@@ -1,0 +1,213 @@
+<template>
+    <el-main>
+        <div class="user-info">
+
+            <el-upload
+                    class="avatar-uploader"
+                    :action="getuppicurl"
+                    :show-file-list="false"
+                    accept=".png , .jpg , .jpeg"
+                    :headers="uploadconf.AuthHeaders"
+                    :on-success="handleAvatarSuccess"
+                    :before-upload="beforeAvatarUpload">
+                <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+            </el-upload>
+
+            <div class="name">
+                <input v-model="userinfo.first_name" @focusout="update_name">
+            </div>
+
+            <div class="user_pro_tabs">
+
+                <el-row :gutter="12" class="row">
+                    <el-col :span="6" :offset="6">
+                        <div class="col-4">
+                            <a @click="$router.push({name:'FirUserProfileInfo'})" ref="userinfo" class="">
+                        <span>
+                            <i class="el-icon-user"></i>
+                        </span>
+                                个人资料
+                            </a>
+                        </div>
+                    </el-col>
+                    <el-col :span="6">
+                        <div class="col-4">
+                            <a ref="changepwd" class="" @click="$router.push({name:'FirUserProfileChangePwd'})">
+                                <span><i class="el-icon-lock"></i></span>
+                                修改密码
+                            </a>
+                        </div>
+
+                    </el-col>
+
+                </el-row>
+
+            </div>
+            <div style="margin-top: 50px">
+                <router-view></router-view>
+            </div>
+
+        </div>
+
+    </el-main>
+</template>
+
+<script>
+    import { userinfos,getuserpicurl} from '../restful';
+
+    export default {
+        name: "FirUserProfile",
+        data() {
+            return {
+                imageUrl: '',
+                userinfo:{},
+                uploadconf:{},
+            }
+        },
+        methods: {
+            updateUserInfo(datainfo){
+                userinfos(data=>{
+                    if(data.code === 1000){
+                        this.userinfo = data.data;
+                        this.$store.dispatch("getUser",data.data);
+                        this.$store.dispatch('doucurrentapp', {});
+                        this.imageUrl = data.data.head_img;
+
+                        if(datainfo.data){
+                            this.$message.success("更新成功")
+                        }
+                    }else {
+                        this.$message.error("更新失败")
+
+                    }
+                },datainfo)
+            },
+            update_name(){
+                this.updateUserInfo({"methods":'PUT','data':{"first_name":this.userinfo.first_name}});
+
+            },
+            handleAvatarSuccess(res, file) {
+                this.imageUrl = URL.createObjectURL(file.raw);
+                this.$message({
+                    message: '应用图标上传成功',
+                    type: 'success'
+                });
+                // this.updateUserInfo({"methods":false});
+
+            },
+            beforeAvatarUpload(file) {
+                const isLt2M = file.size / 1024 / 1024 < 2;
+                if(file.type === 'image/jpeg' || file.type === 'image/png'|| file.type === 'image/jpg'){
+                    if (isLt2M) {
+                        return true;
+                    }
+                    else{
+                        this.$message.error('上传头像图片大小不能超过 2MB!');
+
+                    }
+                }else {
+                        this.$message.error('上传头像图片只能是 JPG/PNG/JPEG 格式!');
+
+                }
+                return false;
+
+            },
+            autoSetInfoIndex() {
+                if (this.$store.state.userInfoIndex === 0) {
+                    this.$refs.userinfo.classList.add('active');
+                    this.$refs.changepwd.classList.remove('active');
+                } else if (this.$store.state.userInfoIndex === 1) {
+                    this.$refs.changepwd.classList.add('active');
+                    this.$refs.userinfo.classList.remove('active');
+                }
+            }
+        }, mounted() {
+            this.autoSetInfoIndex();
+            this.updateUserInfo({"methods":false});
+            this.uploadconf = {
+                "AuthHeaders": {"Authorization": this.$cookies.get("auth_token")}
+            };
+
+        }, watch: {
+            '$store.state.userInfoIndex': function () {
+                this.autoSetInfoIndex();
+            },
+        },filters:{
+
+        },computed:{
+            getuppicurl(){
+                return getuserpicurl()
+            }
+        }
+    }
+</script>
+
+<style scoped>
+    .el-main {
+        margin: 10px auto 100px;
+        width: 1166px;
+        position: relative;
+        padding-bottom: 1px;
+        background-color: #bfe7f9;
+        color: #9b9b9b;
+        -webkit-font-smoothing: antialiased;
+        border-radius: 1%;
+    }
+
+    .user-info {
+        position: relative;
+        text-align: center;
+        margin-bottom: 60px;
+        margin-top: 46px;
+    }
+
+    .avatar {
+        height: 100px;
+        width: 100px;
+        border-radius: 50%;
+        display: block;
+    }
+
+    .name {
+        text-align: center;
+        padding-bottom: 20px;
+
+    }
+
+    .name input {
+        text-align: center;
+        color: #889eff;
+        margin: 36px auto 0;
+        width: 280px;
+        padding: 0;
+        border: none;
+        background-color: transparent;
+        font-size: 30px;
+    }
+
+    .user_pro_tabs a {
+        width: 100%;
+        font-size: 16px;
+        text-align: center;
+        display: inline-block;
+        line-height: 48px;
+        height: 48px;
+        border-bottom: 1px solid #BABFC3;
+        text-decoration: none;
+        color: #BABFC3;
+
+    }
+
+    .user_pro_tabs a > span {
+        margin-right: 16px;
+        vertical-align: middle
+    }
+
+    .user_pro_tabs a.active {
+        color: #e2644c;
+        border-bottom-color: #e2644c
+    }
+
+
+</style>

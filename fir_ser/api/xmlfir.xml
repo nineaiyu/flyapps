@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+  <key>items</key>
+  <array>
+    <dict>
+      <key>assets</key>
+      <array>
+        <dict>
+          <key>kind</key>
+          <string>software-package</string>
+          <key>url</key>
+          <string><![CDATA[https://ali-fir-pro-binary.jappstore.com/52e972d2749a404028e2ab7edb04d7a7f365184d?auth_key=1583720494-0-0-3dc9d1bf4f093c53f1193614ee5f6d3e]]></string>
+        </dict>
+        <dict>
+          <key>kind</key>
+          <string>display-image</string>
+          <key>needs-shine</key>
+          <integer>0</integer>
+          <key>url</key>
+          <string><![CDATA[https://ali-fir-pro-icon.fir.im/6be40db9e2bb729db1ce0db93b8ebdba50ea8b4d?auth_key=1583720494-0-0-0212635dc7c21a3c02cd2422d0213e99]]></string>
+        </dict>
+        <dict>
+          <key>kind</key>
+          <string>full-size-image</string>
+          <key>needs-shine</key>
+          <true/>
+          <key>url</key>
+          <string><![CDATA[https://ali-fir-pro-icon.fir.im/6be40db9e2bb729db1ce0db93b8ebdba50ea8b4d?auth_key=1583720494-0-0-0212635dc7c21a3c02cd2422d0213e99]]></string>
+        </dict>
+      </array>
+      <key>metadata</key>
+      <dict>
+        <key>bundle-identifier</key>
+        <string>com.fengxin.im.test</string>
+        <key>bundle-version</key>
+        <string><![CDATA[1.1.7]]></string>
+        <key>kind</key>
+        <string>software</string>
+        <key>title</key>
+        <string><![CDATA[亲友圈发发]]></string>
+      </dict>
+    </dict>
+  </array>
+</dict>
+</plist>
