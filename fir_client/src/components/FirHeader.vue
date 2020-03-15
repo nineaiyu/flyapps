@@ -14,8 +14,10 @@
                     </el-breadcrumb>
 
                 </el-col>
-                <el-col :span="4" :push="5">
-
+                <el-col :span="2" :push="4">
+                    <div class="block"><el-avatar :size="66" :src="$store.state.userinfo.head_img"></el-avatar></div>
+                </el-col>
+                <el-col :span="4" :push="4">
                     <el-dropdown style="padding-top: 12px;" @command="handleCommand">
                         <el-button type="success" plain round>
                             {{$store.state.userinfo.first_name }}<i class="el-icon-arrow-down el-icon--right"></i>

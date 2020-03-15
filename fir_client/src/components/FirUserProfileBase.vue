@@ -93,7 +93,7 @@
                     message: '应用图标上传成功',
                     type: 'success'
                 });
-                // this.updateUserInfo({"methods":false});
+                this.updateUserInfo({"methods":false});
 
             },
             beforeAvatarUpload(file) {

@@ -128,20 +128,13 @@ def delete_apps_storage(app_file_name,release_type):
         print(e)
 
 
-def delete_apps_icon_storage(app_file_name):
-    icon_path = os.path.join(MEDIA_ROOT,"icons")
+def delete_apps_icon_storage(app_file_name,type='icons'):
+    icon_path = os.path.join(MEDIA_ROOT,type)
 
-    remove_lists=[
-        os.path.join(icon_path, "%s.png" % (app_file_name))
-    ]
     try:
-        for delfiles in remove_lists:
-            os.remove(delfiles)
+        os.remove(os.path.join(icon_path, app_file_name))
     except Exception as e:
         print(e)
-
-
-
 
 
 def get_release_type(app_file_name,appinfo):

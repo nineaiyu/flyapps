@@ -13,7 +13,7 @@ import binascii
 import os,datetime
 from api.utils.app.TokenManager import DownloadToken,generateNumericTokenOfLength
 from api.utils.auth import ExpiringTokenAuthentication
-
+from api.utils.app.analyze import delete_apps_icon_storage
 from api.utils.response import BaseResponse
 from api.utils.captcha_verify import verify
 from django.middleware import csrf
@@ -140,31 +140,33 @@ class UserInfoView(APIView):
                 res.msg = "错误的类型"
                 return Response(res.dict)
 
-            img_file_name = request.user.head_img
-            if img_file_name == "" or img_file_name == '/files/imgs/head_img.jpeg':
-                random_file_name = make_from_user_uuid(request.user)
-                head_img = "/".join([settings.MEDIA_URL.strip("/"), "imgs", random_file_name + "." + app_type])
-                try:
-                    request.user.head_img = head_img
-                    request.user.save()
-                except Exception as e:
-                    res.code = 1003
-                    res.msg = "头像保存失败"
-                    return Response(res.dict)
-            else:
-                random_file_name = os.path.basename(img_file_name)
-                local_file = os.path.join(settings.MEDIA_ROOT,"imgs",random_file_name)
-                # 读取传入的文件
-                try:
-                    destination = open(local_file, 'wb+')
-                    for chunk in file_obj.chunks():
-                        # 写入本地文件
-                        destination.write(chunk)
-                    destination.close()
-                except Exception as e:
-                    res.code = 1003
-                    res.msg = "数据写入失败"
-                    return Response(res.dict)
+            # img_file_name = request.user.head_img
+            # if img_file_name == "" or img_file_name == '/files/imgs/head_img.jpeg':
+            old_head_img = request.user.head_img
+            random_file_name = make_from_user_uuid(request.user)
+            head_img = "/".join([settings.MEDIA_URL.strip("/"), "imgs", random_file_name + "." + app_type])
+            local_file = os.path.join(settings.MEDIA_ROOT,"imgs",random_file_name + "." + app_type)
+            # 读取传入的文件
+            try:
+                destination = open(local_file, 'wb+')
+                for chunk in file_obj.chunks():
+                    # 写入本地文件
+                    destination.write(chunk)
+                destination.close()
+            except Exception as e:
+                res.code = 1003
+                res.msg = "数据写入失败"
+                return Response(res.dict)
+            try:
+                request.user.head_img = head_img
+                request.user.save()
+                if old_head_img != "" or old_head_img != '/files/imgs/head_img.jpeg':
+                    delete_apps_icon_storage(os.path.basename(old_head_img),'imgs')
+
+            except Exception as e:
+                res.code = 1003
+                res.msg = "头像保存失败"
+                return Response(res.dict)
 
         return Response(res.dict)
 

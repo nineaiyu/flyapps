@@ -209,7 +209,7 @@ class AppinfoView(APIView):
                             return Response(res.dict)
                         release_obj.icon_url = release_obj.icon_url.replace(old_file_name.split(".")[0],random_file_name)
                         release_obj.save()
-                        delete_apps_icon_storage(old_file_name.split(".")[0])
+                        delete_apps_icon_storage(old_file_name,'icons')
 
                     else:
                         res.code = 1003
