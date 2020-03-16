@@ -8,7 +8,8 @@ export function getScrollTop(){
         documentScrollTop = document.documentElement.scrollTop;
     }
     scrollTop = (bodyScrollTop - documentScrollTop > 0) ? bodyScrollTop : documentScrollTop;
-    return Math.ceil(scrollTop);
+    // return Math.ceil(scrollTop);
+    return scrollTop;
 }
 
 
