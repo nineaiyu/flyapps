@@ -1,6 +1,6 @@
 //滚动条在Y轴上的滚动距离
 export function getScrollTop(){
-    var scrollTop = 0, bodyScrollTop = 0, documentScrollTop = 0;
+    let scrollTop = 0, bodyScrollTop = 0, documentScrollTop = 0;
     if(document.body){
         bodyScrollTop = document.body.scrollTop;
     }
@@ -8,14 +8,15 @@ export function getScrollTop(){
         documentScrollTop = document.documentElement.scrollTop;
     }
     scrollTop = (bodyScrollTop - documentScrollTop > 0) ? bodyScrollTop : documentScrollTop;
-    return Math.ceil(scrollTop);
+    // return Math.ceil(scrollTop);
+    return scrollTop;
 }
 
 
 
 //文档的总高度
 export function getScrollHeight(){
-    var scrollHeight = 0, bodyScrollHeight = 0, documentScrollHeight = 0;
+    let scrollHeight = 0, bodyScrollHeight = 0, documentScrollHeight = 0;
     if(document.body){
         bodyScrollHeight = document.body.scrollHeight;
     }
@@ -30,7 +31,7 @@ export function getScrollHeight(){
 
 //浏览器视口的高度
 export function getWindowHeight(){
-    var windowHeight = 0;
+    let windowHeight = 0;
     if(document.compatMode === "CSS1Compat"){
         windowHeight = document.documentElement.clientHeight;
     }else{

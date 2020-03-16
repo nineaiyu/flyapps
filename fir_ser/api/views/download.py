@@ -66,6 +66,8 @@ class DownloadView(APIView):
                         name = apprelease_obj.app_id.name
                         ios_plist_bytes = make_resigned(bin_url,img_url,bundle_id,bundle_version,name)
                         response = FileResponse(ios_plist_bytes)
+                        response['content_type'] = "text/xml"
+
 
                     else:
 
@@ -74,7 +76,7 @@ class DownloadView(APIView):
 
                         file_path = os.path.join(settings.MEDIA_ROOT,"apps","%s"%(release_id+"."+app_type))
                         response = FileResponse(open(file_path, 'rb'))
-                    response['content_type'] = "application/octet-stream"
+                        response['content_type'] = "application/octet-stream"
                     response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_path)
                     return response
                 except Exception:
