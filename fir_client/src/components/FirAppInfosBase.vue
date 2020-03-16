@@ -164,7 +164,9 @@
             }, {
                 "app_id": this.$route.params.id
             });
-            this.icon_url = this.$store.state.currentapp.master_release.icon_url
+            if(this.$store.state.currentapp.master_release){
+                this.icon_url = this.$store.state.currentapp.master_release.icon_url
+            }
             // this.$store.dispatch('dosetAh',this.getBH);
         },watch:{
             '$store.state.currentapp.master_release.icon_url':function () {

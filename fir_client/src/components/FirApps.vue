@@ -242,10 +242,11 @@
                 hdata: {},
                 willDeleteApp: false,
                 delapp: {},
-                has_next:false,
+                has_next:true,
                 query:{'page':1,size:20},
                 searchflag:false,
-                uploadflag:false
+                uploadflag:false,
+                autoloadflag:true
             }
         }, methods: {
             searchFun(){
@@ -253,6 +254,7 @@
                 if(keysearch === ''){
                     this.searchflag=false;
                     this.applists=[];
+                    this.orgapplists=[];
                     this.query.page=1;
                     if(this.searchfromtype){
                         this.getappsFun({"type": this.searchfromtype});
@@ -263,6 +265,8 @@
                     this.searchflag=true
                 }
                 if(this.searchflag){
+                    this.applists=[];
+                    this.orgapplists=[];
                     if(this.searchfromtype){
                         this.getappsFun({"type": this.searchfromtype,'page':1,size:999});
                     }else {
@@ -274,25 +278,26 @@
                 // eslint-disable-next-line no-console
                 // console.log(getScrollTop() , getWindowHeight(),getScrollTop() + getWindowHeight(), getScrollHeight());
                 if(getScrollTop() + getWindowHeight() >= getScrollHeight()){
-                    if(this.has_next){      //先判断下一页是否有数据
-                        if(this.applists.length === 0){
-                            this.query.page=1;
-                        }else {
-                            this.query.page+=1;
-                        }
-                        if(this.searchfromtype!=='') {
-                            this.query.type = this.searchfromtype;
-                        }
-                            // this.getappsFun(dict(this.query,{"types": this.searchfromtype}));
-                            // this.getappsFun({"type": this.searchfromtype});
-                        // }else {
-                            this.getappsFun(this.query);
-                        // }
 
-                    }else{
-                        // eslint-disable-next-line no-console
-                        console.log("end")
-                    }
+                        if(this.has_next){      //先判断下一页是否有数据
+                            if(this.autoloadflag) {
+                                this.autoloadflag = false;
+                                if (this.applists.length === 0) {
+                                    this.query.page = 1;
+                                } else {
+                                    this.query.page += 1;
+                                }
+                                if (this.searchfromtype !== '') {
+                                    this.query.type = this.searchfromtype;
+                                }
+                                this.getappsFun(this.query);
+                            }
+
+                        }else{
+                            if(! this.has_next){
+                                this.$message.success("已经到底啦")
+                            }
+                        }
                 }
             },
             searchapps() {
@@ -314,6 +319,8 @@
 
                 getapps(data => {
                     if (data.code === 1000) {
+                        this.autoloadflag = true;
+
                         if(this.uploadflag){
                             this.applists = data.data ;
                             this.uploadflag = false;
@@ -453,6 +460,8 @@
         }, mounted() {
             // this.$store.dispatch('dosetAh',this.getBH);
             window.addEventListener('scroll',this.auto_load);
+            this.$store.dispatch('doucurrentapp', {});
+
             this.getappsFun({});
 
         },
