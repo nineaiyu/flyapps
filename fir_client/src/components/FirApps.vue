@@ -242,11 +242,12 @@
                 hdata: {},
                 willDeleteApp: false,
                 delapp: {},
-                has_next:true,
+                has_next:false,
                 query:{'page':1,size:20},
                 searchflag:false,
                 uploadflag:false,
-                autoloadflag:true
+                autoloadflag:true,
+                firstloadflag:true,
             }
         }, methods: {
             searchFun(){
@@ -319,6 +320,10 @@
 
                 getapps(data => {
                     if (data.code === 1000) {
+                        if(this.firstloadflag){
+                            window.addEventListener('scroll',this.auto_load);
+                            this.firstloadflag = false
+                        }
                         this.autoloadflag = true;
 
                         if(this.uploadflag){
@@ -458,11 +463,10 @@
             }
 
         }, mounted() {
-            // this.$store.dispatch('dosetAh',this.getBH);
-            window.addEventListener('scroll',this.auto_load);
             this.$store.dispatch('doucurrentapp', {});
-
             this.getappsFun({});
+            // window.addEventListener('scroll',this.auto_load);
+
 
         },
         destroyed(){
