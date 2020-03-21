@@ -10,6 +10,7 @@ from api.utils.randomstrings import make_app_uuid
 from api.models import AppReleaseInfo,Apps
 import random,xmltodict,json
 from .TokenManager import DownloadToken
+from api.utils.qiniu.tools import QiNiu
 
 
 def make_download_token(release_id,time_limit):
@@ -118,19 +119,26 @@ def delete_apps_storage(app_file_name,release_type):
         else:
             app_file_full_name="%s.ipa" %app_file_name
 
+        qiniu = QiNiu()
+        qiniu.del_qiniu_file(app_file_full_name)
+        icon_url = AppReleaseInfo.objects.filter(release_id=app_file_name).first().icon_url
+        qiniu.del_qiniu_file(os.path.basename(icon_url))
+
         remove_lists=[
             os.path.join(app_path, app_file_full_name),
             os.path.join(icon_path, "%s.png" % (app_file_name))
         ]
         for delfiles in remove_lists:
             os.remove(delfiles)
+
     except Exception as e:
         print(e)
 
 
 def delete_apps_icon_storage(app_file_name,type='icons'):
     icon_path = os.path.join(MEDIA_ROOT,type)
-
+    qiniu = QiNiu()
+    qiniu.del_qiniu_file(app_file_name)
     try:
         os.remove(os.path.join(icon_path, app_file_name))
     except Exception as e:
@@ -184,55 +192,61 @@ def AnalyzeUtil(app_file_name,request):
         apiobj = AppInfo(app_full_path)
         appinfo = apiobj.get_app_data()
         app_img=apiobj.make_app_png(icon_path,app_file_name.split(".")[0])
+        bundle_id = appinfo.get("bundle_id")
+
+        SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,get_app_type(app_file_name),os.path.getsize(app_full_path))
+
     except Exception as e:
         print(e)
         delete_apps_storage(app_file_name.split(".")[0], 0)
         delete_apps_storage(app_file_name.split(".")[0], 1)
-
         return
 
 
-    bundle_id = appinfo.get("bundle_id")
+def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
     app_uuid = make_app_uuid(user_obj,bundle_id+app_file_name.split(".")[1])
-
     ##判断是否存在该app
-    appmobj=Apps.objects.filter(app_id=app_uuid,user_id=user_obj).first()
+    appmobj = Apps.objects.filter(app_id=app_uuid, user_id=user_obj).first()
     if not appmobj:
-        appdata={
-            "app_id":app_uuid,
-            "user_id":user_obj,
-            "type":get_app_type(app_file_name),
+        appdata = {
+            "app_id": app_uuid,
+            "user_id": user_obj,
+            "type": get_app_type(app_file_name),
             "name": appinfo["labelname"],
-            "short":get_random_short(),
-            "bundle_id":bundle_id,
-            "count_hits":0
+            "short": short,
+            "bundle_id": bundle_id,
+            "count_hits": 0
         }
         try:
-            appmobj=Apps.objects.create(**appdata)
+            appmobj = Apps.objects.create(**appdata)
         except Exception as e:
             print(e)
-            delete_apps_storage(app_file_name.split(".")[0],get_release_type(app_file_name,appinfo))
+            delete_apps_storage(app_file_name.split(".")[0], get_release_type(app_file_name, appinfo))
             return
+    else:
+        try:
+            appmobj.short = short
+            appmobj.name = appinfo["labelname"]
+            appmobj.save()
+        except Exception as e:
+            print(e)
+            # appmobj.short = short
+            appmobj.name = appinfo["labelname"]
+            appmobj.save()
 
+    AppReleaseInfo.objects.filter(app_id=appmobj).update(**{"is_master": False})
 
-
-
-
-    AppReleaseInfo.objects.filter(app_id=appmobj).update(**{"is_master":False})
-
-    release_data={
-        "app_id":appmobj,
-        "icon_url":"/".join([MEDIA_URL.strip("/"),"icons",app_img]),
-        "release_id":app_file_name.split(".")[0],
-        "build_version":appinfo.get("version"),
-        "app_version":appinfo.get("versioncode"),
-        "release_type":get_release_type(app_file_name,appinfo),
-        "minimum_os_version":appinfo.get("miniOSversion", None),
-        "binary_size":os.path.getsize(app_full_path),
-        "is_master":True
+    release_data = {
+        "app_id": appmobj,
+        "icon_url": "/".join([MEDIA_URL.strip("/"), "icons", app_img]),
+        "release_id": app_file_name.split(".")[0],
+        "build_version": appinfo.get("version"),
+        "app_version": appinfo.get("versioncode"),
+        "release_type": get_release_type(app_file_name, appinfo),
+        "minimum_os_version": appinfo.get("miniOSversion", None),
+        "binary_size": size,
+        "is_master": True,
+        "changelog":appinfo.get("changelog",'')
     }
 
     AppReleaseInfo.objects.create(**release_data)
-
-
-

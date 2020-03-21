@@ -7,13 +7,158 @@
                 <el-dialog
                         :title="getDelappTitle"
                         :visible.sync="willDeleteApp"
-                        width="50%"
-                >
+                        width="50%">
                     <span>删除后不可恢复，请谨慎操作</span>
                     <span slot="footer" class="dialog-footer">
-            <el-button @click="willDeleteApp = false">取 消</el-button>
-            <el-button type="danger" @click="delApp">确 定</el-button>
-          </span>
+                        <el-button @click="willDeleteApp = false">取 消</el-button>
+                        <el-button type="danger" @click="delApp">确 定</el-button>
+                  </span>
+                </el-dialog>
+
+
+                <el-dialog class="upload-app"
+                        :visible.sync="willuploadApp"
+                        :destroy-on-close="true"
+                        :show-close="!uploading"
+                        width="40%"
+                        :close-on-click-modal="false"
+                        @closed="closeUpload" >
+
+                    <div v-if="!uploading" style="">
+                        <el-row :gutter="20">
+                            <el-col :span="6">
+                                <div class="grid-content bg-purple">
+                                    <div style="width: 100px;height: 100px">
+                                        <el-avatar shape="square" :size="100"  :src="analyseappinfo.icon"></el-avatar>
+                                    </div>
+                                </div>
+                            </el-col>
+                            <el-col :span="18">
+                                <div class="grid-content bg-purple">
+                                    <el-row :gutter="20" style="margin-top: 8px;">
+                                        <el-col :span="18" >
+                                            {{ analyseappinfo.version}} (Build {{ analyseappinfo.buildversion}})      {{ analyseappinfo.release_type_id|getiOStype}}
+                                        </el-col>
+                                    </el-row>
+                                    <el-row :gutter="20" style="margin-top: 18px;">
+                                        <el-col :span="18" >
+                                            <el-input v-model="analyseappinfo.appname"></el-input>
+                                        </el-col>
+
+                                    </el-row>
+                                </div>
+                            </el-col>
+                        </el-row>
+                        <el-divider></el-divider>
+
+                        <el-row :gutter="20">
+
+                            <el-col :span="6">
+                                <div class="grid-content bg-purple">
+                                    <el-row :gutter="20" style="margin-top: 18px;">
+                                        <el-col :span="18" :offset="8">
+                                            <span >短连接</span>
+                                        </el-col>
+                                    </el-row>
+                                </div>
+                            </el-col>
+                            <el-col :span="18">
+                                <div class="grid-content bg-purple">
+                                    <el-row :gutter="20" style="margin-top: 10px;">
+                                        <el-col :span="18" >
+                                            <el-input v-model="analyseappinfo.short">
+                                                <template slot="prepend">{{analyseappinfo.domain_name}}/</template>
+                                            </el-input>
+                                        </el-col>
+                                    </el-row>
+                                </div>
+                            </el-col>
+                        </el-row>
+
+                        <el-row :gutter="20">
+
+                            <el-col :span="6">
+                                <div class="grid-content bg-purple">
+                                    <el-row :gutter="20" style="margin-top: 18px;">
+                                        <el-col :span="18" :offset="8">
+                                            <span >更新日志</span>
+                                        </el-col>
+                                    </el-row>
+                                </div>
+                            </el-col>
+                            <el-col :span="18">
+                                <div class="grid-content bg-purple">
+                                    <el-row :gutter="20" style="margin-top: 10px;">
+                                        <el-col :span="18" >
+                                            <el-input   type="textarea"
+                                                        v-model="analyseappinfo.changelog"
+                                                        placeholder="请输入内容"
+                                                        rows="5"
+                                                        show-word-limit></el-input>
+                                        </el-col>
+                                    </el-row>
+                                </div>
+                            </el-col>
+                        </el-row>
+
+                    </div>
+
+                    <div v-if="uploading" class="wrap">
+                        <!--包裹所有元素的容器-->
+                        <div class="cube">
+                            <!--前面图片 -->
+                            <div class="out_front">
+                                <img src="../assets/imgs/1.png" class="pic">
+                            </div>
+                            <!--后面图片 -->
+                            <div class="out_back">
+                                <img src="../assets/imgs/5.png" class="pic">
+                            </div>
+                            <!--左面图片 -->
+                            <div class="out_left">
+                                <img src="../assets/imgs/6.png" class="pic">
+                            </div>
+                            <!--右面图片 -->
+                            <div class="out_right">
+                                <img src="../assets/imgs/7.png" class="pic">
+                            </div>
+                            <!--上面图片 -->
+                            <div class="out_top">
+                                <img src="../assets/imgs/8.png" class="pic">
+                            </div>
+                            <!--下面图片 -->
+                            <div class="out_bottom">
+                                <img src="../assets/imgs/9.png" class="pic">
+                            </div>
+
+                            <!--小正方体 -->
+                            <span class="in_front">
+                <img :src="this.analyseappinfo.icon" class="in_pic">
+            </span>
+                            <span class="in_back">
+                 <img :src="this.analyseappinfo.icon" class="in_pic">
+            </span>
+                            <span class="in_left">
+                <img :src="this.analyseappinfo.icon" class="in_pic">
+            </span>
+                            <span class="in_right">
+                <img :src="this.analyseappinfo.icon" class="in_pic">
+            </span>
+                            <span class="in_top">
+                <img :src="this.analyseappinfo.icon" class="in_pic">
+            </span>
+                            <span class="in_bottom">
+                <img :src="this.analyseappinfo.icon" class="in_pic">
+            </span>
+                        </div>
+
+                    </div>
+
+
+                    <span slot="footer" class="dialog-footer">
+                        <el-progress :text-inside="true" :stroke-width="26" :percentage="uploadprocess" v-if="uploadflag === true"></el-progress>
+                        <el-button type="primary" plain @click="uploadcloud" v-else>开始上传</el-button>
+                  </span>
                 </el-dialog>
 
                 <el-row>
@@ -112,7 +257,6 @@
 
                 </el-row>
 
-
             </el-header>
 
 
@@ -124,12 +268,16 @@
                     <el-col style="width: 33%;height: 460px ">
                         <div class=" app-animator appdownload">
                             <div class=" card app card-ios" style="padding: 0">
+                                <!--                                        :action="uploadconf.UploadUrl"-->
+
                                 <el-upload
                                         :on-success="handleAvataruploadsuccess"
                                         drag
+                                        :show-file-list="false"
+                                        :before-upload="beforeAvatarUpload"
                                         accept=".ipa , .apk"
                                         :headers="uploadconf.AuthHeaders"
-                                        :action="uploadconf.UploadUrl"
+                                        action="#"
                                         multiple>
                                     <i class="el-icon-upload" style="color: #fff"></i>
                                     <div class="el-upload__text" style="color: #fff;margin-top: 20px">拖拽到这里上传</div>
@@ -227,20 +375,23 @@
 </template>
 
 <script>
-    import {getapps, deleteapp} from "../restful";
-    import {getScrollHeight,getScrollTop,getWindowHeight} from "../utils";
+    import {getapps, deleteapp,getuploadToken} from "../restful";
+    import {getScrollHeight,getScrollTop,getWindowHeight,getappinfo,uploadqiniuoss,dataURLtoFile} from "../utils";
 
     export default {
         name: "FirApps",
         data() {
             return {
                 uploadconf: {"UploadUrl": ""},
+                analyseappinfo:{'appname':'','short':'','changelog':''},
                 keysearch: '',
                 searchfromtype: '',
                 applists: [],
                 orgapplists: [],
                 hdata: {},
                 willDeleteApp: false,
+                willuploadApp:false,
+                uploading:false,
                 delapp: {},
                 has_next:false,
                 query:{'page':1,size:20},
@@ -248,8 +399,70 @@
                 uploadflag:false,
                 autoloadflag:true,
                 firstloadflag:true,
+                currentfile:null,
+                uploadprocess:0,
+                uploadsuccess:0
             }
         }, methods: {
+            uploadqiniu(file,certinfo){
+                // eslint-disable-next-line no-unused-vars
+                uploadqiniuoss(file,certinfo,this,res=>{
+                    this.uploadsuccess +=1;
+                    if(this.uploadsuccess === 2){
+                        this.$message.success(file.name + '上传成功');
+                        getuploadToken(data => {
+                            if (data.code === 1000) {
+                                let app_uuid = this.analyseappinfo.app_uuid;
+                                this.closeUpload();
+                                // app.getappsFun({});
+                                this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
+                            }
+                        },{'methods':'PUT','data':this.analyseappinfo});
+                    }
+                },process=>{
+                    if(this.uploadsuccess === 1) {
+                        this.uploadprocess = process;
+                    }
+                })
+            },
+            getuploadtoken(){
+                getuploadToken(data =>{
+                    if(data.code === 1000){
+                        this.analyseappinfo.short = data.data.short;
+                        this.analyseappinfo.domain_name = data.data.domain_name;
+                        this.analyseappinfo.app_uuid= data.data.app_uuid;
+                        this.analyseappinfo.upload_token= data.data.upload_token;
+                        this.analyseappinfo.upload_key= data.data.upload_key;
+                        this.analyseappinfo.png_key= data.data.png_key;
+                        this.analyseappinfo.png_token= data.data.png_token;
+
+                        this.willuploadApp=true;
+                    }else {
+                        this.$message.error("上传token获取失败，请刷新重试")
+                    }
+                },{'methos':true,'data':{"bundleid":this.analyseappinfo.bundleid,"type":this.analyseappinfo.type}})
+            },
+            uploadcloud(){
+                this.uploadflag=true;
+                this.uploading = true;
+
+                let file=dataURLtoFile(this.analyseappinfo.icon,this.analyseappinfo.png_key);
+                this.uploadqiniu(file,{'upload_key':this.analyseappinfo.png_key,'upload_token':this.analyseappinfo.png_token});
+
+                file = this.currentfile;
+                this.uploadqiniu(file,{'upload_key':this.analyseappinfo.upload_key,'upload_token':this.analyseappinfo.upload_token});
+            },
+            closeUpload(){
+                this.uploadsuccess = 0;
+                this.uploadprocess=0;
+                this.uploadflag=false;
+                this.uploading = false;
+                this.willuploadApp=false;
+                this.currentfile=null;
+                this.uploadflag = false;
+                this.analyseappinfo={};
+            },
+
             searchFun(){
                 let keysearch = this.keysearch.replace(/^\s+|\s+$/g, "");
                 if(keysearch === ''){
@@ -371,13 +584,33 @@
 
                 this.uploadflag = true;
                 this.getappsFun({});
+            },beforeAvatarUpload(file){
+                const loading = this.$loading({
+                    lock: true,
+                    text: 'Loading',
+                    spinner: 'el-icon-loading',
+                    // background: 'rgba(0, 0, 0, 0.7)'
+                });
+                getappinfo(file,appinfo =>{
+                if(appinfo.bundleid){
+                    this.analyseappinfo = appinfo;
+                    this.getuploadtoken();
+                    this.currentfile = file;
+                }else {
+                    this.$message.error("应用解析失败,请检查是否为APP应用")
+                }
+                    loading.close();
+                },err=>{
+                    loading.close();
+                    this.$message.error("应用解析失败,请检查是否为APP应用");
+                    // eslint-disable-next-line no-console
+                    console.log('err ----> ', err);
+                });
+                return false;
             },
 
             delApp() {
                         this.willDeleteApp = false;
-
-                // eslint-disable-next-line no-console
-
                         deleteapp(data => {
                             if (data.code === 1000) {
                                 for(let i=0;i< this.applists.length;i++){
@@ -390,7 +623,6 @@
                                 this.delapp={};
                             } else {
                                 this.$message.error('删除失败，请联系管理员');
-
                             }
                         }, {
                             "app_id": this.delapp.app_id
@@ -408,8 +640,6 @@
                 this.$router.push({name: 'FirDownload', params: { short: app.short }})
             }
         }, computed: {
-
-
             getDelappTitle() {
                 return `删除应用 ${this.delapp.name}`
             },
@@ -424,10 +654,8 @@
                 }
                 return sch;
             }
-
         },
         filters: {
-
             getiOStype: function (type) {
                 let ftype = '';
                 if (type === 1) {
@@ -443,6 +671,8 @@
             autoformat: function (packname) {
                 if ((packname.length) > 20) {
                     return packname.split('').slice(0, 20).join('') + '...';
+                }else {
+                    return packname
                 }
             },
             getapptype: function (type) {
@@ -466,8 +696,6 @@
             this.$store.dispatch('doucurrentapp', {});
             this.getappsFun({});
             // window.addEventListener('scroll',this.auto_load);
-
-
         },
         destroyed(){
             window.removeEventListener('scroll', this.auto_load, false);
@@ -478,7 +706,6 @@
             keysearch: function (val, oldVal) {
                 // this.searchapps()
                 this.searchFun()
-
             },
             // eslint-disable-next-line no-unused-vars
             searchfromtype: function (val, oldVal) {
@@ -486,7 +713,6 @@
                 this.query.page=1;
                 // this.keysearch='';
                 this.searchFun();
-
                 // this.getappsFun({"type": this.searchfromtype});
             },
         }
@@ -494,7 +720,6 @@
 </script>
 
 <style scoped>
-
 
     .el-container {
         margin: 10px auto 100px;
@@ -771,5 +996,133 @@
         color: #4a4a4a
     }
 
+    /*最外层容器样式*/
+    .wrap {
+        width: 100px;
+        height: 100px;
+        /*margin: 119px;*/
+        margin: 120px auto 119px auto;
+        position: relative;
+    }
 
+    /*包裹所有容器样式*/
+    .cube {
+        width: 50px;
+        height: 50px;
+        margin: 0 auto;
+        transform-style: preserve-3d;
+        transform: rotateX(-30deg) rotateY(-80deg);
+        animation: rotate linear 20s infinite;
+    }
+
+    @-webkit-keyframes rotate {
+        from {
+            transform: rotateX(0deg) rotateY(0deg);
+        }
+        to {
+            transform: rotateX(360deg) rotateY(360deg);
+        }
+    }
+
+    .cube div {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        opacity: 0.8;
+        transition: all .4s;
+    }
+
+    /*定义所有图片样式*/
+    .pic {
+        width: 200px;
+        height: 200px;
+    }
+
+    .cube .out_front {
+        transform: rotateY(0deg) translateZ(100px);
+    }
+
+    .cube .out_back {
+        transform: translateZ(-100px) rotateY(180deg);
+    }
+
+    .cube .out_left {
+        transform: rotateY(-90deg) translateZ(100px);
+    }
+
+    .cube .out_right {
+        transform: rotateY(90deg) translateZ(100px);
+    }
+
+    .cube .out_top {
+        transform: rotateX(90deg) translateZ(100px);
+    }
+
+    .cube .out_bottom {
+        transform: rotateX(-90deg) translateZ(100px);
+    }
+
+    /*定义小正方体样式*/
+    .cube span {
+        display: block;
+        width: 100px;
+        height: 100px;
+        position: absolute;
+        top: 50px;
+        left: 50px;
+    }
+
+    .cube .in_pic {
+        width: 100px;
+        height: 100px;
+    }
+
+    .cube .in_front {
+        transform: rotateY(0deg) translateZ(50px);
+    }
+
+    .cube .in_back {
+        transform: translateZ(-50px) rotateY(180deg);
+    }
+
+    .cube .in_left {
+        transform: rotateY(-90deg) translateZ(50px);
+    }
+
+    .cube .in_right {
+        transform: rotateY(90deg) translateZ(50px);
+    }
+
+    .cube .in_top {
+        transform: rotateX(90deg) translateZ(50px);
+    }
+
+    .cube .in_bottom {
+        transform: rotateX(-90deg) translateZ(50px);
+    }
+
+    /*鼠标移入后样式*/
+    .cube:hover .out_front {
+        transform: rotateY(0deg) translateZ(200px);
+    }
+
+    .cube:hover .out_back {
+        transform: translateZ(-200px) rotateY(180deg);
+    }
+
+    .cube:hover .out_left {
+        transform: rotateY(-90deg) translateZ(200px);
+    }
+
+    .cube:hover .out_right {
+        transform: rotateY(90deg) translateZ(200px);
+    }
+
+    .cube:hover .out_top {
+        transform: rotateX(90deg) translateZ(200px);
+    }
+
+    .cube:hover .out_bottom {
+        transform: rotateX(-90deg) translateZ(200px);
+    }
 </style>

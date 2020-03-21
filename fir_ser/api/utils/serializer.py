@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from api import models
 from api.utils.app.analyze import bytes2human,make_download_token
+from api.utils.qiniu.tools import QiNiu
+import os
 
 
 # class CourseCategorySerializer(serializers.ModelSerializer):
@@ -228,6 +230,8 @@ class AppsSerializer(serializers.ModelSerializer):
         if master_release_obj:
 
             icon_url = "/".join([obj.user_id.domain_name, master_release_obj.icon_url])
+            qiniu = QiNiu()
+            icon_url = qiniu.get_qiniu_download_token( os.path.basename(master_release_obj.icon_url))
             datainfo = {
                 "app_version": master_release_obj.app_version,
                 "icon_url": icon_url,
@@ -244,6 +248,11 @@ class AppsSerializer(serializers.ModelSerializer):
             if self.context.get("download_token", None) and self.context.get("download_token") != "download_token":
                 download_url = "/".join([obj.user_id.domain_name, "download", master_release_obj.release_id])
                 download_url = download_url + "?token=" + self.context.get("download_token")
+                if obj.type == 0:
+                    apptype='.apk'
+                else:
+                    apptype = '.ipa'
+                download_url = qiniu.get_qiniu_download_token(master_release_obj.release_id+apptype)
                 datainfo["download_url"] = download_url
 
             return datainfo
@@ -273,12 +282,24 @@ class AppReleaseSerializer(serializers.ModelSerializer):
         return bytes2human(obj.binary_size)
 
     def get_download_url(self,obj):
+
         download_url = "/".join([obj.app_id.user_id.domain_name, "download", obj.release_id])
         download_url = download_url + "?token=" + make_download_token(obj.release_id,300)
+
+        if obj.release_type == 0:
+            apptype = '.apk'
+        else:
+            apptype = '.ipa'
+        qiniu = QiNiu()
+        download_url = qiniu.get_qiniu_download_token(obj.release_id + apptype)
         return download_url
 
     def get_icon_url(self, obj):
-        return "/".join([obj.app_id.user_id.domain_name, obj.icon_url])
+        icon_url="/".join([obj.app_id.user_id.domain_name, obj.icon_url])
+        qiniu = QiNiu()
+        icon_url = qiniu.get_qiniu_download_token(os.path.basename(obj.icon_url))
+
+        return icon_url
 
     def get_master_color(self, obj):
         if obj.is_master:

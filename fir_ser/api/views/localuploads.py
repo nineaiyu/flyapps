@@ -25,6 +25,8 @@ class UploadView(APIView):
 
         # 获取多个file
         files = request.FILES.getlist('file', None)
+        if not files:
+            res.msg="文件不存在"
         for file_obj in files:
             # 将文件缓存到本地后上传
             try:

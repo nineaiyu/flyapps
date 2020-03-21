@@ -580,3 +580,19 @@ export function getuserpicurl() {
 export function getapppicurl(app_id) {
     return USERSEVER + '/apps/' + app_id
 }
+
+
+/**获取上传token */
+export function getuploadToken(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/qiniuupload' ,
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
