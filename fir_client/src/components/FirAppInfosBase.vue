@@ -161,6 +161,7 @@
                     // eslint-disable-next-line no-console
                     console.log("失败了");
                 }
+
             }, {
                 "app_id": this.$route.params.id
             });

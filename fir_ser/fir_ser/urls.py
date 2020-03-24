@@ -47,5 +47,5 @@ urlpatterns = [
     # re_path("api/v1/trade/alipay/",AlipayTradeView),
     # media路径配置
     re_path(r'files/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-    re_path("download/(?P<release_id>\w+)$", DownloadView.as_view(),name="download"),
+    re_path("download/(?P<filename>\w+\.\w+)$", DownloadView.as_view(),name="download"),
 ]

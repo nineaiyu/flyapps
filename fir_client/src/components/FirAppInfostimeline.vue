@@ -145,7 +145,12 @@
 
             },
             getapptimelineFun() {
-
+                const loading = this.$loading({
+                    lock: true,
+                    text: '加载中',
+                    spinner: 'el-icon-loading',
+                    // background: 'rgba(0, 0, 0, 0.7)'
+                });
                 getapptimeline(data => {
                     if (data.code === 1000) {
                         this.release_apps = data.data.release_apps;
@@ -153,6 +158,7 @@
                     } else if (data.code === 1003) {
                         this.$router.push({name: 'FirApps'});
                     }
+                    loading.close();
                 }, {
                     "app_id": this.$route.params.id,
                     "action": "timeline",

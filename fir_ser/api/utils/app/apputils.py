@@ -3,24 +3,10 @@
 # project: 3月 
 # author: liuyu
 # date: 2020/3/6
-from fir_ser.settings import MEDIA_ROOT,MEDIA_URL
-import os
-from .firApi import AppInfo
-from api.utils.randomstrings import make_app_uuid
+from api.utils.app.randomstrings import make_app_uuid
 from api.models import AppReleaseInfo,Apps
 import random,xmltodict,json
-from .TokenManager import DownloadToken
-from api.utils.qiniu.tools import QiNiu
-
-
-def make_download_token(release_id,time_limit):
-    release_ids = []
-    if release_id:
-        release_ids = [release_id]
-    dtoken = DownloadToken()
-    download_token = dtoken.make_token(release_ids,time_limit)
-    return download_token
-
+from api.utils.storage.storage import Storage
 
 def make_resigned(bin_url,img_url,bundle_id,bundle_version,name):
 
@@ -109,42 +95,6 @@ def bytes2human(n):
     return '%sB' % n
 
 
-def delete_apps_storage(app_file_name,release_type):
-    app_path = os.path.join(MEDIA_ROOT,"apps")
-    icon_path = os.path.join(MEDIA_ROOT,"icons")
-
-    try:
-        if release_type == 0:
-            app_file_full_name="%s.apk" %app_file_name
-        else:
-            app_file_full_name="%s.ipa" %app_file_name
-
-        qiniu = QiNiu()
-        qiniu.del_qiniu_file(app_file_full_name)
-        icon_url = AppReleaseInfo.objects.filter(release_id=app_file_name).first().icon_url
-        qiniu.del_qiniu_file(os.path.basename(icon_url))
-
-        remove_lists=[
-            os.path.join(app_path, app_file_full_name),
-            os.path.join(icon_path, "%s.png" % (app_file_name))
-        ]
-        for delfiles in remove_lists:
-            os.remove(delfiles)
-
-    except Exception as e:
-        print(e)
-
-
-def delete_apps_icon_storage(app_file_name,type='icons'):
-    icon_path = os.path.join(MEDIA_ROOT,type)
-    qiniu = QiNiu()
-    qiniu.del_qiniu_file(app_file_name)
-    try:
-        os.remove(os.path.join(icon_path, app_file_name))
-    except Exception as e:
-        print(e)
-
-
 def get_release_type(app_file_name,appinfo):
     extension = app_file_name.split(".")[1]
     if extension == "ipa":
@@ -180,29 +130,6 @@ def get_random_short():
 
 
 
-def AnalyzeUtil(app_file_name,request):
-
-    user_obj = request.user
-
-    app_path = os.path.join(MEDIA_ROOT,"apps")
-    icon_path = os.path.join(MEDIA_ROOT,"icons")
-    app_full_path = os.path.join(app_path,app_file_name)
-
-    try:
-        apiobj = AppInfo(app_full_path)
-        appinfo = apiobj.get_app_data()
-        app_img=apiobj.make_app_png(icon_path,app_file_name.split(".")[0])
-        bundle_id = appinfo.get("bundle_id")
-
-        SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,get_app_type(app_file_name),os.path.getsize(app_full_path))
-
-    except Exception as e:
-        print(e)
-        delete_apps_storage(app_file_name.split(".")[0], 0)
-        delete_apps_storage(app_file_name.split(".")[0], 1)
-        return
-
-
 def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
     app_uuid = make_app_uuid(user_obj,bundle_id+app_file_name.split(".")[1])
     ##判断是否存在该app
@@ -221,7 +148,9 @@ def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
             appmobj = Apps.objects.create(**appdata)
         except Exception as e:
             print(e)
-            delete_apps_storage(app_file_name.split(".")[0], get_release_type(app_file_name, appinfo))
+            storage = Storage(user_obj)
+            storage.delete_file(app_file_name)
+            storage.delete_file(app_img)
             return
     else:
         try:
@@ -230,7 +159,6 @@ def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
             appmobj.save()
         except Exception as e:
             print(e)
-            # appmobj.short = short
             appmobj.name = appinfo["labelname"]
             appmobj.save()
 
@@ -238,7 +166,7 @@ def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
 
     release_data = {
         "app_id": appmobj,
-        "icon_url": "/".join([MEDIA_URL.strip("/"), "icons", app_img]),
+        "icon_url": app_img,
         "release_id": app_file_name.split(".")[0],
         "build_version": appinfo.get("version"),
         "app_version": appinfo.get("versioncode"),

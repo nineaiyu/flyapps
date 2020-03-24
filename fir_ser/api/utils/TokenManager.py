@@ -21,7 +21,7 @@ class DownloadToken(object):
 
     def make_token(self,release_id,time_limit=60):
         random_str = uuid.uuid1().__str__().split("-")[0:-1]
-        user_ran_str = uuid.uuid5(uuid.NAMESPACE_DNS, release_id[0]).__str__().split("-")
+        user_ran_str = uuid.uuid5(uuid.NAMESPACE_DNS, release_id).__str__().split("-")
         user_ran_str.extend(random_str)
         new_str = "".join(user_ran_str)
         self.TokenLists.append({new_str:{
@@ -56,7 +56,6 @@ class DownloadToken(object):
                 for token, data in itokendic.items():
                     if int(ntime) - int(data["atime"]) > 0:
                             self.TokenLists.remove(itokendic)
-
             print("开始清理token，现在token:%s  清理token:%s 剩余token:%s"%(ncount,ncount-len(self.TokenLists),len(self.TokenLists)))
             time.sleep(30)
 

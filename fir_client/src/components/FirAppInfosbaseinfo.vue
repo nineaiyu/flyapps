@@ -60,7 +60,7 @@
 </template>
 
 <script>
-    import {deleteapp, getappinfos, getapppicurl, updateapp} from "../restful"
+    import {deleteapp, getappinfos, getapppicurl, getuploadToken, updateapp} from "../restful"
 
     export default {
         name: "FirAppInfosbaseinfo",
@@ -150,7 +150,15 @@
                 const isLt2M = file.size / 1024 / 1024 < 2;
                 if(file.type === 'image/jpeg' || file.type === 'image/png'|| file.type === 'image/jpg'){
                     if (isLt2M) {
-                        return true;
+                        // return true;
+
+                        getuploadToken(data => {
+                            if (data.code === 1000) {
+                                // eslint-disable-next-line no-console
+                                console.log(data.data)
+                            }
+                        },{'methods':false,'data':{'app_id':this.currentapp.app_id,'upload_key':file.name}});
+
                     }
                     else{
                         this.$message.error('上传头像图片大小不能超过 2MB!');

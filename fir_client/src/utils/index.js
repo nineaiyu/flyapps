@@ -29,7 +29,6 @@ export function getScrollHeight(){
 }
 
 
-
 //浏览器视口的高度
 export function getWindowHeight(){
     let windowHeight = 0;
@@ -124,4 +123,57 @@ export function dataURLtoFile(dataurl, filename) {//将base64转换为文件
         u8arr[n] = bstr.charCodeAt(n);
     }
     return new File([u8arr], filename, {type:mime});
+}
+
+export function uploadaliyunoss(file,certinfo,app,successcallback,processcallback) {
+    const OSS = require('ali-oss');
+    let token = certinfo.upload_token;
+    let client = new OSS({
+        endpoint: token.endpoint,
+        accessKeyId: token.access_key_id,
+        accessKeySecret: token.access_key_secret,
+        stsToken: token.security_token,
+        bucket: token.bucket
+    });
+
+    // eslint-disable-next-line no-unused-vars
+    let currentCheckpoint;
+    const progress = async function progress(p, checkpoint) {
+        currentCheckpoint = checkpoint;
+        // eslint-disable-next-line no-console
+        console.log(Math.floor(p * 100));
+        // eslint-disable-next-line no-console
+        console.log(checkpoint);
+        processcallback(Math.floor(p * 100));
+
+    };
+    const options = {
+        progress,
+        partSize: 1000 * 1024,
+        // meta: {
+        //     year: 2017,
+        //     people: 'test',
+        // },
+    };
+    client.multipartUpload(certinfo.upload_key, file, options).then( (res) => {
+        // eslint-disable-next-line no-console
+        console.log('upload success: %j', res);
+        successcallback(res);
+        currentCheckpoint = null;
+    }).catch((err) => {
+            // eslint-disable-next-line no-console
+            console.error(err);
+        app.$message({
+            message:file.name + '上传失败，请刷新页面重试',
+            type: 'error',
+            duration:0
+        });
+    });
+}
+
+
+import {uploadstorage} from '../restful'
+export function uploadlocalstorage(file,certinfo,app,successcallback,processcallback) {
+    uploadstorage(certinfo,file,successcallback,processcallback)
+
 }

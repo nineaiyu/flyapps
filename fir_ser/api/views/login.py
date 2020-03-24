@@ -1,21 +1,18 @@
 from django.contrib import auth
 from api.models import Token, UserInfo
 from rest_framework.response import Response
-from rest_framework.viewsets import ViewSetMixin
 from api.utils.serializer import UserInfoSerializer
-from rest_framework.viewsets import generics
-from api.utils.randomstrings import make_from_user_uuid
+from api.utils.app.randomstrings import make_from_user_uuid
 
 
 from rest_framework.views import APIView
 from fir_ser import settings
 import binascii
 import os,datetime
-from api.utils.app.TokenManager import DownloadToken,generateNumericTokenOfLength
+from api.utils.TokenManager import DownloadToken,generateNumericTokenOfLength
 from api.utils.auth import ExpiringTokenAuthentication
-from api.utils.app.analyze import delete_apps_icon_storage
+from api.utils.app.apputils import delete_apps_icon_storage
 from api.utils.response import BaseResponse
-from api.utils.captcha_verify import verify
 from django.middleware import csrf
 
 def get_token(request):

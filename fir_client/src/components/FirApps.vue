@@ -376,7 +376,7 @@
 
 <script>
     import {getapps, deleteapp,getuploadToken} from "../restful";
-    import {getScrollHeight,getScrollTop,getWindowHeight,getappinfo,uploadqiniuoss,dataURLtoFile} from "../utils";
+    import {getScrollHeight,getScrollTop,getWindowHeight,getappinfo,uploadqiniuoss,dataURLtoFile,uploadaliyunoss,uploadlocalstorage} from "../utils";
 
     export default {
         name: "FirApps",
@@ -404,28 +404,72 @@
                 uploadsuccess:0
             }
         }, methods: {
-            uploadqiniu(file,certinfo){
-                // eslint-disable-next-line no-unused-vars
-                uploadqiniuoss(file,certinfo,this,res=>{
-                    this.uploadsuccess +=1;
-                    if(this.uploadsuccess === 2){
-                        this.$message.success(file.name + '上传成功');
-                        getuploadToken(data => {
-                            if (data.code === 1000) {
-                                let app_uuid = this.analyseappinfo.app_uuid;
-                                this.closeUpload();
-                                // app.getappsFun({});
-                                this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
-                            }
-                        },{'methods':'PUT','data':this.analyseappinfo});
-                    }
-                },process=>{
-                    if(this.uploadsuccess === 1) {
-                        this.uploadprocess = process;
-                    }
-                })
+            uploadtostorage(file,certinfo){
+
+                if(this.analyseappinfo.storage === 1){
+                    // eslint-disable-next-line no-unused-vars,no-unreachable
+                    uploadqiniuoss(file,certinfo,this,res=>{
+                        this.uploadsuccess +=1;
+                        if(this.uploadsuccess === 2){
+                            this.$message.success(file.name + '上传成功');
+                            getuploadToken(data => {
+                                if (data.code === 1000) {
+                                    let app_uuid = this.analyseappinfo.app_uuid;
+                                    this.closeUpload();
+                                    this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
+                                }
+                            },{'methods':'PUT','data':this.analyseappinfo});
+                        }
+                    },process=>{
+                        if(this.uploadsuccess === 1) {
+                            this.uploadprocess = process;
+                        }
+                    })
+                }else if(this.analyseappinfo.storage === 2){
+                    // eslint-disable-next-line no-unused-vars
+                    uploadaliyunoss(file,certinfo,this,res=>{
+                        this.uploadsuccess +=1;
+                        if(this.uploadsuccess === 2){
+                            this.$message.success(file.name + '上传成功');
+                            getuploadToken(data => {
+                                if (data.code === 1000) {
+                                    let app_uuid = this.analyseappinfo.app_uuid;
+                                    this.closeUpload();
+                                    this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
+                                }
+                            },{'methods':'PUT','data':this.analyseappinfo});
+                        }
+                    },process=>{
+                        if(this.uploadsuccess === 1) {
+                            this.uploadprocess = process;
+                        }
+                    });
+
+                }else {
+                    //本地
+                    certinfo.upload_url = this.uploadconf.UploadUrl;
+                    // eslint-disable-next-line no-unused-vars,no-unreachable
+                    uploadlocalstorage(file,certinfo,this,res=>{
+                        this.uploadsuccess +=1;
+                        if(this.uploadsuccess === 2){
+                            this.$message.success(file.name + '上传成功');
+                            getuploadToken(data => {
+                                if (data.code === 1000) {
+                                    let app_uuid = this.analyseappinfo.app_uuid;
+                                    this.closeUpload();
+                                    this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
+                                }
+                            },{'methods':'PUT','data':this.analyseappinfo});
+                        }
+                    },process=>{
+                        if(this.uploadsuccess === 1) {
+                            this.uploadprocess = process;
+                        }
+                    })
+                }
+
             },
-            getuploadtoken(){
+            getuploadtoken(loading){
                 getuploadToken(data =>{
                     if(data.code === 1000){
                         this.analyseappinfo.short = data.data.short;
@@ -435,11 +479,13 @@
                         this.analyseappinfo.upload_key= data.data.upload_key;
                         this.analyseappinfo.png_key= data.data.png_key;
                         this.analyseappinfo.png_token= data.data.png_token;
+                        this.analyseappinfo.storage= data.data.storage;
 
                         this.willuploadApp=true;
                     }else {
                         this.$message.error("上传token获取失败，请刷新重试")
                     }
+                    loading.close();
                 },{'methos':true,'data':{"bundleid":this.analyseappinfo.bundleid,"type":this.analyseappinfo.type}})
             },
             uploadcloud(){
@@ -447,10 +493,11 @@
                 this.uploading = true;
 
                 let file=dataURLtoFile(this.analyseappinfo.icon,this.analyseappinfo.png_key);
-                this.uploadqiniu(file,{'upload_key':this.analyseappinfo.png_key,'upload_token':this.analyseappinfo.png_token});
+
+                this.uploadtostorage(file,{'upload_key':this.analyseappinfo.png_key,'upload_token':this.analyseappinfo.png_token});
 
                 file = this.currentfile;
-                this.uploadqiniu(file,{'upload_key':this.analyseappinfo.upload_key,'upload_token':this.analyseappinfo.upload_token});
+                this.uploadtostorage(file,{'upload_key':this.analyseappinfo.upload_key,'upload_token':this.analyseappinfo.upload_token});
             },
             closeUpload(){
                 this.uploadsuccess = 0;
@@ -530,9 +577,15 @@
 
             },
             getappsFun(parms) {
-
+                const loading = this.$loading({
+                    lock: true,
+                    text: '加载中',
+                    spinner: 'el-icon-loading',
+                    // background: 'rgba(0, 0, 0, 0.7)'
+                });
                 getapps(data => {
                     if (data.code === 1000) {
+                        loading.close();
                         if(this.firstloadflag){
                             window.addEventListener('scroll',this.auto_load);
                             this.firstloadflag = false
@@ -587,19 +640,18 @@
             },beforeAvatarUpload(file){
                 const loading = this.$loading({
                     lock: true,
-                    text: 'Loading',
+                    text: '应用解析中',
                     spinner: 'el-icon-loading',
                     // background: 'rgba(0, 0, 0, 0.7)'
                 });
                 getappinfo(file,appinfo =>{
                 if(appinfo.bundleid){
                     this.analyseappinfo = appinfo;
-                    this.getuploadtoken();
+                    this.getuploadtoken(loading);
                     this.currentfile = file;
                 }else {
                     this.$message.error("应用解析失败,请检查是否为APP应用")
                 }
-                    loading.close();
                 },err=>{
                     loading.close();
                     this.$message.error("应用解析失败,请检查是否为APP应用");

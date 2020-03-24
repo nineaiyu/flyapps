@@ -9,4 +9,5 @@ admin.site.register(Apps)
 admin.site.register(AppReleaseInfo)
 admin.site.register(Token)
 admin.site.register(VerifyName)
+admin.site.register(AppStorage)
 

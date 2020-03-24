@@ -12,9 +12,9 @@ Axios.defaults.httpsAgent = new https.Agent({
 });
 
 // Axios.defaults.baseURL='';
-const USERSEVER = 'https://fir.dvcloud.xin/api/v1/fir/server';
+// const USERSEVER = 'https://fir.dvcloud.xin/api/v1/fir/server';
 
-// const USERSEVER = 'http://192.168.1.112:8000/api/v1/fir/server';
+const USERSEVER = 'http://192.168.1.112:8000/api/v1/fir/server';
 
 
 export function set_auth_token() {
@@ -595,4 +595,31 @@ export function getuploadToken(callBack, params, load = true) {
         true,
         true
     );
+}
+
+export function uploadstorage(certinfo,file,successCallback,processCallback) {
+
+    let config = {
+        onUploadProgress: function (progressEvent) {
+            let total=progressEvent.total;
+            let loaded = progressEvent.loaded;
+            processCallback(Math.round(loaded*100/total))
+        },
+        headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization':VueCookies.get('auth_token'),
+        },
+    };
+    const data = new FormData();
+    data.append('file', file);
+    data.append('certinfo',JSON.stringify(certinfo));
+    Axios.post(certinfo.upload_url, data, config).then(res => {
+        // eslint-disable-next-line no-console
+        console.log(res);
+        successCallback(res)
+    }).catch(err => {
+        // eslint-disable-next-line no-console
+        console.log(err);
+    });
+
 }
