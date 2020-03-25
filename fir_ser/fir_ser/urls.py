@@ -32,7 +32,7 @@ from api.views.captcha import CaptchaView
 # router.register("course/category", CourseCategoryView)
 from django.views.static import serve
 from fir_ser import settings
-from api.views.download import DownloadView
+from api.views.download import DownloadView,InstallView
 
 urlpatterns = [
     path('fly.admin/', admin.site.urls),
@@ -48,4 +48,5 @@ urlpatterns = [
     # media路径配置
     re_path(r'files/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     re_path("download/(?P<filename>\w+\.\w+)$", DownloadView.as_view(),name="download"),
+    re_path("install/(?P<app_id>\w+)$", InstallView.as_view(), name="install"),
 ]

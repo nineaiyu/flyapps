@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from api import models
 from api.utils.app.apputils import bytes2human
-from api.utils.storage.storage import Storage
+from api.utils.TokenManager import DownloadToken
 
 import os
 
-
+token_obj = DownloadToken()
 
 class UserInfoSerializer(serializers.ModelSerializer):
     # gender = serializers.SerializerMethodField(source="get_gender_display")
@@ -45,7 +45,7 @@ class AppsSerializer(serializers.ModelSerializer):
                                                                       release_id=self.context.get("release_id")).first()
         if master_release_obj:
 
-            icon_url = "/".join([obj.user_id.domain_name, master_release_obj.icon_url])
+            icon_url = ""
 
             if self.context.get("storage", None) and self.context.get("storage") != "undefined":
                 storage = self.context.get("storage", None)
@@ -63,25 +63,20 @@ class AppsSerializer(serializers.ModelSerializer):
                 "binary_url":master_release_obj.binary_url,
             }
 
-            if self.context.get("download_token", None) and self.context.get("download_token") != "download_token":
-                download_url = "/".join([obj.user_id.domain_name, "download", master_release_obj.release_id])
-                download_url = download_url + "?token=" + self.context.get("download_token")
-                if obj.type == 0:
-                    apptype='.apk'
-                else:
-                    apptype = '.ipa'
-                if self.context.get("storage", None) and self.context.get("storage") != "undefined":
-                    storage = self.context.get("storage", None)
-                    download_url = storage.get_download_url(master_release_obj.release_id+apptype)
-                datainfo["download_url"] = download_url
+            download_url = ""
+            # if self.context.get("storage", None) and self.context.get("storage") != "undefined":
+            #     if obj.type == 0:
+            #         apptype = '.apk'
+            #     else:
+            #         apptype = '.ipa'
+            #     storage = self.context.get("storage", None)
+            #     download_url = storage.get_download_url(master_release_obj.release_id+apptype)
+            download_token = token_obj.make_token(master_release_obj.release_id,600)
+            datainfo["download_token"] = download_token
 
             return datainfo
         else:
             return {}
-
-
-
-
 
 
 class AppReleaseSerializer(serializers.ModelSerializer):
@@ -90,8 +85,8 @@ class AppReleaseSerializer(serializers.ModelSerializer):
         fields = ["app_version", "icon_url", "build_version",
                   "release_type", "minimum_os_version",
                   "created_time", "binary_size", "release_id", "size", "type", "editing", "master_color", "changelog",
-                  "is_master",'download_url','binary_url']
-    download_url = serializers.SerializerMethodField()
+                  "is_master",'download_token','binary_url']
+    download_token = serializers.SerializerMethodField()
     size = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
     editing = serializers.SerializerMethodField()
@@ -104,19 +99,19 @@ class AppReleaseSerializer(serializers.ModelSerializer):
     def get_binary_size(self,obj):
         return bytes2human(obj.binary_size)
 
-    def get_download_url(self,obj):
+    def get_download_token(self,obj):
 
-        # download_url = "/".join([obj.app_id.user_id.domain_name, "download", obj.release_id])
-        # download_url = download_url + "?token=" + make_download_token(obj.release_id,300)
         download_url=''
-        if obj.release_type == 0:
-            apptype = '.apk'
-        else:
-            apptype = '.ipa'
-        if self.context.get("storage", None) and self.context.get("storage") != "undefined":
-            storage = self.context.get("storage", None)
-            download_url = storage.get_download_url(obj.release_id + apptype)
-        return download_url
+        # if obj.release_type == 0:
+        #     apptype = '.apk'
+        # else:
+        #     apptype = '.ipa'
+        # if self.context.get("storage", None) and self.context.get("storage") != "undefined":
+        #     storage = self.context.get("storage", None)
+        #     download_url = storage.get_download_url(obj.release_id + apptype)
+        download_token = token_obj.make_token(obj.release_id, 600)
+
+        return download_token
 
     def get_icon_url(self, obj):
         icon_url="/".join([obj.app_id.user_id.domain_name, obj.icon_url])

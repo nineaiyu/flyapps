@@ -63,7 +63,7 @@
 
                                             <button v-if="isdownload" disabled="" class="loading" style="min-width: 43px; width: 43px; padding: 12px 0; border-top-color: transparent; border-left-color: transparent;">&nbsp;</button>
                                             <button v-else @click="download" >
-                                                <el-link icon="el-icon-loadings" :href="downloadurl" type="primary" :underline="false"> 下载安装 </el-link>
+                                                <el-link icon="el-icon-loadings" type="primary" :underline="false"> 下载安装 </el-link>
                                             </button>
                                         </div>
 
@@ -143,7 +143,7 @@
 <script>
     import QRCode from 'qrcodejs2'
 
-    import {getDownloadToken} from '../restful'
+    import {getShortAppinfo,getdownloadurl} from '../restful'
 
     export default {
         name: "FirDownload",
@@ -159,13 +159,33 @@
                 wrong: false,
                 msg: '',
                 dchoice:false,
-                downloadtoken:"",
                 downloadurl:"",
                 isdownload:false,
             }
         }, methods: {
             download() {
                 this.isdownload = true;
+                getdownloadurl(res=>{
+                    if(res.code === 1000){
+
+                        if(this.currentappinfo.type === 1){
+                            this.downloadurl="itms-services://?action=download-manifest&url="+res.data.download_url;
+                        }else{
+                            if(this.agent !== ''){
+                                this.downloadurl = res.data.download_url;
+                            }
+                        }
+
+                        window.location.href=this.downloadurl;
+                    }
+                }, {
+                    'data': {
+                        'token': this.mcurrentappinfo.download_token,
+                        'short': this.currentappinfo.short,
+                        'release_id': this.mcurrentappinfo.release_id,
+                    },
+                    'app_id': this.currentappinfo.app_id
+                })
             },
             qrcode() {
                 new QRCode('qrcode', {
@@ -179,9 +199,8 @@
                 if(this.$route.query.release_id){
                     params["release_id"]=this.$route.query.release_id
                 }
-                getDownloadToken(data => {
+                getShortAppinfo(data => {
                     if (data.code === 1000) {
-                        this.downloadtoken = data.data.download_token;
                         if(!data.data.master_release.release_id){
                             this.$message({
                                 message:"该 release 版本不存在,请检查",
@@ -252,15 +271,6 @@
                         if(this.agent !== ''){
                             this.miscomboappinfo={};
                             this.iscomboappinfo = {};
-                        }
-                        this.downloadurl = this.mcurrentappinfo.download_url;
-                        if(this.currentappinfo.type ===1){
-                            let ios_plist="&type=resigned.plist";
-                            this.downloadurl="itms-services://?action=download-manifest&url="+this.downloadurl+ios_plist
-                        }
-                        if(this.mcurrentappinfo.binary_url && this.agent !== ''){
-                            this.downloadurl=this.mcurrentappinfo.binary_url;
-                            window.location.href=this.mcurrentappinfo.binary_url;
                         }
 
                     }

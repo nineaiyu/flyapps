@@ -19,9 +19,9 @@ class Storage(object):
         if self.storage:
             return self.storage.get_upload_token(filename, expires)
 
-    def get_download_url(self, filename, expires=1800):
+    def get_download_url(self, filename, expires=1800,ftype=None):
         if self.storage:
-            return self.storage.get_download_url(filename, expires)
+            return self.storage.get_download_url(filename, expires,ftype)
 
     def delete_file(self, filename, apptype=None):
         if self.storage:

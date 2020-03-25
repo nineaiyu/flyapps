@@ -121,7 +121,7 @@
 </template>
 
 <script>
-    import {deletereleaseapp, getapptimeline, updatereleaseapp} from "../restful"
+    import {deletereleaseapp, getapptimeline, getdownloadurl, updatereleaseapp} from "../restful"
 
     export default {
         name: "FirAppInfostimeline",
@@ -138,7 +138,19 @@
         },
         methods: {
             downloadPackage(app){
-              window.location.href=app.download_url;
+                getdownloadurl(res=>{
+                    if(res.code === 1000){
+                        window.location.href=res.data.download_url;
+                    }
+                }, {
+                    'data': {
+                        'token': app.download_token,
+                        'short': this.currentapp.short,
+                        'release_id': app.release_id,
+                        "isdownload":true
+                    },
+                    'app_id': this.currentapp.app_id
+                })
             },
             previewRelase(app){
                 this.$router.push({name: 'FirDownload', params: { short: this.currentapp.short },query:{release_id:app.release_id}})

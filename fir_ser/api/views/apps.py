@@ -16,7 +16,6 @@ from api.utils.storage.storage import Storage
 
 from api.models import Apps, AppReleaseInfo
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
-from api.utils.app.apputils import delete_apps_icon_storage
 from rest_framework.pagination import PageNumberPagination
 
 
@@ -206,7 +205,8 @@ class AppInfoView(APIView):
                                                                             random_file_name)
                         release_obj.save()
 
-                        delete_apps_icon_storage(old_file_name, 'icons')
+                        storage = Storage(request.user)
+                        storage.delete_file(old_file_name)
 
                     else:
                         res.code = 1003

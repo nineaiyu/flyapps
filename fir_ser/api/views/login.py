@@ -11,9 +11,9 @@ import binascii
 import os,datetime
 from api.utils.TokenManager import DownloadToken,generateNumericTokenOfLength
 from api.utils.auth import ExpiringTokenAuthentication
-from api.utils.app.apputils import delete_apps_icon_storage
 from api.utils.response import BaseResponse
 from django.middleware import csrf
+from api.utils.storage.storage import Storage
 
 def get_token(request):
     token = csrf.get_token(request)
@@ -158,7 +158,8 @@ class UserInfoView(APIView):
                 request.user.head_img = head_img
                 request.user.save()
                 if old_head_img != "" or old_head_img != '/files/imgs/head_img.jpeg':
-                    delete_apps_icon_storage(os.path.basename(old_head_img),'imgs')
+                    storage = Storage(request.user)
+                    storage.delete_file(os.path.basename(old_head_img))
 
             except Exception as e:
                 res.code = 1003

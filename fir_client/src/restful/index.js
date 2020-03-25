@@ -543,11 +543,11 @@ export function getapptimeline(callBack, params, load = true) {
 }
 
 
-/**获取下载token */
-export function getDownloadToken(callBack, params, load = true) {
+/**根据短链接获取应用信息 */
+export function getShortAppinfo(callBack, params, load = true) {
     getData(
         false,
-        USERSEVER + '/download_token/' + params.short ,
+        USERSEVER + '/short/' + params.short ,
         params,
         data => {
             callBack(data);
@@ -587,6 +587,22 @@ export function getuploadToken(callBack, params, load = true) {
     getData(
         params.methods,
         USERSEVER + '/qiniuupload' ,
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+
+/**获取下载的url */
+export function getdownloadurl(callBack, params, load = true) {
+    getData(
+        false,
+        USERSEVER + '/install/'+params.app_id ,
         params.data,
         data => {
             callBack(data);
