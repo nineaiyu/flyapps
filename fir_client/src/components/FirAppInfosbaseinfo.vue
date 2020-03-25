@@ -32,11 +32,9 @@
             <el-form-item label="应用图标">
                 <el-upload
                         class="avatar-uploader"
-                        :action="getuppicurl"
+                        action="#"
                         :show-file-list="false"
                         accept=".png , .jpg , .jpeg"
-                        :headers="uploadconf.AuthHeaders"
-                        :on-success="handleAvatarSuccess"
                         :before-upload="beforeAvatarUpload">
                     <img v-if="currentapp.icon_url" :src="currentapp.icon_url"
                          class="avatar">
@@ -60,7 +58,8 @@
 </template>
 
 <script>
-    import {deleteapp, getappinfos, getapppicurl, getuploadToken, updateapp} from "../restful"
+    import {deleteapp, getappinfos, getapppicurl, uploadimgs, updateapp, getuploadurl} from "../restful"
+    import { uploadaliyunoss, uploadlocalstorage, uploadqiniuoss} from "../utils";
 
     export default {
         name: "FirAppInfosbaseinfo",
@@ -69,9 +68,54 @@
                 currentapp: {},
                 imageUrl: "",
                 uploadconf:{},
+                uploadprocess:0
             }
         },
         methods: {
+            updateimgs(certinfo){
+                uploadimgs(data => {
+                    if (data.code === 1000) {
+                        // eslint-disable-next-line no-console
+                        console.log(data.data);
+                        this.$message.success('上传成功');
+                        this.updateinfo();
+
+                    }else {
+                        this.$message.error('更新失败');
+                    }
+                },{'methods':'PUT','data':{'certinfo':certinfo}});
+
+            },
+            uploadtostorage(file,certinfo){
+
+                if(certinfo.storage === 1){
+                    // eslint-disable-next-line no-unused-vars,no-unreachable
+                    uploadqiniuoss(file,certinfo,this,res=>{
+                        this.updateimgs(certinfo);
+
+                    },process=>{
+                            this.uploadprocess = process;
+                    })
+                }else if(certinfo.storage === 2){
+                    // eslint-disable-next-line no-unused-vars
+                    uploadaliyunoss(file,certinfo,this,res=>{
+                        this.updateimgs(certinfo);
+                    },process=>{
+                            this.uploadprocess = process;
+                    });
+
+                }else {
+                    //本地
+                    certinfo.upload_url = getuploadurl();
+                    // eslint-disable-next-line no-unused-vars,no-unreachable
+                    uploadlocalstorage(file,certinfo,this,res=>{
+                        this.updateimgs(certinfo);
+                    },process=>{
+                            this.uploadprocess = process;
+                    })
+                }
+
+            },
             delApp() {
                 //发送删除APP的操作
                 this.$confirm('确认删除 ' + this.currentapp.name + ' ?')
@@ -138,27 +182,20 @@
                     }
                 });
             },
-            handleAvatarSuccess(res, file) {
-                this.imageUrl = URL.createObjectURL(file.raw);
-                this.$message({
-                    message: '应用图标上传成功',
-                    type: 'success'
-                });
-                this.updateinfo();
-            },
             beforeAvatarUpload(file) {
                 const isLt2M = file.size / 1024 / 1024 < 2;
                 if(file.type === 'image/jpeg' || file.type === 'image/png'|| file.type === 'image/jpg'){
                     if (isLt2M) {
                         // return true;
 
-                        getuploadToken(data => {
+                        uploadimgs(data => {
                             if (data.code === 1000) {
                                 // eslint-disable-next-line no-console
-                                console.log(data.data)
+                                console.log(data.data);
+                                let certinfo=data.data;
+                                this.uploadtostorage(file,certinfo);
                             }
-                        },{'methods':false,'data':{'app_id':this.currentapp.app_id,'upload_key':file.name}});
-
+                        },{'methods':false,'data':{'app_id':this.currentapp.app_id,'upload_key':file.name,'ftype':'app'}});
                     }
                     else{
                         this.$message.error('上传头像图片大小不能超过 2MB!');

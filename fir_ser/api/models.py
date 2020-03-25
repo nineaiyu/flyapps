@@ -32,7 +32,7 @@ class UserInfo(AbstractUser):
     # password = models.CharField('password', max_length=128,
     #                             help_text=mark_safe('''<a class='btn-link' href='set_password'>重置密码</a>'''))
 
-    head_img = models.CharField(max_length=256, default='/files/imgs/head_img.jpeg',
+    head_img = models.CharField(max_length=256, default='head_img.jpeg',
                                 verbose_name="个人头像")
     role_choices = ((0, '普通会员'), (1, 'VIP'), (2, 'SVIP'), (3, '管理员'))
     role = models.SmallIntegerField(choices=role_choices, default=0, verbose_name="角色")

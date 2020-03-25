@@ -4,11 +4,9 @@
 
             <el-upload
                     class="avatar-uploader"
-                    :action="getuppicurl"
+                    action="#"
                     :show-file-list="false"
                     accept=".png , .jpg , .jpeg"
-                    :headers="uploadconf.AuthHeaders"
-                    :on-success="handleAvatarSuccess"
                     :before-upload="beforeAvatarUpload">
                 <img v-if="imageUrl" :src="imageUrl" class="avatar">
                 <i v-else class="el-icon-plus avatar-uploader-icon"></i>
@@ -54,7 +52,8 @@
 </template>
 
 <script>
-    import { userinfos,getuserpicurl} from '../restful';
+    import {userinfos, getuserpicurl, uploadimgs, getuploadurl} from '../restful';
+    import {uploadaliyunoss, uploadlocalstorage, uploadqiniuoss} from "../utils";
 
     export default {
         name: "FirUserProfile",
@@ -66,6 +65,49 @@
             }
         },
         methods: {
+            updateimgs(certinfo){
+                uploadimgs(data => {
+                    if (data.code === 1000) {
+                        // eslint-disable-next-line no-console
+                        console.log(data.data);
+                        this.$message.success('上传成功');
+                        this.updateUserInfo({"methods":false});
+
+                    }else {
+                        this.$message.error('更新失败');
+                    }
+                },{'methods':'PUT','data':{'certinfo':certinfo}});
+            },
+            uploadtostorage(file,certinfo){
+
+                if(certinfo.storage === 1){
+                    // eslint-disable-next-line no-unused-vars,no-unreachable
+                    uploadqiniuoss(file,certinfo,this,res=>{
+                        this.updateimgs(certinfo);
+
+                    },process=>{
+                        this.uploadprocess = process;
+                    })
+                }else if(certinfo.storage === 2){
+                    // eslint-disable-next-line no-unused-vars
+                    uploadaliyunoss(file,certinfo,this,res=>{
+                        this.updateimgs(certinfo);
+                    },process=>{
+                        this.uploadprocess = process;
+                    });
+
+                }else {
+                    //本地
+                    certinfo.upload_url = getuploadurl();
+                    // eslint-disable-next-line no-unused-vars,no-unreachable
+                    uploadlocalstorage(file,certinfo,this,res=>{
+                        this.updateimgs(certinfo);
+                    },process=>{
+                        this.uploadprocess = process;
+                    })
+                }
+
+            },
             updateUserInfo(datainfo){
                 userinfos(data=>{
                     if(data.code === 1000){
@@ -79,28 +121,26 @@
                         }
                     }else {
                         this.$message.error("更新失败")
-
                     }
                 },datainfo)
             },
             update_name(){
                 this.updateUserInfo({"methods":'PUT','data':{"first_name":this.userinfo.first_name}});
-
-            },
-            handleAvatarSuccess(res, file) {
-                this.imageUrl = URL.createObjectURL(file.raw);
-                this.$message({
-                    message: '应用图标上传成功',
-                    type: 'success'
-                });
-                this.updateUserInfo({"methods":false});
-
             },
             beforeAvatarUpload(file) {
                 const isLt2M = file.size / 1024 / 1024 < 2;
                 if(file.type === 'image/jpeg' || file.type === 'image/png'|| file.type === 'image/jpg'){
                     if (isLt2M) {
-                        return true;
+                        uploadimgs(data => {
+                            if (data.code === 1000) {
+                                // eslint-disable-next-line no-console
+                                console.log(data.data);
+                                let certinfo=data.data;
+                                this.uploadtostorage(file,certinfo);
+                            }
+                        },{'methods':false,'data':{'app_id':this.userinfo.uid,'upload_key':file.name,'ftype':'head'}});
+
+                        return false;
                     }
                     else{
                         this.$message.error('上传头像图片大小不能超过 2MB!');
@@ -125,10 +165,6 @@
         }, mounted() {
             this.autoSetInfoIndex();
             this.updateUserInfo({"methods":false});
-            this.uploadconf = {
-                "AuthHeaders": {"Authorization": this.$cookies.get("auth_token")}
-            };
-
         }, watch: {
             '$store.state.userInfoIndex': function () {
                 this.autoSetInfoIndex();

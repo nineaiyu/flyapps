@@ -2,16 +2,12 @@ from rest_framework import serializers
 from api import models
 from api.utils.app.apputils import bytes2human
 from api.utils.TokenManager import DownloadToken
-
+from api.utils.storage.storage import Storage
 import os
 
 token_obj = DownloadToken()
 
 class UserInfoSerializer(serializers.ModelSerializer):
-    # gender = serializers.SerializerMethodField(source="get_gender_display")
-
-    # def get_gender(self, obj):
-    #     return obj.gender
 
     class Meta:
         model = models.UserInfo
@@ -20,7 +16,8 @@ class UserInfoSerializer(serializers.ModelSerializer):
         fields=["username","uid","qq","mobile","job","email","domain_name","last_login","first_name",'head_img']
     head_img = serializers.SerializerMethodField()
     def get_head_img(self,obj):
-        return "/".join([obj.domain_name, obj.head_img])
+        storage = Storage(obj)
+        return storage.get_download_url(obj.head_img)
 
 
 class AppsSerializer(serializers.ModelSerializer):
@@ -63,14 +60,6 @@ class AppsSerializer(serializers.ModelSerializer):
                 "binary_url":master_release_obj.binary_url,
             }
 
-            download_url = ""
-            # if self.context.get("storage", None) and self.context.get("storage") != "undefined":
-            #     if obj.type == 0:
-            #         apptype = '.apk'
-            #     else:
-            #         apptype = '.ipa'
-            #     storage = self.context.get("storage", None)
-            #     download_url = storage.get_download_url(master_release_obj.release_id+apptype)
             download_token = token_obj.make_token(master_release_obj.release_id,600)
             datainfo["download_token"] = download_token
 
@@ -101,14 +90,6 @@ class AppReleaseSerializer(serializers.ModelSerializer):
 
     def get_download_token(self,obj):
 
-        download_url=''
-        # if obj.release_type == 0:
-        #     apptype = '.apk'
-        # else:
-        #     apptype = '.ipa'
-        # if self.context.get("storage", None) and self.context.get("storage") != "undefined":
-        #     storage = self.context.get("storage", None)
-        #     download_url = storage.get_download_url(obj.release_id + apptype)
         download_token = token_obj.make_token(obj.release_id, 600)
 
         return download_token

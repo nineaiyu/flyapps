@@ -20,9 +20,8 @@ from api.views.login import LoginView,UserInfoView
 from api.views.logout import LogoutView
 from api.views.captcha import CaptchaView
 from api.views.apps import AppsView,AppInfoView,AppReleaseinfoView
-from api.views.localuploads import UploadView,UploadImgView
 from api.views.download import ShortDownloadView
-from api.views.uploads import OssUploadView
+from api.views.uploads import AppAnalyseView,UploadView
 
 
 # router=DefaultRouter()
@@ -37,8 +36,7 @@ urlpatterns = [
     re_path("^apps/(?P<app_id>\w+)", AppInfoView.as_view()),
     re_path("^appinfos/(?P<app_id>\w+)/(?P<act>\w+)", AppReleaseinfoView.as_view()),
     re_path("^upload$",UploadView.as_view()),
-    re_path("^img/upload$",UploadImgView.as_view()),
     re_path("^userinfo",UserInfoView.as_view()),
     re_path("^short/(?P<short>\w+)$", ShortDownloadView.as_view()),
-    re_path("^qiniuupload$", OssUploadView.as_view()),
+    re_path("^analyse$", AppAnalyseView.as_view()),
 ]

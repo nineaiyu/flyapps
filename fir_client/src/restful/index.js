@@ -581,12 +581,17 @@ export function getapppicurl(app_id) {
     return USERSEVER + '/apps/' + app_id
 }
 
+export function getuploadurl() {
+    return USERSEVER + '/upload'
+}
 
-/**获取上传token */
-export function getuploadToken(callBack, params, load = true) {
+
+
+/**分析应用并获取app上传token */
+export function analyseApps(callBack, params, load = true) {
     getData(
         params.methods,
-        USERSEVER + '/qiniuupload' ,
+        USERSEVER + '/analyse' ,
         params.data,
         data => {
             callBack(data);
@@ -613,6 +618,7 @@ export function getdownloadurl(callBack, params, load = true) {
     );
 }
 
+/**上传文件到服务器 */
 export function uploadstorage(certinfo,file,successCallback,processCallback) {
 
     let config = {
@@ -639,3 +645,19 @@ export function uploadstorage(certinfo,file,successCallback,processCallback) {
     });
 
 }
+
+/**获取文件上传token */
+export function uploadimgs(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/upload',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+

@@ -41,7 +41,8 @@ class LoginView(APIView):
                     now = datetime.datetime.now()
                     Token.objects.update_or_create(user=user, defaults={"access_token": key, "created": now})
                     user_info = UserInfo.objects.get(pk=user.pk)
-                    serializer = UserInfoSerializer(user_info)
+
+                    serializer = UserInfoSerializer(user_info,)
                     data = serializer.data
 
                     response.msg = "验证成功!"
@@ -117,55 +118,4 @@ class UserInfoView(APIView):
             return Response(res.dict)
 
         return Response(res.dict)
-
-    def post(self, request):
-        res = BaseResponse()
-
-        # 获取多个file
-        files = request.FILES.getlist('file', None)
-        for file_obj in files:
-            # 将文件缓存到本地后上传
-            try:
-                app_type = file_obj.name.split(".")[-1]
-                if app_type in ['png','jpeg','jpg']:
-                    #上传图片
-                    pass
-                else:
-                    raise
-            except Exception as e:
-                res.code = 1003
-                res.msg = "错误的类型"
-                return Response(res.dict)
-
-            # img_file_name = request.user.head_img
-            # if img_file_name == "" or img_file_name == '/files/imgs/head_img.jpeg':
-            old_head_img = request.user.head_img
-            random_file_name = make_from_user_uuid(request.user)
-            head_img = "/".join([settings.MEDIA_URL.strip("/"), "imgs", random_file_name + "." + app_type])
-            local_file = os.path.join(settings.MEDIA_ROOT,"imgs",random_file_name + "." + app_type)
-            # 读取传入的文件
-            try:
-                destination = open(local_file, 'wb+')
-                for chunk in file_obj.chunks():
-                    # 写入本地文件
-                    destination.write(chunk)
-                destination.close()
-            except Exception as e:
-                res.code = 1003
-                res.msg = "数据写入失败"
-                return Response(res.dict)
-            try:
-                request.user.head_img = head_img
-                request.user.save()
-                if old_head_img != "" or old_head_img != '/files/imgs/head_img.jpeg':
-                    storage = Storage(request.user)
-                    storage.delete_file(os.path.basename(old_head_img))
-
-            except Exception as e:
-                res.code = 1003
-                res.msg = "头像保存失败"
-                return Response(res.dict)
-
-        return Response(res.dict)
-
 

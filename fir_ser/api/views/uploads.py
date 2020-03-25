@@ -3,43 +3,23 @@
 # project: 3月
 # author: liuyu
 # date: 2020/3/6
+
+from api.utils.app.apputils import get_random_short,SaveAppInfos
+from api.utils.storage.storage import Storage
+from api.models import Apps,AppReleaseInfo
+from api.utils.app.randomstrings import make_app_uuid
 from rest_framework.views import APIView
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.app.randomstrings import make_from_user_uuid
 from rest_framework.response import Response
-from api.utils.app.apputils import get_random_short,SaveAppInfos
-from api.utils.storage.storage import Storage
-from api.models import Apps
-from api.utils.app.randomstrings import make_app_uuid
+from fir_ser import settings
+from api.utils.TokenManager import DownloadToken
+import os,json
 
-
-class OssUploadView(APIView):
+class AppAnalyseView(APIView):
 
     authentication_classes = [ExpiringTokenAuthentication, ]
-    #
-    # def get(self,request):
-    #     res = BaseResponse()
-    #     upload_key = request.query_params.get("upload_key", None)
-    #     app_id = request.query_params.get("app_id", None)
-    #     if upload_key:
-    #         if app_id:
-    #             #修改app图片
-    #             app_obj = Apps.objects.filter(app_id=app_id).first()
-    #             if app_obj:
-    #                 release_obj = AppReleaseInfo.objects.filter(app_id=app_obj,is_master=True).first()
-    #
-    #             else:
-    #                 res.code = 1005
-    #                 res.msg = '该应用找不到'
-    #             pass
-    #     else:
-    #         res.code = 1004
-    #
-    #
-    #     return Response(res.dict)
-    #
-
 
     def post(self, request):
         res = BaseResponse()
@@ -107,4 +87,168 @@ class OssUploadView(APIView):
             print(e)
             res.code = 10003
         return Response(res.dict)
+
+
+class UploadView(APIView):
+    '''
+    上传文件接口
+    '''
+    authentication_classes = [ExpiringTokenAuthentication, ]
+
+    def get(self,request):
+        res = BaseResponse()
+        storage = Storage(request.user)
+        request_upload_key=request.query_params.get("upload_key",None)
+        app_id=request.query_params.get("app_id",None)
+        ftype = request.query_params.get("ftype",None)
+        if ftype and app_id and request_upload_key :
+            if ftype =='app':
+                app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
+
+            elif ftype and ftype == 'head':
+                if request.user.uid != app_id:
+                    res.code = 1007
+                    res.msg = '该用户不存在'
+                    return Response(res.dict)
+                else:
+                    app_obj=True
+            else:
+                app_obj=False
+
+            if app_obj:
+                app_type = request_upload_key.split(".")[-1]
+                if app_type not in ["apk", "ipa", 'png', 'jpeg', 'jpg']:
+                    res.code = 1006
+                    res.msg='类型不允许'
+                else:
+                    upload_key = make_from_user_uuid(request.user)+'.'+app_type
+                    upload_token = storage.get_upload_token(upload_key)
+                    storage_type = request.user.storage.storage_type
+                    res.data = {"domain_name": request.user.domain_name,
+                                "upload_token": upload_token,
+                                "upload_key": upload_key,
+                                "storage": storage_type,
+                                "app_id":app_id,
+                                "ftype":ftype}
+            else:
+                res.code = 1006
+                res.msg = '该应用不存在'
+        else:
+            res.code = 1006
+        return Response(res.dict)
+
+
+
+    def post(self, request):
+        res = BaseResponse()
+
+        # 获取多个file
+        files = request.FILES.getlist('file', None)
+        certinfo = request.data.get('certinfo', None)
+
+        try:
+            certinfo = json.loads(certinfo)
+            if not certinfo:
+                res.msg = "token 校验失败"
+                res.code = 1006
+                return Response(res.dict)
+        except Exception as e:
+            print(e)
+            res.msg = "token 校验失败"
+            res.code = 1006
+            return Response(res.dict)
+
+        token_obj = DownloadToken()
+        if token_obj.verify_token(token=certinfo.get("upload_token",None),release_id=certinfo.get("upload_key",None)):
+
+            app_id = certinfo.get("app_id", None)
+            ftype = certinfo.get("ftype",None)
+            if ftype and ftype == 'app':
+                app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
+                if not app_obj:
+                    res.code = 1006
+                    res.msg = '该应用不存在'
+                    return Response(res.dict)
+            elif ftype and ftype == 'head':
+                if request.user.uid != app_id:
+                    res.code = 1007
+                    res.msg = '该用户不存在'
+                    return Response(res.dict)
+            else:
+                res.code = 1008
+                res.msg = '该请求不存在'
+                return Response(res.dict)
+            if not files:
+                res.msg="文件不存在"
+            for file_obj in files:
+                try:
+                    app_type = file_obj.name.split(".")[-1]
+                    if app_type not in ["apk","ipa",'png','jpeg','jpg']:
+                        raise TypeError
+                except Exception as e:
+                    print(e)
+                    res.code = 1003
+                    res.msg = "错误的类型"
+                    return Response(res.dict)
+
+                random_file_name = make_from_user_uuid(request.user)
+                local_file = os.path.join(settings.MEDIA_ROOT,certinfo.get("upload_key",random_file_name))
+                # 读取传入的文件
+                try:
+                    destination = open(local_file, 'wb+')
+                    for chunk in file_obj.chunks():
+                        destination.write(chunk)
+                    destination.close()
+
+                except Exception as e:
+                    res.code = 1003
+                    res.msg = "数据写入失败"
+                    try:
+                        os.remove(local_file)
+                    except Exception as e:
+                        print(e)
+                    return Response(res.dict)
+        else:
+            res.msg = "token 校验失败"
+            res.code = 1006
+
+        return Response(res.dict)
+
+    def put(self,request):
+        res = BaseResponse()
+        certinfo = request.data.get('certinfo',None)
+        if certinfo:
+            app_id = certinfo.get("app_id", None)
+
+            ftype = certinfo.get('ftype',None)
+            storage = Storage(request.user)
+            if ftype and ftype == 'app':
+                app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
+                if app_obj:
+                    release_obj = AppReleaseInfo.objects.filter(app_id=app_obj,is_master=True).first()
+                    if release_obj:
+                        old_file_key = release_obj.icon_url
+                        release_obj.icon_url = certinfo.get("upload_key")
+                        release_obj.save()
+                        storage.delete_file(old_file_key)
+                        return Response(res.dict)
+            elif ftype and ftype == 'head':
+                if request.user.uid != app_id:
+                    res.code = 1007
+                    res.msg = '该用户不存在'
+                    return Response(res.dict)
+                old_file_key = request.user.head_img
+                request.user.head_img = certinfo.get("upload_key")
+                request.user.save()
+                if old_file_key != "" or old_file_key != 'head_img.jpeg':
+                    storage.delete_file(old_file_key)
+
+                return Response(res.dict)
+            else:
+                pass
+        res.code = 1008
+        return Response(res.dict)
+
+
+
 

@@ -268,15 +268,12 @@
                     <el-col style="width: 33%;height: 460px ">
                         <div class=" app-animator appdownload">
                             <div class=" card app card-ios" style="padding: 0">
-                                <!--                                        :action="uploadconf.UploadUrl"-->
 
                                 <el-upload
-                                        :on-success="handleAvataruploadsuccess"
                                         drag
                                         :show-file-list="false"
                                         :before-upload="beforeAvatarUpload"
                                         accept=".ipa , .apk"
-                                        :headers="uploadconf.AuthHeaders"
                                         action="#"
                                         multiple>
                                     <i class="el-icon-upload" style="color: #fff"></i>
@@ -375,14 +372,13 @@
 </template>
 
 <script>
-    import {getapps, deleteapp,getuploadToken} from "../restful";
+    import {getapps, deleteapp,analyseApps,getuploadurl} from "../restful";
     import {getScrollHeight,getScrollTop,getWindowHeight,getappinfo,uploadqiniuoss,dataURLtoFile,uploadaliyunoss,uploadlocalstorage} from "../utils";
 
     export default {
         name: "FirApps",
         data() {
             return {
-                uploadconf: {"UploadUrl": ""},
                 analyseappinfo:{'appname':'','short':'','changelog':''},
                 keysearch: '',
                 searchfromtype: '',
@@ -412,7 +408,7 @@
                         this.uploadsuccess +=1;
                         if(this.uploadsuccess === 2){
                             this.$message.success(file.name + '上传成功');
-                            getuploadToken(data => {
+                            analyseApps(data => {
                                 if (data.code === 1000) {
                                     let app_uuid = this.analyseappinfo.app_uuid;
                                     this.closeUpload();
@@ -431,7 +427,7 @@
                         this.uploadsuccess +=1;
                         if(this.uploadsuccess === 2){
                             this.$message.success(file.name + '上传成功');
-                            getuploadToken(data => {
+                            analyseApps(data => {
                                 if (data.code === 1000) {
                                     let app_uuid = this.analyseappinfo.app_uuid;
                                     this.closeUpload();
@@ -447,13 +443,13 @@
 
                 }else {
                     //本地
-                    certinfo.upload_url = this.uploadconf.UploadUrl;
+                    certinfo.upload_url = getuploadurl();
                     // eslint-disable-next-line no-unused-vars,no-unreachable
                     uploadlocalstorage(file,certinfo,this,res=>{
                         this.uploadsuccess +=1;
                         if(this.uploadsuccess === 2){
                             this.$message.success(file.name + '上传成功');
-                            getuploadToken(data => {
+                            analyseApps(data => {
                                 if (data.code === 1000) {
                                     let app_uuid = this.analyseappinfo.app_uuid;
                                     this.closeUpload();
@@ -470,7 +466,7 @@
 
             },
             getuploadtoken(loading){
-                getuploadToken(data =>{
+                analyseApps(data =>{
                     if(data.code === 1000){
                         this.analyseappinfo.short = data.data.short;
                         this.analyseappinfo.domain_name = data.data.domain_name;
@@ -608,10 +604,7 @@
                         if(!upload_domain){
                             upload_domain=location.origin;
                         }
-                        this.uploadconf = {
-                            "UploadUrl": upload_domain+"/api/v1/fir/server/upload",
-                            "AuthHeaders": {"Authorization": this.$cookies.get("auth_token")}
-                        };
+
                         // this.$store.dispatch('doucurrentapp', {'firapps':1});
 
                     } else {
@@ -620,24 +613,7 @@
                 }, parms);
 
             },
-
-            // eslint-disable-next-line no-unused-vars
-            handleAvataruploadsuccess(response, file, fileList) {
-                if(response.code === 1000){
-                    this.$message.success(file.name + '上传成功');
-                }else {
-                    this.$message.error(file.name + '上传失败,'+response.msg);
-                }
-
-                for (let x = 0; x < fileList.length; x++) {
-                    if (file.name === fileList[x].name) {
-                        fileList.splice(x, 1)
-                    }
-                }
-
-                this.uploadflag = true;
-                this.getappsFun({});
-            },beforeAvatarUpload(file){
+                beforeAvatarUpload(file){
                 const loading = this.$loading({
                     lock: true,
                     text: '应用解析中',
