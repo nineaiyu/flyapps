@@ -134,6 +134,7 @@ def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
     app_uuid = make_app_uuid(user_obj,bundle_id+app_file_name.split(".")[1])
     ##判断是否存在该app
     appmobj = Apps.objects.filter(app_id=app_uuid, user_id=user_obj).first()
+    storage = Storage(user_obj)
     if not appmobj:
         appdata = {
             "app_id": app_uuid,
@@ -148,7 +149,6 @@ def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
             appmobj = Apps.objects.create(**appdata)
         except Exception as e:
             print(e)
-            storage = Storage(user_obj)
             storage.delete_file(app_file_name)
             storage.delete_file(app_img)
             return
@@ -178,3 +178,22 @@ def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
     }
 
     AppReleaseInfo.objects.create(**release_data)
+    try:
+        history_release_limit = int(user_obj.history_release_limit)
+    except Exception as e:
+        print(e)
+        return
+
+    if history_release_limit == 0:
+        pass
+    else:
+        release_queryset = AppReleaseInfo.objects.filter(app_id=appmobj).order_by("-created_time")
+        if release_queryset.count() > history_release_limit:
+            flag = 0
+            for release_obj in release_queryset:
+                flag +=1
+                if flag > history_release_limit:
+                    storage.delete_file(release_obj.release_id,appmobj.type)
+                    storage.delete_file(release_obj.icon_url)
+                    release_obj.delete()
+

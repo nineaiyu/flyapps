@@ -36,23 +36,27 @@ class LoginView(APIView):
                 password = receive.get("password")
                 user = auth.authenticate(username=username, password=password)
                 if user is not None:
-                    # update the token
-                    key = self.generate_key()
-                    now = datetime.datetime.now()
-                    Token.objects.update_or_create(user=user, defaults={"access_token": key, "created": now})
-                    user_info = UserInfo.objects.get(pk=user.pk)
+                    if user.is_active:
 
-                    serializer = UserInfoSerializer(user_info,)
-                    data = serializer.data
+                        # update the token
+                        key = self.generate_key()
+                        now = datetime.datetime.now()
+                        Token.objects.update_or_create(user=user, defaults={"access_token": key, "created": now})
+                        user_info = UserInfo.objects.get(pk=user.pk)
 
-                    response.msg = "验证成功!"
-                    response.userinfo = data
-                    response.token = key
+                        serializer = UserInfoSerializer(user_info,)
+                        data = serializer.data
 
+                        response.msg = "验证成功!"
+                        response.userinfo = data
+                        response.token = key
+                    else:
+                        response.msg = "用户被禁用"
+                        response.code = 1002
                 else:
                     try:
                         UserInfo.objects.get(username=username)
-                        response.msg = "密码错误!"
+                        response.msg = "密码错误或者!"
                         response.code = 1002
                     except UserInfo.DoesNotExist:
                         response.msg = "用户不存在!"

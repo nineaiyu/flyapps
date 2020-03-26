@@ -397,25 +397,29 @@
                 firstloadflag:true,
                 currentfile:null,
                 uploadprocess:0,
-                uploadsuccess:0
+                uploadsuccess:0,
+                loadingobj:null
             }
         }, methods: {
+            updateappinfo(file){
+                this.uploadsuccess +=1;
+                if(this.uploadsuccess === 2){
+                    this.$message.success(file.name + '上传成功');
+                    analyseApps(data => {
+                        if (data.code === 1000) {
+                            let app_uuid = this.analyseappinfo.app_uuid;
+                            this.closeUpload();
+                            this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
+                        }
+                    },{'methods':'PUT','data':this.analyseappinfo});
+                }
+            },
             uploadtostorage(file,certinfo){
 
                 if(this.analyseappinfo.storage === 1){
                     // eslint-disable-next-line no-unused-vars,no-unreachable
                     uploadqiniuoss(file,certinfo,this,res=>{
-                        this.uploadsuccess +=1;
-                        if(this.uploadsuccess === 2){
-                            this.$message.success(file.name + '上传成功');
-                            analyseApps(data => {
-                                if (data.code === 1000) {
-                                    let app_uuid = this.analyseappinfo.app_uuid;
-                                    this.closeUpload();
-                                    this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
-                                }
-                            },{'methods':'PUT','data':this.analyseappinfo});
-                        }
+                    this.updateappinfo(file)
                     },process=>{
                         if(this.uploadsuccess === 1) {
                             this.uploadprocess = process;
@@ -424,46 +428,27 @@
                 }else if(this.analyseappinfo.storage === 2){
                     // eslint-disable-next-line no-unused-vars
                     uploadaliyunoss(file,certinfo,this,res=>{
-                        this.uploadsuccess +=1;
-                        if(this.uploadsuccess === 2){
-                            this.$message.success(file.name + '上传成功');
-                            analyseApps(data => {
-                                if (data.code === 1000) {
-                                    let app_uuid = this.analyseappinfo.app_uuid;
-                                    this.closeUpload();
-                                    this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
-                                }
-                            },{'methods':'PUT','data':this.analyseappinfo});
-                        }
+                        this.updateappinfo(file)
+
                     },process=>{
                         if(this.uploadsuccess === 1) {
                             this.uploadprocess = process;
                         }
                     });
-
                 }else {
                     //本地
                     certinfo.upload_url = getuploadurl();
+                    certinfo.ftype = 'app';
+                    certinfo.app_id = this.analyseappinfo.app_uuid;
                     // eslint-disable-next-line no-unused-vars,no-unreachable
                     uploadlocalstorage(file,certinfo,this,res=>{
-                        this.uploadsuccess +=1;
-                        if(this.uploadsuccess === 2){
-                            this.$message.success(file.name + '上传成功');
-                            analyseApps(data => {
-                                if (data.code === 1000) {
-                                    let app_uuid = this.analyseappinfo.app_uuid;
-                                    this.closeUpload();
-                                    this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
-                                }
-                            },{'methods':'PUT','data':this.analyseappinfo});
-                        }
+                        this.updateappinfo(file)
                     },process=>{
                         if(this.uploadsuccess === 1) {
                             this.uploadprocess = process;
                         }
                     })
                 }
-
             },
             getuploadtoken(loading){
                 analyseApps(data =>{
@@ -573,7 +558,7 @@
 
             },
             getappsFun(parms) {
-                const loading = this.$loading({
+                this.loadingobj = this.$loading({
                     lock: true,
                     text: '加载中',
                     spinner: 'el-icon-loading',
@@ -581,7 +566,7 @@
                 });
                 getapps(data => {
                     if (data.code === 1000) {
-                        loading.close();
+                        this.loadingobj.close();
                         if(this.firstloadflag){
                             window.addEventListener('scroll',this.auto_load);
                             this.firstloadflag = false
@@ -608,12 +593,13 @@
                         // this.$store.dispatch('doucurrentapp', {'firapps':1});
 
                     } else {
+                        this.loadingobj.close();
                         this.$router.push({name: 'FirLogin'});
                     }
                 }, parms);
 
             },
-                beforeAvatarUpload(file){
+            beforeAvatarUpload(file){
                 const loading = this.$loading({
                     lock: true,
                     text: '应用解析中',
@@ -636,7 +622,6 @@
                 });
                 return false;
             },
-
             delApp() {
                         this.willDeleteApp = false;
                         deleteapp(data => {
@@ -727,6 +712,7 @@
         },
         destroyed(){
             window.removeEventListener('scroll', this.auto_load, false);
+            this.loadingobj.close();
         },
         watch: {
 

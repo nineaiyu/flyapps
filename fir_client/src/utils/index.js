@@ -149,7 +149,7 @@ export function uploadaliyunoss(file,certinfo,app,successcallback,processcallbac
     };
     const options = {
         progress,
-        partSize: 1000 * 1024,
+        partSize: 1024 * 1024 / 4,
         // meta: {
         //     year: 2017,
         //     people: 'test',

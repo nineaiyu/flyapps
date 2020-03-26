@@ -104,8 +104,12 @@ class InstallView(APIView):
         if dtoken.verify_token(downtoken,release_id):
             app_obj = Apps.objects.filter(app_id=app_id,short=short).first()
             if app_obj:
+
                 app_obj.count_hits = app_obj.count_hits+1
                 app_obj.save()
+                app_obj.user_id.all_download_times = app_obj.user_id.all_download_times+1
+                app_obj.user_id.save()
+
                 release_obj = AppReleaseInfo.objects.filter(app_id=app_obj,release_id=release_id).first()
                 if release_obj:
                     storage = Storage(app_obj.user_id)

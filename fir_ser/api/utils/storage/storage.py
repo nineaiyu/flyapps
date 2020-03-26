@@ -9,17 +9,18 @@ from .aliyunApi import AliYunOss
 from .qiniuApi import QiNiuOss
 from .localApi import LocalStorage
 import json
+from fir_ser import settings
 
 
 class Storage(object):
     def __init__(self, user):
         self.storage = self.get_storage(user)
 
-    def get_upload_token(self, filename, expires=1800):
+    def get_upload_token(self, filename, expires=600):
         if self.storage:
             return self.storage.get_upload_token(filename, expires)
 
-    def get_download_url(self, filename, expires=1800,ftype=None):
+    def get_download_url(self, filename, expires=600,ftype=None):
         if self.storage:
             return self.storage.get_download_url(filename, expires,ftype)
 
@@ -33,10 +34,10 @@ class Storage(object):
             return self.storage.del_file(filename)
 
     def get_storage(self, user):
-        storage_obj = user.storage
-        if storage_obj:
-            auth = self.get_storage_auth(storage_obj)
-            storage_type = storage_obj.storage_type
+        self.storage_obj = user.storage
+        if self.storage_obj:
+            auth = self.get_storage_auth(self.storage_obj)
+            storage_type = self.storage_obj.storage_type
             if storage_type == 1:
                 new_storage_obj = QiNiuOss(**auth)
             elif storage_type == 2:
@@ -44,7 +45,34 @@ class Storage(object):
             else:
                 new_storage_obj = LocalStorage(**auth)
             return new_storage_obj
+        else:
+            return self.get_default_storage()
+
+    def get_default_storage(self):
+        admin_storage = UserInfo.objects.first().storage
+        if admin_storage:
+            return self.get_storage(UserInfo)
+        else:
+            storage_lists = settings.THIRD_PART_CONFIG.get('storage')
+            for storage in storage_lists:
+                if storage.get("active",None):
+                    storage_type= storage.get('type',None)
+                    auth = storage.get('auth',{})
+                    if storage_type == 1:
+                        new_storage_obj = QiNiuOss(**auth)
+                    elif storage_type == 2:
+                        new_storage_obj = AliYunOss(**auth)
+                    else:
+                        new_storage_obj = LocalStorage(**auth)
+                    return new_storage_obj
         return None
+
+
+
+
+    def get_storage_type(self):
+        if self.storage_obj:
+            return self.storage_obj.storage_type
 
     def get_storage_auth(self, storage_obj):
         auth_dict = {

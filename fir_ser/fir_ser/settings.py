@@ -168,23 +168,14 @@ THIRD_PART_CONFIG = {
     "GEE_TEST": {
 
     },
-    # 支付宝支付相关配置
-    "ALI_PAY": {
-        # 默认使用配置
-        "default": {
-            "version": "1.0",  # 支付宝支付调用的接口版本(固定值1.0)
-            "debug": True,     # 是否启用调试模式(False是正式环境)
-            "app_id": "2016091800539084",  # 支付宝分配给开发者的应用ID(启用线上环境请更改),
-            "app_private_key_path": os.path.join(
-                BASE_DIR, 'keys', 'app_private_2048.txt'
-            ),  # APP应用的私钥
-            "alipay_public_key_path": os.path.join(
-                BASE_DIR, 'keys', 'alipay_public_2048.txt'
-            ),  # 支付宝的公钥
-            "callback_url": "http://47.94.172.250:8804/api/v1/trade/alipay/",  # 添加回调域名
-        },
-        # 目前针对支付业务进行切换
-        "pay": {
+    # APP存储配置
+    'storage': [
+        {
+            'name': 'local',
+            'type': 0,
+            'auth': {'domain_name': 'http://127.0.0.1:8000'}, # 正式环境需要填写正式的访问域名
+            'active': True
         }
-    }
+    ]
+
 }

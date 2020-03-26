@@ -6,7 +6,7 @@
 
 from api.utils.app.apputils import get_random_short,SaveAppInfos
 from api.utils.storage.storage import Storage
-from api.models import Apps,AppReleaseInfo
+from api.models import Apps,AppReleaseInfo,UserInfo
 from api.utils.app.randomstrings import make_app_uuid
 from rest_framework.views import APIView
 from api.utils.response import BaseResponse
@@ -45,8 +45,8 @@ class AppAnalyseView(APIView):
                 upload_key = release_id+'.apk'
             png_key = png_id+'.png'
             storage = Storage(request.user)
+            storage_type =storage.get_storage_type()
 
-            storage_type = request.user.storage.storage_type
             if storage_type == 1:
                 upload_token = storage.get_upload_token(upload_key)
                 png_token = storage.get_upload_token(png_key)
@@ -123,7 +123,7 @@ class UploadView(APIView):
                 else:
                     upload_key = make_from_user_uuid(request.user)+'.'+app_type
                     upload_token = storage.get_upload_token(upload_key)
-                    storage_type = request.user.storage.storage_type
+                    storage_type = storage.get_storage_type()
                     res.data = {"domain_name": request.user.domain_name,
                                 "upload_token": upload_token,
                                 "upload_key": upload_key,
@@ -164,11 +164,12 @@ class UploadView(APIView):
             app_id = certinfo.get("app_id", None)
             ftype = certinfo.get("ftype",None)
             if ftype and ftype == 'app':
-                app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
-                if not app_obj:
-                    res.code = 1006
-                    res.msg = '该应用不存在'
-                    return Response(res.dict)
+                pass
+                # app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
+                # if not app_obj:
+                #     res.code = 1006
+                #     res.msg = '该应用不存在'
+                #     return Response(res.dict)
             elif ftype and ftype == 'head':
                 if request.user.uid != app_id:
                     res.code = 1007

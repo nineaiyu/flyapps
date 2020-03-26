@@ -63,4 +63,8 @@ class ExpiringTokenAuthentication(BaseAuthentication):
             raise AuthenticationFailed({"code": 1001, "error": "无效的token"})
         if user_name != token_obj.user.username:
             raise AuthenticationFailed({"code": 1001, "error": "token校验失败"})
-        return token_obj.user, token_obj
+        if token_obj.user.is_active:
+            return token_obj.user, token_obj
+        else:
+            raise AuthenticationFailed({"code": 1001, "error": "用户被禁用"})
+

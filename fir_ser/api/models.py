@@ -22,33 +22,26 @@ class UserInfo(AbstractUser):
     uid = models.CharField(max_length=64, unique=True)  # user_id，唯一标识
     mobile = models.BigIntegerField(verbose_name="手机", unique=True, help_text="用于手机验证码登录", null=True)
     qq = models.BigIntegerField(verbose_name="QQ",  blank=True, null=True, db_index=True)
-    is_active = models.BooleanField(default=True, verbose_name="账户状态")
+    is_active = models.BooleanField(default=True, verbose_name="账户状态，默认启用")
 
     job = models.TextField("职位", max_length=128, blank=True, null=True)
     company = models.CharField("公司", max_length=128, blank=True, null=True)
 
     gender_choices = ((0, '保密'), (1, '男'), (2, '女'))
     gender = models.SmallIntegerField(choices=gender_choices, default=0, verbose_name="性别")
-    # password = models.CharField('password', max_length=128,
-    #                             help_text=mark_safe('''<a class='btn-link' href='set_password'>重置密码</a>'''))
-
     head_img = models.CharField(max_length=256, default='head_img.jpeg',
                                 verbose_name="个人头像")
     role_choices = ((0, '普通会员'), (1, 'VIP'), (2, 'SVIP'), (3, '管理员'))
     role = models.SmallIntegerField(choices=role_choices, default=0, verbose_name="角色")
+
     memo = models.TextField('备注', blank=True, null=True, default=None, )
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name="注册时间")
     download_times = models.IntegerField(default=100, verbose_name="下载次数")
-    all_download_times = models.IntegerField(default=0, verbose_name="总共下载次数")
+    all_download_times = models.BigIntegerField(default=0, verbose_name="总共下载次数")
     domain_name = models.CharField(verbose_name="域名",blank=True,null=True,max_length=64)
+    history_release_limit = models.IntegerField(default=10,verbose_name="app 历史记录版本",blank=True,null=True)
     storage = models.OneToOneField(to='AppStorage',related_name='app_storage',
-        on_delete=models.SET_NULL, verbose_name="存储",null=True)
-
-    # is_staff = models.BooleanField(verbose_name='staff status', default=False, help_text='决定着用户是否可登录管理后台')
-    # weixin = models.CharField(max_length=128, blank=True, null=True, db_index=True, verbose_name="微信")
-    # signature = models.CharField('个人签名', blank=True, null=True, max_length=255)
-    # openid = models.CharField(max_length=128, blank=True, null=True)
-    # alipay_card = models.CharField(max_length=128, blank=True, null=True, verbose_name="支付宝账户")
+        on_delete=models.SET_NULL, verbose_name="存储",null=True,blank=True)
 
     class Meta:
         verbose_name = '账户信息'
@@ -155,7 +148,9 @@ class AppStorage(models.Model):
     secret_key =models.CharField(max_length=128,blank=True, null=True, verbose_name="存储访问secret")
     bucket_name=models.CharField(max_length=128,blank=True, null=True, verbose_name="存储空间bucket_name")
     additionalparameters = models.TextField(max_length=256,blank=True, null=True,verbose_name="额外参数",
-                                            help_text='阿里云:{"sts_role_arn":"arn信息","endpoint":""}  七牛云:{"domain_name":""}')
+                                            help_text='阿里云:{"sts_role_arn":"arn信息","endpoint":""} '
+                                                      ' 七牛云:{"domain_name":""} '
+                                                      '本地存储:{"domain_name":""}')
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     description = models.TextField('备注', blank=True, null=True, default=None, )
 
@@ -164,4 +159,4 @@ class AppStorage(models.Model):
         verbose_name_plural = "存储配置"
 
     def __str__(self):
-        return "%s %s" % (self.name,self.user_id.get_username())
+        return "%s %s" % (self.user_id.get_username(),self.name)
