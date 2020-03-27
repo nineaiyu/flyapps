@@ -419,7 +419,7 @@ export function loginFun(callBack, params, load = true) {
 /**用户退出 */
 export function logout(callBack, params, load = true) {
     getData(
-        false,
+        'DELETE',
         USERSEVER + '/logout',
         params,
         data => {

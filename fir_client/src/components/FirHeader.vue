@@ -41,7 +41,7 @@
 </template>
 
 <script>
-
+import {logout} from '../restful'
     export default {
         name: "FirHeader",
         data() {
@@ -62,21 +62,24 @@
                 } else if (command === 'chpasswd') {
                     this.$router.push({name: 'FirUserProfileChangePwd'})
                 }else if(command === 'exit'){
-                    this.$cookies.remove("token");
-                    this.$cookies.remove("auth_token");
-                    this.$cookies.remove("username");
-                    this.$cookies.remove("first_name");
-                    this.$store.dispatch('doucurrentapp', {});
-                    this.$store.dispatch('getUser', {});
-                    this.$router.push({name: 'FirLogin'});
+                    logout(data => {
+                        if (data.code === 1000) {
+                            this.$message.success("退出成功");
+                            this.$cookies.remove("token");
+                            this.$cookies.remove("auth_token");
+                            this.$cookies.remove("username");
+                            this.$cookies.remove("first_name");
+                            this.$store.dispatch('doucurrentapp', {});
+                            this.$store.dispatch('getUser', {});
+                            this.$router.push({name: 'FirLogin'});
+                        } else {
+                            this.$message.error("退出失败")
+                        }
+                    }, {})
                 }
             }
 
         }, created() {
-            // this.$bus.$on('appName',val =>{
-            //     this.appName = val;
-            //     alert('header')
-            // })
             this.appName = this.$route.params.id
         }, watch: {
             $route: function () {

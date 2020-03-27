@@ -2,25 +2,21 @@ from django.contrib import auth
 from api.models import Token, UserInfo
 from rest_framework.response import Response
 from api.utils.serializer import UserInfoSerializer
-from api.utils.app.randomstrings import make_from_user_uuid
-
-
+from django.core.cache import cache
 from rest_framework.views import APIView
-from fir_ser import settings
 import binascii
 import os,datetime
 from api.utils.TokenManager import DownloadToken,generateNumericTokenOfLength
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
 from django.middleware import csrf
-from api.utils.storage.storage import Storage
 
 def get_token(request):
     token = csrf.get_token(request)
     return {'csrf_token': token}
 class LoginView(APIView):
     def generate_key(self):
-        return binascii.hexlify(os.urandom(20)).decode()
+        return binascii.hexlify(os.urandom(32)).decode()
 
     def post(self, request):
         response = BaseResponse()
@@ -41,12 +37,13 @@ class LoginView(APIView):
                         # update the token
                         key = self.generate_key()
                         now = datetime.datetime.now()
-                        Token.objects.update_or_create(user=user, defaults={"access_token": key, "created": now})
                         user_info = UserInfo.objects.get(pk=user.pk)
+
+                        cache.set(key,{'uid':user_info.uid,'username':user_info.username},3600*24*7)
+                        Token.objects.create(user=user, **{"access_token": key, "created": now})
 
                         serializer = UserInfoSerializer(user_info,)
                         data = serializer.data
-
                         response.msg = "验证成功!"
                         response.userinfo = data
                         response.token = key
@@ -105,6 +102,13 @@ class UserInfoView(APIView):
                 user.set_password(surepassword)
                 user.save()
                 res.msg="密码修改成功"
+
+                auth_token = request.auth
+                for token_obj in Token.objects.filter(user=user):
+                    if token_obj.access_token != auth_token:
+                        cache.delete(token_obj.access_token)
+                        token_obj.delete()
+
                 return Response(res.dict)
             else:
                 res.code = 1004

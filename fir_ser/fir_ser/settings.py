@@ -143,17 +143,16 @@ GEE_TEST = {
     ],  # 不用验证的用户(存放着用户的uid)
 }
 
-SHOPPING_CAR_KEY = "shopping_car_%s_%s"
-ACCOUNT_KEY = "account_%s_%s"
 
-CACHES1 = {
+
+CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379",
+        "LOCATION": "redis://192.168.137.130:6379",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "CONNECTION_POOL_KWARGS": {"max_connections": 100},
-            # "PASSWORD": "密码",
+            "PASSWORD": "nineven",
             "DECODE_RESPONSES":True
         }
     },

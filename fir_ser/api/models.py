@@ -60,7 +60,7 @@ class Token(models.Model):
     The default authorization token model.
     """
     access_token = models.CharField(max_length=42, unique=True)
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         UserInfo, related_name='auth_token',
         on_delete=models.CASCADE, verbose_name="关联用户"
     )
