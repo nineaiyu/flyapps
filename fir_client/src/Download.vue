@@ -1,5 +1,5 @@
 <template>
-    <div id="app" ref="app">
+    <div id="download" ref="download">
         <router-view></router-view>
     </div>
 </template>
@@ -7,7 +7,7 @@
 <script>
 
     export default {
-        name: 'app',
+        name: 'download',
         data() {
             return {
             }
@@ -72,9 +72,6 @@
     .icon-android3:before {
         content: "\e625";
     }
-
-
-
 
 
 </style>

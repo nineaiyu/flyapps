@@ -143,7 +143,7 @@
 <script>
     import QRCode from 'qrcodejs2'
 
-    import {getShortAppinfo,getdownloadurl} from '../restful'
+    import {getShortAppinfo,getdownloadurl} from '../restful/download'
 
     export default {
         name: "FirDownload",
@@ -272,6 +272,7 @@
                             this.miscomboappinfo={};
                             this.iscomboappinfo = {};
                         }
+                        document.title = this.currentappinfo.name+'下载';
 
                     }
                     else {
