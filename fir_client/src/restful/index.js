@@ -12,9 +12,9 @@ Axios.defaults.httpsAgent = new https.Agent({
 });
 
 // Axios.defaults.baseURL='';
-// const USERSEVER = 'https://fir.dvcloud.xin/api/v1/fir/server';
+const USERSEVER = 'https://fir.dvcloud.xin/api/v1/fir/server';
 
-const USERSEVER = 'http://192.168.1.112:8000/api/v1/fir/server';
+// const USERSEVER = 'http://192.168.1.112:8000/api/v1/fir/server';
 
 
 export function set_auth_token() {
