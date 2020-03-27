@@ -12,7 +12,7 @@
                     <i class="el-icon-cloudy" v-if="! app.is_master"></i>
                     <i class="el-icon-cloudy" style="background-color: #409eff" v-else></i>
 
-                    <b class="ng-binding">{{app.build_version}} (Build {{app.app_version}})</b>
+                    <b class="ng-binding">{{app.app_version}} (Build {{app.build_version}})</b>
                     <div class="release-metainfo ng-hide"
                          v-if="app.release_type === 0">
                         <small>

@@ -8,80 +8,55 @@ from api.models import AppReleaseInfo,Apps
 import random,xmltodict,json
 from api.utils.storage.storage import Storage
 
-def make_resigned(bin_url,img_url,bundle_id,bundle_version,name):
+def make_resigned(bin_url,img_url,bundle_id,app_version,name):
 
-    ios_plist_tem = """
-    {
-        "plist": {
-            "@version": "1.0",
-            "dict": {
-                "key": "items",
-                "array": {
-                    "dict": {
-                        "key": [
-                            "assets",
-                            "metadata"
-                        ],
-                        "array": {
-                            "dict": [
-                                {
-                                    "key": [
-                                        "kind",
-                                        "url"
-                                    ],
-                                    "string": [
-                                        "software-package",
-                                        "%s"
-                                    ]
-                                },
-                                {
-                                    "key": [
-                                        "kind",
-                                        "needs-shine",
-                                        "url"
-                                    ],
-                                    "string": [
-                                        "display-image",
-                                        "%s"
-                                    ],
-                                    "integer": "0"
-                                },
-                                {
-                                    "key": [
-                                        "kind",
-                                        "needs-shine",
-                                        "url"
-                                    ],
-                                    "string": [
-                                        "full-size-image",
-                                        "%s"
-                                    ],
-                                    "true": null
-                                }
-                            ]
-                        },
-                        "dict": {
-                            "key": [
-                                "bundle-identifier",
-                                "bundle-version",
-                                "kind",
-                                "title"
-                            ],
-                            "string": [
-                                "%s",
-                                "%s",
-                                "software",
-                                "%s"
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-    }
-    """ % (bin_url, img_url, img_url, bundle_id, bundle_version, name)
+    ios_plist_tem = """<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+  <key>items</key>
+  <array>
+    <dict>
+      <key>assets</key>
+      <array>
+        <dict>
+          <key>kind</key>
+          <string>software-package</string>
+          <key>url</key>
+          <string><![CDATA[%s]]></string>
+        </dict>
+        <dict>
+          <key>kind</key>
+          <string>display-image</string>
+          <key>needs-shine</key>
+          <integer>0</integer>
+          <key>url</key>
+          <string><![CDATA[%s]]></string>
+        </dict>
+        <dict>
+          <key>kind</key>
+          <string>full-size-image</string>
+          <key>needs-shine</key>
+          <true/>
+          <key>url</key>
+          <string><![CDATA[%s]]></string>
+        </dict>
+      </array>
+      <key>metadata</key>
+      <dict>
+        <key>bundle-identifier</key>
+        <string>%s</string>
+        <key>bundle-version</key>
+        <string><![CDATA[%s]]></string>
+        <key>kind</key>
+        <string>software</string>
+        <key>title</key>
+        <string><![CDATA[%s]]></string>
+      </dict>
+    </dict>
+  </array>
+</dict>
+</plist>""" % (bin_url, img_url, img_url, bundle_id, app_version, name)
 
-    return xmltodict.unparse(json.loads(ios_plist_tem),pretty=True)
+    return ios_plist_tem
 
 def bytes2human(n):
     symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')

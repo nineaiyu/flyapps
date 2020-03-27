@@ -50,9 +50,9 @@ class DownloadView(APIView):
                     if release_obj:
                         storage = Storage(release_obj.app_id.user_id)
                         bundle_id = release_obj.app_id.bundle_id
-                        bundle_version = release_obj.build_version
+                        app_version = release_obj.app_version
                         name = release_obj.app_id.name
-                        ios_plist_bytes = make_resigned(storage.get_download_url(filename),storage.get_download_url(release_obj.icon_url),bundle_id,bundle_version,name)
+                        ios_plist_bytes = make_resigned(storage.get_download_url(filename),storage.get_download_url(release_obj.icon_url),bundle_id,app_version,name)
                         response = FileResponse(ios_plist_bytes)
                         response['content_type'] = "application/x-plist"
                         response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid()
