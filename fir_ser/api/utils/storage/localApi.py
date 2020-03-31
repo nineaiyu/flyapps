@@ -11,8 +11,9 @@ from fir_ser import settings
 import os
 
 class LocalStorage(object):
-    def __init__(self,**kwargs):
-        self.domain_name = kwargs.get('domain_name')
+    def __init__(self,domain_name,is_https):
+        self.domain_name = domain_name
+        self.is_https = is_https
 
     def get_upload_token(self,name,expires):
         dtoken = DownloadToken()
@@ -21,7 +22,10 @@ class LocalStorage(object):
     def get_download_url(self,name,expires=1800,ftype=None):
         dtoken = DownloadToken()
         base_url = '/'.join([self.domain_name,'download', name])
-        download_url = base_url + "?token=" + dtoken.make_token(name,expires)
+        uri='http://'
+        if self.is_https:
+            uri='https://'
+        download_url = uri+ base_url + "?token=" + dtoken.make_token(name,expires)
         if ftype:
             download_url = download_url + '&ftype=' + ftype
         return download_url

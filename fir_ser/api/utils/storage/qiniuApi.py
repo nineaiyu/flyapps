@@ -10,11 +10,12 @@ from qiniu import Auth
 from qiniu import BucketManager
 
 class QiNiuOss(object):
-    def __init__(self,access_key,secret_key,bucket_name,domain_name):
-        access_key=access_key or "mTqfvkLVSTVb2_1ERjDlFS_WAHLSkpDxYr4e4fiJ"
-        secret_key=secret_key or "0G9fXfgmi8h1-bmEsABYkE6apf8IuwKpj3hYLynv"
-        self.bucket_name = bucket_name or 'fir-storage'
-        self.domain_name = domain_name or 'fly-cdn.dvcloud.xin'
+    def __init__(self,access_key,secret_key,bucket_name,domain_name,is_https):
+        access_key=access_key
+        secret_key=secret_key
+        self.bucket_name = bucket_name
+        self.domain_name = domain_name
+        self.is_https = is_https
         self.qiniu_obj = Auth(access_key,secret_key)
 
     def get_upload_token(self,name,expires=1800):
@@ -33,11 +34,13 @@ class QiNiuOss(object):
 
     def get_download_url(self,name,expires=1800,ftype=None):
         #有两种方式构造base_url的形式
-        base_url = '%s/%s' % (self.domain_name, name)
+        uri = 'http://'
+        if self.is_https:
+            uri = 'https://'
+        base_url = '%s%s/%s' % (uri,self.domain_name, name)
         #或者直接输入url的方式下载
         #可以设置token过期时间
         private_url = self.qiniu_obj.private_download_url(base_url, expires=expires)
-        print(private_url)
         return private_url
 
     def del_file(self,name):
@@ -45,6 +48,5 @@ class QiNiuOss(object):
         bucket = BucketManager(self.qiniu_obj)
         # 删除bucket_name 中的文件 key
         ret, info = bucket.delete(self.bucket_name, name)
-        print(info)
         return ret
 

@@ -152,7 +152,7 @@ GEE_TEST = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.137.130:6379",
+        "LOCATION": "redis://127.0.0.1:6379",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "CONNECTION_POOL_KWARGS": {"max_connections": 100},
@@ -176,8 +176,37 @@ THIRD_PART_CONFIG = {
         {
             'name': 'local',
             'type': 0,
-            'auth': {'domain_name': 'http://127.0.0.1:8000'}, # 正式环境需要填写正式的访问域名
+            'auth': {
+                'domain_name': 'fly.dvcloud.xin', # 正式环境需要填写正式的访问域名
+                'is_https':False,
+            },
             'active': True
+        },
+        {
+            'name': 'aliyun',
+            'type': 2,
+            'auth': {
+                'access_key': 'LTAI4FkbTRqejBAzB1yQZpjR',
+                'secret_key': '2WzCsKjYXxOvU4wPtTmrrXnxiLIxy9',
+                'bucket_name': 'fly-app-storage',
+                'sts_role_arn':'acs:ram::1886562303345632:role/fly-app-storage',
+                'endpoint':'oss-cn-beijing.aliyuncs.com',
+                'is_https':True,
+                'domain_name':'ali.storage.dvcloud.xin'
+            },
+            'active': False
+        },
+        {
+            'name': 'qiniuyun',
+            'type': 1,
+            'auth': {
+                'access_key': 'mTqfvkLVSTVb2_1ERjDlFS_WAHLSkpDxYr4e4fiJ',
+                'secret_key': '0G9fXfgmi8h1-bmEsABYkE6apf8IuwKpj3hYLynv',
+                'bucket_name': 'fir-storage',
+                'is_https': False,
+                'domain_name': 'fly-cdn.dvcloud.xin'
+            },
+            'active': False
         }
     ]
 

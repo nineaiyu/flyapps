@@ -51,7 +51,7 @@ class StsToken(object):
 
 class AliYunOss(object):
 
-    def __init__(self,access_key,secret_key,bucket_name,endpoint,sts_role_arn):
+    def __init__(self,access_key,secret_key,bucket_name,endpoint,sts_role_arn,is_https,domain_name=None):
         self.access_key_id = access_key or os.getenv('OSS_TEST_STS_ID', 'LTAI4FeTyvz74CHKCbYuTDGc')
         self.access_key_secret = secret_key or os.getenv('OSS_TEST_STS_KEY', 'uineAEE7tp1d1w4Mv0yLqxvV0IVNTy')
         self.bucket_name = bucket_name or os.getenv('OSS_TEST_BUCKET', 'fir-storage')
@@ -59,7 +59,9 @@ class AliYunOss(object):
         self.sts_role_arn = sts_role_arn or os.getenv('OSS_TEST_STS_ARN', 'acs:ram::1622120977387033:role/appstorage')
         self.region_id = '-'.join( self.endpoint.split('.')[0].split("-")[1:3])
         self.token = StsToken()
-        self.get_auth_bucket('init', 1800)
+        self.is_https = is_https
+        self.domain_name = domain_name
+        self.get_auth_bucket('init', 900)
 
 
     def fetch_sts_token(self,name,expires):
@@ -95,13 +97,21 @@ class AliYunOss(object):
 
     def get_auth_bucket(self,name,expires):
         self.fetch_sts_token(name,expires)
+        uri = 'http://'
+        if self.is_https:
+            uri = 'https://'
+        url = self.endpoint
+        is_cname=False
+        if self.domain_name:
+            url = self.domain_name
+            is_cname=True
+
         auth = oss2.StsAuth(self.token.access_key_id, self.token.access_key_secret, self.token.security_token)
-        self.bucket = oss2.Bucket(auth, self.endpoint,self.bucket_name)
+        self.bucket = oss2.Bucket(auth,uri+url,self.bucket_name,is_cname=is_cname)
 
     def get_download_url(self,name,expires=1800,ftype=None):
         # self.get_auth_bucket(name,expires)
         private_url=self.bucket.sign_url('GET',name,expires)
-        print(private_url)
         return private_url
 
     def del_file(self,name):
@@ -109,5 +119,3 @@ class AliYunOss(object):
         # auth = oss2.StsAuth(self.token.access_key_id, self.token.access_key_secret, self.token.security_token)
         # bucket = oss2.Bucket(auth, self.endpoint,self.bucket_name)
         return self.bucket.delete_object(name)
-
-

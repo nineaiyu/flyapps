@@ -16,11 +16,11 @@ class Storage(object):
     def __init__(self, user):
         self.storage = self.get_storage(user)
 
-    def get_upload_token(self, filename, expires=600):
+    def get_upload_token(self, filename, expires=900):
         if self.storage:
             return self.storage.get_upload_token(filename, expires)
 
-    def get_download_url(self, filename, expires=600,ftype=None):
+    def get_download_url(self, filename, expires=900,ftype=None):
         if self.storage:
             return self.storage.get_download_url(filename, expires,ftype)
 
@@ -44,6 +44,7 @@ class Storage(object):
                 new_storage_obj = AliYunOss(**auth)
             else:
                 new_storage_obj = LocalStorage(**auth)
+            new_storage_obj.storage_type = storage_type
             return new_storage_obj
         else:
             return self.get_default_storage()
@@ -60,10 +61,14 @@ class Storage(object):
                     auth = storage.get('auth',{})
                     if storage_type == 1:
                         new_storage_obj = QiNiuOss(**auth)
+                        new_storage_obj.storage_type=1
                     elif storage_type == 2:
                         new_storage_obj = AliYunOss(**auth)
+                        new_storage_obj.storage_type=2
                     else:
                         new_storage_obj = LocalStorage(**auth)
+                        new_storage_obj.storage_type=3
+
                     return new_storage_obj
         return None
 
@@ -71,14 +76,16 @@ class Storage(object):
 
 
     def get_storage_type(self):
-        if self.storage_obj:
-            return self.storage_obj.storage_type
+        if self.storage:
+            return self.storage.storage_type
 
     def get_storage_auth(self, storage_obj):
         auth_dict = {
             'access_key': storage_obj.access_key,
             'secret_key': storage_obj.secret_key,
             'bucket_name': storage_obj.bucket_name,
+            'domain_name': storage_obj.domain_name,
+            'is_https':storage_obj.is_https
         }
         try:
             additionalparameters = json.loads(storage_obj.additionalparameters)

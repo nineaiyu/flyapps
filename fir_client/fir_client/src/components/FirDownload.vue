@@ -143,7 +143,7 @@
 <script>
     import QRCode from 'qrcodejs2'
 
-    import {getShortAppinfo,getdownloadurl} from '../restful/download'
+    import {getShortAppinfo,getdownloadurl} from '../restful'
 
     export default {
         name: "FirDownload",
