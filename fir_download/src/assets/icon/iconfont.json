@@ -1,0 +1,72 @@
+{
+  "id": "",
+  "name": "",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "217325",
+      "name": "android",
+      "font_class": "android",
+      "unicode": "e61d",
+      "unicode_decimal": 58909
+    },
+    {
+      "icon_id": "1261088",
+      "name": "android",
+      "font_class": "android1",
+      "unicode": "e616",
+      "unicode_decimal": 58902
+    },
+    {
+      "icon_id": "1410210",
+      "name": "android",
+      "font_class": "android2",
+      "unicode": "e62a",
+      "unicode_decimal": 58922
+    },
+    {
+      "icon_id": "1420800",
+      "name": "IOS",
+      "font_class": "ios",
+      "unicode": "e60c",
+      "unicode_decimal": 58892
+    },
+    {
+      "icon_id": "1546553",
+      "name": "IOS",
+      "font_class": "IOS",
+      "unicode": "e68c",
+      "unicode_decimal": 59020
+    },
+    {
+      "icon_id": "2075064",
+      "name": "ios",
+      "font_class": "ios1",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
+      "icon_id": "2325952",
+      "name": "ios",
+      "font_class": "ios2",
+      "unicode": "e64b",
+      "unicode_decimal": 58955
+    },
+    {
+      "icon_id": "3965518",
+      "name": "Android",
+      "font_class": "Android",
+      "unicode": "e6d4",
+      "unicode_decimal": 59092
+    },
+    {
+      "icon_id": "13302922",
+      "name": "android",
+      "font_class": "android3",
+      "unicode": "e625",
+      "unicode_decimal": 58917
+    }
+  ]
+}
