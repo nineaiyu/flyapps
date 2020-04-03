@@ -12,9 +12,9 @@ Axios.defaults.httpsAgent = new https.Agent({
 });
 
 // Axios.defaults.baseURL='';
-const USERSEVER = 'https://fly.dvcloud.xin/api/v1/fir/server';
+// const USERSEVER = 'https://fly.dvcloud.xin/api/v1/fir/server';
 
-// const USERSEVER = 'http://192.168.1.112:8000/api/v1/fir/server';
+const USERSEVER = 'http://192.168.1.112:8000/api/v1/fir/server';
 
 
 export function set_auth_token() {
@@ -584,7 +584,9 @@ export function getapppicurl(app_id) {
 export function getuploadurl() {
     return USERSEVER + '/upload'
 }
-
+export function getplisturl() {
+    return USERSEVER + '/download'
+}
 
 
 /**分析应用并获取app上传token */

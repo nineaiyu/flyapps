@@ -177,10 +177,10 @@ THIRD_PART_CONFIG = {
             'name': 'local',
             'type': 0,
             'auth': {
-                'domain_name': 'fly.dvcloud.xin', # 正式环境需要填写正式的访问域名
+                'domain_name': '127.0.0.1:8000', # 正式环境需要填写正式的访问域名
                 'is_https':False,
             },
-            'active': True
+            'active': False
         },
         {
             'name': 'aliyun',
@@ -194,7 +194,7 @@ THIRD_PART_CONFIG = {
                 'is_https':True,
                 'domain_name':'ali.storage.dvcloud.xin'
             },
-            'active': False
+            'active': True
         },
         {
             'name': 'qiniuyun',

@@ -10,7 +10,7 @@ from fir_ser import settings
 from api.utils.TokenManager import DownloadToken
 from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.apputils import make_resigned
-from api.utils.storage.storage import Storage
+from api.utils.storage.storage import Storage,LocalStorage
 import os
 
 from api.utils.serializer import AppsSerializer
@@ -121,7 +121,9 @@ class InstallView(APIView):
                         if isdownload :
                             download_url = storage.get_download_url(release_obj.release_id + apptype, 600)
                         else:
-                            download_url = storage.get_download_url(release_obj.release_id + apptype,600,'plist')
+                            local_storage = LocalStorage('localhost',False)
+                            # print(local_storage.get_download_url(release_obj.release_id + apptype,600,'plist'))
+                            download_url = local_storage.get_download_url(release_obj.release_id + apptype,600,'plist')
 
                     res.data={"download_url":download_url}
                     return Response(res.dict)
