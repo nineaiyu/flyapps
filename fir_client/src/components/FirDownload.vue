@@ -275,7 +275,9 @@
                             this.iscomboappinfo = {};
                         }
                         document.title = this.currentappinfo.name+'下载';
-
+                        if(this.mcurrentappinfo.binary_url && this.agent !=='' && this.wrong === false){
+                            window.location.href=this.mcurrentappinfo.binary_url
+                        }
                     }
                     else {
                         this.$message({
