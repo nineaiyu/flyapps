@@ -23,10 +23,10 @@ class LoginView(APIView):
         receive = request.data
 
         if request.method == 'POST':
-            print(receive)
+            # print(receive)
             # is_valid = verify(receive)
             is_valid = True
-            print("is_valid", is_valid)
+            # print("is_valid", is_valid)
             if is_valid:
                 username = receive.get("username")
                 password = receive.get("password")

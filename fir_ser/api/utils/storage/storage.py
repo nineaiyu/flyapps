@@ -8,8 +8,9 @@ from api.models import AppStorage, UserInfo
 from .aliyunApi import AliYunOss
 from .qiniuApi import QiNiuOss
 from .localApi import LocalStorage
-import json
+import json,time
 from fir_ser import settings
+from django.core.cache import cache
 
 
 class Storage(object):
@@ -22,7 +23,15 @@ class Storage(object):
 
     def get_download_url(self, filename, expires=900,ftype=None):
         if self.storage:
-            return self.storage.get_download_url(filename, expires,ftype)
+            now = time.time()
+            download_val = cache.get("%s_%s"%('download_url',filename))
+            if download_val:
+                if download_val.get("time") > now - 60:
+                    return download_val.get("download_url")
+
+            download_url=self.storage.get_download_url(filename, expires,ftype)
+            cache.set("%s_%s"%('download_url',filename),{"download_url":download_url,"time":now+expires},expires)
+            return download_url
 
     def delete_file(self, filename, apptype=None):
         if self.storage:
