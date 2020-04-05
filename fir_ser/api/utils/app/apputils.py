@@ -6,7 +6,7 @@
 from api.utils.app.randomstrings import make_app_uuid
 from api.models import AppReleaseInfo,Apps
 import random,xmltodict,json
-from api.utils.storage.storage import Storage
+from api.utils.storage.storage import Storage,del_cache_response_by_short
 
 def make_resigned(bin_url,img_url,bundle_id,app_version,name):
 
@@ -129,6 +129,7 @@ def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
             return
     else:
         try:
+            del_cache_response_by_short(appmobj.short)
             appmobj.short = short
             appmobj.name = appinfo["labelname"]
             appmobj.save()

@@ -12,6 +12,7 @@ from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.apputils import make_resigned
 from api.utils.storage.storage import Storage,LocalStorage
 import os
+from rest_framework_extensions.cache.decorators import cache_response
 
 from api.utils.serializer import AppsSerializer
 from api.models import Apps,AppReleaseInfo
@@ -69,6 +70,7 @@ class ShortDownloadView(APIView):
     根据下载短链接，获取应用信息
     '''
 
+    @cache_response(timeout=300-60, cache="default",key_func='calculate_cache_key',cache_errors=False)
     def get(self,request,short):
         res = BaseResponse()
         release_id = request.query_params.get("release_id", None)
@@ -82,6 +84,17 @@ class ShortDownloadView(APIView):
         res.data = app_serializer.data
         return Response(res.dict)
 
+    #key的设置
+    def calculate_cache_key(self, view_instance, view_method,
+                            request, args, kwargs):
+        id = "download"
+        rtn = '_'.join([
+           id,
+           "short",
+           kwargs.get("short",None)
+        ])
+        # print( request.META)
+        return rtn
 
 class InstallView(APIView):
     '''

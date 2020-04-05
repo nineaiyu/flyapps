@@ -12,7 +12,7 @@ from django.db.models import Sum
 import os
 from fir_ser import settings
 from api.utils.app.randomstrings import make_from_user_uuid
-from api.utils.storage.storage import Storage
+from api.utils.storage.storage import Storage,del_cache_response_by_short
 
 from api.models import Apps, AppReleaseInfo
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
@@ -116,8 +116,11 @@ class AppInfoView(APIView):
 
                 has_combo = apps_obj.has_combo
                 if has_combo:
+                    del_cache_response_by_short(apps_obj.has_combo.short)
                     apps_obj.has_combo.has_combo = None
+
                 apps_obj.delete()
+                del_cache_response_by_short(apps_obj.short)
 
         return Response(res.dict)
 
@@ -145,6 +148,9 @@ class AppInfoView(APIView):
                             has_combo.update(**{"has_combo": apps_obj.first()})
                         else:
                             pass
+                        del_cache_response_by_short(apps_obj.short)
+                        del_cache_response_by_short(has_combo.short)
+
                     except Exception as e:
                         res.code = 1004
                         res.msg = "该应用已经关联"
@@ -152,6 +158,7 @@ class AppInfoView(APIView):
                 try:
                     apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
                     apps_obj.description = data.get("description", apps_obj.description)
+                    del_cache_response_by_short(apps_obj.short)
                     apps_obj.short = data.get("short", apps_obj.short)
                     apps_obj.name = data.get("name", apps_obj.name)
                     apps_obj.save()
@@ -204,6 +211,7 @@ class AppInfoView(APIView):
                         release_obj.icon_url = release_obj.icon_url.replace(old_file_name.split(".")[0],
                                                                             random_file_name)
                         release_obj.save()
+                        del_cache_response_by_short(apps_obj.short)
 
                         storage = Storage(request.user)
                         storage.delete_file(old_file_name)
@@ -262,6 +270,7 @@ class AppReleaseinfoView(APIView):
                     apps_obj.delete()
                 else:
                     pass
+                del_cache_response_by_short(apps_obj.short)
 
         return Response(res.dict)
 
@@ -291,11 +300,13 @@ class AppReleaseinfoView(APIView):
 
                         print(binary_url)
                         appreleaseobj.update(**{"binary_url": binary_url})
+
                 except Exception as e:
                     res.code = 1006
                     res.msg = "更新失败"
                     return Response(res.dict)
 
+                del_cache_response_by_short(apps_obj.short)
                 app_serializer = AppsSerializer(apps_obj)
                 res.data["currentapp"] = app_serializer.data
 

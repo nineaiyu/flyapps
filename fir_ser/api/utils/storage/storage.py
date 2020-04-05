@@ -102,3 +102,14 @@ class Storage(object):
             print(e)
             additionalparameters = {}
         return {**auth_dict, **additionalparameters}
+
+
+
+def del_cache_response_by_short(short):
+    id = "download"
+    rtn = '_'.join([
+        id,
+        "short",
+        short
+    ])
+    cache.delete(rtn)

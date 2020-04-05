@@ -162,6 +162,15 @@ CACHES = {
     },
 }
 
+
+# DRF扩展缓存时间
+REST_FRAMEWORK_EXTENSIONS = {
+    # 缓存时间
+    'DEFAULT_CACHE_RESPONSE_TIMEOUT': 3600,
+    # 缓存存储
+    'DEFAULT_USE_CACHE': 'default',
+}
+
 THIRD_PART_CONFIG = {
     # 阿里云服务配置
     "ALI_YUN": {

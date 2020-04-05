@@ -46,7 +46,7 @@ class AppsSerializer(serializers.ModelSerializer):
 
             if self.context.get("storage", None) and self.context.get("storage") != "undefined":
                 storage = self.context.get("storage", None)
-                icon_url = storage.get_download_url(os.path.basename(master_release_obj.icon_url))
+                icon_url = storage.get_download_url(os.path.basename(master_release_obj.icon_url),300)
             datainfo = {
                 "app_version": master_release_obj.app_version,
                 "icon_url": icon_url,
@@ -60,7 +60,7 @@ class AppsSerializer(serializers.ModelSerializer):
                 "binary_url":master_release_obj.binary_url,
             }
 
-            download_token = token_obj.make_token(master_release_obj.release_id,600)
+            download_token = token_obj.make_token(master_release_obj.release_id,300)
             datainfo["download_token"] = download_token
 
             return datainfo
@@ -90,12 +90,12 @@ class AppReleaseSerializer(serializers.ModelSerializer):
 
     def get_download_token(self,obj):
 
-        download_token = token_obj.make_token(obj.release_id, 600)
+        download_token = token_obj.make_token(obj.release_id, 300)
 
         return download_token
 
     def get_icon_url(self, obj):
-        icon_url="/".join([obj.app_id.user_id.domain_name, obj.icon_url])
+        icon_url=""
         if self.context.get("storage", None) and self.context.get("storage") != "undefined":
             storage = self.context.get("storage", None)
             icon_url = storage.get_download_url(os.path.basename(obj.icon_url))

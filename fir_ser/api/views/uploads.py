@@ -5,7 +5,7 @@
 # date: 2020/3/6
 
 from api.utils.app.apputils import get_random_short,SaveAppInfos
-from api.utils.storage.storage import Storage
+from api.utils.storage.storage import Storage,del_cache_response_by_short
 from api.models import Apps,AppReleaseInfo,UserInfo
 from api.utils.app.randomstrings import make_app_uuid
 from rest_framework.views import APIView
@@ -231,6 +231,7 @@ class UploadView(APIView):
                         old_file_key = release_obj.icon_url
                         release_obj.icon_url = certinfo.get("upload_key")
                         release_obj.save()
+                        del_cache_response_by_short(app_obj.short)
                         storage.delete_file(old_file_key)
                         return Response(res.dict)
             elif ftype and ftype == 'head':
