@@ -148,8 +148,8 @@ class AppInfoView(APIView):
                             has_combo.update(**{"has_combo": apps_obj.first()})
                         else:
                             pass
-                        del_cache_response_by_short(apps_obj.short)
-                        del_cache_response_by_short(has_combo.short)
+                        del_cache_response_by_short(apps_obj.first().short)
+                        del_cache_response_by_short(has_combo.first().short)
 
                     except Exception as e:
                         res.code = 1004
