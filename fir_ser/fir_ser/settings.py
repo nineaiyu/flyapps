@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api.apps.ApiConfig',
+    'django_apscheduler',#定时执行任务
     'rest_framework',
 ]
 
@@ -231,3 +232,10 @@ THIRD_PART_CONFIG = {
     ]
 
 }
+
+CACHE_KEY_TEMPLATE={
+    'download_times_key':'app_download_times_'
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"

@@ -10,13 +10,13 @@ from fir_ser import settings
 from api.utils.TokenManager import DownloadToken
 from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.apputils import make_resigned
-from api.utils.storage.storage import Storage,LocalStorage
-import os,time
-from django.core.cache import cache
+from api.utils.storage.storage import Storage
+from api.utils.storage.caches import get_app_instance_by_cache,get_download_url_by_cache,get_app_download_by_cache
+import os
 from rest_framework_extensions.cache.decorators import cache_response
 
 from api.utils.serializer import AppsSerializer
-from api.models import Apps,AppReleaseInfo,UserInfo
+from api.models import Apps,AppReleaseInfo
 from django.db.models import F
 from django.http import FileResponse
 class DownloadView(APIView):
@@ -72,7 +72,7 @@ class ShortDownloadView(APIView):
     根据下载短链接，获取应用信息
     '''
 
-    @cache_response(timeout=300-60, cache="default",key_func='calculate_cache_key',cache_errors=False)
+    @cache_response(timeout=600-60, cache="default",key_func='calculate_cache_key',cache_errors=False)
     def get(self,request,short):
         res = BaseResponse()
         release_id = request.query_params.get("release_id", None)
@@ -118,23 +118,23 @@ class InstallView(APIView):
         dtoken = DownloadToken()
         if dtoken.verify_token(downtoken,release_id):
             # app_obj = Apps.objects.filter(app_id=app_id).values("pk",'user_id','type','short').first()
-            app_obj = self.get_app_instance_by_cache(app_id,900)
+            app_obj = get_app_instance_by_cache(app_id,900)
             if app_obj:
 
-                Apps.objects.filter(app_id=app_id).update(count_hits=F('count_hits') + 1)
-                UserInfo.objects.filter(pk=app_obj.get("user_id")).update(all_download_times=F('all_download_times') + 1)
-
+                # Apps.objects.filter(app_id=app_id).update(count_hits=F('count_hits') + 1)
+                # UserInfo.objects.filter(pk=app_obj.get("user_id")).update(all_download_times=F('all_download_times') + 1)
+                get_app_download_by_cache(app_id)
                 # release_obj = AppReleaseInfo.objects.filter(app_id=app_obj.get('pk')).values("release_id")
                 # if release_obj:
                 if app_obj.get("type") == 0:
                     apptype = '.apk'
-                    download_url = self.get_download_url_by_cache(app_obj,release_id + apptype,600)
+                    download_url = get_download_url_by_cache(app_obj,release_id + apptype,600)
                 else:
                     apptype = '.ipa'
                     if isdownload :
-                        download_url = self.get_download_url_by_cache(app_obj,release_id + apptype, 600)
+                        download_url = get_download_url_by_cache(app_obj,release_id + apptype, 600)
                     else:
-                        download_url = self.get_download_url_by_cache(app_obj,release_id + apptype,600,isdownload)
+                        download_url = get_download_url_by_cache(app_obj,release_id + apptype,600,isdownload)
 
                 res.data={"download_url":download_url}
                 return Response(res.dict)
@@ -147,23 +147,3 @@ class InstallView(APIView):
         res.msg = "该应用不存在"
         return Response(res.dict)
 
-    def get_download_url_by_cache(self,app_obj,filename,limit,isdownload=False):
-        now = time.time()
-        download_val = cache.get("%s_%s" % ('download_url', filename))
-        if download_val:
-            if download_val.get("time") > now - 60:
-                return download_val.get("download_url")
-        else:
-            if isdownload:
-                local_storage = LocalStorage('localhost', False)
-                return local_storage.get_download_url(filename, limit, 'plist')
-            user_obj = UserInfo.objects.filter(pk=app_obj.get("user_id")).first()
-            storage = Storage(user_obj)
-            return storage.get_download_url(filename, limit)
-
-    def get_app_instance_by_cache(self,app_id,limit):
-        app_obj_cache = cache.get("%s_%s" % ('app_instance', app_id))
-        if not app_obj_cache:
-            app_obj_cache = Apps.objects.filter(app_id=app_id).values("pk",'user_id','type').first()
-            cache.set("%s_%s" % ('app_instance', app_id),app_obj_cache,limit)
-        return app_obj_cache
