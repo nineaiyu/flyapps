@@ -19,7 +19,7 @@ class UserInfo(AbstractUser):
         blank=True,
         null=True
     )
-    uid = models.CharField(max_length=64, unique=True)  # user_id，唯一标识
+    uid = models.CharField(max_length=64, unique=True,db_index=True)  # user_id，唯一标识
     mobile = models.BigIntegerField(verbose_name="手机", unique=True, help_text="用于手机验证码登录", null=True)
     qq = models.BigIntegerField(verbose_name="QQ",  blank=True, null=True, db_index=True)
     is_active = models.BooleanField(default=True, verbose_name="账户状态，默认启用")
@@ -92,12 +92,12 @@ class VerifyName(models.Model):
 ######################################## APP表 ########################################
 
 class Apps(models.Model):
-    app_id =  models.CharField(max_length=64, unique=True)  # ，唯一标识
+    app_id =  models.CharField(max_length=64, unique=True,db_index=True)  # ，唯一标识
     user_id = models.ForeignKey(to="UserInfo",verbose_name="用户ID",on_delete=models.CASCADE)
     type_choices = ((0, 'android'),(1, 'ios'))
     type = models.SmallIntegerField(choices=type_choices, default=0, verbose_name="类型")
     name = models.CharField(max_length=32,blank=True, null=True,verbose_name="应用名称")
-    short = models.CharField(max_length=16,unique=True,verbose_name="短链接")
+    short = models.CharField(max_length=16,unique=True,verbose_name="短链接",db_index=True)
     bundle_id = models.CharField(max_length=64,blank=True,verbose_name="bundle id")
     has_combo = models.OneToOneField(to="Apps", related_name='combo_app_info',
          verbose_name="关联应用",on_delete=models.SET_NULL,null=True,blank=True)
@@ -109,6 +109,7 @@ class Apps(models.Model):
     class Meta:
         verbose_name = '应用信息'
         verbose_name_plural = "应用信息"
+        indexes = [models.Index(fields=['app_id']),models.Index(fields=['id','user_id','type'])]
 
     def __str__(self):
         return "%s %s" % (self.name,self.get_type_display())
@@ -116,7 +117,7 @@ class Apps(models.Model):
 
 class AppReleaseInfo(models.Model):
     is_master = models.BooleanField(verbose_name="是否master版本",default=True)
-    release_id = models.CharField(max_length=64, unique=True,verbose_name="release 版本id")
+    release_id = models.CharField(max_length=64, unique=True,verbose_name="release 版本id",db_index=True)
     app_id = models.ForeignKey(to="Apps",on_delete=models.CASCADE,verbose_name="属于哪个APP")
     build_version = models.CharField(max_length=16,verbose_name="build版本",blank=True)
     app_version = models.CharField(max_length=16,verbose_name="app版本",blank=True)

@@ -105,7 +105,7 @@ class Storage(object):
 
 
 
-def del_cache_response_by_short(short):
+def del_cache_response_by_short(short,app_id):
     id = "download"
     rtn = '_'.join([
         id,
@@ -113,3 +113,5 @@ def del_cache_response_by_short(short):
         short
     ])
     cache.delete(rtn)
+    app_obj_key = "%s_%s" % ('app_instance', app_id)
+    cache.delete(app_obj_key)

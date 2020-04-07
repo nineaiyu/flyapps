@@ -231,7 +231,7 @@ class UploadView(APIView):
                         old_file_key = release_obj.icon_url
                         release_obj.icon_url = certinfo.get("upload_key")
                         release_obj.save()
-                        del_cache_response_by_short(app_obj.short)
+                        del_cache_response_by_short(app_obj.short,app_id)
                         storage.delete_file(old_file_key)
                         return Response(res.dict)
             elif ftype and ftype == 'head':

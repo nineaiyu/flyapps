@@ -129,7 +129,7 @@ def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
             return
     else:
         try:
-            del_cache_response_by_short(appmobj.short)
+            del_cache_response_by_short(appmobj.short,appmobj.app_id)
             appmobj.short = short
             appmobj.name = appinfo["labelname"]
             appmobj.save()
