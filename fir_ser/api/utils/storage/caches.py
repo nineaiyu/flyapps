@@ -13,12 +13,13 @@ from api.utils.storage.storage import Storage,LocalStorage
 from api.utils.crontab.sync_cache import sync_download_times_by_app_id
 from api.utils.crontab import run
 
-def get_download_url_by_cache(app_obj, filename, limit, isdownload=True):
+def get_download_url_by_cache(app_obj, filename, limit, isdownload=True,key=''):
     now = time.time()
     if isdownload is None:
         local_storage = LocalStorage('localhost', False)
         return local_storage.get_download_url(filename, limit, 'plist')
-    download_val = cache.get("%s_%s" % ('download_url', filename))
+    down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
+    download_val = cache.get(down_key)
     if download_val:
         if download_val.get("time") > now - 60:
             return download_val.get("download_url")
