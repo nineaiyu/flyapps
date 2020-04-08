@@ -11,7 +11,7 @@ from api.utils.TokenManager import DownloadToken
 from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.apputils import make_resigned
 from api.utils.storage.storage import Storage
-from api.utils.storage.caches import get_app_instance_by_cache,get_download_url_by_cache,get_app_download_by_cache
+from api.utils.storage.caches import get_app_instance_by_cache,get_download_url_by_cache,set_app_download_by_cache
 import os
 from rest_framework_extensions.cache.decorators import cache_response
 
@@ -115,7 +115,7 @@ class InstallView(APIView):
 
                 # Apps.objects.filter(app_id=app_id).update(count_hits=F('count_hits') + 1)
                 # UserInfo.objects.filter(pk=app_obj.get("user_id")).update(all_download_times=F('all_download_times') + 1)
-                get_app_download_by_cache(app_id)
+                set_app_download_by_cache(app_id)
                 # release_obj = AppReleaseInfo.objects.filter(app_id=app_obj.get('pk')).values("release_id")
                 # if release_obj:
                 if app_obj.get("type") == 0:

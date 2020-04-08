@@ -131,7 +131,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -232,7 +232,6 @@ THIRD_PART_CONFIG = {
     ]
 
 }
-
 CACHE_KEY_TEMPLATE={
     'download_times_key':'app_download_times',
     'make_token_key':'make_token',
@@ -240,7 +239,8 @@ CACHE_KEY_TEMPLATE={
     'app_instance_key':'app_instance',
     'download_url_key':'download_url',
     'user_storage_key':'storage_auth',
-    'user_auth_token_key':'user_auth_token'
+    'user_auth_token_key':'user_auth_token',
+    'download_today_times_key':'download_today_times'
 }
 
 SYNC_CACHE_TO_DATABASE={

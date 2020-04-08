@@ -13,8 +13,7 @@ import os
 from fir_ser import settings
 from api.utils.app.randomstrings import make_from_user_uuid
 from api.utils.storage.storage import Storage
-from api.utils.storage.caches import del_cache_response_by_short
-
+from api.utils.storage.caches import del_cache_response_by_short,get_app_today_download_times
 from api.models import Apps, AppReleaseInfo
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
 from rest_framework.pagination import PageNumberPagination
@@ -43,6 +42,13 @@ class AppsView(APIView):
         res.hdata["upload_domain"] = request.user.domain_name
         res.hdata["ios_count"] = Apps.objects.filter(type=1, user_id=request.user).values('app_id').count()
         res.hdata["android_count"] = Apps.objects.filter(type=0, user_id=request.user).values('app_id').count()
+
+        android_app_ids = Apps.objects.filter(**{"user_id": request.user, "type": 0}).values('app_id')
+        res.hdata["android_today_hits_count"] = get_app_today_download_times(android_app_ids)
+
+        ios_app_ids = Apps.objects.filter(**{"user_id": request.user, "type": 1}).values('app_id')
+        res.hdata["ios_today_hits_count"] = get_app_today_download_times(ios_app_ids)
+
         all_hits_obj = Apps.objects.filter(user_id=request.user).aggregate(count_hits=Sum('count_hits'))
         if all_hits_obj:
             count_hits = all_hits_obj.get("count_hits", 0)
@@ -55,8 +61,7 @@ class AppsView(APIView):
             res.hdata["all_hits_count"] = count_hits
         else:
             res.hdata["all_hits_count"] = 0
-        res.hdata["android_today_hits_count"] = 0
-        res.hdata["ios_today_hits_count"] = 0
+
 
         if app_type == "android":
             filter_data = {"user_id": request.user, "type": 0}
