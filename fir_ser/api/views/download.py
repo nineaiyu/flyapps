@@ -17,7 +17,6 @@ from rest_framework_extensions.cache.decorators import cache_response
 
 from api.utils.serializer import AppsSerializer
 from api.models import Apps,AppReleaseInfo
-from django.db.models import F
 from django.http import FileResponse
 class DownloadView(APIView):
     '''

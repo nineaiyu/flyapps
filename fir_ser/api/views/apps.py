@@ -12,7 +12,8 @@ from django.db.models import Sum
 import os
 from fir_ser import settings
 from api.utils.app.randomstrings import make_from_user_uuid
-from api.utils.storage.storage import Storage,del_cache_response_by_short
+from api.utils.storage.storage import Storage
+from api.utils.storage.caches import del_cache_response_by_short
 
 from api.models import Apps, AppReleaseInfo
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer

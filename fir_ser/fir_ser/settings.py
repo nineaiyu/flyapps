@@ -234,7 +234,14 @@ THIRD_PART_CONFIG = {
 }
 
 CACHE_KEY_TEMPLATE={
-    'download_times_key':'app_download_times_'
+    'download_times_key':'app_download_times_',
+    'make_token_key':'make_token_',
+    'download_short_key':'download_short_',
+    'app_instance_key':'app_instance_'
+}
+
+SYNC_CACHE_TO_DATABASE={
+    'download_times':10  #下载次数同步时间
 }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"

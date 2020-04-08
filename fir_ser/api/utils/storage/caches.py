@@ -45,3 +45,7 @@ def get_app_download_by_cache(app_id):
         cache.incr(key)
     return download_times + 1
 
+
+def del_cache_response_by_short(short,app_id):
+    cache.delete("%s%s"%(CACHE_KEY_TEMPLATE.get("download_short_key"),short))
+    cache.delete("%s%s" % (CACHE_KEY_TEMPLATE.get("app_instance"), app_id))

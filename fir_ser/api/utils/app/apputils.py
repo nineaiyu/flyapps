@@ -5,8 +5,9 @@
 # date: 2020/3/6
 from api.utils.app.randomstrings import make_app_uuid
 from api.models import AppReleaseInfo,Apps
-import random,xmltodict,json
-from api.utils.storage.storage import Storage,del_cache_response_by_short
+import random
+from api.utils.storage.storage import Storage
+from api.utils.storage.caches import del_cache_response_by_short
 
 def make_resigned(bin_url,img_url,bundle_id,app_version,name):
 

@@ -5,8 +5,9 @@
 # date: 2020/3/6
 
 from api.utils.app.apputils import get_random_short,SaveAppInfos
-from api.utils.storage.storage import Storage,del_cache_response_by_short
-from api.models import Apps,AppReleaseInfo,UserInfo
+from api.utils.storage.storage import Storage
+from api.utils.storage.caches import del_cache_response_by_short
+from api.models import Apps,AppReleaseInfo
 from api.utils.app.randomstrings import make_app_uuid
 from rest_framework.views import APIView
 from api.utils.response import BaseResponse
