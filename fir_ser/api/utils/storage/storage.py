@@ -9,7 +9,7 @@ from .aliyunApi import AliYunOss
 from .qiniuApi import QiNiuOss
 from .localApi import LocalStorage
 import json,time
-from fir_ser import settings
+from fir_ser.settings import THIRD_PART_CONFIG,CACHE_KEY_TEMPLATE
 from django.core.cache import cache
 
 
@@ -21,16 +21,17 @@ class Storage(object):
         if self.storage:
             return self.storage.get_upload_token(filename, expires)
 
-    def get_download_url(self, filename, expires=900,ftype=None):
+    def get_download_url(self,filename, expires=900,ftype=None,key=''):
         if self.storage:
             now = time.time()
-            download_val = cache.get("%s_%s"%('download_url',filename))
+            down_key = "_".join([key.lower(),CACHE_KEY_TEMPLATE.get('download_url_key'),filename])
+            download_val = cache.get(down_key)
             if download_val:
                 if download_val.get("time") > now - 60:
                     return download_val.get("download_url")
 
             download_url=self.storage.get_download_url(filename, expires,ftype)
-            cache.set("%s_%s"%('download_url',filename),{"download_url":download_url,"time":now+expires},expires)
+            cache.set(down_key,{"download_url":download_url,"time":now+expires},expires)
             return download_url
 
     def delete_file(self, filename, apptype=None):
@@ -63,7 +64,7 @@ class Storage(object):
         if admin_storage:
             return self.get_storage(UserInfo)
         else:
-            storage_lists = settings.THIRD_PART_CONFIG.get('storage')
+            storage_lists = THIRD_PART_CONFIG.get('storage')
             for storage in storage_lists:
                 if storage.get("active",None):
                     storage_type= storage.get('type',None)

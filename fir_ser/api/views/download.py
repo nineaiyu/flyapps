@@ -81,7 +81,7 @@ class ShortDownloadView(APIView):
             res.msg="该应用不存在"
             return Response(res.dict)
 
-        app_serializer = AppsSerializer(app_obj,context={"release_id":release_id,"storage":Storage(app_obj.user_id)})
+        app_serializer = AppsSerializer(app_obj,context={"key":"ShortDownloadView","release_id":release_id,"storage":Storage(app_obj.user_id)})
         res.data = app_serializer.data
         return Response(res.dict)
 

@@ -19,9 +19,8 @@ from fir_ser.settings import CACHE_KEY_TEMPLATE
 
 class DownloadToken(object):
 
-    def make_token(self,release_id,time_limit=60):
-
-        token_key = "%s%s"%(CACHE_KEY_TEMPLATE.get("make_token_key"),release_id)
+    def make_token(self,release_id,time_limit=60,key=''):
+        token_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get("make_token_key"),release_id])
         make_token_key = cache.get(token_key)
         if make_token_key:
             return make_token_key
@@ -40,7 +39,7 @@ class DownloadToken(object):
     def verify_token(self,token,release_id):
         try:
             values = cache.get(token)
-            if release_id in values.get("data",None):
+            if values and release_id in values.get("data",None):
                 return True
         except Exception as e:
             print(e)

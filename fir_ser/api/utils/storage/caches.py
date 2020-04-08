@@ -11,16 +11,16 @@ from fir_ser.settings import CACHE_KEY_TEMPLATE
 from api.utils.storage.storage import Storage,LocalStorage
 from api.utils.crontab import run
 
-def get_download_url_by_cache(app_obj, filename, limit, isdownload=False):
+def get_download_url_by_cache(app_obj, filename, limit, isdownload=True):
     now = time.time()
+    if isdownload is None:
+        local_storage = LocalStorage('localhost', False)
+        return local_storage.get_download_url(filename, limit, 'plist')
     download_val = cache.get("%s_%s" % ('download_url', filename))
     if download_val:
         if download_val.get("time") > now - 60:
             return download_val.get("download_url")
     else:
-        if isdownload:
-            local_storage = LocalStorage('localhost', False)
-            return local_storage.get_download_url(filename, limit, 'plist')
         user_obj = UserInfo.objects.filter(pk=app_obj.get("user_id")).first()
         storage = Storage(user_obj)
         return storage.get_download_url(filename, limit)
@@ -45,7 +45,6 @@ def get_app_download_by_cache(app_id):
         cache.incr(key)
     return download_times + 1
 
-
 def del_cache_response_by_short(short,app_id):
-    cache.delete("%s%s"%(CACHE_KEY_TEMPLATE.get("download_short_key"),short))
-    cache.delete("%s%s" % (CACHE_KEY_TEMPLATE.get("app_instance"), app_id))
+    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_short_key"),short]))
+    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance"),app_id]))

@@ -234,10 +234,11 @@ THIRD_PART_CONFIG = {
 }
 
 CACHE_KEY_TEMPLATE={
-    'download_times_key':'app_download_times_',
-    'make_token_key':'make_token_',
-    'download_short_key':'download_short_',
-    'app_instance_key':'app_instance_'
+    'download_times_key':'app_download_times',
+    'make_token_key':'make_token',
+    'download_short_key':'download_short',
+    'app_instance_key':'app_instance',
+    'download_url_key':'download_url'
 }
 
 SYNC_CACHE_TO_DATABASE={
