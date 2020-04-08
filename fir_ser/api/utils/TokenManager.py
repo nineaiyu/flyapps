@@ -24,7 +24,7 @@ class DownloadToken(object):
         token_key = "%s%s"%(CACHE_KEY_TEMPLATE.get("make_token_key"),release_id)
         make_token_key = cache.get(token_key)
         if make_token_key:
-            return cache.get(make_token_key)
+            return make_token_key
         else:
             random_str = uuid.uuid1().__str__().split("-")[0:-1]
             user_ran_str = uuid.uuid5(uuid.NAMESPACE_DNS, release_id).__str__().split("-")
