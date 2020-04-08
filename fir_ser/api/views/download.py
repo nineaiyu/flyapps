@@ -88,14 +88,7 @@ class ShortDownloadView(APIView):
     #key的设置
     def calculate_cache_key(self, view_instance, view_method,
                             request, args, kwargs):
-        id = "download"
-        rtn = '_'.join([
-           id,
-           "short",
-           kwargs.get("short",None)
-        ])
-        # print( request.META)
-        return rtn
+        return "_".join([settings.CACHE_KEY_TEMPLATE.get("download_short_key"), kwargs.get("short", None)])
 
 class InstallView(APIView):
     '''

@@ -27,24 +27,24 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True):
 
 
 def get_app_instance_by_cache(app_id, limit):
-    app_obj_cache = cache.get("%s_%s" % ('app_instance', app_id))
+    app_key="_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"),app_id])
+    app_obj_cache = cache.get(app_key)
     if not app_obj_cache:
         app_obj_cache = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type').first()
-        cache.set("%s_%s" % ('app_instance', app_id), app_obj_cache, limit)
+        cache.set(app_key, app_obj_cache, limit)
     return app_obj_cache
 
 
 def get_app_download_by_cache(app_id):
-    down_tem_key = CACHE_KEY_TEMPLATE.get("download_times_key")
-    key = "%s%s" %(down_tem_key,app_id)
-    download_times = cache.get(key)
+    down_tem_key = "_".join([CACHE_KEY_TEMPLATE.get("download_times_key"),app_id])
+    download_times = cache.get(down_tem_key)
     if not download_times:
         download_times=Apps.objects.filter(app_id=app_id).values("count_hits").first().get('count_hits')
-        cache.set(key, download_times + 1, 900)
+        cache.set(down_tem_key, download_times + 1, 900)
     else:
-        cache.incr(key)
+        cache.incr(down_tem_key)
     return download_times + 1
 
 def del_cache_response_by_short(short,app_id):
     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_short_key"),short]))
-    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance"),app_id]))
+    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"),app_id]))

@@ -1,12 +1,8 @@
-from django.utils.translation import ugettext_lazy as _
 from django.core.cache import cache
-
-import datetime
 from rest_framework.authentication import BaseAuthentication
-from rest_framework import exceptions
 from rest_framework.exceptions import AuthenticationFailed
 from api.models import Token, UserInfo
-import pytz
+from fir_ser.settings import CACHE_KEY_TEMPLATE
 import base64
 
 class ExpiringTokenAuthentication(BaseAuthentication):
@@ -26,7 +22,9 @@ class ExpiringTokenAuthentication(BaseAuthentication):
         if not auth_token:
             raise AuthenticationFailed({"code": 1001, "error": "缺少token"})
 
-        cacheuserinfo = cache.get(auth_token)
+        auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'), auth_token])
+
+        cacheuserinfo = cache.get(auth_key)
         if not cacheuserinfo:
             raise AuthenticationFailed({"code": 1001, "error": "无效的token"})
         if user_name != cacheuserinfo.get('username',None):
@@ -37,7 +35,7 @@ class ExpiringTokenAuthentication(BaseAuthentication):
         if not user_obj:
             raise AuthenticationFailed({"code": 1001, "error": "无效的token"})
         if user_obj.is_active:
-            cache.set(auth_token, cacheuserinfo, 3600 * 24 * 7)
+            cache.set(auth_key, cacheuserinfo, 3600 * 24 * 7)
             return user_obj,auth_token
         else:
             raise AuthenticationFailed({"code": 1001, "error": "用户被禁用"})

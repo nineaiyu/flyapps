@@ -8,8 +8,8 @@ from api.models import AppStorage, UserInfo
 from .aliyunApi import AliYunOss
 from .qiniuApi import QiNiuOss
 from .localApi import LocalStorage
-import json,time
-from fir_ser.settings import THIRD_PART_CONFIG,CACHE_KEY_TEMPLATE
+import json, time, base64
+from fir_ser.settings import THIRD_PART_CONFIG, CACHE_KEY_TEMPLATE
 from django.core.cache import cache
 
 
@@ -21,17 +21,17 @@ class Storage(object):
         if self.storage:
             return self.storage.get_upload_token(filename, expires)
 
-    def get_download_url(self,filename, expires=900,ftype=None,key=''):
+    def get_download_url(self, filename, expires=900, ftype=None, key=''):
         if self.storage:
             now = time.time()
-            down_key = "_".join([key.lower(),CACHE_KEY_TEMPLATE.get('download_url_key'),filename])
+            down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
             download_val = cache.get(down_key)
             if download_val:
                 if download_val.get("time") > now - 60:
                     return download_val.get("download_url")
 
-            download_url=self.storage.get_download_url(filename, expires,ftype)
-            cache.set(down_key,{"download_url":download_url,"time":now+expires},expires)
+            download_url = self.storage.get_download_url(filename, expires, ftype)
+            cache.set(down_key, {"download_url": download_url, "time": now + expires}, expires)
             return download_url
 
     def delete_file(self, filename, apptype=None):
@@ -47,15 +47,23 @@ class Storage(object):
         self.storage_obj = user.storage
         if self.storage_obj:
             auth = self.get_storage_auth(self.storage_obj)
+            storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'),
+                                    base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
             storage_type = self.storage_obj.storage_type
-            if storage_type == 1:
-                new_storage_obj = QiNiuOss(**auth)
-            elif storage_type == 2:
-                new_storage_obj = AliYunOss(**auth)
+            new_storage_obj = cache.get(storage_key)
+            if new_storage_obj:
+                return new_storage_obj
             else:
-                new_storage_obj = LocalStorage(**auth)
-            new_storage_obj.storage_type = storage_type
-            return new_storage_obj
+                if storage_type == 1:
+                    new_storage_obj = QiNiuOss(**auth)
+                elif storage_type == 2:
+                    new_storage_obj = AliYunOss(**auth)
+                else:
+                    new_storage_obj = LocalStorage(**auth)
+
+                new_storage_obj.storage_type = storage_type
+                cache.set(storage_key, new_storage_obj, 600)
+                return new_storage_obj
         else:
             return self.get_default_storage()
 
@@ -66,24 +74,27 @@ class Storage(object):
         else:
             storage_lists = THIRD_PART_CONFIG.get('storage')
             for storage in storage_lists:
-                if storage.get("active",None):
-                    storage_type= storage.get('type',None)
-                    auth = storage.get('auth',{})
-                    if storage_type == 1:
-                        new_storage_obj = QiNiuOss(**auth)
-                        new_storage_obj.storage_type=1
-                    elif storage_type == 2:
-                        new_storage_obj = AliYunOss(**auth)
-                        new_storage_obj.storage_type=2
+                if storage.get("active", None):
+                    storage_type = storage.get('type', None)
+                    auth = storage.get('auth', {})
+                    storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'),
+                                            base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
+                    new_storage_obj = cache.get(storage_key)
+                    if new_storage_obj:
+                        return new_storage_obj
                     else:
-                        new_storage_obj = LocalStorage(**auth)
-                        new_storage_obj.storage_type=3
-
-                    return new_storage_obj
+                        if storage_type == 1:
+                            new_storage_obj = QiNiuOss(**auth)
+                            new_storage_obj.storage_type = 1
+                        elif storage_type == 2:
+                            new_storage_obj = AliYunOss(**auth)
+                            new_storage_obj.storage_type = 2
+                        else:
+                            new_storage_obj = LocalStorage(**auth)
+                            new_storage_obj.storage_type = 3
+                        cache.set(storage_key, new_storage_obj, 600)
+                        return new_storage_obj
         return None
-
-
-
 
     def get_storage_type(self):
         if self.storage:
@@ -95,7 +106,7 @@ class Storage(object):
             'secret_key': storage_obj.secret_key,
             'bucket_name': storage_obj.bucket_name,
             'domain_name': storage_obj.domain_name,
-            'is_https':storage_obj.is_https
+            'is_https': storage_obj.is_https
         }
         try:
             additionalparameters = json.loads(storage_obj.additionalparameters)
@@ -103,5 +114,3 @@ class Storage(object):
             print(e)
             additionalparameters = {}
         return {**auth_dict, **additionalparameters}
-
-

@@ -238,7 +238,9 @@ CACHE_KEY_TEMPLATE={
     'make_token_key':'make_token',
     'download_short_key':'download_short',
     'app_instance_key':'app_instance',
-    'download_url_key':'download_url'
+    'download_url_key':'download_url',
+    'user_storage_key':'storage_auth',
+    'user_auth_token_key':'user_auth_token'
 }
 
 SYNC_CACHE_TO_DATABASE={

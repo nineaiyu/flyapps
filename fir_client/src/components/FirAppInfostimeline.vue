@@ -168,6 +168,7 @@
                         this.release_apps = data.data.release_apps;
                         this.currentapp = data.data.currentapp;
                     } else if (data.code === 1003) {
+                        loading.close();
                         this.$router.push({name: 'FirApps'});
                     }
                     loading.close();

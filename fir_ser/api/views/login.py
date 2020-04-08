@@ -10,6 +10,7 @@ from api.utils.TokenManager import DownloadToken,generateNumericTokenOfLength
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
 from django.middleware import csrf
+from fir_ser.settings import CACHE_KEY_TEMPLATE
 
 def get_token(request):
     token = csrf.get_token(request)
@@ -39,7 +40,8 @@ class LoginView(APIView):
                         now = datetime.datetime.now()
                         user_info = UserInfo.objects.get(pk=user.pk)
 
-                        cache.set(key,{'uid':user_info.uid,'username':user_info.username},3600*24*7)
+                        auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'),key])
+                        cache.set(auth_key,{'uid':user_info.uid,'username':user_info.username},3600*24*7)
                         Token.objects.create(user=user, **{"access_token": key, "created": now})
 
                         serializer = UserInfoSerializer(user_info,)
