@@ -1,6 +1,6 @@
 <template>
     <div>
-        <el-container >
+        <el-container>
 
             <el-header style="height: 100px">
 
@@ -17,31 +17,32 @@
 
 
                 <el-dialog class="upload-app"
-                        :visible.sync="willuploadApp"
-                        :destroy-on-close="true"
-                        :show-close="!uploading"
-                        width="40%"
-                        :close-on-click-modal="false"
-                        @closed="closeUpload" >
+                           :visible.sync="willuploadApp"
+                           :destroy-on-close="true"
+                           :show-close="!uploading"
+                           width="40%"
+                           :close-on-click-modal="false"
+                           @closed="closeUpload">
 
                     <div v-if="!uploading" style="">
                         <el-row :gutter="20">
                             <el-col :span="6">
                                 <div class="grid-content bg-purple">
                                     <div style="width: 100px;height: 100px">
-                                        <el-avatar shape="square" :size="100"  :src="analyseappinfo.icon"></el-avatar>
+                                        <el-avatar shape="square" :size="100" :src="analyseappinfo.icon"></el-avatar>
                                     </div>
                                 </div>
                             </el-col>
                             <el-col :span="18">
                                 <div class="grid-content bg-purple">
                                     <el-row :gutter="20" style="margin-top: 8px;">
-                                        <el-col :span="18" >
-                                            {{ analyseappinfo.version}} (Build {{ analyseappinfo.buildversion}})      {{ analyseappinfo.release_type_id|getiOStype}}
+                                        <el-col :span="18">
+                                            {{ analyseappinfo.version}} (Build {{ analyseappinfo.buildversion}}) {{
+                                            analyseappinfo.release_type_id|getiOStype}}
                                         </el-col>
                                     </el-row>
                                     <el-row :gutter="20" style="margin-top: 18px;">
-                                        <el-col :span="18" >
+                                        <el-col :span="18">
                                             <el-input v-model="analyseappinfo.appname"></el-input>
                                         </el-col>
 
@@ -57,7 +58,7 @@
                                 <div class="grid-content bg-purple">
                                     <el-row :gutter="20" style="margin-top: 18px;">
                                         <el-col :span="18" :offset="8">
-                                            <span >短连接</span>
+                                            <span>短连接</span>
                                         </el-col>
                                     </el-row>
                                 </div>
@@ -65,7 +66,7 @@
                             <el-col :span="18">
                                 <div class="grid-content bg-purple">
                                     <el-row :gutter="20" style="margin-top: 10px;">
-                                        <el-col :span="18" >
+                                        <el-col :span="18">
                                             <el-input v-model="analyseappinfo.short">
                                                 <template slot="prepend">{{analyseappinfo.domain_name}}/</template>
                                             </el-input>
@@ -81,7 +82,7 @@
                                 <div class="grid-content bg-purple">
                                     <el-row :gutter="20" style="margin-top: 18px;">
                                         <el-col :span="18" :offset="8">
-                                            <span >更新日志</span>
+                                            <span>更新日志</span>
                                         </el-col>
                                     </el-row>
                                 </div>
@@ -89,12 +90,12 @@
                             <el-col :span="18">
                                 <div class="grid-content bg-purple">
                                     <el-row :gutter="20" style="margin-top: 10px;">
-                                        <el-col :span="18" >
-                                            <el-input   type="textarea"
-                                                        v-model="analyseappinfo.changelog"
-                                                        placeholder="请输入内容"
-                                                        rows="5"
-                                                        show-word-limit></el-input>
+                                        <el-col :span="18">
+                                            <el-input type="textarea"
+                                                      v-model="analyseappinfo.changelog"
+                                                      placeholder="请输入内容"
+                                                      rows="5"
+                                                      show-word-limit></el-input>
                                         </el-col>
                                     </el-row>
                                 </div>
@@ -156,17 +157,19 @@
 
 
                     <span slot="footer" class="dialog-footer">
-                        <el-progress :text-inside="true" :stroke-width="26" :percentage="uploadprocess" v-if="uploadflag === true"></el-progress>
-                        <el-button type="primary" plain @click="uploadcloud" v-else>开始上传</el-button>
+                        <el-progress :text-inside="true" :stroke-width="26" :percentage="uploadprocess"
+                                     v-if="uploadflag === true"></el-progress>
+                        <el-button type="primary" plain @click="uploadcloud" v-else>{{ analyseappinfo.is_new|get_upload_text}}</el-button>
                   </span>
                 </el-dialog>
 
                 <el-row>
                     <el-col :span="4">
                         <el-radio-group v-model="searchfromtype">
-                            <el-radio-button label="android" icon="el-icon-mobile-phone"><i class="iconfont icon-android2"/>
+                            <el-radio-button label="android" icon="el-icon-mobile-phone"><i
+                                    class="iconfont icon-android2"/>
                             </el-radio-button>
-                            <el-radio-button label="ios" ><i class="iconfont icon-ios"/>
+                            <el-radio-button label="ios"><i class="iconfont icon-ios"/>
                             </el-radio-button>
                         </el-radio-group>
 
@@ -261,7 +264,7 @@
 
 
             <div
-                 ref="appmain" style="margin: 40px 20px">
+                    ref="appmain" style="margin: 40px 20px">
 
                 <el-row style="max-height: 460px; margin: 0 auto;" :gutter="10" class="page-apps">
 
@@ -284,83 +287,92 @@
                         </div>
 
                     </el-col>
-                    <el-col  style="width: 33%;height: 460px"
-                 v-for="(r,index) in applists" :key="r.id" @click="appInfos(index)">
+                    <el-col style="width: 33%;height: 460px"
+                            v-for="(r,index) in applists" :key="r.id" @click="appInfos(index)">
 
-            <div class=" app-animator">
-                <div class="card app card-ios">
+                        <div class=" app-animator">
+                            <div class="card app card-ios">
 
-                    <i class=" type-icon iconfont icon-ios" v-if="r.type === 1" src=""></i>
-                    <i class="type-icon iconfont icon-android2"  v-if="r.type === 0"></i>
+                                <i class=" type-icon iconfont icon-ios" v-if="r.type === 1" src=""></i>
+                                <i class="type-icon iconfont icon-android2" v-if="r.type === 0"></i>
 
-                    <div class="type-mark" v-if="r.type === 1"></div>
-                    <div class="type-mark" style="border-top: 48px solid #A4C639" v-if="r.type === 0"></div>
-                    <a class="appicon" @click="appInfos(r)">
-                        <img class="icon ng-isolate-scope" width="100" height="100"
-                             :src="r.master_release.icon_url|make_icon_url"></a>
+                                <div class="type-mark" v-if="r.type === 1"></div>
+                                <div class="type-mark" style="border-top: 48px solid #A4C639" v-if="r.type === 0"></div>
+                                <a class="appicon" @click="appInfos(r)">
+                                    <img class="icon ng-isolate-scope" width="100" height="100"
+                                         :src="r.master_release.icon_url|make_icon_url"></a>
 
-                    <div class="combo-info ng-scope" v-if="r.has_combo !== null ">
-                        <i class="el-icon-copy-document" style="transform:rotateX(180deg);"></i>
-                        <a @click="appInfos(r.has_combo)">
-                            <img class="icon ng-isolate-scope" width="45" height="45"
-                                 :src="r.has_combo.master_release.icon_url|make_icon_url">
-                        </a>
-                    </div>
-
-
-                    <br>
-                    <p class="appname"><i class="el-icon-user-solid"></i><span class="ng-binding">{{ r.name }}</span>
-                    </p>
-                    <table>
-                        <tbody>
+                                <div class="combo-info ng-scope" v-if="r.has_combo !== null ">
+                                    <i class="el-icon-copy-document" style="transform:rotateX(180deg);"></i>
+                                    <a @click="appInfos(r.has_combo)">
+                                        <img class="icon ng-isolate-scope" width="45" height="45"
+                                             :src="r.has_combo.master_release.icon_url|make_icon_url">
+                                    </a>
+                                </div>
 
 
-                        <tr>
-                            <td class="ng-binding">应用大小：</td>
-                            <td><span
-                                    class="ng-binding">{{ r.master_release.binary_size  }}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="ng-binding">应用平台：</td>
-                            <td><span class="ng-binding">{{ r.type |getapptype }}</span></td>
-                        </tr>
-                        <tr>
-                            <td class="ng-binding">应用标识：</td>
-                            <td><span class="ng-binding">{{ r.bundle_id | autoformat }}</span></td>
-                        </tr>
-                        <tr>
-                            <td class="ng-binding">最新版本：</td>
-                            <td><span class="ng-binding">{{ r.master_release.app_version }}（Build {{ r.master_release.build_version }}）</span>
-                            </td>
-                        </tr>
-                        <tr v-if="r.type === 1">
-                            <td class="ng-binding">打包类型：</td>
-                            <td><span class="ng-binding">
+                                <br>
+                                <p class="appname"><i class="el-icon-user-solid"></i><span class="ng-binding">{{ r.name }}</span>
+                                </p>
+                                <table>
+                                    <tbody>
+                                    <tr>
+                                        <td class="ng-binding">应用大小：</td>
+                                        <td><span
+                                                class="ng-binding">{{ r.master_release.binary_size  }}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ng-binding">应用平台：</td>
+                                        <td><span class="ng-binding">{{ r.type |getapptype }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ng-binding">应用标识：</td>
+                                        <td><span class="ng-binding">{{ r.bundle_id | autoformat }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ng-binding">最新版本：</td>
+                                        <td><span class="ng-binding">{{ r.master_release.app_version }}（Build {{ r.master_release.build_version }}）</span>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="r.type === 1 && r.master_release.binary_url === ''">
+                                        <td class="ng-binding">打包类型：</td>
+                                        <td><span class="ng-binding">
                                         {{ r.master_release.release_type|getiOStype }}
                                     </span></td>
-                        </tr>
+                                    </tr>
+                                    <tr v-if=" r.master_release.binary_url !== ''">
+                                        <td>第三方平台下载：</td>
+                                        <td>
+                               <span>
+                                <el-tooltip :content="r.master_release.binary_url" placement="top">
+                                    <a target="_blank" :href="r.master_release.binary_url">{{ r.master_release.binary_url| autoformat}}</a>
+                                </el-tooltip>
+                                </span>
+                                        </td>
+                                    </tr>
 
-                        </tbody>
-                    </table>
-                    <div class="action">
-                        <el-button @click="appInfos(r)">
-                            <i class="icon-pen el-icon-edit"></i> 管理
-                        </el-button>
+                                    </tbody>
+                                </table>
 
-                        <el-button @click="appDownload(r)" target="_blank" class="ng-binding">
-                            <i class="icon-eye el-icon-view"></i> 预览
-                        </el-button>
+                                <div class="action">
+                                    <el-button @click="appInfos(r)">
+                                        <i class="icon-pen el-icon-edit"></i> 管理
+                                    </el-button>
+
+                                    <el-button @click="appDownload(r)" target="_blank" class="ng-binding">
+                                        <i class="icon-eye el-icon-view"></i> 预览
+                                    </el-button>
 
 
-                        <el-button @click="DeleteApp(r)" class="btn btn-remove" icon="el-icon-delete"
-                                   circle></el-button>
+                                    <el-button @click="DeleteApp(r)" class="btn btn-remove" icon="el-icon-delete"
+                                               circle></el-button>
 
-                    </div>
-                </div>
-            </div>
+                                </div>
+                            </div>
+                        </div>
 
-        </el-col>
+                    </el-col>
 
                 </el-row>
 
@@ -372,38 +384,47 @@
 </template>
 
 <script>
-    import {getapps, deleteapp,analyseApps,getuploadurl} from "../restful";
-    import {getScrollHeight,getScrollTop,getWindowHeight,getappinfo,uploadqiniuoss,dataURLtoFile,uploadaliyunoss,uploadlocalstorage} from "../utils";
+    import {getapps, deleteapp, analyseApps, getuploadurl} from "../restful";
+    import {
+        getScrollHeight,
+        getScrollTop,
+        getWindowHeight,
+        getappinfo,
+        uploadqiniuoss,
+        dataURLtoFile,
+        uploadaliyunoss,
+        uploadlocalstorage
+    } from "../utils";
 
     export default {
         name: "FirApps",
         data() {
             return {
-                analyseappinfo:{'appname':'','short':'','changelog':''},
+                analyseappinfo: {'appname': '', 'short': '', 'changelog': ''},
                 keysearch: '',
                 searchfromtype: '',
                 applists: [],
                 orgapplists: [],
                 hdata: {},
                 willDeleteApp: false,
-                willuploadApp:false,
-                uploading:false,
+                willuploadApp: false,
+                uploading: false,
                 delapp: {},
-                has_next:false,
-                query:{'page':1,size:20},
-                searchflag:false,
-                uploadflag:false,
-                autoloadflag:true,
-                firstloadflag:true,
-                currentfile:null,
-                uploadprocess:0,
-                uploadsuccess:0,
-                loadingobj:null
+                has_next: false,
+                query: {'page': 1, size: 20},
+                searchflag: false,
+                uploadflag: false,
+                autoloadflag: true,
+                firstloadflag: true,
+                currentfile: null,
+                uploadprocess: 0,
+                uploadsuccess: 0,
+                loadingobj: null
             }
         }, methods: {
-            updateappinfo(file){
-                this.uploadsuccess +=1;
-                if(this.uploadsuccess === 2){
+            updateappinfo(file) {
+                this.uploadsuccess += 1;
+                if (this.uploadsuccess === 2) {
                     this.$message.success(file.name + '上传成功');
                     analyseApps(data => {
                         if (data.code === 1000) {
@@ -411,135 +432,171 @@
                             this.closeUpload();
                             this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
                         }
-                    },{'methods':'PUT','data':this.analyseappinfo});
+                    }, {'methods': 'PUT', 'data': this.analyseappinfo});
                 }
             },
-            uploadtostorage(file,certinfo){
+            uploadtostorage(file, certinfo) {
 
-                if(this.analyseappinfo.storage === 1){
+                if (this.analyseappinfo.storage === 1) {
                     // eslint-disable-next-line no-unused-vars,no-unreachable
-                    uploadqiniuoss(file,certinfo,this,res=>{
-                    this.updateappinfo(file)
-                    },process=>{
-                        if(this.uploadsuccess === 1) {
+                    uploadqiniuoss(file, certinfo, this, res => {
+                        this.updateappinfo(file)
+                    }, process => {
+                        if (this.uploadsuccess === 1) {
                             this.uploadprocess = process;
                         }
                     })
-                }else if(this.analyseappinfo.storage === 2){
+                } else if (this.analyseappinfo.storage === 2) {
                     // eslint-disable-next-line no-unused-vars
-                    uploadaliyunoss(file,certinfo,this,res=>{
+                    uploadaliyunoss(file, certinfo, this, res => {
                         this.updateappinfo(file)
 
-                    },process=>{
-                        if(this.uploadsuccess === 1) {
+                    }, process => {
+                        if (this.uploadsuccess === 1) {
                             this.uploadprocess = process;
                         }
                     });
-                }else {
+                } else {
                     //本地
                     certinfo.upload_url = getuploadurl();
                     certinfo.ftype = 'app';
                     certinfo.app_id = this.analyseappinfo.app_uuid;
                     // eslint-disable-next-line no-unused-vars,no-unreachable
-                    uploadlocalstorage(file,certinfo,this,res=>{
+                    uploadlocalstorage(file, certinfo, this, res => {
                         this.updateappinfo(file)
-                    },process=>{
-                        if(this.uploadsuccess === 1) {
+                    }, process => {
+                        if (this.uploadsuccess === 1) {
                             this.uploadprocess = process;
                         }
                     })
                 }
             },
-            getuploadtoken(loading){
-                analyseApps(data =>{
-                    if(data.code === 1000){
+            getuploadtoken(loading) {
+                analyseApps(data => {
+                    if (data.code === 1000) {
                         this.analyseappinfo.short = data.data.short;
                         this.analyseappinfo.domain_name = data.data.domain_name;
-                        this.analyseappinfo.app_uuid= data.data.app_uuid;
-                        this.analyseappinfo.upload_token= data.data.upload_token;
-                        this.analyseappinfo.upload_key= data.data.upload_key;
-                        this.analyseappinfo.png_key= data.data.png_key;
-                        this.analyseappinfo.png_token= data.data.png_token;
-                        this.analyseappinfo.storage= data.data.storage;
-
-                        this.willuploadApp=true;
-                    }else {
+                        this.analyseappinfo.app_uuid = data.data.app_uuid;
+                        this.analyseappinfo.upload_token = data.data.upload_token;
+                        this.analyseappinfo.upload_key = data.data.upload_key;
+                        this.analyseappinfo.png_key = data.data.png_key;
+                        this.analyseappinfo.png_token = data.data.png_token;
+                        this.analyseappinfo.storage = data.data.storage;
+                        this.analyseappinfo.is_new = data.data.is_new;
+                        this.analyseappinfo.binary_url = data.data.binary_url;
+                        this.willuploadApp = true;
+                    } else {
                         this.$message.error("上传token获取失败，请刷新重试")
                     }
                     loading.close();
-                },{'methos':true,'data':{"bundleid":this.analyseappinfo.bundleid,"type":this.analyseappinfo.type}})
+                }, {
+                    'methos': true,
+                    'data': {"bundleid": this.analyseappinfo.bundleid, "type": this.analyseappinfo.type}
+                })
             },
-            uploadcloud(){
-                this.uploadflag=true;
+            uploadcloud() {
+                if (this.analyseappinfo.binary_url !== '') {
+
+                    this.$confirm(`该应用存在第三方下载链接 <a target="_blank" href="${this.analyseappinfo.binary_url}"> ${this.analyseappinfo.binary_url}  </a>更新之后，将不会自动跳转第三方下载；若您还需要第三方跳转，请在第三方平台更新该应用。`, '确定更新应用？', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        dangerouslyUseHTMLString: true,
+                        type: 'warning'
+                    }).then(() => {
+                        this.$message({
+                            type: 'success',
+                            message: '开始更新'
+                        });
+                        this.uploadstorage()
+                    }).catch(() => {
+                        this.$message({
+                            type: 'info',
+                            message: '已取消更新'
+                        });
+                        this.closeUpload();
+                    });
+                } else {
+                    this.uploadstorage()
+                }
+            },
+            uploadstorage() {
+                this.uploadflag = true;
                 this.uploading = true;
 
-                let file=dataURLtoFile(this.analyseappinfo.icon,this.analyseappinfo.png_key);
+                let file = dataURLtoFile(this.analyseappinfo.icon, this.analyseappinfo.png_key);
 
-                this.uploadtostorage(file,{'upload_key':this.analyseappinfo.png_key,'upload_token':this.analyseappinfo.png_token});
+                this.uploadtostorage(file, {
+                    'upload_key': this.analyseappinfo.png_key,
+                    'upload_token': this.analyseappinfo.png_token
+                });
 
                 file = this.currentfile;
-                this.uploadtostorage(file,{'upload_key':this.analyseappinfo.upload_key,'upload_token':this.analyseappinfo.upload_token});
+                this.uploadtostorage(file, {
+                    'upload_key': this.analyseappinfo.upload_key,
+                    'upload_token': this.analyseappinfo.upload_token
+                });
+
             },
-            closeUpload(){
+            closeUpload() {
                 this.uploadsuccess = 0;
-                this.uploadprocess=0;
-                this.uploadflag=false;
-                this.uploading = false;
-                this.willuploadApp=false;
-                this.currentfile=null;
+                this.uploadprocess = 0;
                 this.uploadflag = false;
-                this.analyseappinfo={};
+                this.uploading = false;
+                this.willuploadApp = false;
+                this.currentfile = null;
+                this.uploadflag = false;
+                this.analyseappinfo = {};
             },
 
-            searchFun(){
+            searchFun() {
                 let keysearch = this.keysearch.replace(/^\s+|\s+$/g, "");
-                if(keysearch === ''){
-                    this.searchflag=false;
-                    this.applists=[];
-                    this.orgapplists=[];
-                    this.query.page=1;
-                    if(this.searchfromtype){
+                if (keysearch === '') {
+                    this.searchflag = false;
+                    this.applists = [];
+                    this.orgapplists = [];
+                    this.query.page = 1;
+                    if (this.searchfromtype) {
                         this.getappsFun({"type": this.searchfromtype});
-                    }else {
+                    } else {
                         this.getappsFun({});
                     }
-                }else {
-                    this.searchflag=true
+                } else {
+                    this.searchflag = true
                 }
-                if(this.searchflag){
-                    this.applists=[];
-                    this.orgapplists=[];
-                    if(this.searchfromtype){
-                        this.getappsFun({"type": this.searchfromtype,'page':1,size:999});
-                    }else {
-                        this.getappsFun({'page':1,size:999});
+                if (this.searchflag) {
+                    this.applists = [];
+                    this.orgapplists = [];
+                    if (this.searchfromtype) {
+                        this.getappsFun({"type": this.searchfromtype, 'page': 1, size: 999});
+                    } else {
+                        this.getappsFun({'page': 1, size: 999});
                     }
                 }
             },
-            auto_load(){
+            auto_load() {
                 // eslint-disable-next-line no-console
                 // console.log(getScrollTop() , getWindowHeight(),getScrollTop() + getWindowHeight(), getScrollHeight());
-                if(getScrollTop() + getWindowHeight() >= getScrollHeight()){
+                if (getScrollTop() + getWindowHeight() >= getScrollHeight()) {
 
-                        if(this.has_next){      //先判断下一页是否有数据
-                            if(this.autoloadflag) {
-                                this.autoloadflag = false;
-                                if (this.applists.length === 0) {
-                                    this.query.page = 1;
-                                } else {
-                                    this.query.page += 1;
-                                }
-                                if (this.searchfromtype !== '') {
-                                    this.query.type = this.searchfromtype;
-                                }
-                                this.getappsFun(this.query);
+                    if (this.has_next) {      //先判断下一页是否有数据
+                        if (this.autoloadflag) {
+                            this.autoloadflag = false;
+                            if (this.applists.length === 0) {
+                                this.query.page = 1;
+                            } else {
+                                this.query.page += 1;
                             }
-
-                        }else{
-                            if(! this.has_next){
-                                this.$message.success("已经到底啦")
+                            if (this.searchfromtype !== '') {
+                                this.query.type = this.searchfromtype;
                             }
+                            this.getappsFun(this.query);
                         }
+
+                    } else {
+                        if (!this.has_next) {
+                            this.$message.success("已经到底啦")
+                        }
+                    }
                 }
             },
             searchapps() {
@@ -567,27 +624,27 @@
                 getapps(data => {
                     if (data.code === 1000) {
                         this.loadingobj.close();
-                        if(this.firstloadflag){
-                            window.addEventListener('scroll',this.auto_load);
+                        if (this.firstloadflag) {
+                            window.addEventListener('scroll', this.auto_load);
                             this.firstloadflag = false
                         }
                         this.autoloadflag = true;
 
-                        if(this.uploadflag){
-                            this.applists = data.data ;
+                        if (this.uploadflag) {
+                            this.applists = data.data;
                             this.uploadflag = false;
-                        }else {
-                            this.applists = this.applists.concat(data.data) ;
+                        } else {
+                            this.applists = this.applists.concat(data.data);
                         }
                         this.has_next = data.has_next;
                         this.orgapplists = this.applists.slice(); //深拷贝
                         this.hdata = data.hdata;
-                        this.$store.dispatch("getUser",data.userinfo);
+                        this.$store.dispatch("getUser", data.userinfo);
 
                         this.searchapps();
-                        let upload_domain=data.hdata.upload_domain;
-                        if(!upload_domain){
-                            upload_domain=location.origin;
+                        let upload_domain = data.hdata.upload_domain;
+                        if (!upload_domain) {
+                            upload_domain = location.origin;
                         }
 
                         // this.$store.dispatch('doucurrentapp', {'firapps':1});
@@ -599,22 +656,22 @@
                 }, parms);
 
             },
-            beforeAvatarUpload(file){
+            beforeAvatarUpload(file) {
                 const loading = this.$loading({
                     lock: true,
                     text: '应用解析中',
                     spinner: 'el-icon-loading',
                     // background: 'rgba(0, 0, 0, 0.7)'
                 });
-                getappinfo(file,appinfo =>{
-                if(appinfo.bundleid){
-                    this.analyseappinfo = appinfo;
-                    this.getuploadtoken(loading);
-                    this.currentfile = file;
-                }else {
-                    this.$message.error("应用解析失败,请检查是否为APP应用")
-                }
-                },err=>{
+                getappinfo(file, appinfo => {
+                    if (appinfo.bundleid) {
+                        this.analyseappinfo = appinfo;
+                        this.getuploadtoken(loading);
+                        this.currentfile = file;
+                    } else {
+                        this.$message.error("应用解析失败,请检查是否为APP应用")
+                    }
+                }, err => {
                     loading.close();
                     this.$message.error("应用解析失败,请检查是否为APP应用");
                     // eslint-disable-next-line no-console
@@ -623,23 +680,23 @@
                 return false;
             },
             delApp() {
-                        this.willDeleteApp = false;
-                        deleteapp(data => {
-                            if (data.code === 1000) {
-                                for(let i=0;i< this.applists.length;i++){
-                                    if(this.delapp.app_id === this.applists[i].app_id){
-                                        this.applists.splice(i,1);
-                                        this.orgapplists.splice(i,1);
-                                    }
-                                }
-                                this.$message.success(this.delapp.name+'删除成功');
-                                this.delapp={};
-                            } else {
-                                this.$message.error('删除失败，请联系管理员');
+                this.willDeleteApp = false;
+                deleteapp(data => {
+                    if (data.code === 1000) {
+                        for (let i = 0; i < this.applists.length; i++) {
+                            if (this.delapp.app_id === this.applists[i].app_id) {
+                                this.applists.splice(i, 1);
+                                this.orgapplists.splice(i, 1);
                             }
-                        }, {
-                            "app_id": this.delapp.app_id
-                        });
+                        }
+                        this.$message.success(this.delapp.name + '删除成功');
+                        this.delapp = {};
+                    } else {
+                        this.$message.error('删除失败，请联系管理员');
+                    }
+                }, {
+                    "app_id": this.delapp.app_id
+                });
             },
             DeleteApp(delapp) {
                 //页面删除按钮触发
@@ -650,7 +707,7 @@
                 this.$router.push({name: 'FirAppInfostimeline', params: {id: app.app_id}})
             },
             appDownload(app) {
-                this.$router.push({name: 'FirDownload', params: { short: app.short }})
+                this.$router.push({name: 'FirDownload', params: {short: app.short}})
             }
         }, computed: {
             getDelappTitle() {
@@ -673,7 +730,7 @@
                 let ftype = '';
                 if (type === 1) {
                     ftype = '内测版'
-                } else if(type === 2)  {
+                } else if (type === 2) {
                     ftype = '企业版'
                 }
                 return ftype
@@ -684,7 +741,7 @@
             autoformat: function (packname) {
                 if ((packname.length) > 20) {
                     return packname.split('').slice(0, 20).join('') + '...';
-                }else {
+                } else {
                     return packname
                 }
             },
@@ -697,11 +754,18 @@
                 }
                 return ftype
             },
-            make_icon_url(icon_url){
-                if(!icon_url.startsWith("http")){
-                    return location.origin+icon_url
-                }else {
+            make_icon_url(icon_url) {
+                if (!icon_url.startsWith("http")) {
+                    return location.origin + icon_url
+                } else {
                     return icon_url
+                }
+            },
+            get_upload_text(is_new) {
+                if (is_new) {
+                    return '新应用上传'
+                } else {
+                    return '应用更新'
                 }
             }
 
@@ -710,7 +774,7 @@
             this.getappsFun({});
             // window.addEventListener('scroll',this.auto_load);
         },
-        destroyed(){
+        destroyed() {
             window.removeEventListener('scroll', this.auto_load, false);
             this.loadingobj.close();
         },
@@ -723,8 +787,8 @@
             },
             // eslint-disable-next-line no-unused-vars
             searchfromtype: function (val, oldVal) {
-                this.applists=[];
-                this.query.page=1;
+                this.applists = [];
+                this.query.page = 1;
                 // this.keysearch='';
                 this.searchFun();
                 // this.getappsFun({"type": this.searchfromtype});
@@ -906,7 +970,7 @@
 
     .page-apps .card.app .action {
         position: absolute;
-        padding: 40px 0 40px 40px;
+        padding: 20px 0 40px 40px;
         left: 0;
         bottom: 0;
         width: 100%

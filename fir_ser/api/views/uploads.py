@@ -36,9 +36,15 @@ class AppAnalyseView(APIView):
             release_id = make_from_user_uuid(request.user)
             png_id = make_from_user_uuid(request.user)
             app_obj = Apps.objects.filter(app_id=app_uuid).first()
+            binary_url=''
             if app_obj:
+                is_new=False
                 short = app_obj.short
+                app_release_obj=AppReleaseInfo.objects.filter(app_id=app_obj,is_master=True).first()
+                if app_release_obj:
+                    binary_url = app_release_obj.binary_url
             else:
+                is_new=True
                 short = get_random_short()
             if app_type == 'iOS':
                 upload_key = release_id+'.ipa'
@@ -63,7 +69,8 @@ class AppAnalyseView(APIView):
                         "upload_key":upload_key,
                         "png_token":png_token,
                         "png_key":png_key,
-                        "storage":storage_type}
+                        "storage":storage_type,
+                        "is_new":is_new,"binary_url":binary_url}
         else:
             res.code = 1003
 

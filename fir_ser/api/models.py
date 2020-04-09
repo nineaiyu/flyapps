@@ -125,7 +125,7 @@ class AppReleaseInfo(models.Model):
     release_type = models.SmallIntegerField(choices=release_choices, default=0, verbose_name="版本类型")
     minimum_os_version = models.CharField(max_length=64,verbose_name="应用可安装的最低系统版本")
     binary_size = models.BigIntegerField(verbose_name="应用大小")
-    binary_url = models.CharField(max_length=128,blank=True,verbose_name="APPurl")
+    binary_url = models.CharField(max_length=128,blank=True,verbose_name="第三方下载URL")
     icon_url = models.CharField(max_length=128,blank=True,verbose_name="图标url")
     changelog = models.TextField('更新日志', blank=True, null=True, default=None, )
 

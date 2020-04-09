@@ -10,7 +10,7 @@
                 <div class="directive-view-release">
 
                     <i class="el-icon-cloudy" v-if="! app.is_master"></i>
-                    <i class="el-icon-cloudy" style="background-color: #409eff" v-else></i>
+                    <i class="el-icon-cloudy" style="background-color: rgb(96, 200, 279)" v-else></i>
 
                     <b class="ng-binding">{{app.app_version}} (Build {{app.build_version}})</b>
                     <div class="release-metainfo ng-hide"
@@ -28,18 +28,12 @@
                         </small> &nbsp;&nbsp;·&nbsp;&nbsp;
 
                         <small>{{app.release_type|getiOStype}}</small>
-
-                        <!--                                        <i-->
-                        <!--                                                v-if="app.changelog" class="ng-hide">&nbsp;&nbsp;·&nbsp;&nbsp;</i>-->
-                        <!--                                        <small v-if="app.changelog"-->
-                        <!--                                               ng-bind="activity.distribution_name"-->
-                        <!--                                               class="ng-binding ng-hide"> {{app.changelog}}</small>-->
                     </div>
 
                     <p>{{app.changelog}}</p>
                     <textarea v-if="app.editing.changelog"
                               v-model="app.changelog"
-                              placeholder="更新日志" >
+                              placeholder="更新日志">
                     </textarea>
                     <div class="release-actions editing " v-if="app.editing.changelog">
 
@@ -52,7 +46,7 @@
 
                     <el-input v-if="app.editing.binary_url"
                               v-model="app.binary_url"
-                              placeholder="下载地址,默认本服务器，填写第三方可以 自动跳转到第三方平台" >
+                              placeholder="下载地址,默认本服务器，填写第三方可以 自动跳转到第三方平台">
                     </el-input>
                     <div class="release-actions editing " v-if="app.editing.binary_url">
 
@@ -81,7 +75,7 @@
                             <el-button class="tooltip-top" tooltip="下载原文件"
                                        @click="downloadPackage(app)">
                                 <i class="el-icon-download"></i>
-                                <span >{{app.binary_size}}</span>
+                                <span>{{app.binary_size}}</span>
                             </el-button>
 
                         </el-tooltip>
@@ -90,7 +84,7 @@
 
                             <el-button class="tooltip-top" tooltip="修改下载地址"
                                        @click="startEdit(app,'binary_url')"><i
-                                    class="el-icon-link"></i> <span >下载地址</span>
+                                    class="el-icon-link"></i> <span>下载地址</span>
                             </el-button>
 
                         </el-tooltip>
@@ -130,30 +124,34 @@
                 release_apps: [],
                 currentapp: {},
                 activity: {
-                    editing: {'changelog':false,'binary_url':false}
+                    editing: {'changelog': false, 'binary_url': false}
                 },
-                updatas:{},
+                updatas: {},
 
             }
         },
         methods: {
-            downloadPackage(app){
-                getdownloadurl(res=>{
-                    if(res.code === 1000){
-                        window.location.href=res.data.download_url;
+            downloadPackage(app) {
+                getdownloadurl(res => {
+                    if (res.code === 1000) {
+                        window.location.href = res.data.download_url;
                     }
                 }, {
                     'data': {
                         'token': app.download_token,
                         'short': this.currentapp.short,
                         'release_id': app.release_id,
-                        "isdownload":true
+                        "isdownload": true
                     },
                     'app_id': this.currentapp.app_id
                 })
             },
-            previewRelase(app){
-                this.$router.push({name: 'FirDownload', params: { short: this.currentapp.short },query:{release_id:app.release_id}})
+            previewRelase(app) {
+                this.$router.push({
+                    name: 'FirDownload',
+                    params: {short: this.currentapp.short},
+                    query: {release_id: app.release_id}
+                })
 
             },
             getapptimelineFun() {
@@ -236,19 +234,19 @@
                 });
 
             },
-            endEdit(app,type) {
-                if(type==='changelog'){
+            endEdit(app, type) {
+                if (type === 'changelog') {
                     app.editing.changelog = false;
 
-                }else if(type === 'binary_url'){
+                } else if (type === 'binary_url') {
                     app.editing.binary_url = false;
                 }
             },
-            updateChangelog(app,type) {
-                if(type==='changelog'){
+            updateChangelog(app, type) {
+                if (type === 'changelog') {
                     this.activity.editing.changelog = false;
                     this.updatas = {"changelog": app.changelog}
-                }else if(type === 'binary_url') {
+                } else if (type === 'binary_url') {
                     this.activity.editing.binary_url = false;
                     this.updatas = {"binary_url": app.binary_url}
                 }
@@ -257,9 +255,9 @@
                     "release_id": app.release_id,
                     "data": this.updatas
                 });
-                this.updatas={}
+                this.updatas = {}
             },
-            startEdit(app,type) {
+            startEdit(app, type) {
                 if (type === 'changelog') {
 
                     app.editing.changelog = true;
@@ -275,10 +273,10 @@
             this.$store.dispatch('doappInfoIndex', [[5, 5], [5, 5]]);
             this.getapptimelineFun();
         }, filters: {
-            downcontent(content){
-                if(content){
+            downcontent(content) {
+                if (content) {
                     return content
-                }else{
+                } else {
                     return "修改下载地址"
                 }
             },
@@ -292,7 +290,7 @@
                 let ftype = '';
                 if (type === 1) {
                     ftype = '内测版'
-                } else if(type === 2)  {
+                } else if (type === 2) {
                     ftype = '企业版'
                 }
                 return ftype
