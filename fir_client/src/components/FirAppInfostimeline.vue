@@ -290,9 +290,9 @@
             },
             getiOStype: function (type) {
                 let ftype = '';
-                if (type === "Adhoc") {
+                if (type === 1) {
                     ftype = '内测版'
-                } else {
+                } else if(type === 2)  {
                     ftype = '企业版'
                 }
                 return ftype
