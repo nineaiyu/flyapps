@@ -151,7 +151,8 @@ def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
         "minimum_os_version": appinfo.get("miniOSversion", None),
         "binary_size": size,
         "is_master": True,
-        "changelog":appinfo.get("changelog",'')
+        "changelog":appinfo.get("changelog",''),
+        "udid":appinfo.get("udid",''),
     }
 
     AppReleaseInfo.objects.create(**release_data)

@@ -1,7 +1,7 @@
 <template>
     <div class="apps-app-combo page-tabcontent ">
         <div class="middle-wrapper">
-            <div v-if="has_combo " class="request-wrapper">
+            <div class="request-wrapper" v-if="has_combo ">
                 <p class="lead text-center ng-scope">已经与 <b>{{ has_combo.name }}</b> 合并</p>
                 <table>
                     <tr>
@@ -11,26 +11,26 @@
                     </tr>
                     <tr>
                         <td>
-                            <div class="icon"><img class="ng-isolate-scope" :src="cmaster_release.icon_url">
+                            <div class="icon"><img :src="cmaster_release.icon_url" class="ng-isolate-scope">
                             </div>
                         </td>
                         <td><i class="icon-combo"></i></td>
                         <td>
-                            <div class="icon"><img class="ng-isolate-scope" :src="hmaster_release.icon_url">
+                            <div class="icon"><img :src="hmaster_release.icon_url" class="ng-isolate-scope">
                             </div>
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="3" class="actions">
+                        <td class="actions" colspan="3">
                             <!--                            <a class="btn btn-link " @click="each_confirm"><b>解除合并</b></a>-->
-                            <el-button round @click="each_confirm">解除合并</el-button>
+                            <el-button @click="each_confirm" round>解除合并</el-button>
                         </td>
                     </tr>
                 </table>
             </div>
             <div v-else>
                 <div class="icon-container text-center">
-                    <img width="128" height="128" :src="cmaster_release.icon_url">
+                    <img :src="cmaster_release.icon_url" height="128" width="128">
                 </div>
                 <div class="apps-list">
                     <div class="known-apps">
@@ -39,10 +39,10 @@
                         </p>
                         <div class="apps">
                             <b v-if="comboapplists.length ===0 ">暂无可以合并的应用</b>
-                            <div class="app ng-scope" v-for="comboapp in comboapplists" :key="comboapp.app_id"
-                                 @click="each_add(comboapp.app_id)">
+                            <div :key="comboapp.app_id" @click="each_add(comboapp.app_id)" class="app ng-scope"
+                                 v-for="comboapp in comboapplists">
                                 <div class="icon">
-                                    <img class="ng-isolate-scope" :src="comboapp.master_release|geticon_url">
+                                    <img :src="comboapp.master_release|geticon_url" class="ng-isolate-scope">
                                 </div>
                                 <p class="ng-binding">{{ comboapp.name }}</p></div>
                         </div>
@@ -57,11 +57,11 @@
 
                         <div class="form-group">
                             <el-input
-                                    clearables
-                                    prefix-icon="el-icon-search"
-                                    placeholder="输入短链接或者名字"
-                                    v-model="searchKey"
                                     @click="searchapps"
+                                    clearables
+                                    placeholder="输入短链接或者名字"
+                                    prefix-icon="el-icon-search"
+                                    v-model="searchKey"
                             />
                         </div>
 
@@ -84,14 +84,7 @@
 
     export default {
         name: "FirAppInfoscombo"
-        , mounted() {
-
-            this.$store.dispatch('doappInfoIndex', [[31, 31], [31, 31]]);
-
-            // this.getappiconFun();
-            this.setData();
-
-        }, data() {
+        , data() {
             return {
                 searchKey: '',
                 currentapp: {},
@@ -196,9 +189,6 @@
                     this.getappiconFun();
                 }
             },
-            findByShort(e) {
-                alert(111, e)
-            },
             getappiconFun() {
                 let type = "android";
                 if (this.currentapp.type === 0) {
@@ -228,6 +218,12 @@
                 return ftype
             },
         },
+     mounted() {
+        this.$store.dispatch('doappInfoIndex', [[44, 44], [44, 44]]);
+
+        // this.getappiconFun();
+        this.setData();
+    },
         watch: {
             '$store.state.currentapp': function () {
                 this.setData();

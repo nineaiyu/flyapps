@@ -20,6 +20,8 @@ import FirAppBase from "@/components/FirAppBase";
 import FirAppInfosBase from "@/components/FirAppInfosBase";
 import FirAppInfostimeline from "@/components/FirAppInfostimeline";
 import FirAppInfosbaseinfo from "@/components/FirAppInfosbaseinfo";
+import FirAppInfossecurity from "@/components/FirAppInfossecurity";
+import FirAppInfosdevices from "@/components/FirAppInfosdevices";
 import FirAppInfoscombo from "@/components/FirAppInfoscombo";
 import FirUserProfile from "@/components/FirUserProfileBase";
 import FirUserProfileInfo from "@/components/FirUserProfileInfo";
@@ -62,6 +64,16 @@ const router = new VueRouter({
                             path: 'info',
                             name: 'FirAppInfosbaseinfo',
                             component: FirAppInfosbaseinfo,
+                        },
+                        {
+                            path: 'security',
+                            name: 'FirAppInfossecurity',
+                            component: FirAppInfossecurity
+                        },
+                        {
+                            path: 'devices',
+                            name: 'FirAppInfosdevices',
+                            component: FirAppInfosdevices
                         },
                         {
                             path: 'combo',

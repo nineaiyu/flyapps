@@ -2,7 +2,7 @@
     <el-main>
         <div class="page-app app-info">
             <div class="banner">
-                <div class="middle-wrapper" ref="mwp">
+                <div class="middle-wrapper" >
                     <div @click="defaulttimeline">
                         <img :src="icon_url" class="appicon" style="width:100px; height:100px">
                     </div>
@@ -13,17 +13,10 @@
                         <span class="bundleid ng-binding">BundleID<b class="ng-binding">&nbsp;&nbsp;{{ appinfos.bundle_id }}</b></span>
                         <span class="version ng-scope">{{ master_release.minimum_os_version }}&nbsp; 或者高版本</span>
                     </div>
-
                     <div class="actions">
-
-                        <!--                                        <el-button class="upload" icon="el-icon-cloudy">-->
-                        <!--                                            上传新版本-->
-                        <!--                                        </el-button>-->
-
                         <el-button @click="appDownload" class="download" icon="el-icon-view">
                             预览
                         </el-button>
-
                     </div>
 
                     <div class="tabs-container">
@@ -33,10 +26,17 @@
                             </el-col>
 
                             <el-col :span="3">
+                                <a class="" ref="security" @click="security"><i class="el-icon-set-up"></i>权限管理</a>
+                            </el-col>
 
+                            <el-col :span="3">
                                 <a class="" ref="combo" @click="combo"><i class="el-icon-copy-document"
                                                                           style="transform:rotateX(180deg);"></i>应用合并</a>
                             </el-col>
+                            <el-col :span="3" v-if="appinfos.type">
+                                <a class="" ref="devices" @click="devices"><i class="el-icon-mobile-phone"></i>设备列表</a>
+                            </el-col>
+
                         </el-row>
                     </div>
                 </div>
@@ -48,7 +48,6 @@
                             v-model="$store.state.appInfoIndex[0]"
                             range
                             :show-tooltip="false"
-                            :change="slidevents()"
                             :max="100">
                     </el-slider>
                 </div>
@@ -57,10 +56,7 @@
                 <el-container style="padding-top: 20px;max-width: 96%">
                     <router-view></router-view>
                 </el-container>
-
             </div>
-
-
         </div>
     </el-main>
 
@@ -80,44 +76,43 @@
                 activity: {
                     editing: false
                 },
-                slidvalue: [[5, 5], [5, 5]]
-
             }
         },
         methods: {
+            setfunactive(item,index){
+                for (let key in this.$refs) {
+                    if(key === item){
+                        this.$refs[key].classList.add('active');
+                        this.$store.dispatch('doappInfoIndex', [[index, index], [index, index]]);
+                    }else {
+                        this.$refs[key].classList.remove('active');
+                    }
+                }
+            },
             appDownload() {
                 this.$router.push({name: 'FirDownload', params: { short: this.appinfos.short }})
             },
-            combo() {
-                this.$router.push({name: 'FirAppInfoscombo'});
-                this.$store.dispatch('doappInfoIndex', [[31, 31], [31, 31]]);
-
-                this.$refs.combo.classList.add('active');
-                this.$refs.baseinfo.classList.remove('active');
-
-
+            defaulttimeline() {
+                this.setfunactive('timeline',5);
+                this.$router.push({name: 'FirAppInfostimeline'});
             },
             baseinfo() {
-                this.$refs.baseinfo.classList.add('active');
-                this.$refs.combo.classList.remove('active');
-
+                this.setfunactive('baseinfo',18);
                 this.$router.push({name: 'FirAppInfosbaseinfo'});
-                this.$store.dispatch('doappInfoIndex', [[18, 18], [18, 18]]);
+            },
+            security(){
+                this.setfunactive('security',31);
+                this.$router.push({name: 'FirAppInfossecurity'});
 
             },
-            slidevents() {
-                // let index = this.$store.state.appInfoIndex[1];
-                // this.$store.dispatch('doappInfoIndex',[index,index]);
-                // eslint-disable-next-line no-console
-                // console.log(index);
+            combo() {
+                this.setfunactive('combo',44);
+                this.$router.push({name: 'FirAppInfoscombo'});
             },
-            defaulttimeline() {
-                this.$refs.baseinfo.classList.remove('active');
-                this.$refs.combo.classList.remove('active');
-                this.$router.push({name: 'FirAppInfostimeline'});
-                this.$store.dispatch('doappInfoIndex', [[5, 5], [5, 5]]);
+            devices(){
+                this.setfunactive('devices',57);
+                this.$router.push({name: 'FirAppInfosdevices'});
             },
-
         }, created() {
 
         }, filters: {
@@ -132,21 +127,8 @@
             },
         },
         computed: {
-            getBH: function () {
-                let sch = this.$refs.appinfomain.scrollHeight;
-
-                if (sch === 0 || sch < window.innerHeight) {
-                    sch = window.innerHeight;
-
-
-                } else {
-                    sch += 130;
-                }
-                return sch;
-            }
 
         }, mounted() {
-
             getappinfos(data => {
 
                 if (data.code === 1000) {
@@ -161,14 +143,12 @@
                     // eslint-disable-next-line no-console
                     console.log("失败了");
                 }
-
             }, {
                 "app_id": this.$route.params.id
             });
             if(this.$store.state.currentapp.master_release){
                 this.icon_url = this.$store.state.currentapp.master_release.icon_url
             }
-            // this.$store.dispatch('dosetAh',this.getBH);
         },watch:{
             '$store.state.currentapp.master_release.icon_url':function () {
                     this.icon_url = this.$store.state.currentapp.master_release.icon_url

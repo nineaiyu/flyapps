@@ -58,13 +58,18 @@
                                         </el-button>
 
                                         <button type="button" v-else-if="wrong">{{ msg }}</button>
-<!--                                        <button v-else @click="download">下载安装</button>-->
                                         <div v-else >
+                                            <button v-if="isdownload" disabled="" class="loading" style="min-width: 42px; width: 42px; padding: 21px 0; border-top-color: transparent; border-left-color: transparent;">&nbsp;</button>
+                                            <div v-else>
+                                                <div v-if="currentappinfo.need_password" style="margin:0 auto; width:166px">
+                                                    <el-input  prefix-icon="el-icon-lock" clearable="true" placeholder="请输入密码"  v-model="password" icon="el-icon-loadings" type="primary" :underline="false"> </el-input>
+                                                </div>
+                                                <el-divider v-if="currentappinfo.need_password"></el-divider>
+                                                <button  @click="download" >
+                                                    <el-link icon="el-icon-loadings" type="primary" :underline="false"> 下载安装 </el-link>
+                                                </button>
+                                            </div>
 
-                                            <button v-if="isdownload" disabled="" class="loading" style="min-width: 43px; width: 43px; padding: 12px 0; border-top-color: transparent; border-left-color: transparent;">&nbsp;</button>
-                                            <button v-else @click="download" >
-                                                <el-link icon="el-icon-loadings" type="primary" :underline="false"> 下载安装 </el-link>
-                                            </button>
                                         </div>
 
                                     </div>
@@ -158,36 +163,48 @@
                 agent: '',
                 wrong: false,
                 msg: '',
+                password:'',
                 dchoice:false,
                 downloadurl:"",
                 isdownload:false,
             }
         }, methods: {
             download() {
-                this.isdownload = true;
-                getdownloadurl(res=>{
-                    if(res.code === 1000){
+                if( this.currentappinfo.app_id){
+                    this.isdownload = true;
+                    getdownloadurl(res=>{
+                        if(res.code === 1000){
 
-                        if(this.currentappinfo.type === 1){
-                            let download_url = res.data.download_url;
-                            download_url = download_url.replace('http://localhost/download',getplisturl());
-                            this.downloadurl="itms-services://?action=download-manifest&url="+encodeURIComponent(download_url);
-                        }else{
-                            if(this.agent !== ''){
-                                this.downloadurl = res.data.download_url;
+                            if(this.currentappinfo.type === 1){
+                                let download_url = res.data.download_url;
+                                download_url = download_url.replace('http://localhost/download',getplisturl());
+                                this.downloadurl="itms-services://?action=download-manifest&url="+encodeURIComponent(download_url);
+                            }else{
+                                if(this.agent !== ''){
+                                    this.downloadurl = res.data.download_url;
+                                }
                             }
-                        }
 
-                        window.location.href=this.downloadurl;
-                    }
-                }, {
-                    'data': {
-                        'token': this.mcurrentappinfo.download_token,
-                        'short': this.currentappinfo.short,
-                        'release_id': this.mcurrentappinfo.release_id,
-                    },
-                    'app_id': this.currentappinfo.app_id
-                })
+                            window.location.href=this.downloadurl;
+                        }
+                        else {
+                            this.isdownload = false;
+                            this.password='';
+                            this.$message({
+                                message:"密码错误，或者下载链接失效",
+                                type: 'error',
+                            });
+                        }
+                    }, {
+                        'data': {
+                            'token': this.mcurrentappinfo.download_token,
+                            'short': this.currentappinfo.short,
+                            'release_id': this.mcurrentappinfo.release_id,
+                            'password':this.password,
+                        },
+                        'app_id': this.currentappinfo.app_id
+                    })
+                }
             },
             qrcode() {
                 new QRCode('qrcode', {

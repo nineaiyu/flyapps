@@ -15,7 +15,7 @@ from api.utils.storage.caches import get_app_instance_by_cache,get_download_url_
 import os
 from rest_framework_extensions.cache.decorators import cache_response
 
-from api.utils.serializer import AppsSerializer
+from api.utils.serializer import AppsShortSerializer
 from api.models import Apps,AppReleaseInfo
 from django.http import FileResponse
 class DownloadView(APIView):
@@ -81,7 +81,12 @@ class ShortDownloadView(APIView):
             res.msg="该应用不存在"
             return Response(res.dict)
 
-        app_serializer = AppsSerializer(app_obj,context={"key":"ShortDownloadView","release_id":release_id,"storage":Storage(app_obj.user_id)})
+        if not app_obj.isshow:
+            res.code=1004
+            res.msg="您没有权限访问该应用"
+            return Response(res.dict)
+
+        app_serializer = AppsShortSerializer(app_obj,context={"key":"ShortDownloadView","release_id":release_id,"storage":Storage(app_obj.user_id)})
         res.data = app_serializer.data
         return Response(res.dict)
 
@@ -101,6 +106,7 @@ class InstallView(APIView):
         short = request.query_params.get("short",None)
         release_id = request.query_params.get("release_id",None)
         isdownload = request.query_params.get("isdownload",None)
+        password = request.query_params.get("password",None)
 
         if not downtoken or not short or not release_id:
             res.code=1004
@@ -109,15 +115,9 @@ class InstallView(APIView):
 
         dtoken = DownloadToken()
         if dtoken.verify_token(downtoken,release_id):
-            # app_obj = Apps.objects.filter(app_id=app_id).values("pk",'user_id','type','short').first()
-            app_obj = get_app_instance_by_cache(app_id,900)
+            app_obj = get_app_instance_by_cache(app_id,password,900)
             if app_obj:
-
-                # Apps.objects.filter(app_id=app_id).update(count_hits=F('count_hits') + 1)
-                # UserInfo.objects.filter(pk=app_obj.get("user_id")).update(all_download_times=F('all_download_times') + 1)
                 set_app_download_by_cache(app_id)
-                # release_obj = AppReleaseInfo.objects.filter(app_id=app_obj.get('pk')).values("release_id")
-                # if release_obj:
                 if app_obj.get("type") == 0:
                     apptype = '.apk'
                     download_url = get_download_url_by_cache(app_obj,release_id + apptype,600)

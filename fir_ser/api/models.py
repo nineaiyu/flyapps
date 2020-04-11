@@ -101,9 +101,10 @@ class Apps(models.Model):
     bundle_id = models.CharField(max_length=64,blank=True,verbose_name="bundle id")
     has_combo = models.OneToOneField(to="Apps", related_name='combo_app_info',
          verbose_name="关联应用",on_delete=models.SET_NULL,null=True,blank=True)
-    # icon_img = models.ImageField(upload_to="course/%Y-%m", verbose_name='图标')
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     count_hits = models.BigIntegerField(verbose_name="下载次数",default=0)
+    password = models.CharField(verbose_name="访问密码",default='',help_text='默认 没有密码',max_length=32)
+    isshow = models.BigIntegerField(verbose_name="下载页可见",default=1)
     description = models.TextField('描述', blank=True, null=True, default=None, )
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     class Meta:
@@ -128,6 +129,7 @@ class AppReleaseInfo(models.Model):
     binary_url = models.CharField(max_length=128,blank=True,verbose_name="第三方下载URL")
     icon_url = models.CharField(max_length=128,blank=True,verbose_name="图标url")
     changelog = models.TextField('更新日志', blank=True, null=True, default=None, )
+    udid = models.TextField('ios内测版 udid', blank=True, null=True, default='', )
 
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
 

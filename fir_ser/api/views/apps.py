@@ -167,6 +167,8 @@ class AppInfoView(APIView):
                     del_cache_response_by_short(apps_obj.short,apps_obj.app_id)
                     apps_obj.short = data.get("short", apps_obj.short)
                     apps_obj.name = data.get("name", apps_obj.name)
+                    apps_obj.password = data.get("password", apps_obj.password)
+                    apps_obj.isshow = data.get("isshow", apps_obj.isshow)
                     apps_obj.save()
                 except Exception as e:
                     res.code = 1005

@@ -5,8 +5,8 @@
 # date: 2020/4/7
 
 from django.core.cache import cache
-from api.models import Apps,UserInfo
-import time
+from api.models import Apps,UserInfo,AppReleaseInfo
+import time,os
 from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE
 from api.utils.storage.storage import Storage,LocalStorage
@@ -29,12 +29,22 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True,key=''):
         return storage.get_download_url(filename, limit)
 
 
-def get_app_instance_by_cache(app_id, limit):
+def get_app_instance_by_cache(app_id,password, limit):
     app_key="_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"),app_id])
     app_obj_cache = cache.get(app_key)
     if not app_obj_cache:
-        app_obj_cache = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type').first()
+        app_obj_cache = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type','password').first()
         cache.set(app_key, app_obj_cache, limit)
+
+    app_password=app_obj_cache.get("password")
+
+    if app_password != '':
+        if password is None:
+            return None
+
+        if app_password.lower() != password.strip().lower():
+            return None
+
     return app_obj_cache
 
 
@@ -53,6 +63,14 @@ def set_app_download_by_cache(app_id, limit=900):
 def del_cache_response_by_short(short,app_id):
     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_short_key"),short]))
     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"),app_id]))
+
+
+    key='ShortDownloadView'.lower()
+    master_release_dict = AppReleaseInfo.objects.filter(app_id__app_id=app_id,is_master=True).values('icon_url','release_id').first()
+    download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
+    cache.delete("_".join([key, download_val, os.path.basename(master_release_dict.get("icon_url"))]))
+    cache.delete("_".join([key,download_val, master_release_dict.get('release_id')]))
+    cache.delete("_".join([key.lower(), CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id')]))
 
 
 def set_app_today_download_times(app_id):

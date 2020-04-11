@@ -56,13 +56,18 @@
                     </button>
 
                     <button type="button" v-else-if="wrong">{{ msg }}</button>
-                    <!--                                        <button v-else @click="download">下载安装</button>-->
                     <div v-else >
+                      <button v-if="isdownload" disabled="" class="loading" style="min-width: 42px; width: 42px; padding: 21px 0; border-top-color: transparent; border-left-color: transparent;">&nbsp;</button>
+                      <div v-else>
+                        <div v-if="currentappinfo.need_password" style="margin:0 auto; width:166px">
+                          <input  class="passwd"  placeholder="请输入密码"  v-model="password" />
+                        </div>
+                        <br/>
+                        <button  @click="download" >
+                          <a icon="el-icon-loadings" type="primary" :underline="false"> 下载安装 </a>
+                        </button>
+                      </div>
 
-                      <button v-if="isdownload" disabled="" class="loading" style="min-width: 43px; width: 43px; padding: 12px 0; border-top-color: transparent; border-left-color: transparent;">&nbsp;</button>
-                      <button v-else @click="download" >
-                        <a icon="el-icon-loadings" type="primary" :underline="false"> 下载安装 </a>
-                      </button>
                     </div>
 
                   </div>
@@ -160,6 +165,7 @@
         agent: '',
         wrong: false,
         msg: '',
+        password:'',
         dchoice:false,
         downloadurl:"",
         isdownload:false,
@@ -167,32 +173,39 @@
       }
     }, methods: {
       download() {
-        this.isdownload = true;
-        getdownloadurl(res=>{
-          if(res.code === 1000){
+        if( this.currentappinfo.app_id) {
 
-            if(this.currentappinfo.type === 1){
-              let download_url = res.data.download_url;
-              download_url = download_url.replace('http://localhost/download',getplisturl());
-              this.downloadurl="itms-services://?action=download-manifest&url="+encodeURIComponent(download_url);
-            }else{
-              if(this.agent !== ''){
-                this.downloadurl = res.data.download_url;
+          this.isdownload = true;
+          getdownloadurl(res => {
+            if (res.code === 1000) {
+
+              if (this.currentappinfo.type === 1) {
+                let download_url = res.data.download_url;
+                download_url = download_url.replace('http://localhost/download', getplisturl());
+                this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
+              } else {
+                if (this.agent !== '') {
+                  this.downloadurl = res.data.download_url;
+                }
               }
-            }
 
-            window.location.href=this.downloadurl;
-          }
-        }, {
-          'data': {
-            'token': this.mcurrentappinfo.download_token,
-            'short': this.currentappinfo.short,
-            'release_id': this.mcurrentappinfo.release_id,
-          },
-          'app_id': this.currentappinfo.app_id
-        })
+              window.location.href = this.downloadurl;
+            } else {
+              this.isdownload = false;
+              alert("密码错误，或者下载链接失效")
+            }
+          }, {
+            'data': {
+              'token': this.mcurrentappinfo.download_token,
+              'short': this.currentappinfo.short,
+              'release_id': this.mcurrentappinfo.release_id,
+              'password': this.password,
+            },
+            'app_id': this.currentappinfo.app_id
+          })
+        }
       },
-      qrcode() {
+      qrcode(){
         new QRCode('qrcode', {
           width: 100,
           height: 100,
@@ -285,11 +298,6 @@
 
           }
           else {
-          //   this.$message({
-          //     message: data.msg,
-          //     type: 'error',
-          //     duration:0
-          //   });
             this.iserror = true;
           }
         }, params)
@@ -719,38 +727,6 @@
     display: none
   }
 
-  .passwd form {
-    text-align: center
-  }
-
-  .passwd form h4 {
-    font-weight: 400;
-    font-size: 18px
-  }
-
-  .passwd form button, .passwd form input {
-    padding: 12px 20px;
-    width: 300px;
-    border: 1px solid #f8ba0b;
-    border-radius: 5px;
-    font-size: 16px
-  }
-
-  .passwd form button:focus, .passwd form input:focus {
-    outline: 0
-  }
-
-  .passwd form input {
-    color: #f8ba0b;
-    text-align: center
-  }
-
-  .passwd form button {
-    border-color: #f8ba0b;
-    background-color: #f8ba0b;
-    color: #fff;
-    cursor: pointer
-  }
 
   .main .icon-container {
     position: relative;
@@ -915,6 +891,14 @@
     color: #fff
   }
 
+  .main > header .actions input {
+    display: inline-block;
+    padding: 12px 46px;
+    width: 166px;
+    border: 1px solid #32b2a7;
+    border-radius: 40px;
+    font-size: 14px;
+  }
   .main > header .actions button a{
     color: #fff
   }

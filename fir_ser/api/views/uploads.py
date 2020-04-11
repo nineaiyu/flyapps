@@ -85,7 +85,8 @@ class AppAnalyseView(APIView):
             "versioncode":data.get("version"),
             "release_type":data.get("release_type"),
             "miniOSversion":data.get("miniosversion"),
-            "changelog":data.get("changelog",'')
+            "changelog":data.get("changelog",''),
+            "udid": data.get("udid", ''),
         }
 
         try:
