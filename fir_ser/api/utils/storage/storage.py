@@ -15,7 +15,10 @@ from django.core.cache import cache
 
 class Storage(object):
     def __init__(self, user):
-        self.storage = self.get_storage(user)
+        try:
+            self.storage = self.get_storage(user)
+        except Exception as e:
+            self.storage=None
 
     def get_upload_token(self, filename, expires=900):
         if self.storage:

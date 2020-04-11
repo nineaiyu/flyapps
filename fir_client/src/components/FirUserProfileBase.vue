@@ -19,7 +19,7 @@
             <div class="user_pro_tabs">
 
                 <el-row :gutter="12" class="row">
-                    <el-col :span="6" :offset="6">
+                    <el-col :span="6" :offset="3">
                         <div class="col-4">
                             <a @click="$router.push({name:'FirUserProfileInfo'})" ref="userinfo" class="">
                         <span>
@@ -34,6 +34,16 @@
                             <a ref="changepwd" class="" @click="$router.push({name:'FirUserProfileChangePwd'})">
                                 <span><i class="el-icon-lock"></i></span>
                                 修改密码
+                            </a>
+                        </div>
+
+                    </el-col>
+
+                    <el-col :span="6">
+                        <div class="col-4">
+                            <a ref="storage" class="" @click="$router.push({name:'FirUserProfileStorage'})">
+                                <span><i class="el-icon-coin"></i></span>
+                                存储配置
                             </a>
                         </div>
 
@@ -71,7 +81,7 @@
                         // eslint-disable-next-line no-console
                         console.log(data.data);
                         this.$message.success('上传成功');
-                        this.updateUserInfo({"methods":false});
+                        this.updateUserInfo({"methods":'GET'});
 
                     }else {
                         this.$message.error('更新失败');
@@ -138,7 +148,7 @@
                                 let certinfo=data.data;
                                 this.uploadtostorage(file,certinfo);
                             }
-                        },{'methods':false,'data':{'app_id':this.userinfo.uid,'upload_key':file.name,'ftype':'head'}});
+                        },{'methods':'GET','data':{'app_id':this.userinfo.uid,'upload_key':file.name,'ftype':'head'}});
 
                         return false;
                     }
@@ -153,18 +163,27 @@
                 return false;
 
             },
+            setfunactive(item){
+                for (let key in this.$refs) {
+                    if(key === item){
+                        this.$refs[key].classList.add('active');
+                    }else {
+                        this.$refs[key].classList.remove('active');
+                    }
+                }
+            },
             autoSetInfoIndex() {
                 if (this.$store.state.userInfoIndex === 0) {
-                    this.$refs.userinfo.classList.add('active');
-                    this.$refs.changepwd.classList.remove('active');
+                    this.setfunactive('userinfo');
                 } else if (this.$store.state.userInfoIndex === 1) {
-                    this.$refs.changepwd.classList.add('active');
-                    this.$refs.userinfo.classList.remove('active');
+                    this.setfunactive('changepwd');
+                }else if (this.$store.state.userInfoIndex === 2) {
+                    this.setfunactive('storage');
                 }
             }
         }, mounted() {
             this.autoSetInfoIndex();
-            this.updateUserInfo({"methods":false});
+            this.updateUserInfo({"methods":'GET'});
         }, watch: {
             '$store.state.userInfoIndex': function () {
                 this.autoSetInfoIndex();

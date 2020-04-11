@@ -26,6 +26,7 @@ import FirAppInfoscombo from "@/components/FirAppInfoscombo";
 import FirUserProfile from "@/components/FirUserProfileBase";
 import FirUserProfileInfo from "@/components/FirUserProfileInfo";
 import FirUserProfileChangePwd from "@/components/FirUserProfileChangePwd";
+import FirUserProfileStorage from "@/components/FirUserProfileStorage";
 
 const router = new VueRouter({
     mode:'history',
@@ -100,6 +101,10 @@ const router = new VueRouter({
                             path: 'setpasswd',
                             name: 'FirUserProfileChangePwd',
                             component: FirUserProfileChangePwd
+                        }, {
+                            path: 'storage',
+                            name: 'FirUserProfileStorage',
+                            component: FirUserProfileStorage
                         }
                     ]
                 }

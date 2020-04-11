@@ -191,7 +191,7 @@
                                 let certinfo=data.data;
                                 this.uploadtostorage(file,certinfo);
                             }
-                        },{'methods':false,'data':{'app_id':this.currentapp.app_id,'upload_key':file.name,'ftype':'app'}});
+                        },{'methods':'GET','data':{'app_id':this.currentapp.app_id,'upload_key':file.name,'ftype':'app'}});
                     }
                     else{
                         this.$message.error('上传应用图片大小不能超过 2MB!');

@@ -159,7 +159,7 @@
                 }
             },
             getphonecode() {
-                this.updateUserInfo({"methods":false,'data':{'act':'sms'}});
+                this.updateUserInfo({"methods":'GET','data':{'act':'sms'}});
 
             }
         }, mounted() {

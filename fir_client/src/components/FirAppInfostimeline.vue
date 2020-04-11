@@ -173,7 +173,6 @@
                 }, {
                     "app_id": this.$route.params.id,
                     "action": "timeline",
-                    "methods": false
                 })
             },
             del_release_app(app) {

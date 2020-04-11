@@ -22,6 +22,7 @@ from api.views.captcha import CaptchaView
 from api.views.apps import AppsView,AppInfoView,AppReleaseinfoView
 from api.views.download import ShortDownloadView
 from api.views.uploads import AppAnalyseView,UploadView
+from api.views.storage import StorageView
 
 
 # router=DefaultRouter()
@@ -33,6 +34,7 @@ urlpatterns = [
     re_path("^logout",LogoutView.as_view()),
     re_path("^captcha_check/",CaptchaView.as_view()),
     re_path("^apps$", AppsView.as_view()),
+    re_path("^storage$", StorageView.as_view()),
     re_path("^apps/(?P<app_id>\w+)", AppInfoView.as_view()),
     re_path("^appinfos/(?P<app_id>\w+)/(?P<act>\w+)", AppReleaseinfoView.as_view()),
     re_path("^upload$",UploadView.as_view()),

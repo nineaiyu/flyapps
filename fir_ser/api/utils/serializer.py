@@ -187,3 +187,12 @@ class AppReleaseSerializer(serializers.ModelSerializer):
 
     def get_editing(self, obj):
         return {"changelog":False,"binary_url":False}
+
+
+class StorageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.AppStorage
+        # depth = 1
+        exclude = ["user_id"]
+
+    storage_type_display= serializers.CharField(source="get_storage_type_display")
