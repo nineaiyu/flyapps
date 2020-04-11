@@ -62,8 +62,11 @@ def set_app_download_by_cache(app_id, limit=900):
 
 def del_cache_response_by_short(short,app_id):
     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_short_key"),short]))
-    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"),app_id]))
+    key = "_".join([CACHE_KEY_TEMPLATE.get("download_short_key"),short,'*'])
+    for app_download_key in cache.iter_keys(key):
+        cache.delete(app_download_key)
 
+    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"),app_id]))
 
     key='ShortDownloadView'.lower()
     master_release_dict = AppReleaseInfo.objects.filter(app_id__app_id=app_id,is_master=True).values('icon_url','release_id').first()
