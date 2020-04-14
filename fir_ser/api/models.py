@@ -152,10 +152,11 @@ class AppStorage(models.Model):
     bucket_name=models.CharField(max_length=128,blank=True, null=True, verbose_name="存储空间bucket_name")
     domain_name=models.CharField(max_length=128,blank=True, null=True, verbose_name="下载域名",help_text='fly-storage.dvcloud.xin,可以自定义端口')
     is_https = models.BooleanField(default=True, verbose_name="是否支持https")
-    additionalparameters = models.TextField(max_length=256,blank=True, null=True,verbose_name="额外参数",
-                                            help_text='阿里云:{"sts_role_arn":"arn信息","endpoint":""} ')
+    additionalparameters = models.TextField(blank=True, null=True,verbose_name="额外参数",
+                                            help_text='阿里云:{"sts_role_arn":"arn信息","endpoint":""} ', default=None)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
-    description = models.TextField('备注', blank=True, null=True, default=None, )
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    description = models.TextField('备注', blank=True, null=True, default='')
 
     class Meta:
         verbose_name = '存储配置'

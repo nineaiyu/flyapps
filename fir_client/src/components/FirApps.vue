@@ -755,11 +755,15 @@
                 return ftype
             },
             make_icon_url(icon_url) {
-                if (!icon_url.startsWith("http")) {
-                    return location.origin + icon_url
-                } else {
-                    return icon_url
+                if(icon_url){
+                    if (!icon_url.startsWith("http")) {
+                        return location.origin + icon_url
+                    } else {
+                        return icon_url
+                    }
                 }
+                return icon_url
+
             },
             get_upload_text(is_new) {
                 if (is_new) {

@@ -1,6 +1,6 @@
 import Axios from 'axios'
 import VueCookies from 'vue-cookies'
-
+import router from "../router";
 const https = require('https');
 const Base64 = require('js-base64').Base64;
 Axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -45,7 +45,7 @@ function getData(methods = true, url, params = {}, callBack, load, isCode = fals
 
     if (methods === "DELETE") {
         Axios
-            .delete(url, params)
+            .delete(url, {params:params})
             .then(function (response) {
                 if (isCode) {
                     callBack(response.data);
@@ -150,6 +150,9 @@ function getData(methods = true, url, params = {}, callBack, load, isCode = fals
             .catch(function (error) {
                 // eslint-disable-next-line no-console
                 console.log(error, error.response);
+                if(error.response && error.response.status === 403){
+                    router.push({name: 'FirLogin'});
+                }
                 callBack(null);
             });
     }

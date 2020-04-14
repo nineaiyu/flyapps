@@ -3,7 +3,7 @@ from api import models
 from api.utils.app.apputils import bytes2human
 from api.utils.TokenManager import DownloadToken
 from api.utils.storage.storage import Storage
-import os
+import os,json
 
 token_obj = DownloadToken()
 
@@ -192,7 +192,23 @@ class AppReleaseSerializer(serializers.ModelSerializer):
 class StorageSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppStorage
-        # depth = 1
         exclude = ["user_id"]
 
-    storage_type_display= serializers.CharField(source="get_storage_type_display")
+    storage_type_display= serializers.CharField(source="get_storage_type_display",read_only=True)
+    additionalparameters=serializers.CharField(write_only=True)
+    additionalparameter=serializers.SerializerMethodField(read_only=True)
+
+    def get_additionalparameter(self,obj):
+        infos={}
+        try:
+            infos = json.loads(obj.additionalparameters)
+        except Exception as e:
+            print(e)
+        return infos
+
+    def create(self, validated_data):
+        if self.context.get("user_obj", None) and self.context.get("user_obj") != "undefined":
+            user_obj = self.context.get("user_obj", None)
+            storage_obj = models.AppStorage.objects.create(**validated_data,user_id=user_obj,)
+            return storage_obj
+        return None
