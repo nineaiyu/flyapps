@@ -9,12 +9,7 @@ from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
 import json
-from django.db.models import Sum
-import os
-from fir_ser import settings
-from api.utils.app.randomstrings import make_from_user_uuid
-from api.utils.storage.storage import Storage
-from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times
+from api.utils.storage.caches import del_cache_storage
 from api.models import  AppStorage,UserInfo
 from api.utils.serializer import StorageSerializer
 
@@ -80,6 +75,7 @@ class StorageView(APIView):
                     UserInfo.objects.filter(pk=request.user.pk).update(storage=None)
                 else:
                     UserInfo.objects.filter(pk=request.user.pk).update(storage_id=use_storage_id)
+                del_cache_storage(request.user)
             except Exception as e:
                 print(e)
                 res.code=1006

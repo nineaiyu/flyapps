@@ -5,8 +5,8 @@
 # date: 2020/4/7
 
 from django.core.cache import cache
-from api.models import Apps,UserInfo,AppReleaseInfo
-import time,os
+from api.models import Apps,UserInfo,AppReleaseInfo,AppStorage
+import time,os,base64,json
 from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE
 from api.utils.storage.storage import Storage,LocalStorage
@@ -73,8 +73,27 @@ def del_cache_response_by_short(short,app_id):
     download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
     cache.delete("_".join([key, download_val, os.path.basename(master_release_dict.get("icon_url"))]))
     cache.delete("_".join([key,download_val, master_release_dict.get('release_id')]))
-    cache.delete("_".join([key.lower(), CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id')]))
+    cache.delete("_".join([key, CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id')]))
 
+
+def del_cache_by_app_id(app_id,user_obj):
+    key=''
+    master_release_dict = AppReleaseInfo.objects.filter(app_id__app_id=app_id,is_master=True).values('icon_url','release_id').first()
+    download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
+    cache.delete("_".join([key, download_val, os.path.basename(master_release_dict.get("icon_url"))]))
+    cache.delete("_".join([key,download_val, master_release_dict.get('release_id')]))
+    cache.delete("_".join([key.lower(), CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id')]))
+    cache.delete("_".join([key,download_val,user_obj.head_img]))
+
+
+def del_cache_storage(user_obj):
+    for app_obj in Apps.objects.filter(user_id=user_obj):
+        del_cache_response_by_short(app_obj.short, app_obj.app_id)
+        del_cache_by_app_id(app_obj.app_id,user_obj)
+
+    storage_keys = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'),user_obj.uid,'*'])
+    for storage_key in cache.iter_keys(storage_keys):
+        cache.delete(storage_key)
 
 def set_app_today_download_times(app_id):
     now = timezone.now()

@@ -50,7 +50,7 @@ class Storage(object):
         self.storage_obj = user.storage
         if self.storage_obj:
             auth = self.get_storage_auth(self.storage_obj)
-            storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'),
+            storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'),user.uid,
                                     base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
             storage_type = self.storage_obj.storage_type
             new_storage_obj = cache.get(storage_key)
@@ -68,9 +68,9 @@ class Storage(object):
                 cache.set(storage_key, new_storage_obj, 600)
                 return new_storage_obj
         else:
-            return self.get_default_storage()
+            return self.get_default_storage(user)
 
-    def get_default_storage(self):
+    def get_default_storage(self,user):
         admin_storage = UserInfo.objects.first().storage
         if admin_storage:
             return self.get_storage(UserInfo)
@@ -80,7 +80,7 @@ class Storage(object):
                 if storage.get("active", None):
                     storage_type = storage.get('type', None)
                     auth = storage.get('auth', {})
-                    storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'),
+                    storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'),user.uid,
                                             base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
                     new_storage_obj = cache.get(storage_key)
                     if new_storage_obj:
