@@ -71,7 +71,7 @@ class Storage(object):
             return self.get_default_storage(user)
 
     def get_default_storage(self,user):
-        admin_storage = UserInfo.objects.first().storage
+        admin_storage = UserInfo.objects.filter(is_superuser=True).order_by('pk').first().storage
         if admin_storage:
             return self.get_storage(UserInfo)
         else:

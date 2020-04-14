@@ -1,6 +1,6 @@
 <template>
     <div style="text-align:center">
-
+        <h2 v-if="is_admin_storage">管理员存储，您配置的存储将决定其他用户配置的默认存储，请谨慎修改</h2>
         <el-dialog :title="title" :visible.sync="dialogstorageVisible" :destroy-on-close="true" :close-on-click-modal="false">
 
             <el-form v-if="editstorageinfo.id !==-1" ref="storageinfoform" :model="editstorageinfo"
@@ -216,6 +216,7 @@
                 isaddflag: false,
                 activeName: 'chostorage',
                 storage_info_lists: [],
+                is_admin_storage:false,
             }
         }, methods: {
             deepCopy(source) {
@@ -364,6 +365,7 @@
                         this.org_storage_id=this.use_storage_id = data.storage;
                         this.storage_list = data.storage_list;
                         this.storage_info_lists = data.data;
+                        this.is_admin_storage = data.is_admin_storage;
                         this.format_storage(data.data);
                         this.disabled=true;
                         this.isaddflag=false;

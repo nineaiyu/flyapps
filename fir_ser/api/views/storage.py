@@ -44,6 +44,10 @@ class StorageView(APIView):
             if storage_t[0] in [0, 3]: continue
             res.storage_list.append({'id': storage_t[0], 'name': storage_t[1]})
 
+        admin_storage = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
+        res.is_admin_storage=False
+        if admin_storage.uid == request.user.uid:
+            res.is_admin_storage = True
         return Response(res.dict)
 
     def post(self, request):
