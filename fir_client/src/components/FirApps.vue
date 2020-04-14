@@ -490,7 +490,7 @@
                     }
                     loading.close();
                 }, {
-                    'methos': 'POST',
+                    'methods': 'POST',
                     'data': {"bundleid": this.analyseappinfo.bundleid, "type": this.analyseappinfo.type}
                 })
             },
