@@ -129,14 +129,15 @@ class IosUtils(object):
 
     def get_profile_full_path(self):
         cert_dir_name = make_app_uuid(self.user_obj,self.auth.get("username"))
-        cert_dir_path = os.path.join(SUPER_SIGN_ROOT,cert_dir_name)
-        file_format_path_name = os.path.join(cert_dir_path,cert_dir_name,"profile")
-        if not os.path.isdir(file_format_path_name):
-            os.makedirs(file_format_path_name)
-        provisionName = os.path.join(file_format_path_name,self.app_obj.app_id)
+        cert_dir_path = os.path.join(SUPER_SIGN_ROOT,cert_dir_name,"profile")
+        if not os.path.isdir(cert_dir_path):
+            os.makedirs(cert_dir_path)
+        provisionName = os.path.join(cert_dir_path,self.app_obj.app_id)
         return provisionName+ '.mobileprovision'
 
     def resign(self):
+        if AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first().is_signed:
+            return
         self.download_profile()
         cert_dir_name = make_app_uuid(self.app_obj.user_id,self.auth.get("username"))
         cert_dir_path = os.path.join(SUPER_SIGN_ROOT,cert_dir_name)

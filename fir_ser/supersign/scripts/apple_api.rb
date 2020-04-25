@@ -56,7 +56,7 @@ class DevelopPortalHandle
 
         #没有找到就创建，找到就下载
         File.write(provisionName, profile.download)
-        return provisionFileName
+        return provisionName
     end
 
     def delete_profile(provisioningClass,appid)

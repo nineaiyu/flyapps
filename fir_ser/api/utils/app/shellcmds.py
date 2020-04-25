@@ -87,11 +87,12 @@ class SSHConnection(object):
             self._client.close()
 
 def shell_command(cmdstrs):
-    cmdresult = re.split(r'\s+', cmdstrs)
+    # cmdresult = re.split(r'\s+', cmdstrs)
+    # print(cmdresult)
     result = default_result()
     result['return_info'] = ''
     shell_start_time = time.time()
-    child = Popen(cmdresult, shell=True, stdout=PIPE, stderr=PIPE)
+    child = Popen(cmdstrs, shell=True, stdout=PIPE, stderr=PIPE)
     out, err = child.communicate()
     shell_end_time = time.time()
     result['shell_run_time'] = shell_end_time - shell_start_time
@@ -123,5 +124,6 @@ def use_user_pass(hostip,port,user,passwd,cmdstrs):
         print('host: %s user:%s - shell: %s - %s%s - %s%d' % (hostip,user,cmdstrs, 'return_info: ', out, 'exit_code: ', out['status']))
         conn.close()
     return result
+
 
 

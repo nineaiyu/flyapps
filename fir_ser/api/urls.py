@@ -23,7 +23,7 @@ from api.views.apps import AppsView,AppInfoView,AppReleaseinfoView
 from api.views.download import ShortDownloadView
 from api.views.uploads import AppAnalyseView,UploadView
 from api.views.storage import StorageView
-from api.views.download import IosUDIDView
+from api.views.receiveudids import IosUDIDView
 
 
 # router=DefaultRouter()

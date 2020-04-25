@@ -19,8 +19,11 @@ def exec_shell(cmd,remote=False):
         print(result)
         return result
     else:
+        print(cmd)
         result = shell_command(cmd)
         print(result)
+        if result.get("exit_code") != 0 :
+            raise
         return result
 
 
@@ -41,40 +44,33 @@ class AppDeveloperApi(object):
         file_format_path_name = os.path.join(cert_dir_path,cert_dir_name)
         self.cmd=self.cmd + " cert add  '%s'" %(file_format_path_name)
         result = exec_shell(self.cmd)
-        print(result)
 
     def get_profile(self,bundleId,app_id,device_udid,device_name,provisionName):
-        self.cmd=self.cmd + " profile add %s %s %s %s %s '%s'" %(bundleId,app_id,device_udid,device_name,self.certid,provisionName)
+        self.cmd=self.cmd + " profile add '%s' '%s' '%s' '%s' '%s' '%s'" %(bundleId,app_id,device_udid,device_name,self.certid,provisionName)
         result = exec_shell(self.cmd)
-        print(result)
 
     def del_profile(self,bundleId,app_id):
-        self.cmd=self.cmd + " profile del %s %s" %(bundleId,app_id)
+        self.cmd=self.cmd + " profile del '%s' '%s'" %(bundleId,app_id)
         result = exec_shell(self.cmd)
-        print(result)
 
     def set_device_status(self,status,device_udid):
         if status == "enable":
-            self.cmd=self.cmd + " device enable %s" %(device_udid)
+            self.cmd=self.cmd + " device enable '%s'" %(device_udid)
         else:
-            self.cmd=self.cmd + " device disable %s" %(device_udid)
+            self.cmd=self.cmd + " device disable '%s'" %(device_udid)
         result = exec_shell(self.cmd)
-        print(result)
 
     def add_device(self,device_udid,device_name):
-        self.cmd=self.cmd + " device add %s %s" %(device_udid,device_name)
+        self.cmd=self.cmd + " device add '%s' '%s'" %(device_udid,device_name)
         result = exec_shell(self.cmd)
-        print(result)
 
     def add_app(self,bundleId,app_id):
-        self.cmd=self.cmd + " app add %s %s" %(bundleId,app_id)
+        self.cmd=self.cmd + " app add '%s' '%s'" %(bundleId,app_id)
         result = exec_shell(self.cmd)
-        print(result)
 
     def del_app(self,bundleId):
-        self.cmd=self.cmd + " app del %s " %(bundleId)
+        self.cmd=self.cmd + " app del '%s' " %(bundleId)
         result = exec_shell(self.cmd)
-        print(result)
 
 # appdev = AppDeveloperApi("hehehuyu521@163.com","Hehehuyu123")
 # appdev.create_cert()
@@ -87,10 +83,9 @@ class ResignApp(object):
         self.my_local_key=my_local_key
         self.app_dev_pem = app_dev_pem
         # script_path=os.path.join(SUPER_SIGN_ROOT,'scripts','apple_api.rb')
-        self.cmd = "isign  -c %s  -k %s " %(self.app_dev_pem,self.my_local_key)
+        self.cmd = "isign  -c '%s'  -k '%s' " %(self.app_dev_pem,self.my_local_key)
 
     def sign(self,new_profile,org_ipa,new_ipa):
 
-        self.cmd = self.cmd + " -p %s -o %s  %s" %(new_profile,new_ipa,org_ipa)
+        self.cmd = self.cmd + " -p '%s' -o '%s'  '%s'" %(new_profile,new_ipa,org_ipa)
         result = exec_shell(self.cmd)
-        print(result)

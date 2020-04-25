@@ -10,13 +10,13 @@ from fir_ser import settings
 from api.utils.TokenManager import DownloadToken
 from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.apputils import make_resigned
-from api.utils.app.supersignutils import make_udid_mobileconfig,udid_bytes_to_dict,get_post_udid_url,get_redirect_server_domain,IosUtils
+from api.utils.app.supersignutils import make_udid_mobileconfig,get_post_udid_url
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import get_app_instance_by_cache,get_download_url_by_cache,set_app_download_by_cache,del_cache_response_by_short
 import os
 from rest_framework_extensions.cache.decorators import cache_response
 from api.utils.serializer import AppsShortSerializer
-from api.models import Apps,AppReleaseInfo,AppUDID
+from api.models import Apps,AppReleaseInfo
 from django.http import FileResponse
 class DownloadView(APIView):
     '''
@@ -153,36 +153,5 @@ class InstallView(APIView):
         res.code = 1006
         res.msg = "该应用不存在"
         return Response(res.dict)
-
-
-
-
-from django.views import View
-from django.http import HttpResponsePermanentRedirect,Http404
-
-class IosUDIDView(View):
-
-    def post(self,request,short):
-        stream_f = str(request.body)
-        format_udid_info = udid_bytes_to_dict(stream_f)
-        print(format_udid_info,short)
-
-        try:
-            app_info=Apps.objects.filter(short=short).values("pk",'issupersign').first()
-
-            if app_info :
-                if app_info.get('issupersign'):
-                    AppUDID.objects.update_or_create(app_id_id= app_info.get('pk'),**format_udid_info,defaults={'udid':format_udid_info.get('udid')})
-                    ios_obj = IosUtils(format_udid_info,app_info)
-                    ios_obj.resign()
-                else:
-                    return Http404
-            else:
-                return Http404
-
-        except Exception as e:
-            print(e)
-        server_domain = get_redirect_server_domain(request)
-        return HttpResponsePermanentRedirect("%s/%s?udid=%s"%(server_domain,short,format_udid_info.get("udid")))
 
 

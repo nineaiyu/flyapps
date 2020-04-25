@@ -180,11 +180,9 @@ class AppUDID(models.Model):
     binary_file = models.CharField(max_length=128,blank=True,verbose_name="签名包名称",null=True)
 
 
-
-
     class Meta:
-        verbose_name = '应用详情'
-        verbose_name_plural = "应用详情"
+        verbose_name = '设备详情'
+        verbose_name_plural = "设备详情"
         unique_together = ('app_id', 'udid',)
 
     def __str__(self):

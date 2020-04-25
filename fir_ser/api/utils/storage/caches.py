@@ -5,8 +5,8 @@
 # date: 2020/4/7
 
 from django.core.cache import cache
-from api.models import Apps,UserInfo,AppReleaseInfo,AppStorage
-import time,os,base64,json
+from api.models import Apps,UserInfo,AppReleaseInfo,AppUDID
+import time,os
 from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE
 from api.utils.storage.storage import Storage,LocalStorage
@@ -21,6 +21,11 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True,key='',u
         if not udid:
             if app_obj.get('issupersign',None):
                 download_url_type = 'mobileconifg'
+        else:
+            appudid_obj = AppUDID.objects.filter(app_id_id=app_obj.get("pk"),udid=udid,is_signed=True).first()
+            if appudid_obj:
+                filename=appudid_obj.binary_file+'.ipa'
+            return local_storage.get_download_url(filename, limit)
         return local_storage.get_download_url(filename, limit, download_url_type)
     down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
     download_val = cache.get(down_key)
