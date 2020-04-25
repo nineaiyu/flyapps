@@ -217,6 +217,7 @@ class APPSuperSignUsedInfo(models.Model):
     user_id = models.ForeignKey(to="UserInfo",verbose_name="用户ID",on_delete=models.CASCADE)
     app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
     udid = models.ForeignKey(to="AppUDID",on_delete=models.CASCADE, verbose_name="所消耗的udid")
+    developerid = models.ForeignKey(to="AppIOSDeveloperInfo",on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     class Meta:
