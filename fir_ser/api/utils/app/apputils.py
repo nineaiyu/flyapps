@@ -133,9 +133,11 @@ def SaveAppInfos(app_file_name,user_obj,appinfo,bundle_id,app_img,short,size):
             del_cache_response_by_short(appmobj.short,appmobj.app_id)
             appmobj.short = short
             appmobj.name = appinfo["labelname"]
+            appmobj.bundle_id = bundle_id
             appmobj.save()
         except Exception as e:
             print(e)
+            appmobj.bundle_id = bundle_id
             appmobj.name = appinfo["labelname"]
             appmobj.save()
 

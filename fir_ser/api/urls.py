@@ -23,6 +23,7 @@ from api.views.apps import AppsView,AppInfoView,AppReleaseinfoView
 from api.views.download import ShortDownloadView
 from api.views.uploads import AppAnalyseView,UploadView
 from api.views.storage import StorageView
+from api.views.download import IosUDIDView
 
 
 # router=DefaultRouter()
@@ -40,5 +41,6 @@ urlpatterns = [
     re_path("^upload$",UploadView.as_view()),
     re_path("^userinfo",UserInfoView.as_view()),
     re_path("^short/(?P<short>\w+)$", ShortDownloadView.as_view()),
+    re_path("^udid/(?P<short>\w+)$", IosUDIDView.as_view()),
     re_path("^analyse$", AppAnalyseView.as_view()),
 ]

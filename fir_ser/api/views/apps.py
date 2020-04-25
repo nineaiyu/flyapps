@@ -169,8 +169,11 @@ class AppInfoView(APIView):
                     apps_obj.name = data.get("name", apps_obj.name)
                     apps_obj.password = data.get("password", apps_obj.password)
                     apps_obj.isshow = data.get("isshow", apps_obj.isshow)
+                    if apps_obj.type == 1:
+                        apps_obj.issupersign = data.get("issupersign", apps_obj.issupersign)
                     apps_obj.save()
                 except Exception as e:
+                    print(e)
                     res.code = 1005
                     res.msg = "短连接已经存在"
 

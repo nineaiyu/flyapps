@@ -167,6 +167,7 @@
                 dchoice:false,
                 downloadurl:"",
                 isdownload:false,
+                udid:"",
             }
         }, methods: {
             download() {
@@ -176,9 +177,16 @@
                         if(res.code === 1000){
 
                             if(this.currentappinfo.type === 1){
-                                let download_url = res.data.download_url;
-                                download_url = download_url.replace('http://localhost/download',getplisturl());
-                                this.downloadurl="itms-services://?action=download-manifest&url="+encodeURIComponent(download_url);
+                                if(this.currentappinfo.issupersign  && this.udid !== this.$route.query.udid){
+                                    if(this.agent !== ''){
+                                        let download_url = res.data.download_url;
+                                        this.downloadurl = download_url.replace('http://localhost/download',getplisturl());
+                                    }
+                                }else {
+                                    let download_url = res.data.download_url;
+                                    download_url = download_url.replace('http://localhost/download',getplisturl());
+                                    this.downloadurl="itms-services://?action=download-manifest&url="+encodeURIComponent(download_url);
+                                }
                             }else{
                                 if(this.agent !== ''){
                                     this.downloadurl = res.data.download_url;
@@ -201,6 +209,7 @@
                             'short': this.currentappinfo.short,
                             'release_id': this.mcurrentappinfo.release_id,
                             'password':this.password,
+                            'udid':this.udid
                         },
                         'app_id': this.currentappinfo.app_id
                     })
@@ -218,7 +227,11 @@
                 if(this.$route.query.release_id){
                     params["release_id"]=this.$route.query.release_id
                 }
+                if(this.$route.query.udid){
+                    params["udid"]=this.$route.query.udid
+                }
                 getShortAppinfo(data => {
+                    this.udid = data.udid;
                     if (data.code === 1000) {
                         if(!data.data.master_release.release_id){
                             this.$message({

@@ -13,11 +13,15 @@ from api.utils.storage.storage import Storage,LocalStorage
 from api.utils.crontab.sync_cache import sync_download_times_by_app_id
 from api.utils.crontab import run
 
-def get_download_url_by_cache(app_obj, filename, limit, isdownload=True,key=''):
+def get_download_url_by_cache(app_obj, filename, limit, isdownload=True,key='',udid=None):
     now = time.time()
     if isdownload is None:
         local_storage = LocalStorage('localhost', False)
-        return local_storage.get_download_url(filename, limit, 'plist')
+        download_url_type = 'plist'
+        if not udid:
+            if app_obj.get('issupersign',None):
+                download_url_type = 'mobileconifg'
+        return local_storage.get_download_url(filename, limit, download_url_type)
     down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
     download_val = cache.get(down_key)
     if download_val:
@@ -33,7 +37,7 @@ def get_app_instance_by_cache(app_id,password, limit):
     app_key="_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"),app_id])
     app_obj_cache = cache.get(app_key)
     if not app_obj_cache:
-        app_obj_cache = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type','password').first()
+        app_obj_cache = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type','password','issupersign').first()
         cache.set(app_key, app_obj_cache, limit)
 
     app_password=app_obj_cache.get("password")
@@ -60,7 +64,7 @@ def set_app_download_by_cache(app_id, limit=900):
     set_app_today_download_times(app_id)
     return download_times + 1
 
-def del_cache_response_by_short(short,app_id):
+def del_cache_response_by_short(short,app_id,udid=''):
     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_short_key"),short]))
     key = "_".join([CACHE_KEY_TEMPLATE.get("download_short_key"),short,'*'])
     for app_download_key in cache.iter_keys(key):
@@ -71,9 +75,9 @@ def del_cache_response_by_short(short,app_id):
     key='ShortDownloadView'.lower()
     master_release_dict = AppReleaseInfo.objects.filter(app_id__app_id=app_id,is_master=True).values('icon_url','release_id').first()
     download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
-    cache.delete("_".join([key, download_val, os.path.basename(master_release_dict.get("icon_url"))]))
-    cache.delete("_".join([key,download_val, master_release_dict.get('release_id')]))
-    cache.delete("_".join([key, CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id')]))
+    cache.delete("_".join([key, download_val, os.path.basename(master_release_dict.get("icon_url")),udid]))
+    cache.delete("_".join([key,download_val, master_release_dict.get('release_id'),udid]))
+    cache.delete("_".join([key, CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id'),udid]))
 
 
 def del_cache_by_app_id(app_id,user_obj):

@@ -145,6 +145,8 @@ STATICFILES_DIRS=[
 # Media配置
 MEDIA_URL = "files/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "files")
+#supersign配置
+SUPER_SIGN_ROOT = os.path.join(BASE_DIR, "supersign")
 
 AUTH_USER_MODEL="api.UserInfo"
 
@@ -245,6 +247,11 @@ CACHE_KEY_TEMPLATE={
 
 SYNC_CACHE_TO_DATABASE={
     'download_times':10  #下载次数同步时间
+}
+
+SERVER_DOMAIN={
+    'POST_UDID_DOMAIN':'http://192.168.8.236:8000',  #超级签名调试
+    'REDIRECT_UDID_DOMAIN': 'http://192.168.8.236:8080',  # 超级签名调试
 }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"

@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 
 from django.contrib.contenttypes.models import ContentType
-from api.utils.app.randomstrings import make_random_uuid
+from api.utils.app.randomstrings import make_random_uuid,make_app_uuid
 from django.contrib.auth.models import AbstractUser
 
 ######################################## 用户表 ########################################
@@ -105,6 +105,7 @@ class Apps(models.Model):
     count_hits = models.BigIntegerField(verbose_name="下载次数",default=0)
     password = models.CharField(verbose_name="访问密码",default='',help_text='默认 没有密码',max_length=32)
     isshow = models.BigIntegerField(verbose_name="下载页可见",default=1)
+    issupersign = models.BigIntegerField(verbose_name="是否超级签名包",default=False)
     description = models.TextField('描述', blank=True, null=True, default=None, )
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     class Meta:
@@ -164,3 +165,65 @@ class AppStorage(models.Model):
 
     def __str__(self):
         return "%s %s" % (self.user_id.get_username(),self.name)
+
+class AppUDID(models.Model):
+    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
+    udid = models.CharField(max_length=64, unique=True,verbose_name="udid唯一标识",db_index=True)
+    product = models.CharField(max_length=64, verbose_name="产品", blank=True, null=True, )
+    serial = models.CharField(max_length=64, verbose_name="序列号", blank=True, null=True, )
+    version = models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
+    imei= models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
+    iccid= models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    is_signed = models.BooleanField(verbose_name="是否完成签名打包",default=False)
+    binary_file = models.CharField(max_length=128,blank=True,verbose_name="签名包名称",null=True)
+
+
+
+
+    class Meta:
+        verbose_name = '应用详情'
+        verbose_name_plural = "应用详情"
+        unique_together = ('app_id', 'udid',)
+
+    def __str__(self):
+        return "%s-%s" % (self.app_id.name,self.udid)
+
+class AppIOSDeveloperInfo(models.Model):
+    user_id = models.ForeignKey(to="UserInfo",verbose_name="用户ID",on_delete=models.CASCADE)
+    name = models.CharField(max_length=64,verbose_name="开发者标识",unique=True)
+    email = models.EmailField(
+        verbose_name='email address',
+        max_length=64,
+        unique=True,
+        blank=True,
+        null=True
+    )
+    password = models.CharField(max_length=64,)
+    is_actived = models.BooleanField(default=False,verbose_name="是否已经激活")
+    certid = models.CharField(max_length=64,blank=True,verbose_name="超级签名自动创建证书ID",null=True)
+    usable_number = models.IntegerField(verbose_name="可使用设备数",default=100)
+    use_number = models.IntegerField(verbose_name="已消耗设备数",default=0)
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    class Meta:
+        verbose_name = '苹果开发者账户'
+        verbose_name_plural = "苹果开发者账户"
+
+
+    def __str__(self):
+        return "%s-%s" % (self.name,self.email)
+
+class APPSuperSignUsedInfo(models.Model):
+    user_id = models.ForeignKey(to="UserInfo",verbose_name="用户ID",on_delete=models.CASCADE)
+    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
+    udid = models.ForeignKey(to="AppUDID",on_delete=models.CASCADE, verbose_name="所消耗的udid")
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    class Meta:
+        verbose_name = '设备使用统计'
+        verbose_name_plural = "设备使用统计"
+
+    def __str__(self):
+        return "%s-%s-%s" % (self.user_id,self.app_id,self.udid)

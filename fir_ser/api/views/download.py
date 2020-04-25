@@ -10,13 +10,13 @@ from fir_ser import settings
 from api.utils.TokenManager import DownloadToken
 from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.apputils import make_resigned
+from api.utils.app.supersignutils import make_udid_mobileconfig,udid_bytes_to_dict,get_post_udid_url,get_redirect_server_domain,IosUtils
 from api.utils.storage.storage import Storage
-from api.utils.storage.caches import get_app_instance_by_cache,get_download_url_by_cache,set_app_download_by_cache
+from api.utils.storage.caches import get_app_instance_by_cache,get_download_url_by_cache,set_app_download_by_cache,del_cache_response_by_short
 import os
 from rest_framework_extensions.cache.decorators import cache_response
-
 from api.utils.serializer import AppsShortSerializer
-from api.models import Apps,AppReleaseInfo
+from api.models import Apps,AppReleaseInfo,AppUDID
 from django.http import FileResponse
 class DownloadView(APIView):
     '''
@@ -56,15 +56,23 @@ class DownloadView(APIView):
                         name = release_obj.app_id.name
                         ios_plist_bytes = make_resigned(storage.get_download_url(filename),storage.get_download_url(release_obj.icon_url),bundle_id,app_version,name)
                         response = FileResponse(ios_plist_bytes)
-                        response['content_type'] = "application/x-plist"
+                        response['Content-Type'] = "application/x-plist"
                         response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid()
+                        return response
+                elif ftype == 'mobileconifg':
+                    release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
+                    if release_obj:
+                        bundle_id = release_obj.app_id.bundle_id
+                        udid_url = get_post_udid_url(request,release_obj.app_id.short)
+                        ios_udid_mobileconfig = make_udid_mobileconfig(udid_url, bundle_id)
+                        response = FileResponse(ios_udid_mobileconfig)
+                        response['Content-Type'] = "application/x-apple-aspen-config"
+                        response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() +'.mobileconfig'
                         return response
 
         res.code=1004
         res.msg="token校验失败"
         return Response(res.dict)
-
-
 
 class ShortDownloadView(APIView):
     '''
@@ -75,7 +83,10 @@ class ShortDownloadView(APIView):
     def get(self,request,short):
         res = BaseResponse()
         release_id = request.query_params.get("release_id", None)
+        udid = request.query_params.get("udid", None)
         app_obj = Apps.objects.filter(short=short).first()
+        if udid:
+            del_cache_response_by_short(short,app_obj.app_id,udid=udid)
         if not app_obj:
             res.code=1003
             res.msg="该应用不存在"
@@ -88,13 +99,15 @@ class ShortDownloadView(APIView):
 
         app_serializer = AppsShortSerializer(app_obj,context={"key":"ShortDownloadView","release_id":release_id,"storage":Storage(app_obj.user_id)})
         res.data = app_serializer.data
+        res.udid = udid
         return Response(res.dict)
 
     #key的设置
     def calculate_cache_key(self, view_instance, view_method,
                             request, args, kwargs):
         release_id = request.query_params.get("release_id", '')
-        return "_".join([settings.CACHE_KEY_TEMPLATE.get("download_short_key"), kwargs.get("short", ''),release_id])
+        udid = request.query_params.get("udid", '')
+        return "_".join([settings.CACHE_KEY_TEMPLATE.get("download_short_key"), kwargs.get("short", ''),release_id,udid])
 
 class InstallView(APIView):
     '''
@@ -108,6 +121,7 @@ class InstallView(APIView):
         release_id = request.query_params.get("release_id",None)
         isdownload = request.query_params.get("isdownload",None)
         password = request.query_params.get("password",None)
+        udid = request.query_params.get("udid",None)
 
         if not downtoken or not short or not release_id:
             res.code=1004
@@ -125,9 +139,9 @@ class InstallView(APIView):
                 else:
                     apptype = '.ipa'
                     if isdownload :
-                        download_url = get_download_url_by_cache(app_obj,release_id + apptype, 600)
+                        download_url = get_download_url_by_cache(app_obj,release_id + apptype, 600,udid=udid)
                     else:
-                        download_url = get_download_url_by_cache(app_obj,release_id + apptype,600,isdownload)
+                        download_url = get_download_url_by_cache(app_obj,release_id + apptype,600,isdownload,udid=udid)
 
                 res.data={"download_url":download_url}
                 return Response(res.dict)
@@ -139,4 +153,36 @@ class InstallView(APIView):
         res.code = 1006
         res.msg = "该应用不存在"
         return Response(res.dict)
+
+
+
+
+from django.views import View
+from django.http import HttpResponsePermanentRedirect,Http404
+
+class IosUDIDView(View):
+
+    def post(self,request,short):
+        stream_f = str(request.body)
+        format_udid_info = udid_bytes_to_dict(stream_f)
+        print(format_udid_info,short)
+
+        try:
+            app_info=Apps.objects.filter(short=short).values("pk",'issupersign').first()
+
+            if app_info :
+                if app_info.get('issupersign'):
+                    AppUDID.objects.update_or_create(app_id_id= app_info.get('pk'),**format_udid_info,defaults={'udid':format_udid_info.get('udid')})
+                    ios_obj = IosUtils(format_udid_info,app_info)
+                    ios_obj.resign()
+                else:
+                    return Http404
+            else:
+                return Http404
+
+        except Exception as e:
+            print(e)
+        server_domain = get_redirect_server_domain(request)
+        return HttpResponsePermanentRedirect("%s/%s?udid=%s"%(server_domain,short,format_udid_info.get("udid")))
+
 

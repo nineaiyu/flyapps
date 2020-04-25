@@ -42,6 +42,22 @@
 
             </el-form-item>
 
+            <el-form-item v-if="currentapp.type === 1" label-width="160px" label="是否开启超级签名">
+
+                <el-tooltip :content="supersign.msg" placement="top">
+                    <el-switch
+                            @change="supersignevent"
+                            v-model="supersign.val"
+                            active-color="#13ce66"
+                            inactive-color="#ff4949"
+                            active-value="on"
+                            inactive-value="off">
+                    </el-switch>
+                </el-tooltip>
+
+            </el-form-item>
+
+
         </el-form>
 
     </div>
@@ -57,10 +73,12 @@
         data() {
             return {
                 currentapp: {},
-                downtip:{},
+                downtip:{'msg':''},
+                supersign:{'msg':''},
                 passwordtip:{'msg':''},
                 passwordflag:false,
                 showdownloadflag:false,
+                showsupersignflag:false,
             }
         },
         methods: {
@@ -96,9 +114,20 @@
                 }
                 this.showdownloadflag=true;
             },
+            setbuttonsignshow(currentapp){
+                if(currentapp.issupersign === 1){
+                    this.supersignevent("on");
+                    this.supersign.val='on';
+                }else {
+                    this.supersignevent("off");
+                    this.supersign.val='off';
+                }
+                this.showsupersignflag=true;
+            },
             setbuttondefault(currentapp){
                 this.setbuttondefaltpass(currentapp);
                 this.setbuttondefaltshow(currentapp);
+                this.setbuttonsignshow(currentapp);
             },
             passwordswitch(state){
                 this.passwordflag=false;
@@ -158,18 +187,35 @@
                             "isshow": 1,
                         });
                         this.currentapp.isshow=1;
-                    }else {
-                        this.downtip.msg='下载页对所有人可见';
                     }
+                        this.downtip.msg='下载页对所有人可见';
                 }else {
                     if(this.showdownloadflag){
                         this.saveappinfo({
                             "isshow": 0,
                         });
                         this.currentapp.isshow=0;
-                    }else {
-                        this.downtip.msg = '下载页不可见'
                     }
+                        this.downtip.msg = '下载页不可见'
+                }
+            },
+            supersignevent(newval){
+                if(newval === "on"){
+                    if(this.showsupersignflag){
+                        this.saveappinfo({
+                            "issupersign": 1,
+                        });
+                        this.currentapp.issupersign=1;
+                    }
+                        this.supersign.msg='已经开启超级签名';
+                }else {
+                    if(this.showsupersignflag){
+                        this.saveappinfo({
+                            "issupersign": 0,
+                        });
+                        this.currentapp.issupersign=0;
+                    }
+                        this.supersign.msg = '关闭'
                 }
             },
             showpasswordevent(newval){
@@ -194,6 +240,7 @@
                 this.currentapp = this.$store.state.currentapp;
                 this.passwordflag=false;
                 this.showdownloadflag=false;
+                this.showsupersignflag=false;
                 this.setbuttondefault(this.currentapp);
             }
         },
