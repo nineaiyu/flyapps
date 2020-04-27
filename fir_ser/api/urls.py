@@ -25,6 +25,8 @@ from api.views.uploads import AppAnalyseView,UploadView
 from api.views.storage import StorageView
 from api.views.receiveudids import IosUDIDView
 
+from api.views.supersign import DeveloperView,SuperSignUsedView,AppUDIDUsedView
+
 
 # router=DefaultRouter()
 # router.register("apps", AppsView)
@@ -43,4 +45,7 @@ urlpatterns = [
     re_path("^short/(?P<short>\w+)$", ShortDownloadView.as_view()),
     re_path("^udid/(?P<short>\w+)$", IosUDIDView.as_view()),
     re_path("^analyse$", AppAnalyseView.as_view()),
+    re_path("^supersign/developer$", DeveloperView.as_view()),
+    re_path("^supersign/devices$", SuperSignUsedView.as_view()),
+    re_path("^supersign/udid$", AppUDIDUsedView.as_view()),
 ]

@@ -25,6 +25,9 @@
                         <el-dropdown-menu slot="dropdown">
                             <el-dropdown-item command="userinfo">个人资料</el-dropdown-item>
                             <el-dropdown-item command="chpasswd">修改密码</el-dropdown-item>
+                            <el-dropdown-item command="storage">存储管理</el-dropdown-item>
+                            <el-dropdown-item command="supersign">超级签名</el-dropdown-item>
+
                             <el-dropdown-item command="exit">退出</el-dropdown-item>
 
                         </el-dropdown-menu>
@@ -61,7 +64,12 @@ import {logout} from '../restful'
                     this.$router.push({name: 'FirUserProfileInfo'})
                 } else if (command === 'chpasswd') {
                     this.$router.push({name: 'FirUserProfileChangePwd'})
-                }else if(command === 'exit'){
+                }else if (command === 'storage') {
+                    this.$router.push({name: 'FirUserProfileStorage'})
+                }else if (command === 'supersign') {
+                    this.$router.push({name: 'FirSuperSignBase'})
+                }
+                else if(command === 'exit'){
                     logout(data => {
                         if (data.code === 1000) {
                             this.$message.success("退出成功");

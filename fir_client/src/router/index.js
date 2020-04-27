@@ -23,10 +23,12 @@ import FirAppInfosbaseinfo from "@/components/FirAppInfosbaseinfo";
 import FirAppInfossecurity from "@/components/FirAppInfossecurity";
 import FirAppInfosdevices from "@/components/FirAppInfosdevices";
 import FirAppInfoscombo from "@/components/FirAppInfoscombo";
-import FirUserProfile from "@/components/FirUserProfileBase";
+import FirUserProfileBase from "@/components/FirUserProfileBase";
 import FirUserProfileInfo from "@/components/FirUserProfileInfo";
 import FirUserProfileChangePwd from "@/components/FirUserProfileChangePwd";
 import FirUserProfileStorage from "@/components/FirUserProfileStorage";
+
+import FirSuperSignBase from "@/components/FirSuperSignBase";
 
 const router = new VueRouter({
     mode:'history',
@@ -91,7 +93,7 @@ const router = new VueRouter({
             children: [
                 {
                     path: '',
-                    component: FirUserProfile,
+                    component: FirUserProfileBase,
                     children: [
                         {
                             path: 'info',
@@ -115,6 +117,17 @@ const router = new VueRouter({
             path: '/login',
             name: 'FirLogin',
             component: FirLogin
+        },
+        {
+            path: '/supersign',
+            component: FirAppBase,
+            children: [
+                {
+                    path: '',
+                    name: 'FirSuperSignBase',
+                    component: FirSuperSignBase,
+                }
+        ]
         },
         {
             path: '/register',

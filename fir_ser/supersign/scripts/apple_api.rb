@@ -39,7 +39,7 @@ class DevelopPortalHandle
 	    if !cert then
 		    cert = Spaceship::Portal.certificate.production.all.last
 		end
-		profile = provisioningClass.create!(bundle_id: appid,certificate:cert,name:provisionName + '_dis')
+		profile = provisioningClass.create!(bundle_id: appid,certificate:cert,name:provisionName.split("/")[-1])
         return profile
 	end
 

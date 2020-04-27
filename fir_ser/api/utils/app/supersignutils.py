@@ -104,15 +104,14 @@ def get_redirect_server_domain(request):
 
 
 class IosUtils(object):
-    def __init__(self, udid_info, app_obj):
+    def __init__(self, udid_info,user_obj,app_obj=None):
         self.udid_info = udid_info
         self.app_obj = app_obj
-        self.user_obj = app_obj.user_id
+        self.user_obj = user_obj
         self.get_developer_auth()
 
     def get_developer_auth(self):
-        developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj, is_actived=True,
-                                                           use_number__lte=F("usable_number")).first()
+        developer_obj = self.get_developer_user_by_app_udid()
         auth = {
             "username": developer_obj.email,
             "password": developer_obj.password,
@@ -120,6 +119,17 @@ class IosUtils(object):
         }
         self.developer_obj = developer_obj
         self.auth = auth
+
+    def get_developer_user_by_app_udid(self):
+        usedeviceobj = APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'), app_id=self.app_obj,
+                                                           user_id=self.user_obj).first()
+        if usedeviceobj and usedeviceobj.developer_obj.use_number < usedeviceobj.developer_obj.usable_number:
+            developer_obj = usedeviceobj.developerid
+        else:
+            developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj, is_actived=True,
+                                                               use_number__lt=F("usable_number")).order_by(
+                "created_time").first()
+        return developer_obj
 
     def create_cert(self):
         app_api_obj = AppDeveloperApi(**self.auth)
@@ -179,11 +189,25 @@ class IosUtils(object):
 
         newdata = {
             "is_signed": True,
-            "binary_file": random_file_name + ".ipa"
+            "binary_file": random_file_name
         }
         AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).update(**newdata)
         APPSuperSignUsedInfo.objects.create(app_id=self.app_obj, user_id=self.user_obj, developerid=self.developer_obj,
-                                            udid=self.udid_info.get('udid'))
+                                            udid=AppUDID.objects.filter(app_id=self.app_obj,udid=self.udid_info.get('udid')).first())
         AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj, is_actived=True,
                                            use_number__lte=F("usable_number")).first().update(
             use_number=self.developer_obj.use_number + 1)
+
+    @staticmethod
+    def disable_udid(udid_obj,app_id):
+        usedeviceobj=APPSuperSignUsedInfo.objects.filter(udid=udid_obj,app_id_id=app_id)
+        if usedeviceobj:
+            developer_obj = usedeviceobj.first().developerid
+            auth = {
+                "username": developer_obj.email,
+                "password": developer_obj.password,
+                "certid": developer_obj.certid
+            }
+            app_api_obj = AppDeveloperApi(**auth)
+            app_api_obj.set_device_status("disable",udid_obj.udid)
+            usedeviceobj.delete()

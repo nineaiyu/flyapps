@@ -212,3 +212,52 @@ class StorageSerializer(serializers.ModelSerializer):
             storage_obj = models.AppStorage.objects.create(**validated_data,user_id=user_obj,)
             return storage_obj
         return None
+
+class DeveloperSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.AppIOSDeveloperInfo
+        # depth = 1
+        exclude = ["password", "id","name","user_id"]
+
+class SuperSignUsedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.APPSuperSignUsedInfo
+        # depth = 1
+        fields = ["created_time","device_udid","device_name","developer_id","bundle_id","bundle_name"]
+
+    device_udid = serializers.SerializerMethodField()
+    device_name = serializers.SerializerMethodField()
+    developer_id = serializers.SerializerMethodField()
+    bundle_id = serializers.SerializerMethodField()
+    bundle_name = serializers.SerializerMethodField()
+
+    def get_device_udid(self,obj):
+        return obj.udid.udid
+
+    def get_device_name(self,obj):
+        return obj.udid.product
+
+    def get_developer_id(self,obj):
+        return obj.developerid.email
+
+    def get_bundle_id(self, obj):
+        return obj.app_id.bundle_id
+
+    def get_bundle_name(self, obj):
+        return obj.app_id.name
+
+
+class DeviceUDIDSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.AppUDID
+        # depth = 1
+        exclude = ["binary_file","updated_time","is_signed"]
+
+    bundle_id = serializers.SerializerMethodField()
+    bundle_name = serializers.SerializerMethodField()
+
+    def get_bundle_id(self, obj):
+        return obj.app_id.bundle_id
+
+    def get_bundle_name(self, obj):
+        return obj.app_id.name

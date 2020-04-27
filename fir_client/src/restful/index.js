@@ -10,9 +10,11 @@ Axios.defaults.httpsAgent = new https.Agent({
 });
 
 // Axios.defaults.baseURL='';
-const USERSEVER = 'https://fly.dvcloud.xin/api/v1/fir/server';
+const DOMAIN = 'https://fly.dvcloud.xin';
 
-// const USERSEVER = 'http://192.168.1.112:8000/api/v1/fir/server';
+// const DOMAIN = 'http://192.168.8.236:8000';
+const APIPATH='/api/v1/fir/server';
+let USERSEVER = DOMAIN+APIPATH;
 
 
 export function set_auth_token() {
@@ -357,7 +359,7 @@ export function getuploadurl() {
     return USERSEVER + '/upload'
 }
 export function getplisturl() {
-    return USERSEVER + '/download'
+    return DOMAIN + '/download'
 }
 
 
@@ -435,3 +437,48 @@ export function uploadimgs(callBack, params, load = true) {
     );
 }
 
+/**超级签名 苹果开发者信息 */
+export function iosdeveloper(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/supersign/developer',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+/**超级签名 设备消耗信息 */
+export function iosdevices(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/supersign/devices',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+/**超级签名 设备udid信息 */
+export function iosdevicesudid(callBack, params, load = true) {
+    // eslint-disable-next-line no-console
+    getData(
+        params.methods,
+        USERSEVER + '/supersign/udid',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}

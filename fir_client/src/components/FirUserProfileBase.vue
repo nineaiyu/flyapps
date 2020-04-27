@@ -66,7 +66,7 @@
     import {uploadaliyunoss, uploadlocalstorage, uploadqiniuoss} from "../utils";
 
     export default {
-        name: "FirUserProfile",
+        name: "FirUserProfileBase",
         data() {
             return {
                 imageUrl: '',

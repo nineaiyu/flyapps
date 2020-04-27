@@ -20,7 +20,7 @@ class IosUDIDView(View):
             if app_info :
                 if app_info.issupersign:
                     AppUDID.objects.update_or_create(app_id=app_info,**format_udid_info,defaults={'udid':format_udid_info.get('udid')})
-                    ios_obj = IosUtils(format_udid_info,app_info)
+                    ios_obj = IosUtils(format_udid_info,app_info.user_id,app_info)
                     ios_obj.resign()
                 else:
                     return Http404

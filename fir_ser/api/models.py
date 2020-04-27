@@ -168,7 +168,7 @@ class AppStorage(models.Model):
 
 class AppUDID(models.Model):
     app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
-    udid = models.CharField(max_length=64, unique=True,verbose_name="udid唯一标识",db_index=True)
+    udid = models.CharField(max_length=64,verbose_name="udid唯一标识",db_index=True)
     product = models.CharField(max_length=64, verbose_name="产品", blank=True, null=True, )
     serial = models.CharField(max_length=64, verbose_name="序列号", blank=True, null=True, )
     version = models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
@@ -205,6 +205,8 @@ class AppIOSDeveloperInfo(models.Model):
     use_number = models.IntegerField(verbose_name="已消耗设备数",default=0)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    description = models.TextField('备注', blank=True, null=True, default='')
+
     class Meta:
         verbose_name = '苹果开发者账户'
         verbose_name_plural = "苹果开发者账户"
