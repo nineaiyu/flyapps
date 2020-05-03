@@ -35,14 +35,72 @@ class DeveloperView(APIView):
         app_page_serializer = page_obj.paginate_queryset(queryset=developer_obj.order_by("-updated_time"), request=request,
                                                          view=self)
 
-        app_serializer = DeveloperSerializer(app_page_serializer, many=True,)
+        Developer_serializer = DeveloperSerializer(app_page_serializer, many=True,)
         userserializer = UserInfoSerializer(request.user)
         res.userinfo = {}
         res.has_next = {}
         res.userinfo = userserializer.data
-        res.data = app_serializer.data
+        res.data = Developer_serializer.data
         res.has_next = page_obj.page.has_next()
         return Response(res.dict)
+
+    def put(self,request):
+        data = request.data
+        email=data.get("email",None)
+        if email:
+            developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user,email=email).first()
+
+
+
+            if developer_obj:
+                act = data.get("act", None)
+                if act:
+                    res = BaseResponse()
+                    if act == "preactive":
+                        if not IosUtils.active_developer(developer_obj):
+                            res.code = 1008
+                            res.msg = "开发者账户或密码有误"
+                            return Response(res.dict)
+                        else:
+                            res.code = 1009
+                            return Response(res.dict)
+                    elif act == "nowactive" :
+                        code = data.get("code", None)
+                        if code:
+                            if IosUtils.active_developer(developer_obj,code):
+                                developer_obj.is_actived=True
+                                developer_obj.save()
+                                IosUtils.create_developer_cert(developer_obj,request.user)
+                else:
+                    developer_obj.usable_number=data.get("usable_number",developer_obj.usable_number)
+                    developer_obj.description = data.get("description", developer_obj.description)
+                    password = data.get("password", developer_obj.password)
+                    if password != "" and password != developer_obj.password:
+                        developer_obj.password=password
+                        developer_obj.is_actived=False
+                    developer_obj.save()
+
+        return self.get(request)
+
+    def post(self,request):
+        data = request.data
+        datainfo={
+            "usable_number" : data.get("usable_number", ""),
+            "description" : data.get("description", ""),
+            "password" : data.get("password", ""),
+            "email" : data.get("email", ""),
+        }
+        try:
+            AppIOSDeveloperInfo.objects.create(user_id=request.user,**datainfo)
+        except Exception as e:
+            print(e)
+            res = BaseResponse()
+            res.code=1005
+            res.msg="添加失败"
+            return Response(res.dict)
+
+        return self.get(request)
+
 
 class SuperSignUsedView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
@@ -84,7 +142,6 @@ class AppUDIDUsedView(APIView):
         return Response(res.dict)
 
     def delete(self,request):
-        res = BaseResponse()
         id = request.query_params.get("id", None)
         app_id = request.query_params.get("aid", None)
         app_udid_obj=AppUDID.objects.filter(app_id__user_id_id=request.user,pk=id)

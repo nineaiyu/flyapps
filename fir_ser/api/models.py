@@ -190,11 +190,9 @@ class AppUDID(models.Model):
 
 class AppIOSDeveloperInfo(models.Model):
     user_id = models.ForeignKey(to="UserInfo",verbose_name="用户ID",on_delete=models.CASCADE)
-    name = models.CharField(max_length=64,verbose_name="开发者标识",unique=True)
     email = models.EmailField(
         verbose_name='email address',
         max_length=64,
-        unique=True,
         blank=True,
         null=True
     )
@@ -210,10 +208,12 @@ class AppIOSDeveloperInfo(models.Model):
     class Meta:
         verbose_name = '苹果开发者账户'
         verbose_name_plural = "苹果开发者账户"
+        unique_together = ('user_id', 'email',)
+
 
 
     def __str__(self):
-        return "%s-%s" % (self.name,self.email)
+        return "%s-%s" % (self.user_id,self.email)
 
 class APPSuperSignUsedInfo(models.Model):
     user_id = models.ForeignKey(to="UserInfo",verbose_name="用户ID",on_delete=models.CASCADE)
@@ -228,3 +228,16 @@ class APPSuperSignUsedInfo(models.Model):
 
     def __str__(self):
         return "%s-%s-%s" % (self.user_id,self.app_id,self.udid)
+
+class APPToDeveloper(models.Model):
+    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
+    developerid = models.ForeignKey(to="AppIOSDeveloperInfo",on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
+    binary_file = models.CharField(max_length=128,blank=True,verbose_name="签名包名称",null=True)
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = '应用开发者绑定'
+        verbose_name_plural = "应用开发者绑定"
+
+    def __str__(self):
+        return "%s-%s-%s" % (self.developerid,self.app_id,self.binary_file)

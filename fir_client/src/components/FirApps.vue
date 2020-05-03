@@ -8,11 +8,15 @@
                         :title="getDelappTitle"
                         :visible.sync="willDeleteApp"
                         width="50%">
-                    <span>删除后不可恢复，请谨慎操作</span>
+
+                    <span v-if="delapp.issupersign">请先在权限管理页面关闭超级签名</span>
+                    <span v-else>删除后不可恢复，请谨慎操作</span>
+
                     <span slot="footer" class="dialog-footer">
                         <el-button @click="willDeleteApp = false">取 消</el-button>
-                        <el-button type="danger" @click="delApp">确 定</el-button>
-                  </span>
+                        <el-button v-if="delapp.issupersign" type="danger" @click="$router.push({name: 'FirAppInfossecurity', params: {id: delapp.app_id}})">确 定</el-button>
+                        <el-button v-else type="danger" @click="delApp">确 定</el-button>
+                    </span>
                 </el-dialog>
 
 
@@ -337,18 +341,21 @@
                                     </tr>
                                     <tr v-if="r.type === 1 && r.master_release.binary_url === ''">
                                         <td class="ng-binding">打包类型：</td>
-                                        <td><span class="ng-binding">
-                                        {{ r.master_release.release_type|getiOStype }}
-                                    </span></td>
+                                        <td>
+                                            <span class="ng-binding">
+                                                {{ r.master_release.release_type|getiOStype }}
+                                                <span v-if="r.issupersign">超级签名</span>
+                                            </span>
+                                        </td>
                                     </tr>
                                     <tr v-if=" r.master_release.binary_url !== ''">
                                         <td>第三方平台下载：</td>
                                         <td>
-                               <span>
-                                <el-tooltip :content="r.master_release.binary_url" placement="top">
-                                    <a target="_blank" :href="r.master_release.binary_url">{{ r.master_release.binary_url| autoformat}}</a>
-                                </el-tooltip>
-                                </span>
+                                           <span>
+                                            <el-tooltip :content="r.master_release.binary_url" placement="top">
+                                                <a target="_blank" :href="r.master_release.binary_url">{{ r.master_release.binary_url| autoformat}}</a>
+                                            </el-tooltip>
+                                            </span>
                                         </td>
                                     </tr>
 
@@ -364,8 +371,10 @@
                                         <i class="icon-eye el-icon-view"></i> 预览
                                     </el-button>
 
+                                        <el-button v-if="r.issupersign"  @click="DeleteApp(r)" class="btn btn-remove" icon="el-icon-loading"
+                                                   circle></el-button>
 
-                                    <el-button @click="DeleteApp(r)" class="btn btn-remove" icon="el-icon-delete"
+                                    <el-button v-else @click="DeleteApp(r)" class="btn btn-remove" icon="el-icon-delete"
                                                circle></el-button>
 
                                 </div>
@@ -739,7 +748,8 @@
                 return size / 1000;
             },
             autoformat: function (packname) {
-                if ((packname.length) > 20) {
+
+                if (packname && (packname.length) > 20) {
                     return packname.split('').slice(0, 20).join('') + '...';
                 } else {
                     return packname

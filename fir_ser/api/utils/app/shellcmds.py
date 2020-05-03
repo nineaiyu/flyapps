@@ -3,8 +3,7 @@
 # project: 3月
 # author: liuyu
 # date: 2020/3/6
-
-import time,re,os
+import time,re,os,signal
 from subprocess import Popen, PIPE
 import logging
 import paramiko,json
@@ -86,13 +85,23 @@ class SSHConnection(object):
         if self._client:
             self._client.close()
 
-def shell_command(cmdstrs):
+def shell_command(cmdstrs,timeout):
     # cmdresult = re.split(r'\s+', cmdstrs)
     # print(cmdresult)
     result = default_result()
     result['return_info'] = ''
     shell_start_time = time.time()
     child = Popen(cmdstrs, shell=True, stdout=PIPE, stderr=PIPE)
+    if timeout:
+        while child.poll() is None:
+            time.sleep(0.2)
+            now = time.time()
+            if int(now - shell_start_time) > timeout:
+                os.kill(child.pid, signal.SIGKILL)
+                os.waitpid(-1, os.WNOHANG)
+                result['exit_code']=126
+                return result
+
     out, err = child.communicate()
     shell_end_time = time.time()
     result['shell_run_time'] = shell_end_time - shell_start_time

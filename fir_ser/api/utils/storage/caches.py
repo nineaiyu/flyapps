@@ -5,7 +5,7 @@
 # date: 2020/4/7
 
 from django.core.cache import cache
-from api.models import Apps,UserInfo,AppReleaseInfo,AppUDID
+from api.models import Apps,UserInfo,AppReleaseInfo,AppUDID,APPToDeveloper,APPSuperSignUsedInfo
 import time,os
 from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE
@@ -24,8 +24,19 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True,key='',u
         else:
             appudid_obj = AppUDID.objects.filter(app_id_id=app_obj.get("pk"),udid=udid,is_signed=True).first()
             if appudid_obj:
-                filename=appudid_obj.binary_file+'.ipa'
-            return local_storage.get_download_url(filename, limit)
+                SuperSign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=udid,app_id_id=app_obj.get("pk")).first()
+                if SuperSign_obj:
+                    APPToDeveloper_obj = APPToDeveloper.objects.filter(app_id_id=app_obj.get("pk"),developerid=SuperSign_obj.developerid).first()
+                    if APPToDeveloper_obj:
+                        filename=APPToDeveloper_obj.binary_file
+                        return local_storage.get_download_url(filename, limit, download_url_type)
+                    else:
+                        return ""
+                else:
+                    return ""
+            else:
+                return ""
+
         return local_storage.get_download_url(filename, limit, download_url_type)
     down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
     download_val = cache.get(down_key)
@@ -38,7 +49,9 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True,key='',u
         return storage.get_download_url(filename, limit)
 
 
-def get_app_instance_by_cache(app_id,password, limit):
+def get_app_instance_by_cache(app_id,password, limit,udid):
+    if udid:
+        return Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type','password','issupersign').first()
     app_key="_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"),app_id])
     app_obj_cache = cache.get(app_key)
     if not app_obj_cache:
@@ -79,10 +92,11 @@ def del_cache_response_by_short(short,app_id,udid=''):
 
     key='ShortDownloadView'.lower()
     master_release_dict = AppReleaseInfo.objects.filter(app_id__app_id=app_id,is_master=True).values('icon_url','release_id').first()
-    download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
-    cache.delete("_".join([key, download_val, os.path.basename(master_release_dict.get("icon_url")),udid]))
-    cache.delete("_".join([key,download_val, master_release_dict.get('release_id'),udid]))
-    cache.delete("_".join([key, CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id'),udid]))
+    if master_release_dict:
+        download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
+        cache.delete("_".join([key, download_val, os.path.basename(master_release_dict.get("icon_url")),udid]))
+        cache.delete("_".join([key,download_val, master_release_dict.get('release_id'),udid]))
+        cache.delete("_".join([key, CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id'),udid]))
 
 
 def del_cache_by_app_id(app_id,user_obj):

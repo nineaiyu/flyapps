@@ -13,4 +13,5 @@ admin.site.register(AppStorage)
 admin.site.register(AppUDID)
 admin.site.register(AppIOSDeveloperInfo)
 admin.site.register(APPSuperSignUsedInfo)
+admin.site.register(APPToDeveloper)
 

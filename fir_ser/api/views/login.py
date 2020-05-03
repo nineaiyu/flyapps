@@ -32,6 +32,7 @@ class LoginView(APIView):
                 username = receive.get("username")
                 password = receive.get("password")
                 user = auth.authenticate(username=username, password=password)
+                print(username,password,user)
                 if user is not None:
                     if user.is_active:
 

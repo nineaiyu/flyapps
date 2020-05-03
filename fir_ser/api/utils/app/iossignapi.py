@@ -9,7 +9,7 @@ from fir_ser.settings import SUPER_SIGN_ROOT
 import os
 from api.utils.app.randomstrings import make_app_uuid
 
-def exec_shell(cmd,remote=False):
+def exec_shell(cmd,remote=False,timeout=None):
     if remote:
         hostip="10.66.6.66"
         port=65534
@@ -20,10 +20,10 @@ def exec_shell(cmd,remote=False):
         return result
     else:
         print(cmd)
-        result = shell_command(cmd)
+        result = shell_command(cmd,timeout)
         print(result)
         if result.get("exit_code") != 0 :
-            raise
+            return False
         return result
 
 
@@ -35,6 +35,20 @@ class AppDeveloperApi(object):
         self.certid = certid
         script_path=os.path.join(SUPER_SIGN_ROOT,'scripts','apple_api.rb')
         self.cmd = "ruby %s '%s' '%s'" %(script_path,self.username,self.password)
+
+    def active(self,code):
+        timeout=10
+        self.cmd = self.cmd + " active "
+        if code:
+            self.cmd = "echo  %s | %s" %(code,self.cmd)
+            timeout=None
+        try:
+            result = exec_shell(self.cmd,timeout=timeout)
+            if result["exit_code"] == 0:
+                return True
+        except Exception as e:
+            print(e)
+        return False
 
     def create_cert(self,user_obj):
         cert_dir_name = make_app_uuid(user_obj,self.username)
@@ -68,8 +82,8 @@ class AppDeveloperApi(object):
         self.cmd=self.cmd + " app add '%s' '%s'" %(bundleId,app_id)
         result = exec_shell(self.cmd)
 
-    def del_app(self,bundleId):
-        self.cmd=self.cmd + " app del '%s' " %(bundleId)
+    def del_app(self,bundleId,app_id):
+        self.cmd=self.cmd + " app del '%s' '%s'" %(bundleId,app_id)
         result = exec_shell(self.cmd)
 
 # appdev = AppDeveloperApi("hehehuyu521@163.com","Hehehuyu123")

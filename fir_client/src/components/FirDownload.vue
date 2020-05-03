@@ -31,7 +31,8 @@
                                         <span id="qrcode" class="qrcode">
                                         </span>
                                     </div>
-                                    <p class="scan-tips wrapper icon-warp" >{{ mcurrentappinfo.release_type|getiOStype  }}</p>
+                                    <p v-if="currentappinfo.issupersign" class="scan-tips wrapper icon-warp" >超级签</p>
+                                    <p  v-else class="scan-tips wrapper icon-warp" >{{ mcurrentappinfo.release_type|getiOStype  }}</p>
                                     <h1 class="name wrapper">
                                         <span class="icon-warp" style="margin-left:0px">
                                             <i v-if="currentappinfo.type === 0 && agent !== ''" class="iconfont icon-android2"/>
@@ -175,7 +176,10 @@
                     this.isdownload = true;
                     getdownloadurl(res=>{
                         if(res.code === 1000){
-
+                            if(res.data.download_url === ""){
+                                window.location.href=this.full_url;
+                                return
+                            }
                             if(this.currentappinfo.type === 1){
                                 if(this.currentappinfo.issupersign  && this.udid !== this.$route.query.udid){
                                     if(this.agent !== ''){
@@ -209,7 +213,7 @@
                             'short': this.currentappinfo.short,
                             'release_id': this.mcurrentappinfo.release_id,
                             'password':this.password,
-                            'udid':this.udid
+                            'udid':this.udid,
                         },
                         'app_id': this.currentappinfo.app_id
                     })
@@ -223,7 +227,7 @@
                 })
             },
             getDownloadTokenFun() {
-                let params={ "short": this.$route.params.short };
+                let params={ "short": this.$route.params.short ,"time":new Date().getTime()};
                 if(this.$route.query.release_id){
                     params["release_id"]=this.$route.query.release_id
                 }
@@ -363,7 +367,7 @@
             this.getAgent();
         }, mounted() {
             this.getDownloadTokenFun();
-            this.full_url = location.href;
+            this.full_url = location.href.split("?")[0];
             this.qrcode();
         },filters:{
             getiOStype: function (type) {

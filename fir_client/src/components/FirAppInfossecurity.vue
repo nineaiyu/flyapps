@@ -54,7 +54,7 @@
                             inactive-value="off">
                     </el-switch>
                 </el-tooltip>
-
+                <el-button @click="clean_app" v-if="currentapp.issupersign === 0 && currentapp.count !== 0" style="margin-left: 20px" size="small" type="info" plain>清理开发者账户脏数据</el-button>
             </el-form-item>
 
 
@@ -79,9 +79,13 @@
                 passwordflag:false,
                 showdownloadflag:false,
                 showsupersignflag:false,
+                clecount:0
             }
         },
         methods: {
+            clean_app(){
+                this.saveappinfo({"clean":true})
+            },
             saveappinfo(data) {
                 updateapp(data => {
                     if (data.code === 1000) {

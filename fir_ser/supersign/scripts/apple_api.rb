@@ -50,11 +50,18 @@ class DevelopPortalHandle
         profile = nil
         if  0 < filtered_profiles.length then
             profile = filtered_profiles[0]
+            all_devices = Spaceship::Portal.device.all
+            profile.devices=all_devices
+            profile.update!
+            profile = provisioningClass.find_by_bundle_id(bundle_id: appid)[0]
         elsif 0 == filtered_profiles.length then
             profile = createDistributionProvision(provisioningClass,appid,provisionName,certid)
         end
 
-        #没有找到就创建，找到就下载
+        if profile.status == "Invalid" or profile.status == "Expired"  then
+          profile.repair! # yes, that's all you need to repair a profile
+        end
+
         File.write(provisionName, profile.download)
         return provisionName
     end
@@ -150,6 +157,8 @@ end
             handle.createCert(file_format_path_name)
         end
 
+    when "active"
+        puts "active"
     else
         puts "error"
     end

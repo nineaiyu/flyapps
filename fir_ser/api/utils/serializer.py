@@ -171,7 +171,7 @@ class AppReleaseSerializer(serializers.ModelSerializer):
         icon_url=""
         if self.context.get("storage", None) and self.context.get("storage") != "undefined":
             storage = self.context.get("storage", None)
-            icon_url = storage.get_download_url(os.path.basename(obj.icon_url))
+            icon_url = storage.get_download_url(os.path.basename(obj.icon_url),600)
 
         return icon_url
 
@@ -217,7 +217,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppIOSDeveloperInfo
         # depth = 1
-        exclude = ["password", "id","name","user_id"]
+        exclude = ["password", "id","user_id"]
 
 class SuperSignUsedSerializer(serializers.ModelSerializer):
     class Meta:

@@ -106,7 +106,13 @@ class ShortDownloadView(APIView):
     def calculate_cache_key(self, view_instance, view_method,
                             request, args, kwargs):
         release_id = request.query_params.get("release_id", '')
-        udid = request.query_params.get("udid", '')
+        udid = request.query_params.get("udid", None)
+        time = request.query_params.get("time", None)
+        if udid and time:
+            udid=time
+        if not udid:
+            udid=""
+
         return "_".join([settings.CACHE_KEY_TEMPLATE.get("download_short_key"), kwargs.get("short", ''),release_id,udid])
 
 class InstallView(APIView):
@@ -130,9 +136,8 @@ class InstallView(APIView):
 
         dtoken = DownloadToken()
         if dtoken.verify_token(downtoken,release_id):
-            app_obj = get_app_instance_by_cache(app_id,password,900)
+            app_obj = get_app_instance_by_cache(app_id,password,900,udid)
             if app_obj:
-                set_app_download_by_cache(app_id)
                 if app_obj.get("type") == 0:
                     apptype = '.apk'
                     download_url = get_download_url_by_cache(app_obj,release_id + apptype,600)
@@ -144,6 +149,8 @@ class InstallView(APIView):
                         download_url = get_download_url_by_cache(app_obj,release_id + apptype,600,isdownload,udid=udid)
 
                 res.data={"download_url":download_url}
+                if download_url!= "":
+                    set_app_download_by_cache(app_id)
                 return Response(res.dict)
         else:
             res.code = 1004

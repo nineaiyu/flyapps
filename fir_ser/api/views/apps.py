@@ -11,10 +11,11 @@ from rest_framework.response import Response
 from django.db.models import Sum
 import os
 from fir_ser import settings
+from api.utils.app.supersignutils import IosUtils
 from api.utils.app.randomstrings import make_from_user_uuid
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short,get_app_today_download_times
-from api.models import Apps, AppReleaseInfo
+from api.models import Apps, AppReleaseInfo,APPToDeveloper
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
 from rest_framework.pagination import PageNumberPagination
 
@@ -107,6 +108,9 @@ class AppInfoView(APIView):
             userserializer = UserInfoSerializer(request.user)
             res.userinfo = {}
             res.userinfo = userserializer.data
+            count=APPToDeveloper.objects.filter(app_id=apps_obj).count()
+            res.data["count"] = count
+
         return Response(res.dict)
 
     def delete(self, request, app_id):
@@ -115,18 +119,16 @@ class AppInfoView(APIView):
             apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
             if apps_obj:
                 storage = Storage(request.user)
-                for appreleaseobj in AppReleaseInfo.objects.filter(app_id=apps_obj).all():
-                    storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
-                    storage.delete_file(appreleaseobj.icon_url)
-                    appreleaseobj.delete()
-
                 has_combo = apps_obj.has_combo
                 if has_combo:
                     del_cache_response_by_short(apps_obj.has_combo.short,apps_obj.has_combo.app_id)
                     apps_obj.has_combo.has_combo = None
-
-                apps_obj.delete()
                 del_cache_response_by_short(apps_obj.short,apps_obj.app_id)
+                for appreleaseobj in AppReleaseInfo.objects.filter(app_id=apps_obj).all():
+                    storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
+                    storage.delete_file(appreleaseobj.icon_url)
+                    appreleaseobj.delete()
+                apps_obj.delete()
 
         return Response(res.dict)
 
@@ -134,6 +136,12 @@ class AppInfoView(APIView):
         res = BaseResponse()
         if app_id:
             data = request.data
+
+            clean = data.get("clean",None)
+            if clean :
+                apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
+                IosUtils.clean_app_by_user_obj(apps_obj,request.user)
+                return Response(res.dict)
 
             has_combo = data.get("has_combo", None)
             if has_combo:
@@ -309,7 +317,6 @@ class AppReleaseinfoView(APIView):
                             else:
                                 binary_url = appreleaseobj.first().binary_url
 
-                        print(binary_url)
                         appreleaseobj.update(**{"binary_url": binary_url})
 
                 except Exception as e:
