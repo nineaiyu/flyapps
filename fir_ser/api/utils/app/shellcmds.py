@@ -86,15 +86,13 @@ class SSHConnection(object):
             self._client.close()
 
 def shell_command(cmdstrs,timeout):
-    # cmdresult = re.split(r'\s+', cmdstrs)
-    # print(cmdresult)
     result = default_result()
     result['return_info'] = ''
     shell_start_time = time.time()
     child = Popen(cmdstrs, shell=True, stdout=PIPE, stderr=PIPE)
     if timeout:
         while child.poll() is None:
-            time.sleep(0.2)
+            time.sleep(1)
             now = time.time()
             if int(now - shell_start_time) > timeout:
                 os.kill(child.pid, signal.SIGKILL)

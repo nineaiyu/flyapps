@@ -71,12 +71,13 @@ def make_udid_mobileconfig(udid_url, PayloadOrganization, PayloadUUID=uuid.uuid1
 def get_post_udid_url(request, short):
     server_domain = get_http_server_doamin(request)
 
-    PATH_INFO = request.META.get('PATH_INFO')
-    PATH_INFO_lists = PATH_INFO.strip('/').split('/')
-    PATH_INFO_lists[-1] = 'udid'
-    PATH_INFO_lists.pop(-2)
-    PATH_INFO_lists.append(short)
-    PATH_INFO_lists.insert(0, server_domain)
+    # PATH_INFO = request.META.get('PATH_INFO')
+    # PATH_INFO_lists = PATH_INFO.strip('/').split('/')
+    # PATH_INFO_lists[-1] = 'udid'
+    # PATH_INFO_lists.pop(-2)
+    # PATH_INFO_lists.append(short)
+    # PATH_INFO_lists.insert(0, server_domain)
+    PATH_INFO_lists=[server_domain,"udid",short]
     udid_url = "/".join(PATH_INFO_lists)
     return udid_url
 
@@ -278,11 +279,12 @@ class IosUtils(object):
                 app_api_obj = AppDeveloperApi(**auth)
                 app_api_obj.set_device_status("disable", udid_obj.udid)
 
-            if developer_obj.use_number > 0:
-                developer_obj.use_number = developer_obj.use_number - 1
-                developer_obj.save()
+                if developer_obj.use_number > 0:
+                    developer_obj.use_number = developer_obj.use_number - 1
+                    developer_obj.save()
 
             udid_obj.delete()
+
             SuperSignUsed_obj.delete()
 
 
@@ -301,8 +303,8 @@ class IosUtils(object):
             if developer_obj:
                 IosUtils.clean_app_by_developer_obj(app_obj,developer_obj)
                 APPToDeveloper.objects.filter(developerid=developer_obj,app_id=app_obj).delete()
-
                 IosUtils.clean_udid_by_app_obj(app_obj,developer_obj)
+
     @staticmethod
     def clean_app_by_developer_obj(app_obj,developer_obj):
         auth = {
@@ -322,27 +324,11 @@ class IosUtils(object):
         :param developer_obj:
         :return:
         '''
-        # auth = {
-        #     "username": developer_obj.email,
-        #     "password": developer_obj.password,
-        #     "certid": developer_obj.certid
-        # }
-
         for APPToDeveloper_obj in APPToDeveloper.objects.filter(developerid=developer_obj):
             app_obj=APPToDeveloper_obj.app_id
             IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
             APPToDeveloper.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
             IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
-
-
-        # for SuperSignUsed_obj in APPSuperSignUsedInfo.objects.filter(developerid=developer_obj):
-        #
-        #     app_obj = SuperSignUsed_obj.app_id
-        #     app_api_obj = AppDeveloperApi(**auth)
-        #     app_api_obj.del_profile(app_obj.bundle_id, app_obj.app_id)
-        #     app_api_obj2 = AppDeveloperApi(**auth)
-        #     app_api_obj2.del_app(app_obj.bundle_id,app_obj.app_id)
-        #     APPToDeveloper.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
 
     @staticmethod
     def active_developer(developer_obj,code=None):

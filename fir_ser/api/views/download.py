@@ -16,7 +16,7 @@ from api.utils.storage.caches import get_app_instance_by_cache,get_download_url_
 import os
 from rest_framework_extensions.cache.decorators import cache_response
 from api.utils.serializer import AppsShortSerializer
-from api.models import Apps,AppReleaseInfo
+from api.models import Apps,AppReleaseInfo,APPToDeveloper,APPSuperSignUsedInfo
 from django.http import FileResponse
 class DownloadView(APIView):
     '''
@@ -48,7 +48,12 @@ class DownloadView(APIView):
                 return response
             else:
                 if ftype == 'plist':
-                    release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
+                    release_id = filename.split('.')[0]
+                    apptodev_obj = APPToDeveloper.objects.filter(binary_file=release_id).first()
+                    if apptodev_obj:
+                        release_obj = AppReleaseInfo.objects.filter(is_master=True,app_id=apptodev_obj.app_id).first()
+                    else:
+                        release_obj = AppReleaseInfo.objects.filter(release_id=release_id).first()
                     if release_obj:
                         storage = Storage(release_obj.app_id.user_id)
                         bundle_id = release_obj.app_id.bundle_id
@@ -59,6 +64,7 @@ class DownloadView(APIView):
                         response['Content-Type'] = "application/x-plist"
                         response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid()
                         return response
+                    res.msg = "plist release_id error"
                 elif ftype == 'mobileconifg':
                     release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
                     if release_obj:
@@ -69,6 +75,7 @@ class DownloadView(APIView):
                         response['Content-Type'] = "application/x-apple-aspen-config"
                         response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() +'.mobileconfig'
                         return response
+                    res.msg = "mobileconifg release_id error"
 
         res.code=1004
         res.msg="token校验失败"
@@ -85,13 +92,12 @@ class ShortDownloadView(APIView):
         release_id = request.query_params.get("release_id", None)
         udid = request.query_params.get("udid", None)
         app_obj = Apps.objects.filter(short=short).first()
-        if udid:
-            del_cache_response_by_short(short,app_obj.app_id,udid=udid)
         if not app_obj:
             res.code=1003
             res.msg="该应用不存在"
             return Response(res.dict)
-
+        if udid:
+            del_cache_response_by_short(short,app_obj.app_id,udid=udid)
         if not app_obj.isshow:
             res.code=1004
             res.msg="您没有权限访问该应用"

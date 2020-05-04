@@ -6,10 +6,9 @@ Axios.defaults.httpsAgent = new https.Agent({
     keepAlive: true
 });
 
-// Axios.defaults.baseURL='';
-const USERSEVER = 'https://fly.dvcloud.xin/api/v1/fir/server';
-
-// const USERSEVER = 'http://192.168.1.112:8000/api/v1/fir/server';
+const DOMAIN = 'https://fly.harmonygames.cn';
+const APIPATH='/api/v1/fir/server';
+let USERSEVER = DOMAIN+APIPATH;
 
 
 function getData(url, params = {}, callBack) {
@@ -113,7 +112,4 @@ export function getdownloadurl(callBack, params) {
             callBack(data);
         },
     );
-}
-export function getplisturl() {
-    return USERSEVER + '/download'
 }

@@ -9,10 +9,8 @@ Axios.defaults.httpsAgent = new https.Agent({
     keepAlive: true
 });
 
-// Axios.defaults.baseURL='';
-const DOMAIN = 'https://fly.dvcloud.xin';
 
-// const DOMAIN = 'http://192.168.8.236:8000';
+const DOMAIN = 'https://fly.harmonygames.cn';
 const APIPATH='/api/v1/fir/server';
 let USERSEVER = DOMAIN+APIPATH;
 
@@ -357,9 +355,6 @@ export function getapppicurl(app_id) {
 
 export function getuploadurl() {
     return USERSEVER + '/upload'
-}
-export function getplisturl() {
-    return DOMAIN + '/download'
 }
 
 

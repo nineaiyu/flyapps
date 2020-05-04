@@ -8,7 +8,7 @@ from django.core.cache import cache
 from api.models import Apps,UserInfo,AppReleaseInfo,AppUDID,APPToDeveloper,APPSuperSignUsedInfo
 import time,os
 from django.utils import timezone
-from fir_ser.settings import CACHE_KEY_TEMPLATE
+from fir_ser.settings import CACHE_KEY_TEMPLATE,SERVER_DOMAIN
 from api.utils.storage.storage import Storage,LocalStorage
 from api.utils.crontab.sync_cache import sync_download_times_by_app_id
 from api.utils.crontab import run
@@ -16,7 +16,7 @@ from api.utils.crontab import run
 def get_download_url_by_cache(app_obj, filename, limit, isdownload=True,key='',udid=None):
     now = time.time()
     if isdownload is None:
-        local_storage = LocalStorage('localhost', False)
+        local_storage = LocalStorage(**SERVER_DOMAIN.get("IOS_PMFILE_DOWNLOAD_DOMAIN"))
         download_url_type = 'plist'
         if not udid:
             if app_obj.get('issupersign',None):
@@ -28,8 +28,7 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True,key='',u
                 if SuperSign_obj:
                     APPToDeveloper_obj = APPToDeveloper.objects.filter(app_id_id=app_obj.get("pk"),developerid=SuperSign_obj.developerid).first()
                     if APPToDeveloper_obj:
-                        filename=APPToDeveloper_obj.binary_file
-                        return local_storage.get_download_url(filename, limit, download_url_type)
+                        return local_storage.get_download_url(APPToDeveloper_obj.binary_file+"."+filename.split(".")[-1], limit, download_url_type)
                     else:
                         return ""
                 else:

@@ -250,8 +250,12 @@ SYNC_CACHE_TO_DATABASE={
 }
 
 SERVER_DOMAIN={
-    'POST_UDID_DOMAIN':'http://192.168.8.236:8000',  #超级签名调试
-    'REDIRECT_UDID_DOMAIN': 'http://192.168.8.236:8080',  # 超级签名调试
+    'IOS_PMFILE_DOWNLOAD_DOMAIN':{
+        "domain_name":'fly.harmonygames.cn',
+        'is_https':True,
+    },  # ios 描述文件和plist文件下载域名，该域名用于后端，一般为api访问域名
+    'POST_UDID_DOMAIN':'https://fly.harmonygames.cn',  #超级签名 安装签名时 向该域名 发送udid数据，该域名用于后端，一般为 api 访问域名
+    'REDIRECT_UDID_DOMAIN': 'https://fly.harmonygames.cn',  # 超级签名 安装完成之后，跳转域名，该域名为前端web访问域名
 }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"

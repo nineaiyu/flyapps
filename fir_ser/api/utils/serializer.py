@@ -169,9 +169,12 @@ class AppReleaseSerializer(serializers.ModelSerializer):
 
     def get_icon_url(self, obj):
         icon_url=""
+        key = ''
+        if self.context.get("key", None) and self.context.get("key") != "undefined":
+            key = self.context.get("key", '')
         if self.context.get("storage", None) and self.context.get("storage") != "undefined":
             storage = self.context.get("storage", None)
-            icon_url = storage.get_download_url(os.path.basename(obj.icon_url),600)
+            icon_url = storage.get_download_url(os.path.basename(obj.icon_url),600,key=key)
 
         return icon_url
 

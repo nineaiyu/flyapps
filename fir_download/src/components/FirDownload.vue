@@ -29,7 +29,8 @@
                     <span id="qrcode" class="qrcode">
                                         </span>
                   </div>
-                  <p class="scan-tips wrapper icon-warp" >{{ mcurrentappinfo.release_type|getiOStype  }}</p>
+                  <p v-if="currentappinfo.issupersign" class="scan-tips wrapper icon-warp" >超级签</p>
+                  <p  v-else class="scan-tips wrapper icon-warp" >{{ mcurrentappinfo.release_type|getiOStype  }}</p>
                   <h1 class="name wrapper">
                                         <span class="icon-warp" style="margin-left:0px">
                                             <i v-if="currentappinfo.type === 0 && agent !== ''" class="iconfont icon-android2"/>
@@ -150,7 +151,7 @@
 <script>
   import QRCode from 'qrcodejs2'
 
-  import {getShortAppinfo,getdownloadurl,getplisturl} from '../restful/download'
+  import {getShortAppinfo,getdownloadurl} from '../restful/download'
 
   export default {
     name: "FirDownload",
@@ -179,17 +180,26 @@
           getdownloadurl(res => {
             if (res.code === 1000) {
 
-              if (this.currentappinfo.type === 1) {
-                let download_url = res.data.download_url;
-                download_url = download_url.replace('http://localhost/download', getplisturl());
-                this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
-              } else {
-                if (this.agent !== '') {
+              if(res.data.download_url === ""){
+                window.location.href=this.full_url;
+                return
+              }
+              if(this.currentappinfo.type === 1){
+                if(this.currentappinfo.issupersign  && this.udid !== this.$route.query.udid){
+                  if(this.agent !== ''){
+                    this.download_url = res.data.download_url;
+                  }
+                }else {
+                  let download_url = res.data.download_url;
+                  this.downloadurl="itms-services://?action=download-manifest&url="+encodeURIComponent(download_url);
+                }
+              }else{
+                if(this.agent !== ''){
                   this.downloadurl = res.data.download_url;
                 }
               }
 
-              window.location.href = this.downloadurl;
+              window.location.href=this.downloadurl;
             } else {
               this.isdownload = false;
               alert("密码错误，或者下载链接失效")
@@ -200,6 +210,7 @@
               'short': this.currentappinfo.short,
               'release_id': this.mcurrentappinfo.release_id,
               'password': this.password,
+              'udid':this.udid,
             },
             'app_id': this.currentappinfo.app_id
           })
@@ -213,7 +224,7 @@
         })
       },
       getDownloadTokenFun() {
-        let params={ "short": this.$route.params.short };
+        let params={ "short": this.$route.params.short,"time":new Date().getTime() };
         if(this.$route.query.release_id){
           params["release_id"]=this.$route.query.release_id
         }

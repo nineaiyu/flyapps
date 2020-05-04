@@ -149,7 +149,7 @@
 <script>
     import QRCode from 'qrcodejs2'
 
-    import {getShortAppinfo,getdownloadurl,getplisturl} from '../restful'
+    import {getShortAppinfo,getdownloadurl} from '../restful'
 
     export default {
         name: "FirDownload",
@@ -183,12 +183,12 @@
                             if(this.currentappinfo.type === 1){
                                 if(this.currentappinfo.issupersign  && this.udid !== this.$route.query.udid){
                                     if(this.agent !== ''){
-                                        let download_url = res.data.download_url;
-                                        this.downloadurl = download_url.replace('http://localhost/download',getplisturl());
+                                        this.downloadurl=res.data.download_url;
+                                        // this.downloadurl = download_url.replace('http://localhost/download',getplisturl());
                                     }
                                 }else {
                                     let download_url = res.data.download_url;
-                                    download_url = download_url.replace('http://localhost/download',getplisturl());
+                                    // download_url = download_url.replace('http://localhost/download',getplisturl());
                                     this.downloadurl="itms-services://?action=download-manifest&url="+encodeURIComponent(download_url);
                                 }
                             }else{

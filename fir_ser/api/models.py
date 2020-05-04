@@ -232,7 +232,7 @@ class APPSuperSignUsedInfo(models.Model):
 class APPToDeveloper(models.Model):
     app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
     developerid = models.ForeignKey(to="AppIOSDeveloperInfo",on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
-    binary_file = models.CharField(max_length=128,blank=True,verbose_name="签名包名称",null=True)
+    binary_file = models.CharField(max_length=128,blank=True,verbose_name="签名包名称",null=True,unique=True)
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
