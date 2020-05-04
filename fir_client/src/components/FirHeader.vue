@@ -53,12 +53,6 @@ import {logout} from '../restful'
                 appName: '',
             }
         }, methods: {
-            handleSelect() {
-
-            },
-            checkUrl() {
-
-            },
             handleCommand(command) {
                 if (command === 'userinfo') {
                     this.$router.push({name: 'FirUserProfileInfo'})
@@ -67,7 +61,8 @@ import {logout} from '../restful'
                 }else if (command === 'storage') {
                     this.$router.push({name: 'FirUserProfileStorage'})
                 }else if (command === 'supersign') {
-                    this.$router.push({name: 'FirSuperSignBase'})
+                    this.$router.push({"name":'FirSuperSignBase', params: {act: "iosdeveloper"}})
+
                 }
                 else if(command === 'exit'){
                     logout(data => {

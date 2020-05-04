@@ -84,7 +84,8 @@
         },
         methods: {
             clean_app(){
-                this.saveappinfo({"clean":true})
+                this.saveappinfo({"clean":true});
+                this.currentapp.count = 0;
             },
             saveappinfo(data) {
                 updateapp(data => {

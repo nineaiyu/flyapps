@@ -197,12 +197,14 @@ class IosUtils(object):
         }
         #更新已经完成签名状态，设备消耗记录，和开发者已消耗数量
         AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).update(**newdata)
+
+        if APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'),developerid=self.developer_obj).count() == 0:
+            developer_obj = self.developer_obj
+            developer_obj.use_number=developer_obj.use_number + 1
+            developer_obj.save()
+
         APPSuperSignUsedInfo.objects.create(app_id=self.app_obj, user_id=self.user_obj, developerid=self.developer_obj,
                                             udid=AppUDID.objects.filter(app_id=self.app_obj,udid=self.udid_info.get('udid')).first())
-        developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj, is_actived=True,
-                                           use_number__lte=F("usable_number")).first()
-        developer_obj.use_number=self.developer_obj.use_number + 1
-        developer_obj.save()
 
         # 生成新的ipa，然后替换release，或许，binary_file 这个字段已经无用
         # AppReleaseInfo.objects.filter(app_id=self.app_obj,is_master=True).update(release_id=random_file_name)
@@ -211,7 +213,7 @@ class IosUtils(object):
 
 
         #创建
-        apptodev_obj=APPToDeveloper.objects.filter(developerid=developer_obj,app_id=self.app_obj).first()
+        apptodev_obj=APPToDeveloper.objects.filter(developerid=self.developer_obj,app_id=self.app_obj).first()
         if apptodev_obj:
             storage = Storage(self.user_obj)
             storage.delete_file(apptodev_obj.binary_file, release_obj.release_type)
@@ -220,7 +222,7 @@ class IosUtils(object):
             apptodev_obj.save()
 
         else:
-            APPToDeveloper.objects.create(developerid=developer_obj,app_id=self.app_obj,binary_file=random_file_name)
+            APPToDeveloper.objects.create(developerid=self.developer_obj,app_id=self.app_obj,binary_file=random_file_name)
 
     @staticmethod
     def disable_udid(udid_obj,app_id):
@@ -235,8 +237,8 @@ class IosUtils(object):
             }
 
             # 需要判断该设备在同一个账户下 的多个应用，若存在，则不操作
-            udid_lists=APPSuperSignUsedInfo.objects.values_list("udid__udid").filter(developerid=developer_obj)
-            if len(udid_lists) == len(set(udid_lists)):
+            udid_lists=list(APPSuperSignUsedInfo.objects.values_list("udid__udid").filter(developerid=developer_obj))
+            if udid_lists.count((udid_obj.udid,)) == 1:
                 app_api_obj = AppDeveloperApi(**auth)
                 app_api_obj.set_device_status("disable",udid_obj.udid)
 
@@ -257,29 +259,30 @@ class IosUtils(object):
                 APPToDeveloper.objects.filter(developerid=developer_obj,app_id_id=app_id).delete()
 
     @staticmethod
-    def clean_udid_by_app_obj(app_obj):
-        for SuperSignUsed_obj in APPSuperSignUsedInfo.objects.filter(app_id=app_obj):
+    def clean_udid_by_app_obj(app_obj,developer_obj):
+
+        auth = {
+            "username": developer_obj.email,
+            "password": developer_obj.password,
+            "certid": developer_obj.certid
+        }
+
+
+        # 需要判断该设备在同一个账户下 的多个应用，若存在，则不操作
+        udid_lists = list(APPSuperSignUsedInfo.objects.values_list("udid__udid").filter(developerid=developer_obj))
+
+        for SuperSignUsed_obj in APPSuperSignUsedInfo.objects.filter(app_id=app_obj, developerid=developer_obj):
             udid_obj = SuperSignUsed_obj.udid
-            developer_obj=SuperSignUsed_obj.developerid
 
-            auth = {
-                "username": developer_obj.email,
-                "password": developer_obj.password,
-                "certid": developer_obj.certid
-            }
-
-            # 需要判断该设备在同一个账户下 的多个应用，若存在，则不操作
-            udid_lists = APPSuperSignUsedInfo.objects.values_list("udid__udid").filter(developerid=developer_obj)
-            if len(udid_lists) == len(set(udid_lists)):
+            if udid_lists.count((udid_obj.udid,)) == 1:
                 app_api_obj = AppDeveloperApi(**auth)
                 app_api_obj.set_device_status("disable", udid_obj.udid)
 
-                if developer_obj.use_number > 0:
-                    developer_obj.use_number = developer_obj.use_number - 1
-                    developer_obj.save()
+            if developer_obj.use_number > 0:
+                developer_obj.use_number = developer_obj.use_number - 1
+                developer_obj.save()
 
-                udid_obj.delete()
-
+            udid_obj.delete()
             SuperSignUsed_obj.delete()
 
 
@@ -299,7 +302,7 @@ class IosUtils(object):
                 IosUtils.clean_app_by_developer_obj(app_obj,developer_obj)
                 APPToDeveloper.objects.filter(developerid=developer_obj,app_id=app_obj).delete()
 
-        IosUtils.clean_udid_by_app_obj(app_obj)
+                IosUtils.clean_udid_by_app_obj(app_obj,developer_obj)
     @staticmethod
     def clean_app_by_developer_obj(app_obj,developer_obj):
         auth = {
@@ -319,18 +322,27 @@ class IosUtils(object):
         :param developer_obj:
         :return:
         '''
-        auth = {
-            "username": developer_obj.email,
-            "password": developer_obj.password,
-            "certid": developer_obj.certid
-        }
-        for SuperSignUsed_obj in APPSuperSignUsedInfo.objects.filter(developerid=developer_obj):
-            app_obj = SuperSignUsed_obj.app_id
-            app_api_obj = AppDeveloperApi(**auth)
-            app_api_obj.del_profile(app_obj.bundle_id, app_obj.app_id)
-            app_api_obj2 = AppDeveloperApi(**auth)
-            app_api_obj2.del_app(app_obj.bundle_id,app_obj.app_id)
+        # auth = {
+        #     "username": developer_obj.email,
+        #     "password": developer_obj.password,
+        #     "certid": developer_obj.certid
+        # }
+
+        for APPToDeveloper_obj in APPToDeveloper.objects.filter(developerid=developer_obj):
+            app_obj=APPToDeveloper_obj.app_id
+            IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
             APPToDeveloper.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
+            IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
+
+
+        # for SuperSignUsed_obj in APPSuperSignUsedInfo.objects.filter(developerid=developer_obj):
+        #
+        #     app_obj = SuperSignUsed_obj.app_id
+        #     app_api_obj = AppDeveloperApi(**auth)
+        #     app_api_obj.del_profile(app_obj.bundle_id, app_obj.app_id)
+        #     app_api_obj2 = AppDeveloperApi(**auth)
+        #     app_api_obj2.del_app(app_obj.bundle_id,app_obj.app_id)
+        #     APPToDeveloper.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
 
     @staticmethod
     def active_developer(developer_obj,code=None):

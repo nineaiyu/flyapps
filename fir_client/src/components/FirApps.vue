@@ -9,13 +9,13 @@
                         :visible.sync="willDeleteApp"
                         width="50%">
 
-                    <span v-if="delapp.issupersign">请先在权限管理页面关闭超级签名</span>
+                    <span v-if="delapp.issupersign">该应用开启了超级签名，执行删除操作，将会删除相关开发者账户下的证书等数据，可能会导致已经下载的APP闪退，并且删除后不可恢复，请谨慎操作</span>
                     <span v-else>删除后不可恢复，请谨慎操作</span>
 
                     <span slot="footer" class="dialog-footer">
                         <el-button @click="willDeleteApp = false">取 消</el-button>
-                        <el-button v-if="delapp.issupersign" type="danger" @click="$router.push({name: 'FirAppInfossecurity', params: {id: delapp.app_id}})">确 定</el-button>
-                        <el-button v-else type="danger" @click="delApp">确 定</el-button>
+<!--                        <el-button v-if="delapp.issupersign" type="danger" @click="$router.push({name: 'FirAppInfossecurity', params: {id: delapp.app_id}})">确 定</el-button>-->
+                        <el-button  type="danger" @click="delApp">确 定</el-button>
                     </span>
                 </el-dialog>
 
@@ -651,11 +651,6 @@
                         this.$store.dispatch("getUser", data.userinfo);
 
                         this.searchapps();
-                        let upload_domain = data.hdata.upload_domain;
-                        if (!upload_domain) {
-                            upload_domain = location.origin;
-                        }
-
                         // this.$store.dispatch('doucurrentapp', {'firapps':1});
 
                     } else {

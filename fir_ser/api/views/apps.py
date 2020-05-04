@@ -118,6 +118,9 @@ class AppInfoView(APIView):
         if app_id:
             apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
             if apps_obj:
+                if apps_obj.issupersign:
+                    IosUtils.clean_app_by_user_obj(apps_obj, request.user)
+
                 storage = Storage(request.user)
                 has_combo = apps_obj.has_combo
                 if has_combo:

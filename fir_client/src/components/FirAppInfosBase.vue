@@ -12,6 +12,7 @@
                         <span><i class="el-icon-cloudy"></i><b class="ng-binding">{{ appinfos.count_hits }}</b></span>
                         <span class="bundleid ng-binding">BundleID<b class="ng-binding">&nbsp;&nbsp;{{ appinfos.bundle_id }}</b></span>
                         <span class="version ng-scope">{{ master_release.minimum_os_version }}&nbsp; 或者高版本</span>
+                        <span class="short ng-scope" v-if="appinfos.issupersign">已经开启超级签</span>
                     </div>
                     <div class="actions">
                         <el-button @click="appDownload" class="download" icon="el-icon-view">
@@ -33,7 +34,7 @@
                                 <a class="" ref="combo" @click="combo"><i class="el-icon-copy-document"
                                                                           style="transform:rotateX(180deg);"></i>应用合并</a>
                             </el-col>
-                            <el-col :span="3" v-if="appinfos.type">
+                            <el-col :span="3" v-if="appinfos.type===1 && master_release.release_type ===1 ">
                                 <a class="" ref="devices" @click="devices"><i class="el-icon-mobile-phone"></i>设备列表</a>
                             </el-col>
 
@@ -111,7 +112,11 @@
             },
             devices(){
                 this.setfunactive('devices',57);
-                this.$router.push({name: 'FirAppInfosdevices'});
+                if(this.appinfos.issupersign){
+                    this.$router.push({"name":'FirSuperSignBase', params: {act: "useddevices"},query:{bundleid:this.appinfos.bundle_id}})
+                }else {
+                    this.$router.push({name: 'FirAppInfosdevices'});
+                }
             },
         }, created() {
 

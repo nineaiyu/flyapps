@@ -29,19 +29,20 @@ class DeveloperView(APIView):
 
         res = BaseResponse()
 
+        appid = request.query_params.get("appid", None)
         developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
+        if appid:
+            developer_obj=developer_obj.filter(email=appid)
 
         page_obj = AppsPageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=developer_obj.order_by("-updated_time"), request=request,
                                                          view=self)
-
         Developer_serializer = DeveloperSerializer(app_page_serializer, many=True,)
         userserializer = UserInfoSerializer(request.user)
         res.userinfo = {}
-        res.has_next = {}
         res.userinfo = userserializer.data
         res.data = Developer_serializer.data
-        res.has_next = page_obj.page.has_next()
+        res.count=developer_obj.count()
         return Response(res.dict)
 
     def put(self,request):
@@ -49,9 +50,6 @@ class DeveloperView(APIView):
         email=data.get("email",None)
         if email:
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user,email=email).first()
-
-
-
             if developer_obj:
                 act = data.get("act", None)
                 if act:
@@ -101,19 +99,41 @@ class DeveloperView(APIView):
 
         return self.get(request)
 
+    def delete(self,request):
+        email=request.query_params.get("email",None)
+        if email:
+            developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user,email=email).first()
+            if developer_obj:
+                IosUtils.clean_developer(developer_obj)
+                developer_obj.delete()
+
+        return self.get(request)
 
 class SuperSignUsedView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
 
     def get(self, request):
         res = BaseResponse()
-        developer_obj = APPSuperSignUsedInfo.objects.filter(user_id=request.user)
+
+        udid = request.query_params.get("udid", None)
+        bundleid = request.query_params.get("bundleid", None)
+        developerid = request.query_params.get("appid", None)
+
+        SuperSignUsed_obj = APPSuperSignUsedInfo.objects.filter(user_id=request.user,)
+
+        if developerid:
+            SuperSignUsed_obj=SuperSignUsed_obj.filter(developerid__email=developerid)
+        if udid:
+            SuperSignUsed_obj = SuperSignUsed_obj.filter(udid__udid=udid)
+        if bundleid:
+            SuperSignUsed_obj = SuperSignUsed_obj.filter(app_id__bundle_id=bundleid)
+
         page_obj = AppsPageNumber()
-        app_page_serializer = page_obj.paginate_queryset(queryset=developer_obj.order_by("-created_time"), request=request,
+        app_page_serializer = page_obj.paginate_queryset(queryset=SuperSignUsed_obj.order_by("-created_time"), request=request,
                                                          view=self)
         app_serializer = SuperSignUsedSerializer(app_page_serializer, many=True, )
         res.data = app_serializer.data
-        res.has_next = page_obj.page.has_next()
+        res.count=SuperSignUsed_obj.count()
         return Response(res.dict)
 
 class AppUDIDUsedView(APIView):
@@ -124,27 +144,25 @@ class AppUDIDUsedView(APIView):
 
         udid = request.query_params.get("udid", None)
         bundleid = request.query_params.get("bundleid", None)
-        if udid and bundleid:
-            developer_obj = AppUDID.objects.filter(app_id__user_id_id=request.user,app_id__bundle_id=bundleid,udid=udid)
-        elif udid:
-                developer_obj = AppUDID.objects.filter(app_id__user_id_id=request.user,udid=udid)
-        elif bundleid:
-                developer_obj = AppUDID.objects.filter(app_id__user_id_id=request.user,app_id__bundle_id=bundleid)
-        else:
-            developer_obj = AppUDID.objects.filter(app_id__user_id_id=request.user)
+        AppUDID_obj = AppUDID.objects.filter(app_id__user_id_id=request.user)
+        if udid:
+                AppUDID_obj = AppUDID_obj.filter(udid=udid)
+        if bundleid:
+                AppUDID_obj = AppUDID_obj.filter(app_id__bundle_id=bundleid)
 
         page_obj = AppsPageNumber()
-        app_page_serializer = page_obj.paginate_queryset(queryset=developer_obj.order_by("-created_time"), request=request,
+        app_page_serializer = page_obj.paginate_queryset(queryset=AppUDID_obj.order_by("-created_time"), request=request,
                                                          view=self)
         app_serializer = DeviceUDIDSerializer(app_page_serializer, many=True,)
         res.data = app_serializer.data
-        res.has_next = page_obj.page.has_next()
+        res.count=AppUDID_obj.count()
         return Response(res.dict)
 
     def delete(self,request):
+        res = BaseResponse()
         id = request.query_params.get("id", None)
         app_id = request.query_params.get("aid", None)
         app_udid_obj=AppUDID.objects.filter(app_id__user_id_id=request.user,pk=id)
         IosUtils.disable_udid(app_udid_obj.first(),app_id)
         app_udid_obj.delete()
-        return self.get(request)
+        return Response(res.dict)

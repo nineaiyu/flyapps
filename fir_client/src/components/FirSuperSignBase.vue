@@ -45,6 +45,13 @@
 
         <el-tabs v-model="activeName" type="border-card" @tab-click="handleClick" tab-position="top">
             <el-tab-pane label="开发者账户" name="iosdeveloper">
+                <el-input
+                        style="width: 30%;margin-right: 30px;margin-bottom: 10px"
+                        v-model="appidseach"
+                        clearable
+                        placeholder="输入用户APPID" />
+                <el-button type="primary" icon="el-icon-search" @click="handleCurrentChange(pagination.currentPage)">搜索</el-button>
+
                 <el-table
                         :data="app_developer_lists"
                         border
@@ -102,7 +109,7 @@
                             <el-button
                                     size="mini"
                                     type="danger"
-                                    @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+                                    @click="handleDeleteDeveloper(scope.row)">删除</el-button>
 
                         </template>
                     </el-table-column>
@@ -112,6 +119,23 @@
             </el-tab-pane>
             <el-tab-pane label="添加开发者" name="adddeveloper">添加开发者</el-tab-pane>
             <el-tab-pane label="设备消耗" name="useddevices">
+                <el-input
+                        style="width: 30%;margin-right: 30px;margin-bottom: 10px"
+                        v-model="udidsearch"
+                        clearable
+                        placeholder="输入UDID" />
+                <el-input
+                        style="width: 20%;margin-right: 30px;margin-bottom: 10px"
+                        v-model="Bundleidsearch"
+                        clearable
+                        placeholder="输入BundleID" />
+                <el-input
+                        style="width: 20%;margin-right: 30px;margin-bottom: 10px"
+                        v-model="appidseach"
+                        clearable
+                        placeholder="输入用户APPID" />
+                <el-button type="primary" icon="el-icon-search" @click="handleCurrentChange(pagination.currentPage)">搜索</el-button>
+
                 <el-table
                         :data="app_devices_lists"
                         border
@@ -164,7 +188,9 @@
                         v-model="Bundleidsearch"
                         clearable
                         placeholder="输入BundleID" />
-                <el-button type="primary" icon="el-icon-search" @click="iosdevicesudidFun('GET',{udid:udidsearch,bundleid:Bundleidsearch})">搜索</el-button>
+                <el-button type="primary" icon="el-icon-search" @click="handleCurrentChange(pagination.currentPage)">搜索</el-button>
+
+
                 <el-table
                         :data="app_udid_lists"
                         border
@@ -222,12 +248,23 @@
                             <el-button
                                     size="mini"
                                     type="danger"
-                                    @click="iosdevicesudidFun('DELETE',{id:scope.row.id,aid:scope.row.app_id})">删除</el-button>
+                                    @click="udidDeleteFun(scope)">删除</el-button>
                         </template>
                     </el-table-column>
                 </el-table>
 
             </el-tab-pane>
+            <div style="margin-top: 20px" v-if="activeName!== 'adddeveloper'">
+                <el-pagination
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page.sync="pagination.currentPage"
+                        :page-sizes="[10, 20, 50, 100]"
+                        :page-size="pagination.pagesize"
+                        layout="total,sizes, prev, pager, next"
+                        :total="pagination.total">
+                </el-pagination>
+            </div>
         </el-tabs>
 
     </el-main>
@@ -235,7 +272,8 @@
 
 <script>
 
-    import {iosdeveloper, iosdevices,iosdevicesudid } from "../restful";
+    import {iosdeveloper, iosdevices, iosdevicesudid, userinfos} from "../restful";
+    import {removeAaary} from "../utils";
 
     export default {
         name: "FirSuperSignBase",
@@ -247,16 +285,30 @@
                 activeName:"iosdeveloper",
                 udidsearch:"",
                 Bundleidsearch:"",
+                appidseach:"",
                 dialogaddDeveloperVisible:false,
                 title:"",
                 editdeveloperinfo:{},
                 isedit:false,
                 placeholder:"",
                 codeactiveVisible:false,
+                pagination:{"currentPage":1,"total":0,"pagesize":10}
 
             }
         },
         methods: {
+            udidDeleteFun(scope){
+                this.iosdevicesudidFun('DELETE',{id:scope.row.id,aid:scope.row.app_id});
+                this.app_udid_lists=removeAaary(this.app_udid_lists,scope.row)
+            },
+            handleSizeChange(val) {
+                this.pagination.pagesize=val;
+                this.get_data_from_tabname(this.activeName,{"size":this.pagination.pagesize,"page":this.pagination.currentPage})
+            },
+            handleCurrentChange(val) {
+                this.pagination.currentPage=val;
+                this.get_data_from_tabname(this.activeName,{"size":this.pagination.pagesize,"page":this.pagination.currentPage})
+            },
             IsNum(s){
                 if(s!=null){
                     var r,re;
@@ -266,14 +318,14 @@
                 }
                 return false;
             },
-    inputcode(developer){
+            inputcode(developer){
                 this.$prompt('请输入验证码', '提示', {
                     confirmButtonText: '确定',
                     cancelButtonText: '取消',
                     closeOnClickModal:false,
                 }).then(({ value }) => {
                     if(value.toString().length>5 && this.IsNum(value)){
-                        this.iosdeveloperFun({"methods":"PUT","data":{"email":developer.email,"act":"nowactive","code":value}});
+                        this.iosdeveloperFun({"methods":"PUT","data":{"email":developer.email,"act":"nowactive","code":value.replace(/^\s+|\s+$/g, "")}});
                     }
                 }).catch(() => {
                     this.$message({
@@ -310,22 +362,42 @@
                     }
                 }
             },
-            handleDelete(b){
-                // eslint-disable-next-line no-console
-                console.log(b)
+            handleDeleteDeveloper(developer_info){
+
+
+                this.$confirm('此操作会删除该苹果开发者账户下面的生成的证书等数据,可能会导致超级签包的闪退, 是否继续?', '警告', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.iosdeveloperFun({"methods":"DELETE","data":{"email":developer_info.email}});
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
             },
-            handleClick(tab, event) {
-                // eslint-disable-next-line no-console
-                console.log(tab, event);
-                if(tab.name === "useddevices"){
-                    this.iosdevicesFun()
-                }else if(tab.name === "devicesudid"){
-                    this.iosdevicesudidFun('GET')
-                }else if(tab.name === "adddeveloper"){
+            get_data_from_tabname(tabname,data={}){
+                data.udid=this.udidsearch.replace(/^\s+|\s+$/g, "");
+                data.bundleid=this.Bundleidsearch.replace(/^\s+|\s+$/g, "");
+                data.appid=this.appidseach.replace(/^\s+|\s+$/g, "");
+                this.$router.push({"name":'FirSuperSignBase', params: {act: tabname}});
+                if(tabname === "useddevices"){
+                    this.iosdevicesFun('GET',data)
+                }else if(tabname === "devicesudid"){
+                    this.iosdevicesudidFun('GET',data)
+                }else if(tabname === "adddeveloper"){
                     this.title='新增私有开发者账户';
                     this.dialogaddDeveloperVisible=true;
+                }else if(tabname === "iosdeveloper"){
+                    this.iosdeveloperFun({"methods":"GET","data":data})
                 }
-
+            },
+            // eslint-disable-next-line no-unused-vars
+            handleClick(tab, event) {
+                this.pagination={"currentPage":1,"total":0,"pagesize":10};
+                this.get_data_from_tabname(tab.name);
             },
             // eslint-disable-next-line no-unused-vars
             deviceformatter(row, column){
@@ -345,21 +417,21 @@
                 } else
                     return '';
             },
-            iosdevicesFun(){
+            iosdevicesFun(methods,data){
                 iosdevices(data=>{
                     if(data.code === 1000){
                         this.app_devices_lists = data.data;
-                        // eslint-disable-next-line no-console
-                        console.log(data)
+                        this.pagination.total=data.count;
                     }
                 },{
-                    "methods":"GET"
+                    "methods":methods,"data":data
                 })
             },
             iosdeveloperFun(params){
                 iosdeveloper(data=>{
                     if(data.code === 1000){
                         this.app_developer_lists = data.data;
+                        this.pagination.total=data.count;
                         this.$store.dispatch("getUser",data.userinfo);
                         this.$store.dispatch('doucurrentapp', {});
                         if(this.dialogaddDeveloperVisible){
@@ -381,24 +453,43 @@
             iosdevicesudidFun(action,data){
                 iosdevicesudid(data=>{
                     if(data.code === 1000){
-                        this.app_udid_lists = data.data;
+                        if(action !== "DELETE"){
+                            this.app_udid_lists = data.data;
+                            this.pagination.total=data.count;
+                        }
                     }
                 },{
                     "methods":action,"data":data
                 })
-            }
+            },
+            getUserInfoFun(){
+                userinfos(data=>{
+                    if(data.code === 1000){
+                        this.$store.dispatch("getUser",data.data);
+                    }else {
+                        this.$message.error("用户信息获取失败")
+                    }
+                },{"methods":"GET"})
+            },
 
         }, mounted() {
-                this.iosdeveloperFun({"methods":"GET"})
-        }, watch: {
-            // eslint-disable-next-line no-unused-vars
-            udidsearch: function (val, oldVal) {
-                // this.searchapps()
-            },
-        },filters:{
-
-        },computed:{
-
+            this.getUserInfoFun();
+            if(this.$route.params.act){
+                let activeName=this.$route.params.act;
+                let activeName_list=["useddevices","devicesudid","adddeveloper","iosdeveloper"];
+                for(let index in activeName_list){
+                    if(activeName_list[index] === activeName){
+                        this.activeName=activeName;
+                        let bundleid=this.$route.query.bundleid;
+                        if(bundleid){
+                            this.Bundleidsearch=bundleid;
+                        }
+                        this.get_data_from_tabname(activeName);
+                        return
+                    }
+                }
+            }
+            this.get_data_from_tabname(this.activeName);
         }
     }
 </script>

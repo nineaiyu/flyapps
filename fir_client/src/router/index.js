@@ -123,7 +123,7 @@ const router = new VueRouter({
             component: FirAppBase,
             children: [
                 {
-                    path: '',
+                    path: ':act',
                     name: 'FirSuperSignBase',
                     component: FirSuperSignBase,
                 }
