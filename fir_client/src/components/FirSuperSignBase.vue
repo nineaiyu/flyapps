@@ -51,6 +51,13 @@
                         clearable
                         placeholder="输入用户APPID" />
                 <el-button type="primary" icon="el-icon-search" @click="handleCurrentChange(pagination.currentPage)">搜索</el-button>
+                <div style="width: 40%;margin-right: 30px;float:right">
+                    <el-link :underline="false">总设备量：{{ developer_used_info.all_usable_number}}   已经使用：{{ developer_used_info.all_use_number}}  还剩：{{ developer_used_info.now_can_use_number}} 可用</el-link>
+                    <el-progress
+                            type="line"
+                            :color="developer_usedColor"
+                            :text-inside="true" :stroke-width="18" :percentage="percentage" status="success"></el-progress>
+                </div>
 
                 <el-table
                         :data="app_developer_lists"
@@ -292,11 +299,29 @@
                 isedit:false,
                 placeholder:"",
                 codeactiveVisible:false,
-                pagination:{"currentPage":1,"total":0,"pagesize":10}
+                pagination:{"currentPage":1,"total":0,"pagesize":10},
+                developer_used_info:{},
+                percentage:0,
 
             }
         },
         methods: {
+            developer_usedColor(percentage){
+                if (percentage < 20) {
+                    return '#6f7ad3';
+                } else if (percentage < 40) {
+                    return '#1989fa';
+                } else if (percentage < 60) {
+                    return '#5cb87a';
+
+                } else if (percentage < 80) {
+                    return '#e6a23c';
+                } else if(percentage<90){
+                    return '#E63918';
+                }else {
+                    return '#F50346';
+                }
+            },
             udidDeleteFun(scope){
                 this.iosdevicesudidFun('DELETE',{id:scope.row.id,aid:scope.row.app_id});
                 this.app_udid_lists=removeAaary(this.app_udid_lists,scope.row)
@@ -432,8 +457,12 @@
                     if(data.code === 1000){
                         this.app_developer_lists = data.data;
                         this.pagination.total=data.count;
-                        this.$store.dispatch("getUser",data.userinfo);
-                        this.$store.dispatch('doucurrentapp', {});
+                        this.developer_used_info=data.use_num;
+                        if(this.developer_used_info.all_usable_number ===0){
+                            this.percentage=0
+                        }else {
+                            this.percentage=parseInt(this.developer_used_info.all_use_number*100/this.developer_used_info.all_usable_number);
+                        }
                         if(this.dialogaddDeveloperVisible){
                             this.canceledit();
                             this.$message.success("操作成功");

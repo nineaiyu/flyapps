@@ -12,6 +12,7 @@ from api.models import AppIOSDeveloperInfo,APPSuperSignUsedInfo,AppUDID
 from api.utils.serializer import  DeveloperSerializer, UserInfoSerializer,SuperSignUsedSerializer,DeviceUDIDSerializer
 from rest_framework.pagination import PageNumberPagination
 from api.utils.app.supersignutils import IosUtils
+from django.db.models import Sum,F
 
 
 
@@ -31,6 +32,21 @@ class DeveloperView(APIView):
 
         appid = request.query_params.get("appid", None)
         developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
+
+        use_number_obj = developer_obj.filter(is_actived=True)
+        if use_number_obj:
+            use_number_dict=use_number_obj.aggregate(usable_number=Sum('usable_number'),use_number=Sum('use_number'))
+            use_number_dict2=use_number_obj.filter(use_number__lt=F("usable_number")).aggregate(usable_number=Sum('usable_number'),use_number=Sum('use_number'))
+            now_can_use_number=0
+            if use_number_dict2 and  use_number_dict2.get("usable_number",0) and use_number_dict2.get("use_number", 0):
+                now_can_use_number = use_number_dict2.get("usable_number",0)-use_number_dict2.get("use_number", 0)
+
+            res.use_num={
+                "all_usable_number":use_number_dict.get("usable_number", 0),
+                "all_use_number":use_number_dict.get("use_number", 0),
+                "now_can_use_number":now_can_use_number
+            }
+
         if appid:
             developer_obj=developer_obj.filter(email=appid)
 
@@ -38,9 +54,7 @@ class DeveloperView(APIView):
         app_page_serializer = page_obj.paginate_queryset(queryset=developer_obj.order_by("-updated_time"), request=request,
                                                          view=self)
         Developer_serializer = DeveloperSerializer(app_page_serializer, many=True,)
-        userserializer = UserInfoSerializer(request.user)
-        res.userinfo = {}
-        res.userinfo = userserializer.data
+
         res.data = Developer_serializer.data
         res.count=developer_obj.count()
         return Response(res.dict)
