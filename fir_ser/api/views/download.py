@@ -155,7 +155,7 @@ class InstallView(APIView):
                         download_url = get_download_url_by_cache(app_obj,release_id + apptype,600,isdownload,udid=udid)
 
                 res.data={"download_url":download_url}
-                if download_url!= "":
+                if download_url != "" and udid is None:
                     set_app_download_by_cache(app_id)
                 return Response(res.dict)
         else:
