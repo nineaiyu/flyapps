@@ -206,3 +206,13 @@ export function deepCopy(source) {
     }
     return result;
 }
+
+export function IsNum(s){
+    if(s!=null){
+        var r,re;
+        re = /\d*/i; //\d表示数字,*表示匹配多个数字
+        r = s.match(re);
+        return (r==s)?true:false;
+    }
+    return false;
+}

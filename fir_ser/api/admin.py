@@ -14,4 +14,5 @@ admin.site.register(AppUDID)
 admin.site.register(AppIOSDeveloperInfo)
 admin.site.register(APPSuperSignUsedInfo)
 admin.site.register(APPToDeveloper)
+admin.site.register(UDIDsyncDeveloper)
 

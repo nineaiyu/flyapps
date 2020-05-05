@@ -7,11 +7,13 @@
 import uuid, xmltodict, os, re
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN
 from api.utils.app.iossignapi import AppDeveloperApi, ResignApp
-from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo,Apps,APPToDeveloper
+from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo,Apps,APPToDeveloper,UDIDsyncDeveloper
 from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
 from django.db.models import F
-from api.utils.storage.storage import Storage,LocalStorage
+from api.utils.serializer import get_developer_udided
+from api.utils.storage.storage import LocalStorage
 from api.utils.storage.caches import del_cache_response_by_short
+
 
 
 def udid_bytes_to_dict(xml_stream):
@@ -69,7 +71,6 @@ def make_udid_mobileconfig(udid_url, PayloadOrganization, PayloadUUID=uuid.uuid1
 
 def get_post_udid_url(request, short):
     server_domain = get_http_server_doamin(request)
-
     # PATH_INFO = request.META.get('PATH_INFO')
     # PATH_INFO_lists = PATH_INFO.strip('/').split('/')
     # PATH_INFO_lists[-1] = 'udid'
@@ -123,15 +124,28 @@ class IosUtils(object):
         self.auth = auth
 
     def get_developer_user_by_app_udid(self):
-        usedeviceobj = APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'), app_id=self.app_obj,
+        usedeviceobj = APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'), #app_id=self.app_obj,
                                                            user_id=self.user_obj).first()
-        if usedeviceobj and usedeviceobj.developerid.use_number < usedeviceobj.developerid.usable_number:
-            developer_obj = usedeviceobj.developerid
+        #只要账户下面存在udid,就可以使用该苹果开发者账户，避免多个开发者账户下面出现同一个udid
+        if usedeviceobj :#and usedeviceobj.developerid.use_number < usedeviceobj.developerid.usable_number:
+            developer_obj = usedeviceobj.developeridjj
         else:
-            developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj, is_actived=True,
-                                                               use_number__lt=F("usable_number")).order_by(
-                "created_time").first()
-        return developer_obj
+            developer_udid_obj = UDIDsyncDeveloper.objects.filter(udid=self.udid_info.get('udid')).first()
+            if developer_udid_obj:
+                developer_obj = developer_udid_obj.developerid
+            else:
+                # developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj, is_actived=True,
+                #                                                    use_number__lt=F("usable_number")).order_by(
+                #     "created_time").first()
+
+                for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj,
+                                                                        is_actived=True, ).order_by("created_time"):
+                    usable_number = developer_obj.usable_number
+                    flyapp_used = get_developer_udided(developer_obj)[1]
+                    if flyapp_used < usable_number:
+                        return developer_obj
+
+        return None
 
     def create_cert(self):
         app_api_obj = AppDeveloperApi(**self.auth)
@@ -148,6 +162,7 @@ class IosUtils(object):
         developer_obj.is_actived=True
         developer_obj.certid=cert_id
         developer_obj.save()
+
     def download_profile(self):
         app_api_obj = AppDeveloperApi(**self.auth)
         bundleId = self.app_obj.bundle_id
@@ -155,14 +170,6 @@ class IosUtils(object):
         device_udid = self.udid_info.get('udid')
         device_name = self.udid_info.get('product')
         app_api_obj.get_profile(bundleId, app_id, device_udid, device_name, self.get_profile_full_path())
-
-    # def file_format_path(self):
-    #     cert_dir_name = make_app_uuid(self.app_obj.user_id, self.auth.get("username"))
-    #     cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name)
-    #     if not os.path.isdir(cert_dir_path):
-    #         os.makedirs(cert_dir_path)
-    #     file_format_path_name = os.path.join(cert_dir_path, cert_dir_name)
-    #     return file_format_path_name
 
     def get_profile_full_path(self):
         cert_dir_name = make_app_uuid(self.user_obj, self.auth.get("username"))
@@ -201,16 +208,23 @@ class IosUtils(object):
         #更新已经完成签名状态，设备消耗记录，和开发者已消耗数量
         AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).update(**newdata)
 
-        if APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'),developerid=self.developer_obj).count() == 0:
+        appsupersign_obj=APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'),developerid=self.developer_obj)
+        if appsupersign_obj.count() == 0:
             developer_obj = self.developer_obj
             developer_obj.use_number=developer_obj.use_number + 1
             developer_obj.save()
 
-        APPSuperSignUsedInfo.objects.create(app_id=self.app_obj, user_id=self.user_obj, developerid=self.developer_obj,
-                                            udid=AppUDID.objects.filter(app_id=self.app_obj,udid=self.udid_info.get('udid')).first())
+        if not appsupersign_obj.filter(app_id=self.app_obj, user_id=self.user_obj).first():
+            APPSuperSignUsedInfo.objects.create(app_id=self.app_obj, user_id=self.user_obj, developerid=self.developer_obj,
+                                                udid__udid=self.udid_info.get('udid'))
 
         del_cache_response_by_short(self.app_obj.short,self.app_obj.app_id,udid=self.udid_info.get('udid'))
 
+
+        app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=self.developer_obj, udid=self.udid_info.get('udid'))
+        if not app_udid_obj:
+            device=AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).values("serial", 'product', 'udid','version').first()
+            UDIDsyncDeveloper.objects.create(developerid=self.developer_obj, **device)
 
         #创建
         apptodev_obj=APPToDeveloper.objects.filter(developerid=self.developer_obj,app_id=self.app_obj).first()
@@ -367,8 +381,37 @@ class IosUtils(object):
         developer_obj.certid=cert_id
         developer_obj.save()
 
+    @staticmethod
+    def get_device_from_developer(developer_obj,user_obj):
+        auth = {
+            "username": developer_obj.email,
+            "password": developer_obj.password,
+            "certid": developer_obj.certid
+        }
+        app_api_obj = AppDeveloperApi(**auth)
+        app_api_obj.get_device(user_obj)
+        file_format_path_name = file_format_path(user_obj,auth)
+        devices_info = ""
+        try:
+            with open(file_format_path_name+".devices.info", "r") as f:
+                devices_info = f.read().replace("\n\t", "").replace("[", "").replace("]", "")
+        except Exception as e:
+            print(e)
 
-
+        for devicestr in devices_info.split(">"):
+            formatdevice = re.findall(r'.*Device id="(.*)",.*name="(.*)",.*udid="(.*?)",.*model=(.*),.*', devicestr)
+            if formatdevice:
+                device = {
+                    "serial": formatdevice[0][0],
+                    "product": formatdevice[0][1],
+                    "udid": formatdevice[0][2],
+                    "version": formatdevice[0][3],
+                }
+                app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,udid=device.get("udid"))
+                if app_udid_obj:
+                    pass
+                else:
+                    UDIDsyncDeveloper.objects.create(developerid=developer_obj,**device)
 
 def file_format_path(user_obj,auth):
     cert_dir_name = make_app_uuid(user_obj, auth.get("username"))

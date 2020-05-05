@@ -222,6 +222,26 @@ class DeveloperSerializer(serializers.ModelSerializer):
         # depth = 1
         exclude = ["password", "id","user_id"]
 
+    developer_used_number = serializers.SerializerMethodField()
+    developer_used_other_number = serializers.SerializerMethodField()
+    def get_developer_used_number(self,obj):
+        return models.UDIDsyncDeveloper.objects.filter(developerid=obj).count()
+
+    def get_developer_used_other_number(self,obj):
+        return get_developer_udided(obj)[0]
+
+def get_developer_udided(developer_obj):
+    SuperSignUsed_obj = models.APPSuperSignUsedInfo.objects.filter(developerid=developer_obj )
+    UDIDsyncDeveloper_obj = models.UDIDsyncDeveloper.objects.filter(developerid=developer_obj)
+    develoer_udid_lists=[]
+    supersign_udid_lists=[]
+    if UDIDsyncDeveloper_obj:
+        develoer_udid_lists=list(UDIDsyncDeveloper_obj.values_list("udid"))
+    if SuperSignUsed_obj:
+        supersign_udid_lists=list(SuperSignUsed_obj.values_list("udid__udid"))
+    return len(set(develoer_udid_lists)-set(supersign_udid_lists)),len(develoer_udid_lists)
+
+
 class SuperSignUsedSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.APPSuperSignUsedInfo

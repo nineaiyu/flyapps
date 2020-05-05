@@ -21,6 +21,7 @@
                         <el-input  v-model="editdeveloperinfo.description"></el-input>
                     </el-form-item>
                     <div style="" >
+                        <el-button v-if="isedit" @click="syncdevices">同步设备信息</el-button>
                         <el-button  @click="updateorcreate">保存</el-button>
                         <el-button  @click="canceledit">取消</el-button>
                     </div>
@@ -52,7 +53,7 @@
                         placeholder="输入用户APPID" />
                 <el-button type="primary" icon="el-icon-search" @click="handleCurrentChange(pagination.currentPage)">搜索</el-button>
                 <div style="width: 40%;margin-right: 30px;float:right">
-                    <el-link :underline="false">总设备量：{{ developer_used_info.all_usable_number}}   已经使用：{{ developer_used_info.all_use_number}}  还剩：{{ developer_used_info.now_can_use_number}} 可用</el-link>
+                    <el-link :underline="false">总设备量：{{ developer_used_info.all_usable_number}}   已经使用：【平台：{{ developer_used_info.all_use_number}} 】【其他：{{developer_used_info.other_used_sum}} 】 还剩：{{developer_used_info.all_usable_number- developer_used_info.flyapp_used_sum}} 可用</el-link>
                     <el-progress
                             type="line"
                             :color="developer_usedColor"
@@ -70,6 +71,18 @@
                             prop="email"
                             label="用户"
                             width="220">
+                        <template slot-scope="scope">
+                            <el-popover trigger="hover" placement="top">
+                                <p>开发者账户已使用设备数: {{ scope.row.developer_used_number }}</p>
+                                <p>开发者账户可用设备数: {{ 100-scope.row.developer_used_number }}</p>
+                                <p>由于您设置可用设备数: {{ scope.row.usable_number}} ,所以现在可用设备数: {{ scope.row.usable_number-scope.row.developer_used_number }}</p>
+
+                                <div slot="reference" class="name-wrapper">
+                                    <el-tag size="medium">{{ scope.row.email }}</el-tag>
+                                </div>
+                            </el-popover>
+                        </template>
+
                     </el-table-column>
                     <el-table-column
                             prop="is_actived"
@@ -85,12 +98,29 @@
                             prop="usable_number"
                             label="可用设备数"
                             width="100">
+                        <template slot-scope="scope">
+                            <el-popover trigger="hover" placement="top">
+                                <p>可用设备数: {{ scope.row.usable_number-scope.row.developer_used_number }}</p>
+                                <div slot="reference" class="name-wrapper">
+                                    <el-tag size="medium"> {{ scope.row.usable_number-scope.row.developer_used_number }}</el-tag>
+                                </div>
+                            </el-popover>
+                        </template>
                     </el-table-column>
 
                     <el-table-column
                             prop="use_number"
                             label="已消耗设备数"
                             width="120">
+                        <template slot-scope="scope">
+                            <el-popover trigger="hover" placement="top">
+                                <p>开发者账户已使用设备数【本平台】: {{ scope.row.use_number }}</p>
+                                <p>开发者账户已使用设备数【其他】: {{ scope.row.developer_used_other_number }}</p>
+                                <div slot="reference" class="name-wrapper">
+                                    <el-tag size="medium">{{ scope.row.use_number }}</el-tag>
+                                </div>
+                            </el-popover>
+                        </template>
                     </el-table-column>
 
                     <el-table-column
@@ -280,7 +310,7 @@
 <script>
 
     import {iosdeveloper, iosdevices, iosdevicesudid, userinfos} from "../restful";
-    import {removeAaary} from "../utils";
+    import {removeAaary,IsNum} from "../utils";
 
     export default {
         name: "FirSuperSignBase",
@@ -334,14 +364,8 @@
                 this.pagination.currentPage=val;
                 this.get_data_from_tabname(this.activeName,{"size":this.pagination.pagesize,"page":this.pagination.currentPage})
             },
-            IsNum(s){
-                if(s!=null){
-                    var r,re;
-                    re = /\d*/i; //\d表示数字,*表示匹配多个数字
-                    r = s.match(re);
-                    return (r==s)?true:false;
-                }
-                return false;
+            syncdevices(){
+                this.iosdeveloperFun({"methods":"PUT","data":{"email":this.editdeveloperinfo.email,"act":"syncdevice"}});
             },
             inputcode(developer){
                 this.$prompt('请输入验证码', '提示', {
@@ -349,7 +373,7 @@
                     cancelButtonText: '取消',
                     closeOnClickModal:false,
                 }).then(({ value }) => {
-                    if(value.toString().length>5 && this.IsNum(value)){
+                    if(value.toString().length>5 && IsNum(value)){
                         this.iosdeveloperFun({"methods":"PUT","data":{"email":developer.email,"act":"nowactive","code":value.replace(/^\s+|\s+$/g, "")}});
                     }
                 }).catch(() => {
@@ -461,7 +485,7 @@
                         if(this.developer_used_info.all_usable_number ===0){
                             this.percentage=0
                         }else {
-                            this.percentage=parseInt(this.developer_used_info.all_use_number*100/this.developer_used_info.all_usable_number);
+                            this.percentage=parseInt(this.developer_used_info.flyapp_used_sum*100/this.developer_used_info.all_usable_number);
                         }
                         if(this.dialogaddDeveloperVisible){
                             this.canceledit();

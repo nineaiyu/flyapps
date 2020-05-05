@@ -50,13 +50,15 @@ class AppDeveloperApi(object):
             print(e)
         return False
 
-    def create_cert(self,user_obj):
+    def file_format_path_name(self,user_obj):
         cert_dir_name = make_app_uuid(user_obj,self.username)
         cert_dir_path = os.path.join(SUPER_SIGN_ROOT,cert_dir_name)
         if not os.path.isdir(cert_dir_path):
             os.makedirs(cert_dir_path)
-        file_format_path_name = os.path.join(cert_dir_path,cert_dir_name)
-        self.cmd=self.cmd + " cert add  '%s'" %(file_format_path_name)
+        return os.path.join(cert_dir_path,cert_dir_name)
+
+    def create_cert(self,user_obj):
+        self.cmd=self.cmd + " cert add  '%s'" %(self.file_format_path_name(user_obj))
         result = exec_shell(self.cmd)
 
     def get_profile(self,bundleId,app_id,device_udid,device_name,provisionName):
@@ -76,6 +78,10 @@ class AppDeveloperApi(object):
 
     def add_device(self,device_udid,device_name):
         self.cmd=self.cmd + " device add '%s' '%s'" %(device_udid,device_name)
+        result = exec_shell(self.cmd)
+
+    def get_device(self,user_obj):
+        self.cmd=self.cmd + " device get '%s' " %(self.file_format_path_name(user_obj))
         result = exec_shell(self.cmd)
 
     def add_app(self,bundleId,app_id):

@@ -17,6 +17,13 @@ class DevelopPortalHandle
         File.write(file_format_path_name+".info",cert)
     end
 
+    def getDevice(file_format_path_name)
+        all_devices= Spaceship::Portal.device.all(include_disabled: true)
+        if  0 < all_devices.length then
+            File.write(file_format_path_name+".devices.info",all_devices)
+         end
+    end
+
 	def createApp(appid,appname)
 		app = Spaceship::Portal.app.find(appid)
 		if !app then
@@ -115,6 +122,8 @@ end
             handle.enableDevice(device_udid)
         when "disable"
             handle.disableDevice(device_udid)
+        when "get"
+            handle.getDevice(device_udid)
         end
 
     when "app"
