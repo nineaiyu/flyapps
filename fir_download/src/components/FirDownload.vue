@@ -175,19 +175,24 @@
     }, methods: {
       download() {
         if( this.currentappinfo.app_id) {
-
           this.isdownload = true;
           getdownloadurl(res => {
-            if (res.code === 1000) {
-
+            if(res.code === 1000){
               if(res.data.download_url === ""){
                 window.location.href=this.full_url;
                 return
               }
               if(this.currentappinfo.type === 1){
-                if(this.currentappinfo.issupersign  && this.udid !== this.$route.query.udid){
-                  if(this.agent !== ''){
-                    this.download_url = res.data.download_url;
+                if(this.currentappinfo.issupersign){
+                  if(this.$route.query.udid && this.udid === this.$route.query.udid){
+                    if(this.agent !== ''){
+                      let download_url = res.data.download_url;
+                      this.downloadurl="itms-services://?action=download-manifest&url="+encodeURIComponent(download_url);
+                    }
+                  }else {
+                    if(this.agent !== ''){
+                      this.downloadurl = res.data.download_url;
+                    }
                   }
                 }else {
                   let download_url = res.data.download_url;
@@ -228,8 +233,14 @@
         if(this.$route.query.release_id){
           params["release_id"]=this.$route.query.release_id
         }
+        if(this.$route.query.udid){
+          params["udid"]=this.$route.query.udid
+        }else {
+          params["udid"]=""
+        }
         getShortAppinfo(data => {
           if (data.code === 1000) {
+            this.udid = data.udid;
             if(!data.data.master_release.release_id){
               // this.$message({
               //   message:"该 release 版本不存在,请检查",
