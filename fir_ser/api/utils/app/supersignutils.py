@@ -174,8 +174,11 @@ class IosUtils(object):
 
     def resign(self):
         if AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first().is_signed:
-            if APPToDeveloper.objects.filter(app_id=self.app_obj).first():
-                return
+            apptodev_obj=APPToDeveloper.objects.filter(app_id=self.app_obj).first()
+            if apptodev_obj:
+                release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
+                if release_obj.release_id == apptodev_obj.release_file:
+                    return
         self.download_profile()
 
         file_format_path_name = file_format_path(self.user_obj,self.auth)
@@ -206,23 +209,20 @@ class IosUtils(object):
         APPSuperSignUsedInfo.objects.create(app_id=self.app_obj, user_id=self.user_obj, developerid=self.developer_obj,
                                             udid=AppUDID.objects.filter(app_id=self.app_obj,udid=self.udid_info.get('udid')).first())
 
-        # 生成新的ipa，然后替换release，或许，binary_file 这个字段已经无用
-        # AppReleaseInfo.objects.filter(app_id=self.app_obj,is_master=True).update(release_id=random_file_name)
-
         del_cache_response_by_short(self.app_obj.short,self.app_obj.app_id,udid=self.udid_info.get('udid'))
 
 
         #创建
         apptodev_obj=APPToDeveloper.objects.filter(developerid=self.developer_obj,app_id=self.app_obj).first()
         if apptodev_obj:
-            storage = Storage(self.user_obj)
-            storage.delete_file(apptodev_obj.binary_file, release_obj.release_type)
-
+            storage = LocalStorage("localhost", False)
+            storage.del_file(apptodev_obj.binary_file+ ".ipa")
             apptodev_obj.binary_file=random_file_name
+            apptodev_obj.release_file=release_obj.release_id
             apptodev_obj.save()
 
         else:
-            APPToDeveloper.objects.create(developerid=self.developer_obj,app_id=self.app_obj,binary_file=random_file_name)
+            APPToDeveloper.objects.create(developerid=self.developer_obj,app_id=self.app_obj,binary_file=random_file_name,release_file=release_obj.release_id)
 
     @staticmethod
     def disable_udid(udid_obj,app_id):
