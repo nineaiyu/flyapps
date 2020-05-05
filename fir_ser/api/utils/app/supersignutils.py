@@ -10,7 +10,7 @@ from api.utils.app.iossignapi import AppDeveloperApi, ResignApp
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo,Apps,APPToDeveloper
 from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
 from django.db.models import F
-from api.utils.storage.storage import Storage
+from api.utils.storage.storage import Storage,LocalStorage
 from api.utils.storage.caches import del_cache_response_by_short
 
 
@@ -255,8 +255,8 @@ class IosUtils(object):
                 app_api_obj.del_profile(app_obj.bundle_id,app_obj.app_id)
                 app_api_obj2 = AppDeveloperApi(**auth)
                 app_api_obj2.del_app(app_obj.bundle_id,app_obj.app_id)
+                delete_app_to_dev_and_file(developer_obj, app_id)
 
-                APPToDeveloper.objects.filter(developerid=developer_obj,app_id_id=app_id).delete()
 
     @staticmethod
     def clean_udid_by_app_obj(app_obj,developer_obj):
@@ -301,7 +301,7 @@ class IosUtils(object):
             developer_obj=AppIOSDeveloperInfo.objects.filter(pk=SuperSign_obj[0]).first()
             if developer_obj:
                 IosUtils.clean_app_by_developer_obj(app_obj,developer_obj)
-                APPToDeveloper.objects.filter(developerid=developer_obj,app_id=app_obj).delete()
+                delete_app_to_dev_and_file(developer_obj, app_obj.id)
                 IosUtils.clean_udid_by_app_obj(app_obj,developer_obj)
 
     @staticmethod
@@ -326,7 +326,7 @@ class IosUtils(object):
         for APPToDeveloper_obj in APPToDeveloper.objects.filter(developerid=developer_obj):
             app_obj=APPToDeveloper_obj.app_id
             IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
-            APPToDeveloper.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
+            delete_app_to_dev_and_file(developer_obj,app_obj.id)
             IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
 
     @staticmethod
@@ -378,5 +378,12 @@ def file_format_path(user_obj,auth):
     file_format_path_name = os.path.join(cert_dir_path, cert_dir_name)
     return file_format_path_name
 
+def delete_app_to_dev_and_file(developer_obj,app_id):
+    APPToDeveloper_obj=APPToDeveloper.objects.filter(developerid=developer_obj, app_id_id=app_id)
+    if APPToDeveloper_obj:
+        binary_file = os.path.join(MEDIA_ROOT, APPToDeveloper_obj.first().binary_file + ".ipa")
+        lsobj=LocalStorage("localhost",False)
+        lsobj.del_file(binary_file)
+        APPToDeveloper_obj.delete()
 
 
