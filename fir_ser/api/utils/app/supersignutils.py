@@ -128,7 +128,7 @@ class IosUtils(object):
                                                            user_id=self.user_obj).first()
         #只要账户下面存在udid,就可以使用该苹果开发者账户，避免多个开发者账户下面出现同一个udid
         if usedeviceobj :#and usedeviceobj.developerid.use_number < usedeviceobj.developerid.usable_number:
-            developer_obj = usedeviceobj.developeridjj
+            developer_obj = usedeviceobj.developerid
         else:
             developer_udid_obj = UDIDsyncDeveloper.objects.filter(udid=self.udid_info.get('udid')).first()
             if developer_udid_obj:
@@ -216,7 +216,7 @@ class IosUtils(object):
 
         if not appsupersign_obj.filter(app_id=self.app_obj, user_id=self.user_obj).first():
             APPSuperSignUsedInfo.objects.create(app_id=self.app_obj, user_id=self.user_obj, developerid=self.developer_obj,
-                                                udid__udid=self.udid_info.get('udid'))
+                                                udid=AppUDID.objects.filter(app_id=self.app_obj,udid=self.udid_info.get('udid')).first())
 
         del_cache_response_by_short(self.app_obj.short,self.app_obj.app_id,udid=self.udid_info.get('udid'))
 

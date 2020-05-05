@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from api import models
+from django.db.models import Sum,F
 from api.utils.app.apputils import bytes2human
 from api.utils.TokenManager import DownloadToken
 from api.utils.storage.storage import Storage
@@ -241,6 +242,26 @@ def get_developer_udided(developer_obj):
         supersign_udid_lists=list(SuperSignUsed_obj.values_list("udid__udid"))
     return len(set(develoer_udid_lists)-set(supersign_udid_lists)),len(develoer_udid_lists)
 
+
+
+def get_developer_devices(developer_obj_lists):
+    other_used_sum = 0
+    flyapp_used_sum = 0
+    for dev_obj in developer_obj_lists:
+        other_used, flyapp_used = get_developer_udided(dev_obj)
+        other_used_sum += other_used
+        flyapp_used_sum += flyapp_used
+
+    use_number_obj = developer_obj_lists.filter(is_actived=True)
+    if use_number_obj:
+        use_number_dict = use_number_obj.aggregate(usable_number=Sum('usable_number'), use_number=Sum('use_number'))
+        use_num = {
+            "all_usable_number": use_number_dict.get("usable_number", 0),
+            "all_use_number": use_number_dict.get("use_number", 0),
+            "other_used_sum": other_used_sum,
+            "flyapp_used_sum": flyapp_used_sum,
+        }
+        return use_num
 
 class SuperSignUsedSerializer(serializers.ModelSerializer):
     class Meta:

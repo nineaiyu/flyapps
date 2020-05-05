@@ -16,7 +16,7 @@ from api.utils.app.randomstrings import make_from_user_uuid
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short,get_app_today_download_times
 from api.models import Apps, AppReleaseInfo,APPToDeveloper,AppIOSDeveloperInfo
-from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
+from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer,get_developer_devices
 from rest_framework.pagination import PageNumberPagination
 
 
@@ -181,15 +181,11 @@ class AppInfoView(APIView):
                     apps_obj.password = data.get("password", apps_obj.password)
                     apps_obj.isshow = data.get("isshow", apps_obj.isshow)
                     if apps_obj.type == 1:
-                        now_can_use_number=0
                         developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
-                        use_number_dict = developer_obj.filter(is_actived=True).filter(use_number__lt=F("usable_number")).aggregate(
-                                usable_number=Sum('usable_number'), use_number=Sum('use_number'))
-                        if use_number_dict and use_number_dict.get("usable_number", 0) and use_number_dict.get(
-                                "use_number", 0):
-                            now_can_use_number = use_number_dict.get("usable_number", 0) - use_number_dict.get(
-                                "use_number", 0)
-                        if now_can_use_number == 0:
+
+                        use_num = get_developer_devices(developer_obj)
+
+                        if use_num.get("flyapp_used_sum") >= use_num.get("all_usable_number"):
                             res.code = 1008
                             res.msg = "超级签余额不足，无法开启"
                             return Response(res.dict)

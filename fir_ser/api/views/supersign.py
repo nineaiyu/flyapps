@@ -9,10 +9,9 @@ from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
 from api.models import AppIOSDeveloperInfo,APPSuperSignUsedInfo,AppUDID,UDIDsyncDeveloper
-from api.utils.serializer import  DeveloperSerializer, SuperSignUsedSerializer,DeviceUDIDSerializer,get_developer_udided
+from api.utils.serializer import  DeveloperSerializer, SuperSignUsedSerializer,DeviceUDIDSerializer,get_developer_devices
 from rest_framework.pagination import PageNumberPagination
 from api.utils.app.supersignutils import IosUtils
-from django.db.models import Sum,F
 
 
 
@@ -32,24 +31,7 @@ class DeveloperView(APIView):
 
         appid = request.query_params.get("appid", None)
         developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
-
-        other_used_sum=0
-        flyapp_used_sum=0
-        for dev_obj in developer_obj:
-            other_used,flyapp_used=get_developer_udided(dev_obj)
-            other_used_sum+=other_used
-            flyapp_used_sum+=flyapp_used
-
-        use_number_obj = developer_obj.filter(is_actived=True)
-        if use_number_obj:
-            use_number_dict=use_number_obj.aggregate(usable_number=Sum('usable_number'),use_number=Sum('use_number'))
-            res.use_num={
-                "all_usable_number":use_number_dict.get("usable_number", 0),
-                "all_use_number":use_number_dict.get("use_number", 0),
-                "other_used_sum":other_used_sum,
-                "flyapp_used_sum":flyapp_used_sum,
-            }
-
+        res.use_num=get_developer_devices(developer_obj)
         if appid:
             developer_obj=developer_obj.filter(email=appid)
 

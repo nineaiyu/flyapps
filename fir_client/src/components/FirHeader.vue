@@ -61,6 +61,7 @@ import {logout} from '../restful'
                 }else if (command === 'storage') {
                     this.$router.push({name: 'FirUserProfileStorage'})
                 }else if (command === 'supersign') {
+                    this.$store.dispatch('doucurrentapp', {});
                     this.$router.push({"name":'FirSuperSignBase', params: {act: "iosdeveloper"}})
 
                 }
