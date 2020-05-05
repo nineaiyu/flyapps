@@ -67,12 +67,14 @@
 
 <script>
     import { updateapp, } from "../restful"
+    import {deepCopy} from "../utils";
 
     export default {
         name: "FirAppInfossecurity",
         data() {
             return {
                 currentapp: {},
+                orgcurrentapp: {},
                 downtip:{'msg':''},
                 supersign:{'msg':''},
                 passwordtip:{'msg':''},
@@ -93,6 +95,13 @@
                         this.$message.success('数据更新成功');
                     }else {
                         this.$message.error('操作失败,'+data.msg);
+
+                        this.currentapp=deepCopy(this.orgcurrentapp);
+                        this.passwordflag=false;
+                        this.showdownloadflag=false;
+                        this.showsupersignflag=false;
+                        this.setbuttondefault(this.currentapp);
+
                     }
                 }, {
                     "app_id": this.currentapp.app_id,
@@ -242,11 +251,13 @@
                 }
             },
             appinit(){
+
                 this.currentapp = this.$store.state.currentapp;
                 this.passwordflag=false;
                 this.showdownloadflag=false;
                 this.showsupersignflag=false;
                 this.setbuttondefault(this.currentapp);
+                this.orgcurrentapp=deepCopy(this.currentapp)
             }
         },
         mounted() {

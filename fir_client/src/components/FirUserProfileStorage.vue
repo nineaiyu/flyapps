@@ -197,6 +197,7 @@
 
 <script>
     import {getStorageinfo} from "../restful";
+    import {deepCopy} from "../utils";
 
     export default {
         name: "FirUserProfileStorage",
@@ -219,24 +220,18 @@
                 is_admin_storage:false,
             }
         }, methods: {
-            deepCopy(source) {
-                let result={};
-                for (let key in source) {
-                    result[key] = typeof source[key]==='object'? this.deepCopy(source[key]): source[key];
-                }
-                return result;
-            },
+
             showstorage(editstorageinfo){
                 this.title='查看存储信息';
                 this.disabled=true;
                 this.dialogstorageVisible=true;
-                this.editstorageinfo=this.deepCopy(editstorageinfo);
+                this.editstorageinfo=deepCopy(editstorageinfo);
             },
             editstorage(editstorageinfo){
                 this.title='存储编辑';
                 this.disabled=false;
                 this.dialogstorageVisible=true;
-                this.editstorageinfo=this.deepCopy(editstorageinfo);
+                this.editstorageinfo=deepCopy(editstorageinfo);
                 this.isaddflag=false;
             },add_storage_click(){
                 this.title='新增存储';

@@ -82,7 +82,10 @@ class DeveloperView(APIView):
                             if IosUtils.active_developer(developer_obj,code):
                                 developer_obj.is_actived=True
                                 developer_obj.save()
-                                IosUtils.create_developer_cert(developer_obj,request.user)
+                                if developer_obj.certid and len(developer_obj.certid) > 6:
+                                    pass
+                                else:
+                                    IosUtils.create_developer_cert(developer_obj,request.user)
                 else:
                     developer_obj.usable_number=data.get("usable_number",developer_obj.usable_number)
                     developer_obj.description = data.get("description", developer_obj.description)

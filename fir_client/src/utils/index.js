@@ -197,3 +197,12 @@ export function removeAaary(_arr, _obj) {
         }
     }
 }
+
+//深拷贝
+export function deepCopy(source) {
+    let result={};
+    for (let key in source) {
+        result[key] = typeof source[key]==='object'? deepCopy(source[key]): source[key];
+    }
+    return result;
+}
