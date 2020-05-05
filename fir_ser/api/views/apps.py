@@ -181,14 +181,13 @@ class AppInfoView(APIView):
                     apps_obj.password = data.get("password", apps_obj.password)
                     apps_obj.isshow = data.get("isshow", apps_obj.isshow)
                     if apps_obj.type == 1:
-                        developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
-
-                        use_num = get_developer_devices(developer_obj)
-
-                        if use_num.get("flyapp_used_sum") >= use_num.get("all_usable_number"):
-                            res.code = 1008
-                            res.msg = "超级签余额不足，无法开启"
-                            return Response(res.dict)
+                        # 为啥注释掉，就是该udid已经在该平台使用了，虽然已经没有余额，但是其他应用也是可以超级签名的
+                        # developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
+                        # use_num = get_developer_devices(developer_obj)
+                        # if use_num.get("flyapp_used_sum") >= use_num.get("all_usable_number"):
+                        #     res.code = 1008
+                        #     res.msg = "超级签余额不足，无法开启"
+                        #     return Response(res.dict)
                         apps_obj.issupersign = data.get("issupersign", apps_obj.issupersign)
                     apps_obj.save()
                 except Exception as e:
