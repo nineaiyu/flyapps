@@ -144,8 +144,8 @@ class IosUtils(object):
                     flyapp_used = get_developer_udided(developer_obj)[1]
                     if flyapp_used < usable_number:
                         return developer_obj
-
-        return None
+                return None
+        return developer_obj
 
     def create_cert(self):
         app_api_obj = AppDeveloperApi(**self.auth)
