@@ -21,7 +21,8 @@
                         <el-input  v-model="editdeveloperinfo.description"></el-input>
                     </el-form-item>
                     <div style="" >
-                        <el-button v-if="isedit" @click="syncdevices">同步设备信息</el-button>
+                        <el-button v-if="isedit && editdeveloperinfo.is_actived" @click="syncdevices">同步设备信息</el-button>
+                        <el-button v-if="isedit && editdeveloperinfo.is_actived && !editdeveloperinfo.certid" @click="isocertcert">手动创建证书</el-button>
                         <el-button  @click="updateorcreate">保存</el-button>
                         <el-button  @click="canceledit">取消</el-button>
                     </div>
@@ -366,6 +367,9 @@
             },
             syncdevices(){
                 this.iosdeveloperFun({"methods":"PUT","data":{"email":this.editdeveloperinfo.email,"act":"syncdevice"}});
+            },
+            isocertcert(){
+                this.iosdeveloperFun({"methods":"PUT","data":{"email":this.editdeveloperinfo.email,"act":"ioscert"}});
             },
             inputcode(developer){
                 this.$prompt('请输入验证码', '提示', {

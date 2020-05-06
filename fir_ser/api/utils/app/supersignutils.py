@@ -331,7 +331,7 @@ class IosUtils(object):
         app_api_obj2.del_app(app_obj.bundle_id,app_obj.app_id)
 
     @staticmethod
-    def clean_developer(developer_obj):
+    def clean_developer(developer_obj,user_obj):
         '''
         根据消耗记录 删除该苹果账户下所有信息
         :param developer_obj:
@@ -342,6 +342,20 @@ class IosUtils(object):
             IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
             delete_app_to_dev_and_file(developer_obj,app_obj.id)
             IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
+        auth = {
+            "username": developer_obj.email
+        }
+        full_path=file_format_path(user_obj, auth)
+        try:
+            for root, dirs, files in os.walk(full_path, topdown=False):
+                for name in files:
+                    os.remove(os.path.join(root, name))
+                for name in dirs:
+                    os.rmdir(os.path.join(root, name))
+            os.rmdir(full_path)
+        except Exception as e:
+            print(e)
+
 
     @staticmethod
     def active_developer(developer_obj,code=None):
@@ -424,7 +438,7 @@ def file_format_path(user_obj,auth):
 def delete_app_to_dev_and_file(developer_obj,app_id):
     APPToDeveloper_obj=APPToDeveloper.objects.filter(developerid=developer_obj, app_id_id=app_id)
     if APPToDeveloper_obj:
-        binary_file = os.path.join(MEDIA_ROOT, APPToDeveloper_obj.first().binary_file + ".ipa")
+        binary_file = APPToDeveloper_obj.first().binary_file + ".ipa"
         lsobj=LocalStorage("localhost",False)
         lsobj.del_file(binary_file)
         APPToDeveloper_obj.delete()

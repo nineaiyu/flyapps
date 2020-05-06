@@ -72,6 +72,10 @@ class DeveloperView(APIView):
                                 else:
                                     IosUtils.create_developer_cert(developer_obj,request.user)
                                     IosUtils.get_device_from_developer(developer_obj, request.user)
+                    elif act == "ioscert":
+                        if not developer_obj.certid:
+                            IosUtils.create_developer_cert(developer_obj, request.user)
+                            IosUtils.get_device_from_developer(developer_obj, request.user)
                     elif act == "syncdevice":
                         IosUtils.get_device_from_developer(developer_obj,request.user)
 
@@ -115,7 +119,7 @@ class DeveloperView(APIView):
         if email:
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user,email=email).first()
             if developer_obj:
-                IosUtils.clean_developer(developer_obj)
+                IosUtils.clean_developer(developer_obj,request.user)
                 developer_obj.delete()
 
         return self.get(request)
