@@ -330,7 +330,7 @@
                 placeholder:"",
                 codeactiveVisible:false,
                 pagination:{"currentPage":1,"total":0,"pagesize":10},
-                developer_used_info:{},
+                developer_used_info:{"all_usable_number":0,"other_used_sum":0,"all_use_number":0},
                 percentage:0,
 
             }
@@ -481,12 +481,13 @@
                     if(data.code === 1000){
                         this.app_developer_lists = data.data;
                         this.pagination.total=data.count;
-                        this.developer_used_info=data.use_num;
-                        if(this.developer_used_info.all_usable_number ===0){
-                            this.percentage=0
-                        }else {
-                            this.percentage=parseInt(this.developer_used_info.flyapp_used_sum*100/this.developer_used_info.all_usable_number);
+                        if(data.use_num){
+                            this.developer_used_info=data.use_num;
+                            if(this.developer_used_info.all_usable_number !==0){
+                                this.percentage=parseInt(this.developer_used_info.flyapp_used_sum*100/this.developer_used_info.all_usable_number);
+                            }
                         }
+
                         if(this.dialogaddDeveloperVisible){
                             this.canceledit();
                             this.$message.success("操作成功");
