@@ -87,11 +87,11 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'flyapp',
         'USER': 'flyuser',
-        'PASSWORD': 'flypwd00oo.1',
+        'PASSWORD': 'KGzKjZpWBp4R4RSa',
         'HOST': '127.0.0.1',
         'PORT': '3306',
         #设置MySQL的驱动
-        'options': {'init_command': 'SET storage_engine=INNODB'}
+        'OPTIONS': {'init_command': 'SET storage_engine=INNODB'}
     }
 
 }
