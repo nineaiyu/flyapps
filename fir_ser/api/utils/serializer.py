@@ -113,7 +113,7 @@ class AppsShortSerializer(serializers.ModelSerializer):
                 key=self.context.get("key", '')
             if self.context.get("storage", None) and self.context.get("storage") != "undefined":
                 storage = self.context.get("storage", None)
-                icon_url = storage.get_download_url(os.path.basename(master_release_obj.icon_url),600,key=key)
+                icon_url = storage.get_download_url(os.path.basename(master_release_obj.icon_url),600,key=key,force_new=True)
             datainfo = {
                 "app_version": master_release_obj.app_version,
                 "icon_url": icon_url,
@@ -126,7 +126,7 @@ class AppsShortSerializer(serializers.ModelSerializer):
                 "binary_url":master_release_obj.binary_url,
             }
 
-            download_token = token_obj.make_token(master_release_obj.release_id,600,key=key)
+            download_token = token_obj.make_token(master_release_obj.release_id,600,key=key,force_new=True)
             datainfo["download_token"] = download_token
             return datainfo
         else:

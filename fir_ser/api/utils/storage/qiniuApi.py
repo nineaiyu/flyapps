@@ -32,7 +32,7 @@ class QiNiuOss(object):
         # print(token)
         return token
 
-    def get_download_url(self,name,expires=1800,ftype=None):
+    def get_download_url(self,name,expires=1800,ftype=None,force_new=False):
         #有两种方式构造base_url的形式
         uri = 'http://'
         if self.is_https:

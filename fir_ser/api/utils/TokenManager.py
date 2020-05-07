@@ -18,10 +18,10 @@ from fir_ser.settings import CACHE_KEY_TEMPLATE
 
 class DownloadToken(object):
 
-    def make_token(self,release_id,time_limit=60,key=''):
+    def make_token(self,release_id,time_limit=60,key='',force_new=False):
         token_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get("make_token_key"),release_id])
         make_token_key = cache.get(token_key)
-        if make_token_key:
+        if make_token_key and not force_new:
             return make_token_key
         else:
             random_str = uuid.uuid1().__str__().split("-")[0:-1]
