@@ -270,6 +270,7 @@ class IosUtils(object):
                 app_api_obj2 = AppDeveloperApi(**auth)
                 app_api_obj2.del_app(app_obj.bundle_id,app_obj.app_id)
                 delete_app_to_dev_and_file(developer_obj, app_id)
+                delete_app_profile_file(developer_obj, app_obj)
 
 
     @staticmethod
@@ -317,6 +318,7 @@ class IosUtils(object):
                 IosUtils.clean_app_by_developer_obj(app_obj,developer_obj)
                 delete_app_to_dev_and_file(developer_obj, app_obj.id)
                 IosUtils.clean_udid_by_app_obj(app_obj,developer_obj)
+                delete_app_profile_file(developer_obj, app_obj)
 
     @staticmethod
     def clean_app_by_developer_obj(app_obj,developer_obj):
@@ -435,6 +437,13 @@ def file_format_path(user_obj,auth):
     file_format_path_name = os.path.join(cert_dir_path, cert_dir_name)
     return file_format_path_name
 
+def get_profile_full_path(developer_obj,app_obj):
+    cert_dir_name = make_app_uuid(developer_obj.user_id, developer_obj.email)
+    cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name, "profile")
+    provisionName = os.path.join(cert_dir_path, app_obj.app_id)
+    return provisionName + '.mobileprovision'
+
+
 def delete_app_to_dev_and_file(developer_obj,app_id):
     APPToDeveloper_obj=APPToDeveloper.objects.filter(developerid=developer_obj, app_id_id=app_id)
     if APPToDeveloper_obj:
@@ -443,4 +452,8 @@ def delete_app_to_dev_and_file(developer_obj,app_id):
         lsobj.del_file(binary_file)
         APPToDeveloper_obj.delete()
 
-
+def delete_app_profile_file(developer_obj,app_obj):
+    try:
+        os.remove(get_profile_full_path(developer_obj,app_obj))
+    except Exception as e:
+        print(e)

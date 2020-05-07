@@ -101,6 +101,8 @@ def shell_command(cmdstrs,timeout):
                 return result
 
     out, err = child.communicate()
+    if err:
+        result['err_info'] = err
     shell_end_time = time.time()
     result['shell_run_time'] = shell_end_time - shell_start_time
     out = out.strip(b'\n')
