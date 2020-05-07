@@ -25,7 +25,7 @@ class LocalStorage(object):
         uri='http://'
         if self.is_https:
             uri='https://'
-        download_url = uri+ base_url + "?token=" + dtoken.make_token(name,expires,force_new)
+        download_url = uri+ base_url + "?token=" + dtoken.make_token(name,expires,force_new=force_new)
         if ftype:
             download_url = download_url + '&ftype=' + ftype
         return download_url
