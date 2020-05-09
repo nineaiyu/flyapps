@@ -8,10 +8,12 @@ from rest_framework.views import APIView
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
-from api.models import AppIOSDeveloperInfo,APPSuperSignUsedInfo,AppUDID,UDIDsyncDeveloper
-from api.utils.serializer import  DeveloperSerializer, SuperSignUsedSerializer,DeviceUDIDSerializer,get_developer_devices
+from api.models import AppIOSDeveloperInfo,APPSuperSignUsedInfo,AppUDID
+from api.utils.serializer import  DeveloperSerializer, SuperSignUsedSerializer,DeviceUDIDSerializer
 from rest_framework.pagination import PageNumberPagination
 from api.utils.app.supersignutils import IosUtils
+from api.utils.utils import get_developer_devices
+from api.utils.storage.caches import developer_auth_code
 
 
 
@@ -54,28 +56,28 @@ class DeveloperView(APIView):
                 if act:
                     res = BaseResponse()
                     if act == "preactive":
-                        if not IosUtils.active_developer(developer_obj):
-                            res.code = 1008
-                            res.msg = "开发者账户或密码有误"
-                            return Response(res.dict)
+                        developer_auth_code("del", request.user, developer_obj.email)
+                        status,result = IosUtils.active_developer(developer_obj,request.user)
+                        if status:
+                            return self.get(request)
                         else:
-                            res.code = 1009
+                            res.code = 1008
+                            res.msg = result.get("return_info")
                             return Response(res.dict)
                     elif act == "nowactive" :
                         code = data.get("code", None)
                         if code:
-                            if IosUtils.active_developer(developer_obj,code):
-                                developer_obj.is_actived=True
-                                developer_obj.save()
-                                if developer_obj.certid and len(developer_obj.certid) > 6:
-                                    pass
-                                else:
-                                    IosUtils.create_developer_cert(developer_obj,request.user)
-                                    IosUtils.get_device_from_developer(developer_obj, request.user)
+                            developer_auth_code("set",request.user,developer_obj.email,code)
+
                     elif act == "ioscert":
                         if not developer_obj.certid:
-                            IosUtils.create_developer_cert(developer_obj, request.user)
-                            IosUtils.get_device_from_developer(developer_obj, request.user)
+                            status,result=IosUtils.create_developer_cert(developer_obj, request.user)
+                            if status:
+                                IosUtils.get_device_from_developer(developer_obj, request.user)
+                            else:
+                                res.code = 1008
+                                res.msg = result.get("err_info")
+                                return Response(res.dict)
                     elif act == "syncdevice":
                         IosUtils.get_device_from_developer(developer_obj,request.user)
 

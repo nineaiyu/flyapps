@@ -8,6 +8,8 @@ from subprocess import Popen, PIPE
 import logging
 import paramiko,json
 import socket
+import pexpect
+from api.utils.storage.caches import developer_auth_code
 
 def default_result():
     return {'exit_code': '99', 'return_info': 'Failed to run, function_name is not existed'}
@@ -84,6 +86,54 @@ class SSHConnection(object):
             self._transport.close()
         if self._client:
             self._client.close()
+
+def pshell_command(cmdstrs,user_obj,developer_email,timeout=60*10):
+    result = default_result()
+    run = pexpect.spawn(cmdstrs, encoding='utf-8')
+    try:
+        index = run.expect(["Two-factor Authentication","Invalid username and password combination", pexpect.EOF, pexpect.TIMEOUT],timeout=timeout)
+        if index == 0:
+            count = 1
+            if timeout == -1:
+                timeout = 60*60*24
+            while True and count<timeout/3:
+                code = developer_auth_code("get",user_obj,developer_email)
+                if code:
+                    run.sendline(code)
+                    try:
+                        err = run.expect(["Unauthorized Access", pexpect.EOF, pexpect.TIMEOUT])
+                        if err == 0:
+                            result['exit_code'] = 2
+                            result['return_info'] = 'Unauthorized Access'
+                        elif err == 1:
+                            result['exit_code'] = 0
+                            result['return_info'] = 'Verify Code Success'
+                        else:
+                            result['exit_code'] = 3
+                            result['return_info'] = 'Verify Code TimeOut or UnKnown Error'
+                        developer_auth_code("del", user_obj, developer_email)
+                        return result
+                    except Exception as e:
+                        print(e)
+                    developer_auth_code("del", user_obj, developer_email)
+                    result['exit_code'] = 0
+                    result['return_info'] = 'Success'
+                    return result
+                count+=1
+                time.sleep(3)
+        elif index == 1:
+            result['exit_code'] = 1
+            result['return_info'] = 'Invalid username and password combination'
+        elif index == 2:
+            result['exit_code'] = 0
+            result['return_info'] = 'Alreay Success'
+        else:
+            result['exit_code'] = 4
+            result['return_info'] = 'Code TimeOut or UnKnown Error'
+    except Exception as e:
+        print(e)
+    return result
+
 
 def shell_command(cmdstrs,timeout):
     result = default_result()

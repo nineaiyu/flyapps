@@ -4,7 +4,7 @@
 # author: liuyu
 # date: 2020/4/24
 
-from api.utils.app.shellcmds import shell_command,use_user_pass
+from api.utils.app.shellcmds import shell_command,use_user_pass,pshell_command
 from fir_ser.settings import SUPER_SIGN_ROOT
 import os
 from api.utils.app.randomstrings import make_app_uuid
@@ -23,8 +23,14 @@ def exec_shell(cmd,remote=False,timeout=None):
         result = shell_command(cmd,timeout)
         print(result)
         if result.get("exit_code") != 0 :
-            return False
-        return result
+            err_info=result.get("err_info",None)
+            if err_info:
+                if "have access to this membership resource. Contact your team" in err_info:
+                    result["err_info"]="You currently don't have access to this membership resource"
+                else:
+                    result["err_info"]="Unknown Error"
+            return False,result
+        return True,result
 
 
 
@@ -36,19 +42,18 @@ class AppDeveloperApi(object):
         script_path=os.path.join(SUPER_SIGN_ROOT,'scripts','apple_api.rb')
         self.cmd = "ruby %s '%s' '%s'" %(script_path,self.username,self.password)
 
-    def active(self,code):
-        timeout=10
+    def active(self,user_obj):
         self.cmd = self.cmd + " active "
-        if code:
-            self.cmd = "echo  %s | %s" %(code,self.cmd)
-            timeout=None
+        print(self.cmd)
+        result={}
         try:
-            result = exec_shell(self.cmd,timeout=timeout)
+            result = pshell_command(self.cmd,user_obj,self.username)
+            print(result)
             if result["exit_code"] == 0:
-                return True
+                return True,result
         except Exception as e:
             print(e)
-        return False
+        return False,result
 
     def file_format_path_name(self,user_obj):
         cert_dir_name = make_app_uuid(user_obj,self.username)
@@ -59,7 +64,7 @@ class AppDeveloperApi(object):
 
     def create_cert(self,user_obj):
         self.cmd=self.cmd + " cert add  '%s'" %(self.file_format_path_name(user_obj))
-        result = exec_shell(self.cmd)
+        return exec_shell(self.cmd)
 
     def get_profile(self,bundleId,app_id,device_udid,device_name,provisionName):
         self.cmd=self.cmd + " profile add '%s' '%s' '%s' '%s' '%s' '%s'" %(bundleId,app_id,device_udid,device_name,self.certid,provisionName)
@@ -82,7 +87,7 @@ class AppDeveloperApi(object):
 
     def get_device(self,user_obj):
         self.cmd=self.cmd + " device get '%s' " %(self.file_format_path_name(user_obj))
-        result = exec_shell(self.cmd)
+        return exec_shell(self.cmd)
 
     def add_app(self,bundleId,app_id):
         self.cmd=self.cmd + " app add '%s' '%s'" %(bundleId,app_id)
@@ -92,10 +97,6 @@ class AppDeveloperApi(object):
         self.cmd=self.cmd + " app del '%s' '%s'" %(bundleId,app_id)
         result = exec_shell(self.cmd)
 
-# appdev = AppDeveloperApi("hehehuyu521@163.com","Hehehuyu123")
-# appdev.create_cert()
-# appdev.get_profile('com.hehegames.NenJiangMaJiang',"e6f0c1aeee6853af9c21651654a812e7","6dd86c12ab5506a1f7e45b0f58b6b1448f5cdf54","iPad5,1")
-# # e6f0c1aeee6853af9c21651654a812e7_dis.mobileprovision
 
 class ResignApp(object):
 

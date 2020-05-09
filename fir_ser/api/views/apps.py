@@ -15,13 +15,9 @@ from api.utils.app.supersignutils import IosUtils
 from api.utils.app.randomstrings import make_from_user_uuid
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short,get_app_today_download_times
-from api.models import Apps, AppReleaseInfo,APPToDeveloper,AppIOSDeveloperInfo
-from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer,get_developer_devices
+from api.models import Apps, AppReleaseInfo,APPToDeveloper
+from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
 from rest_framework.pagination import PageNumberPagination
-
-
-# REDIS_CONN = redis.Redis(decode_responses=True)
-
 
 class AppsPageNumber(PageNumberPagination):
     page_size = 20  # 每页显示多少条

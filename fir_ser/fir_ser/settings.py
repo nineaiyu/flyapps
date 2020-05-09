@@ -242,7 +242,8 @@ CACHE_KEY_TEMPLATE={
     'download_url_key':'download_url',
     'user_storage_key':'storage_auth',
     'user_auth_token_key':'user_auth_token',
-    'download_today_times_key':'download_today_times'
+    'download_today_times_key':'download_today_times',
+    'developer_auth_code_key': 'developer_auth_code',
 }
 
 SYNC_CACHE_TO_DATABASE={

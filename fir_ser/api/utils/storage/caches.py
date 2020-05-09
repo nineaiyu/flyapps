@@ -11,6 +11,7 @@ from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE,SERVER_DOMAIN
 from api.utils.storage.storage import Storage,LocalStorage
 from api.utils.crontab.sync_cache import sync_download_times_by_app_id
+from api.utils.utils import file_format_path
 try:
     from api.utils.crontab import run
 except Exception as e:
@@ -142,3 +143,15 @@ def get_app_today_download_times(app_ids):
     for k, v in down_times_lists.items():
         download_times_count+=v
     return download_times_count
+
+
+def developer_auth_code(act,user_obj,developer_email,code=None):
+    auth_key=file_format_path(user_obj,email=developer_email)
+    key = "_".join([CACHE_KEY_TEMPLATE.get("developer_auth_code_key"),auth_key])
+    if act == "set":
+        cache.delete(key)
+        cache.set(key,code,60*10)
+    elif act == "get":
+        return cache.get(key)
+    elif act == "del":
+        cache.delete(key)

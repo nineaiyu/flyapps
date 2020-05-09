@@ -9,11 +9,10 @@ from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN
 from api.utils.app.iossignapi import AppDeveloperApi, ResignApp
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo,Apps,APPToDeveloper,UDIDsyncDeveloper
 from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
-from django.db.models import F
 from api.utils.serializer import get_developer_udided
-from api.utils.storage.storage import LocalStorage
+from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.caches import del_cache_response_by_short
-
+from api.utils.utils import file_format_path,delete_app_to_dev_and_file,delete_app_profile_file
 
 
 def udid_bytes_to_dict(xml_stream):
@@ -146,22 +145,6 @@ class IosUtils(object):
                         return developer_obj
                 return None
         return developer_obj
-
-    def create_cert(self):
-        app_api_obj = AppDeveloperApi(**self.auth)
-        app_api_obj.create_cert(self.user_obj)
-        file_format_path_name = file_format_path(self.user_obj,self.auth)
-        cert_info = None
-        try:
-            with open(file_format_path_name + '.info', "r") as f:
-                cert_info = f.read()
-        except Exception as e:
-            print(e)
-        cert_id = re.findall(r'.*\n\tid=(.*),.*', cert_info)[0].replace('"', '')
-        developer_obj=AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj, email=self.auth.get("username")).first()
-        developer_obj.is_actived=True
-        developer_obj.certid=cert_id
-        developer_obj.save()
 
     def download_profile(self):
         app_api_obj = AppDeveloperApi(**self.auth)
@@ -344,10 +327,7 @@ class IosUtils(object):
             IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
             delete_app_to_dev_and_file(developer_obj,app_obj.id)
             IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
-        auth = {
-            "username": developer_obj.email
-        }
-        full_path=file_format_path(user_obj, auth)
+        full_path=file_format_path(user_obj, email=developer_obj.email)
         try:
             for root, dirs, files in os.walk(full_path, topdown=False):
                 for name in files:
@@ -360,7 +340,7 @@ class IosUtils(object):
 
 
     @staticmethod
-    def active_developer(developer_obj,code=None):
+    def active_developer(developer_obj,user_obj):
         '''
         激活开发者账户
         :param developer_obj:
@@ -373,7 +353,14 @@ class IosUtils(object):
             "certid": developer_obj.certid
         }
         app_api_obj = AppDeveloperApi(**auth)
-        return app_api_obj.active(code)
+        status,result = app_api_obj.active(user_obj)
+        if status:
+            developer_obj.is_actived=True
+            developer_obj.save()
+            if not developer_obj.certid :
+                IosUtils.create_developer_cert(developer_obj,user_obj)
+                IosUtils.get_device_from_developer(developer_obj, user_obj)
+        return status,result
 
     @staticmethod
     def create_developer_cert(developer_obj,user_obj):
@@ -383,19 +370,21 @@ class IosUtils(object):
             "certid": developer_obj.certid
         }
         app_api_obj = AppDeveloperApi(**auth)
-        app_api_obj.create_cert(user_obj)
-        file_format_path_name = file_format_path(user_obj,auth)
-        cert_info = None
-        try:
-            with open(file_format_path_name + '.info', "r") as f:
-                cert_info = f.read()
-        except Exception as e:
-            print(e)
-        cert_id = re.findall(r'.*\n\tid=(.*),.*', cert_info)[0].replace('"', '')
-        developer_obj=AppIOSDeveloperInfo.objects.filter(user_id=user_obj, email=auth.get("username")).first()
-        developer_obj.is_actived=True
-        developer_obj.certid=cert_id
-        developer_obj.save()
+        status,result = app_api_obj.create_cert(user_obj)
+        if status:
+            file_format_path_name = file_format_path(user_obj,auth)
+            cert_info = None
+            try:
+                with open(file_format_path_name + '.info', "r") as f:
+                    cert_info = f.read()
+            except Exception as e:
+                print(e)
+            cert_id = re.findall(r'.*\n\tid=(.*),.*', cert_info)[0].replace('"', '')
+            developer_obj=AppIOSDeveloperInfo.objects.filter(user_id=user_obj, email=auth.get("username")).first()
+            developer_obj.is_actived=True
+            developer_obj.certid=cert_id
+            developer_obj.save()
+        return status,result
 
     @staticmethod
     def get_device_from_developer(developer_obj,user_obj):
@@ -405,55 +394,28 @@ class IosUtils(object):
             "certid": developer_obj.certid
         }
         app_api_obj = AppDeveloperApi(**auth)
-        app_api_obj.get_device(user_obj)
-        file_format_path_name = file_format_path(user_obj,auth)
-        devices_info = ""
-        try:
-            with open(file_format_path_name+".devices.info", "r") as f:
-                devices_info = f.read().replace("\n\t", "").replace("[", "").replace("]", "")
-        except Exception as e:
-            print(e)
+        status,result = app_api_obj.get_device(user_obj)
+        if status:
+            file_format_path_name = file_format_path(user_obj,auth)
+            devices_info = ""
+            try:
+                with open(file_format_path_name+".devices.info", "r") as f:
+                    devices_info = f.read().replace("\n\t", "").replace("[", "").replace("]", "")
+            except Exception as e:
+                print(e)
 
-        for devicestr in devices_info.split(">"):
-            formatdevice = re.findall(r'.*Device id="(.*)",.*name="(.*)",.*udid="(.*?)",.*model=(.*),.*', devicestr)
-            if formatdevice:
-                device = {
-                    "serial": formatdevice[0][0],
-                    "product": formatdevice[0][1],
-                    "udid": formatdevice[0][2],
-                    "version": formatdevice[0][3],
-                }
-                app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,udid=device.get("udid"))
-                if app_udid_obj:
-                    pass
-                else:
-                    UDIDsyncDeveloper.objects.create(developerid=developer_obj,**device)
-
-def file_format_path(user_obj,auth):
-    cert_dir_name = make_app_uuid(user_obj, auth.get("username"))
-    cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name)
-    if not os.path.isdir(cert_dir_path):
-        os.makedirs(cert_dir_path)
-    file_format_path_name = os.path.join(cert_dir_path, cert_dir_name)
-    return file_format_path_name
-
-def get_profile_full_path(developer_obj,app_obj):
-    cert_dir_name = make_app_uuid(developer_obj.user_id, developer_obj.email)
-    cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name, "profile")
-    provisionName = os.path.join(cert_dir_path, app_obj.app_id)
-    return provisionName + '.mobileprovision'
-
-
-def delete_app_to_dev_and_file(developer_obj,app_id):
-    APPToDeveloper_obj=APPToDeveloper.objects.filter(developerid=developer_obj, app_id_id=app_id)
-    if APPToDeveloper_obj:
-        binary_file = APPToDeveloper_obj.first().binary_file + ".ipa"
-        lsobj=LocalStorage("localhost",False)
-        lsobj.del_file(binary_file)
-        APPToDeveloper_obj.delete()
-
-def delete_app_profile_file(developer_obj,app_obj):
-    try:
-        os.remove(get_profile_full_path(developer_obj,app_obj))
-    except Exception as e:
-        print(e)
+            for devicestr in devices_info.split(">"):
+                formatdevice = re.findall(r'.*Device id="(.*)",.*name="(.*)",.*udid="(.*?)",.*model=(.*),.*', devicestr)
+                if formatdevice:
+                    device = {
+                        "serial": formatdevice[0][0],
+                        "product": formatdevice[0][1],
+                        "udid": formatdevice[0][2],
+                        "version": formatdevice[0][3],
+                    }
+                    app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,udid=device.get("udid"))
+                    if app_udid_obj:
+                        pass
+                    else:
+                        UDIDsyncDeveloper.objects.create(developerid=developer_obj,**device)
+        return status,result

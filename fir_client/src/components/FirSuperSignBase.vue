@@ -76,7 +76,7 @@
                             <el-popover trigger="hover" placement="top">
                                 <p>开发者账户已使用设备数: {{ scope.row.developer_used_number }}</p>
                                 <p>开发者账户可用设备数: {{ 100-scope.row.developer_used_number }}</p>
-                                <p>由于您设置可用设备数: {{ scope.row.usable_number}} ,所以现在可用设备数: {{ scope.row.usable_number-scope.row.developer_used_number }}</p>
+                                <p>由于您设置可用设备数: {{ scope.row.usable_number}} ,所以现在可用设备数: {{ scope.row.usable_number-scope.row.developer_used_number > 0 ?scope.row.usable_number-scope.row.developer_used_number :0 }}</p>
 
                                 <div slot="reference" class="name-wrapper">
                                     <el-tag size="medium">{{ scope.row.email }}</el-tag>
@@ -101,9 +101,9 @@
                             width="100">
                         <template slot-scope="scope">
                             <el-popover trigger="hover" placement="top">
-                                <p>可用设备数: {{ scope.row.usable_number-scope.row.developer_used_number }}</p>
+                                <p>可用设备数: {{ scope.row.usable_number-scope.row.developer_used_number > 0 ?scope.row.usable_number-scope.row.developer_used_number :0}}</p>
                                 <div slot="reference" class="name-wrapper">
-                                    <el-tag size="medium"> {{ scope.row.usable_number-scope.row.developer_used_number }}</el-tag>
+                                    <el-tag size="medium"> {{ scope.row.usable_number-scope.row.developer_used_number > 0 ?scope.row.usable_number-scope.row.developer_used_number :0 }}</el-tag>
                                 </div>
                             </el-popover>
                         </template>
