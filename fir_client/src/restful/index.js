@@ -88,12 +88,12 @@ function ErrorMsg(error) {
     }
     if (error.response && error.response.status === 403) {
         router.push({name: 'FirLogin'});
-    }
-
-    if (error.message === 'Network Error') {
-        alert('网络连接失败');
-    } else {
-        alert(error)
+    }else{
+        if (error.message === 'Network Error') {
+            alert('网络连接失败');
+        } else {
+            alert(error)
+        }
     }
 }
 

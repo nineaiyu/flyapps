@@ -4,7 +4,7 @@
 # author: liuyu
 # date: 2020/3/23
 
-from api.models import AppStorage, UserInfo
+from api.models import UserInfo
 from .aliyunApi import AliYunOss
 from .qiniuApi import QiNiuOss
 from .localApi import LocalStorage
@@ -24,7 +24,7 @@ class Storage(object):
         if self.storage:
             return self.storage.get_upload_token(filename, expires)
 
-    def get_download_url(self, filename, expires=900, ftype=None, key='', force_new=False):
+    def get_download_url(self, filename, expires=900,  key='', force_new=False):
         if self.storage:
             now = time.time()
             down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
@@ -33,7 +33,7 @@ class Storage(object):
                 if download_val.get("time") > now - 60:
                     return download_val.get("download_url")
 
-            download_url = self.storage.get_download_url(filename, expires, ftype, force_new=False)
+            download_url = self.storage.get_download_url(filename, expires,force_new=True)
             cache.set(down_key, {"download_url": download_url, "time": now + expires}, expires)
             return download_url
 

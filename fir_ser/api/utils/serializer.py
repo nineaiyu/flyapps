@@ -170,7 +170,7 @@ class AppReleaseSerializer(serializers.ModelSerializer):
 
     def get_download_token(self, obj):
 
-        download_token = token_obj.make_token(obj.release_id, 300)
+        download_token = token_obj.make_token(obj.release_id, 600)
 
         return download_token
 

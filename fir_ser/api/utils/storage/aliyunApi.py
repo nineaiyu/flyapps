@@ -110,7 +110,7 @@ class AliYunOss(object):
         auth = oss2.StsAuth(self.token.access_key_id, self.token.access_key_secret, self.token.security_token)
         self.bucket = oss2.Bucket(auth, uri + url, self.bucket_name, is_cname=is_cname)
 
-    def get_download_url(self, name, expires=1800, ftype=None, force_new=False):
+    def get_download_url(self, name, expires=1800, force_new=False):
         # self.get_auth_bucket(name,expires)
         private_url = self.bucket.sign_url('GET', name, expires)
         return private_url

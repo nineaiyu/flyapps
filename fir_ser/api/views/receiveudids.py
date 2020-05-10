@@ -15,6 +15,7 @@ class IosUDIDView(View):
     def post(self, request, short):
         stream_f = str(request.body)
         format_udid_info = udid_bytes_to_dict(stream_f)
+        server_domain = get_redirect_server_domain(request)
         try:
             app_info = Apps.objects.filter(short=short).first()
 
@@ -25,11 +26,11 @@ class IosUDIDView(View):
                     ios_obj = IosUtils(format_udid_info, app_info.user_id, app_info)
                     ios_obj.resign()
                 else:
-                    return Http404
+                    return HttpResponsePermanentRedirect(
+                        "%s/%s" % (server_domain, short))
             else:
-                return Http404
-
+                return HttpResponsePermanentRedirect(
+                    "%s/%s" % (server_domain, short))
         except Exception as e:
             print(e)
-        server_domain = get_redirect_server_domain(request)
         return HttpResponsePermanentRedirect("%s/%s?udid=%s" % (server_domain, short, format_udid_info.get("udid")))

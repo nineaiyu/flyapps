@@ -20,15 +20,14 @@ class LocalStorage(object):
         dtoken = DownloadToken()
         return dtoken.make_token(name, expires)
 
-    def get_download_url(self, name, expires=1800, ftype=None, force_new=False):
+    def get_download_url(self, name, expires=600, force_new=False):
         dtoken = DownloadToken()
         base_url = '/'.join([self.domain_name, 'download', name])
         uri = 'http://'
         if self.is_https:
             uri = 'https://'
-        download_url = uri + base_url + "?token=" + dtoken.make_token(name, expires, force_new=force_new)
-        if ftype:
-            download_url = download_url + '&ftype=' + ftype
+        download_url = "%s%s?%s=%s" % (
+        uri, base_url, settings.DATA_DOWNLOAD_KEY, dtoken.make_token(name, expires, force_new=force_new))
         return download_url
 
     def del_file(self, name):

@@ -31,8 +31,8 @@ class DownloadView(APIView):
 
     def get(self, request, filename):
         res = BaseResponse()
-        downtoken = request.query_params.get("token", None)
-        ftype = request.query_params.get("ftype", None)
+        downtoken = request.query_params.get(settings.DATA_DOWNLOAD_KEY, None)
+        ftype = filename.split(".")[-1]
         if not downtoken:
             res.code = 1004
             res.msg = "缺失token"
@@ -40,7 +40,38 @@ class DownloadView(APIView):
 
         dtoken = DownloadToken()
         if dtoken.verify_token(downtoken, filename):
-            if not ftype:
+            if ftype == 'plist':
+                release_id = filename.split('.')[0]
+                apptodev_obj = APPToDeveloper.objects.filter(binary_file=release_id).first()
+                if apptodev_obj:
+                    release_obj = AppReleaseInfo.objects.filter(is_master=True, app_id=apptodev_obj.app_id).first()
+                else:
+                    release_obj = AppReleaseInfo.objects.filter(release_id=release_id).first()
+                if release_obj:
+                    storage = Storage(release_obj.app_id.user_id)
+                    bundle_id = release_obj.app_id.bundle_id
+                    app_version = release_obj.app_version
+                    name = release_obj.app_id.name
+                    ios_plist_bytes = make_resigned(storage.get_download_url(filename.split('.')[0]+".ipa"),
+                                                    storage.get_download_url(release_obj.icon_url), bundle_id,
+                                                    app_version, name)
+                    response = FileResponse(ios_plist_bytes)
+                    response['Content-Type'] = "application/x-plist"
+                    response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid()
+                    return response
+                res.msg = "plist release_id error"
+            elif ftype == 'mobileconifg':
+                release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
+                if release_obj:
+                    bundle_id = release_obj.app_id.bundle_id
+                    udid_url = get_post_udid_url(request, release_obj.app_id.short)
+                    ios_udid_mobileconfig = make_udid_mobileconfig(udid_url, bundle_id)
+                    response = FileResponse(ios_udid_mobileconfig)
+                    response['Content-Type'] = "application/x-apple-aspen-config"
+                    response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileconfig'
+                    return response
+                res.msg = "mobileconifg release_id error"
+            else:
                 file_path = os.path.join(settings.MEDIA_ROOT, filename)
                 try:
                     response = FileResponse(open(file_path, 'rb'))
@@ -50,38 +81,6 @@ class DownloadView(APIView):
                 response['content_type'] = "application/octet-stream"
                 response['Content-Disposition'] = 'attachment; filename=' + filename
                 return response
-            else:
-                if ftype == 'plist':
-                    release_id = filename.split('.')[0]
-                    apptodev_obj = APPToDeveloper.objects.filter(binary_file=release_id).first()
-                    if apptodev_obj:
-                        release_obj = AppReleaseInfo.objects.filter(is_master=True, app_id=apptodev_obj.app_id).first()
-                    else:
-                        release_obj = AppReleaseInfo.objects.filter(release_id=release_id).first()
-                    if release_obj:
-                        storage = Storage(release_obj.app_id.user_id)
-                        bundle_id = release_obj.app_id.bundle_id
-                        app_version = release_obj.app_version
-                        name = release_obj.app_id.name
-                        ios_plist_bytes = make_resigned(storage.get_download_url(filename),
-                                                        storage.get_download_url(release_obj.icon_url), bundle_id,
-                                                        app_version, name)
-                        response = FileResponse(ios_plist_bytes)
-                        response['Content-Type'] = "application/x-plist"
-                        response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid()
-                        return response
-                    res.msg = "plist release_id error"
-                elif ftype == 'mobileconifg':
-                    release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
-                    if release_obj:
-                        bundle_id = release_obj.app_id.bundle_id
-                        udid_url = get_post_udid_url(request, release_obj.app_id.short)
-                        ios_udid_mobileconfig = make_udid_mobileconfig(udid_url, bundle_id)
-                        response = FileResponse(ios_udid_mobileconfig)
-                        response['Content-Type'] = "application/x-apple-aspen-config"
-                        response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileconfig'
-                        return response
-                    res.msg = "mobileconifg release_id error"
 
         res.code = 1004
         res.msg = "token校验失败"
@@ -166,7 +165,7 @@ class InstallView(APIView):
                                                                  udid=udid)
 
                 res.data = {"download_url": download_url}
-                if download_url != "" and not download_url.endswith("mobileconifg"):
+                if download_url != "" and "mobileconifg" not in download_url:
                     set_app_download_by_cache(app_id)
                 return Response(res.dict)
         else:

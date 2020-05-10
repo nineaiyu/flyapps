@@ -21,20 +21,20 @@ class DownloadToken(object):
 
     def make_token(self, release_id, time_limit=60, key='', force_new=False):
         token_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get("make_token_key"), release_id])
-        make_token_key = cache.get(token_key)
-        if make_token_key and not force_new:
-            return make_token_key
+        token = cache.get(token_key)
+        if token and not force_new:
+            return token
         else:
             random_str = uuid.uuid1().__str__().split("-")[0:-1]
             user_ran_str = uuid.uuid5(uuid.NAMESPACE_DNS, release_id).__str__().split("-")
             user_ran_str.extend(random_str)
-            new_str = "".join(user_ran_str)
-            cache.set(new_str, {
+            token = "".join(user_ran_str)
+            cache.set(token, {
                 "atime": time.time() + time_limit,
                 "data": release_id
             }, time_limit)
-            cache.set(token_key, new_str, time_limit - 1)
-            return new_str
+            cache.set(token_key, token, time_limit - 1)
+            return token
 
     def verify_token(self, token, release_id):
         try:

@@ -236,6 +236,8 @@ CACHE_KEY_TEMPLATE = {
     'developer_auth_code_key': 'developer_auth_code',
 }
 
+DATA_DOWNLOAD_KEY="d_token"
+
 SYNC_CACHE_TO_DATABASE = {
     'download_times': 10  # 下载次数同步时间
 }
