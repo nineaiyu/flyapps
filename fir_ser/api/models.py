@@ -147,7 +147,6 @@ class AppReleaseInfo(models.Model):
 class AppStorage(models.Model):
     user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
     name = models.CharField(max_length=64, blank=True, null=True, verbose_name="存储名字")
-    # is_used = models.BooleanField(verbose_name="是否使用该存储",default=True)
     storage_choices = ((0, '本地存储'), (1, '七牛云存储'), (2, '阿里云存储'), (3, '默认存储'))
     storage_type = models.SmallIntegerField(choices=storage_choices, default=3, verbose_name="存储类型")
     access_key = models.CharField(max_length=128, blank=True, null=True, verbose_name="存储访问key")
@@ -165,6 +164,14 @@ class AppStorage(models.Model):
     class Meta:
         verbose_name = '存储配置'
         verbose_name_plural = "存储配置"
+
+    def save(self, *args, **kwargs):
+        if self.storage_type in (1, 2):
+            if self.bucket_name and self.secret_key and self.access_key:
+                return super(AppStorage, self).save(*args, **kwargs)
+            else:
+                return
+        super(AppStorage, self).save(*args, **kwargs)
 
     def __str__(self):
         return "%s %s" % (self.user_id.get_username(), self.name)

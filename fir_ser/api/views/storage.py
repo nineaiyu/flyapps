@@ -46,7 +46,7 @@ class StorageView(APIView):
 
         admin_storage = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
         res.is_admin_storage = False
-        if admin_storage.uid == request.user.uid:
+        if admin_storage and admin_storage.uid == request.user.uid:
             res.is_admin_storage = True
         return Response(res.dict)
 

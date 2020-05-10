@@ -219,8 +219,9 @@ class StorageSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         if self.context.get("user_obj", None) and self.context.get("user_obj") != "undefined":
             user_obj = self.context.get("user_obj", None)
-            storage_obj = models.AppStorage.objects.create(**validated_data, user_id=user_obj, )
-            return storage_obj
+            if user_obj:
+                storage_obj = models.AppStorage.objects.create(**validated_data, user_id=user_obj)
+                return storage_obj
         return None
 
 

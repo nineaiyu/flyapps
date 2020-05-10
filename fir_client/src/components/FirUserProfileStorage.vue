@@ -257,7 +257,12 @@
             updateorcreate() {
                 let methods = "PUT";
                 if (this.isaddflag) {
-                    methods = "POST"
+                    if (this.editstorageinfo.access_key && this.editstorageinfo.secret_key && this.editstorageinfo.bucket_name) {
+                        methods = "POST";
+                    } else {
+                        this.$message.error("参数不正确");
+                        return
+                    }
                 }
                 getStorageinfo(data => {
                     if (data.code === 1000) {
