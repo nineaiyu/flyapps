@@ -3,7 +3,6 @@ from django.contrib import admin
 # Register your models here.
 from .models import *
 
-
 admin.site.register(UserInfo)
 admin.site.register(Apps)
 admin.site.register(AppReleaseInfo)
@@ -15,4 +14,3 @@ admin.site.register(AppIOSDeveloperInfo)
 admin.site.register(APPSuperSignUsedInfo)
 admin.site.register(APPToDeveloper)
 admin.site.register(UDIDsyncDeveloper)
-

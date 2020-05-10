@@ -16,7 +16,6 @@ from .yun.basic import AliYunClient
 
 
 class AliApi(object):
-
     # 默认的支付配置
     DEFAULT_ALI_PAY_CONFIG = settings.THIRD_PART_CONFIG["ALI_PAY"]["default"]
     # 指定的支付配置(业务拓展)

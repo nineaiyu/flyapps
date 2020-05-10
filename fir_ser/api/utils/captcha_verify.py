@@ -1,5 +1,7 @@
 from django.conf import settings
 from api.utils.geetest import GeeTestLib
+
+
 def verify(verify_data, uid=None, extend_params=None):
     """第三方滑动验证码校验.
 
@@ -44,4 +46,3 @@ def verify(verify_data, uid=None, extend_params=None):
         return True if result else False
     else:
         return True
-

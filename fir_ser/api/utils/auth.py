@@ -5,6 +5,7 @@ from api.models import Token, UserInfo
 from fir_ser.settings import CACHE_KEY_TEMPLATE
 import base64
 
+
 class ExpiringTokenAuthentication(BaseAuthentication):
 
     def authenticate(self, request):
@@ -27,16 +28,16 @@ class ExpiringTokenAuthentication(BaseAuthentication):
         cacheuserinfo = cache.get(auth_key)
         if not cacheuserinfo:
             raise AuthenticationFailed({"code": 1001, "error": "无效的token"})
-        if user_name != cacheuserinfo.get('username',None):
+        if user_name != cacheuserinfo.get('username', None):
             raise AuthenticationFailed({"code": 1001, "error": "token校验失败"})
 
-        user_obj = UserInfo.objects.filter(uid=cacheuserinfo.get('uid',None),username=cacheuserinfo.get("username")).first()
+        user_obj = UserInfo.objects.filter(uid=cacheuserinfo.get('uid', None),
+                                           username=cacheuserinfo.get("username")).first()
         # token_obj = Token.objects.filter(access_token=auth_token).first()
         if not user_obj:
             raise AuthenticationFailed({"code": 1001, "error": "无效的token"})
         if user_obj.is_active:
             cache.set(auth_key, cacheuserinfo, 3600 * 24 * 7)
-            return user_obj,auth_token
+            return user_obj, auth_token
         else:
             raise AuthenticationFailed({"code": 1001, "error": "用户被禁用"})
-

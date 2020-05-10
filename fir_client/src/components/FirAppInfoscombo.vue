@@ -93,7 +93,7 @@
                 hmaster_release: {},
                 comboapplists: [],
                 orgapplists: [],
-                comboapp:{"master_release":""}
+                comboapp: {"master_release": ""}
             }
         }, methods: {
             searchapps() {
@@ -202,11 +202,11 @@
                     } else {
                         this.$router.push({name: 'FirLogin'});
                     }
-                }, {"type": type,"page":1,"size":999,"act":'combo'});
+                }, {"type": type, "page": 1, "size": 999, "act": 'combo'});
             }
         }, filters: {
-            geticon_url(app){
-                return  app.icon_url
+            geticon_url(app) {
+                return app.icon_url
             },
             getapptype: function (type) {
                 let ftype = '';
@@ -218,12 +218,12 @@
                 return ftype
             },
         },
-     mounted() {
-        this.$store.dispatch('doappInfoIndex', [[44, 44], [44, 44]]);
+        mounted() {
+            this.$store.dispatch('doappInfoIndex', [[44, 44], [44, 44]]);
 
-        // this.getappiconFun();
-        this.setData();
-    },
+            // this.getappiconFun();
+            this.setData();
+        },
         watch: {
             '$store.state.currentapp': function () {
                 this.setData();

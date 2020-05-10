@@ -10,7 +10,6 @@ from .base import BaseAliYunAPI
 
 
 class AliYunVod(BaseAliYunAPI):
-
     VERSION = "2017-03-21"
 
     API_BASE_URL = "http://vod.cn-shanghai.aliyuncs.com/"
@@ -41,8 +40,8 @@ class AliYunVod(BaseAliYunAPI):
         return self._get(action="GetVideoPlayAuth", data=data)
 
     def get_play_info(
-        self, video_id, formats=None, timeout=None, stream_type=None, definition=None,
-        result_type=None, output_type=None,
+            self, video_id, formats=None, timeout=None, stream_type=None, definition=None,
+            result_type=None, output_type=None,
     ):
         """获取播放 `auth`
 
@@ -99,8 +98,8 @@ class AliYunVod(BaseAliYunAPI):
         return self._get(action="GetPlayInfo", data=data)
 
     def query_flow_data(
-        self, domain_name=None, start_time=None, end_time=None, time_merge=None, interval=None,
-        location_name_en=None, isp_name_en=None,
+            self, domain_name=None, start_time=None, end_time=None, time_merge=None, interval=None,
+            location_name_en=None, isp_name_en=None,
     ):
         """查询流量数据
 
@@ -156,8 +155,8 @@ class AliYunVod(BaseAliYunAPI):
         return self._get(action="DescribeDomainFlowData", data=data)
 
     def query_bps_data(
-        self, domain_name=None, start_time=None, end_time=None, time_merge=None, interval=None,
-        location_name_en=None, isp_name_en=None,
+            self, domain_name=None, start_time=None, end_time=None, time_merge=None, interval=None,
+            location_name_en=None, isp_name_en=None,
     ):
         """查询网络带宽
 

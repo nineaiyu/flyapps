@@ -31,7 +31,7 @@ import FirUserProfileStorage from "@/components/FirUserProfileStorage";
 import FirSuperSignBase from "@/components/FirSuperSignBase";
 
 const router = new VueRouter({
-    mode:'history',
+    mode: 'history',
     routes: [
         {
             path: '/',
@@ -127,7 +127,7 @@ const router = new VueRouter({
                     name: 'FirSuperSignBase',
                     component: FirSuperSignBase,
                 }
-        ]
+            ]
         },
         {
             path: '/register',

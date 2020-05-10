@@ -15,5 +15,5 @@ class LogoutView(APIView):
         user = request.user.pk
         auth_token = request.auth
         cache.delete(auth_token)
-        Token.objects.filter(user=user,access_token=auth_token).delete()
+        Token.objects.filter(user=user, access_token=auth_token).delete()
         return Response({"code": 1000})

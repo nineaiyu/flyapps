@@ -4,7 +4,6 @@
 
 
 class BaseAliYunAPI(object):
-
     """
 
     阿里云服务API基类

@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
@@ -27,7 +26,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,7 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api.apps.ApiConfig',
-    'django_apscheduler',#定时执行任务
+    'django_apscheduler',  # 定时执行任务
     'rest_framework',
 ]
 
@@ -46,7 +44,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -74,7 +72,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'fir_ser.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
@@ -90,12 +87,11 @@ DATABASES = {
         'PASSWORD': 'KGzKjZpWBp4R4RSa',
         'HOST': '127.0.0.1',
         'PORT': '3306',
-        #设置MySQL的驱动
+        # 设置MySQL的驱动
         'OPTIONS': {'init_command': 'SET storage_engine=INNODB'}
     }
 
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -133,24 +129,21 @@ USE_L10N = True
 
 USE_TZ = False
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS=[
-    os.path.join(BASE_DIR,"static")
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static")
 ]
 
 # Media配置
 MEDIA_URL = "files/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "files")
-#supersign配置
+# supersign配置
 SUPER_SIGN_ROOT = os.path.join(BASE_DIR, "supersign")
 
-AUTH_USER_MODEL="api.UserInfo"
-
-
+AUTH_USER_MODEL = "api.UserInfo"
 
 GEE_TEST = {
     "gee_test_access_id": "37ca5631edd1e882721808d35163b3ad",
@@ -161,8 +154,6 @@ GEE_TEST = {
     ],  # 不用验证的用户(存放着用户的uid)
 }
 
-
-
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -171,11 +162,10 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "CONNECTION_POOL_KWARGS": {"max_connections": 100},
             "PASSWORD": "nineven",
-            "DECODE_RESPONSES":True
+            "DECODE_RESPONSES": True
         }
     },
 }
-
 
 # DRF扩展缓存时间
 REST_FRAMEWORK_EXTENSIONS = {
@@ -200,10 +190,10 @@ THIRD_PART_CONFIG = {
             'name': 'local',
             'type': 0,
             'auth': {
-                'domain_name': '127.0.0.1:8000', # 正式环境需要填写正式的访问域名
-                'is_https':False,
+                'domain_name': 'fly.harmonygames.cn',  # 正式环境需要填写正式的访问域名
+                'is_https': True,
             },
-            'active': False
+            'active': True
         },
         {
             'name': 'aliyun',
@@ -212,12 +202,12 @@ THIRD_PART_CONFIG = {
                 'access_key': 'LTAI4FkbTRqejBAzB1yQZpjR',
                 'secret_key': '2WzCsKjYXxOvU4wPtTmrrXnxiLIxy9',
                 'bucket_name': 'fly-app-storage',
-                'sts_role_arn':'acs:ram::1886562303345632:role/fly-app-storage',
-                'endpoint':'oss-cn-beijing.aliyuncs.com',
-                'is_https':True,
-                'domain_name':'ali.storage.dvcloud.xin'
+                'sts_role_arn': 'acs:ram::1886562303345632:role/fly-app-storage',
+                'endpoint': 'oss-cn-beijing.aliyuncs.com',
+                'is_https': True,
+                'domain_name': 'ali.storage.dvcloud.xin'
             },
-            'active': True
+            'active': False
         },
         {
             'name': 'qiniuyun',
@@ -234,28 +224,28 @@ THIRD_PART_CONFIG = {
     ]
 
 }
-CACHE_KEY_TEMPLATE={
-    'download_times_key':'app_download_times',
-    'make_token_key':'make_token',
-    'download_short_key':'download_short',
-    'app_instance_key':'app_instance',
-    'download_url_key':'download_url',
-    'user_storage_key':'storage_auth',
-    'user_auth_token_key':'user_auth_token',
-    'download_today_times_key':'download_today_times',
+CACHE_KEY_TEMPLATE = {
+    'download_times_key': 'app_download_times',
+    'make_token_key': 'make_token',
+    'download_short_key': 'download_short',
+    'app_instance_key': 'app_instance',
+    'download_url_key': 'download_url',
+    'user_storage_key': 'storage_auth',
+    'user_auth_token_key': 'user_auth_token',
+    'download_today_times_key': 'download_today_times',
     'developer_auth_code_key': 'developer_auth_code',
 }
 
-SYNC_CACHE_TO_DATABASE={
-    'download_times':10  #下载次数同步时间
+SYNC_CACHE_TO_DATABASE = {
+    'download_times': 10  # 下载次数同步时间
 }
 
-SERVER_DOMAIN={
-    'IOS_PMFILE_DOWNLOAD_DOMAIN':{
-        "domain_name":'fly.harmonygames.cn',
-        'is_https':True,
+SERVER_DOMAIN = {
+    'IOS_PMFILE_DOWNLOAD_DOMAIN': {
+        "domain_name": 'fly.harmonygames.cn',
+        'is_https': True,
     },  # ios 描述文件和plist文件下载域名，该域名用于后端，一般为api访问域名
-    'POST_UDID_DOMAIN':'https://fly.harmonygames.cn',  #超级签名 安装签名时 向该域名 发送udid数据，该域名用于后端，一般为 api 访问域名
+    'POST_UDID_DOMAIN': 'https://fly.harmonygames.cn',  # 超级签名 安装签名时 向该域名 发送udid数据，该域名用于后端，一般为 api 访问域名
     'REDIRECT_UDID_DOMAIN': 'https://fly.harmonygames.cn',  # 超级签名 安装完成之后，跳转域名，该域名为前端web访问域名
 }
 

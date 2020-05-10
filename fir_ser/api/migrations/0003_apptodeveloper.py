@@ -5,7 +5,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('api', '0002_auto_20200503_1120'),
     ]
@@ -17,8 +16,11 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('binary_file', models.CharField(blank=True, max_length=128, null=True, verbose_name='签名包名称')),
                 ('updated_time', models.DateTimeField(auto_now=True, verbose_name='更新时间')),
-                ('app_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.Apps', verbose_name='属于哪个APP')),
-                ('developerid', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.AppIOSDeveloperInfo', verbose_name='所使用苹果开发者账户')),
+                ('app_id',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.Apps', verbose_name='属于哪个APP')),
+                ('developerid',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.AppIOSDeveloperInfo',
+                                   verbose_name='所使用苹果开发者账户')),
             ],
             options={
                 'verbose_name': '设备使用统计',

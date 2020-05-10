@@ -1,56 +1,58 @@
 <template>
     <div style="text-align:center">
         <h2 v-if="is_admin_storage">管理员存储，您配置的存储将决定其他用户配置的默认存储，请谨慎修改</h2>
-        <el-dialog :title="title" :visible.sync="dialogstorageVisible" :destroy-on-close="true" :close-on-click-modal="false">
+        <el-dialog :title="title" :visible.sync="dialogstorageVisible" :destroy-on-close="true"
+                   :close-on-click-modal="false">
 
             <el-form v-if="editstorageinfo.id !==-1" ref="storageinfoform" :model="editstorageinfo"
                      label-width="80px" style="margin:0 auto;">
-            <el-form-item label-width="100px" label="存储类型">
-                <el-select :disabled='disabled' v-model="editstorageinfo.storage_type" placeholder="存储类型"
-                           style="margin-left: -100px">
-                    <el-option v-for="st in storage_list" :key="st.id" :label="st.name" :value="st.id"></el-option>
-                </el-select>
-            </el-form-item>
-
-            <div v-if="editstorageinfo.storage_type">
-                <el-form-item label-width="110px" label="存储名称">
-                    <el-input :disabled='disabled' v-model="editstorageinfo.name"></el-input>
+                <el-form-item label-width="100px" label="存储类型">
+                    <el-select :disabled='disabled' v-model="editstorageinfo.storage_type" placeholder="存储类型"
+                               style="margin-left: -100px">
+                        <el-option v-for="st in storage_list" :key="st.id" :label="st.name" :value="st.id"></el-option>
+                    </el-select>
                 </el-form-item>
 
-                <el-form-item label-width="110px" label="key">
-                    <el-input :disabled='disabled' v-model="editstorageinfo.access_key"></el-input>
-                </el-form-item>
-                <el-form-item label-width="110px" label="secret">
-                    <el-input :disabled='disabled' v-model="editstorageinfo.secret_key"></el-input>
-                </el-form-item>
-
-                <el-form-item label-width="110px" label="bucket_name">
-                    <el-input :disabled='disabled' v-model="editstorageinfo.bucket_name"></el-input>
-                </el-form-item>
-                <el-form-item label-width="110px" label="下载域名">
-                    <el-input :disabled='disabled' v-model="editstorageinfo.domain_name"></el-input>
-                </el-form-item>
-
-                <div v-if="editstorageinfo.storage_type === 2">
-                    <el-form-item label-width="110px" label="sts_role_arn">
-                        <el-input :disabled='disabled'
-                                  v-model="editstorageinfo.additionalparameter.sts_role_arn"></el-input>
+                <div v-if="editstorageinfo.storage_type">
+                    <el-form-item label-width="110px" label="存储名称">
+                        <el-input :disabled='disabled' v-model="editstorageinfo.name"></el-input>
                     </el-form-item>
 
-                    <el-form-item label-width="110px" label="endpoint">
-                        <el-input :disabled='disabled' v-model="editstorageinfo.additionalparameter.endpoint"></el-input>
+                    <el-form-item label-width="110px" label="key">
+                        <el-input :disabled='disabled' v-model="editstorageinfo.access_key"></el-input>
                     </el-form-item>
+                    <el-form-item label-width="110px" label="secret">
+                        <el-input :disabled='disabled' v-model="editstorageinfo.secret_key"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label-width="110px" label="bucket_name">
+                        <el-input :disabled='disabled' v-model="editstorageinfo.bucket_name"></el-input>
+                    </el-form-item>
+                    <el-form-item label-width="110px" label="下载域名">
+                        <el-input :disabled='disabled' v-model="editstorageinfo.domain_name"></el-input>
+                    </el-form-item>
+
+                    <div v-if="editstorageinfo.storage_type === 2">
+                        <el-form-item label-width="110px" label="sts_role_arn">
+                            <el-input :disabled='disabled'
+                                      v-model="editstorageinfo.additionalparameter.sts_role_arn"></el-input>
+                        </el-form-item>
+
+                        <el-form-item label-width="110px" label="endpoint">
+                            <el-input :disabled='disabled'
+                                      v-model="editstorageinfo.additionalparameter.endpoint"></el-input>
+                        </el-form-item>
+
+                    </div>
+
+                    <el-form-item label-width="110px" label="备注">
+                        <el-input :disabled='disabled' v-model="editstorageinfo.description"></el-input>
+                    </el-form-item>
+
+                    <el-button v-if="!disabled" @click="updateorcreate">保存</el-button>
+                    <el-button v-if="!disabled" @click="dialogstorageVisible=false">取消</el-button>
 
                 </div>
-
-                <el-form-item label-width="110px" label="备注">
-                    <el-input :disabled='disabled' v-model="editstorageinfo.description"></el-input>
-                </el-form-item>
-
-                <el-button v-if="!disabled" @click="updateorcreate">保存</el-button>
-                <el-button v-if="!disabled" @click="dialogstorageVisible=false">取消</el-button>
-
-            </div>
             </el-form>
         </el-dialog>
 
@@ -71,20 +73,23 @@
                         </el-option>
                     </el-option-group>
                 </el-select>
-                <el-button style="margin-left: 10px" round type="info" icon="el-icon-thumb" @click="change_storage_info">保存</el-button>
+                <el-button style="margin-left: 10px" round type="info" icon="el-icon-thumb"
+                           @click="change_storage_info">保存
+                </el-button>
 
                 <!--                <el-button-group style="margin-left: 10px">-->
-<!--                    <el-button round type="info" icon="el-icon-edit" @click="change_storage_info"></el-button>-->
-<!--                    <el-button round type="info" icon="el-icon-plus" @click="add_storage_info"></el-button>-->
-<!--                    <el-button round type="info" icon="el-icon-delete" @click="del_storage_info"></el-button>-->
-<!--                </el-button-group>-->
+                <!--                    <el-button round type="info" icon="el-icon-edit" @click="change_storage_info"></el-button>-->
+                <!--                    <el-button round type="info" icon="el-icon-plus" @click="add_storage_info"></el-button>-->
+                <!--                    <el-button round type="info" icon="el-icon-delete" @click="del_storage_info"></el-button>-->
+                <!--                </el-button-group>-->
                 <el-divider></el-divider>
                 <el-form v-if="storageinfo.id && storageinfo.id !==-1" ref="storageinfoform" :model="storageinfo"
                          label-width="80px" style="width: 39%;margin:0 auto;">
                     <el-form-item label-width="110px" label="存储类型">
                         <el-select :disabled='Sdisabled' v-model="storageinfo.storage_type" placeholder="存储类型"
                                    style="margin-left: -60px">
-                            <el-option v-for="st in storage_list" :key="st.id" :label="st.name" :value="st.id"></el-option>
+                            <el-option v-for="st in storage_list" :key="st.id" :label="st.name"
+                                       :value="st.id"></el-option>
                         </el-select>
                     </el-form-item>
 
@@ -115,7 +120,8 @@
                             </el-form-item>
 
                             <el-form-item label-width="110px" label="endpoint">
-                                <el-input :disabled='Sdisabled' v-model="storageinfo.additionalparameter.endpoint"></el-input>
+                                <el-input :disabled='Sdisabled'
+                                          v-model="storageinfo.additionalparameter.endpoint"></el-input>
                             </el-form-item>
 
                             <el-form-item label-width="110px" label="备注">
@@ -173,21 +179,23 @@
                             fixed="right"
                             label="操作"
                             width="120">
-                        <template slot-scope="scope" >
+                        <template slot-scope="scope">
                             <div v-if="scope.row.id === org_storage_id">
-                                <el-button v-if="scope.row.id === org_storage_id"   @click="showstorage(scope.row)" type="success" size="small">使用中</el-button>
+                                <el-button v-if="scope.row.id === org_storage_id" @click="showstorage(scope.row)"
+                                           type="success" size="small">使用中
+                                </el-button>
                             </div>
                             <div v-else>
                                 <el-button @click="showstorage(scope.row)" type="text" size="small">查看</el-button>
-                                <el-button  @click="editstorage(scope.row)" type="text" size="small">编辑</el-button>
-                                <el-button  @click="del_storage_info(scope.row)" type="text" size="small">删除</el-button>
+                                <el-button @click="editstorage(scope.row)" type="text" size="small">编辑</el-button>
+                                <el-button @click="del_storage_info(scope.row)" type="text" size="small">删除</el-button>
                             </div>
 
                         </template>
                     </el-table-column>
                 </el-table>
             </el-tab-pane>
-            <el-tab-pane label="新增存储" name="addstorage" >
+            <el-tab-pane label="新增存储" name="addstorage">
             </el-tab-pane>
 
         </el-tabs>
@@ -204,12 +212,12 @@
         data() {
             return {
                 fstorage_lists: [],
-                Sdisabled:true,
+                Sdisabled: true,
                 use_storage_id: 0,
-                org_storage_id:0,
-                title:'',
-                dialogstorageVisible:false,
-                editstorageinfo:{'additionalparameter':{}},
+                org_storage_id: 0,
+                title: '',
+                dialogstorageVisible: false,
+                editstorageinfo: {'additionalparameter': {}},
                 selectlabel: "",
                 storageinfo: {'additionalparameter': {}},
                 storage_list: [],
@@ -217,32 +225,32 @@
                 isaddflag: false,
                 activeName: 'chostorage',
                 storage_info_lists: [],
-                is_admin_storage:false,
+                is_admin_storage: false,
             }
         }, methods: {
 
-            showstorage(editstorageinfo){
-                this.title='查看存储信息';
-                this.disabled=true;
-                this.dialogstorageVisible=true;
-                this.editstorageinfo=deepCopy(editstorageinfo);
+            showstorage(editstorageinfo) {
+                this.title = '查看存储信息';
+                this.disabled = true;
+                this.dialogstorageVisible = true;
+                this.editstorageinfo = deepCopy(editstorageinfo);
             },
-            editstorage(editstorageinfo){
-                this.title='存储编辑';
-                this.disabled=false;
-                this.dialogstorageVisible=true;
-                this.editstorageinfo=deepCopy(editstorageinfo);
-                this.isaddflag=false;
-            },add_storage_click(){
-                this.title='新增存储';
-                this.disabled=false;
-                this.dialogstorageVisible=true;
-                this.editstorageinfo={'additionalparameter':{}};
-                this.isaddflag=true;
+            editstorage(editstorageinfo) {
+                this.title = '存储编辑';
+                this.disabled = false;
+                this.dialogstorageVisible = true;
+                this.editstorageinfo = deepCopy(editstorageinfo);
+                this.isaddflag = false;
+            }, add_storage_click() {
+                this.title = '新增存储';
+                this.disabled = false;
+                this.dialogstorageVisible = true;
+                this.editstorageinfo = {'additionalparameter': {}};
+                this.isaddflag = true;
             },
             // eslint-disable-next-line no-unused-vars
             handleClick(tab, event) {
-                if(tab.name === 'addstorage'){
+                if (tab.name === 'addstorage') {
                     this.add_storage_click()
                 }
             },
@@ -254,9 +262,9 @@
                 getStorageinfo(data => {
                     if (data.code === 1000) {
                         this.$message.success('操作成功');
-                        this.dialogstorageVisible=false;
+                        this.dialogstorageVisible = false;
                         if (this.isaddflag) {
-                            this.activeName='setstorage';
+                            this.activeName = 'setstorage';
                         }
                         this.getstorageinfoFun();
 
@@ -271,11 +279,11 @@
                     type: 'warning'
                 }).then(() => {
                     getStorageinfo(data => {
-                            if (data.code === 1000) {
-                                this.$message.success('删除成功');
-                                this.getstorageinfoFun();
-                            }
-                        }, {"methods": 'DELETE', 'data': {'id': sinfo.id, 'tid': sinfo.storage_type}})
+                        if (data.code === 1000) {
+                            this.$message.success('删除成功');
+                            this.getstorageinfoFun();
+                        }
+                    }, {"methods": 'DELETE', 'data': {'id': sinfo.id, 'tid': sinfo.storage_type}})
                 }).catch(() => {
                     this.$message({
                         type: 'info',
@@ -285,24 +293,24 @@
 
             },
             change_storage_info() {
-                    this.$confirm('此操作将导致应用，图片，显示下载异常, 是否继续?', '警告', {
-                        confirmButtonText: '确定',
-                        cancelButtonText: '取消',
-                        type: 'warning'
-                    }).then(() => {
-                        getStorageinfo(data => {
-                            if (data.code === 1000) {
-                                this.$message.success('修改成功');
-                                this.getstorageinfoFun();
-                            }
-                        }, {"methods": 'PUT', 'data': {'use_storage_id':this.use_storage_id}});
-                        this.getstorageinfoFun();
-                    }).catch(() => {
-                        this.$message({
-                            type: 'info',
-                            message: '已取消操作'
-                        });
+                this.$confirm('此操作将导致应用，图片，显示下载异常, 是否继续?', '警告', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    getStorageinfo(data => {
+                        if (data.code === 1000) {
+                            this.$message.success('修改成功');
+                            this.getstorageinfoFun();
+                        }
+                    }, {"methods": 'PUT', 'data': {'use_storage_id': this.use_storage_id}});
+                    this.getstorageinfoFun();
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消操作'
                     });
+                });
             },
             select_storage(a) {
                 this.disabled = true;
@@ -357,13 +365,13 @@
             getstorageinfoFun() {
                 getStorageinfo(data => {
                     if (data.code === 1000) {
-                        this.org_storage_id=this.use_storage_id = data.storage;
+                        this.org_storage_id = this.use_storage_id = data.storage;
                         this.storage_list = data.storage_list;
                         this.storage_info_lists = data.data;
                         this.is_admin_storage = data.is_admin_storage;
                         this.format_storage(data.data);
-                        this.disabled=true;
-                        this.isaddflag=false;
+                        this.disabled = true;
+                        this.isaddflag = false;
                     } else {
                         this.$message.error('存储获取失败,' + data);
                     }

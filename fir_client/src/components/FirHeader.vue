@@ -15,7 +15,9 @@
 
                 </el-col>
                 <el-col :span="2" :push="4">
-                    <div class="block"><el-avatar :size="66" :src="$store.state.userinfo.head_img"></el-avatar></div>
+                    <div class="block">
+                        <el-avatar :size="66" :src="$store.state.userinfo.head_img"></el-avatar>
+                    </div>
                 </el-col>
                 <el-col :span="4" :push="4">
                     <el-dropdown style="padding-top: 12px;" @command="handleCommand">
@@ -44,7 +46,8 @@
 </template>
 
 <script>
-import {logout} from '../restful'
+    import {logout} from '../restful'
+
     export default {
         name: "FirHeader",
         data() {
@@ -58,14 +61,13 @@ import {logout} from '../restful'
                     this.$router.push({name: 'FirUserProfileInfo'})
                 } else if (command === 'chpasswd') {
                     this.$router.push({name: 'FirUserProfileChangePwd'})
-                }else if (command === 'storage') {
+                } else if (command === 'storage') {
                     this.$router.push({name: 'FirUserProfileStorage'})
-                }else if (command === 'supersign') {
+                } else if (command === 'supersign') {
                     this.$store.dispatch('doucurrentapp', {});
-                    this.$router.push({"name":'FirSuperSignBase', params: {act: "iosdeveloper"}})
+                    this.$router.push({"name": 'FirSuperSignBase', params: {act: "iosdeveloper"}})
 
-                }
-                else if(command === 'exit'){
+                } else if (command === 'exit') {
                     logout(data => {
                         if (data.code === 1000) {
                             this.$message.success("退出成功");

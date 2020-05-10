@@ -116,7 +116,7 @@ class Apps(models.Model):
         indexes = [models.Index(fields=['app_id']), models.Index(fields=['id', 'user_id', 'type'])]
 
     def __str__(self):
-        return "%s %s-%s %s" % (self.name, self.get_type_display(), self.short,  self.issupersign)
+        return "%s %s-%s %s" % (self.name, self.get_type_display(), self.short, self.issupersign)
 
 
 class AppReleaseInfo(models.Model):

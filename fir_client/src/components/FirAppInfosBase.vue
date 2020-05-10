@@ -2,7 +2,7 @@
     <el-main>
         <div class="page-app app-info">
             <div class="banner">
-                <div class="middle-wrapper" >
+                <div class="middle-wrapper">
                     <div @click="defaulttimeline">
                         <img :src="icon_url" class="appicon" style="width:100px; height:100px">
                     </div>
@@ -70,7 +70,7 @@
         name: "FirAppInfosBase",
         data() {
             return {
-                icon_url:"",
+                icon_url: "",
                 appinfos: {},
                 master_release: {},
                 allapp: [],
@@ -80,41 +80,45 @@
             }
         },
         methods: {
-            setfunactive(item,index){
+            setfunactive(item, index) {
                 for (let key in this.$refs) {
-                    if(key === item){
+                    if (key === item) {
                         this.$refs[key].classList.add('active');
                         this.$store.dispatch('doappInfoIndex', [[index, index], [index, index]]);
-                    }else {
+                    } else {
                         this.$refs[key].classList.remove('active');
                     }
                 }
             },
             appDownload() {
-                this.$router.push({name: 'FirDownload', params: { short: this.appinfos.short }})
+                this.$router.push({name: 'FirDownload', params: {short: this.appinfos.short}})
             },
             defaulttimeline() {
-                this.setfunactive('timeline',5);
+                this.setfunactive('timeline', 5);
                 this.$router.push({name: 'FirAppInfostimeline'});
             },
             baseinfo() {
-                this.setfunactive('baseinfo',18);
+                this.setfunactive('baseinfo', 18);
                 this.$router.push({name: 'FirAppInfosbaseinfo'});
             },
-            security(){
-                this.setfunactive('security',31);
+            security() {
+                this.setfunactive('security', 31);
                 this.$router.push({name: 'FirAppInfossecurity'});
 
             },
             combo() {
-                this.setfunactive('combo',44);
+                this.setfunactive('combo', 44);
                 this.$router.push({name: 'FirAppInfoscombo'});
             },
-            devices(){
-                this.setfunactive('devices',57);
-                if(this.appinfos.issupersign){
-                    this.$router.push({"name":'FirSuperSignBase', params: {act: "useddevices"},query:{bundleid:this.appinfos.bundle_id}})
-                }else {
+            devices() {
+                this.setfunactive('devices', 57);
+                if (this.appinfos.issupersign) {
+                    this.$router.push({
+                        "name": 'FirSuperSignBase',
+                        params: {act: "useddevices"},
+                        query: {bundleid: this.appinfos.bundle_id}
+                    })
+                } else {
                     this.$router.push({name: 'FirAppInfosdevices'});
                 }
             },
@@ -131,15 +135,13 @@
                 return ftype
             },
         },
-        computed: {
-
-        }, mounted() {
+        computed: {}, mounted() {
             getappinfos(data => {
 
                 if (data.code === 1000) {
                     this.appinfos = data.data;
                     this.master_release = data.data.master_release;
-                    this.$store.dispatch("getUser",data.userinfo);
+                    this.$store.dispatch("getUser", data.userinfo);
                     this.appinfos["icon_url"] = this.master_release.icon_url;
                     this.$store.dispatch('doucurrentapp', this.appinfos);
                 } else if (data.code === 1003) {
@@ -151,12 +153,12 @@
             }, {
                 "app_id": this.$route.params.id
             });
-            if(this.$store.state.currentapp.master_release){
+            if (this.$store.state.currentapp.master_release) {
                 this.icon_url = this.$store.state.currentapp.master_release.icon_url
             }
-        },watch:{
-            '$store.state.currentapp.master_release.icon_url':function () {
-                    this.icon_url = this.$store.state.currentapp.master_release.icon_url
+        }, watch: {
+            '$store.state.currentapp.master_release.icon_url': function () {
+                this.icon_url = this.$store.state.currentapp.master_release.icon_url
             }
         }
 

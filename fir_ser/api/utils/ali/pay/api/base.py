@@ -4,7 +4,6 @@
 
 
 class BaseAliPayAPI(object):
-
     """
 
     支付宝支付API基类

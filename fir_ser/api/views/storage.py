@@ -10,7 +10,7 @@ from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
 import json
 from api.utils.storage.caches import del_cache_storage
-from api.models import  AppStorage,UserInfo
+from api.models import AppStorage, UserInfo
 from api.utils.serializer import StorageSerializer
 
 
@@ -36,7 +36,7 @@ class StorageView(APIView):
         if use_storage_obj:
             res.storage = use_storage_obj.id
         else:
-            res.storage = -1 # 默认存储
+            res.storage = -1  # 默认存储
 
         res.storage_list = []
         storage_org_list = list(AppStorage.storage_choices)
@@ -45,7 +45,7 @@ class StorageView(APIView):
             res.storage_list.append({'id': storage_t[0], 'name': storage_t[1]})
 
         admin_storage = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
-        res.is_admin_storage=False
+        res.is_admin_storage = False
         if admin_storage.uid == request.user.uid:
             res.is_admin_storage = True
         return Response(res.dict)
@@ -72,7 +72,7 @@ class StorageView(APIView):
         res = BaseResponse()
         data = request.data
 
-        use_storage_id=data.get("use_storage_id",None)
+        use_storage_id = data.get("use_storage_id", None)
         if use_storage_id:
             try:
                 if use_storage_id == -1:
@@ -82,8 +82,8 @@ class StorageView(APIView):
                 del_cache_storage(request.user)
             except Exception as e:
                 print(e)
-                res.code=1006
-                res.msg='修改失败'
+                res.code = 1006
+                res.msg = '修改失败'
             return Response(res.dict)
 
         try:

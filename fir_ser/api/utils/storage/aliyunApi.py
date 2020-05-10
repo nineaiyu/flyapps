@@ -4,7 +4,7 @@
 # author: liuyu
 # date: 2020/3/22
 
-#pip install aliyun-python-sdk-sts oss2
+# pip install aliyun-python-sdk-sts oss2
 
 import json
 import os
@@ -40,31 +40,32 @@ class StsToken(object):
     :param str security_token: 临时用户Token
     :param str request_id: 请求ID
     """
+
     def __init__(self):
         self.access_key_id = ''
         self.access_key_secret = ''
         self.expiration = 3600
         self.security_token = ''
         self.request_id = ''
-        self.bucket=''
-        self.endpoint=''
+        self.bucket = ''
+        self.endpoint = ''
+
 
 class AliYunOss(object):
 
-    def __init__(self,access_key,secret_key,bucket_name,endpoint,sts_role_arn,is_https,domain_name=None):
+    def __init__(self, access_key, secret_key, bucket_name, endpoint, sts_role_arn, is_https, domain_name=None):
         self.access_key_id = access_key or os.getenv('OSS_TEST_STS_ID', 'LTAI4FeTyvz74CHKCbYuTDGc')
         self.access_key_secret = secret_key or os.getenv('OSS_TEST_STS_KEY', 'uineAEE7tp1d1w4Mv0yLqxvV0IVNTy')
         self.bucket_name = bucket_name or os.getenv('OSS_TEST_BUCKET', 'fir-storage')
         self.endpoint = endpoint or os.getenv('OSS_TEST_ENDPOINT', 'oss-cn-beijing.aliyuncs.com')
         self.sts_role_arn = sts_role_arn or os.getenv('OSS_TEST_STS_ARN', 'acs:ram::1622120977387033:role/appstorage')
-        self.region_id = '-'.join( self.endpoint.split('.')[0].split("-")[1:3])
+        self.region_id = '-'.join(self.endpoint.split('.')[0].split("-")[1:3])
         self.token = StsToken()
         self.is_https = is_https
         self.domain_name = domain_name
         self.get_auth_bucket('init', 900)
 
-
-    def fetch_sts_token(self,name,expires):
+    def fetch_sts_token(self, name, expires):
         """子用户角色扮演获取临时用户的密钥
         :param access_key_id: 子用户的 access key id
         :param access_key_secret: 子用户的 access key secret
@@ -88,33 +89,33 @@ class AliYunOss(object):
         self.token.security_token = j['Credentials']['SecurityToken']
         self.token.request_id = j['RequestId']
         self.token.expiration = oss2.utils.to_unixtime(j['Credentials']['Expiration'], '%Y-%m-%dT%H:%M:%SZ')
-        self.token.bucket=self.bucket_name
-        self.token.endpoint=self.endpoint
+        self.token.bucket = self.bucket_name
+        self.token.endpoint = self.endpoint
         return self.token.__dict__
 
-    def get_upload_token(self,name,expires=1800):
-        return self.fetch_sts_token(name,expires)
+    def get_upload_token(self, name, expires=1800):
+        return self.fetch_sts_token(name, expires)
 
-    def get_auth_bucket(self,name,expires):
-        self.fetch_sts_token(name,expires)
+    def get_auth_bucket(self, name, expires):
+        self.fetch_sts_token(name, expires)
         uri = 'http://'
         if self.is_https:
             uri = 'https://'
         url = self.endpoint
-        is_cname=False
+        is_cname = False
         if self.domain_name:
             url = self.domain_name
-            is_cname=True
+            is_cname = True
 
         auth = oss2.StsAuth(self.token.access_key_id, self.token.access_key_secret, self.token.security_token)
-        self.bucket = oss2.Bucket(auth,uri+url,self.bucket_name,is_cname=is_cname)
+        self.bucket = oss2.Bucket(auth, uri + url, self.bucket_name, is_cname=is_cname)
 
-    def get_download_url(self,name,expires=1800,ftype=None,force_new=False):
+    def get_download_url(self, name, expires=1800, ftype=None, force_new=False):
         # self.get_auth_bucket(name,expires)
-        private_url=self.bucket.sign_url('GET',name,expires)
+        private_url = self.bucket.sign_url('GET', name, expires)
         return private_url
 
-    def del_file(self,name):
+    def del_file(self, name):
         # self.fetch_sts_token(name,expires=300)
         # auth = oss2.StsAuth(self.token.access_key_id, self.token.access_key_secret, self.token.security_token)
         # bucket = oss2.Bucket(auth, self.endpoint,self.bucket_name)

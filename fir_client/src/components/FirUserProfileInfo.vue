@@ -5,14 +5,16 @@
             <el-form-item>
                 <el-row>
                     <el-col :span="22">
-                        <el-input v-model="userinfo.username" prefix-icon="el-icon-user" placeholder="用户名" disabled></el-input>
+                        <el-input v-model="userinfo.username" prefix-icon="el-icon-user" placeholder="用户名"
+                                  disabled></el-input>
                     </el-col>
                 </el-row>
             </el-form-item>
             <el-form-item>
                 <el-row>
                     <el-col :span="18">
-                        <el-input v-model="userinfo.qq" :readonly="editqq !== true" ref="qq" prefix-icon="el-icon-message"
+                        <el-input v-model="userinfo.qq" :readonly="editqq !== true" ref="qq"
+                                  prefix-icon="el-icon-message"
                                   placeholder="QQ"></el-input>
                     </el-col>
                     <el-col :span="2">
@@ -87,6 +89,7 @@
 
 <script>
     import {userinfos} from '../restful'
+
     export default {
         name: "FirUserProfileInfo",
         data() {
@@ -99,38 +102,38 @@
                 editposition: false
             }
         }, methods: {
-            saveQQ(){
-                this.updateUserInfo({"methods":'PUT','data':this.userinfo});
+            saveQQ() {
+                this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
                 this.changeQQValue()
             },
-            savePositionValue(){
-                this.updateUserInfo({"methods":'PUT','data':this.userinfo});
+            savePositionValue() {
+                this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
                 this.changePositionValue()
             },
-            savePhone(){
-                this.updateUserInfo({"methods":'PUT','data':this.userinfo});
+            savePhone() {
+                this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
                 this.changePhoneValue()
             },
-            updateUserInfo(datainfo){
-                userinfos(data=>{
-                    if(data.code === 1000){
+            updateUserInfo(datainfo) {
+                userinfos(data => {
+                    if (data.code === 1000) {
                         this.userinfo = data.data;
-                        this.$store.dispatch("getUser",data.data);
-                        if(data.data.sms_code){
+                        this.$store.dispatch("getUser", data.data);
+                        if (data.data.sms_code) {
                             this.$notify({
                                 title: '验证码',
-                                message: '您正在修改手机号码，验证码为:'+data.data.sms_code,
+                                message: '您正在修改手机号码，验证码为:' + data.data.sms_code,
                                 type: 'success'
                             });
                         }
-                        if(datainfo.data){
+                        if (datainfo.data) {
                             this.$message.success("更新成功")
                         }
-                    }else {
+                    } else {
                         this.$message.error("更新失败")
 
                     }
-                },datainfo)
+                }, datainfo)
             },
             changePhoneValue() {
                 this.editphone = !this.editphone;
@@ -159,7 +162,7 @@
                 }
             },
             getphonecode() {
-                this.updateUserInfo({"methods":'GET','data':{'act':'sms'}});
+                this.updateUserInfo({"methods": 'GET', 'data': {'act': 'sms'}});
 
             }
         }, mounted() {
@@ -167,8 +170,8 @@
             // this.updateUserInfo({"methods":false});
             this.userinfo = this.$store.state.userinfo;
 
-        },watch:{
-            '$store.state.userinfo':function () {
+        }, watch: {
+            '$store.state.userinfo': function () {
                 this.userinfo = this.$store.state.userinfo;
             }
         }

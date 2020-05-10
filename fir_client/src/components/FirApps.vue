@@ -14,8 +14,8 @@
 
                     <span slot="footer" class="dialog-footer">
                         <el-button @click="willDeleteApp = false">取 消</el-button>
-<!--                        <el-button v-if="delapp.issupersign" type="danger" @click="$router.push({name: 'FirAppInfossecurity', params: {id: delapp.app_id}})">确 定</el-button>-->
-                        <el-button  type="danger" @click="delApp">确 定</el-button>
+                        <!--                        <el-button v-if="delapp.issupersign" type="danger" @click="$router.push({name: 'FirAppInfossecurity', params: {id: delapp.app_id}})">确 定</el-button>-->
+                        <el-button type="danger" @click="delApp">确 定</el-button>
                     </span>
                 </el-dialog>
 
@@ -371,8 +371,9 @@
                                         <i class="icon-eye el-icon-view"></i> 预览
                                     </el-button>
 
-                                        <el-button v-if="r.issupersign"  @click="DeleteApp(r)" class="btn btn-remove" icon="el-icon-loading"
-                                                   circle></el-button>
+                                    <el-button v-if="r.issupersign" @click="DeleteApp(r)" class="btn btn-remove"
+                                               icon="el-icon-loading"
+                                               circle></el-button>
 
                                     <el-button v-else @click="DeleteApp(r)" class="btn btn-remove" icon="el-icon-delete"
                                                circle></el-button>
@@ -717,17 +718,6 @@
             getDelappTitle() {
                 return `删除应用 ${this.delapp.name}`
             },
-            getBH: function () {
-                let sch = this.$refs.appmain.scrollHeight;
-
-                if (sch === 0 || sch < window.innerHeight) {
-                    sch = window.innerHeight;
-
-                } else {
-                    sch += 280;
-                }
-                return sch;
-            }
         },
         filters: {
             getiOStype: function (type) {
@@ -760,7 +750,7 @@
                 return ftype
             },
             make_icon_url(icon_url) {
-                if(icon_url){
+                if (icon_url) {
                     if (!icon_url.startsWith("http")) {
                         return location.origin + icon_url
                     } else {
@@ -781,7 +771,6 @@
         }, mounted() {
             this.$store.dispatch('doucurrentapp', {});
             this.getappsFun({});
-            // window.addEventListener('scroll',this.auto_load);
         },
         destroyed() {
             window.removeEventListener('scroll', this.auto_load, false);

@@ -17,7 +17,7 @@
                 <span class="pattern right"><img src="../assets/download_pattern_right.png"></span>
             </div>
 
-            <el-container  class="out-container">
+            <el-container class="out-container">
 
                 <div class="main">
                     <header>
@@ -31,12 +31,15 @@
                                         <span id="qrcode" class="qrcode">
                                         </span>
                                     </div>
-                                    <p v-if="currentappinfo.issupersign" class="scan-tips wrapper icon-warp" >超级签</p>
-                                    <p  v-else class="scan-tips wrapper icon-warp" >{{ mcurrentappinfo.release_type|getiOStype  }}</p>
+                                    <p v-if="currentappinfo.issupersign" class="scan-tips wrapper icon-warp">超级签</p>
+                                    <p v-else class="scan-tips wrapper icon-warp">{{
+                                        mcurrentappinfo.release_type|getiOStype }}</p>
                                     <h1 class="name wrapper">
                                         <span class="icon-warp" style="margin-left:0px">
-                                            <i v-if="currentappinfo.type === 0 && agent !== ''" class="iconfont icon-android2"/>
-                                            <i v-if="currentappinfo.type === 1 && agent !== ''" class="iconfont icon-ios"/>
+                                            <i v-if="currentappinfo.type === 0 && agent !== ''"
+                                               class="iconfont icon-android2"/>
+                                            <i v-if="currentappinfo.type === 1 && agent !== ''"
+                                               class="iconfont icon-ios"/>
 
                                             {{ currentappinfo.name }}
                                         </span>
@@ -46,7 +49,8 @@
                                             class="text-black">{{ full_url }}</span></p>
 
                                     <div class="release-info">
-                                        <p>{{ mcurrentappinfo.app_version }}（Build {{ mcurrentappinfo.build_version }}）- {{ mcurrentappinfo.binary_size }}</p>
+                                        <p>{{ mcurrentappinfo.app_version }}（Build {{ mcurrentappinfo.build_version }}）-
+                                            {{ mcurrentappinfo.binary_size }}</p>
                                         <p>更新于：{{ mcurrentappinfo.created_time |formatTime}}</p>
                                         <p class="version" v-if="mcurrentappinfo.changelog && agent === ''">
                                             更新日志：{{ mcurrentappinfo.changelog }}
@@ -59,15 +63,24 @@
                                         </el-button>
 
                                         <button type="button" v-else-if="wrong">{{ msg }}</button>
-                                        <div v-else >
-                                            <button v-if="isdownload" disabled="" class="loading" style="min-width: 42px; width: 42px; padding: 21px 0; border-top-color: transparent; border-left-color: transparent;">&nbsp;</button>
+                                        <div v-else>
+                                            <button v-if="isdownload" disabled="" class="loading"
+                                                    style="min-width: 42px; width: 42px; padding: 21px 0; border-top-color: transparent; border-left-color: transparent;">
+                                                &nbsp;
+                                            </button>
                                             <div v-else>
-                                                <div v-if="currentappinfo.need_password" style="margin:0 auto; width:166px">
-                                                    <el-input  prefix-icon="el-icon-lock" clearable="true" placeholder="请输入密码"  v-model="password" icon="el-icon-loadings" type="primary" :underline="false"> </el-input>
+                                                <div v-if="currentappinfo.need_password"
+                                                     style="margin:0 auto; width:166px">
+                                                    <el-input prefix-icon="el-icon-lock" clearable="true"
+                                                              placeholder="请输入密码" v-model="password"
+                                                              icon="el-icon-loadings" type="primary"
+                                                              :underline="false"></el-input>
                                                 </div>
                                                 <el-divider v-if="currentappinfo.need_password"></el-divider>
-                                                <button  @click="download" >
-                                                    <el-link icon="el-icon-loadings" type="primary" :underline="false"> 下载安装 </el-link>
+                                                <button @click="download">
+                                                    <el-link icon="el-icon-loadings" type="primary" :underline="false">
+                                                        下载安装
+                                                    </el-link>
                                                 </button>
                                             </div>
 
@@ -131,7 +144,7 @@
                         <div class="release-info">
                             <div class="info" v-if="mcurrentappinfo.changelog">
                                 <h3>更新日志</h3>
-                                    {{ mcurrentappinfo.changelog }}
+                                {{ mcurrentappinfo.changelog }}
                             </div>
                         </div>
 
@@ -149,7 +162,7 @@
 <script>
     import QRCode from 'qrcodejs2'
 
-    import {getShortAppinfo,getdownloadurl} from '../restful'
+    import {getShortAppinfo, getdownloadurl} from '../restful'
 
     export default {
         name: "FirDownload",
@@ -159,56 +172,55 @@
                 iscomboappinfo: {},
                 mcurrentappinfo: {},
                 miscomboappinfo: {},
-                tmpinfo:{},
-                full_url:"",
+                tmpinfo: {},
+                full_url: "",
                 agent: '',
                 wrong: false,
                 msg: '',
-                password:'',
-                dchoice:false,
-                downloadurl:"",
-                isdownload:false,
-                udid:"",
+                password: '',
+                dchoice: false,
+                downloadurl: "",
+                isdownload: false,
+                udid: "",
             }
         }, methods: {
             download() {
-                if( this.currentappinfo.app_id){
+                if (this.currentappinfo.app_id) {
                     this.isdownload = true;
-                    getdownloadurl(res=>{
-                        if(res.code === 1000){
-                            if(res.data.download_url === ""){
-                                window.location.href=this.full_url;
+                    getdownloadurl(res => {
+                        if (res.code === 1000) {
+                            if (res.data.download_url === "") {
+                                window.location.href = this.full_url;
                                 return
                             }
-                            if(this.currentappinfo.type === 1){
-                                if(this.currentappinfo.issupersign){
-                                    if(this.$route.query.udid && this.udid === this.$route.query.udid){
-                                        if(this.agent !== ''){
+                            if (this.currentappinfo.type === 1) {
+                                if (this.currentappinfo.issupersign) {
+                                    if (this.$route.query.udid && this.udid === this.$route.query.udid) {
+                                        if (this.agent !== '') {
                                             let download_url = res.data.download_url;
-                                            this.downloadurl="itms-services://?action=download-manifest&url="+encodeURIComponent(download_url);
+                                            this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
                                         }
-                                    }else {
-                                        if(this.agent !== ''){
+                                    } else {
+                                        if (this.agent !== '') {
                                             this.downloadurl = res.data.download_url;
                                         }
                                     }
-                                }else {
+                                } else {
                                     let download_url = res.data.download_url;
-                                    this.downloadurl="itms-services://?action=download-manifest&url="+encodeURIComponent(download_url);
+                                    this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
                                 }
-                            }else{
-                                if(this.agent !== ''){
+                            } else {
+                                if (this.agent !== '') {
                                     this.downloadurl = res.data.download_url;
                                 }
                             }
 
-                            window.location.href=this.downloadurl;
-                        }
-                        else {
+                            window.location.href = this.downloadurl;
+                        } else {
                             this.isdownload = false;
-                            this.password='';
+                            this.password = '';
                             this.$message({
-                                message:"密码错误，或者下载链接失效",
+                                message: "密码错误，或者下载链接失效",
                                 type: 'error',
                             });
                         }
@@ -217,8 +229,8 @@
                             'token': this.mcurrentappinfo.download_token,
                             'short': this.currentappinfo.short,
                             'release_id': this.mcurrentappinfo.release_id,
-                            'password':this.password,
-                            'udid':this.udid,
+                            'password': this.password,
+                            'udid': this.udid,
                         },
                         'app_id': this.currentappinfo.app_id
                     })
@@ -232,77 +244,77 @@
                 })
             },
             getDownloadTokenFun() {
-                let params={ "short": this.$route.params.short ,"time":new Date().getTime()};
-                if(this.$route.query.release_id){
-                    params["release_id"]=this.$route.query.release_id
+                let params = {"short": this.$route.params.short, "time": new Date().getTime()};
+                if (this.$route.query.release_id) {
+                    params["release_id"] = this.$route.query.release_id
                 }
-                if(this.$route.query.udid){
-                    params["udid"]=this.$route.query.udid
-                }else {
-                    params["udid"]=""
+                if (this.$route.query.udid) {
+                    params["udid"] = this.$route.query.udid
+                } else {
+                    params["udid"] = ""
                 }
                 getShortAppinfo(data => {
                     if (data.code === 1000) {
                         this.udid = data.udid;
-                        if(!data.data.master_release.release_id){
+                        if (!data.data.master_release.release_id) {
                             this.$message({
-                                message:"该 release 版本不存在,请检查",
+                                message: "该 release 版本不存在,请检查",
                                 type: 'error',
-                                duration:0
+                                duration: 0
                             });
                             return
                         }
 
-                        if(this.agent === "android"){
+                        if (this.agent === "android") {
                             // 请求的数据iOS
-                            if(data.data.type === 1){
-                                if(data.data.has_combo){
-                                    if(!params.release_id){
+                            if (data.data.type === 1) {
+                                if (data.data.has_combo) {
+                                    if (!params.release_id) {
                                         this.currentappinfo = data.data.has_combo;
                                         this.mcurrentappinfo = data.data.has_combo.master_release;
-                                    }else {
+                                    } else {
                                         this.wrong = true;
                                         this.msg = '该 release 版本只能在苹果设备使用';
                                     }
                                     this.iscomboappinfo = data.data;
                                     this.miscomboappinfo = data.data.master_release;
 
-                                }else {
+                                } else {
                                     this.wrong = true;
                                     this.msg = '苹果应用不支持安卓设备';
-                                    this.dchoice=true;
+                                    this.dchoice = true;
 
                                 }
-                            }else {
-                               this.dchoice=true;
+                            } else {
+                                this.dchoice = true;
                             }
-                        }else if(this.agent === "apple"){
-                            if(data.data.type === 0){
-                                if(data.data.has_combo){
-                                    if(!params.release_id){
+                        } else if (this.agent === "apple") {
+                            if (data.data.type === 0) {
+                                if (data.data.has_combo) {
+                                    if (!params.release_id) {
                                         this.currentappinfo = data.data.has_combo;
                                         this.mcurrentappinfo = data.data.has_combo.master_release;
-                                    }else {
+                                    } else {
                                         this.wrong = true;
                                         this.msg = '该 release 版本只能在安卓设备使用';
                                     }
                                     this.iscomboappinfo = data.data;
                                     this.miscomboappinfo = data.data.master_release;
 
-                                }else {
+                                } else {
                                     this.wrong = true;
                                     this.msg = '安卓应用不支持苹果设备';
-                                    this.dchoice=true;
+                                    this.dchoice = true;
 
                                 }
-                            }else {
-                                this.dchoice=true;
+                            } else {
+                                this.dchoice = true;
                             }
-                        }else {
-                            this.dchoice=true;
+                        } else {
+                            this.dchoice = true;
                         }
 
-                        if(this.dchoice){
+                        if (this.dchoice) {
                             this.currentappinfo = data.data;
                             this.mcurrentappinfo = data.data.master_release;
                             if (this.currentappinfo.has_combo) {
@@ -311,20 +323,19 @@
                             }
                         }
 
-                        if(this.agent !== ''){
-                            this.miscomboappinfo={};
+                        if (this.agent !== '') {
+                            this.miscomboappinfo = {};
                             this.iscomboappinfo = {};
                         }
-                        document.title = this.currentappinfo.name+'下载';
-                        if(this.mcurrentappinfo.binary_url && this.agent !=='' && this.wrong === false){
-                            window.location.href=this.mcurrentappinfo.binary_url
+                        document.title = this.currentappinfo.name + '下载';
+                        if (this.mcurrentappinfo.binary_url && this.agent !== '' && this.wrong === false) {
+                            window.location.href = this.mcurrentappinfo.binary_url
                         }
-                    }
-                    else {
+                    } else {
                         this.$message({
                             message: data.msg,
                             type: 'error',
-                            duration:0
+                            duration: 0
                         });
                     }
                 }, params)
@@ -376,20 +387,20 @@
             this.getDownloadTokenFun();
             this.full_url = location.href.split("?")[0];
             this.qrcode();
-        },filters:{
+        }, filters: {
             getiOStype: function (type) {
                 let ftype = '';
                 if (type === 1) {
                     ftype = '内测版'
-                } else if(type === 2)  {
+                } else if (type === 2) {
                     ftype = '企业版'
                 }
                 return ftype
             },
-            formatTime:function (stime) {
-                if(stime){
+            formatTime: function (stime) {
+                if (stime) {
                     stime = stime.split(".")[0].split("T");
-                    return stime[0]+" "+stime[1]
+                    return stime[0] + " " + stime[1]
                 }
             }
         }
@@ -950,7 +961,7 @@
         color: #fff
     }
 
-    .main > header .actions button a{
+    .main > header .actions button a {
         color: #fff
     }
 
@@ -1404,7 +1415,6 @@
     .main.forbidden .footer .one-key-report, .main.not_found .footer .one-key-report {
         display: none
     }
-
 
 
     .app_bottom_fixed img {

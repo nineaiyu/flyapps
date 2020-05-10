@@ -59,17 +59,19 @@
             updatepasswd() {
                 if (this.form.newpassword === this.form.surepassword) {
 
-                    userinfos(data=>{
-                        if(data.code === 1000){
+                    userinfos(data => {
+                        if (data.code === 1000) {
                             this.userinfo = data.data;
-                                this.$message.success('密码修改成功');
-                        }else {
-                            this.$message.error('密码修改失败,'+data.msg);
+                            this.$message.success('密码修改成功');
+                        } else {
+                            this.$message.error('密码修改失败,' + data.msg);
                         }
-                    },{"methods":'PUT','data':{
+                    }, {
+                        "methods": 'PUT', 'data': {
                             "oldpassword": this.form.oldpassword,
                             "surepassword": this.form.surepassword
-                        }});
+                        }
+                    });
                 } else {
                     this.$message.error('密码不一致');
                 }

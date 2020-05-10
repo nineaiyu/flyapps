@@ -16,10 +16,11 @@ from fir_ser.settings import CACHE_KEY_TEMPLATE
         cache.set(token_obj.key, token_obj.user, min(delta.total_seconds(), 3600 * 24 * 7))
 '''
 
+
 class DownloadToken(object):
 
-    def make_token(self,release_id,time_limit=60,key='',force_new=False):
-        token_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get("make_token_key"),release_id])
+    def make_token(self, release_id, time_limit=60, key='', force_new=False):
+        token_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get("make_token_key"), release_id])
         make_token_key = cache.get(token_key)
         if make_token_key and not force_new:
             return make_token_key
@@ -29,16 +30,16 @@ class DownloadToken(object):
             user_ran_str.extend(random_str)
             new_str = "".join(user_ran_str)
             cache.set(new_str, {
-                "atime":time.time()+time_limit,
-                "data":release_id
+                "atime": time.time() + time_limit,
+                "data": release_id
             }, time_limit)
-            cache.set(token_key,new_str,time_limit-1)
+            cache.set(token_key, new_str, time_limit - 1)
             return new_str
 
-    def verify_token(self,token,release_id):
+    def verify_token(self, token, release_id):
         try:
             values = cache.get(token)
-            if values and release_id in values.get("data",None):
+            if values and release_id in values.get("data", None):
                 return True
         except Exception as e:
             print(e)
@@ -55,8 +56,11 @@ def generateTokenForMedium(medium):
     else:
         return generateNumericTokenOfLength(6)
 
+
 def generateNumericTokenOfLength(length):
     return "".join([random.choice(string.digits) for _ in range(length)])
 
+
 def generateAlphanumericTokenOfLength(length):
-    return "".join([random.choice(string.digits + string.ascii_lowercase + string.ascii_uppercase) for _ in range(length)])
+    return "".join(
+        [random.choice(string.digits + string.ascii_lowercase + string.ascii_uppercase) for _ in range(length)])

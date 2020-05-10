@@ -20,13 +20,13 @@
             </el-form-item>
 
 
-            <el-form-item label-width="160px" label="是否开启访问密码" >
+            <el-form-item label-width="160px" label="是否开启访问密码">
 
-                <el-tooltip  placement="top">
+                <el-tooltip placement="top">
                     <div slot="content">
                         {{passwordtip.msg}}<br>
                         <div v-if="passwordtip.val === 'on'">
-                            <el-link  icon="el-icon-edit" :underline="false" @click="setaccesspassword">修改</el-link>
+                            <el-link icon="el-icon-edit" :underline="false" @click="setaccesspassword">修改</el-link>
                         </div>
                     </div>
                     <el-switch
@@ -54,7 +54,9 @@
                             inactive-value="off">
                     </el-switch>
                 </el-tooltip>
-                <el-button @click="clean_app" v-if="currentapp.issupersign === 0 && currentapp.count !== 0" style="margin-left: 20px" size="small" type="info" plain>清理开发者账户脏数据</el-button>
+                <el-button @click="clean_app" v-if="currentapp.issupersign === 0 && currentapp.count !== 0"
+                           style="margin-left: 20px" size="small" type="info" plain>清理开发者账户脏数据
+                </el-button>
             </el-form-item>
 
 
@@ -66,7 +68,7 @@
 </template>
 
 <script>
-    import { updateapp, } from "../restful"
+    import {updateapp,} from "../restful"
     import {deepCopy} from "../utils";
 
     export default {
@@ -75,31 +77,31 @@
             return {
                 currentapp: {},
                 orgcurrentapp: {},
-                downtip:{'msg':''},
-                supersign:{'msg':''},
-                passwordtip:{'msg':''},
-                passwordflag:false,
-                showdownloadflag:false,
-                showsupersignflag:false,
-                clecount:0
+                downtip: {'msg': ''},
+                supersign: {'msg': ''},
+                passwordtip: {'msg': ''},
+                passwordflag: false,
+                showdownloadflag: false,
+                showsupersignflag: false,
+                clecount: 0
             }
         },
         methods: {
-            clean_app(){
-                this.saveappinfo({"clean":true});
+            clean_app() {
+                this.saveappinfo({"clean": true});
                 this.currentapp.count = 0;
             },
             saveappinfo(data) {
                 updateapp(data => {
                     if (data.code === 1000) {
                         this.$message.success('数据更新成功');
-                    }else {
-                        this.$message.error('操作失败,'+data.msg);
+                    } else {
+                        this.$message.error('操作失败,' + data.msg);
 
-                        this.currentapp=deepCopy(this.orgcurrentapp);
-                        this.passwordflag=false;
-                        this.showdownloadflag=false;
-                        this.showsupersignflag=false;
+                        this.currentapp = deepCopy(this.orgcurrentapp);
+                        this.passwordflag = false;
+                        this.showdownloadflag = false;
+                        this.showsupersignflag = false;
                         this.setbuttondefault(this.currentapp);
 
                     }
@@ -108,57 +110,57 @@
                     "data": data
                 });
             },
-            setbuttondefaltpass(currentapp){
-                if(currentapp.password === ''){
-                    this.passwordtip.val='off';
+            setbuttondefaltpass(currentapp) {
+                if (currentapp.password === '') {
+                    this.passwordtip.val = 'off';
                     this.showpasswordevent("off");
-                }else {
-                    this.passwordtip.val='on';
+                } else {
+                    this.passwordtip.val = 'on';
                     this.showpasswordevent("on");
                 }
-                this.passwordflag=true;
+                this.passwordflag = true;
             },
-            setbuttondefaltshow(currentapp){
-                if(currentapp.isshow === 1){
+            setbuttondefaltshow(currentapp) {
+                if (currentapp.isshow === 1) {
                     this.showdownloadevent("on");
-                    this.downtip.val='on';
-                }else {
+                    this.downtip.val = 'on';
+                } else {
                     this.showdownloadevent("off");
-                    this.downtip.val='off';
+                    this.downtip.val = 'off';
                 }
-                this.showdownloadflag=true;
+                this.showdownloadflag = true;
             },
-            setbuttonsignshow(currentapp){
-                if(currentapp.issupersign === 1){
+            setbuttonsignshow(currentapp) {
+                if (currentapp.issupersign === 1) {
                     this.supersignevent("on");
-                    this.supersign.val='on';
-                }else {
+                    this.supersign.val = 'on';
+                } else {
                     this.supersignevent("off");
-                    this.supersign.val='off';
+                    this.supersign.val = 'off';
                 }
-                this.showsupersignflag=true;
+                this.showsupersignflag = true;
             },
-            setbuttondefault(currentapp){
+            setbuttondefault(currentapp) {
                 this.setbuttondefaltpass(currentapp);
                 this.setbuttondefaltshow(currentapp);
                 this.setbuttonsignshow(currentapp);
             },
-            passwordswitch(state){
-                this.passwordflag=false;
+            passwordswitch(state) {
+                this.passwordflag = false;
                 this.showpasswordevent(state);
-                this.passwordtip.val=state;
-                this.passwordflag=true;
+                this.passwordtip.val = state;
+                this.passwordflag = true;
             },
-            setaccesspassword(){
+            setaccesspassword() {
                 this.$prompt('', '请设置访问密码', {
                     confirmButtonText: '确定',
                     cancelButtonText: '取消',
-                    closeOnClickModal:false,
-                    inputValue:`${this.currentapp.password}`,
-                }).then(({ value }) => {
-                    value = value.replace(/\s+/g,"");
-                    if(this.currentapp.password === value ) {
-                        if(value === ''){
+                    closeOnClickModal: false,
+                    inputValue: `${this.currentapp.password}`,
+                }).then(({value}) => {
+                    value = value.replace(/\s+/g, "");
+                    if (this.currentapp.password === value) {
+                        if (value === '') {
                             this.$message({
                                 type: 'success',
                                 message: '访问密码未变'
@@ -166,103 +168,103 @@
                             this.passwordflag = false;
                             this.setbuttondefaltpass(this.currentapp);
                             return
-                        }else {
+                        } else {
                             return
                         }
                     }
-                        this.saveappinfo({
-                            "password": value,
+                    this.saveappinfo({
+                        "password": value,
+                    });
+                    if (value === '') {
+                        this.passwordswitch("off");
+                        this.$message({
+                            type: 'success',
+                            message: '设置成功，取消密码访问'
                         });
-                        if(value === ''){
-                            this.passwordswitch("off");
-                            this.$message({
-                                type: 'success',
-                                message: '设置成功，取消密码访问'
-                            });
-                        }else {
-                            this.passwordtip.msg='访问密码:' + value;
-                            this.$message({
-                                type: 'success',
-                                message: '设置成功，访问密码是: ' + value
-                            });
-                        }
-                        this.currentapp.password=value;
-                        this.$store.dispatch('doucurrentapp', this.currentapp)
+                    } else {
+                        this.passwordtip.msg = '访问密码:' + value;
+                        this.$message({
+                            type: 'success',
+                            message: '设置成功，访问密码是: ' + value
+                        });
+                    }
+                    this.currentapp.password = value;
+                    this.$store.dispatch('doucurrentapp', this.currentapp)
                 }).catch(() => {
-                    if(this.currentapp.password === ''){
+                    if (this.currentapp.password === '') {
                         this.passwordswitch("off")
                     }
                 });
             },
-            showdownloadevent(newval){
-                if(newval === "on"){
-                    if(this.showdownloadflag){
+            showdownloadevent(newval) {
+                if (newval === "on") {
+                    if (this.showdownloadflag) {
                         this.saveappinfo({
                             "isshow": 1,
                         });
-                        this.currentapp.isshow=1;
+                        this.currentapp.isshow = 1;
                     }
-                        this.downtip.msg='下载页对所有人可见';
-                }else {
-                    if(this.showdownloadflag){
+                    this.downtip.msg = '下载页对所有人可见';
+                } else {
+                    if (this.showdownloadflag) {
                         this.saveappinfo({
                             "isshow": 0,
                         });
-                        this.currentapp.isshow=0;
+                        this.currentapp.isshow = 0;
                     }
-                        this.downtip.msg = '下载页不可见'
+                    this.downtip.msg = '下载页不可见'
                 }
             },
-            supersignevent(newval){
-                if(newval === "on"){
-                    if(this.showsupersignflag){
+            supersignevent(newval) {
+                if (newval === "on") {
+                    if (this.showsupersignflag) {
                         this.saveappinfo({
                             "issupersign": 1,
                         });
-                        this.currentapp.issupersign=1;
+                        this.currentapp.issupersign = 1;
                     }
-                        this.supersign.msg='已经开启超级签名';
-                }else {
-                    if(this.showsupersignflag){
+                    this.supersign.msg = '已经开启超级签名';
+                } else {
+                    if (this.showsupersignflag) {
                         this.saveappinfo({
                             "issupersign": 0,
                         });
-                        this.currentapp.issupersign=0;
+                        this.currentapp.issupersign = 0;
                     }
-                        this.supersign.msg = '关闭'
+                    this.supersign.msg = '关闭'
                 }
             },
-            showpasswordevent(newval){
-                if(newval === "on"){
-                    if(this.passwordflag){
+            showpasswordevent(newval) {
+                if (newval === "on") {
+                    if (this.passwordflag) {
                         this.setaccesspassword()
-                    }else {
-                        this.passwordtip.msg='访问密码:' + this.currentapp.password ;
+                    } else {
+                        this.passwordtip.msg = '访问密码:' + this.currentapp.password;
                     }
-                }else {
-                    if(this.passwordflag){
+                } else {
+                    if (this.passwordflag) {
                         this.saveappinfo({
                             "password": '',
                         });
                     }
-                    this.currentapp.password='';
+                    this.currentapp.password = '';
                     this.$store.dispatch('doucurrentapp', this.currentapp);
-                    this.passwordtip.msg='无访问密码'
+                    this.passwordtip.msg = '无访问密码'
                 }
             },
-            appinit(){
+            appinit() {
 
                 this.currentapp = this.$store.state.currentapp;
-                this.passwordflag=false;
-                this.showdownloadflag=false;
-                this.showsupersignflag=false;
+                this.passwordflag = false;
+                this.showdownloadflag = false;
+                this.showsupersignflag = false;
                 this.setbuttondefault(this.currentapp);
-                this.orgcurrentapp=deepCopy(this.currentapp)
+                this.orgcurrentapp = deepCopy(this.currentapp)
             }
         },
         mounted() {
             this.$store.dispatch('doappInfoIndex', [[31, 31], [31, 31]]);
-            if(!this.currentapp.app_id){
+            if (!this.currentapp.app_id) {
                 this.appinit();
             }
         },
@@ -270,8 +272,7 @@
             '$store.state.currentapp': function () {
                 this.appinit();
             },
-        },computed:{
-    }
+        }, computed: {}
     }
 </script>
 

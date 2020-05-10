@@ -30,9 +30,9 @@
                     <el-button type="danger" @click="onSubmit">登录</el-button>
                 </el-form-item>
 
-<!--                <el-form-item>-->
-<!--                    <el-button type="primary" @click="onRegister" plain>注册</el-button>-->
-<!--                </el-form-item>-->
+                <!--                <el-form-item>-->
+                <!--                    <el-button type="primary" @click="onRegister" plain>注册</el-button>-->
+                <!--                </el-form-item>-->
             </el-form>
 
 
@@ -74,7 +74,7 @@
                             this.$cookies.set("token", data['token']);
                             this.$cookies.set("username", data.userinfo.username);
                             this.$cookies.set("first_name", data.userinfo.first_name);
-                            this.$store.dispatch("get_user",data.userinfo);
+                            this.$store.dispatch("get_user", data.userinfo);
                             set_auth_token();
                             this.$router.push({name: 'FirApps'})
                         } else {

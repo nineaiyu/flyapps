@@ -3,13 +3,13 @@
 # project: 5月
 # author: liuyu
 # date: 2020/5/7
-import  os
+import os
 from fir_ser.settings import SUPER_SIGN_ROOT
-from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo,Apps,APPToDeveloper,UDIDsyncDeveloper
+from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
+    UDIDsyncDeveloper
 from api.utils.app.randomstrings import make_app_uuid
 from api.utils.storage.localApi import LocalStorage
 from django.db.models import Sum
-
 
 
 def file_format_path(user_obj, auth=None, email=None):
@@ -48,16 +48,15 @@ def delete_app_profile_file(developer_obj, app_obj):
 
 
 def get_developer_udided(developer_obj):
-    SuperSignUsed_obj = APPSuperSignUsedInfo.objects.filter(developerid=developer_obj )
+    SuperSignUsed_obj = APPSuperSignUsedInfo.objects.filter(developerid=developer_obj)
     UDIDsyncDeveloper_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj)
-    develoer_udid_lists=[]
-    supersign_udid_lists=[]
+    develoer_udid_lists = []
+    supersign_udid_lists = []
     if UDIDsyncDeveloper_obj:
-        develoer_udid_lists=list(UDIDsyncDeveloper_obj.values_list("udid"))
+        develoer_udid_lists = list(UDIDsyncDeveloper_obj.values_list("udid"))
     if SuperSignUsed_obj:
-        supersign_udid_lists=list(SuperSignUsed_obj.values_list("udid__udid"))
-    return len(set(develoer_udid_lists)-set(supersign_udid_lists)),len(develoer_udid_lists)
-
+        supersign_udid_lists = list(SuperSignUsed_obj.values_list("udid__udid"))
+    return len(set(develoer_udid_lists) - set(supersign_udid_lists)), len(develoer_udid_lists)
 
 
 def get_developer_devices(developer_obj_lists):

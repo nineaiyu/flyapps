@@ -1,6 +1,7 @@
 import Axios from 'axios'
 import VueCookies from 'vue-cookies'
 import router from "../router";
+
 const https = require('https');
 const Base64 = require('js-base64').Base64;
 Axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -11,8 +12,10 @@ Axios.defaults.httpsAgent = new https.Agent({
 
 
 const DOMAIN = 'https://fly.harmonygames.cn';
-const APIPATH='/api/v1/fir/server';
-let USERSEVER = DOMAIN+APIPATH;
+// const DOMAIN = 'https://testapp.harmonygames.cn';
+// const DOMAIN = 'http://172.16.133.34:8000';
+const APIPATH = '/api/v1/fir/server';
+let USERSEVER = DOMAIN + APIPATH;
 
 
 export function set_auth_token() {
@@ -41,11 +44,64 @@ export function set_auth_token() {
 
 set_auth_token();
 
+function ErrorMsg(error) {
+    if (error && error.response) {
+        switch (error.response.status) {
+            case 400:
+                error.message = '请求错误(400)';
+                break;
+            case 401:
+                error.message = '未授权，请重新登录(401)';
+                break;
+            case 403:
+                error.message = '拒绝访问(403)';
+                break;
+            case 404:
+                error.message = '请求出错(404)';
+                break;
+            case 408:
+                error.message = '请求超时(408)';
+                break;
+            case 500:
+                error.message = '服务器错误(500)';
+                break;
+            case 501:
+                error.message = '服务未实现(501)';
+                break;
+            case 502:
+                error.message = '网络错误(502)';
+                break;
+            case 503:
+                error.message = '服务不可用(503)';
+                break;
+            case 504:
+                error.message = '网络超时(504)';
+                break;
+            case 505:
+                error.message = 'HTTP版本不受支持(505)';
+                break;
+            default:
+                error.message = `连接出错(${error.response.status})!`;
+        }
+    } else {
+        error.message = '连接服务器失败!';
+    }
+    if (error.response && error.response.status === 403) {
+        router.push({name: 'FirLogin'});
+    }
+
+    if (error.message === 'Network Error') {
+        alert('网络连接失败');
+    } else {
+        alert(error)
+    }
+}
+
 function getData(methods = true, url, params = {}, callBack, load, isCode = false) {
 
     if (methods === "DELETE") {
         Axios
-            .delete(url, {params:params})
+            .delete(url, {params: params})
             .then(function (response) {
                 if (isCode) {
                     callBack(response.data);
@@ -54,58 +110,11 @@ function getData(methods = true, url, params = {}, callBack, load, isCode = fals
                 }
             })
             .catch(function (error) {
-
-                if (error && error.response) {
-                    switch (error.response.status) {
-                        case 400:
-                            error.message = '请求错误(400)';
-                            break;
-                        case 401:
-                            error.message = '未授权，请重新登录(401)';
-                            break;
-                        case 403:
-                            error.message = '拒绝访问(403)';
-                            break;
-                        case 404:
-                            error.message = '请求出错(404)';
-                            break;
-                        case 408:
-                            error.message = '请求超时(408)';
-                            break;
-                        case 500:
-                            error.message = '服务器错误(500)';
-                            break;
-                        case 501:
-                            error.message = '服务未实现(501)';
-                            break;
-                        case 502:
-                            error.message = '网络错误(502)';
-                            break;
-                        case 503:
-                            error.message = '服务不可用(503)';
-                            break;
-                        case 504:
-                            error.message = '网络超时(504)';
-                            break;
-                        case 505:
-                            error.message = 'HTTP版本不受支持(505)';
-                            break;
-                        default:
-                            error.message = `连接出错(${error.response.status})!`;
-                    }
-                } else {
-                    error.message = '连接服务器失败!';
-                }
-                if (error.message === 'Network Error') {
-                    alert('网络连接失败');
-                } else {
-                    alert(error)
-                }
+                ErrorMsg(error);
                 callBack(null);
             });
 
-    }
-    else  if (methods === "PUT") {
+    } else if (methods === "PUT") {
         Axios
             .put(url, params)
             .then(function (response) {
@@ -116,16 +125,11 @@ function getData(methods = true, url, params = {}, callBack, load, isCode = fals
                 }
             })
             .catch(function (error) {
-                // eslint-disable-next-line no-console
-                console.log(error, error.response);
-
+                ErrorMsg(error);
                 callBack(null);
             });
 
-    }
-
-
-   else if (methods === 'POST') {
+    } else if (methods === 'POST') {
         Axios
             .post(url, params)
             .then(function (response) {
@@ -137,22 +141,18 @@ function getData(methods = true, url, params = {}, callBack, load, isCode = fals
 
             })
             .catch(function (error) {
-                // eslint-disable-next-line no-console
-                console.log(error, error.response);
+                ErrorMsg(error);
                 callBack(null);
             });
-    } else  {
+    } else {
         Axios
             .get(url, {params: params})
             .then(function (response) {
                 callBack(response.data);
             })
             .catch(function (error) {
-                // eslint-disable-next-line no-console
-                console.log(error, error.response);
-                if(error.response && error.response.status === 403){
-                    router.push({name: 'FirLogin'});
-                }
+                ErrorMsg(error);
+
                 callBack(null);
             });
     }
@@ -304,7 +304,7 @@ export function getapptimeline(callBack, params, load = true) {
 export function getShortAppinfo(callBack, params, load = true) {
     getData(
         'GET',
-        USERSEVER + '/short/' + params.short ,
+        USERSEVER + '/short/' + params.short,
         params,
         data => {
             callBack(data);
@@ -319,7 +319,7 @@ export function getShortAppinfo(callBack, params, load = true) {
 export function getStorageinfo(callBack, params, load = true) {
     getData(
         params.methods,
-        USERSEVER + '/storage' ,
+        USERSEVER + '/storage',
         params.data,
         data => {
             callBack(data);
@@ -347,8 +347,9 @@ export function userinfos(callBack, params, load = true) {
 }
 
 export function getuserpicurl() {
-    return USERSEVER+ '/userinfo'
+    return USERSEVER + '/userinfo'
 }
+
 export function getapppicurl(app_id) {
     return USERSEVER + '/apps/' + app_id
 }
@@ -362,7 +363,7 @@ export function getuploadurl() {
 export function analyseApps(callBack, params, load = true) {
     getData(
         params.methods,
-        USERSEVER + '/analyse' ,
+        USERSEVER + '/analyse',
         params.data,
         data => {
             callBack(data);
@@ -378,7 +379,7 @@ export function analyseApps(callBack, params, load = true) {
 export function getdownloadurl(callBack, params, load = true) {
     getData(
         'GET',
-        USERSEVER + '/install/'+params.app_id ,
+        USERSEVER + '/install/' + params.app_id,
         params.data,
         data => {
             callBack(data);
@@ -390,22 +391,22 @@ export function getdownloadurl(callBack, params, load = true) {
 }
 
 /**上传文件到服务器 */
-export function uploadstorage(certinfo,file,successCallback,processCallback) {
+export function uploadstorage(certinfo, file, successCallback, processCallback) {
 
     let config = {
         onUploadProgress: function (progressEvent) {
-            let total=progressEvent.total;
+            let total = progressEvent.total;
             let loaded = progressEvent.loaded;
-            processCallback(Math.round(loaded*100/total))
+            processCallback(Math.round(loaded * 100 / total))
         },
         headers: {
             'Content-Type': 'multipart/form-data',
-            'Authorization':VueCookies.get('auth_token'),
+            'Authorization': VueCookies.get('auth_token'),
         },
     };
     const data = new FormData();
     data.append('file', file);
-    data.append('certinfo',JSON.stringify(certinfo));
+    data.append('certinfo', JSON.stringify(certinfo));
     Axios.post(certinfo.upload_url, data, config).then(res => {
         // eslint-disable-next-line no-console
         console.log(res);

@@ -5,7 +5,7 @@
 # date: 2019/12/19
 
 import requests
-import zipfile, re, os, random,io
+import zipfile, re, os, random, io
 from androguard.core.bytecodes import apk
 import plistlib
 import qrcode
@@ -24,13 +24,12 @@ def bytes2human(n):
     return '%sB' % n
 
 
-
 class AppInfo(object):
     def __init__(self, app_path):
         self.app_path = app_path
         self.result = {}
 
-    def make_app_png(self,png_path,filename):
+    def make_app_png(self, png_path, filename):
         zf = zipfile.ZipFile(self.app_path)
         name_list = zf.namelist()
         if self.app_path.endswith("apk"):
@@ -59,14 +58,13 @@ class AppInfo(object):
         if size == 0:
             raise Exception("File size error")
 
-
         if not os.path.isdir(png_path):
             os.makedirs(png_path)
 
-        with open(os.path.join(png_path, "%s.png" %filename), 'wb') as f:
+        with open(os.path.join(png_path, "%s.png" % filename), 'wb') as f:
             f.write(zf.read(iconfile))
 
-        return "%s.png" %filename
+        return "%s.png" % filename
 
     def get_app_data(self):
         if self.app_path.endswith("apk"):
@@ -116,13 +114,13 @@ class AppInfo(object):
                 versioncode = plist_root['CFBundleVersion']
                 bundle_id = plist_root['CFBundleIdentifier']
                 version = plist_root['CFBundleShortVersionString']
-                miniOSversion  = plist_root["MinimumOSVersion"]
+                miniOSversion = plist_root["MinimumOSVersion"]
                 self.result = {
                     "labelname": labelname,
                     "bundle_id": bundle_id,
                     "versioncode": versioncode,
                     "version": version,
-                    "miniOSversion":miniOSversion,
+                    "miniOSversion": miniOSversion,
                     "type": "ios",
                 }
 
@@ -247,11 +245,11 @@ class FirApi(object):
         res = self.__request("post", binary_upload_url, data=binary_data, files=files)
         if res.status_code == 200:
             print(res.json())
-            QrCode.make_logo_qr(os.path.join("https://fir.im/", short_url), icon_path, "fir_%s.png"%(appinfo["labelname"]))
+            QrCode.make_logo_qr(os.path.join("https://fir.im/", short_url), icon_path,
+                                "fir_%s.png" % (appinfo["labelname"]))
 
         else:
             raise Exception(res.content)
-
 
     def get_app_list(self):
         url = "%s?api_token=%s" % (self.app_url, self.api_token)
@@ -363,8 +361,9 @@ class QrCode(object):
             img.save(save_path)
         else:
             imgByteArr = io.BytesIO()
-            img.save(imgByteArr,format="PNG")
+            img.save(imgByteArr, format="PNG")
             return imgByteArr.getvalue()
+
 
 if __name__ == '__main__':
     apk_path = "/root/hehemajiang.apk"
@@ -372,14 +371,13 @@ if __name__ == '__main__':
 
     fir = FirApi(API_TOKEN)
 
-    #上传
+    # 上传
     fir.upload_app(apk_path)
 
     # 获取版本信息
     # print(fir.get_version_by_id("5dfb54d3b2eb4612589c3040"))
 
-    #获取app详细信息
+    # 获取app详细信息
     # print(fir.get_app_infos_by_id("5dfb54d3b2eb4612589c3040"))
-    #获取列表
+    # 获取列表
     # print(fir.get_app_list())
-

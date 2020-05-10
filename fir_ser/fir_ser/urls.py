@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,re_path,include
+from django.urls import path, re_path, include
 from rest_framework.routers import DefaultRouter
 # from api.views.course import CourseView,CourseDetailView,CourseCategoryView
 from api.views.login import LoginView
@@ -32,9 +32,8 @@ from api.views.captcha import CaptchaView
 # router.register("course/category", CourseCategoryView)
 from django.views.static import serve
 from fir_ser import settings
-from api.views.download import DownloadView,InstallView
+from api.views.download import DownloadView, InstallView
 from api.views.receiveudids import IosUDIDView
-
 
 urlpatterns = [
     path('fly.admin/', admin.site.urls),
@@ -49,7 +48,7 @@ urlpatterns = [
     # re_path("api/v1/trade/alipay/",AlipayTradeView),
     # media路径配置
     re_path(r'files/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-    re_path("download/(?P<filename>\w+\.\w+)$", DownloadView.as_view(),name="download"),
+    re_path("download/(?P<filename>\w+\.\w+)$", DownloadView.as_view(), name="download"),
     re_path("install/(?P<app_id>\w+)$", InstallView.as_view(), name="install"),
     re_path("^udid/(?P<short>\w+)$", IosUDIDView.as_view()),
 ]

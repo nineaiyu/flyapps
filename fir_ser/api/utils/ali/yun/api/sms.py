@@ -10,7 +10,6 @@ from .base import BaseAliYunAPI
 
 
 class AliYunSms(BaseAliYunAPI):
-
     VERSION = "2017-05-25"
 
     API_BASE_URL = "http://dysmsapi.aliyuncs.com/"
@@ -62,12 +61,12 @@ class AliYunSms(BaseAliYunAPI):
         return self._get(action="SendSms", data=data)
 
     def send_batch(
-        self,
-        phone_number_json,
-        sign_name_json,
-        template_code,
-        template_param_json,
-        sms_upextend_code_json=None,
+            self,
+            phone_number_json,
+            sign_name_json,
+            template_code,
+            template_param_json,
+            sms_upextend_code_json=None,
     ):
         """短信批量发送
 

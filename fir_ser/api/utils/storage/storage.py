@@ -18,13 +18,13 @@ class Storage(object):
         try:
             self.storage = self.get_storage(user)
         except Exception as e:
-            self.storage=None
+            self.storage = None
 
     def get_upload_token(self, filename, expires=900):
         if self.storage:
             return self.storage.get_upload_token(filename, expires)
 
-    def get_download_url(self, filename, expires=900, ftype=None, key='',force_new=False):
+    def get_download_url(self, filename, expires=900, ftype=None, key='', force_new=False):
         if self.storage:
             now = time.time()
             down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
@@ -33,7 +33,7 @@ class Storage(object):
                 if download_val.get("time") > now - 60:
                     return download_val.get("download_url")
 
-            download_url = self.storage.get_download_url(filename, expires, ftype,force_new=False)
+            download_url = self.storage.get_download_url(filename, expires, ftype, force_new=False)
             cache.set(down_key, {"download_url": download_url, "time": now + expires}, expires)
             return download_url
 
@@ -50,7 +50,7 @@ class Storage(object):
         self.storage_obj = user.storage
         if self.storage_obj:
             auth = self.get_storage_auth(self.storage_obj)
-            storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'),user.uid,
+            storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'), user.uid,
                                     base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
             storage_type = self.storage_obj.storage_type
             new_storage_obj = cache.get(storage_key)
@@ -70,7 +70,7 @@ class Storage(object):
         else:
             return self.get_default_storage(user)
 
-    def get_default_storage(self,user):
+    def get_default_storage(self, user):
         admin_obj = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
         if admin_obj and admin_obj.storage:
             return self.get_storage(admin_obj)
@@ -80,7 +80,7 @@ class Storage(object):
                 if storage.get("active", None):
                     storage_type = storage.get('type', None)
                     auth = storage.get('auth', {})
-                    storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'),user.uid,
+                    storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'), user.uid,
                                             base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
                     new_storage_obj = cache.get(storage_key)
                     if new_storage_obj:

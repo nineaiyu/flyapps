@@ -59,7 +59,7 @@
 
 <script>
     import {deleteapp, getappinfos, getapppicurl, uploadimgs, updateapp, getuploadurl} from "../restful"
-    import { uploadaliyunoss, uploadlocalstorage, uploadqiniuoss} from "../utils";
+    import {uploadaliyunoss, uploadlocalstorage, uploadqiniuoss} from "../utils";
 
     export default {
         name: "FirAppInfosbaseinfo",
@@ -67,12 +67,12 @@
             return {
                 currentapp: {},
                 imageUrl: "",
-                uploadconf:{},
-                uploadprocess:0
+                uploadconf: {},
+                uploadprocess: 0
             }
         },
         methods: {
-            updateimgs(certinfo){
+            updateimgs(certinfo) {
                 uploadimgs(data => {
                     if (data.code === 1000) {
                         // eslint-disable-next-line no-console
@@ -80,38 +80,38 @@
                         this.$message.success('上传成功');
                         this.updateinfo();
 
-                    }else {
+                    } else {
                         this.$message.error('更新失败');
                     }
-                },{'methods':'PUT','data':{'certinfo':certinfo}});
+                }, {'methods': 'PUT', 'data': {'certinfo': certinfo}});
 
             },
-            uploadtostorage(file,certinfo){
+            uploadtostorage(file, certinfo) {
 
-                if(certinfo.storage === 1){
+                if (certinfo.storage === 1) {
                     // eslint-disable-next-line no-unused-vars,no-unreachable
-                    uploadqiniuoss(file,certinfo,this,res=>{
+                    uploadqiniuoss(file, certinfo, this, res => {
                         this.updateimgs(certinfo);
 
-                    },process=>{
-                            this.uploadprocess = process;
+                    }, process => {
+                        this.uploadprocess = process;
                     })
-                }else if(certinfo.storage === 2){
+                } else if (certinfo.storage === 2) {
                     // eslint-disable-next-line no-unused-vars
-                    uploadaliyunoss(file,certinfo,this,res=>{
+                    uploadaliyunoss(file, certinfo, this, res => {
                         this.updateimgs(certinfo);
-                    },process=>{
-                            this.uploadprocess = process;
+                    }, process => {
+                        this.uploadprocess = process;
                     });
 
-                }else {
+                } else {
                     //本地
                     certinfo.upload_url = getuploadurl();
                     // eslint-disable-next-line no-unused-vars,no-unreachable
-                    uploadlocalstorage(file,certinfo,this,res=>{
+                    uploadlocalstorage(file, certinfo, this, res => {
                         this.updateimgs(certinfo);
-                    },process=>{
-                            this.uploadprocess = process;
+                    }, process => {
+                        this.uploadprocess = process;
                     })
                 }
 
@@ -146,13 +146,13 @@
                     });
                 // alert('发送删除APP',this.delapp.name)
             },
-            updateinfo(){
+            updateinfo() {
                 getappinfos(data => {
 
                     if (data.code === 1000) {
                         this.appinfos = data.data;
                         this.master_release = data.data.master_release;
-                        this.$store.dispatch("getUser",data.userinfo);
+                        this.$store.dispatch("getUser", data.userinfo);
                         this.appinfos["icon_url"] = this.master_release.icon_url;
                         this.$store.dispatch('doucurrentapp', this.appinfos);
 
@@ -170,8 +170,8 @@
                 updateapp(data => {
                     if (data.code === 1000) {
                         this.$message.success('数据更新成功');
-                    }else {
-                        this.$message.error('操作失败,'+data.msg);
+                    } else {
+                        this.$message.error('操作失败,' + data.msg);
                     }
                 }, {
                     "app_id": this.currentapp.app_id,
@@ -184,19 +184,21 @@
             },
             beforeAvatarUpload(file) {
                 const isLt2M = file.size / 1024 / 1024 < 2;
-                if(file.type === 'image/jpeg' || file.type === 'image/png'|| file.type === 'image/jpg'){
+                if (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg') {
                     if (isLt2M) {
                         uploadimgs(data => {
                             if (data.code === 1000) {
-                                let certinfo=data.data;
-                                this.uploadtostorage(file,certinfo);
+                                let certinfo = data.data;
+                                this.uploadtostorage(file, certinfo);
                             }
-                        },{'methods':'GET','data':{'app_id':this.currentapp.app_id,'upload_key':file.name,'ftype':'app'}});
-                    }
-                    else{
+                        }, {
+                            'methods': 'GET',
+                            'data': {'app_id': this.currentapp.app_id, 'upload_key': file.name, 'ftype': 'app'}
+                        });
+                    } else {
                         this.$message.error('上传应用图片大小不能超过 2MB!');
                     }
-                }else {
+                } else {
                     this.$message.error('上传应用图片只能是 JPG/PNG/JPEG 格式!');
 
                 }
@@ -205,7 +207,7 @@
         },
         mounted() {
             this.$store.dispatch('doappInfoIndex', [[18, 18], [18, 18]]);
-            if(!this.currentapp.app_id){
+            if (!this.currentapp.app_id) {
                 this.currentapp = this.$store.state.currentapp;
             }
             this.uploadconf = {
@@ -216,11 +218,11 @@
             '$store.state.currentapp': function () {
                 this.currentapp = this.$store.state.currentapp;
             }
-        },computed:{
-        getuppicurl(){
-            return getapppicurl(this.currentapp.app_id)
+        }, computed: {
+            getuppicurl() {
+                return getapppicurl(this.currentapp.app_id)
+            }
         }
-    }
     }
 </script>
 

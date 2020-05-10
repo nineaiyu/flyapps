@@ -70,104 +70,106 @@
         data() {
             return {
                 imageUrl: '',
-                userinfo:{},
-                uploadconf:{},
+                userinfo: {},
+                uploadconf: {},
             }
         },
         methods: {
-            updateimgs(certinfo){
+            updateimgs(certinfo) {
                 uploadimgs(data => {
                     if (data.code === 1000) {
                         // eslint-disable-next-line no-console
                         console.log(data.data);
                         this.$message.success('上传成功');
-                        this.updateUserInfo({"methods":'GET'});
+                        this.updateUserInfo({"methods": 'GET'});
 
-                    }else {
+                    } else {
                         this.$message.error('更新失败');
                     }
-                },{'methods':'PUT','data':{'certinfo':certinfo}});
+                }, {'methods': 'PUT', 'data': {'certinfo': certinfo}});
             },
-            uploadtostorage(file,certinfo){
+            uploadtostorage(file, certinfo) {
 
-                if(certinfo.storage === 1){
+                if (certinfo.storage === 1) {
                     // eslint-disable-next-line no-unused-vars,no-unreachable
-                    uploadqiniuoss(file,certinfo,this,res=>{
+                    uploadqiniuoss(file, certinfo, this, res => {
                         this.updateimgs(certinfo);
 
-                    },process=>{
+                    }, process => {
                         this.uploadprocess = process;
                     })
-                }else if(certinfo.storage === 2){
+                } else if (certinfo.storage === 2) {
                     // eslint-disable-next-line no-unused-vars
-                    uploadaliyunoss(file,certinfo,this,res=>{
+                    uploadaliyunoss(file, certinfo, this, res => {
                         this.updateimgs(certinfo);
-                    },process=>{
+                    }, process => {
                         this.uploadprocess = process;
                     });
 
-                }else {
+                } else {
                     //本地
                     certinfo.upload_url = getuploadurl();
                     // eslint-disable-next-line no-unused-vars,no-unreachable
-                    uploadlocalstorage(file,certinfo,this,res=>{
+                    uploadlocalstorage(file, certinfo, this, res => {
                         this.updateimgs(certinfo);
-                    },process=>{
+                    }, process => {
                         this.uploadprocess = process;
                     })
                 }
 
             },
-            updateUserInfo(datainfo){
-                userinfos(data=>{
-                    if(data.code === 1000){
+            updateUserInfo(datainfo) {
+                userinfos(data => {
+                    if (data.code === 1000) {
                         this.userinfo = data.data;
-                        this.$store.dispatch("getUser",data.data);
+                        this.$store.dispatch("getUser", data.data);
                         this.$store.dispatch('doucurrentapp', {});
                         this.imageUrl = data.data.head_img;
 
-                        if(datainfo.data){
+                        if (datainfo.data) {
                             this.$message.success("更新成功")
                         }
-                    }else {
+                    } else {
                         this.$message.error("更新失败")
                     }
-                },datainfo)
+                }, datainfo)
             },
-            update_name(){
-                this.updateUserInfo({"methods":'PUT','data':{"first_name":this.userinfo.first_name}});
+            update_name() {
+                this.updateUserInfo({"methods": 'PUT', 'data': {"first_name": this.userinfo.first_name}});
             },
             beforeAvatarUpload(file) {
                 const isLt2M = file.size / 1024 / 1024 < 2;
-                if(file.type === 'image/jpeg' || file.type === 'image/png'|| file.type === 'image/jpg'){
+                if (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg') {
                     if (isLt2M) {
                         uploadimgs(data => {
                             if (data.code === 1000) {
                                 // eslint-disable-next-line no-console
                                 console.log(data.data);
-                                let certinfo=data.data;
-                                this.uploadtostorage(file,certinfo);
+                                let certinfo = data.data;
+                                this.uploadtostorage(file, certinfo);
                             }
-                        },{'methods':'GET','data':{'app_id':this.userinfo.uid,'upload_key':file.name,'ftype':'head'}});
+                        }, {
+                            'methods': 'GET',
+                            'data': {'app_id': this.userinfo.uid, 'upload_key': file.name, 'ftype': 'head'}
+                        });
 
                         return false;
-                    }
-                    else{
+                    } else {
                         this.$message.error('上传头像图片大小不能超过 2MB!');
 
                     }
-                }else {
-                        this.$message.error('上传头像图片只能是 JPG/PNG/JPEG 格式!');
+                } else {
+                    this.$message.error('上传头像图片只能是 JPG/PNG/JPEG 格式!');
 
                 }
                 return false;
 
             },
-            setfunactive(item){
+            setfunactive(item) {
                 for (let key in this.$refs) {
-                    if(key === item){
+                    if (key === item) {
                         this.$refs[key].classList.add('active');
-                    }else {
+                    } else {
                         this.$refs[key].classList.remove('active');
                     }
                 }
@@ -177,21 +179,19 @@
                     this.setfunactive('userinfo');
                 } else if (this.$store.state.userInfoIndex === 1) {
                     this.setfunactive('changepwd');
-                }else if (this.$store.state.userInfoIndex === 2) {
+                } else if (this.$store.state.userInfoIndex === 2) {
                     this.setfunactive('storage');
                 }
             }
         }, mounted() {
             this.autoSetInfoIndex();
-            this.updateUserInfo({"methods":'GET'});
+            this.updateUserInfo({"methods": 'GET'});
         }, watch: {
             '$store.state.userInfoIndex': function () {
                 this.autoSetInfoIndex();
             },
-        },filters:{
-
-        },computed:{
-            getuppicurl(){
+        }, filters: {}, computed: {
+            getuppicurl() {
                 return getuserpicurl()
             }
         }

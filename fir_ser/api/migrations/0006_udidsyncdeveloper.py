@@ -5,7 +5,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('api', '0005_apptodeveloper_release_file'),
     ]
@@ -20,7 +19,9 @@ class Migration(migrations.Migration):
                 ('serial', models.CharField(blank=True, max_length=64, null=True, verbose_name='序列号')),
                 ('version', models.CharField(blank=True, max_length=64, null=True, verbose_name='型号')),
                 ('created_time', models.DateTimeField(auto_now_add=True, verbose_name='创建时间')),
-                ('developerid', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.AppIOSDeveloperInfo', verbose_name='所使用苹果开发者账户')),
+                ('developerid',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.AppIOSDeveloperInfo',
+                                   verbose_name='所使用苹果开发者账户')),
             ],
             options={
                 'verbose_name': 'iOS开发平台同步设备信息',

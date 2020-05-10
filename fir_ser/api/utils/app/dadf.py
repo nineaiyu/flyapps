@@ -12,7 +12,7 @@ from androguard.core.bytecodes import apk
 import plistlib
 
 
-def get_android_data( package_file):
+def get_android_data(package_file):
     try:
         apkobj = apk.APK(package_file)
     except Exception as err:
@@ -26,7 +26,8 @@ def get_android_data( package_file):
             sdk_version = apkobj.get_target_sdk_version()
             return labelname, bundle_id, versioncode, versioname, sdk_version
 
-def get_ios_data( ios_file):
+
+def get_ios_data(ios_file):
     if zipfile.is_zipfile(ios_file):
         ipaobj = zipfile.ZipFile(ios_file)
         info_path = get_ios_info_path(ipaobj)
@@ -39,22 +40,23 @@ def get_ios_data( ios_file):
                 print("inhouse")
 
 
-
-def get_ios_info_path( ipaobj):
+def get_ios_info_path(ipaobj):
     infopath_re = re.compile(r'.*.app/embedded.mobileprovision')
     for i in ipaobj.namelist():
         m = infopath_re.match(i)
         if m is not None:
             return m.group()
 
-def get_ios_icon_path( ipaobj):
+
+def get_ios_icon_path(ipaobj):
     infopath_re = re.compile(r'Payload/[^/]*.app/AppIcon[^/]*[^(ipad)].png')
     for i in ipaobj.namelist():
         m = infopath_re.match(i)
         if m is not None:
             return m.group()
 
-def get_package_size( package_path):
+
+def get_package_size(package_path):
     fsize = os.path.getsize(package_path)
     fsize = fsize / float(1024 * 1024)
     return round(fsize, 2)

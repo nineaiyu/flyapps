@@ -3,23 +3,23 @@
 
     <div style="margin-top: 20px;width: 90%;margin-left: 8%">
         <h2>UDID列表及用户信息</h2>
-            <el-table
-                    :data="udidlists"
-                    stripe
-                    style="width: 100%">
-                <el-table-column width="180"
-                        prop="model"
-                        label="设备型号">
-                </el-table-column>
-                <el-table-column width="180"
-                        prop="version"
-                        label="系统版本">
-                </el-table-column>
-                <el-table-column width="380"
-                        prop="udid"
-                        label="UDID">
-                </el-table-column>
-            </el-table>
+        <el-table
+                :data="udidlists"
+                stripe
+                style="width: 100%">
+            <el-table-column width="180"
+                             prop="model"
+                             label="设备型号">
+            </el-table-column>
+            <el-table-column width="180"
+                             prop="version"
+                             label="系统版本">
+            </el-table-column>
+            <el-table-column width="380"
+                             prop="udid"
+                             label="UDID">
+            </el-table-column>
+        </el-table>
 
     </div>
 
@@ -35,12 +35,10 @@
                 udidlists: []
             }
         },
-        methods: {
-
-        },
+        methods: {},
         mounted() {
             this.$store.dispatch('doappInfoIndex', [[57, 57], [57, 57]]);
-            if(!this.currentapp.app_id){
+            if (!this.currentapp.app_id) {
                 this.currentapp = this.$store.state.currentapp;
                 this.udidlists = this.currentapp.master_release.udid;
             }
@@ -50,8 +48,7 @@
                 this.currentapp = this.$store.state.currentapp;
                 this.udidlists = this.currentapp.master_release.udid;
             }
-        },computed:{
-    }
+        }, computed: {}
     }
 </script>
 

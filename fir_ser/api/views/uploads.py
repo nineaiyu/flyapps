@@ -4,10 +4,10 @@
 # author: liuyu
 # date: 2020/3/6
 
-from api.utils.app.apputils import get_random_short,SaveAppInfos
+from api.utils.app.apputils import get_random_short, SaveAppInfos
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short
-from api.models import Apps,AppReleaseInfo
+from api.models import Apps, AppReleaseInfo
 from api.utils.app.randomstrings import make_app_uuid
 from rest_framework.views import APIView
 from api.utils.response import BaseResponse
@@ -16,10 +16,10 @@ from api.utils.app.randomstrings import make_from_user_uuid
 from rest_framework.response import Response
 from fir_ser import settings
 from api.utils.TokenManager import DownloadToken
-import os,json
+import os, json
+
 
 class AppAnalyseView(APIView):
-
     authentication_classes = [ExpiringTokenAuthentication, ]
 
     def post(self, request):
@@ -31,67 +31,67 @@ class AppAnalyseView(APIView):
         if bundleid and app_type:
             ap = 'apk'
             if app_type == 'iOS':
-                ap='ipa'
+                ap = 'ipa'
             app_uuid = make_app_uuid(request.user, bundleid + ap)
             release_id = make_from_user_uuid(request.user)
             png_id = make_from_user_uuid(request.user)
             app_obj = Apps.objects.filter(app_id=app_uuid).first()
-            binary_url=''
+            binary_url = ''
             if app_obj:
-                is_new=False
+                is_new = False
                 short = app_obj.short
-                app_release_obj=AppReleaseInfo.objects.filter(app_id=app_obj,is_master=True).first()
+                app_release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
                 if app_release_obj:
                     binary_url = app_release_obj.binary_url
             else:
-                is_new=True
+                is_new = True
                 short = get_random_short()
             if app_type == 'iOS':
-                upload_key = release_id+'.ipa'
+                upload_key = release_id + '.ipa'
             else:
-                upload_key = release_id+'.apk'
-            png_key = png_id+'.png'
+                upload_key = release_id + '.apk'
+            png_key = png_id + '.png'
             storage = Storage(request.user)
-            storage_type =storage.get_storage_type()
+            storage_type = storage.get_storage_type()
 
             if storage_type == 1:
                 upload_token = storage.get_upload_token(upload_key)
                 png_token = storage.get_upload_token(png_key)
             elif storage_type == 2:
-                png_token=upload_token = storage.get_upload_token(upload_key)
+                png_token = upload_token = storage.get_upload_token(upload_key)
             else:
                 upload_token = storage.get_upload_token(upload_key)
                 png_token = storage.get_upload_token(png_key)
 
             res.data = {"app_uuid": app_uuid, "short": short,
                         "domain_name": request.user.domain_name,
-                        "upload_token":upload_token,
-                        "upload_key":upload_key,
-                        "png_token":png_token,
-                        "png_key":png_key,
-                        "storage":storage_type,
-                        "is_new":is_new,"binary_url":binary_url}
+                        "upload_token": upload_token,
+                        "upload_key": upload_key,
+                        "png_token": png_token,
+                        "png_key": png_key,
+                        "storage": storage_type,
+                        "is_new": is_new, "binary_url": binary_url}
         else:
             res.code = 1003
 
         return Response(res.dict)
 
-    def put(self,request):
+    def put(self, request):
         res = BaseResponse()
-        data=request.data
-        appinfo={
-            "labelname":data.get("appname"),
-            "version":data.get("buildversion"),
-            "versioncode":data.get("version"),
-            "release_type":data.get("release_type"),
-            "miniOSversion":data.get("miniosversion"),
-            "changelog":data.get("changelog",''),
+        data = request.data
+        appinfo = {
+            "labelname": data.get("appname"),
+            "version": data.get("buildversion"),
+            "versioncode": data.get("version"),
+            "release_type": data.get("release_type"),
+            "miniOSversion": data.get("miniosversion"),
+            "changelog": data.get("changelog", ''),
             "udid": data.get("udid", ''),
         }
 
         try:
             SaveAppInfos(data.get("upload_key"), request.user, appinfo,
-                     data.get("bundleid"), data.get("png_key"), data.get("short"), data.get('filesize'))
+                         data.get("bundleid"), data.get("png_key"), data.get("short"), data.get('filesize'))
         except Exception as e:
             print(e)
             res.code = 10003
@@ -104,14 +104,14 @@ class UploadView(APIView):
     '''
     authentication_classes = [ExpiringTokenAuthentication, ]
 
-    def get(self,request):
+    def get(self, request):
         res = BaseResponse()
         storage = Storage(request.user)
-        request_upload_key=request.query_params.get("upload_key",None)
-        app_id=request.query_params.get("app_id",None)
-        ftype = request.query_params.get("ftype",None)
-        if ftype and app_id and request_upload_key :
-            if ftype =='app':
+        request_upload_key = request.query_params.get("upload_key", None)
+        app_id = request.query_params.get("app_id", None)
+        ftype = request.query_params.get("ftype", None)
+        if ftype and app_id and request_upload_key:
+            if ftype == 'app':
                 app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
 
             elif ftype and ftype == 'head':
@@ -120,33 +120,31 @@ class UploadView(APIView):
                     res.msg = '该用户不存在'
                     return Response(res.dict)
                 else:
-                    app_obj=True
+                    app_obj = True
             else:
-                app_obj=False
+                app_obj = False
 
             if app_obj:
                 app_type = request_upload_key.split(".")[-1]
                 if app_type not in ["apk", "ipa", 'png', 'jpeg', 'jpg']:
                     res.code = 1006
-                    res.msg='类型不允许'
+                    res.msg = '类型不允许'
                 else:
-                    upload_key = make_from_user_uuid(request.user)+'.'+app_type
+                    upload_key = make_from_user_uuid(request.user) + '.' + app_type
                     upload_token = storage.get_upload_token(upload_key)
                     storage_type = storage.get_storage_type()
                     res.data = {"domain_name": request.user.domain_name,
                                 "upload_token": upload_token,
                                 "upload_key": upload_key,
                                 "storage": storage_type,
-                                "app_id":app_id,
-                                "ftype":ftype}
+                                "app_id": app_id,
+                                "ftype": ftype}
             else:
                 res.code = 1006
                 res.msg = '该应用不存在'
         else:
             res.code = 1006
         return Response(res.dict)
-
-
 
     def post(self, request):
         res = BaseResponse()
@@ -168,10 +166,11 @@ class UploadView(APIView):
             return Response(res.dict)
 
         token_obj = DownloadToken()
-        if token_obj.verify_token(token=certinfo.get("upload_token",None),release_id=certinfo.get("upload_key",None)):
+        if token_obj.verify_token(token=certinfo.get("upload_token", None),
+                                  release_id=certinfo.get("upload_key", None)):
 
             app_id = certinfo.get("app_id", None)
-            ftype = certinfo.get("ftype",None)
+            ftype = certinfo.get("ftype", None)
             if ftype and ftype == 'app':
                 pass
                 # app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
@@ -189,11 +188,11 @@ class UploadView(APIView):
                 res.msg = '该请求不存在'
                 return Response(res.dict)
             if not files:
-                res.msg="文件不存在"
+                res.msg = "文件不存在"
             for file_obj in files:
                 try:
                     app_type = file_obj.name.split(".")[-1]
-                    if app_type not in ["apk","ipa",'png','jpeg','jpg']:
+                    if app_type not in ["apk", "ipa", 'png', 'jpeg', 'jpg']:
                         raise TypeError
                 except Exception as e:
                     print(e)
@@ -202,7 +201,7 @@ class UploadView(APIView):
                     return Response(res.dict)
 
                 random_file_name = make_from_user_uuid(request.user)
-                local_file = os.path.join(settings.MEDIA_ROOT,certinfo.get("upload_key",random_file_name))
+                local_file = os.path.join(settings.MEDIA_ROOT, certinfo.get("upload_key", random_file_name))
                 # 读取传入的文件
                 try:
                     destination = open(local_file, 'wb+')
@@ -224,23 +223,23 @@ class UploadView(APIView):
 
         return Response(res.dict)
 
-    def put(self,request):
+    def put(self, request):
         res = BaseResponse()
-        certinfo = request.data.get('certinfo',None)
+        certinfo = request.data.get('certinfo', None)
         if certinfo:
             app_id = certinfo.get("app_id", None)
 
-            ftype = certinfo.get('ftype',None)
+            ftype = certinfo.get('ftype', None)
             storage = Storage(request.user)
             if ftype and ftype == 'app':
                 app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
                 if app_obj:
-                    release_obj = AppReleaseInfo.objects.filter(app_id=app_obj,is_master=True).first()
+                    release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
                     if release_obj:
                         old_file_key = release_obj.icon_url
                         release_obj.icon_url = certinfo.get("upload_key")
                         release_obj.save()
-                        del_cache_response_by_short(app_obj.short,app_id)
+                        del_cache_response_by_short(app_obj.short, app_id)
                         storage.delete_file(old_file_key)
                         return Response(res.dict)
             elif ftype and ftype == 'head':
@@ -259,7 +258,3 @@ class UploadView(APIView):
                 pass
         res.code = 1008
         return Response(res.dict)
-
-
-
-

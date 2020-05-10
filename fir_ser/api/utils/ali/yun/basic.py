@@ -17,7 +17,6 @@ from ..tools import get_iso_8061_date
 
 logger = logging.getLogger(__name__)
 
-
 QUERY_STRING = None
 
 
@@ -33,7 +32,7 @@ def _get_signature(string_to_sign, secret, signer=hmac):
 def __pop_standard_urlencode(query):
     ret = ""
     for item in query:
-        
+
         if not item[1]:
             continue
 
@@ -66,7 +65,6 @@ def _is_api_endpoint(instance):
 
 
 class AliYunClient(BaseAli):
-
     VERSION = ""  # 每个接口都需要版本号
 
     API_BASE_URL = ""  # 阿里云api网关地址均从使用的接口定义

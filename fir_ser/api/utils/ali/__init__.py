@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 class BaseAli(object):
-
     API_BASE_URL = ""
 
     _http = requests.session()

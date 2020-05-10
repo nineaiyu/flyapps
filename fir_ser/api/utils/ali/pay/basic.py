@@ -37,8 +37,8 @@ class AliPay(BaseAli):
     order = api.AliOrder()
 
     def __init__(
-        self, app_id, app_private_key_path, ali_public_key_path,
-        notify_url, return_url, debug,
+            self, app_id, app_private_key_path, ali_public_key_path,
+            notify_url, return_url, debug,
     ):
 
         # 如果是调试模式，则用调试api

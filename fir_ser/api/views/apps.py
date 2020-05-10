@@ -8,16 +8,17 @@ from rest_framework.views import APIView
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
-from django.db.models import Sum,F
+from django.db.models import Sum, F
 import os
 from fir_ser import settings
 from api.utils.app.supersignutils import IosUtils
 from api.utils.app.randomstrings import make_from_user_uuid
 from api.utils.storage.storage import Storage
-from api.utils.storage.caches import del_cache_response_by_short,get_app_today_download_times
-from api.models import Apps, AppReleaseInfo,APPToDeveloper
+from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times
+from api.models import Apps, AppReleaseInfo, APPToDeveloper
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
 from rest_framework.pagination import PageNumberPagination
+
 
 class AppsPageNumber(PageNumberPagination):
     page_size = 20  # 每页显示多少条
@@ -58,7 +59,6 @@ class AppsView(APIView):
             res.hdata["all_hits_count"] = count_hits
         else:
             res.hdata["all_hits_count"] = 0
-
 
         if app_type == "android":
             filter_data = {"user_id": request.user, "type": 0}
@@ -104,7 +104,7 @@ class AppInfoView(APIView):
             userserializer = UserInfoSerializer(request.user)
             res.userinfo = {}
             res.userinfo = userserializer.data
-            count=APPToDeveloper.objects.filter(app_id=apps_obj).count()
+            count = APPToDeveloper.objects.filter(app_id=apps_obj).count()
             res.data["count"] = count
 
         return Response(res.dict)
@@ -120,9 +120,9 @@ class AppInfoView(APIView):
                 storage = Storage(request.user)
                 has_combo = apps_obj.has_combo
                 if has_combo:
-                    del_cache_response_by_short(apps_obj.has_combo.short,apps_obj.has_combo.app_id)
+                    del_cache_response_by_short(apps_obj.has_combo.short, apps_obj.has_combo.app_id)
                     apps_obj.has_combo.has_combo = None
-                del_cache_response_by_short(apps_obj.short,apps_obj.app_id)
+                del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
                 for appreleaseobj in AppReleaseInfo.objects.filter(app_id=apps_obj).all():
                     storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
                     storage.delete_file(appreleaseobj.icon_url)
@@ -136,10 +136,10 @@ class AppInfoView(APIView):
         if app_id:
             data = request.data
 
-            clean = data.get("clean",None)
-            if clean :
+            clean = data.get("clean", None)
+            if clean:
                 apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
-                IosUtils.clean_app_by_user_obj(apps_obj,request.user)
+                IosUtils.clean_app_by_user_obj(apps_obj, request.user)
                 return Response(res.dict)
 
             has_combo = data.get("has_combo", None)
@@ -161,8 +161,8 @@ class AppInfoView(APIView):
                             has_combo.update(**{"has_combo": apps_obj.first()})
                         else:
                             pass
-                        del_cache_response_by_short(apps_obj.first().short,apps_obj.first().app_id)
-                        del_cache_response_by_short(has_combo.first().short,has_combo.first().app_id)
+                        del_cache_response_by_short(apps_obj.first().short, apps_obj.first().app_id)
+                        del_cache_response_by_short(has_combo.first().short, has_combo.first().app_id)
 
                     except Exception as e:
                         res.code = 1004
@@ -171,7 +171,7 @@ class AppInfoView(APIView):
                 try:
                     apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
                     apps_obj.description = data.get("description", apps_obj.description)
-                    del_cache_response_by_short(apps_obj.short,apps_obj.app_id)
+                    del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
                     apps_obj.short = data.get("short", apps_obj.short)
                     apps_obj.name = data.get("name", apps_obj.name)
                     apps_obj.password = data.get("password", apps_obj.password)
@@ -236,7 +236,7 @@ class AppInfoView(APIView):
                         release_obj.icon_url = release_obj.icon_url.replace(old_file_name.split(".")[0],
                                                                             random_file_name)
                         release_obj.save()
-                        del_cache_response_by_short(apps_obj.short,apps_obj.app_id)
+                        del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
 
                         storage = Storage(request.user)
                         storage.delete_file(old_file_name)
@@ -295,7 +295,7 @@ class AppReleaseinfoView(APIView):
                     apps_obj.delete()
                 else:
                     pass
-                del_cache_response_by_short(apps_obj.short,apps_obj.app_id)
+                del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
 
         return Response(res.dict)
 
@@ -330,7 +330,7 @@ class AppReleaseinfoView(APIView):
                     res.msg = "更新失败"
                     return Response(res.dict)
 
-                del_cache_response_by_short(apps_obj.short,apps_obj.app_id)
+                del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
                 app_serializer = AppsSerializer(apps_obj)
                 res.data["currentapp"] = app_serializer.data
 
