@@ -11,8 +11,8 @@
       </div>
 
       <div v-else>
-        <span class="pattern left"><img src="../assets/download_pattern_left.png"></span>
-        <span class="pattern right"><img src="../assets/download_pattern_right.png"></span>
+<!--        <span class="pattern left"><img src="../assets/download_pattern_left.png"></span>-->
+<!--        <span class="pattern right"><img src="../assets/download_pattern_right.png"></span>-->
       </div>
 
       <div  class="out-container container">
@@ -251,7 +251,7 @@
               return false
             }
 
-            if(this.agent === "android"){
+            if(this.agent === "android" || this.agent === "wxandroid"){
               // 请求的数据iOS
               if(data.data.type === 1){
                 if(data.data.has_combo){
@@ -274,7 +274,7 @@
               }else {
                 this.dchoice=true;
               }
-            }else if(this.agent === "apple"){
+            }else if(this.agent === "apple"|| this.agent === "wxapple"){
               if(data.data.type === 0){
                 if(data.data.has_combo){
                   if(!params.release_id){
@@ -325,6 +325,7 @@
         }, params)
       },
       getAgent() {
+        const ua = navigator.userAgent.toLowerCase();
         const browser = {
           versions: function () {
             const u = navigator.userAgent;
@@ -345,14 +346,15 @@
         };
         if (browser.versions.iPhone || browser.versions.iPad || browser.versions.ios) {//苹果版
 
-
-          //is_weixn();//苹果微信不自动跳转浏览器
-          // alert('苹果');
-          this.agent = 'apple';
+          if (ua.match(/MicroMessenger/i) == "micromessenger") {
+            this.agent = 'wxapple';
+            //微信
+          } else {
+            this.agent = 'apple';
+          }
 
         }
         if (browser.versions.android) {//安卓
-          var ua = navigator.userAgent.toLowerCase();
           if (ua.match(/MicroMessenger/i) == "micromessenger") {
             // alert('安卓微信');
             this.agent = 'wxandroid';

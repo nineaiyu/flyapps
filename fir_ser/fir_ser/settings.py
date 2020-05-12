@@ -88,7 +88,8 @@ DATABASES = {
         'HOST': '127.0.0.1',
         'PORT': '3306',
         # 设置MySQL的驱动
-        'OPTIONS': {'init_command': 'SET storage_engine=INNODB'}
+        # 'OPTIONS': {'init_command': 'SET storage_engine=INNODB'},
+        'OPTIONS': {'init_command': 'SET sql_mode="STRICT_TRANS_TABLES"','charset': 'utf8mb4'}
     }
 
 }
@@ -199,13 +200,13 @@ THIRD_PART_CONFIG = {
             'name': 'aliyun',
             'type': 2,
             'auth': {
-                'access_key': 'LTAI4FkbTRqejBAzB1yQZpjR',
-                'secret_key': '2WzCsKjYXxOvU4wPtTmrrXnxiLIxy9',
-                'bucket_name': 'fly-app-storage',
-                'sts_role_arn': 'acs:ram::1886562303345632:role/fly-app-storage',
+                'access_key': 'LTAI4FkbTR',
+                'secret_key': '2iLIxy9',
+                'bucket_name': 'fge',
+                'sts_role_arn': 'ap-sage',
                 'endpoint': 'oss-cn-beijing.aliyuncs.com',
                 'is_https': True,
-                'domain_name': 'ali.storage.dvcloud.xin'
+                'domain_name': 'aoud.xin'
             },
             'active': False
         },
@@ -213,11 +214,11 @@ THIRD_PART_CONFIG = {
             'name': 'qiniuyun',
             'type': 1,
             'auth': {
-                'access_key': 'mTqfvkLVSTVb2_1ERjDlFS_WAHLSkpDxYr4e4fiJ',
-                'secret_key': '0G9fXfgmi8h1-bmEsABYkE6apf8IuwKpj3hYLynv',
-                'bucket_name': 'fir-storage',
+                'access_key': 'mT4fiJ',
+                'secret_key': '0G9fXfhYLynv',
+                'bucket_name': 'fge',
                 'is_https': False,
-                'domain_name': 'fly-cdn.dvcloud.xin'
+                'domain_name': 'foud.xin'
             },
             'active': False
         }
@@ -237,6 +238,7 @@ CACHE_KEY_TEMPLATE = {
 }
 
 DATA_DOWNLOAD_KEY="d_token"
+DATA_DOWNLOAD_KEY_OPEN=True  #是否开启图片和应用下载token，只本地存储支持该操作
 
 SYNC_CACHE_TO_DATABASE = {
     'download_times': 10  # 下载次数同步时间

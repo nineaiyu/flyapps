@@ -26,8 +26,11 @@ class LocalStorage(object):
         uri = 'http://'
         if self.is_https:
             uri = 'https://'
-        download_url = "%s%s?%s=%s" % (
-        uri, base_url, settings.DATA_DOWNLOAD_KEY, dtoken.make_token(name, expires, force_new=force_new))
+        if settings.DATA_DOWNLOAD_KEY_OPEN:
+            download_url = "%s%s?%s=%s" % (
+                uri, base_url, settings.DATA_DOWNLOAD_KEY, dtoken.make_token(name, expires, force_new=force_new))
+        else:
+            download_url = "%s%s" % (uri, base_url)
         return download_url
 
     def del_file(self, name):

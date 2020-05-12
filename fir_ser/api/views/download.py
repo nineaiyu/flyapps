@@ -33,13 +33,17 @@ class DownloadView(APIView):
         res = BaseResponse()
         downtoken = request.query_params.get(settings.DATA_DOWNLOAD_KEY, None)
         ftype = filename.split(".")[-1]
-        if not downtoken:
-            res.code = 1004
-            res.msg = "缺失token"
-            return Response(res.dict)
+        flag=True
+        if settings.DATA_DOWNLOAD_KEY_OPEN:
+            if not downtoken:
+                res.code = 1004
+                res.msg = "缺失token"
+                return Response(res.dict)
 
-        dtoken = DownloadToken()
-        if dtoken.verify_token(downtoken, filename):
+            dtoken = DownloadToken()
+            flag=dtoken.verify_token(downtoken, filename)
+
+        if flag:
             if ftype == 'plist':
                 release_id = filename.split('.')[0]
                 apptodev_obj = APPToDeveloper.objects.filter(binary_file=release_id).first()
