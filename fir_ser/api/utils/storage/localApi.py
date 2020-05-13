@@ -35,7 +35,17 @@ class LocalStorage(object):
 
     def del_file(self, name):
         try:
-            os.remove(os.path.join(settings.MEDIA_ROOT, name))
+            file = os.path.join(settings.MEDIA_ROOT, name)
+            if os.path.isfile(file):
+                os.remove(file)
+            return True
+        except Exception as e:
+            print(e)
+            return False
+
+    def rename_file(self, oldfilename, newfilename):
+        try:
+            os.rename(os.path.join(settings.MEDIA_ROOT, oldfilename), os.path.join(settings.MEDIA_ROOT, newfilename))
             return True
         except Exception as e:
             print(e)

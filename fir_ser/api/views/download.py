@@ -33,7 +33,7 @@ class DownloadView(APIView):
         res = BaseResponse()
         downtoken = request.query_params.get(settings.DATA_DOWNLOAD_KEY, None)
         ftype = filename.split(".")[-1]
-        flag=True
+        flag = True
         if settings.DATA_DOWNLOAD_KEY_OPEN:
             if not downtoken:
                 res.code = 1004
@@ -41,7 +41,7 @@ class DownloadView(APIView):
                 return Response(res.dict)
 
             dtoken = DownloadToken()
-            flag=dtoken.verify_token(downtoken, filename)
+            flag = dtoken.verify_token(downtoken, filename)
 
         if flag:
             if ftype == 'plist':
@@ -56,7 +56,7 @@ class DownloadView(APIView):
                     bundle_id = release_obj.app_id.bundle_id
                     app_version = release_obj.app_version
                     name = release_obj.app_id.name
-                    ios_plist_bytes = make_resigned(storage.get_download_url(filename.split('.')[0]+".ipa"),
+                    ios_plist_bytes = make_resigned(storage.get_download_url(filename.split('.')[0] + ".ipa"),
                                                     storage.get_download_url(release_obj.icon_url), bundle_id,
                                                     app_version, name)
                     response = FileResponse(ios_plist_bytes)

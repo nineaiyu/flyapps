@@ -50,3 +50,8 @@ class QiNiuOss(object):
         # 删除bucket_name 中的文件 key
         ret, info = bucket.delete(self.bucket_name, name)
         return ret
+
+    def rename_file(self, oldfilename, newfilename):
+        bucket = BucketManager(self.qiniu_obj)
+        ret, info = bucket.move(self.bucket_name, oldfilename, self.bucket_name, newfilename)
+        return ret

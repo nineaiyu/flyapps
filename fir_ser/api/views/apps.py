@@ -15,7 +15,7 @@ from api.utils.app.supersignutils import IosUtils
 from api.utils.app.randomstrings import make_from_user_uuid
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times
-from api.models import Apps, AppReleaseInfo, APPToDeveloper
+from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
 from rest_framework.pagination import PageNumberPagination
 
@@ -53,7 +53,8 @@ class AppsView(APIView):
             if count_hits:
                 if count_hits > 0:
                     request.user.all_download_times += count_hits
-                    request.user.save()
+                    UserInfo.objects.filter(pk=request.user.id).update(
+                        all_download_times=request.user.all_download_times + count_hits)
             else:
                 count_hits = 0
             res.hdata["all_hits_count"] = count_hits
@@ -184,6 +185,11 @@ class AppInfoView(APIView):
                         #     res.code = 1008
                         #     res.msg = "超级签余额不足，无法开启"
                         #     return Response(res.dict)
+                        developer_count = AppIOSDeveloperInfo.objects.filter(user_id=request.user).count()
+                        if developer_count == 0:
+                            res.code = 1008
+                            res.msg = "超级签开发者不存在，无法开启"
+                            return Response(res.dict)
                         apps_obj.issupersign = data.get("issupersign", apps_obj.issupersign)
                     apps_obj.save()
                 except Exception as e:

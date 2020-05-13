@@ -7,7 +7,11 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
 from fir_ser.settings import SYNC_CACHE_TO_DATABASE
-from api.utils.crontab.sync_cache import sync_download_times
+from api.utils.crontab.sync_cache import sync_download_times, auto_clean_upload_tmp_file, auto_delete_job_log
+import logging
+
+logging.basicConfig()
+logging.getLogger('apscheduler').setLevel(logging.ERROR)
 
 import atexit
 import fcntl
@@ -34,12 +38,21 @@ try:
             sync_download_times()
 
 
+        # @register_job(scheduler, 'cron', day_of_week='mon-fri', hour='9', minute='30', second='10',id='task_time')
+        @register_job(scheduler, "interval", seconds=SYNC_CACHE_TO_DATABASE.get("auto_clean_tmp_file_times"))
+        def auto_clean_upload_tmp_file_job():
+            # 这里写你要执行的任务
+            auto_clean_upload_tmp_file()
+            auto_delete_job_log()
+
+
         register_events(scheduler)
         scheduler.start()
     except Exception as e:
         print(e)
         # 有错误就停止定时器
         scheduler.shutdown()
+
 
 except:
     pass

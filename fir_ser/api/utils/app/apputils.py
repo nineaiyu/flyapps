@@ -112,7 +112,9 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
     ##判断是否存在该app
     appmobj = Apps.objects.filter(app_id=app_uuid, user_id=user_obj).first()
     storage = Storage(user_obj)
+    newapp = False
     if not appmobj:
+        newapp = True
         appdata = {
             "app_id": app_uuid,
             "user_id": user_obj,
@@ -126,11 +128,12 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
             appmobj = Apps.objects.create(**appdata)
         except Exception as e:
             print(e)
-            storage.delete_file(app_file_name)
-            storage.delete_file(app_img)
-            return
+            # storage.delete_file(app_file_name)
+            # storage.delete_file(app_img)
+            return False
     else:
         try:
+            newapp = False
             del_cache_response_by_short(appmobj.short, appmobj.app_id)
             appmobj.short = short
             appmobj.name = appinfo["labelname"]
@@ -157,13 +160,18 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
         "changelog": appinfo.get("changelog", ''),
         "udid": appinfo.get("udid", ''),
     }
-
-    AppReleaseInfo.objects.create(**release_data)
+    try:
+        AppReleaseInfo.objects.create(**release_data)
+    except Exception as e:
+        print(e)
+        if newapp:
+            appmobj.delete()
+        return False
     try:
         history_release_limit = int(user_obj.history_release_limit)
     except Exception as e:
         print(e)
-        return
+        return True
 
     if history_release_limit == 0:
         pass
@@ -177,3 +185,4 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
                     storage.delete_file(release_obj.release_id, appmobj.type)
                     storage.delete_file(release_obj.icon_url)
                     release_obj.delete()
+    return True

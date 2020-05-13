@@ -89,7 +89,7 @@ DATABASES = {
         'PORT': '3306',
         # 设置MySQL的驱动
         # 'OPTIONS': {'init_command': 'SET storage_engine=INNODB'},
-        'OPTIONS': {'init_command': 'SET sql_mode="STRICT_TRANS_TABLES"','charset': 'utf8mb4'}
+        'OPTIONS': {'init_command': 'SET sql_mode="STRICT_TRANS_TABLES"', 'charset': 'utf8mb4'}
     }
 
 }
@@ -235,13 +235,17 @@ CACHE_KEY_TEMPLATE = {
     'user_auth_token_key': 'user_auth_token',
     'download_today_times_key': 'download_today_times',
     'developer_auth_code_key': 'developer_auth_code',
+    'upload_file_tmp_name_key': 'upload_file_tmp_name',
 }
 
-DATA_DOWNLOAD_KEY="d_token"
-DATA_DOWNLOAD_KEY_OPEN=True  #是否开启图片和应用下载token，只本地存储支持该操作
+DATA_DOWNLOAD_KEY = "d_token"
+DATA_DOWNLOAD_KEY_OPEN = True  # 是否开启图片和应用下载token，只本地存储支持该操作
+FILE_UPLOAD_TMP_KEY = ".tmp"
 
 SYNC_CACHE_TO_DATABASE = {
-    'download_times': 10  # 下载次数同步时间
+    'download_times': 10,  # 下载次数同步时间
+    'auto_clean_tmp_file_times': 60 * 30,  # 定时清理上传失误生成的临时文件
+    'auto_clean_apscheduler_log': 100000,  # 定时清理定时任务执行的日志，该参数为日志保留的数量
 }
 
 SERVER_DOMAIN = {

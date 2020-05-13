@@ -168,7 +168,7 @@
                 </el-dialog>
 
                 <el-row>
-                    <el-col :span="4">
+                    <el-col :span="3">
                         <el-radio-group v-model="searchfromtype">
                             <el-radio-button label="android" icon="el-icon-mobile-phone"><i
                                     class="iconfont icon-android2"/>
@@ -178,15 +178,26 @@
                         </el-radio-group>
 
                     </el-col>
-                    <el-col :span="5">
+                    <el-col :span="4">
+                        <el-row>
+                            <el-col :span="20">
                         <el-input
                                 placeholder="请输入名称搜索"
                                 v-model="keysearch"
                                 @click="searchapps"
-                                clearable prefix-icon="el-icon-search">
+                                clearable >
                         </el-input>
+                            </el-col>
+                            <el-col :span="2" >
 
+                            <el-button  icon="el-icon-search"  @click="searchFun">
+                        </el-button>
+                            </el-col>
+                        </el-row>
                     </el-col>
+<!--                    <el-col :span="1" class="surplus-card">-->
+<!--        -->
+<!--                    </el-col>-->
 
                     <el-col :span="7" class="surplus-card">
                         <el-row>
@@ -435,6 +446,7 @@
             updateappinfo(file) {
                 this.uploadsuccess += 1;
                 if (this.uploadsuccess === 2) {
+                    delete this.analyseappinfo.icon;
                     this.$message.success(file.name + '上传成功');
                     analyseApps(data => {
                         if (data.code === 1000) {
@@ -781,7 +793,10 @@
             // eslint-disable-next-line no-unused-vars
             keysearch: function (val, oldVal) {
                 // this.searchapps()
-                this.searchFun()
+                let keysearch = this.keysearch.replace(/^\s+|\s+$/g, "");
+                if(keysearch === ""){
+                    this.searchFun()
+                }
             },
             // eslint-disable-next-line no-unused-vars
             searchfromtype: function (val, oldVal) {

@@ -120,3 +120,7 @@ class AliYunOss(object):
         # auth = oss2.StsAuth(self.token.access_key_id, self.token.access_key_secret, self.token.security_token)
         # bucket = oss2.Bucket(auth, self.endpoint,self.bucket_name)
         return self.bucket.delete_object(name)
+
+    def rename_file(self, oldfilename, newfilename):
+        self.bucket.copy_object(self.bucket_name, oldfilename, newfilename)
+        return self.del_file(oldfilename)

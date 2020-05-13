@@ -45,7 +45,7 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
             else:
                 return ""
 
-        return local_storage.get_download_url(filename.split(".")[0]+ "." + download_url_type, limit)
+        return local_storage.get_download_url(filename.split(".")[0] + "." + download_url_type, limit)
     down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
     download_val = cache.get(down_key)
     if download_val:
@@ -169,3 +169,14 @@ def developer_auth_code(act, user_obj, developer_email, code=None):
         return cache.get(key)
     elif act == "del":
         cache.delete(key)
+
+
+def upload_file_tmp_name(act, filename, user_obj_id):
+    tmp_key = "_".join([CACHE_KEY_TEMPLATE.get("upload_file_tmp_name_key"), filename])
+    if act == "set":
+        cache.delete(tmp_key)
+        cache.set(tmp_key, {'time': time.time(), 'id': user_obj_id, "filename": filename}, 60 * 60)
+    elif act == "get":
+        return cache.get(tmp_key)
+    elif act == "del":
+        cache.delete(tmp_key)

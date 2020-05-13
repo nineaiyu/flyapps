@@ -6,8 +6,8 @@
 
 from api.utils.app.apputils import get_random_short, SaveAppInfos
 from api.utils.storage.storage import Storage
-from api.utils.storage.caches import del_cache_response_by_short
-from api.models import Apps, AppReleaseInfo
+from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
+from api.models import Apps, AppReleaseInfo, UserInfo
 from api.utils.app.randomstrings import make_app_uuid
 from rest_framework.views import APIView
 from api.utils.response import BaseResponse
@@ -47,10 +47,10 @@ class AppAnalyseView(APIView):
                 is_new = True
                 short = get_random_short()
             if app_type == 'iOS':
-                upload_key = release_id + '.ipa'
+                upload_key = release_id + '.ipa' + settings.FILE_UPLOAD_TMP_KEY
             else:
-                upload_key = release_id + '.apk'
-            png_key = png_id + '.png'
+                upload_key = release_id + '.apk' + settings.FILE_UPLOAD_TMP_KEY
+            png_key = png_id + '.png' + settings.FILE_UPLOAD_TMP_KEY
             storage = Storage(request.user)
             storage_type = storage.get_storage_type()
 
@@ -63,6 +63,8 @@ class AppAnalyseView(APIView):
                 upload_token = storage.get_upload_token(upload_key)
                 png_token = storage.get_upload_token(png_key)
 
+            upload_file_tmp_name("set", png_key, request.user.id)
+            upload_file_tmp_name("set", upload_key, request.user.id)
             res.data = {"app_uuid": app_uuid, "short": short,
                         "domain_name": request.user.domain_name,
                         "upload_token": upload_token,
@@ -90,8 +92,26 @@ class AppAnalyseView(APIView):
         }
 
         try:
-            SaveAppInfos(data.get("upload_key"), request.user, appinfo,
-                         data.get("bundleid"), data.get("png_key"), data.get("short"), data.get('filesize'))
+            storage = Storage(request.user)
+            app_tmp_filename = data.get("upload_key")
+            app_new_filename = data.get("upload_key").strip(settings.FILE_UPLOAD_TMP_KEY)
+
+            png_tmp_filename = data.get("png_key")
+            png_new_filename = data.get("png_key").strip(settings.FILE_UPLOAD_TMP_KEY)
+
+            if SaveAppInfos(app_new_filename, request.user, appinfo,
+                            data.get("bundleid"), png_new_filename, data.get("short"), data.get('filesize')):
+                pass
+                # 需要将tmp 文件修改为正式文件
+                storage.rename_file(app_tmp_filename, app_new_filename)
+                storage.rename_file(png_tmp_filename, png_new_filename)
+            else:
+                storage.delete_file(app_tmp_filename)
+                storage.delete_file(png_tmp_filename)
+            # 删除redis key
+            upload_file_tmp_name("del", app_tmp_filename, request.user.id)
+            upload_file_tmp_name("del", png_tmp_filename, request.user.id)
+
         except Exception as e:
             print(e)
             res.code = 10003
@@ -191,7 +211,10 @@ class UploadView(APIView):
                 res.msg = "文件不存在"
             for file_obj in files:
                 try:
+
                     app_type = file_obj.name.split(".")[-1]
+                    if app_type == "tmp":
+                        app_type = file_obj.name.split(".")[-2]
                     if app_type not in ["apk", "ipa", 'png', 'jpeg', 'jpg']:
                         raise TypeError
                 except Exception as e:
@@ -210,6 +233,7 @@ class UploadView(APIView):
                     destination.close()
 
                 except Exception as e:
+                    print(e)
                     res.code = 1003
                     res.msg = "数据写入失败"
                     try:
@@ -222,6 +246,10 @@ class UploadView(APIView):
             res.code = 1006
 
         return Response(res.dict)
+
+    '''
+    应用图片上传之后
+    '''
 
     def put(self, request):
         res = BaseResponse()
@@ -248,8 +276,7 @@ class UploadView(APIView):
                     res.msg = '该用户不存在'
                     return Response(res.dict)
                 old_file_key = request.user.head_img
-                request.user.head_img = certinfo.get("upload_key")
-                request.user.save()
+                UserInfo.objects.filter(pk=request.user.id).update(head_img=certinfo.get("upload_key"))
                 if old_file_key != "" or old_file_key != 'head_img.jpeg':
                     storage.delete_file(old_file_key)
 

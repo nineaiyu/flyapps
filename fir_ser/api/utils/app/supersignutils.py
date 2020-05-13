@@ -380,10 +380,8 @@ class IosUtils(object):
             except Exception as e:
                 print(e)
             cert_id = re.findall(r'.*\n\tid=(.*),.*', cert_info)[0].replace('"', '')
-            developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=user_obj, email=auth.get("username")).first()
-            developer_obj.is_actived = True
-            developer_obj.certid = cert_id
-            developer_obj.save()
+            AppIOSDeveloperInfo.objects.filter(user_id=user_obj, email=auth.get("username")).update(is_actived=True,
+                                                                                                    certid=cert_id)
         return status, result
 
     @staticmethod
