@@ -38,7 +38,7 @@ def auto_clean_upload_tmp_file():
         data = cache.get(upload_tem_file_key)
         if data:
             stime = data.get("stime", None)
-            if stime and time.time() - stime > 60 * 60:
+            if stime and time.time() - stime > 60 * 20:
                 user_obj = UserInfo.objects.filter(pk=data.get("id")).first()
                 if user_obj:
                     storage = Storage(user_obj)
