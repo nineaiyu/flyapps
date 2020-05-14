@@ -57,7 +57,7 @@ class AppsView(APIView):
                 if count_hits > 0:
                     logger.info(
                         "update user all_download_times  old:%s  now:%s" % (
-                        count_hits, request.user.all_download_times))
+                            count_hits, request.user.all_download_times))
                     UserInfo.objects.filter(pk=request.user.id).update(
                         all_download_times=count_hits)
             else:

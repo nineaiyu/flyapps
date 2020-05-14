@@ -14,6 +14,9 @@ from rest_framework.pagination import PageNumberPagination
 from api.utils.app.supersignutils import IosUtils
 from api.utils.utils import get_developer_devices
 from api.utils.storage.caches import developer_auth_code
+import logging
+
+logger = logging.getLogger(__file__)
 
 
 class AppsPageNumber(PageNumberPagination):
@@ -109,7 +112,8 @@ class DeveloperView(APIView):
                         if usable_number >= 0 and usable_number <= 100:
                             developer_obj.usable_number = usable_number
                     except Exception as e:
-                        print(e)
+                        logger.error("developer %s usable_number %s get failed Exception:%s" % (
+                        developer_obj, data.get("usable_number", developer_obj.usable_number), e))
                     developer_obj.description = data.get("description", developer_obj.description)
                     password = data.get("password", developer_obj.password)
                     if password != "" and password != developer_obj.password:
@@ -130,7 +134,8 @@ class DeveloperView(APIView):
         try:
             AppIOSDeveloperInfo.objects.create(user_id=request.user, **datainfo)
         except Exception as e:
-            print(e)
+            logger.error("user %s create developer %s failed Exception:%s" % (
+                request.user, datainfo, e))
             res = BaseResponse()
             res.code = 1005
             res.msg = "添加失败"

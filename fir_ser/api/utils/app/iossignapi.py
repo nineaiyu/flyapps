@@ -9,7 +9,9 @@ from fir_ser.settings import SUPER_SIGN_ROOT
 import os
 from api.utils.app.randomstrings import make_app_uuid
 import logging
+
 logger = logging.getLogger(__file__)
+
 
 def exec_shell(cmd, remote=False, timeout=None):
     if remote:
@@ -20,9 +22,9 @@ def exec_shell(cmd, remote=False, timeout=None):
         result = use_user_pass(hostip, port, user, passwd, cmd)
         return result
     else:
-        logger.info("exec_shell cmd:%s"%(cmd))
+        logger.info("exec_shell cmd:%s" % (cmd))
         result = shell_command(cmd, timeout)
-        logger.info("exec_shell cmd:%s  result:%s"%(cmd,result))
+        logger.info("exec_shell cmd:%s  result:%s" % (cmd, result))
         if result.get("exit_code") != 0:
             err_info = result.get("err_info", None)
             if err_info:
@@ -46,11 +48,11 @@ class AppDeveloperApi(object):
 
     def active(self, user_obj):
         self.cmd = self.cmd + " active "
-        logger.info("ios developer active cmd:%s"%(self.cmd))
+        logger.info("ios developer active cmd:%s" % (self.cmd))
         result = {}
         try:
             result = pshell_command(self.cmd, user_obj, self.username)
-            logger.info("ios developer active cmd:%s  result:%s" % (self.cmd ,result))
+            logger.info("ios developer active cmd:%s  result:%s" % (self.cmd, result))
             if result["exit_code"] == 0:
                 return True, result
         except Exception as e:

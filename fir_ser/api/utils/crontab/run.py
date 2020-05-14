@@ -9,6 +9,7 @@ from django_apscheduler.jobstores import DjangoJobStore, register_events, regist
 from fir_ser.settings import SYNC_CACHE_TO_DATABASE
 from api.utils.crontab.sync_cache import sync_download_times, auto_clean_upload_tmp_file, auto_delete_job_log
 import logging
+
 logger = logging.getLogger(__file__)
 
 import atexit
@@ -47,7 +48,7 @@ try:
         register_events(scheduler)
         scheduler.start()
     except Exception as e:
-        logger.error("scheduler failed,so shutdown it Exception:%s"%(e))
+        logger.error("scheduler failed,so shutdown it Exception:%s" % (e))
         # 有错误就停止定时器
         scheduler.shutdown()
 

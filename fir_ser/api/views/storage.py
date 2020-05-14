@@ -12,6 +12,9 @@ import json
 from api.utils.storage.caches import del_cache_storage
 from api.models import AppStorage, UserInfo
 from api.utils.serializer import StorageSerializer
+import logging
+
+logger = logging.getLogger(__file__)
 
 
 class StorageView(APIView):
@@ -56,7 +59,8 @@ class StorageView(APIView):
         try:
             data['additionalparameters'] = json.dumps(data.get('additionalparameter', ''))
         except Exception as e:
-            print(e)
+            logger.error("user:%s additionalparameters %s dumps failed Exception:%s" % (
+            request.user, data.get('additionalparameter', ''), e))
 
         serializer = StorageSerializer(data=data, context={'user_obj': request.user})
         if serializer.is_valid():
@@ -81,7 +85,7 @@ class StorageView(APIView):
                     UserInfo.objects.filter(pk=request.user.pk).update(storage_id=use_storage_id)
                 del_cache_storage(request.user)
             except Exception as e:
-                print(e)
+                logger.error("update user %s storage failed Exception:%s" % (request.user, e))
                 res.code = 1006
                 res.msg = '修改失败'
             return Response(res.dict)
@@ -89,7 +93,8 @@ class StorageView(APIView):
         try:
             data['additionalparameters'] = json.dumps(data.get('additionalparameter', ''))
         except Exception as e:
-            print(e)
+            logger.error("user:%s additionalparameters %s dumps failed Exception:%s" % (
+                request.user, data.get('additionalparameter', ''), e))
 
         storage_id = data.get("id", None)
         if storage_id:

@@ -17,8 +17,11 @@ from api.utils.storage.caches import get_app_instance_by_cache, get_download_url
 import os
 from rest_framework_extensions.cache.decorators import cache_response
 from api.utils.serializer import AppsShortSerializer
-from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInfo
+from api.models import Apps, AppReleaseInfo, APPToDeveloper
 from django.http import FileResponse
+import logging
+
+logger = logging.getLogger(__file__)
 
 
 class DownloadView(APIView):
@@ -83,7 +86,7 @@ class DownloadView(APIView):
                     else:
                         response = FileResponse()
                 except Exception as e:
-                    print(e)
+                    logger.error("read %s failed  Exception:%s" % (file_path, e))
                     response = FileResponse()
                 response['content_type'] = "application/octet-stream"
                 response['Content-Disposition'] = 'attachment; filename=' + filename
@@ -132,7 +135,7 @@ class ShortDownloadView(APIView):
             udid = time
         if not udid:
             udid = ""
-
+        logging.info("make cache_response release_id:%s udid:%s" % (release_id, udid))
         return "_".join(
             [settings.CACHE_KEY_TEMPLATE.get("download_short_key"), kwargs.get("short", ''), release_id, udid])
 

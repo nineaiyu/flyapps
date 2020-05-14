@@ -10,6 +10,7 @@ from api.utils.TokenManager import DownloadToken
 from fir_ser import settings
 import os
 import logging
+
 logger = logging.getLogger(__file__)
 
 
@@ -43,7 +44,7 @@ class LocalStorage(object):
                 os.remove(file)
             return True
         except Exception as e:
-            logger.error("delete file %s failed Exception %s"%(file,e))
+            logger.error("delete file %s failed Exception %s" % (file, e))
             return False
 
     def rename_file(self, oldfilename, newfilename):
@@ -51,5 +52,5 @@ class LocalStorage(object):
             os.rename(os.path.join(settings.MEDIA_ROOT, oldfilename), os.path.join(settings.MEDIA_ROOT, newfilename))
             return True
         except Exception as e:
-            logger.error("rename_file file %s to %s failed Exception %s" % (oldfilename,newfilename, e))
+            logger.error("rename_file file %s to %s failed Exception %s" % (oldfilename, newfilename, e))
             return False

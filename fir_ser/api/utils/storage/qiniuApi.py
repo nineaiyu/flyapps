@@ -30,7 +30,6 @@ class QiNiuOss(object):
         }
         # 3600为token过期时间，秒为单位。3600等于一小时
         token = self.qiniu_obj.upload_token(self.bucket_name, name, expires, policy)
-        # print(token)
         return token
 
     def get_download_url(self, name, expires=1800, force_new=False):

@@ -4,7 +4,7 @@
 # author: liuyu
 # date: 2020/3/6
 
-import uuid, xmltodict, os, re ,logging
+import uuid, xmltodict, os, re, logging
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN
 from api.utils.app.iossignapi import AppDeveloperApi, ResignApp
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
@@ -14,7 +14,9 @@ from api.utils.serializer import get_developer_udided
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.caches import del_cache_response_by_short
 from api.utils.utils import file_format_path, delete_app_to_dev_and_file, delete_app_profile_file
-logger=logging.getLogger(__file__)
+
+logger = logging.getLogger(__file__)
+
 
 def udid_bytes_to_dict(xml_stream):
     new_uuid_info = {}
@@ -25,7 +27,8 @@ def udid_bytes_to_dict(xml_stream):
         for i in range(len(xml_dict['plist']['dict']['key'])):
             new_uuid_info[xml_dict['plist']['dict']['key'][i].lower()] = xml_dict['plist']['dict']['string'][i]
     except Exception as e:
-        logger.error("udid_xml_stream:%s Exception:%s"%(xml_stream,e))
+        logger.error("udid_xml_stream:%s Exception:%s" % (xml_stream, e))
+        return None
     return new_uuid_info
 
 
@@ -340,7 +343,8 @@ class IosUtils(object):
                     os.rmdir(os.path.join(root, name))
             os.rmdir(full_path)
         except Exception as e:
-            logger.error("clean_developer developer_obj:%s user_obj:%s delete file failed Exception:%s"%(developer_obj,user_obj,e))
+            logger.error("clean_developer developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
+                developer_obj, user_obj, e))
 
     @staticmethod
     def active_developer(developer_obj, user_obj):
@@ -379,7 +383,7 @@ class IosUtils(object):
                     cert_info = f.read()
             except Exception as e:
                 logger.error("create_developer_cert developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
-                developer_obj, user_obj, e))
+                    developer_obj, user_obj, e))
             if cert_info:
                 cert_id = re.findall(r'.*\n\tid=(.*),.*', cert_info)[0].replace('"', '')
                 AppIOSDeveloperInfo.objects.filter(user_id=user_obj, email=auth.get("username")).update(is_actived=True,
@@ -402,8 +406,9 @@ class IosUtils(object):
                 with open(file_format_path_name + ".devices.info", "r") as f:
                     devices_info = f.read().replace("\n\t", "").replace("[", "").replace("]", "")
             except Exception as e:
-                logger.error("get_device_from_developer developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
-                developer_obj, user_obj, e))
+                logger.error(
+                    "get_device_from_developer developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
+                        developer_obj, user_obj, e))
 
             for devicestr in devices_info.split(">"):
                 formatdevice = re.findall(r'.*Device id="(.*)",.*name="(.*)",.*udid="(.*?)",.*model=(.*),.*', devicestr)

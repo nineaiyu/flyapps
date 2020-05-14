@@ -279,9 +279,6 @@ LOGGING = {
         'simple': {
             'format': '[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d]%(message)s'
         },
-        'collect': {
-            'format': '%(message)s'
-        }
     },
     'filters': {
         'require_debug_true': {
@@ -290,7 +287,7 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'filters': ['require_debug_true'],  # 只有在Django debug为True时才在屏幕打印日志
             'class': 'logging.StreamHandler',
             'formatter': 'simple'

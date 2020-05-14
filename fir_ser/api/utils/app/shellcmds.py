@@ -10,7 +10,9 @@ import paramiko, json
 import socket
 import pexpect
 from api.utils.storage.caches import developer_auth_code
+
 logger = logging.getLogger(__file__)
+
 
 def default_result():
     return {'exit_code': '99', 'return_info': 'Failed to run, function_name is not existed'}
@@ -115,7 +117,8 @@ def pshell_command(cmdstrs, user_obj, developer_email, timeout=60 * 10):
                         developer_auth_code("del", user_obj, developer_email)
                         return result
                     except Exception as e:
-                        logger.error("cmdstrs:%s developer_email:%s user_obj:%s Exception:%s"%(cmdstrs,developer_email,user_obj,e))
+                        logger.error("cmdstrs:%s developer_email:%s user_obj:%s Exception:%s" % (
+                            cmdstrs, developer_email, user_obj, e))
                     developer_auth_code("del", user_obj, developer_email)
                     result['exit_code'] = 0
                     result['return_info'] = 'Success'
@@ -182,7 +185,7 @@ def use_user_pass(hostip, port, user, passwd, cmdstrs):
         result['return_info'] = outs
         result['exit_code'] = out['status']
         # logging.info(u'shell: %s - %s%s - %s%d' % (cmdstrs, 'return_info: ', out, 'exit_code: ', out['status']))
-        print('host: %s user:%s - shell: %s - %s%s - %s%d' % (
+        logger.info('host: %s user:%s - shell: %s - %s%s - %s%d' % (
             hostip, user, cmdstrs, 'return_info: ', out, 'exit_code: ', out['status']))
         conn.close()
     return result

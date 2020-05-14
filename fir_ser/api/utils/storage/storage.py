@@ -12,7 +12,8 @@ import json, time, base64
 from fir_ser.settings import THIRD_PART_CONFIG, CACHE_KEY_TEMPLATE
 from django.core.cache import cache
 import logging
-logger=logging.getLogger(__file__)
+
+logger = logging.getLogger(__file__)
 
 
 class Storage(object):
@@ -20,7 +21,7 @@ class Storage(object):
         try:
             self.storage = self.get_storage(user)
         except Exception as e:
-            logger.error("get %s storage failed Exception:%s"%(user,e))
+            logger.error("get %s storage failed Exception:%s" % (user, e))
             self.storage = None
 
     def get_upload_token(self, filename, expires=900):
@@ -121,6 +122,7 @@ class Storage(object):
         try:
             additionalparameters = json.loads(storage_obj.additionalparameters)
         except Exception as e:
-            logger.error("%s get_storage_auth additionalparameters %s loads failed Exception:%s"%(storage_obj.user_id,storage_obj.additionalparameters,e))
+            logger.error("%s get_storage_auth additionalparameters %s loads failed Exception:%s" % (
+                storage_obj.user_id, storage_obj.additionalparameters, e))
             additionalparameters = {}
         return {**auth_dict, **additionalparameters}

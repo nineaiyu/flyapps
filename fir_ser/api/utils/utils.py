@@ -46,10 +46,13 @@ def delete_app_to_dev_and_file(developer_obj, app_id):
 
 
 def delete_app_profile_file(developer_obj, app_obj):
+    file = get_profile_full_path(developer_obj, app_obj)
     try:
-        os.remove(get_profile_full_path(developer_obj, app_obj))
+        if os.path.isfile(file):
+            os.remove(get_profile_full_path(developer_obj, app_obj))
     except Exception as e:
-        print(e)
+        logger.error("delete_app_profile_file developer_obj:%s  app_obj:%s file:%s Exception:%s" % (
+            developer_obj, app_obj, file, e))
 
 
 def get_developer_udided(developer_obj):

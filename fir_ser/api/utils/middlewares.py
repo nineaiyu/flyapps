@@ -1,4 +1,7 @@
 from django.utils.deprecation import MiddlewareMixin
+import logging
+
+logger = logging.getLogger(__file__)
 
 
 class CorsMiddleWare(MiddlewareMixin):
@@ -14,5 +17,5 @@ class CorsMiddleWare(MiddlewareMixin):
 
             response["Cache-Control"] = "no-cache"
         except Exception as e:
-            print(e)
+            logger.error(e)
         return response

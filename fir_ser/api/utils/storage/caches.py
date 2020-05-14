@@ -18,7 +18,7 @@ logger = logging.getLogger(__file__)
 try:
     from api.utils.crontab import run
 except Exception as e:
-    logger.error("import crontab.run failed Exception:%s"%(e))
+    logger.error("import crontab.run failed Exception:%s" % (e))
 
 
 def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='', udid=None):

@@ -7,7 +7,10 @@
 from api.utils.app.supersignutils import udid_bytes_to_dict, get_redirect_server_domain, IosUtils
 from api.models import Apps, AppUDID
 from django.views import View
-from django.http import HttpResponsePermanentRedirect, Http404
+from django.http import HttpResponsePermanentRedirect
+import logging
+
+logger = logging.getLogger(__file__)
 
 
 class IosUDIDView(View):
@@ -32,5 +35,5 @@ class IosUDIDView(View):
                 return HttpResponsePermanentRedirect(
                     "%s/%s" % (server_domain, short))
         except Exception as e:
-            print(e)
+            logger.error("short %s receive udid Exception:%s" % (short, e))
         return HttpResponsePermanentRedirect("%s/%s?udid=%s" % (server_domain, short, format_udid_info.get("udid")))

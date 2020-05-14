@@ -5,7 +5,6 @@ from django.core.cache import cache
 from rest_framework.response import Response
 
 
-
 class LogoutView(APIView):
     authentication_classes = [ExpiringTokenAuthentication]
 

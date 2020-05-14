@@ -16,7 +16,9 @@ from api.utils.app.randomstrings import make_from_user_uuid
 from rest_framework.response import Response
 from fir_ser import settings
 from api.utils.TokenManager import DownloadToken
-import os, json
+import os, json, logging
+
+logger = logging.getLogger(__file__)
 
 
 class AppAnalyseView(APIView):
@@ -113,7 +115,7 @@ class AppAnalyseView(APIView):
             upload_file_tmp_name("del", png_tmp_filename, request.user.id)
 
         except Exception as e:
-            print(e)
+            logger.error("%s %s save app info failed Exception:%s" % (request.user, data.get("bundleid"), e))
             res.code = 10003
         return Response(res.dict)
 
@@ -180,7 +182,7 @@ class UploadView(APIView):
                 res.code = 1006
                 return Response(res.dict)
         except Exception as e:
-            print(e)
+            logger.error("%s certinfo:%s get failed Exception:%s" % (request.user, certinfo, e))
             res.msg = "token 校验失败"
             res.code = 1006
             return Response(res.dict)
@@ -216,9 +218,10 @@ class UploadView(APIView):
                     if app_type == "tmp":
                         app_type = file_obj.name.split(".")[-2]
                     if app_type not in ["apk", "ipa", 'png', 'jpeg', 'jpg']:
+                        logger.error("user:%s  upload file type error file:%s " % (request.user, file_obj.name))
                         raise TypeError
                 except Exception as e:
-                    print(e)
+                    logger.error("user:%s  upload file type error Exception:%s " % (request.user, e))
                     res.code = 1003
                     res.msg = "错误的类型"
                     return Response(res.dict)
@@ -233,13 +236,14 @@ class UploadView(APIView):
                     destination.close()
 
                 except Exception as e:
-                    print(e)
+                    logger.error("user:%s  save file:%s error Exception:%s " % (request.user, local_file, e))
                     res.code = 1003
                     res.msg = "数据写入失败"
                     try:
-                        os.remove(local_file)
+                        if os.path.isfile(local_file):
+                            os.remove(local_file)
                     except Exception as e:
-                        print(e)
+                        logger.error("user:%s  delete file:%s error Exception:%s " % (request.user, local_file, e))
                     return Response(res.dict)
         else:
             res.msg = "token 校验失败"

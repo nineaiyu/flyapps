@@ -9,6 +9,9 @@ import random
 import time
 from django.core.cache import cache
 from fir_ser.settings import CACHE_KEY_TEMPLATE
+import logging
+
+logger = logging.getLogger(__file__)
 
 
 class DownloadToken(object):
@@ -17,6 +20,8 @@ class DownloadToken(object):
         token_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get("make_token_key"), release_id])
         token = cache.get(token_key)
         if token and not force_new:
+            logger.debug("make_token  cache exists get token:%s  release_id:%s force_new:%s token_key:%s" % (
+                token, release_id, force_new, token_key))
             return token
         else:
             random_str = uuid.uuid1().__str__().split("-")[0:-1]
@@ -28,17 +33,21 @@ class DownloadToken(object):
                 "data": release_id
             }, time_limit)
             cache.set(token_key, token, time_limit - 1)
+            logger.debug(
+                "make_token  cache not exists get token:%s  release_id:%s force_new:%s token_key:%s" % (
+                    token, release_id, force_new, token_key))
             return token
 
     def verify_token(self, token, release_id):
         try:
             values = cache.get(token)
             if values and release_id in values.get("data", None):
+                logger.debug("verify_token token:%s  release_id:%s success" % (token, release_id))
                 return True
         except Exception as e:
-            print(e)
+            logger.error("verify_token token:%s  release_id:%s failed Exception:%s" % (token, release_id, e))
             return False
-
+        logger.error("verify_token token:%s  release_id:%s failed" % (token, release_id))
         return False
 
 
