@@ -115,7 +115,7 @@
 </template>
 
 <script>
-    import {deletereleaseapp, getapptimeline, getdownloadurl, updatereleaseapp} from "../restful"
+    import {releaseapputils, getdownloadurl} from "../restful"
 
     export default {
         name: "FirAppInfostimeline",
@@ -161,7 +161,7 @@
                     spinner: 'el-icon-loading',
                     // background: 'rgba(0, 0, 0, 0.7)'
                 });
-                getapptimeline(data => {
+                releaseapputils(data => {
                     if (data.code === 1000) {
                         this.release_apps = data.data.release_apps;
                         this.currentapp = data.data.currentapp;
@@ -171,8 +171,9 @@
                     }
                     loading.close();
                 }, {
+                    "methods": "GET",
                     "app_id": this.$route.params.id,
-                    "action": "timeline",
+                    "release_id": "timeline",
                 })
             },
             del_release_app(app) {
@@ -180,7 +181,7 @@
                 this.$confirm('确认删除 ' + this.currentapp.name + '下 当前 release 版本吗?')
                     // eslint-disable-next-line no-unused-vars
                     .then(res => {
-                        deletereleaseapp(data => {
+                        releaseapputils(data => {
                             if (data.code === 1000) {
                                 this.$message({
                                     message: '删除成功',
@@ -195,6 +196,7 @@
                                 });
                             }
                         }, {
+                            "methods": "DELETE",
                             "app_id": this.currentapp.app_id,
                             "release_id": app.release_id,
                         });
@@ -202,7 +204,7 @@
 
             },
             updatereleaseappFun(params) {
-                updatereleaseapp(data => {
+                releaseapputils(data => {
                         if (data.code === 1000) {
                             this.$message({
                                 message: '更新成功',
@@ -225,6 +227,7 @@
             },
             make_master_release(app) {
                 this.updatereleaseappFun({
+                    "methods": "PUT",
                     "app_id": this.currentapp.app_id,
                     "release_id": app.release_id,
                     "data": {
@@ -250,6 +253,7 @@
                     this.updatas = {"binary_url": app.binary_url}
                 }
                 this.updatereleaseappFun({
+                    "methods": "PUT",
                     "app_id": this.currentapp.app_id,
                     "release_id": app.release_id,
                     "data": this.updatas

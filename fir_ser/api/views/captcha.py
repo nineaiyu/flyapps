@@ -16,3 +16,21 @@ class CaptchaView(APIView):
         response_str = json.loads(response_str)
 
         return Response({"error_no": 0, "data": response_str})
+
+
+from captcha.models import CaptchaStore
+from captcha.helpers import captcha_image_url
+import json
+
+
+class AjaxExampleForm(APIView):
+
+    def get(self, request):
+        to_json_response = dict()
+        to_json_response['status'] = 0
+        to_json_response['new_cptch_key'] = CaptchaStore.generate_key()
+        to_json_response['new_cptch_image'] = captcha_image_url(to_json_response['new_cptch_key'])
+        CaptchaStore.remove_expired()
+        a = CaptchaStore.objects.filter(hashkey=to_json_response['new_cptch_key']).first()
+        print(a)
+        return Response(to_json_response)

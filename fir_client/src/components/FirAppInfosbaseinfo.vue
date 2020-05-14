@@ -58,7 +58,7 @@
 </template>
 
 <script>
-    import {deleteapp, getappinfos, getapppicurl, uploadimgs, updateapp, getuploadurl} from "../restful"
+    import {apputils, getapppicurl, uploadimgs, getuploadurl} from "../restful"
     import {uploadaliyunoss, uploadlocalstorage, uploadqiniuoss} from "../utils";
 
     export default {
@@ -122,7 +122,7 @@
                     // eslint-disable-next-line no-unused-vars
                     .then(res => {
                         this.willDeleteApp = false;
-                        deleteapp(data => {
+                        apputils(data => {
                             if (data.code === 1000) {
                                 this.$message({
                                     message: '删除成功',
@@ -136,6 +136,7 @@
                                 });
                             }
                         }, {
+                            "methods": "DELETE",
                             "app_id": this.currentapp.app_id
                         });
 
@@ -147,7 +148,7 @@
                 // alert('发送删除APP',this.delapp.name)
             },
             updateinfo() {
-                getappinfos(data => {
+                apputils(data => {
 
                     if (data.code === 1000) {
                         this.appinfos = data.data;
@@ -163,17 +164,19 @@
                         console.log("失败了");
                     }
                 }, {
+                    "methods": "GET",
                     "app_id": this.currentapp.app_id
                 });
             },
             saveappinfo() {
-                updateapp(data => {
+                apputils(data => {
                     if (data.code === 1000) {
                         this.$message.success('数据更新成功');
                     } else {
                         this.$message.error('操作失败,' + data.msg);
                     }
                 }, {
+                    "methods": "PUT",
                     "app_id": this.currentapp.app_id,
                     "data": {
                         "description": this.currentapp.description,

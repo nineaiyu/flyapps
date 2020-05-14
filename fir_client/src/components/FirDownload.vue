@@ -13,8 +13,8 @@
             </div>
 
             <div v-else>
-<!--                <span class="pattern left"><img src="../assets/download_pattern_left.png"></span>-->
-<!--                <span class="pattern right"><img src="../assets/download_pattern_right.png"></span>-->
+                <!--                <span class="pattern left"><img src="../assets/download_pattern_left.png"></span>-->
+                <!--                <span class="pattern right"><img src="../assets/download_pattern_right.png"></span>-->
             </div>
 
             <el-container class="out-container">

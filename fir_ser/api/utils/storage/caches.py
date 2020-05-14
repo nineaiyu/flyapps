@@ -8,11 +8,13 @@ from django.core.cache import cache
 from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, APPSuperSignUsedInfo
 import time, os
 from django.utils import timezone
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE
 from api.utils.storage.storage import Storage, LocalStorage
 from api.utils.crontab.sync_cache import sync_download_times_by_app_id
 from api.utils.utils import file_format_path
+import logging
 
+logger = logging.getLogger(__file__)
 try:
     from api.utils.crontab import run
 except Exception as e:
@@ -180,3 +182,27 @@ def upload_file_tmp_name(act, filename, user_obj_id):
         return cache.get(tmp_key)
     elif act == "del":
         cache.delete(tmp_key)
+
+
+def login_auth_failed(act, email):
+    auth_code_key = "_".join([CACHE_KEY_TEMPLATE.get("login_failed_try_times_key"), email])
+    if act == "set":
+        data = {
+            "count": 1,
+            "time": time.time()
+        }
+        cdata = cache.get(auth_code_key)
+        if cdata:
+            data["count"] = cdata["count"] + 1
+            data["time"] = time.time()
+        logger.info("auth_code_key:%s  data:%s" % (auth_code_key, data))
+        cache.set(auth_code_key, data, 60 * 60)
+    elif act == "get":
+        cdata = cache.get(auth_code_key)
+        if cdata:
+            if cdata["count"] > SYNC_CACHE_TO_DATABASE.get("try_login_times"):
+                logging.error("email:%s login failed too many ,is locked . cdata:%s" % (email, cdata))
+                return False
+        return True
+    elif act == "del":
+        cache.delete(auth_code_key)

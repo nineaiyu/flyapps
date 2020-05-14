@@ -78,7 +78,10 @@ class DownloadView(APIView):
             else:
                 file_path = os.path.join(settings.MEDIA_ROOT, filename)
                 try:
-                    response = FileResponse(open(file_path, 'rb'))
+                    if os.path.isfile(file_path):
+                        response = FileResponse(open(file_path, 'rb'))
+                    else:
+                        response = FileResponse()
                 except Exception as e:
                     print(e)
                     response = FileResponse()

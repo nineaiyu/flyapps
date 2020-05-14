@@ -64,7 +64,7 @@
 </template>
 
 <script>
-    import {getappinfos} from "../restful";
+    import {apputils} from "../restful";
 
     export default {
         name: "FirAppInfosBase",
@@ -136,7 +136,7 @@
             },
         },
         computed: {}, mounted() {
-            getappinfos(data => {
+            apputils(data => {
 
                 if (data.code === 1000) {
                     this.appinfos = data.data;
@@ -151,6 +151,7 @@
                     console.log("失败了");
                 }
             }, {
+                "methods": "GET",
                 "app_id": this.$route.params.id
             });
             if (this.$store.state.currentapp.master_release) {

@@ -20,8 +20,10 @@ decorator==4.4.2
 Django==3.0.3
 django-apscheduler==0.3.0
 django-qrcode==0.3
+django-ranged-response==0.2.0
 django-redis==4.11.0
 django-rest-framework==0.1.0
+django-simple-captcha==0.5.12
 djangorestframework==3.11.0
 dnspython==1.16.0
 drf-extensions==0.6.0

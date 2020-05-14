@@ -181,23 +181,23 @@
                     <el-col :span="4">
                         <el-row>
                             <el-col :span="20">
-                        <el-input
-                                placeholder="请输入名称搜索"
-                                v-model="keysearch"
-                                @click="searchapps"
-                                clearable >
-                        </el-input>
+                                <el-input
+                                        placeholder="请输入名称搜索"
+                                        v-model="keysearch"
+                                        @click="searchapps"
+                                        clearable>
+                                </el-input>
                             </el-col>
-                            <el-col :span="2" >
+                            <el-col :span="2">
 
-                            <el-button  icon="el-icon-search"  @click="searchFun">
-                        </el-button>
+                                <el-button icon="el-icon-search" @click="searchFun">
+                                </el-button>
                             </el-col>
                         </el-row>
                     </el-col>
-<!--                    <el-col :span="1" class="surplus-card">-->
-<!--        -->
-<!--                    </el-col>-->
+                    <!--                    <el-col :span="1" class="surplus-card">-->
+                    <!--        -->
+                    <!--                    </el-col>-->
 
                     <el-col :span="7" class="surplus-card">
                         <el-row>
@@ -405,7 +405,7 @@
 </template>
 
 <script>
-    import {getapps, deleteapp, analyseApps, getuploadurl} from "../restful";
+    import {getapps, apputils, analyseApps, getuploadurl} from "../restful";
     import {
         getScrollHeight,
         getScrollTop,
@@ -698,7 +698,7 @@
             },
             delApp() {
                 this.willDeleteApp = false;
-                deleteapp(data => {
+                apputils(data => {
                     if (data.code === 1000) {
                         for (let i = 0; i < this.applists.length; i++) {
                             if (this.delapp.app_id === this.applists[i].app_id) {
@@ -712,6 +712,7 @@
                         this.$message.error('删除失败，请联系管理员');
                     }
                 }, {
+                    "methods": "DELETE",
                     "app_id": this.delapp.app_id
                 });
             },
@@ -794,7 +795,7 @@
             keysearch: function (val, oldVal) {
                 // this.searchapps()
                 let keysearch = this.keysearch.replace(/^\s+|\s+$/g, "");
-                if(keysearch === ""){
+                if (keysearch === "") {
                     this.searchFun()
                 }
             },

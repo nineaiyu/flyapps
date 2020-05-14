@@ -80,7 +80,7 @@
 </template>
 
 <script>
-    import {getappinfos, getapps, updateapp} from "../restful";
+    import {getapps, apputils} from "../restful";
 
     export default {
         name: "FirAppInfoscombo"
@@ -111,13 +111,13 @@
                 }
             },
             each_add(hcombo_id) {
-                updateapp(data => {
+                apputils(data => {
                     if (data.code === 1000) {
                         this.$message.success('操作成功');
 
                         this.comboapplists = [];
 
-                        getappinfos(data => {
+                        apputils(data => {
                             let appinfos = {};
                             appinfos = data.data;
                             appinfos["icon_url"] = appinfos.master_release.icon_url;
@@ -134,6 +134,7 @@
 
                             }
                         }, {
+                            "methods": "GET",
                             "app_id": this.currentapp.app_id
                         });
 
@@ -142,6 +143,7 @@
 
                     }
                 }, {
+                    "methods": "PUT",
                     "app_id": this.currentapp.app_id,
                     "data": {
                         "has_combo": {
@@ -152,7 +154,7 @@
                 });
             },
             each_confirm() {
-                updateapp(data => {
+                apputils(data => {
                     if (data.code === 1000) {
                         this.$message.success('操作成功');
 
@@ -166,6 +168,7 @@
 
                     }
                 }, {
+                    "methods": "PUT",
                     "app_id": this.currentapp.app_id,
                     "data": {
                         "has_combo": {

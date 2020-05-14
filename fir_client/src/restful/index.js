@@ -88,7 +88,7 @@ function ErrorMsg(error) {
     }
     if (error.response && error.response.status === 403) {
         router.push({name: 'FirLogin'});
-    }else{
+    } else {
         if (error.message === 'Network Error') {
             alert('网络连接失败');
         } else {
@@ -161,9 +161,9 @@ function getData(methods = true, url, params = {}, callBack, load, isCode = fals
 /**用户登录 */
 export function loginFun(callBack, params, load = true) {
     getData(
-        'POST',
+        params.methods,
         USERSEVER + '/login',
-        params,
+        params.data,
         data => {
             callBack(data);
         },
@@ -204,58 +204,11 @@ export function getapps(callBack, params, load = true) {
     );
 }
 
-/**用户应用详情 */
-export function getappinfos(callBack, params, load = true) {
+
+/**app应用操作 */
+export function apputils(callBack, params, load = true) {
     getData(
-        'GET',
-        USERSEVER + '/apps/' + params.app_id,
-        {},
-        data => {
-            callBack(data);
-        },
-        load,
-        true,
-        true
-    );
-}
-
-
-/**删除应用 */
-export function deleteapp(callBack, params, load = true) {
-    getData(
-        "DELETE",
-        USERSEVER + '/apps/' + params.app_id,
-        {},
-        data => {
-            callBack(data);
-        },
-        load,
-        true,
-        true
-    );
-}
-
-
-/**删除release应用 */
-export function deletereleaseapp(callBack, params, load = true) {
-    getData(
-        "DELETE",
-        USERSEVER + '/appinfos/' + params.app_id + '/' + params.release_id,
-        {},
-        data => {
-            callBack(data);
-        },
-        load,
-        true,
-        true
-    );
-}
-
-
-/**更新app应用 */
-export function updateapp(callBack, params, load = true) {
-    getData(
-        "PUT",
+        params.methods,
         USERSEVER + '/apps/' + params.app_id,
         params.data,
         data => {
@@ -267,29 +220,12 @@ export function updateapp(callBack, params, load = true) {
     );
 }
 
-
-/**更新release应用 */
-export function updatereleaseapp(callBack, params, load = true) {
+/**release应用操作 */
+export function releaseapputils(callBack, params, load = true) {
     getData(
-        "PUT",
+        params.methods,
         USERSEVER + '/appinfos/' + params.app_id + '/' + params.release_id,
         params.data,
-        data => {
-            callBack(data);
-        },
-        load,
-        true,
-        true
-    );
-}
-
-
-/**用户应用详情 */
-export function getapptimeline(callBack, params, load = true) {
-    getData(
-        'GET',
-        USERSEVER + '/appinfos/' + params.app_id + '/' + params.action,
-        {},
         data => {
             callBack(data);
         },

@@ -4,12 +4,17 @@
 # author: liuyu
 # date: 2020/5/7
 import os
-from fir_ser.settings import SUPER_SIGN_ROOT
-from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
+from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN, CAPTCHA_LENGTH
+from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
     UDIDsyncDeveloper
 from api.utils.app.randomstrings import make_app_uuid
 from api.utils.storage.localApi import LocalStorage
 from django.db.models import Sum
+from captcha.models import CaptchaStore
+from captcha.helpers import captcha_image_url
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def file_format_path(user_obj, auth=None, email=None):
@@ -77,3 +82,22 @@ def get_developer_devices(developer_obj_lists):
             "flyapp_used_sum": flyapp_used_sum,
         }
         return use_num
+
+
+def get_captcha():
+    cptch_key = CaptchaStore.generate_key()
+    cptch_image = captcha_image_url(cptch_key)
+    CaptchaStore.remove_expired()
+    local_storage = LocalStorage(**SERVER_DOMAIN.get("IOS_PMFILE_DOWNLOAD_DOMAIN"))
+    return {"cptch_image": "/".join([local_storage.get_base_url(), cptch_image.strip("/")]), "cptch_key": cptch_key,
+            "length": CAPTCHA_LENGTH}
+
+
+def valid_captcha(cptch_key, code, username):
+    if username:
+        challenge = CaptchaStore.objects.filter(hashkey=cptch_key).values("challenge").first()
+        logger.info("cptch_key:%s code:%s  challenge:%s" % ((cptch_key, code, challenge)))
+        if challenge:
+            if cptch_key and code and code.strip(" ").lower() == challenge.get("challenge").lower():
+                return True
+    return False

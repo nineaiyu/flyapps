@@ -68,7 +68,7 @@
 </template>
 
 <script>
-    import {updateapp,} from "../restful"
+    import {apputils,} from "../restful"
     import {deepCopy} from "../utils";
 
     export default {
@@ -92,7 +92,7 @@
                 this.currentapp.count = 0;
             },
             saveappinfo(data) {
-                updateapp(data => {
+                apputils(data => {
                     if (data.code === 1000) {
                         this.$message.success('数据更新成功');
                     } else {
@@ -106,6 +106,7 @@
 
                     }
                 }, {
+                    "methods": "PUT",
                     "app_id": this.currentapp.app_id,
                     "data": data
                 });

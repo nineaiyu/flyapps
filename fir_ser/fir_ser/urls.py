@@ -36,10 +36,10 @@ from api.views.download import DownloadView, InstallView
 from api.views.receiveudids import IosUDIDView
 
 urlpatterns = [
-    path('fly.admin/', admin.site.urls),
+    re_path('fly.admin/', admin.site.urls),
     # path("",include(router.urls)),
-    path("api/v1/fir/server/", include('api.urls')),
-
+    re_path("api/v1/fir/server/", include('api.urls')),
+    re_path('^captcha/', include('captcha.urls')),
     # re_path("shoppingcar/",ShoppingCarView.as_view()),
     # re_path("account/",AccountView.as_view()),
     # re_path("payment/",PaymentView.as_view()),
@@ -47,8 +47,9 @@ urlpatterns = [
     # re_path("get_pay_url/",get_pay_url),s
     # re_path("api/v1/trade/alipay/",AlipayTradeView),
     # media路径配置
-    re_path(r'files/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    re_path('files/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     re_path("download/(?P<filename>\w+\.\w+)$", DownloadView.as_view(), name="download"),
     re_path("install/(?P<app_id>\w+)$", InstallView.as_view(), name="install"),
     re_path("^udid/(?P<short>\w+)$", IosUDIDView.as_view()),
+
 ]

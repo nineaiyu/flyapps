@@ -18,6 +18,9 @@ from api.utils.storage.caches import del_cache_response_by_short, get_app_today_
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
 from rest_framework.pagination import PageNumberPagination
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AppsPageNumber(PageNumberPagination):
@@ -34,7 +37,7 @@ class AppsView(APIView):
 
         app_type = request.query_params.get("type", None)
         act_type = request.query_params.get("act", None)
-
+        logger.info("app_type:%s act_type:%s" % (app_type, act_type))
         res = BaseResponse()
         res.hdata = {"all_hits_count": 0}
         res.hdata["upload_domain"] = request.user.domain_name
@@ -52,9 +55,11 @@ class AppsView(APIView):
             count_hits = all_hits_obj.get("count_hits", 0)
             if count_hits:
                 if count_hits > 0:
-                    request.user.all_download_times += count_hits
+                    logger.info(
+                        "update user all_download_times  old:%s  now:%s" % (
+                        count_hits, request.user.all_download_times))
                     UserInfo.objects.filter(pk=request.user.id).update(
-                        all_download_times=request.user.all_download_times + count_hits)
+                        all_download_times=count_hits)
             else:
                 count_hits = 0
             res.hdata["all_hits_count"] = count_hits
@@ -73,7 +78,7 @@ class AppsView(APIView):
             filter_data["has_combo"] = None
 
         apps_obj = Apps.objects.filter(**filter_data)
-
+        logger.info(filter_data)
         page_obj = AppsPageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=apps_obj.order_by("-updated_time"), request=request,
                                                          view=self)
@@ -100,6 +105,7 @@ class AppInfoView(APIView):
                 app_serializer = AppsSerializer(apps_obj, context={"storage": Storage(request.user)})
                 res.data = app_serializer.data
             else:
+                logger.error("app_id:%s is not found in user:%s " % (app_id, request.user))
                 res.msg = "未找到该应用"
                 res.code = 1003
             userserializer = UserInfoSerializer(request.user)
@@ -116,15 +122,20 @@ class AppInfoView(APIView):
             apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
             if apps_obj:
                 if apps_obj.issupersign:
+                    logger.info("app_id:%s is supersign ,so delete this app need clean IOS developer")
                     IosUtils.clean_app_by_user_obj(apps_obj, request.user)
 
                 storage = Storage(request.user)
                 has_combo = apps_obj.has_combo
                 if has_combo:
+                    logger.info(
+                        "app_id:%s has_combo ,so delete this app need uncombo and clean del_cache_response_by_short")
                     del_cache_response_by_short(apps_obj.has_combo.short, apps_obj.has_combo.app_id)
                     apps_obj.has_combo.has_combo = None
                 del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
                 for appreleaseobj in AppReleaseInfo.objects.filter(app_id=apps_obj).all():
+                    logger.info("app_id:%s has_combo ,so delete this app need clean all release,release_id:%s" % (
+                        appreleaseobj.release_id))
                     storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
                     storage.delete_file(appreleaseobj.icon_url)
                     appreleaseobj.delete()
@@ -139,6 +150,7 @@ class AppInfoView(APIView):
 
             clean = data.get("clean", None)
             if clean:
+                logger.info("app_id:%s clean:%s ,close supersign should clean_app_by_user_obj" % (app_id, clean))
                 apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
                 IosUtils.clean_app_by_user_obj(apps_obj, request.user)
                 return Response(res.dict)
@@ -147,6 +159,7 @@ class AppInfoView(APIView):
             if has_combo:
                 actions = has_combo.get("action", None)
                 hcombo_id = has_combo.get("hcombo_id", None)
+                logger.info("app_id:%s actions:%s  hcombo_id:%s" % (app_id, actions, hcombo_id))
 
                 if actions and hcombo_id:
                     has_combo = Apps.objects.filter(user_id=request.user, app_id=hcombo_id)
@@ -166,6 +179,7 @@ class AppInfoView(APIView):
                         del_cache_response_by_short(has_combo.first().short, has_combo.first().app_id)
 
                     except Exception as e:
+                        logger.error("app_id:%s actions:%s hcombo_id:%s Exception:%s" % (app_id, actions, hcombo_id, e))
                         res.code = 1004
                         res.msg = "该应用已经关联"
             else:
@@ -187,71 +201,72 @@ class AppInfoView(APIView):
                         #     return Response(res.dict)
                         developer_count = AppIOSDeveloperInfo.objects.filter(user_id=request.user).count()
                         if developer_count == 0:
+                            logger.error("app_id:%s can't open supersign,owner has no ios developer" % (app_id))
                             res.code = 1008
                             res.msg = "超级签开发者不存在，无法开启"
                             return Response(res.dict)
                         apps_obj.issupersign = data.get("issupersign", apps_obj.issupersign)
                     apps_obj.save()
                 except Exception as e:
-                    print(e)
+                    logger.error("app_id:%s update Exception:%s" % (app_id, e))
                     res.code = 1005
                     res.msg = "短连接已经存在"
 
         return Response(res.dict)
 
-    def post(self, request, app_id):
-        res = BaseResponse()
-
-        # 获取多个file
-        files = request.FILES.getlist('file', None)
-        for file_obj in files:
-            # 将文件缓存到本地后上传
-            try:
-                app_type = file_obj.name.split(".")[-1]
-                if app_type in ['png', 'jpeg', 'jpg']:
-                    # 上传图片
-                    pass
-                else:
-                    raise
-            except Exception as e:
-                res.code = 1003
-                res.msg = "错误的类型"
-                return Response(res.dict)
-
-            if app_id:
-                apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
-                if apps_obj:
-                    release_obj = AppReleaseInfo.objects.filter(app_id=apps_obj, is_master=True).first()
-                    if release_obj:
-
-                        random_file_name = make_from_user_uuid(request.user)
-                        old_file_name = os.path.basename(release_obj.icon_url)
-                        local_file = os.path.join(settings.MEDIA_ROOT, "icons",
-                                                  random_file_name + "." + old_file_name.split(".")[1])
-                        # 读取传入的文件
-                        try:
-                            destination = open(local_file, 'wb+')
-                            for chunk in file_obj.chunks():
-                                # 写入本地文件
-                                destination.write(chunk)
-                            destination.close()
-                        except Exception as e:
-                            res.code = 1003
-                            res.msg = "数据写入失败"
-                            return Response(res.dict)
-                        release_obj.icon_url = release_obj.icon_url.replace(old_file_name.split(".")[0],
-                                                                            random_file_name)
-                        release_obj.save()
-                        del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
-
-                        storage = Storage(request.user)
-                        storage.delete_file(old_file_name)
-
-                    else:
-                        res.code = 1003
-                else:
-                    res.code = 1003
-        return Response(res.dict)
+    # def post(self, request, app_id):
+    #     res = BaseResponse()
+    #
+    #     # 获取多个file
+    #     files = request.FILES.getlist('file', None)
+    #     for file_obj in files:
+    #         # 将文件缓存到本地后上传
+    #         try:
+    #             app_type = file_obj.name.split(".")[-1]
+    #             if app_type in ['png', 'jpeg', 'jpg']:
+    #                 # 上传图片
+    #                 pass
+    #             else:
+    #                 raise
+    #         except Exception as e:
+    #             res.code = 1003
+    #             res.msg = "错误的类型"
+    #             return Response(res.dict)
+    #
+    #         if app_id:
+    #             apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
+    #             if apps_obj:
+    #                 release_obj = AppReleaseInfo.objects.filter(app_id=apps_obj, is_master=True).first()
+    #                 if release_obj:
+    #
+    #                     random_file_name = make_from_user_uuid(request.user)
+    #                     old_file_name = os.path.basename(release_obj.icon_url)
+    #                     local_file = os.path.join(settings.MEDIA_ROOT, "icons",
+    #                                               random_file_name + "." + old_file_name.split(".")[1])
+    #                     # 读取传入的文件
+    #                     try:
+    #                         destination = open(local_file, 'wb+')
+    #                         for chunk in file_obj.chunks():
+    #                             # 写入本地文件
+    #                             destination.write(chunk)
+    #                         destination.close()
+    #                     except Exception as e:
+    #                         res.code = 1003
+    #                         res.msg = "数据写入失败"
+    #                         return Response(res.dict)
+    #                     release_obj.icon_url = release_obj.icon_url.replace(old_file_name.split(".")[0],
+    #                                                                         random_file_name)
+    #                     release_obj.save()
+    #                     del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
+    #
+    #                     storage = Storage(request.user)
+    #                     storage.delete_file(old_file_name)
+    #
+    #                 else:
+    #                     res.code = 1003
+    #             else:
+    #                 res.code = 1003
+    #     return Response(res.dict)
 
 
 class AppReleaseinfoView(APIView):

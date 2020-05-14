@@ -6,11 +6,16 @@ from django.core.cache import cache
 from rest_framework.views import APIView
 import binascii
 import os, datetime
+from api.utils.utils import get_captcha, valid_captcha
 from api.utils.TokenManager import DownloadToken, generateNumericTokenOfLength
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
 from django.middleware import csrf
 from fir_ser.settings import CACHE_KEY_TEMPLATE
+from api.utils.storage.caches import login_auth_failed
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_token(request):
@@ -27,54 +32,54 @@ class LoginView(APIView):
         receive = request.data
 
         if request.method == 'POST':
-            # print(receive)
-            # is_valid = verify(receive)
-            is_valid = True
-            # print("is_valid", is_valid)
+            username = receive.get("username", None)
+            is_valid = valid_captcha(receive.get("cptch_key", None), receive.get("authcode", None), username)
             if is_valid:
-                username = receive.get("username")
-                password = receive.get("password")
-                user = auth.authenticate(username=username, password=password)
-                print(username, password, user)
-                if user is not None:
-                    if user.is_active:
+                if login_auth_failed("get", username):
+                    password = receive.get("password")
+                    user = auth.authenticate(username=username, password=password)
+                    logger.info("username:%s  password:%s" % (username, password))
+                    if user is not None:
+                        if user.is_active:
+                            login_auth_failed("del", username)
+                            # update the token
+                            key = self.generate_key()
+                            now = datetime.datetime.now()
+                            user_info = UserInfo.objects.get(pk=user.pk)
 
-                        # update the token
-                        key = self.generate_key()
-                        now = datetime.datetime.now()
-                        user_info = UserInfo.objects.get(pk=user.pk)
+                            auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'), key])
+                            cache.set(auth_key, {'uid': user_info.uid, 'username': user_info.username}, 3600 * 24 * 7)
+                            Token.objects.create(user=user, **{"access_token": key, "created": now})
 
-                        auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'), key])
-                        cache.set(auth_key, {'uid': user_info.uid, 'username': user_info.username}, 3600 * 24 * 7)
-                        Token.objects.create(user=user, **{"access_token": key, "created": now})
-
-                        serializer = UserInfoSerializer(user_info, )
-                        data = serializer.data
-                        response.msg = "验证成功!"
-                        response.userinfo = data
-                        response.token = key
+                            serializer = UserInfoSerializer(user_info, )
+                            data = serializer.data
+                            response.msg = "验证成功!"
+                            response.userinfo = data
+                            response.token = key
+                        else:
+                            response.msg = "用户被禁用"
+                            response.code = 1005
                     else:
-                        response.msg = "用户被禁用"
-                        response.code = 1002
+                        login_auth_failed("set", username)
+                        try:
+                            UserInfo.objects.get(username=username)
+                            response.msg = "密码或者账户有误"
+                            response.code = 1002
+                        except UserInfo.DoesNotExist:
+                            response.msg = "用户不存在!"
+                            response.code = 1003
                 else:
-                    try:
-                        UserInfo.objects.get(username=username)
-                        response.msg = "密码错误或者!"
-                        response.code = 1002
-                    except UserInfo.DoesNotExist:
-                        response.msg = "用户不存在!"
-                        response.code = 1003
+                    response.code = 1006
+                    response.msg = "用户登录失败次数过多，已被锁定，请24小时之后再次尝试"
             else:
-
                 response.code = 1001
-                response.msg = "请完成滑动验证!"
+                response.msg = "验证码有误"
 
             return Response(response.dict)
 
     def get(self, request):
         response = BaseResponse()
-        csrf = get_token(request)
-        response.data = csrf
+        response.data = get_captcha()
         return Response(response.dict)
 
 
