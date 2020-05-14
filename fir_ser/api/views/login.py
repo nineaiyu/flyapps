@@ -70,7 +70,7 @@ class LoginView(APIView):
                             response.code = 1003
                 else:
                     response.code = 1006
-                    response.msg = "用户登录失败次数过多，已被锁定，请24小时之后再次尝试"
+                    response.msg = "用户登录失败次数过多，已被锁定，请1小时之后再次尝试"
             else:
                 response.code = 1001
                 response.msg = "验证码有误"

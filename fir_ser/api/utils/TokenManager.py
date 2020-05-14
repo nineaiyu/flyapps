@@ -10,12 +10,6 @@ import time
 from django.core.cache import cache
 from fir_ser.settings import CACHE_KEY_TEMPLATE
 
-'''
-        user = cache.get(token)
-        delta = datetime.timedelta(weeks=2) - delta
-        cache.set(token_obj.key, token_obj.user, min(delta.total_seconds(), 3600 * 24 * 7))
-'''
-
 
 class DownloadToken(object):
 

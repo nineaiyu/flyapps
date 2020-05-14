@@ -8,7 +8,8 @@ from api.utils.app.shellcmds import shell_command, use_user_pass, pshell_command
 from fir_ser.settings import SUPER_SIGN_ROOT
 import os
 from api.utils.app.randomstrings import make_app_uuid
-
+import logging
+logger = logging.getLogger(__file__)
 
 def exec_shell(cmd, remote=False, timeout=None):
     if remote:
@@ -17,12 +18,11 @@ def exec_shell(cmd, remote=False, timeout=None):
         user = "root"
         passwd = "root"
         result = use_user_pass(hostip, port, user, passwd, cmd)
-        print(result)
         return result
     else:
-        print(cmd)
+        logger.info("exec_shell cmd:%s"%(cmd))
         result = shell_command(cmd, timeout)
-        print(result)
+        logger.info("exec_shell cmd:%s  result:%s"%(cmd,result))
         if result.get("exit_code") != 0:
             err_info = result.get("err_info", None)
             if err_info:
@@ -46,15 +46,15 @@ class AppDeveloperApi(object):
 
     def active(self, user_obj):
         self.cmd = self.cmd + " active "
-        print(self.cmd)
+        logger.info("ios developer active cmd:%s"%(self.cmd))
         result = {}
         try:
             result = pshell_command(self.cmd, user_obj, self.username)
-            print(result)
+            logger.info("ios developer active cmd:%s  result:%s" % (self.cmd ,result))
             if result["exit_code"] == 0:
                 return True, result
         except Exception as e:
-            print(e)
+            logger.error("ios developer active cmd:%s Failed Exception:%s" % (self.cmd, e))
         return False, result
 
     def file_format_path_name(self, user_obj):

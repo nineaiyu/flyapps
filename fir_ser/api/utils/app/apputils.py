@@ -8,7 +8,8 @@ from api.models import AppReleaseInfo, Apps
 import random
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short
-
+import logging
+logger=logging.getLogger(__file__)
 
 def make_resigned(bin_url, img_url, bundle_id, app_version, name):
     ios_plist_tem = """<?xml version="1.0" encoding="UTF-8"?>
@@ -127,9 +128,7 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
         try:
             appmobj = Apps.objects.create(**appdata)
         except Exception as e:
-            print(e)
-            # storage.delete_file(app_file_name)
-            # storage.delete_file(app_img)
+            logger.error("create new app failed,appdata:%s  Exception:%s"%(appdata,e))
             return False
     else:
         try:
@@ -140,7 +139,7 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
             appmobj.bundle_id = bundle_id
             appmobj.save()
         except Exception as e:
-            print(e)
+            logger.error("save app info failed,appmobj:%s  Exception:%s"%(appmobj,e))
             appmobj.bundle_id = bundle_id
             appmobj.name = appinfo["labelname"]
             appmobj.save()
@@ -163,25 +162,25 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
     try:
         AppReleaseInfo.objects.create(**release_data)
     except Exception as e:
-        print(e)
+        logging.error("create app release failed,release_data:%s  Exception:%s" % (release_data, e))
         if newapp:
+            logger.info("create app release failed,release_data:%s ,and app is new ,so delete this app:%s" % (release_data, appmobj))
             appmobj.delete()
         return False
     try:
         history_release_limit = int(user_obj.history_release_limit)
     except Exception as e:
-        print(e)
+        logger.error("get history_release_limit failed,history_release_limit:%s  Exception:%s" % (user_obj.history_release_limit, e))
         return True
 
-    if history_release_limit == 0:
-        pass
-    else:
+    if history_release_limit != 0:
         release_queryset = AppReleaseInfo.objects.filter(app_id=appmobj).order_by("-created_time")
         if release_queryset.count() > history_release_limit:
             flag = 0
             for release_obj in release_queryset:
                 flag += 1
                 if flag > history_release_limit:
+                    logging.info("history_release_limit:%s this release is to more,so delete it release_id:%s"%(history_release_limit,release_obj.release_id))
                     storage.delete_file(release_obj.release_id, appmobj.type)
                     storage.delete_file(release_obj.icon_url)
                     release_obj.delete()

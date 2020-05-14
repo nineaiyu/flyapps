@@ -4,7 +4,9 @@ from api.utils.app.apputils import bytes2human
 from api.utils.TokenManager import DownloadToken
 from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided
-import os, json
+import os, json, logging
+
+logger = logging.getLogger(__file__)
 
 token_obj = DownloadToken()
 
@@ -213,7 +215,7 @@ class StorageSerializer(serializers.ModelSerializer):
         try:
             infos = json.loads(obj.additionalparameters)
         except Exception as e:
-            print(e)
+            logger.error("%s additionalparameter loads failed Exception:%s" % (obj.additionalparameters, e))
         return infos
 
     def create(self, validated_data):

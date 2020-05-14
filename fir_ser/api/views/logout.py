@@ -4,12 +4,10 @@ from api.models import Token
 from django.core.cache import cache
 from rest_framework.response import Response
 
-from api.utils.permission import LoginUserPermission
 
 
 class LogoutView(APIView):
     authentication_classes = [ExpiringTokenAuthentication]
-    permission_classes = [LoginUserPermission]
 
     def delete(self, request):
         user = request.user.pk

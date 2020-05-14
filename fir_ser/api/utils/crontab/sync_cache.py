@@ -10,14 +10,17 @@ from django.core.cache import cache
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE
 import time
 from django_apscheduler.models import DjangoJobExecution
-
+import logging
+logger = logging.getLogger(__file__)
 
 def sync_download_times():
     down_tem_key = CACHE_KEY_TEMPLATE.get("download_times_key")
     key = "_".join([down_tem_key, '*'])
     for app_download in cache.iter_keys(key):
+        count_hits = cache.get(app_download)
         app_id = app_download.split(down_tem_key)[1].strip('_')
-        Apps.objects.filter(app_id=app_id).update(count_hits=cache.get(app_download))
+        Apps.objects.filter(app_id=app_id).update(count_hits=count_hits)
+        logger.info("sync_download_times app_id:%s count_hits:%s"%(app_id,count_hits))
 
 
 def sync_download_times_by_app_id(app_ids):
@@ -29,6 +32,7 @@ def sync_download_times_by_app_id(app_ids):
     for k, v in down_times_lists.items():
         app_id = k.split(CACHE_KEY_TEMPLATE.get("download_times_key"))[1].strip('_')
         Apps.objects.filter(app_id=app_id).update(count_hits=v)
+        logger.info("sync_download_times_by_app_id app_id:%s count_hits:%s"%(app_id,v))
 
 
 def auto_clean_upload_tmp_file():
@@ -45,7 +49,10 @@ def auto_clean_upload_tmp_file():
                     filename = data.get("filename", None)
                     if filename:
                         storage.delete_file(filename)
+                        logger.info("auto_clean_upload_tmp_file delete_file :%s " % (filename))
+
                 cache.delete(upload_tem_file_key)
+                logger.info("auto_clean_upload_tmp_file upload_tem_file_key :%s " % (upload_tem_file_key))
 
 
 def auto_delete_job_log():

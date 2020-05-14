@@ -19,7 +19,6 @@ from rest_framework.routers import DefaultRouter
 # from api.views.course import CourseView,CourseDetailView,CourseCategoryView
 from api.views.login import LoginView
 from api.views.logout import LogoutView
-from api.views.captcha import CaptchaView
 # from api.views.shoppingcart import ShoppingCarView
 # from api.views.account import AccountView
 # from api.views.payment import PaymentView
