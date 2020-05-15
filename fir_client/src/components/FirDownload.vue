@@ -6,7 +6,7 @@
         </el-header>
         <el-main>
 
-            <div class="wechat_tip_content" v-if="agent === 'wxandroid'">
+            <div class="wechat_tip_content" v-if="agent === 'wxandroid' || agent === 'wxapple'">
                 <div class="wechat_tip">
                     <i class="triangle-up"></i>请点击右上角<br>选择"浏览器中打开"
                 </div>
@@ -59,7 +59,7 @@
 
                                     <div id="actions" class="actions" v-if="agent !==''">
 
-                                        <el-button type="info" round v-if="agent === 'wxandroid'">不支持在微信内下载安装
+                                        <el-button type="info" round v-if="agent === 'wxandroid' || agent === 'wxapple'">不支持在微信内下载安装
                                         </el-button>
 
                                         <button type="button" v-else-if="wrong">{{ msg }}</button>

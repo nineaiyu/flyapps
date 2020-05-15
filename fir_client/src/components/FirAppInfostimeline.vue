@@ -46,9 +46,9 @@
 
                     <el-input v-if="app.editing.binary_url"
                               v-model="app.binary_url"
-                              placeholder="下载地址,默认本服务器，填写第三方可以 自动跳转到第三方平台">
+                              placeholder="下载地址,默认本服务器，填写第三方可以 自动跳转到第三方平台" clearable>
                     </el-input>
-                    <div class="release-actions editing " v-if="app.editing.binary_url">
+                    <div class="release-actions editing " v-if="app.editing.binary_url" style="margin-top: 10px">
 
                         <button class="btn-cancel" @click="endEdit(app,'binary_url')"><span
                         >取消</span></button>
