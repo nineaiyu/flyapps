@@ -58,6 +58,7 @@ class DeveloperView(APIView):
                 act = data.get("act", None)
                 if act:
                     res = BaseResponse()
+                    logger.info("user %s iosdeveloper %s act %s" % (request.user, developer_obj, act))
                     if act == "preactive":
                         developer_auth_code("del", request.user, developer_obj.email)
                         status, result = IosUtils.active_developer(developer_obj, request.user)
@@ -107,19 +108,28 @@ class DeveloperView(APIView):
                             res.msg = result.get("return_info")
                             return Response(res.dict)
                 else:
+                    logger.info("user %s iosdeveloper %s update input data %s" % (request.user, developer_obj, data))
+                    logger.info("user %s iosdeveloper %s update old data %s" % (
+                    request.user, developer_obj, developer_obj.__dict__))
                     try:
                         usable_number = int(data.get("usable_number", developer_obj.usable_number))
                         if usable_number >= 0 and usable_number <= 100:
                             developer_obj.usable_number = usable_number
                     except Exception as e:
                         logger.error("developer %s usable_number %s get failed Exception:%s" % (
-                        developer_obj, data.get("usable_number", developer_obj.usable_number), e))
+                            developer_obj, data.get("usable_number", developer_obj.usable_number), e))
                     developer_obj.description = data.get("description", developer_obj.description)
                     password = data.get("password", developer_obj.password)
                     if password != "" and password != developer_obj.password:
                         developer_obj.password = password
                         developer_obj.is_actived = False
-                    developer_obj.save()
+                    try:
+                        developer_obj.save()
+                        logger.info("user %s iosdeveloper %s update now data %s" % (
+                            request.user, developer_obj, developer_obj.__dict__))
+                    except Exception as e:
+                        logger.error("user %s iosdeveloper %s update error data %s Exception %s" % (
+                            request.user, developer_obj, data, e))
 
         return self.get(request)
 
@@ -132,6 +142,8 @@ class DeveloperView(APIView):
             "email": data.get("email", ""),
         }
         try:
+            logger.error("user %s  add new developer %s  data %s" % (
+                request.user, data.get("email", ""), datainfo))
             AppIOSDeveloperInfo.objects.create(user_id=request.user, **datainfo)
         except Exception as e:
             logger.error("user %s create developer %s failed Exception:%s" % (
@@ -148,6 +160,8 @@ class DeveloperView(APIView):
         if email:
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, email=email).first()
             if developer_obj:
+                logger.error("user %s delete developer %s " % (
+                    request.user, developer_obj))
                 IosUtils.clean_developer(developer_obj, request.user)
                 developer_obj.delete()
 
@@ -211,6 +225,8 @@ class AppUDIDUsedView(APIView):
         id = request.query_params.get("id", None)
         app_id = request.query_params.get("aid", None)
         app_udid_obj = AppUDID.objects.filter(app_id__user_id_id=request.user, pk=id)
-        IosUtils.disable_udid(app_udid_obj.first(), app_id)
-        app_udid_obj.delete()
+        if app_udid_obj:
+            logger.error("user %s delete devices %s" % (request.user, app_udid_obj))
+            IosUtils.disable_udid(app_udid_obj.first(), app_id)
+            app_udid_obj.delete()
         return Response(res.dict)

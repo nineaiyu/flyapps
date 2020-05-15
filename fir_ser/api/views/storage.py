@@ -56,18 +56,20 @@ class StorageView(APIView):
     def post(self, request):
         res = BaseResponse()
         data = request.data
+        logger.info("user %s add new storage data:%s" % (request.user, data))
         try:
             data['additionalparameters'] = json.dumps(data.get('additionalparameter', ''))
         except Exception as e:
             logger.error("user:%s additionalparameters %s dumps failed Exception:%s" % (
-            request.user, data.get('additionalparameter', ''), e))
+                request.user, data.get('additionalparameter', ''), e))
 
         serializer = StorageSerializer(data=data, context={'user_obj': request.user})
         if serializer.is_valid():
             serializer.save()
             res.msg = serializer.validated_data
-
+            logger.info("user %s add new storage success" % (request.user))
         else:
+            logger.info("user %s add new storage failed" % (request.user))
             res.msg = serializer.errors
             res.code = 1005
         return Response(res.dict)
@@ -75,6 +77,7 @@ class StorageView(APIView):
     def put(self, request):
         res = BaseResponse()
         data = request.data
+        logger.info("user %s update storage data:%s" % (request.user, data))
 
         use_storage_id = data.get("use_storage_id", None)
         if use_storage_id:
@@ -116,7 +119,11 @@ class StorageView(APIView):
         res = BaseResponse()
         storage_id = request.query_params.get("id", None)
         if storage_id:
-            AppStorage.objects.filter(user_id=request.user, id=storage_id).delete()
+            try:
+                AppStorage.objects.filter(user_id=request.user, id=storage_id).delete()
+                logger.error("user %s delete storage id:%s success" % (request.user, storage_id))
+            except Exception as e:
+                logger.error("user %s delete storage id:%s failed Exception:%s" % (request.user, storage_id, e))
         else:
             res.code = 1004
             res.msg = '该存储不存在'

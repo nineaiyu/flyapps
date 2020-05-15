@@ -100,7 +100,7 @@ class AppAnalyseView(APIView):
 
             png_tmp_filename = data.get("png_key")
             png_new_filename = data.get("png_key").strip(settings.FILE_UPLOAD_TMP_KEY)
-
+            logger.info("user %s create or update app %s  data:%s" % (request.user, data.get("bundleid"), data))
             if SaveAppInfos(app_new_filename, request.user, appinfo,
                             data.get("bundleid"), png_new_filename, data.get("short"), data.get('filesize')):
                 pass
@@ -115,7 +115,7 @@ class AppAnalyseView(APIView):
             upload_file_tmp_name("del", png_tmp_filename, request.user.id)
 
         except Exception as e:
-            logger.error("%s %s save app info failed Exception:%s" % (request.user, data.get("bundleid"), e))
+            logger.error("user %s %s save app info failed Exception:%s" % (request.user, data.get("bundleid"), e))
             res.code = 10003
         return Response(res.dict)
 
@@ -229,6 +229,7 @@ class UploadView(APIView):
                 random_file_name = make_from_user_uuid(request.user)
                 local_file = os.path.join(settings.MEDIA_ROOT, certinfo.get("upload_key", random_file_name))
                 # 读取传入的文件
+                logger.info("user:%s  save file:%s" % (request.user, local_file))
                 try:
                     destination = open(local_file, 'wb+')
                     for chunk in file_obj.chunks():
@@ -260,10 +261,11 @@ class UploadView(APIView):
         certinfo = request.data.get('certinfo', None)
         if certinfo:
             app_id = certinfo.get("app_id", None)
+            logger.info("user %s update img %s info" % (request.user, app_id))
 
             ftype = certinfo.get('ftype', None)
             storage = Storage(request.user)
-            if ftype and ftype == 'app':
+            if ftype and app_id and ftype == 'app':
                 app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
                 if app_obj:
                     release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
@@ -271,10 +273,10 @@ class UploadView(APIView):
                         old_file_key = release_obj.icon_url
                         release_obj.icon_url = certinfo.get("upload_key")
                         release_obj.save()
-                        del_cache_response_by_short(app_obj.short, app_id)
+                        del_cache_response_by_short(app_id)
                         storage.delete_file(old_file_key)
                         return Response(res.dict)
-            elif ftype and ftype == 'head':
+            elif ftype and app_id and ftype == 'head':
                 if request.user.uid != app_id:
                     res.code = 1007
                     res.msg = '该用户不存在'

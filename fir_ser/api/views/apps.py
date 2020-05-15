@@ -9,10 +9,7 @@ from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
 from django.db.models import Sum, F
-import os
-from fir_ser import settings
 from api.utils.app.supersignutils import IosUtils
-from api.utils.app.randomstrings import make_from_user_uuid
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo
@@ -37,7 +34,6 @@ class AppsView(APIView):
 
         app_type = request.query_params.get("type", None)
         act_type = request.query_params.get("act", None)
-        logger.info("app_type:%s act_type:%s" % (app_type, act_type))
         res = BaseResponse()
         res.hdata = {"all_hits_count": 0}
         res.hdata["upload_domain"] = request.user.domain_name
@@ -122,20 +118,20 @@ class AppInfoView(APIView):
             apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
             if apps_obj:
                 if apps_obj.issupersign:
-                    logger.info("app_id:%s is supersign ,so delete this app need clean IOS developer")
+                    logger.info("app_id:%s is supersign ,delete this app need clean IOS developer" % (app_id))
                     IosUtils.clean_app_by_user_obj(apps_obj, request.user)
 
                 storage = Storage(request.user)
                 has_combo = apps_obj.has_combo
                 if has_combo:
                     logger.info(
-                        "app_id:%s has_combo ,so delete this app need uncombo and clean del_cache_response_by_short")
-                    del_cache_response_by_short(apps_obj.has_combo.short, apps_obj.has_combo.app_id)
+                        "app_id:%s has_combo ,delete this app need uncombo and clean del_cache_response_by_short" % (
+                            app_id))
                     apps_obj.has_combo.has_combo = None
-                del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
+                del_cache_response_by_short(apps_obj.app_id)
                 for appreleaseobj in AppReleaseInfo.objects.filter(app_id=apps_obj).all():
-                    logger.info("app_id:%s has_combo ,so delete this app need clean all release,release_id:%s" % (
-                        appreleaseobj.release_id))
+                    logger.info("delete app_id:%s  need clean all release,release_id:%s" % (
+                        app_id, appreleaseobj.release_id))
                     storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
                     storage.delete_file(appreleaseobj.icon_url)
                     appreleaseobj.delete()
@@ -175,8 +171,7 @@ class AppInfoView(APIView):
                             has_combo.update(**{"has_combo": apps_obj.first()})
                         else:
                             pass
-                        del_cache_response_by_short(apps_obj.first().short, apps_obj.first().app_id)
-                        del_cache_response_by_short(has_combo.first().short, has_combo.first().app_id)
+                        del_cache_response_by_short(apps_obj.first().app_id)
 
                     except Exception as e:
                         logger.error("app_id:%s actions:%s hcombo_id:%s Exception:%s" % (app_id, actions, hcombo_id, e))
@@ -185,8 +180,9 @@ class AppInfoView(APIView):
             else:
                 try:
                     apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
+                    logger.info("app_id:%s update old data:%s" % (app_id, apps_obj.__dict__))
                     apps_obj.description = data.get("description", apps_obj.description)
-                    del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
+                    del_cache_response_by_short(apps_obj.app_id)
                     apps_obj.short = data.get("short", apps_obj.short)
                     apps_obj.name = data.get("name", apps_obj.name)
                     apps_obj.password = data.get("password", apps_obj.password)
@@ -206,6 +202,7 @@ class AppInfoView(APIView):
                             res.msg = "超级签开发者不存在，无法开启"
                             return Response(res.dict)
                         apps_obj.issupersign = data.get("issupersign", apps_obj.issupersign)
+                    logger.info("app_id:%s update new data:%s" % (app_id, apps_obj.__dict__))
                     apps_obj.save()
                 except Exception as e:
                     logger.error("app_id:%s update Exception:%s" % (app_id, e))
@@ -300,11 +297,13 @@ class AppReleaseinfoView(APIView):
                 apprelease_count = AppReleaseInfo.objects.filter(app_id=apps_obj).values("release_id").count()
                 appreleaseobj = AppReleaseInfo.objects.filter(app_id=apps_obj, release_id=act).first()
                 if not appreleaseobj.is_master:
+                    logger.info("delete app release %s" % (appreleaseobj))
                     storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
                     storage.delete_file(appreleaseobj.icon_url)
 
                     appreleaseobj.delete()
                 elif appreleaseobj.is_master and apprelease_count < 2:
+                    logger.info("delete app master release %s and clean app %s " % (appreleaseobj, apps_obj))
                     storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
                     storage.delete_file(appreleaseobj.icon_url)
 
@@ -316,7 +315,7 @@ class AppReleaseinfoView(APIView):
                     apps_obj.delete()
                 else:
                     pass
-                del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
+                del_cache_response_by_short(apps_obj.app_id)
 
         return Response(res.dict)
 
@@ -327,16 +326,16 @@ class AppReleaseinfoView(APIView):
             apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
             if apps_obj:
                 appreleaseobj = AppReleaseInfo.objects.filter(app_id=apps_obj, release_id=act)
-
-                make_master = request.data.get("make_master", None)
+                data = request.data
+                make_master = data.get("make_master", None)
                 try:
                     if make_master and make_master == act:
                         AppReleaseInfo.objects.filter(app_id=apps_obj).update(**{"is_master": False})
                         appreleaseobj.update(**{"is_master": True})
                     else:
                         appreleaseobj.update(
-                            **{"changelog": request.data.get("changelog", appreleaseobj.first().changelog)})
-                        binary_url = request.data.get("binary_url", None)
+                            **{"changelog": data.get("changelog", appreleaseobj.first().changelog)})
+                        binary_url = data.get("binary_url", None)
                         if binary_url != '':
                             if binary_url:
                                 if not binary_url.startswith('http'):
@@ -345,13 +344,14 @@ class AppReleaseinfoView(APIView):
                                 binary_url = appreleaseobj.first().binary_url
 
                         appreleaseobj.update(**{"binary_url": binary_url})
-
+                    logger.info("update app:%s release:%s data:%s" % (apps_obj, appreleaseobj, data))
                 except Exception as e:
+                    logger.error("update app:%s release:%s failed Exception:%s" % (apps_obj, appreleaseobj, e))
                     res.code = 1006
                     res.msg = "更新失败"
                     return Response(res.dict)
 
-                del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
+                del_cache_response_by_short(apps_obj.app_id)
                 app_serializer = AppsSerializer(apps_obj)
                 res.data["currentapp"] = app_serializer.data
 

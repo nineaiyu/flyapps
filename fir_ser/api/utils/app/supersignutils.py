@@ -172,7 +172,9 @@ class IosUtils(object):
             if apptodev_obj:
                 release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
                 if release_obj.release_id == apptodev_obj.release_file:
+                    logger.info("udid %s exists app_id %s" % (self.udid_info.get('udid'), self.app_obj))
                     return
+        logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
         self.download_profile()
 
         file_format_path_name = file_format_path(self.user_obj, self.auth)
@@ -200,6 +202,8 @@ class IosUtils(object):
         if appsupersign_obj.count() == 0:
             developer_obj = self.developer_obj
             developer_obj.use_number = developer_obj.use_number + 1
+            logger.info("developer %s use_number+1 now %s udid %s app_id %s" % (
+            developer_obj, developer_obj.use_number, self.udid_info.get('udid'), self.app_obj))
             developer_obj.save()
 
         if not appsupersign_obj.filter(app_id=self.app_obj, user_id=self.user_obj).first():
@@ -208,7 +212,7 @@ class IosUtils(object):
                                                 udid=AppUDID.objects.filter(app_id=self.app_obj,
                                                                             udid=self.udid_info.get('udid')).first())
 
-        del_cache_response_by_short(self.app_obj.short, self.app_obj.app_id, udid=self.udid_info.get('udid'))
+        del_cache_response_by_short(self.app_obj.app_id, udid=self.udid_info.get('udid'))
 
         app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=self.developer_obj, udid=self.udid_info.get('udid'))
         if not app_udid_obj:

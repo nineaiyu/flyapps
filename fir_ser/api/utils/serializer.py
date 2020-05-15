@@ -102,7 +102,8 @@ class AppsShortSerializer(serializers.ModelSerializer):
     def get_has_combo(self, obj):
         if obj.has_combo:
             obj.has_combo.has_combo = None
-            return AppsSerializer(obj.has_combo, context=self.context).data
+            if obj.has_combo.isshow:
+                return AppsSerializer(obj.has_combo, context=self.context).data
 
     master_release = serializers.SerializerMethodField()
 

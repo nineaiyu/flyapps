@@ -94,7 +94,18 @@ def set_app_download_by_cache(app_id, limit=900):
     return download_times + 1
 
 
-def del_cache_response_by_short(short, app_id, udid=''):
+def del_cache_response_by_short(app_id, udid=''):
+    apps_dict = Apps.objects.filter(app_id=app_id).values("id", "short", "app_id", "has_combo").first()
+    if apps_dict:
+        del_cache_response_by_short_util(apps_dict.get("short"), apps_dict.get("app_id"), udid)
+        if apps_dict.get("has_combo"):
+            combo_dict = Apps.objects.filter(pk=apps_dict.get("has_combo")).values("id", "short", "app_id").first()
+            if combo_dict:
+                del_cache_response_by_short_util(combo_dict.get("short"), combo_dict.get("app_id"), udid)
+
+
+def del_cache_response_by_short_util(short, app_id, udid):
+    logger.info("del_cache_response_by_short short:%s app_id:%s udid:%s" % (short, app_id, udid))
     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short]))
     key = "_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short, '*'])
     for app_download_key in cache.iter_keys(key):
@@ -126,8 +137,9 @@ def del_cache_by_app_id(app_id, user_obj):
 
 
 def del_cache_storage(user_obj):
+    logger.info("del_cache_storage user:%s" % (user_obj))
     for app_obj in Apps.objects.filter(user_id=user_obj):
-        del_cache_response_by_short(app_obj.short, app_obj.app_id)
+        del_cache_response_by_short(app_obj.app_id)
         del_cache_by_app_id(app_obj.app_id, user_obj)
 
     storage_keys = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'), user_obj.uid, '*'])
@@ -185,6 +197,7 @@ def upload_file_tmp_name(act, filename, user_obj_id):
 
 
 def login_auth_failed(act, email):
+    logger.error("login email:%s act:%s" % (email, act))
     auth_code_key = "_".join([CACHE_KEY_TEMPLATE.get("login_failed_try_times_key"), email])
     if act == "set":
         data = {

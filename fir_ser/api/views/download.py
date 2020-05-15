@@ -29,9 +29,6 @@ class DownloadView(APIView):
     文件下载接口,适用于本地存储和所有plist文件下载
     '''
 
-    # authentication_classes = [ExpiringTokenAuthentication, ]
-    # parser_classes = (MultiPartParser,)
-
     def get(self, request, filename):
         res = BaseResponse()
         downtoken = request.query_params.get(settings.DATA_DOWNLOAD_KEY, None)
@@ -113,7 +110,7 @@ class ShortDownloadView(APIView):
             res.msg = "该应用不存在"
             return Response(res.dict)
         if udid:
-            del_cache_response_by_short(short, app_obj.app_id, udid=udid)
+            del_cache_response_by_short(app_obj.app_id, udid=udid)
         if not app_obj.isshow:
             res.code = 1004
             res.msg = "您没有权限访问该应用"

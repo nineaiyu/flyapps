@@ -18,6 +18,7 @@ class IosUDIDView(View):
     def post(self, request, short):
         stream_f = str(request.body)
         format_udid_info = udid_bytes_to_dict(stream_f)
+        logger.info("short %s get new udid %s" % (short, format_udid_info))
         server_domain = get_redirect_server_domain(request)
         try:
             app_info = Apps.objects.filter(short=short).first()
