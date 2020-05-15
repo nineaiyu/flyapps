@@ -397,7 +397,8 @@
             this.getAgent();
         }, mounted() {
             this.getDownloadTokenFun();
-            this.full_url = location.href.split("?")[0];
+            // this.full_url = location.href.split("?")[0];
+            this.full_url = location.href;
             this.qrcode();
         }, filters: {
             getiOStype: function (type) {
