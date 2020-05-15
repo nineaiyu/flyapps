@@ -147,14 +147,6 @@ SUPER_SIGN_ROOT = os.path.join(BASE_DIR, "supersign")
 
 AUTH_USER_MODEL = "api.UserInfo"
 
-GEE_TEST = {
-    "gee_test_access_id": "37ca5631edd1e882721808d35163b3ad",
-    "gee_test_access_key": "7eb11ccf3e0953bdd060ed8b60b0c4f5",
-    "verify_status": True,  # 是否启用滑动验证码验证组件(True表示启用)
-    "not_verify": [
-        "2ba6b08d53a4fd27057a32537e2d55ae",
-    ],  # 不用验证的用户(存放着用户的uid)
-}
 
 CACHES = {
     "default": {
@@ -178,14 +170,6 @@ REST_FRAMEWORK_EXTENSIONS = {
 }
 
 THIRD_PART_CONFIG = {
-    # 阿里云服务配置
-    "ALI_YUN": {
-
-    },
-    # 滑动验证码服务配置
-    "GEE_TEST": {
-
-    },
     # APP存储配置
     'storage': [
         {

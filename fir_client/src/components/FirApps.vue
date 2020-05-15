@@ -625,7 +625,7 @@
                 let keysearch = this.keysearch.replace(/^\s+|\s+$/g, "");
                 let newapplists = [];
                 for (let i = 0; i < this.orgapplists.length; i++) {
-                    if (this.orgapplists[i].name.search(keysearch) === 0) {
+                    if (this.orgapplists[i].name.search(keysearch) >= 0) {
                         newapplists.push(this.orgapplists[i]);
                     }
                 }
