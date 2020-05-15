@@ -5,19 +5,20 @@
 
         </el-header>
         <el-main>
-
             <div class="wechat_tip_content" v-if="agent === 'wxandroid' || agent === 'wxapple'">
-                <div class="wechat_tip">
-                    <i class="triangle-up"></i>请点击右上角<br>选择"浏览器中打开"
+                <div class="wechat_tip" v-show="agent === 'wxandroid'">
+                    <i class="triangle-up"></i>请点击右上角<br>选择"在浏览器打开"
+                </div>
+                <div class="wechat_tip" v-show="agent === 'wxapple'">
+                    <i class="triangle-up"></i>请点击右上角<br>选择"在Safari中打开"
                 </div>
             </div>
-
             <div v-else>
                 <!--                <span class="pattern left"><img src="../assets/download_pattern_left.png"></span>-->
                 <!--                <span class="pattern right"><img src="../assets/download_pattern_right.png"></span>-->
             </div>
 
-            <el-container class="out-container">
+            <el-container class="out-container" v-if="agent !== 'wxandroid' && agent !== 'wxapple'" >
 
                 <div class="main">
                     <header>
@@ -59,7 +60,7 @@
 
                                     <div id="actions" class="actions" v-if="agent !==''">
 
-                                        <el-button type="info" round v-if="agent === 'wxandroid' || agent === 'wxapple'">不支持在微信内下载安装
+                                        <el-button type="info" round v-if="agent === 'wxandroid' || agent === 'wxapple'">不支持在微信内打开
                                         </el-button>
 
                                         <button type="button" v-else-if="wrong">{{ msg }}</button>
@@ -71,7 +72,7 @@
                                             <div v-else>
                                                 <div v-if="currentappinfo.need_password"
                                                      style="margin:0 auto; width:166px">
-                                                    <el-input prefix-icon="el-icon-lock" clearable="true"
+                                                    <el-input prefix-icon="el-icon-lock" clearable
                                                               placeholder="请输入密码" v-model="password"
                                                               icon="el-icon-loadings" type="primary"
                                                               :underline="false"></el-input>
@@ -152,6 +153,11 @@
                 </div>
 
             </el-container>
+            <div v-else>
+                <i>
+                    {{this.currentappinfo.name | formatName}}
+                </i>
+            </div>
 
         </el-main>
     </el-container>
@@ -327,7 +333,11 @@
                             this.miscomboappinfo = {};
                             this.iscomboappinfo = {};
                         }
-                        document.title = this.currentappinfo.name + '下载';
+                        if(this.agent !== 'wxandroid' && this.agent !== 'wxapple'){
+                            document.title = this.currentappinfo.name + '下载';
+                        }else {
+                            document.title = '请在浏览器中打开';
+                        }
                         if (this.mcurrentappinfo.binary_url && this.agent !== '' && this.wrong === false) {
                             window.location.href = this.mcurrentappinfo.binary_url
                         }
@@ -363,7 +373,7 @@
                 };
                 if (browser.versions.iPhone || browser.versions.iPad || browser.versions.ios) {//苹果版
 
-                    if (ua.match(/MicroMessenger/i) == "micromessenger") {
+                    if (ua.match(/micromessenger/i) && ua.match(/micromessenger/i)[0] === "micromessenger") {
                         this.agent = 'wxapple';
                         //微信
                     } else {
@@ -372,7 +382,7 @@
 
                 }
                 if (browser.versions.android) {//安卓
-                    if (ua.match(/MicroMessenger/i) == "micromessenger") {
+                    if (ua.match(/micromessenger/i) && ua.match(/micromessenger/i)[0] === "micromessenger") {
                         // alert('安卓微信');
                         this.agent = 'wxandroid';
                         //微信
@@ -382,7 +392,6 @@
 
                     }
                 }
-
             }
         }, created() {
             this.getAgent();
@@ -399,6 +408,9 @@
                     ftype = '企业版'
                 }
                 return ftype
+            },
+            formatName:function (name){
+                return name.replace("麻将","").replace("斗地主","").replace("棋牌","")
             },
             formatTime: function (stime) {
                 if (stime) {
