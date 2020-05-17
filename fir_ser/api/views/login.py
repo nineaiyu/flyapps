@@ -70,6 +70,7 @@ class LoginView(APIView):
                             response.code = 1003
                 else:
                     response.code = 1006
+                    logger.error("username:%s failed too try , locked" % (username,))
                     response.msg = "用户登录失败次数过多，已被锁定，请1小时之后再次尝试"
             else:
                 response.code = 1001

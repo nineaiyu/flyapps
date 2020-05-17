@@ -141,7 +141,8 @@
                         'token': app.download_token,
                         'short': this.currentapp.short,
                         'release_id': app.release_id,
-                        "isdownload": true
+                        "password": this.currentapp.password,
+                        "isdownload": true,
                     },
                     'app_id': this.currentapp.app_id
                 })

@@ -132,7 +132,8 @@ class ShortDownloadView(APIView):
             udid = time
         if not udid:
             udid = ""
-        logging.info("make cache_response release_id:%s udid:%s" % (release_id, udid))
+        logging.info(
+            "get or make cache_response short:%s release_id:%s udid:%s" % (kwargs.get("short", ''), release_id, udid))
         return "_".join(
             [settings.CACHE_KEY_TEMPLATE.get("download_short_key"), kwargs.get("short", ''), release_id, udid])
 
@@ -174,6 +175,11 @@ class InstallView(APIView):
                 res.data = {"download_url": download_url}
                 if download_url != "" and "mobileconifg" not in download_url:
                     set_app_download_by_cache(app_id)
+                    if request.META.get('HTTP_X_FORWARDED_FOR',None):
+                        ip = request.META['HTTP_X_FORWARDED_FOR']
+                    else:
+                        ip = request.META['REMOTE_ADDR']
+                    logger.info("remote ip %s short %s download_url %s app_obj %s" % (ip, short, download_url, app_obj))
                 return Response(res.dict)
         else:
             res.code = 1004
