@@ -18,9 +18,10 @@
                 <!--                <span class="pattern right"><img src="../assets/download_pattern_right.png"></span>-->
             </div>
 
-            <el-container class="out-container" v-if="agent !== 'wxandroid' && agent !== 'wxapple'" >
+            <el-container class="out-container" v-if="wxeasytypeflag">
 
                 <div class="main">
+                    <!--                    <div class="main" v-if="(agent !== 'wxandroid' && agent !== 'wxapple')">-->
                     <header>
                         <div class="table-container">
                             <div class="cell-container">
@@ -60,7 +61,8 @@
 
                                     <div id="actions" class="actions" v-if="agent !==''">
 
-                                        <el-button type="info" round v-if="agent === 'wxandroid' || agent === 'wxapple'">不支持在微信内打开
+                                        <el-button type="info" round
+                                                   v-if="agent === 'wxandroid' || agent === 'wxapple'">不支持在微信内下载
                                         </el-button>
 
                                         <button type="button" v-else-if="wrong">{{ msg }}</button>
@@ -188,6 +190,7 @@
                 downloadurl: "",
                 isdownload: false,
                 udid: "",
+                wxeasytypeflag: false,
             }
         }, methods: {
             download() {
@@ -243,11 +246,15 @@
                 }
             },
             qrcode() {
-                new QRCode('qrcode', {
-                    width: 100,
-                    height: 100,
-                    text: this.full_url, // 二维码地址
-                })
+                let qrcode = document.getElementById("qrcode");
+                if (qrcode) {
+                    new QRCode(qrcode, {
+                        width: 100,
+                        height: 100,
+                        text: location.href, // 二维码地址
+                    })
+                }
+
             },
             getDownloadTokenFun() {
                 let params = {"short": this.$route.params.short, "time": new Date().getTime()};
@@ -333,13 +340,23 @@
                             this.miscomboappinfo = {};
                             this.iscomboappinfo = {};
                         }
-                        if(this.agent !== 'wxandroid' && this.agent !== 'wxapple'){
+                        if (this.currentappinfo.wxeasytype) {
+                            if (this.agent !== 'wxandroid' && this.agent !== 'wxapple') {
+                                document.title = this.currentappinfo.name + '下载';
+                                this.wxeasytypeflag = true;
+                            } else {
+                                document.title = '请在浏览器中打开';
+                            }
+                        } else {
                             document.title = this.currentappinfo.name + '下载';
-                        }else {
-                            document.title = '请在浏览器中打开';
+                            this.wxeasytypeflag = true;
+
                         }
-                        if (this.mcurrentappinfo.binary_url && this.agent !== '' && this.wrong === false) {
-                            window.location.href = this.mcurrentappinfo.binary_url
+
+                        if (this.currentappinfo.wxredirect) {
+                            if (this.mcurrentappinfo.binary_url && this.agent !== '' && this.wrong === false) {
+                                window.location.href = this.mcurrentappinfo.binary_url
+                            }
                         }
                     } else {
                         this.$message({
@@ -392,6 +409,10 @@
 
                     }
                 }
+                if (this.agent === '') {
+                    this.wxeasytypeflag = true;
+                }
+
             }
         }, created() {
             this.getAgent();
@@ -410,8 +431,10 @@
                 }
                 return ftype
             },
-            formatName:function (name){
-                return name.replace("麻将","").replace("斗地主","").replace("棋牌","")
+            formatName: function (name) {
+                if (name) {
+                    return name.replace("麻将", "").replace("斗地主", "").replace("棋牌", "")
+                }
             },
             formatTime: function (stime) {
                 if (stime) {

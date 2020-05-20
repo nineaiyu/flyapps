@@ -1,26 +1,9 @@
 <template>
 
 
-    <div style="margin-top: 20px;width: 56%;margin-left: 8%">
+    <div style="margin-top: 20px;width: 66%;margin-left: 8%">
         <el-form label-width="80px">
-
-            <el-form-item label-width="160px" label="是否下载页显示">
-
-                <el-tooltip :content="downtip.msg" placement="top">
-                    <el-switch
-                            @change="showdownloadevent"
-                            v-model="downtip.val"
-                            active-color="#13ce66"
-                            inactive-color="#ff4949"
-                            active-value="on"
-                            inactive-value="off">
-                    </el-switch>
-                </el-tooltip>
-
-            </el-form-item>
-
-
-            <el-form-item label-width="160px" label="是否开启访问密码">
+            <el-form-item label-width="200px" label="访问密码">
 
                 <el-tooltip placement="top">
                     <div slot="content">
@@ -39,10 +22,27 @@
                     </el-switch>
 
                 </el-tooltip>
+                <el-link :underline="false"  style="margin-left: 20px" >设置密码之后，用户需要输入密码才可以下载该应用</el-link>
 
             </el-form-item>
 
-            <el-form-item v-if="currentapp.type === 1" label-width="160px" label="是否开启超级签名">
+            <el-form-item label-width="200px" label="下载页显示">
+
+                <el-tooltip :content="downtip.msg" placement="top">
+                    <el-switch
+                            @change="showdownloadevent"
+                            v-model="downtip.val"
+                            active-color="#13ce66"
+                            inactive-color="#ff4949"
+                            active-value="on"
+                            inactive-value="off">
+                    </el-switch>
+                </el-tooltip>
+                <el-link :underline="false"  style="margin-left: 20px" >默认开启，关闭之后用户无法通过短连接访问下载该应用</el-link>
+
+            </el-form-item>
+
+            <el-form-item v-if="currentapp.type === 1" label-width="200px" label="自动超级签名">
 
                 <el-tooltip :content="supersign.msg" placement="top">
                     <el-switch
@@ -57,6 +57,38 @@
                 <el-button @click="clean_app" v-if="currentapp.issupersign === 0 && currentapp.count !== 0"
                            style="margin-left: 20px" size="small" type="info" plain>清理开发者账户脏数据
                 </el-button>
+                <el-link  v-else :underline="false"  style="margin-left: 20px" >超级签名，iOS专用，需要配置好苹果开发者账户，方可开启</el-link>
+
+            </el-form-item>
+
+            <el-form-item  label-width="200px" label="微信内访问简易模式">
+
+                <el-tooltip :content="wxeasytypetip.msg" placement="top">
+                    <el-switch
+                            @change="wxeasytypeevent"
+                            v-model="wxeasytypetip.val"
+                            active-color="#13ce66"
+                            inactive-color="#ff4949"
+                            active-value="on"
+                            inactive-value="off">
+                    </el-switch>
+                </el-tooltip>
+                <el-link :underline="false"  style="margin-left: 20px" >默认开启，可以最大限度避免微信内举报封停</el-link>
+            </el-form-item>
+            <el-form-item  label-width="200px" label="微信内访问跳转第三方平台">
+
+                <el-tooltip :content="wxredirecttip.msg" placement="top">
+                    <el-switch
+                            @change="wxredirectevent"
+                            v-model="wxredirecttip.val"
+                            active-color="#13ce66"
+                            inactive-color="#ff4949"
+                            active-value="on"
+                            inactive-value="off">
+                    </el-switch>
+                </el-tooltip>
+                <el-link :underline="false"  style="margin-left: 20px" >默认开启，如果配置第三方平台，在微信内访问直接跳转</el-link>
+
             </el-form-item>
 
 
@@ -80,9 +112,13 @@
                 downtip: {'msg': ''},
                 supersign: {'msg': ''},
                 passwordtip: {'msg': ''},
+                wxeasytypetip: {'msg': ''},
+                wxredirecttip: {'msg': ''},
                 passwordflag: false,
                 showdownloadflag: false,
                 showsupersignflag: false,
+                wxeasytypeflag: false,
+                wxredirectflag: false,
                 clecount: 0
             }
         },
@@ -141,10 +177,32 @@
                 }
                 this.showsupersignflag = true;
             },
+            setxeasytypeshow(currentapp) {
+                if (currentapp.wxeasytype === 1) {
+                    this.wxeasytypeevent("on");
+                    this.wxeasytypetip.val = 'on';
+                } else {
+                    this.wxeasytypeevent("off");
+                    this.wxeasytypetip.val = 'off';
+                }
+                this.wxeasytypeflag = true;
+            },
+            setwxredirectshow(currentapp) {
+                if (currentapp.wxredirect === 1) {
+                    this.wxredirectevent("on");
+                    this.wxredirecttip.val = 'on';
+                } else {
+                    this.wxredirectevent("off");
+                    this.wxredirecttip.val = 'off';
+                }
+                this.wxredirectflag = true;
+            },
             setbuttondefault(currentapp) {
                 this.setbuttondefaltpass(currentapp);
                 this.setbuttondefaltshow(currentapp);
                 this.setbuttonsignshow(currentapp);
+                this.setxeasytypeshow(currentapp);
+                this.setwxredirectshow(currentapp);
             },
             passwordswitch(state) {
                 this.passwordflag = false;
@@ -253,12 +311,56 @@
                     this.passwordtip.msg = '无访问密码'
                 }
             },
+
+            wxeasytypeevent(newval) {
+                if (newval === "on") {
+                    if (this.wxeasytypeflag) {
+                        this.saveappinfo({
+                            "wxeasytype": 1,
+                        });
+                        this.currentapp.wxeasytype = 1;
+                    }
+                    this.wxeasytypetip.msg = '已经开启微信内访问简易模式';
+                } else {
+                    if (this.wxeasytypeflag) {
+                        this.saveappinfo({
+                            "wxeasytype": 0,
+                        });
+                        this.currentapp.wxeasytype = 0;
+                    }
+                    this.wxeasytypetip.msg = '关闭'
+                }
+            },
+
+            wxredirectevent(newval) {
+                if (newval === "on") {
+                    if (this.wxredirectflag) {
+                        this.saveappinfo({
+                            "wxredirect": 1,
+                        });
+                        this.currentapp.wxredirect = 1;
+                    }
+                    this.wxredirecttip.msg = '已经开启微信内自动跳转第三方平台';
+                } else {
+                    if (this.wxredirectflag) {
+                        this.saveappinfo({
+                            "wxredirect": 0,
+                        });
+                        this.currentapp.wxredirect = 0;
+                    }
+                    this.wxredirecttip.msg = '关闭'
+                }
+            },
+
+
             appinit() {
 
                 this.currentapp = this.$store.state.currentapp;
                 this.passwordflag = false;
                 this.showdownloadflag = false;
                 this.showsupersignflag = false;
+                this.wxeasytypeflag = false;
+                this.wxredirectflag = false;
                 this.setbuttondefault(this.currentapp);
                 this.orgcurrentapp = deepCopy(this.currentapp)
             }

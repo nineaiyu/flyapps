@@ -107,6 +107,8 @@ class Apps(models.Model):
     password = models.CharField(verbose_name="访问密码", default='', help_text='默认 没有密码', max_length=32)
     isshow = models.BigIntegerField(verbose_name="下载页可见", default=1)
     issupersign = models.BigIntegerField(verbose_name="是否超级签名包", default=False)
+    wxredirect = models.BigIntegerField(verbose_name="微信内第三方链接自动跳转", default=True)
+    wxeasytype = models.BigIntegerField(verbose_name="微信内简易房屋，避免微信封停", default=True)
     description = models.TextField('描述', blank=True, null=True, default=None, )
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 

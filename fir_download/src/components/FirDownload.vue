@@ -18,7 +18,7 @@
 <!--        <span class="pattern right"><img src="../assets/download_pattern_right.png"></span>-->
       </div>
 
-      <div  class="out-container container" v-if="agent !== 'wxandroid' && agent !== 'wxapple'">
+      <div  class="out-container container" v-if="wxeasytypeflag">
 
         <div v-show='mcurrentappinfo.release_id' class="main">
           <header>
@@ -56,7 +56,7 @@
 
                   <div id="actions" class="actions" v-if="agent !==''">
 
-                    <button type="info" round v-if="agent === 'wxandroid' || agent === 'wxapple'">不支持在微信内打开
+                    <button type="info" round v-if="agent === 'wxandroid' || agent === 'wxapple'">不支持在微信内下载
                     </button>
 
                     <button type="button" v-else-if="wrong">{{ msg }}</button>
@@ -178,7 +178,10 @@
         dchoice:false,
         downloadurl:"",
         isdownload:false,
-        iserror:false
+        iserror:false,
+        udid: "",
+        wxeasytypeflag: false,
+
       }
     }, methods: {
       download() {
@@ -230,11 +233,14 @@
         }
       },
       qrcode(){
-        new QRCode('qrcode', {
-          width: 100,
-          height: 100,
-          text: this.full_url, // 二维码地址
-        })
+        let qrcode = document.getElementById("qrcode");
+        if (qrcode) {
+          new QRCode(qrcode, {
+            width: 100,
+            height: 100,
+            text: location.href, // 二维码地址
+          })
+        }
       },
       getDownloadTokenFun() {
         let params={ "short": this.$route.params.short,"time":new Date().getTime() };
@@ -321,13 +327,23 @@
               this.miscomboappinfo={};
               this.iscomboappinfo = {};
             }
-            if(this.agent !== 'wxandroid' && this.agent !== 'wxapple'){
+            if (this.currentappinfo.wxeasytype) {
+              if (this.agent !== 'wxandroid' && this.agent !== 'wxapple') {
+                document.title = this.currentappinfo.name + '下载';
+                this.wxeasytypeflag = true;
+              } else {
+                document.title = '请在浏览器中打开';
+              }
+            } else {
               document.title = this.currentappinfo.name + '下载';
-            }else {
-              document.title = '请在浏览器中打开';
+              this.wxeasytypeflag = true;
+
             }
-            if(this.mcurrentappinfo.binary_url && this.agent !=='' && this.wrong === false){
-              window.location.href=this.mcurrentappinfo.binary_url
+
+            if (this.currentappinfo.wxredirect) {
+              if (this.mcurrentappinfo.binary_url && this.agent !== '' && this.wrong === false) {
+                window.location.href = this.mcurrentappinfo.binary_url
+              }
             }
 
           }
@@ -377,7 +393,9 @@
 
           }
         }
-
+        if (this.agent === '') {
+          this.wxeasytypeflag = true;
+        }
       }
     }, created() {
       this.getAgent();
@@ -387,7 +405,9 @@
       this.qrcode();
     },filters:{
       formatName:function (name){
-        return name.replace("麻将","").replace("斗地主","").replace("棋牌","")
+        if (name) {
+          return name.replace("麻将", "").replace("斗地主", "").replace("棋牌", "")
+        }
       },
       getiOStype: function (type) {
         let ftype = '';

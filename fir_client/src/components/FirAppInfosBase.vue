@@ -27,7 +27,7 @@
                             </el-col>
 
                             <el-col :span="3">
-                                <a class="" ref="security" @click="security"><i class="el-icon-set-up"></i>权限管理</a>
+                                <a class="" ref="security" @click="security"><i class="el-icon-set-up"></i>应用管理</a>
                             </el-col>
 
                             <el-col :span="3">

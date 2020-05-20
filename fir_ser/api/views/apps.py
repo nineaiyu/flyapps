@@ -187,6 +187,8 @@ class AppInfoView(APIView):
                     apps_obj.name = data.get("name", apps_obj.name)
                     apps_obj.password = data.get("password", apps_obj.password)
                     apps_obj.isshow = data.get("isshow", apps_obj.isshow)
+                    apps_obj.wxeasytype = data.get("wxeasytype", apps_obj.wxeasytype)
+                    apps_obj.wxredirect = data.get("wxredirect", apps_obj.wxredirect)
                     if apps_obj.type == 1:
                         # 为啥注释掉，就是该udid已经在该平台使用了，虽然已经没有余额，但是其他应用也是可以超级签名的
                         # developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
