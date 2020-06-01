@@ -17,7 +17,7 @@ const store = new Vuex.Store({
         userInfoIndex: 0,
     },
     mutations: {
-        get_user(state, data) {
+        setuserinfo(state, data) {
             state.userinfo = data;
         },
         setappInfoIndex(state, val) {
@@ -31,8 +31,8 @@ const store = new Vuex.Store({
         }
     },
     actions: {
-        getUser(context, data) {
-            context.commit('get_user', data);
+        doUserinfo(context, data) {
+            context.commit('setuserinfo', data);
         },
         doappInfoIndex(context, val) {
             context.commit('setappInfoIndex', val)

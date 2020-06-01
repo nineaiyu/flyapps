@@ -85,7 +85,7 @@ function getData(url, params = {}, callBack) {
                 alert('网络连接失败')
             }
 
-            callBack(null);
+            callBack({"code":-1});
         });
 }
 

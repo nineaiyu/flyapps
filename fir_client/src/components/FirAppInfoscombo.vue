@@ -130,7 +130,7 @@
                             } else {
 
                                 // eslint-disable-next-line no-console
-                                console.log("失败了");
+                                console.log("Error");
 
                             }
                         }, {

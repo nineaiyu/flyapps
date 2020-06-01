@@ -79,7 +79,7 @@
                 uploadimgs(data => {
                     if (data.code === 1000) {
                         // eslint-disable-next-line no-console
-                        console.log(data.data);
+                        // console.log(data.data);
                         this.$message.success('上传成功');
                         this.updateUserInfo({"methods": 'GET'});
 
@@ -122,7 +122,7 @@
                 userinfos(data => {
                     if (data.code === 1000) {
                         this.userinfo = data.data;
-                        this.$store.dispatch("getUser", data.data);
+                        this.$store.dispatch("doUserinfo", data.data);
                         this.$store.dispatch('doucurrentapp', {});
                         this.imageUrl = data.data.head_img;
 
@@ -144,7 +144,7 @@
                         uploadimgs(data => {
                             if (data.code === 1000) {
                                 // eslint-disable-next-line no-console
-                                console.log(data.data);
+                                // console.log(data.data);
                                 let certinfo = data.data;
                                 this.uploadtostorage(file, certinfo);
                             }

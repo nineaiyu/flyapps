@@ -140,9 +140,9 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
     const progress = async function progress(p, checkpoint) {
         currentCheckpoint = checkpoint;
         // eslint-disable-next-line no-console
-        console.log(Math.floor(p * 100));
+        // console.log(Math.floor(p * 100));
         // eslint-disable-next-line no-console
-        console.log(checkpoint);
+        // console.log(checkpoint);
         processcallback(Math.floor(p * 100));
 
     };
@@ -156,7 +156,7 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
     };
     client.multipartUpload(certinfo.upload_key, file, options).then((res) => {
         // eslint-disable-next-line no-console
-        console.log('upload success: %j', res);
+        // console.log('upload success: %j', res);
         successcallback(res);
         currentCheckpoint = null;
     }).catch((err) => {

@@ -141,14 +141,14 @@
                 if (data.code === 1000) {
                     this.appinfos = data.data;
                     this.master_release = data.data.master_release;
-                    this.$store.dispatch("getUser", data.userinfo);
+                    this.$store.dispatch("doUserinfo", data.userinfo);
                     this.appinfos["icon_url"] = this.master_release.icon_url;
                     this.$store.dispatch('doucurrentapp', this.appinfos);
                 } else if (data.code === 1003) {
                     this.$router.push({name: 'FirApps'});
                 } else {
                     // eslint-disable-next-line no-console
-                    console.log("失败了");
+                    console.log("Error");
                 }
             }, {
                 "methods": "GET",

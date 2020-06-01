@@ -118,7 +118,7 @@
                 userinfos(data => {
                     if (data.code === 1000) {
                         this.userinfo = data.data;
-                        this.$store.dispatch("getUser", data.data);
+                        this.$store.dispatch("doUserinfo", data.data);
                         if (data.data.sms_code) {
                             this.$notify({
                                 title: '验证码',

@@ -279,7 +279,7 @@
 
 
             <div
-                    ref="appmain" style="margin: 40px 20px">
+                    ref="appmain" style="margin: 40px 20px;height: 100%">
 
                 <el-row style="max-height: 460px; margin: 0 auto;" :gutter="10" class="page-apps">
 
@@ -661,7 +661,7 @@
                         this.has_next = data.has_next;
                         this.orgapplists = this.applists.slice(); //深拷贝
                         this.hdata = data.hdata;
-                        this.$store.dispatch("getUser", data.userinfo);
+                        this.$store.dispatch("doUserinfo", data.userinfo);
 
                         this.searchapps();
                         // this.$store.dispatch('doucurrentapp', {'firapps':1});
@@ -692,7 +692,7 @@
                     loading.close();
                     this.$message.error("应用解析失败,请检查是否为APP应用");
                     // eslint-disable-next-line no-console
-                    console.log('err ----> ', err);
+                    console.log('Error ', err);
                 });
                 return false;
             },

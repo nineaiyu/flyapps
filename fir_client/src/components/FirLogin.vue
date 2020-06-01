@@ -86,10 +86,10 @@
                                     type: 'success'
                                 });
                                 this.$cookies.remove("auth_token");
-                                this.$cookies.set("token", data['token']);
-                                this.$cookies.set("username", data.userinfo.username);
-                                this.$cookies.set("first_name", data.userinfo.first_name);
-                                this.$store.dispatch("get_user", data.userinfo);
+                                this.$cookies.set("token", data['token'],3600 * 24 * 30);
+                                this.$cookies.set("username", data.userinfo.username,3600 * 24 * 30);
+                                this.$cookies.set("first_name", data.userinfo.first_name,3600 * 24 * 30);
+                                this.$store.dispatch("doUserinfo", data.userinfo);
                                 set_auth_token();
                                 this.$router.push({name: 'FirApps'})
                             } else {

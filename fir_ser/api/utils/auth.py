@@ -38,6 +38,7 @@ class ExpiringTokenAuthentication(BaseAuthentication):
             raise AuthenticationFailed({"code": 1001, "error": "无效的token"})
         if user_obj.is_active:
             cache.set(auth_key, cacheuserinfo, 3600 * 24 * 7)
+            # cache.expire(auth_key, timeout=3600 * 24 * 7)
             return user_obj, auth_token
         else:
             raise AuthenticationFailed({"code": 1001, "error": "用户被禁用"})

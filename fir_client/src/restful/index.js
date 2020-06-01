@@ -30,7 +30,7 @@ export function set_auth_token() {
             } else {
                 let token = VueCookies.get('token');
                 let username = VueCookies.get('username');
-                VueCookies.set("auth_token", Base64.encode(token + ':' + username));
+                VueCookies.set("auth_token", Base64.encode(token + ':' + username),3600 * 24 * 30);
             }
         }
         // 更改加载的样式
@@ -111,7 +111,7 @@ function getData(methods = true, url, params = {}, callBack, load, isCode = fals
             })
             .catch(function (error) {
                 ErrorMsg(error);
-                callBack(null);
+                callBack({"code":-1});
             });
 
     } else if (methods === "PUT") {
@@ -126,7 +126,7 @@ function getData(methods = true, url, params = {}, callBack, load, isCode = fals
             })
             .catch(function (error) {
                 ErrorMsg(error);
-                callBack(null);
+                callBack({"code":-1});
             });
 
     } else if (methods === 'POST') {
@@ -142,7 +142,7 @@ function getData(methods = true, url, params = {}, callBack, load, isCode = fals
             })
             .catch(function (error) {
                 ErrorMsg(error);
-                callBack(null);
+                callBack({"code":-1});
             });
     } else {
         Axios
@@ -152,8 +152,7 @@ function getData(methods = true, url, params = {}, callBack, load, isCode = fals
             })
             .catch(function (error) {
                 ErrorMsg(error);
-
-                callBack(null);
+                callBack({"code":-1});
             });
     }
 }
@@ -345,7 +344,7 @@ export function uploadstorage(certinfo, file, successCallback, processCallback) 
     data.append('certinfo', JSON.stringify(certinfo));
     Axios.post(certinfo.upload_url, data, config).then(res => {
         // eslint-disable-next-line no-console
-        console.log(res);
+        // console.log(res);
         successCallback(res)
     }).catch(err => {
         // eslint-disable-next-line no-console

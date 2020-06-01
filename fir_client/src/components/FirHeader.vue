@@ -76,7 +76,7 @@
                             this.$cookies.remove("username");
                             this.$cookies.remove("first_name");
                             this.$store.dispatch('doucurrentapp', {});
-                            this.$store.dispatch('getUser', {});
+                            this.$store.dispatch('doUserinfo', {});
                             this.$router.push({name: 'FirLogin'});
                         } else {
                             this.$message.error("退出失败")

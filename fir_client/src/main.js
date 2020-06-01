@@ -32,7 +32,7 @@ router.beforeEach((to, from, next) => {
             avatar: VueCookies.get('avatar'),
             notice_num: VueCookies.get('notice_num')
         };
-        store.dispatch('getUser', user)
+        store.dispatch('doUserinfo', user)
     }
     next()
 

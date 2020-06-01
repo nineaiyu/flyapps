@@ -614,7 +614,7 @@
             getUserInfoFun() {
                 userinfos(data => {
                     if (data.code === 1000) {
-                        this.$store.dispatch("getUser", data.data);
+                        this.$store.dispatch("doUserinfo", data.data);
                     } else {
                         this.$message.error("用户信息获取失败")
                     }
