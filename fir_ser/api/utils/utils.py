@@ -109,5 +109,6 @@ def valid_captcha(cptch_key, code, username):
 
 def upload_oss_default_head_img(user_obj, storage_obj):
     head_img_full_path = os.path.join(MEDIA_ROOT, "head_img.jpeg")
-    storage_obj = Storage(user_obj, storage_obj)
-    return storage_obj.upload_file(head_img_full_path)
+    if storage_obj:
+        storage_obj = Storage(user_obj, storage_obj)
+        return storage_obj.upload_file(head_img_full_path)

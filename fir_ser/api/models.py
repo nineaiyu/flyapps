@@ -173,7 +173,7 @@ class AppStorage(models.Model):
                 return super(AppStorage, self).save(*args, **kwargs)
             else:
                 return
-        super(AppStorage, self).save(*args, **kwargs)
+        return super(AppStorage, self).save(*args, **kwargs)
 
     def __str__(self):
         return "%s %s" % (self.user_id.get_username(), self.name)

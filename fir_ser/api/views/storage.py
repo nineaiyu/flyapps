@@ -72,6 +72,7 @@ class StorageView(APIView):
                     res.msg = serializer.validated_data
                     logger.info("user %s add new storage success" % (request.user))
                 else:
+                    storage_obj.delete()
                     logger.error("user %s add new storage failed" % (request.user))
                     res.msg = "文件上传校验失败，请检查参数是否正确"
                     res.code = 1005
@@ -104,33 +105,36 @@ class StorageView(APIView):
                 res.msg = '修改失败'
             return Response(res.dict)
 
-        try:
-            data['additionalparameters'] = json.dumps(data.get('additionalparameter', ''))
-        except Exception as e:
-            logger.error("user:%s additionalparameters %s dumps failed Exception:%s" % (
-                request.user, data.get('additionalparameter', ''), e))
-
         storage_id = data.get("id", None)
         if storage_id:
             if storage_id == request.user.storage.id:
                 res.msg = '存储正在使用中，无法修改'
                 res.code = 1007
                 return Response(res.dict)
+            try:
+                data['additionalparameters'] = json.dumps(data.get('additionalparameter', ''))
+            except Exception as e:
+                del data['additionalparameters']
+                logger.error("user:%s additionalparameters %s dumps failed Exception:%s" % (
+                    request.user, data.get('additionalparameter', ''), e))
+
             storage_obj = AppStorage.objects.filter(id=storage_id, user_id=request.user).first()
+            storage_obj_bak = AppStorage.objects.filter(id=storage_id, user_id=request.user).first()
             serializer = StorageSerializer(instance=storage_obj, data=data, context={'user_obj': request.user},
                                            partial=True)
             if serializer.is_valid():
-                storage_obj = serializer.save()
-                if storage_obj:
-                    if upload_oss_default_head_img(request.user, storage_obj):
+                new_storage_obj = serializer.save()
+                if new_storage_obj:
+                    if upload_oss_default_head_img(request.user, new_storage_obj):
                         res.msg = serializer.validated_data
-                        logger.info("user %s add new storage success" % (request.user))
+                        logger.info("user %s update storage success" % (request.user))
                     else:
-                        logger.error("user %s add new storage failed" % (request.user))
+                        storage_obj_bak.save()
+                        logger.error("user %s update storage failed" % (request.user))
                         res.msg = "文件上传校验失败，请检查参数是否正确"
                         res.code = 1005
                 else:
-                    logger.info("user %s add new storage failed" % (request.user))
+                    logger.info("user %s update storage failed" % (request.user))
                     res.msg = serializer.errors
                     res.code = 1005
             else:
