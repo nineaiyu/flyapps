@@ -67,9 +67,9 @@
                 form: {
                     email: '',
                     password: '',
-                    authcode:''
+                    authcode: ''
                 },
-                cptch:{"cptch_image": '', "cptch_key": '',"length":8},
+                cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
             }
         },
         methods: {
@@ -77,7 +77,7 @@
                 let email = this.form.email;
                 let password = this.form.password;
                 let authcode = this.form.authcode;
-                if(authcode.length === this.cptch.length){
+                if (authcode.length === this.cptch.length) {
                     if (this.isEmail(email) && password.length > 6) {
                         loginFun(data => {
                             if (data.code == 1000) {
@@ -86,9 +86,9 @@
                                     type: 'success'
                                 });
                                 this.$cookies.remove("auth_token");
-                                this.$cookies.set("token", data['token'],3600 * 24 * 30);
-                                this.$cookies.set("username", data.userinfo.username,3600 * 24 * 30);
-                                this.$cookies.set("first_name", data.userinfo.first_name,3600 * 24 * 30);
+                                this.$cookies.set("token", data['token'], 3600 * 24 * 30);
+                                this.$cookies.set("username", data.userinfo.username, 3600 * 24 * 30);
+                                this.$cookies.set("first_name", data.userinfo.first_name, 3600 * 24 * 30);
                                 this.$store.dispatch("doUserinfo", data.userinfo);
                                 set_auth_token();
                                 this.$router.push({name: 'FirApps'})
@@ -100,12 +100,12 @@
                                 this.get_auth_code();
                             }
                         }, {
-                            "methods":"POST",
-                            "data":{
+                            "methods": "POST",
+                            "data": {
                                 "username": email,
                                 "password": password,
-                                "authcode":authcode,
-                                "cptch_key":this.cptch.cptch_key
+                                "authcode": authcode,
+                                "cptch_key": this.cptch.cptch_key
                             }
                         });
 
@@ -116,7 +116,7 @@
                             type: 'warning'
                         });
                     }
-                }else {
+                } else {
                     this.$message({
                         message: '验证码有误',
                         type: 'warning'
@@ -132,10 +132,10 @@
                 }
                 return false;
             },
-            get_auth_code(){
+            get_auth_code() {
                 loginFun(data => {
                     if (data.code == 1000) {
-                        this.cptch=data.data;
+                        this.cptch = data.data;
                     } else {
                         this.$message({
                             message: data.msg,
@@ -143,8 +143,8 @@
                         });
                     }
                 }, {
-                    "methods":"GET",
-                    "data":{}
+                    "methods": "GET",
+                    "data": {}
                 });
             },
         },

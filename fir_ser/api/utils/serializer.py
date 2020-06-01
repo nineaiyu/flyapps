@@ -88,7 +88,7 @@ class AppsShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Apps
         fields = ["app_id", "name", "short", "has_combo", "isshow", "description", "need_password", 'master_release',
-                  'type', 'issupersign','wxeasytype','wxredirect']
+                  'type', 'issupersign', 'wxeasytype', 'wxredirect']
 
     need_password = serializers.SerializerMethodField()
 

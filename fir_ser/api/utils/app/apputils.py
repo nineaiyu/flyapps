@@ -60,7 +60,7 @@ def make_resigned(bin_url, img_url, bundle_id, app_version, name):
 </dict>
 </plist>""" % (bin_url, img_url, img_url, bundle_id, app_version, name)
     logger.info("make_resigned bin_url %s ,img_url %s, img_url %s, bundle_id %s, app_version %s, name %s" % (
-    bin_url, img_url, img_url, bundle_id, app_version, name))
+        bin_url, img_url, img_url, bundle_id, app_version, name))
     return ios_plist_tem
 
 

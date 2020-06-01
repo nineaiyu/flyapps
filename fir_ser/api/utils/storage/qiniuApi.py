@@ -6,8 +6,9 @@
 '''
 主要是调用七牛云存储，处理七牛云存储的逻辑
 '''
-from qiniu import Auth
+from qiniu import Auth, put_file, etag
 from qiniu import BucketManager
+import os
 
 
 class QiNiuOss(object):
@@ -54,3 +55,11 @@ class QiNiuOss(object):
         bucket = BucketManager(self.qiniu_obj)
         ret, info = bucket.move(self.bucket_name, oldfilename, self.bucket_name, newfilename)
         return ret
+
+    def upload_file(self, local_file_full_path):
+        if os.path.isfile(local_file_full_path):
+            filename = os.path.basename(local_file_full_path)
+            token = self.get_upload_token(filename)
+            ret, info = put_file(token, filename, local_file_full_path)
+            if ret['key'] == filename and ret['hash'] == etag(local_file_full_path):
+                return True

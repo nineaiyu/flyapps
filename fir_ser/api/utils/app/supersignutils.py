@@ -203,7 +203,7 @@ class IosUtils(object):
             developer_obj = self.developer_obj
             developer_obj.use_number = developer_obj.use_number + 1
             logger.info("developer %s use_number+1 now %s udid %s app_id %s" % (
-            developer_obj, developer_obj.use_number, self.udid_info.get('udid'), self.app_obj))
+                developer_obj, developer_obj.use_number, self.udid_info.get('udid'), self.app_obj))
             developer_obj.save()
 
         if not appsupersign_obj.filter(app_id=self.app_obj, user_id=self.user_obj).first():

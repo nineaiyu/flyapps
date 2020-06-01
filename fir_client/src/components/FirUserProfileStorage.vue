@@ -273,9 +273,10 @@
                         }
                         this.getstorageinfoFun();
 
+                    } else {
+                        this.$message.error('操作失败，' + data.msg);
                     }
                 }, {"methods": methods, 'data': this.editstorageinfo});
-                this.getstorageinfoFun();
             }, del_storage_info(sinfo) {
 
                 this.$confirm('此操作可能会导致程序异常, 是否继续?', '警告', {

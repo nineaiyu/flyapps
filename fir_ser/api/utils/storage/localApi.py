@@ -54,3 +54,8 @@ class LocalStorage(object):
         except Exception as e:
             logger.error("rename_file file %s to %s failed Exception %s" % (oldfilename, newfilename, e))
             return False
+
+    def upload_file(self, local_file_full_path):
+        if os.path.isfile(local_file_full_path):
+            return True
+        return False

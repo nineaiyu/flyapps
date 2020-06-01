@@ -22,7 +22,7 @@
                     </el-switch>
 
                 </el-tooltip>
-                <el-link :underline="false"  style="margin-left: 20px" >设置密码之后，用户需要输入密码才可以下载该应用</el-link>
+                <el-link :underline="false" style="margin-left: 20px">设置密码之后，用户需要输入密码才可以下载该应用</el-link>
 
             </el-form-item>
 
@@ -38,7 +38,7 @@
                             inactive-value="off">
                     </el-switch>
                 </el-tooltip>
-                <el-link :underline="false"  style="margin-left: 20px" >默认开启，关闭之后用户无法通过短连接访问下载该应用</el-link>
+                <el-link :underline="false" style="margin-left: 20px">默认开启，关闭之后用户无法通过短连接访问下载该应用</el-link>
 
             </el-form-item>
 
@@ -57,11 +57,11 @@
                 <el-button @click="clean_app" v-if="currentapp.issupersign === 0 && currentapp.count !== 0"
                            style="margin-left: 20px" size="small" type="info" plain>清理开发者账户脏数据
                 </el-button>
-                <el-link  v-else :underline="false"  style="margin-left: 20px" >超级签名，iOS专用，需要配置好苹果开发者账户，方可开启</el-link>
+                <el-link v-else :underline="false" style="margin-left: 20px">超级签名，iOS专用，需要配置好苹果开发者账户，方可开启</el-link>
 
             </el-form-item>
 
-            <el-form-item  label-width="200px" label="微信内访问简易模式">
+            <el-form-item label-width="200px" label="微信内访问简易模式">
 
                 <el-tooltip :content="wxeasytypetip.msg" placement="top">
                     <el-switch
@@ -73,9 +73,9 @@
                             inactive-value="off">
                     </el-switch>
                 </el-tooltip>
-                <el-link :underline="false"  style="margin-left: 20px" >默认开启，可以最大限度避免微信内举报封停</el-link>
+                <el-link :underline="false" style="margin-left: 20px">默认开启，可以最大限度避免微信内举报封停</el-link>
             </el-form-item>
-            <el-form-item  label-width="200px" label="微信内访问跳转第三方平台">
+            <el-form-item label-width="200px" label="微信内访问跳转第三方平台">
 
                 <el-tooltip :content="wxredirecttip.msg" placement="top">
                     <el-switch
@@ -87,7 +87,7 @@
                             inactive-value="off">
                     </el-switch>
                 </el-tooltip>
-                <el-link :underline="false"  style="margin-left: 20px" >默认开启，如果配置第三方平台，在微信内访问直接跳转</el-link>
+                <el-link :underline="false" style="margin-left: 20px">默认开启，如果配置第三方平台，在微信内访问直接跳转</el-link>
 
             </el-form-item>
 

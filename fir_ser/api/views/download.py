@@ -175,7 +175,7 @@ class InstallView(APIView):
                 res.data = {"download_url": download_url}
                 if download_url != "" and "mobileconifg" not in download_url:
                     set_app_download_by_cache(app_id)
-                    if request.META.get('HTTP_X_FORWARDED_FOR',None):
+                    if request.META.get('HTTP_X_FORWARDED_FOR', None):
                         ip = request.META['HTTP_X_FORWARDED_FOR']
                     else:
                         ip = request.META['REMOTE_ADDR']

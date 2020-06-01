@@ -110,7 +110,7 @@ class DeveloperView(APIView):
                 else:
                     logger.info("user %s iosdeveloper %s update input data %s" % (request.user, developer_obj, data))
                     logger.info("user %s iosdeveloper %s update old data %s" % (
-                    request.user, developer_obj, developer_obj.__dict__))
+                        request.user, developer_obj, developer_obj.__dict__))
                     try:
                         usable_number = int(data.get("usable_number", developer_obj.usable_number))
                         if usable_number >= 0 and usable_number <= 100:

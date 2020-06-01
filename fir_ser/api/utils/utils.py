@@ -4,11 +4,12 @@
 # author: liuyu
 # date: 2020/5/7
 import os
-from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN, CAPTCHA_LENGTH
+from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
     UDIDsyncDeveloper
 from api.utils.app.randomstrings import make_app_uuid
 from api.utils.storage.localApi import LocalStorage
+from api.utils.storage.storage import Storage
 from django.db.models import Sum
 from captcha.models import CaptchaStore
 from captcha.helpers import captcha_image_url
@@ -104,3 +105,9 @@ def valid_captcha(cptch_key, code, username):
             if cptch_key and code and code.strip(" ").lower() == challenge.get("challenge").lower():
                 return True
     return False
+
+
+def upload_oss_default_head_img(user_obj, storage_obj):
+    head_img_full_path = os.path.join(MEDIA_ROOT, "head_img.jpeg")
+    storage_obj = Storage(user_obj, storage_obj)
+    return storage_obj.upload_file(head_img_full_path)
