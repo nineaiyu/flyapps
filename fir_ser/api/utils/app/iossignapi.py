@@ -73,7 +73,7 @@ class AppDeveloperApi(object):
     def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName):
         self.cmd = self.cmd + " profile add '%s' '%s' '%s' '%s' '%s' '%s'" % (
             bundleId, app_id, device_udid, device_name, self.certid, provisionName)
-        result = exec_shell(self.cmd)
+        return exec_shell(self.cmd)
 
     def del_profile(self, bundleId, app_id):
         self.cmd = self.cmd + " profile del '%s' '%s'" % (bundleId, app_id)

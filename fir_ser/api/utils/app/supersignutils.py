@@ -156,7 +156,7 @@ class IosUtils(object):
         app_id = self.app_obj.app_id
         device_udid = self.udid_info.get('udid')
         device_name = self.udid_info.get('product')
-        app_api_obj.get_profile(bundleId, app_id, device_udid, device_name, self.get_profile_full_path())
+        return app_api_obj.get_profile(bundleId, app_id, device_udid, device_name, self.get_profile_full_path())
 
     def get_profile_full_path(self):
         cert_dir_name = make_app_uuid(self.user_obj, self.auth.get("username"))
@@ -175,7 +175,13 @@ class IosUtils(object):
                     logger.info("udid %s exists app_id %s" % (self.udid_info.get('udid'), self.app_obj))
                     return
         logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
-        self.download_profile()
+        status, result = self.download_profile()
+        if not status:
+            logger.error("udid %s app %s  developer %s sign failed %s" % (
+            self.udid_info.get('udid'), self.app_obj, self.developer_obj, result))
+            self.developer_obj.is_actived = False
+            self.developer_obj.save()
+            return
 
         file_format_path_name = file_format_path(self.user_obj, self.auth)
         my_local_key = file_format_path_name + ".key"
