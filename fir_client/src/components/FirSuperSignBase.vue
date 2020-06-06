@@ -41,7 +41,7 @@
 
 
         <el-dialog
-                title="请输入验证码"
+                title="请在5分钟内输入验证码"
                 :visible.sync="codeactiveVisible"
                 width="30%"
                 center>
