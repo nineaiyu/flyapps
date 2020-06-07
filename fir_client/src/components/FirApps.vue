@@ -178,7 +178,7 @@
                         </el-radio-group>
 
                     </el-col>
-                    <el-col :span="4">
+                    <el-col :span="5">
                         <el-row>
                             <el-col :span="20">
                                 <el-input
@@ -199,7 +199,7 @@
                     <!--        -->
                     <!--                    </el-col>-->
 
-                    <el-col :span="7" class="surplus-card">
+                    <el-col :span="8" class="surplus-card">
                         <el-row>
                             <el-col :span="8">
                                 <div>

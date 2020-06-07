@@ -11,8 +11,8 @@ from api.utils.TokenManager import DownloadToken, generateNumericTokenOfLength
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
 from django.middleware import csrf
-from fir_ser.settings import CACHE_KEY_TEMPLATE
-from api.utils.storage.caches import login_auth_failed, del_cache_storage, set_default_app_wx_easy
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN
+from api.utils.storage.caches import login_auth_failed, set_default_app_wx_easy
 import logging
 
 logger = logging.getLogger(__name__)
@@ -131,9 +131,20 @@ class UserInfoView(APIView):
         else:
             # 修改个人资料
             domain_name = data.get("domain_name", None)
-            if domain_name and len(domain_name.strip(' ')) > 3:
-                request.user.domain_name = domain_name.strip(' ')
-                set_default_app_wx_easy(request.user)
+            if domain_name:
+                domain_name_list = domain_name.strip(' ').strip("http://").strip("https://").split("/")
+                if len(domain_name_list) > 1:
+                    domain_name = domain_name_list[0]
+                    if len(domain_name) > 3:
+                        if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
+                            serializer = UserInfoSerializer(request.user)
+                            res.data = serializer.data
+                            res.code = 1004
+                            res.msg = "域名设置失败，请更换其他域名"
+                            return Response(res.dict)
+                        else:
+                            request.user.domain_name = domain_name
+                            set_default_app_wx_easy(request.user)
 
             if domain_name == '':
                 request.user.domain_name = None
