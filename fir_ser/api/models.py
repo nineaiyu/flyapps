@@ -38,7 +38,7 @@ class UserInfo(AbstractUser):
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name="注册时间")
     download_times = models.IntegerField(default=100, verbose_name="下载次数")
     all_download_times = models.BigIntegerField(default=0, verbose_name="总共下载次数")
-    domain_name = models.CharField(verbose_name="域名", blank=True, null=True, max_length=64)
+    domain_name = models.CharField(verbose_name="下载页面域名", blank=True, null=True, max_length=64)
     history_release_limit = models.IntegerField(default=10, verbose_name="app 历史记录版本", blank=True, null=True)
     storage = models.OneToOneField(to='AppStorage', related_name='app_storage',
                                    on_delete=models.SET_NULL, verbose_name="存储", null=True, blank=True)

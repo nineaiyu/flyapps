@@ -256,6 +256,19 @@
                 }
 
             },
+            auto_redircet_url(domain_name) {
+                if (domain_name) {
+                    let nurl = location.href.split("//")[1].split("/");
+                    const user_hostname = domain_name.split("//");
+                    if (nurl[0] === user_hostname[1]) {
+                        return true;
+                    } else {
+                        nurl[0] = user_hostname[1];
+                        window.location.href = user_hostname[0] + "//" + nurl.join("/");
+                        return false;
+                    }
+                }
+            },
             getDownloadTokenFun() {
                 let params = {"short": this.$route.params.short, "time": new Date().getTime()};
                 if (this.$route.query.release_id) {
@@ -268,6 +281,9 @@
                 }
                 getShortAppinfo(data => {
                     if (data.code === 1000) {
+                        if (!this.auto_redircet_url(data.domain_name)) {
+                            return;
+                        }
                         this.udid = data.udid;
                         if (!data.data.master_release.release_id) {
                             this.$message({

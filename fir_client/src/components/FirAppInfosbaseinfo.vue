@@ -106,7 +106,11 @@
 
                 } else {
                     //本地
-                    certinfo.upload_url = getuploadurl();
+                    if (certinfo.domain_name) {
+                        certinfo.upload_url = getuploadurl(certinfo.domain_name)
+                    } else {
+                        certinfo.upload_url = getuploadurl();
+                    }
                     // eslint-disable-next-line no-unused-vars,no-unreachable
                     uploadlocalstorage(file, certinfo, this, res => {
                         this.updateimgs(certinfo);

@@ -12,7 +12,7 @@ from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
 from django.middleware import csrf
 from fir_ser.settings import CACHE_KEY_TEMPLATE
-from api.utils.storage.caches import login_auth_failed
+from api.utils.storage.caches import login_auth_failed, del_cache_storage, set_default_app_wx_easy
 import logging
 
 logger = logging.getLogger(__name__)
@@ -106,12 +106,10 @@ class UserInfoView(APIView):
         data = request.data
         logger.info("user:%s update old data:%s" % (request.user, request.user.__dict__))
         logger.info("user:%s update new data:%s" % (request.user, data))
-        request.user.qq = data.get("qq", request.user.qq)
-        request.user.job = data.get("job", request.user.job)
-        request.user.first_name = data.get("first_name", request.user.first_name)
 
         oldpassword = data.get("oldpassword", None)
         surepassword = data.get("surepassword", None)
+
         if oldpassword and surepassword:
             user = auth.authenticate(username=request.user.username, password=oldpassword)
             if user is not None:
@@ -131,6 +129,18 @@ class UserInfoView(APIView):
                 res.code = 1004
                 res.msg = "老密码校验失败"
         else:
+            # 修改个人资料
+            domain_name = data.get("domain_name", None)
+            if domain_name and len(domain_name.strip(' ')) > 3:
+                request.user.domain_name = domain_name.strip(' ')
+                set_default_app_wx_easy(request.user)
+
+            if domain_name == '':
+                request.user.domain_name = None
+                set_default_app_wx_easy(request.user)
+
+            request.user.job = data.get("job", request.user.job)
+            request.user.first_name = data.get("first_name", request.user.first_name)
 
             sms_token = data.get("sms_token", None)
             if sms_token:

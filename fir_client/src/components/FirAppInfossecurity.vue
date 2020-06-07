@@ -65,6 +65,7 @@
 
                 <el-tooltip :content="wxeasytypetip.msg" placement="top">
                     <el-switch
+                            :disabled="wxeasy_disable"
                             @change="wxeasytypeevent"
                             v-model="wxeasytypetip.val"
                             active-color="#13ce66"
@@ -73,7 +74,7 @@
                             inactive-value="off">
                     </el-switch>
                 </el-tooltip>
-                <el-link :underline="false" style="margin-left: 20px">默认开启，可以最大限度避免微信内举报封停</el-link>
+                <el-link :underline="false" style="margin-left: 20px">默认开启，可以最大限度避免微信内举报封停，如果绑定域名，可以关闭</el-link>
             </el-form-item>
             <el-form-item label-width="200px" label="微信内访问跳转第三方平台">
 
@@ -119,7 +120,8 @@
                 showsupersignflag: false,
                 wxeasytypeflag: false,
                 wxredirectflag: false,
-                clecount: 0
+                clecount: 0,
+                wxeasy_disable:false
             }
         },
         methods: {
@@ -186,6 +188,9 @@
                     this.wxeasytypetip.val = 'off';
                 }
                 this.wxeasytypeflag = true;
+                if(!this.$store.state.userinfo.domain_name){
+                    this.wxeasy_disable=true;
+                }
             },
             setwxredirectshow(currentapp) {
                 if (currentapp.wxredirect === 1) {

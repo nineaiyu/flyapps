@@ -10,7 +10,7 @@ from fir_ser import settings
 from api.utils.TokenManager import DownloadToken
 from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.apputils import make_resigned
-from api.utils.app.supersignutils import make_udid_mobileconfig, get_post_udid_url
+from api.utils.app.supersignutils import make_udid_mobileconfig, get_post_udid_url, get_redirect_server_domain
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import get_app_instance_by_cache, get_download_url_by_cache, set_app_download_by_cache, \
     del_cache_response_by_short
@@ -120,6 +120,7 @@ class ShortDownloadView(APIView):
                                                                "storage": Storage(app_obj.user_id)})
         res.data = app_serializer.data
         res.udid = udid
+        res.domain_name = get_redirect_server_domain(request, app_obj.user_id)
         return Response(res.dict)
 
     # key的设置

@@ -13,15 +13,15 @@
             <el-form-item>
                 <el-row>
                     <el-col :span="18">
-                        <el-input v-model="userinfo.qq" :readonly="editqq !== true" ref="qq"
-                                  prefix-icon="el-icon-message"
-                                  placeholder="QQ"></el-input>
+                        <el-input v-model="userinfo.domain_name" :readonly="editdomain_name !== true" ref="domain_name"
+                                  prefix-icon="el-icon-download"
+                                  placeholder="下载页域名"></el-input>
                     </el-col>
                     <el-col :span="2">
                         <el-button icon="el-icon-edit" @click="changeQQValue">
                         </el-button>
                     </el-col>
-                    <el-col :span="4" v-if="editqq === true">
+                    <el-col :span="4" v-if="editdomain_name === true">
                         <el-button type="success" @click="saveQQ" plain
                                    style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px">保存
                         </el-button>
@@ -98,7 +98,7 @@
                     srccode: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
                 },
                 editphone: false,
-                editqq: false,
+                editdomain_name: false,
                 editposition: false
             }
         }, methods: {
@@ -154,11 +154,11 @@
 
             },
             changeQQValue() {
-                this.editqq = !this.editqq;
-                if (this.$refs.qq.$el.children[0].style.backgroundColor) {
-                    this.$refs.qq.$el.children[0].style.backgroundColor = ''
+                this.editdomain_name = !this.editdomain_name;
+                if (this.$refs.domain_name.$el.children[0].style.backgroundColor) {
+                    this.$refs.domain_name.$el.children[0].style.backgroundColor = ''
                 } else {
-                    this.$refs.qq.$el.children[0].style.backgroundColor = '#f6ffdc';
+                    this.$refs.domain_name.$el.children[0].style.backgroundColor = '#f6ffdc';
                 }
             },
             getphonecode() {

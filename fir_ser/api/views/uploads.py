@@ -25,6 +25,11 @@ class AppAnalyseView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
 
     def post(self, request):
+        '''
+        应用上传前 分析数据，并返回应用上传信息
+        :param request:
+        :return:
+        '''
         res = BaseResponse()
         # 1.接收 bundelid ，返回随机应用名称和短连接
         bundleid = request.data.get("bundleid", None)
@@ -68,7 +73,7 @@ class AppAnalyseView(APIView):
             upload_file_tmp_name("set", png_key, request.user.id)
             upload_file_tmp_name("set", upload_key, request.user.id)
             res.data = {"app_uuid": app_uuid, "short": short,
-                        "domain_name": request.user.domain_name,
+                        "domain_name": settings.SERVER_DOMAIN.get("FILE_UPLOAD_DOMAIN", None),
                         "upload_token": upload_token,
                         "upload_key": upload_key,
                         "png_token": png_token,
@@ -81,6 +86,11 @@ class AppAnalyseView(APIView):
         return Response(res.dict)
 
     def put(self, request):
+        '''
+        该方法就是 应用上传完成之后的回调方法，更新或者创建新应用信息
+        :param request:
+        :return:
+        '''
         res = BaseResponse()
         data = request.data
         appinfo = {
@@ -103,7 +113,6 @@ class AppAnalyseView(APIView):
             logger.info("user %s create or update app %s  data:%s" % (request.user, data.get("bundleid"), data))
             if SaveAppInfos(app_new_filename, request.user, appinfo,
                             data.get("bundleid"), png_new_filename, data.get("short"), data.get('filesize')):
-                pass
                 # 需要将tmp 文件修改为正式文件
                 storage.rename_file(app_tmp_filename, app_new_filename)
                 storage.rename_file(png_tmp_filename, png_new_filename)
@@ -127,6 +136,11 @@ class UploadView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
 
     def get(self, request):
+        '''
+        该方法 主要是本地上传，通过该方法获取上传的 应用图片或者用户头像 的上传信息
+        :param request:
+        :return:
+        '''
         res = BaseResponse()
         storage = Storage(request.user)
         request_upload_key = request.query_params.get("upload_key", None)
@@ -155,12 +169,14 @@ class UploadView(APIView):
                     upload_key = make_from_user_uuid(request.user) + '.' + app_type
                     upload_token = storage.get_upload_token(upload_key)
                     storage_type = storage.get_storage_type()
-                    res.data = {"domain_name": request.user.domain_name,
-                                "upload_token": upload_token,
-                                "upload_key": upload_key,
-                                "storage": storage_type,
-                                "app_id": app_id,
-                                "ftype": ftype}
+                    res.data = {
+                        "domain_name": settings.SERVER_DOMAIN.get("FILE_UPLOAD_DOMAIN", None),
+                        "upload_token": upload_token,
+                        "upload_key": upload_key,
+                        "storage": storage_type,
+                        "app_id": app_id,
+                        "ftype": ftype
+                    }
             else:
                 res.code = 1006
                 res.msg = '该应用不存在'
@@ -169,6 +185,11 @@ class UploadView(APIView):
         return Response(res.dict)
 
     def post(self, request):
+        '''
+        该方法 主要是本地上传文件接口，负责上传 应用图片，应用文件或者用户头像
+        :param request:
+        :return:
+        '''
         res = BaseResponse()
 
         # 获取多个file
@@ -252,11 +273,12 @@ class UploadView(APIView):
 
         return Response(res.dict)
 
-    '''
-    应用图片上传之后
-    '''
-
     def put(self, request):
+        '''
+        该方法就是 应用图片或者用户头像上传完成之后的回调方法，为了更新上传完成的信息
+        :param request:
+        :return:
+        '''
         res = BaseResponse()
         certinfo = request.data.get('certinfo', None)
         if certinfo:

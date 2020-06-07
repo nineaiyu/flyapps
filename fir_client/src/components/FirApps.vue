@@ -480,7 +480,11 @@
                     });
                 } else {
                     //本地
-                    certinfo.upload_url = getuploadurl();
+                    if (this.analyseappinfo.domain_name) {
+                        certinfo.upload_url = getuploadurl(this.analyseappinfo.domain_name)
+                    } else {
+                        certinfo.upload_url = getuploadurl();
+                    }
                     certinfo.ftype = 'app';
                     certinfo.app_id = this.analyseappinfo.app_uuid;
                     // eslint-disable-next-line no-unused-vars,no-unreachable

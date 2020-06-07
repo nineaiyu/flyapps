@@ -182,12 +182,15 @@ class AppInfoView(APIView):
                     apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
                     logger.info("app_id:%s update old data:%s" % (app_id, apps_obj.__dict__))
                     apps_obj.description = data.get("description", apps_obj.description)
-                    del_cache_response_by_short(apps_obj.app_id)
                     apps_obj.short = data.get("short", apps_obj.short)
                     apps_obj.name = data.get("name", apps_obj.name)
                     apps_obj.password = data.get("password", apps_obj.password)
                     apps_obj.isshow = data.get("isshow", apps_obj.isshow)
-                    apps_obj.wxeasytype = data.get("wxeasytype", apps_obj.wxeasytype)
+                    if request.user.domain_name and len(request.user.domain_name) > 3:
+                        apps_obj.wxeasytype = data.get("wxeasytype", apps_obj.wxeasytype)
+                    else:
+                        apps_obj.wxeasytype = 1
+
                     apps_obj.wxredirect = data.get("wxredirect", apps_obj.wxredirect)
                     if apps_obj.type == 1:
                         # 为啥注释掉，就是该udid已经在该平台使用了，虽然已经没有余额，但是其他应用也是可以超级签名的
@@ -206,66 +209,13 @@ class AppInfoView(APIView):
                         apps_obj.issupersign = data.get("issupersign", apps_obj.issupersign)
                     logger.info("app_id:%s update new data:%s" % (app_id, apps_obj.__dict__))
                     apps_obj.save()
+                    del_cache_response_by_short(apps_obj.app_id)
                 except Exception as e:
                     logger.error("app_id:%s update Exception:%s" % (app_id, e))
                     res.code = 1005
                     res.msg = "短连接已经存在"
 
         return Response(res.dict)
-
-    # def post(self, request, app_id):
-    #     res = BaseResponse()
-    #
-    #     # 获取多个file
-    #     files = request.FILES.getlist('file', None)
-    #     for file_obj in files:
-    #         # 将文件缓存到本地后上传
-    #         try:
-    #             app_type = file_obj.name.split(".")[-1]
-    #             if app_type in ['png', 'jpeg', 'jpg']:
-    #                 # 上传图片
-    #                 pass
-    #             else:
-    #                 raise
-    #         except Exception as e:
-    #             res.code = 1003
-    #             res.msg = "错误的类型"
-    #             return Response(res.dict)
-    #
-    #         if app_id:
-    #             apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
-    #             if apps_obj:
-    #                 release_obj = AppReleaseInfo.objects.filter(app_id=apps_obj, is_master=True).first()
-    #                 if release_obj:
-    #
-    #                     random_file_name = make_from_user_uuid(request.user)
-    #                     old_file_name = os.path.basename(release_obj.icon_url)
-    #                     local_file = os.path.join(settings.MEDIA_ROOT, "icons",
-    #                                               random_file_name + "." + old_file_name.split(".")[1])
-    #                     # 读取传入的文件
-    #                     try:
-    #                         destination = open(local_file, 'wb+')
-    #                         for chunk in file_obj.chunks():
-    #                             # 写入本地文件
-    #                             destination.write(chunk)
-    #                         destination.close()
-    #                     except Exception as e:
-    #                         res.code = 1003
-    #                         res.msg = "数据写入失败"
-    #                         return Response(res.dict)
-    #                     release_obj.icon_url = release_obj.icon_url.replace(old_file_name.split(".")[0],
-    #                                                                         random_file_name)
-    #                     release_obj.save()
-    #                     del_cache_response_by_short(apps_obj.short, apps_obj.app_id)
-    #
-    #                     storage = Storage(request.user)
-    #                     storage.delete_file(old_file_name)
-    #
-    #                 else:
-    #                     res.code = 1003
-    #             else:
-    #                 res.code = 1003
-    #     return Response(res.dict)
 
 
 class AppReleaseinfoView(APIView):

@@ -147,7 +147,6 @@ SUPER_SIGN_ROOT = os.path.join(BASE_DIR, "supersign")
 
 AUTH_USER_MODEL = "api.UserInfo"
 
-
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -241,15 +240,15 @@ SERVER_DOMAIN = {
         'is_https': True,
     },  # ios 描述文件和plist文件下载域名，该域名用于后端，一般为api访问域名
     'POST_UDID_DOMAIN': 'https://fly.harmonygames.cn',  # 超级签名 安装签名时 向该域名 发送udid数据，该域名用于后端，一般为 api 访问域名
-    'REDIRECT_UDID_DOMAIN': 'https://fly.harmonygames.cn',  # 超级签名 安装完成之后，跳转域名，该域名为前端web访问域名
+    'REDIRECT_UDID_DOMAIN': 'https://fly.harmonygames.cn',  # 超级签名 安装完成之后，跳转域名，该域名为前端web访问域名，如果用户定义了自己的域名，则跳转用户域名
+    'FILE_UPLOAD_DOMAIN': 'https://fly.harmonygames.cn',  # 本地文件上传域名，使用本地存储必须配置
 }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
-CAPTCHA_TIMEOUT=5  # Minutes
-CAPTCHA_LENGTH= 6  # Chars
-
+CAPTCHA_TIMEOUT = 5  # Minutes
+CAPTCHA_LENGTH = 6  # Chars
 
 BASE_LOG_DIR = os.path.join(BASE_DIR, "logs")
 LOGGING = {

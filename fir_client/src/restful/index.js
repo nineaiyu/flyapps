@@ -289,8 +289,12 @@ export function getapppicurl(app_id) {
     return USERSEVER + '/apps/' + app_id
 }
 
-export function getuploadurl() {
-    return USERSEVER + '/upload'
+export function getuploadurl(domain_name=null) {
+        if (domain_name) {
+            return domain_name + APIPATH + '/upload'
+        } else {
+            return USERSEVER + '/upload';
+        }
 }
 
 

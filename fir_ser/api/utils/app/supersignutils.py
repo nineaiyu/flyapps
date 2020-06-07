@@ -97,8 +97,15 @@ def get_http_server_doamin(request):
     return server_domain
 
 
-def get_redirect_server_domain(request):
-    server_domain = SERVER_DOMAIN.get('REDIRECT_UDID_DOMAIN', None)
+def get_redirect_server_domain(request, user_obj=None):
+    if user_obj:
+        domain_name = user_obj.domain_name
+    else:
+        domain_name = request.user.domain_name
+    if domain_name and len(domain_name) > 3:
+        server_domain = "%s://%s" % ('http', domain_name)  # 第三方域名暂时不支持HTTPS
+    else:
+        server_domain = SERVER_DOMAIN.get('REDIRECT_UDID_DOMAIN', None)
     if not server_domain or not server_domain.startswith("http"):
         HTTP_HOST = request.META.get('HTTP_HOST')
         SERVER_PROTOCOL = request.META.get('SERVER_PROTOCOL')
@@ -178,7 +185,7 @@ class IosUtils(object):
         status, result = self.download_profile()
         if not status:
             logger.error("udid %s app %s  developer %s sign failed %s" % (
-            self.udid_info.get('udid'), self.app_obj, self.developer_obj, result))
+                self.udid_info.get('udid'), self.app_obj, self.developer_obj, result))
             self.developer_obj.is_actived = False
             self.developer_obj.save()
             return
