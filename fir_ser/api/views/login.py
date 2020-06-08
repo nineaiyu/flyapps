@@ -1,5 +1,5 @@
 from django.contrib import auth
-from api.models import Token, UserInfo
+from api.models import Token, UserInfo, Apps
 from rest_framework.response import Response
 from api.utils.serializer import UserInfoSerializer
 from django.core.cache import cache
@@ -148,6 +148,7 @@ class UserInfoView(APIView):
 
             if domain_name == '':
                 request.user.domain_name = None
+                Apps.objects.filter(user_id=request.user).update(wxeasytype=True)
                 set_default_app_wx_easy(request.user)
 
             request.user.job = data.get("job", request.user.job)
