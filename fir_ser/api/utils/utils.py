@@ -3,7 +3,7 @@
 # project: 5月
 # author: liuyu
 # date: 2020/5/7
-import os
+import os, re
 from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
     UDIDsyncDeveloper
@@ -112,3 +112,13 @@ def upload_oss_default_head_img(user_obj, storage_obj):
     if storage_obj:
         storage_obj = Storage(user_obj, storage_obj)
         return storage_obj.upload_file(head_img_full_path)
+
+
+def is_valid_domain(value):
+    pattern = re.compile(
+        r'^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|'
+        r'([a-zA-Z]{1}[0-9]{1})|([0-9]{1}[a-zA-Z]{1})|'
+        r'([a-zA-Z0-9][-_.a-zA-Z0-9]{0,61}[a-zA-Z0-9]))\.'
+        r'([a-zA-Z]{2,13}|[a-zA-Z0-9-]{2,30}.[a-zA-Z]{2,3})$'
+    )
+    return True if pattern.match(value) else False

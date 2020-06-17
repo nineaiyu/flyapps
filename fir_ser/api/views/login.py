@@ -6,7 +6,7 @@ from django.core.cache import cache
 from rest_framework.views import APIView
 import binascii
 import os, datetime
-from api.utils.utils import get_captcha, valid_captcha
+from api.utils.utils import get_captcha, valid_captcha, is_valid_domain
 from api.utils.TokenManager import DownloadToken, generateNumericTokenOfLength
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
@@ -132,19 +132,30 @@ class UserInfoView(APIView):
             # 修改个人资料
             domain_name = data.get("domain_name", None)
             if domain_name:
-                domain_name_list = domain_name.strip(' ').strip("http://").strip("https://").split("/")
-                if len(domain_name_list) > 1:
+                domain_name_list = domain_name.strip(' ').replace("http://", "").replace("https://", "").split("/")
+                if len(domain_name_list) > 0:
                     domain_name = domain_name_list[0]
-                    if len(domain_name) > 3:
+                    if len(domain_name) > 3 and is_valid_domain(domain_name_list[0]):
                         if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
-                            serializer = UserInfoSerializer(request.user)
-                            res.data = serializer.data
-                            res.code = 1004
-                            res.msg = "域名设置失败，请更换其他域名"
-                            return Response(res.dict)
+                            admin_storage = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
+                            if admin_storage and admin_storage.uid == request.user.uid:
+                                request.user.domain_name = domain_name
+                                set_default_app_wx_easy(request.user)
+                            else:
+                                serializer = UserInfoSerializer(request.user)
+                                res.data = serializer.data
+                                res.code = 1004
+                                res.msg = "域名设置失败，请更换其他域名"
+                                return Response(res.dict)
                         else:
                             request.user.domain_name = domain_name
                             set_default_app_wx_easy(request.user)
+                    else:
+                        serializer = UserInfoSerializer(request.user)
+                        res.data = serializer.data
+                        res.code = 1004
+                        res.msg = "域名校验失败"
+                        return Response(res.dict)
 
             if domain_name == '':
                 request.user.domain_name = None
