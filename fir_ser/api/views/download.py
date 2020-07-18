@@ -10,7 +10,7 @@ from fir_ser import settings
 from api.utils.TokenManager import DownloadToken
 from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.apputils import make_resigned
-from api.utils.app.supersignutils import make_udid_mobileconfig, get_post_udid_url, get_redirect_server_domain
+from api.utils.app.supersignutils import make_sign_udid_mobileconfig, get_post_udid_url, get_redirect_server_domain
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import get_app_instance_by_cache, get_download_url_by_cache, set_app_download_by_cache, \
     del_cache_response_by_short
@@ -69,7 +69,7 @@ class DownloadView(APIView):
                 if release_obj:
                     bundle_id = release_obj.app_id.bundle_id
                     udid_url = get_post_udid_url(request, release_obj.app_id.short)
-                    ios_udid_mobileconfig = make_udid_mobileconfig(udid_url, bundle_id)
+                    ios_udid_mobileconfig = make_sign_udid_mobileconfig(udid_url, bundle_id, release_obj.app_id.name)
                     response = FileResponse(ios_udid_mobileconfig)
                     response['Content-Type'] = "application/x-apple-aspen-config"
                     response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileconfig'

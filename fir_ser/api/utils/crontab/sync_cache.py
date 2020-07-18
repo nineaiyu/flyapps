@@ -7,8 +7,8 @@
 from api.models import Apps, UserInfo
 from api.utils.storage.storage import Storage
 from django.core.cache import cache
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE
-import time
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT
+import time, os
 from django_apscheduler.models import DjangoJobExecution
 import logging
 
@@ -65,3 +65,17 @@ def auto_delete_job_log():
         count = DjangoJobExecution.objects.count()
         if count > need_count:
             DjangoJobExecution.objects.filter(id__lte=max_id - need_count).delete()
+
+
+def auto_delete_tmp_file():
+    mobileconfig_tmp_dir = os.path.join(SUPER_SIGN_ROOT, 'tmp', 'mobileconfig')
+    for root, dirs, files in os.walk(mobileconfig_tmp_dir, topdown=False):
+        now_time = time.time()
+        for name in files:
+            file_path = os.path.join(root, name)
+            st_mtime = os.stat(file_path).st_mtime
+            if now_time - st_mtime > SYNC_CACHE_TO_DATABASE.get('clean_local_tmp_file_from_mtime', 30 * 60):
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    logger.error("auto_delete_tmp_file  %s Failed . Exception %s" % (file_path, e))
