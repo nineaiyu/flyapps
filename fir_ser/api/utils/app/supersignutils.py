@@ -101,7 +101,7 @@ def get_redirect_server_domain(request, user_obj=None):
     if user_obj:
         domain_name = user_obj.domain_name
     else:
-        domain_name = request.user.domain_name
+        domain_name = None
     if domain_name and len(domain_name) > 3:
         server_domain = "%s://%s" % ('http', domain_name)  # 第三方域名暂时不支持HTTPS
     else:
