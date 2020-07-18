@@ -111,6 +111,13 @@ class ResignApp(object):
         # script_path=os.path.join(SUPER_SIGN_ROOT,'scripts','apple_api.rb')
         self.cmd = "isign  -c '%s'  -k '%s' " % (self.app_dev_pem, self.my_local_key)
 
+    @staticmethod
+    def sign_mobileconfig(mobilconfig_path, sign_mobilconfig_path, ssl_pem_path, ssl_key_path):
+        cmd = "openssl smime -sign -in %s -out %s -signer %s " \
+              "-inkey %s -certfile %s -outform der -nodetach " % (
+                  mobilconfig_path, sign_mobilconfig_path, ssl_pem_path, ssl_key_path, ssl_pem_path)
+        return exec_shell(cmd)
+
     def sign(self, new_profile, org_ipa, new_ipa):
         self.cmd = self.cmd + " -p '%s' -o '%s'  '%s'" % (new_profile, new_ipa, org_ipa)
         result = exec_shell(self.cmd)

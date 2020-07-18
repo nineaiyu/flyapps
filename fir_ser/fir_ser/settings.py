@@ -230,8 +230,10 @@ FILE_UPLOAD_TMP_KEY = ".tmp"
 SYNC_CACHE_TO_DATABASE = {
     'download_times': 10,  # 下载次数同步时间
     'auto_clean_tmp_file_times': 60 * 30,  # 定时清理上传失误生成的临时文件
-    'auto_clean_apscheduler_log': 100000,  # 定时清理定时任务执行的日志，该参数为日志保留的数量
+    'auto_clean_local_tmp_file_times': 60 * 30,  # 定时清理临时文件,现在包含超级签名描述临时文件
     'try_login_times': 5,  # 当天登录失败次数，超过该失败次数，锁定24小时
+    'auto_clean_apscheduler_log': 100000,  # 定时清理定时任务执行的日志,该日志存在数据库中，该参数为日志保留的数量
+    'clean_local_tmp_file_from_mtime': 60 * 60,  # 清理最后一次修改时间超过限制时间的临时文件,单位秒
 }
 
 SERVER_DOMAIN = {
@@ -242,6 +244,13 @@ SERVER_DOMAIN = {
     'POST_UDID_DOMAIN': 'https://fly.harmonygames.cn',  # 超级签名 安装签名时 向该域名 发送udid数据，该域名用于后端，一般为 api 访问域名
     'REDIRECT_UDID_DOMAIN': 'https://fly.harmonygames.cn',  # 超级签名 安装完成之后，跳转域名，该域名为前端web访问域名，如果用户定义了自己的域名，则跳转用户域名
     'FILE_UPLOAD_DOMAIN': 'https://fly.harmonygames.cn',  # 本地文件上传域名，使用本地存储必须配置
+}
+
+MOBILECONFIG_SIGN_SSL = {
+    # 描述文件是否签名，默认是关闭状态；如果开启，并且ssl_key_path 和 ssl_pem_path 正常，则使用填写的ssl进行签名,否则默认不签名
+    'open': False,
+    'ssl_key_path': '/data/cert/fly.harmonygames.cn.key',
+    'ssl_pem_path': '/data/cert/fly.harmonygames.cn.pem'
 }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"

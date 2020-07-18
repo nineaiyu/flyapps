@@ -5,7 +5,7 @@
 # date: 2020/3/6
 
 import uuid, xmltodict, os, re, logging
-from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN
+from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILECONFIG_SIGN_SSL
 from api.utils.app.iossignapi import AppDeveloperApi, ResignApp
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
     UDIDsyncDeveloper
@@ -32,8 +32,45 @@ def udid_bytes_to_dict(xml_stream):
     return new_uuid_info
 
 
-def make_udid_mobileconfig(udid_url, PayloadOrganization, PayloadUUID=uuid.uuid1(), PayloadDescription='本文件仅用来获取设备ID',
-                           PayloadDisplayName='查询设备UDID'):
+def make_sign_udid_mobileconfig(udid_url, PayloadOrganization, appname):
+    if MOBILECONFIG_SIGN_SSL.get("open"):
+        ssl_key_path = MOBILECONFIG_SIGN_SSL.get("ssl_key_path", None)
+        ssl_pem_path = MOBILECONFIG_SIGN_SSL.get("ssl_pem_path", None)
+
+        if ssl_key_path and ssl_pem_path and os.path.isfile(ssl_key_path) and os.path.isfile(ssl_pem_path):
+            mobileconfig_tmp_dir = os.path.join(SUPER_SIGN_ROOT, 'tmp', 'mobileconfig')
+            if not os.path.exists(mobileconfig_tmp_dir):
+                os.makedirs(mobileconfig_tmp_dir)
+
+            mobileconfig_filename = PayloadOrganization + str(uuid.uuid1())
+            mobilconfig_path = os.path.join(mobileconfig_tmp_dir, mobileconfig_filename)
+
+            sign_mobilconfig_path = os.path.join(mobileconfig_tmp_dir, 'sign_' + mobileconfig_filename)
+            with open(mobilconfig_path, "w") as f:
+                f.write(make_udid_mobileconfig(udid_url, PayloadOrganization, appname))
+
+            status, result = ResignApp.sign_mobileconfig(mobilconfig_path, sign_mobilconfig_path, ssl_pem_path,
+                                                         ssl_key_path)
+            if status:
+                mobileconfig_body = open(sign_mobilconfig_path, 'rb')
+            else:
+                logger.error(
+                    "%s %s sign_mobileconfig failed ERROR:%s" % (PayloadOrganization, appname, result.get("err_info")))
+                return make_udid_mobileconfig(udid_url, PayloadOrganization, appname)
+
+            return mobileconfig_body
+
+        else:
+            logger.error("sign_mobileconfig %s or %s is not exists" % (ssl_key_path, ssl_pem_path))
+            return make_udid_mobileconfig(udid_url, PayloadOrganization, appname)
+
+    else:
+        return make_udid_mobileconfig(udid_url, PayloadOrganization, appname)
+
+
+def make_udid_mobileconfig(udid_url, PayloadOrganization, appname, PayloadUUID=uuid.uuid1(),
+                           PayloadDescription='该文件仅用来获取设备ID，帮助用户安装授权',
+                           PayloadDisplayName='设备安装授权'):
     # <!--参考:https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/iPhoneOTAConfiguration/ConfigurationProfileExamples/ConfigurationProfileExamples.html-->
     mobileconfig = '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -68,7 +105,8 @@ def make_udid_mobileconfig(udid_url, PayloadOrganization, PayloadUUID=uuid.uuid1
         <key>PayloadType</key>
         <string>Profile Service</string>
     </dict>
-</plist>''' % (udid_url, PayloadOrganization, PayloadDisplayName, PayloadUUID, PayloadOrganization, PayloadDescription)
+</plist>''' % (udid_url, PayloadOrganization, appname + " -- " + PayloadDisplayName, PayloadUUID, PayloadOrganization,
+               PayloadDescription)
     return mobileconfig
 
 
