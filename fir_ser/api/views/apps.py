@@ -257,10 +257,9 @@ class AppReleaseinfoView(APIView):
                 elif appreleaseobj.is_master and apprelease_count < 2:
                     logger.info("delete app master release %s and clean app %s " % (appreleaseobj, apps_obj))
 
-                    if apps_obj:
-                        if apps_obj.issupersign:
-                            logger.info("app_id:%s is supersign ,delete this app need clean IOS developer" % (app_id))
-                            IosUtils.clean_app_by_user_obj(apps_obj, request.user)
+                    if apps_obj.issupersign:
+                        logger.info("app_id:%s is supersign ,delete this app need clean IOS developer" % (app_id))
+                        IosUtils.clean_app_by_user_obj(apps_obj, request.user)
 
                     storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
                     storage.delete_file(appreleaseobj.icon_url)
