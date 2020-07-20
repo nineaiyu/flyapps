@@ -66,10 +66,29 @@
 
                                     <button type="button" v-else-if="wrong">{{ msg }}</button>
                                     <div v-else>
-                                        <button v-if="isdownload" disabled="" class="loading"
-                                                style="min-width: 42px; width: 42px; padding: 21px 0; border-top-color: transparent; border-left-color: transparent;">
-                                            &nbsp;
-                                        </button>
+                                        <div v-if="isdownload">
+                                            <div v-if="gomobile">
+                                                <button disabled="" class="loading"
+                                                        style="min-width: 42px; width: 42px; padding: 21px 0; border-top-color: transparent; border-left-color: transparent;">
+                                                </button>
+                                            </div>
+                                            <div v-else>
+                                                <div class="actions type-ios">
+                                                    <div><p>正在安装，请按 Home 键在桌面查看</p>
+                                                        <p>
+                                                            <button @click="gomobileaction">
+                                                                <a icon="el-icon-loadings" type="primary"
+                                                                         :underline="false">
+                                                                    立即信任
+                                                                </a>
+                                                            </button>
+
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div v-else>
                                             <div v-if="currentappinfo.need_password" style="margin:0 auto; width:166px">
                                                 <input class="passwd" placeholder="请输入密码" v-model="password"/>
@@ -190,11 +209,16 @@
                 udid: "",
                 wxeasytypeflag: false,
                 timer: '',
+                gomobile: true,
+                mobileprovision:'',
 
             }
         }, beforeDestroy() {
             clearTimeout(this.timer);
         }, methods: {
+            gomobileaction(){
+                window.location.href = this.mobileprovision;
+            },
             download() {
                 if (this.currentappinfo.app_id) {
                     this.isdownload = true;
@@ -228,6 +252,13 @@
                                 } else {
                                     let download_url = res.data.download_url;
                                     this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
+                                    if (res.data.extra_url !== "") {
+                                        this.mobileprovision = res.data.extra_url;
+                                        // eslint-disable-next-line no-unused-vars
+                                        this.timmer = setTimeout(data => {
+                                            this.gomobile = false;
+                                        }, 5000);
+                                    }
                                 }
                             } else {
                                 if (this.agent !== '') {

@@ -253,6 +253,21 @@ MOBILECONFIG_SIGN_SSL = {
     'ssl_pem_path': '/data/cert/fly.harmonygames.cn.pem'
 }
 
+DEFAULT_MOBILEPROVISION = {
+    # 默认描述文件路径或者下载路径，用户企业签名或者超级签名 跳转 [设置 - 通用 - 描述文件|设备管理] 页面
+    # 如果配置了path路径，则走路径，如果配置了url，则走URL，path 优先级大于url优先级
+    'enterprise': {
+        'path': os.path.join(MEDIA_ROOT, 'embedded.mobileprovision'),
+        'url': 'https://ali-static.jappstore.com/embedded.mobileprovision'
+    },
+    'supersign': {
+        # 超级签名，如果self 为True，则默认用自己的描述文件，否则同企业配置顺序一致
+        'self': True,
+        'path': os.path.join(MEDIA_ROOT, 'embedded.mobileprovision'),
+        'url': 'https://ali-static.jappstore.com/embedded.mobileprovision'
+    }
+}
+
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 

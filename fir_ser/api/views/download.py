@@ -87,11 +87,28 @@ class DownloadView(APIView):
                     if os.path.isfile(file_path):
                         response = FileResponse(open(file_path, 'rb'))
                     else:
-                        response = FileResponse()
+                        file_path = settings.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
+                        if os.path.isfile(file_path):
+                            response = FileResponse(open(file_path, 'rb'))
+                        else:
+                            response = FileResponse()
                     response['Content-Type'] = "application/x-apple-aspen-config"
                     response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileprovision'
                     return response
                 res.msg = "mobileprovision release_id error"
+            elif ftype == 'dmobileprovision':
+                release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
+                if release_obj:
+                    file_path = settings.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
+                    if os.path.isfile(file_path):
+                        response = FileResponse(open(file_path, 'rb'))
+                    else:
+                        response = FileResponse()
+                    response['Content-Type'] = "application/x-apple-aspen-config"
+                    response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileprovision'
+                    return response
+                res.msg = "dmobileprovision release_id error"
+
             else:
                 file_path = os.path.join(settings.MEDIA_ROOT, filename)
                 try:
