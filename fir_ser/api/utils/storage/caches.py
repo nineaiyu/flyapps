@@ -8,7 +8,7 @@ from django.core.cache import cache
 from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, APPSuperSignUsedInfo
 import time, os
 from django.utils import timezone
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION
 from api.utils.storage.storage import Storage, LocalStorage
 from api.utils.crontab.sync_cache import sync_download_times_by_app_id
 from api.utils.utils import file_format_path
@@ -47,9 +47,26 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
             else:
                 return "", ""
 
+        supersign = DEFAULT_MOBILEPROVISION.get("supersign")
         mobileconifg = ""
-        if download_url_type == 'mobileconifg':
+
+        if download_url_type == 'plist':
+            enterprise = DEFAULT_MOBILEPROVISION.get("enterprise")
+            mpath = enterprise.get('path', None)
+            murl = enterprise.get('url', None)
+        else:
+            mpath = supersign.get('path', None)
+            murl = supersign.get('url', None)
+
+        if murl and len(murl) > 5:
+            mobileconifg = murl
+
+        if mpath and os.path.isfile(mpath):
+            mobileconifg = local_storage.get_download_url(filename.split(".")[0] + "." + "dmobileprovision", limit)
+
+        if download_url_type == 'mobileconifg' and supersign.get("self"):
             mobileconifg = local_storage.get_download_url(filename.split(".")[0] + "." + "mobileprovision", limit)
+
         return local_storage.get_download_url(filename.split(".")[0] + "." + download_url_type, limit), mobileconifg
     down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
     download_val = cache.get(down_key)
