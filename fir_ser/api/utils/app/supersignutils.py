@@ -141,7 +141,10 @@ def get_redirect_server_domain(request, user_obj=None):
     else:
         domain_name = None
     if domain_name and len(domain_name) > 3:
-        server_domain = "%s://%s" % ('http', domain_name)  # 第三方域名暂时不支持HTTPS
+        if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
+            server_domain = SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN")
+        else:
+            server_domain = "%s://%s" % ('http', domain_name)  # 第三方域名暂时不支持HTTPS
     else:
         server_domain = SERVER_DOMAIN.get('REDIRECT_UDID_DOMAIN', None)
     if not server_domain or not server_domain.startswith("http"):
