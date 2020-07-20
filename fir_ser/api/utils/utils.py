@@ -50,7 +50,7 @@ def delete_app_profile_file(developer_obj, app_obj):
     file = get_profile_full_path(developer_obj, app_obj)
     try:
         if os.path.isfile(file):
-            os.remove(get_profile_full_path(developer_obj, app_obj))
+            os.remove(file)
     except Exception as e:
         logger.error("delete_app_profile_file developer_obj:%s  app_obj:%s file:%s Exception:%s" % (
             developer_obj, app_obj, file, e))

@@ -39,24 +39,27 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
                                                                        developerid=SuperSign_obj.developerid).first()
                     if APPToDeveloper_obj:
                         return local_storage.get_download_url(
-                            APPToDeveloper_obj.binary_file + "." + download_url_type, limit)
+                            APPToDeveloper_obj.binary_file + "." + download_url_type, limit), ""
                     else:
-                        return ""
+                        return "", ""
                 else:
-                    return ""
+                    return "", ""
             else:
-                return ""
+                return "", ""
 
-        return local_storage.get_download_url(filename.split(".")[0] + "." + download_url_type, limit)
+        mobileconifg = ""
+        if download_url_type == 'mobileconifg':
+            mobileconifg = local_storage.get_download_url(filename.split(".")[0] + "." + "mobileprovision", limit)
+        return local_storage.get_download_url(filename.split(".")[0] + "." + download_url_type, limit), mobileconifg
     down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
     download_val = cache.get(down_key)
     if download_val:
         if download_val.get("time") > now - 60:
-            return download_val.get("download_url")
+            return download_val.get("download_url"), ""
     else:
         user_obj = UserInfo.objects.filter(pk=app_obj.get("user_id")).first()
         storage = Storage(user_obj)
-        return storage.get_download_url(filename, limit)
+        return storage.get_download_url(filename, limit), ""
 
 
 def get_app_instance_by_cache(app_id, password, limit, udid):

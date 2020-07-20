@@ -121,7 +121,7 @@
                 wxeasytypeflag: false,
                 wxredirectflag: false,
                 clecount: 0,
-                wxeasy_disable:false
+                wxeasy_disable: false
             }
         },
         methods: {
@@ -188,8 +188,8 @@
                     this.wxeasytypetip.val = 'off';
                 }
                 this.wxeasytypeflag = true;
-                if(!this.$store.state.userinfo.domain_name){
-                    this.wxeasy_disable=true;
+                if (!this.$store.state.userinfo.domain_name) {
+                    this.wxeasy_disable = true;
                 }
             },
             setwxredirectshow(currentapp) {

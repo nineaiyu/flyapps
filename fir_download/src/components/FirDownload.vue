@@ -189,8 +189,11 @@
                 iserror: false,
                 udid: "",
                 wxeasytypeflag: false,
+                timer: '',
 
             }
+        }, beforeDestroy() {
+            clearTimeout(this.timer);
         }, methods: {
             download() {
                 if (this.currentappinfo.app_id) {
@@ -198,7 +201,7 @@
                     getdownloadurl(res => {
                         if (res.code === 1000) {
                             if (res.data.download_url === "") {
-                                window.location.href = this.full_url;
+                                window.location.href = this.full_url.split("?")[0];
                                 return
                             }
                             if (this.currentappinfo.type === 1) {
@@ -211,6 +214,15 @@
                                     } else {
                                         if (this.agent !== '') {
                                             this.downloadurl = res.data.download_url;
+                                            window.location.href = this.downloadurl;
+                                            if (res.data.extra_url !== "") {
+                                                // eslint-disable-next-line no-unused-vars
+                                                this.timmer = setTimeout(data => {
+                                                    window.location.href = res.data.extra_url;
+                                                }, 3000);
+                                            }
+
+                                            return;
                                         }
                                     }
                                 } else {

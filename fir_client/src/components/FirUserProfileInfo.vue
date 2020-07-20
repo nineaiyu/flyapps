@@ -130,7 +130,7 @@
                             this.$message.success("更新成功")
                         }
                     } else {
-                        this.$message.error("更新失败 "+data.msg)
+                        this.$message.error("更新失败 " + data.msg)
 
                     }
                 }, datainfo)

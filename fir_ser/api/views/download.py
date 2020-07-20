@@ -17,9 +17,10 @@ from api.utils.storage.caches import get_app_instance_by_cache, get_download_url
 import os
 from rest_framework_extensions.cache.decorators import cache_response
 from api.utils.serializer import AppsShortSerializer
-from api.models import Apps, AppReleaseInfo, APPToDeveloper
+from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInfo
 from django.http import FileResponse
 import logging
+from api.utils.utils import get_profile_full_path
 
 logger = logging.getLogger(__file__)
 
@@ -75,6 +76,22 @@ class DownloadView(APIView):
                     response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileconfig'
                     return response
                 res.msg = "mobileconifg release_id error"
+            elif ftype == 'mobileprovision':
+                release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
+                if release_obj:
+                    appsuper_obj = APPSuperSignUsedInfo.objects.filter(app_id=release_obj.app_id).last()
+                    if not appsuper_obj:
+                        appsuper_obj = APPSuperSignUsedInfo.objects.last()
+                    developer_obj = appsuper_obj.developerid
+                    file_path = get_profile_full_path(developer_obj, release_obj.app_id)
+                    if os.path.isfile(file_path):
+                        response = FileResponse(open(file_path, 'rb'))
+                    else:
+                        response = FileResponse()
+                    response['Content-Type'] = "application/x-apple-aspen-config"
+                    response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileprovision'
+                    return response
+                res.msg = "mobileprovision release_id error"
             else:
                 file_path = os.path.join(settings.MEDIA_ROOT, filename)
                 try:
@@ -164,16 +181,18 @@ class InstallView(APIView):
             if app_obj:
                 if app_obj.get("type") == 0:
                     apptype = '.apk'
-                    download_url = get_download_url_by_cache(app_obj, release_id + apptype, 600)
+                    download_url, extra_url = get_download_url_by_cache(app_obj, release_id + apptype, 600)
                 else:
                     apptype = '.ipa'
                     if isdownload:
-                        download_url = get_download_url_by_cache(app_obj, release_id + apptype, 600, udid=udid)
+                        download_url, extra_url = get_download_url_by_cache(app_obj, release_id + apptype, 600,
+                                                                            udid=udid)
                     else:
-                        download_url = get_download_url_by_cache(app_obj, release_id + apptype, 600, isdownload,
-                                                                 udid=udid)
+                        download_url, extra_url = get_download_url_by_cache(app_obj, release_id + apptype, 600,
+                                                                            isdownload,
+                                                                            udid=udid)
 
-                res.data = {"download_url": download_url}
+                res.data = {"download_url": download_url, "extra_url": extra_url}
                 if download_url != "" and "mobileconifg" not in download_url:
                     set_app_download_by_cache(app_id)
                     if request.META.get('HTTP_X_FORWARDED_FOR', None):

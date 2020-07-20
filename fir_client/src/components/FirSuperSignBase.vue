@@ -567,10 +567,17 @@
                 })
             },
             iosdeveloperFun(params) {
+                const loading = this.$loading({
+                    lock: true,
+                    text: '执行中,请耐心等待...',
+                    spinner: 'el-icon-loading',
+                    background: 'rgba(0, 0, 0, 0.7)'
+                });
                 iosdeveloper(data => {
                     if (data.code === 1000) {
                         this.app_developer_lists = data.data;
                         this.pagination.total = data.count;
+                        loading.close();
                         if (data.use_num) {
                             this.developer_used_info = data.use_num;
                             if (this.developer_used_info.all_usable_number !== 0) {
