@@ -82,16 +82,24 @@ class DownloadView(APIView):
                     appsuper_obj = APPSuperSignUsedInfo.objects.filter(app_id=release_obj.app_id).last()
                     if not appsuper_obj:
                         appsuper_obj = APPSuperSignUsedInfo.objects.last()
-                    developer_obj = appsuper_obj.developerid
-                    file_path = get_profile_full_path(developer_obj, release_obj.app_id)
-                    if os.path.isfile(file_path):
-                        response = FileResponse(open(file_path, 'rb'))
-                    else:
+
+                    if not appsuper_obj:
                         file_path = settings.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
                         if os.path.isfile(file_path):
                             response = FileResponse(open(file_path, 'rb'))
                         else:
                             response = FileResponse()
+                    else:
+                        developer_obj = appsuper_obj.developerid
+                        file_path = get_profile_full_path(developer_obj, release_obj.app_id)
+                        if os.path.isfile(file_path):
+                            response = FileResponse(open(file_path, 'rb'))
+                        else:
+                            file_path = settings.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
+                            if os.path.isfile(file_path):
+                                response = FileResponse(open(file_path, 'rb'))
+                            else:
+                                response = FileResponse()
                     response['Content-Type'] = "application/x-apple-aspen-config"
                     response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileprovision'
                     return response
