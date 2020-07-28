@@ -75,8 +75,8 @@
                                             <div v-else>
                                                 <div class="actions type-ios">
                                                     <div><p>正在安装，请按 Home 键在桌面查看</p>
-                                                        <p>
-                                                            <button @click="gomobileaction">
+                                                        <p v-if="!this.currentappinfo.issupersign">
+                                                        <button @click="gomobileaction">
                                                                 <a icon="el-icon-loadings" type="primary"
                                                                          :underline="false">
                                                                     立即信任
@@ -234,6 +234,10 @@
                                         if (this.agent !== '') {
                                             let download_url = res.data.download_url;
                                             this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
+                                            // eslint-disable-next-line no-unused-vars
+                                            this.timmer = setTimeout(data => {
+                                                this.gomobile = false;
+                                            }, 5000);
                                         }
                                     } else {
                                         if (this.agent !== '') {
