@@ -433,7 +433,7 @@
                             iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者QQHD浏览器
                             iPad: u.indexOf('iPad') > -1, //是否iPad
                             webApp: u.indexOf('Safari') === -1, //是否web应该程序，没有头部与底部
-                            macos: u.indexOf('Mac OS') > -1
+                            macos: u.indexOf('Mac OS') > -1 && u.indexOf('Macintosh') > -1
                         };
                     }(),
                     language: (navigator.browserLanguage || navigator.language).toLowerCase()
