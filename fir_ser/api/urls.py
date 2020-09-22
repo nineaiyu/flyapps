@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, re_path, include
 
-from api.views.login import LoginView, UserInfoView
+from api.views.login import LoginView, UserInfoView, RegistView
 from api.views.logout import LogoutView
 from api.views.apps import AppsView, AppInfoView, AppReleaseinfoView
 from api.views.download import ShortDownloadView
@@ -32,6 +32,7 @@ from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedVie
 urlpatterns = [
     # path("",include(router.urls)),
     re_path("^login", LoginView.as_view()),
+    re_path("^register", RegistView.as_view()),
     re_path("^logout", LogoutView.as_view()),
     re_path("^apps$", AppsView.as_view()),
     re_path("^storage$", StorageView.as_view()),

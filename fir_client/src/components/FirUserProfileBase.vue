@@ -13,7 +13,7 @@
             </el-upload>
 
             <div class="name">
-                <input v-model="userinfo.first_name" @focusout="update_name">
+                <input v-model="userinfo.first_name" maxlength="8" @focusout="update_name">
             </div>
 
             <div class="user_pro_tabs">

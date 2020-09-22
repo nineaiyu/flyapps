@@ -172,6 +172,22 @@ export function loginFun(callBack, params, load = true) {
     );
 }
 
+/**用户注册 */
+export function registerFun(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/register',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+
 /**用户退出 */
 export function logout(callBack, params, load = true) {
     getData(

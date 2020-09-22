@@ -44,9 +44,9 @@
                     <el-button type="danger" @click="onSubmit">登录</el-button>
                 </el-form-item>
 
-                <!--                <el-form-item>-->
-                <!--                    <el-button type="primary" @click="onRegister" plain>注册</el-button>-->
-                <!--                </el-form-item>-->
+                <el-form-item>
+                    <el-button type="primary" @click="onRegister" plain>注册</el-button>
+                </el-form-item>
             </el-form>
 
 

@@ -83,6 +83,51 @@ class LoginView(APIView):
         response.data = get_captcha()
         return Response(response.dict)
 
+class RegistView(APIView):
+    def generate_key(self):
+        return binascii.hexlify(os.urandom(32)).decode()
+
+    def post(self, request):
+        response = BaseResponse()
+        receive = request.data
+
+        username = receive.get("username", None)
+        is_valid = valid_captcha(receive.get("cptch_key", None), receive.get("authcode", None), username)
+        if is_valid:
+            if login_auth_failed("get", username):
+                password = receive.get("password")
+                password2 = receive.get("password2")
+                if password == password2:
+
+                    try:
+                        UserInfo.objects.get(username=username)
+                        login_auth_failed("set", username)
+                        response.msg = "邮箱已经存在，请更换其他邮箱"
+                        response.code = 1002
+                    except UserInfo.DoesNotExist:
+                        user_obj = UserInfo.objects.create_user(username, email=username, password=password,first_name=username)
+                        if user_obj:
+                            response.msg = "注册成功"
+                            response.code = 1000
+                else:
+                    response.code = 1001
+                    response.msg = "密码不一致"
+            else:
+                response.code = 1006
+                logger.error("username:%s failed too try , locked" % (username,))
+                response.msg = "用户注册失败次数过多，已被锁定，请1小时之后再次尝试"
+        else:
+            response.code = 1001
+            response.msg = "验证码有误"
+
+        return Response(response.dict)
+
+    def get(self, request):
+        response = BaseResponse()
+        response.data = get_captcha()
+        return Response(response.dict)
+
+
 
 class UserInfoView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
@@ -170,7 +215,15 @@ class UserInfoView(APIView):
                 sms_token_obj = DownloadToken()
                 if sms_token_obj.verify_token(sms_token, data.get("sms_code", None)):
                     request.user.mobile = data.get("mobile", request.user.mobile)
-            request.user.save()
+            try:
+                request.user.save()
+            except Exception as e:
+                serializer = UserInfoSerializer(request.user)
+                res.data = serializer.data
+                res.code = 1004
+                res.msg = "信息保存失败"
+                logger.error("User %s info save failed. Excepiton:%s" % (request.user,e))
+                return Response(res.dict)
             serializer = UserInfoSerializer(request.user)
             res.data = serializer.data
             return Response(res.dict)
