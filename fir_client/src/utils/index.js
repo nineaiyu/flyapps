@@ -125,9 +125,8 @@ export function dataURLtoFile(dataurl, filename) {//将base64转换为文件
 }
 
 export function uploadaliyunoss(file, certinfo, app, successcallback, processcallback) {
-    const OSS = require('ali-oss');
     let token = certinfo.upload_token;
-    let client = new OSS({
+    let client = new app.oss({
         endpoint: token.endpoint,
         accessKeyId: token.access_key_id,
         accessKeySecret: token.access_key_secret,
