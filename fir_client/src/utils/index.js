@@ -196,14 +196,19 @@ export function removeAaary(_arr, _obj) {
     }
 }
 
-//深拷贝
-export function deepCopy(source) {
-    let result = {};
-    for (let key in source) {
-        result[key] = typeof source[key] === 'object' ? deepCopy(source[key]) : source[key];
-    }
-    return result;
-}
+//深拷贝-字段不能为null
+// export function deepCopy(source) {
+//     let result = {};
+//     for (let key in source) {
+//         result[key] = typeof source[key] === 'object' ? deepCopy(source[key]) : source[key];
+//     }
+//     return result;
+// }
+//
+// //深拷贝-只有json
+// export function deepCopyJson(source) {
+//     return JSON.parse(JSON.stringify(source))
+// }
 
 export function IsNum(s) {
     if (s != null) {
@@ -213,4 +218,46 @@ export function IsNum(s) {
         return (r == s) ? true : false;
     }
     return false;
+}
+
+function getType(x) {
+    if (x) {
+        if (x.constructor.toString().indexOf("Array") > -1) {
+            return 'array'
+        } else if (x.constructor.toString().indexOf("Number") > -1) {
+            return 'number'
+        } else if (x.constructor.toString().indexOf("String") > -1) {
+            return 'string'
+        } else if (x.constructor.toString().indexOf("Object") > -1) {
+            return 'object'
+        } else {
+            return x.constructor.toString()
+        }
+    } else {
+        return x
+    }
+
+}
+//深拷贝
+export function deepCopy(data) {
+    let type = getType(data);
+    let obj;
+    if (type === 'array') {
+        obj = [];
+    } else if (type === 'object') {
+        obj = {};
+    } else {
+        //不再具有下一层次
+        return data;
+    }
+    if (type === 'array') {
+        for (let i = 0, len = data.length; i < len; i++) {
+            obj.push(deepCopy(data[i]));
+        }
+    } else if (type === 'object') {
+        for (let key in data) {
+            obj[key] = deepCopy(data[key]);
+        }
+    }
+    return obj;
 }

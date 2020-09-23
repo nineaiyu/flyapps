@@ -160,7 +160,10 @@
         }, watch: {
             '$store.state.currentapp.master_release.icon_url': function () {
                 this.icon_url = this.$store.state.currentapp.master_release.icon_url
-            }
+            },
+            '$store.state.currentapp': function () {
+                this.appinfos = this.$store.state.currentapp;
+            },
         }
 
     }

@@ -192,7 +192,7 @@ class AppInfoView(APIView):
                         apps_obj.wxeasytype = 1
 
                     apps_obj.wxredirect = data.get("wxredirect", apps_obj.wxredirect)
-                    if apps_obj.type == 1:
+                    if apps_obj.type == 1 and data.get('issupersign', -1) != -1:
                         # 为啥注释掉，就是该udid已经在该平台使用了，虽然已经没有余额，但是其他应用也是可以超级签名的
                         # developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
                         # use_num = get_developer_devices(developer_obj)

@@ -89,6 +89,7 @@
 
 <script>
     import {userinfos} from '../restful'
+    import {deepCopy} from "../utils";
 
     export default {
         name: "FirUserProfileInfo",
@@ -97,6 +98,7 @@
                 userinfo: {
                     srccode: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
                 },
+                orguserinfo:{},
                 editphone: false,
                 editdomain_name: false,
                 editposition: false
@@ -117,20 +119,29 @@
             updateUserInfo(datainfo) {
                 userinfos(data => {
                     if (data.code === 1000) {
-                        this.userinfo = data.data;
-                        this.$store.dispatch("doUserinfo", data.data);
+                        let phonenumber=null;
                         if (data.data.sms_code) {
+                            phonenumber = this.userinfo.mobile;
                             this.$notify({
                                 title: '验证码',
                                 message: '您正在修改手机号码，验证码为:' + data.data.sms_code,
                                 type: 'success'
                             });
                         }
+                        this.userinfo = data.data;
+                        this.$store.dispatch("doUserinfo", data.data);
+                        this.orguserinfo = deepCopy(data.data);
+                        if(phonenumber){
+                            this.userinfo.mobile = phonenumber;
+                        }
+
                         if (datainfo.data) {
                             this.$message.success("更新成功")
                         }
+
                     } else {
-                        this.$message.error("更新失败 " + data.msg)
+                        this.$message.error("更新失败 " + data.msg);
+                        this.$store.dispatch('doUserinfo', this.orguserinfo);
 
                     }
                 }, datainfo)
@@ -169,10 +180,13 @@
             this.$store.dispatch('douserInfoIndex', 0);
             // this.updateUserInfo({"methods":false});
             this.userinfo = this.$store.state.userinfo;
+            this.orguserinfo = deepCopy(this.$store.state.userinfo);
+
 
         }, watch: {
             '$store.state.userinfo': function () {
                 this.userinfo = this.$store.state.userinfo;
+                this.orguserinfo = deepCopy(this.$store.state.userinfo);
             }
         }
     }

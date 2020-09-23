@@ -107,7 +107,7 @@ class StorageView(APIView):
 
         storage_id = data.get("id", None)
         if storage_id:
-            if storage_id == request.user.storage.id:
+            if request.user.storage and storage_id == request.user.storage.id:
                 res.msg = '存储正在使用中，无法修改'
                 res.code = 1007
                 return Response(res.dict)

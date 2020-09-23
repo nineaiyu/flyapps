@@ -127,10 +127,11 @@ class AliYunOss(object):
 
     def upload_file(self, local_file_full_path):
         if os.path.isfile(local_file_full_path):
-            with open(local_file_full_path, 'rb') as fileobj:
-                # Seek方法用于指定从第1000个字节位置开始读写。上传时会从您指定的第1000个字节位置开始上传，直到文件结束。
-                fileobj.seek(1000, os.SEEK_SET)
-                # Tell方法用于返回当前位置。
-                # current = fileobj.tell()
-                self.bucket.put_object(os.path.basename(local_file_full_path), fileobj)
+            self.bucket.put_object_from_file(os.path.basename(local_file_full_path), local_file_full_path)
+            # with open(local_file_full_path, 'rb') as fileobj:
+            #     # Seek方法用于指定从第1000个字节位置开始读写。上传时会从您指定的第1000个字节位置开始上传，直到文件结束。
+            #     fileobj.seek(1000, os.SEEK_SET)
+            #     # Tell方法用于返回当前位置。
+            #     # current = fileobj.tell()
+            #     self.bucket.put_object(os.path.basename(local_file_full_path), fileobj)
             return True

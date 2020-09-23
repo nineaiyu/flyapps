@@ -125,6 +125,13 @@
             }
         },
         methods: {
+            set_default_flag() {
+                this.passwordflag = false;
+                this.showdownloadflag = false;
+                this.showsupersignflag = false;
+                this.wxeasytypeflag = false;
+                this.wxredirectflag = false;
+            },
             clean_app() {
                 this.saveappinfo({"clean": true});
                 this.currentapp.count = 0;
@@ -135,13 +142,7 @@
                         this.$message.success('数据更新成功');
                     } else {
                         this.$message.error('操作失败,' + data.msg);
-
-                        this.currentapp = deepCopy(this.orgcurrentapp);
-                        this.passwordflag = false;
-                        this.showdownloadflag = false;
-                        this.showsupersignflag = false;
-                        this.setbuttondefault(this.currentapp);
-
+                        this.$store.dispatch('doucurrentapp', this.orgcurrentapp);
                     }
                 }, {
                     "methods": "PUT",
@@ -357,17 +358,11 @@
                 }
             },
 
-
             appinit() {
-
                 this.currentapp = this.$store.state.currentapp;
-                this.passwordflag = false;
-                this.showdownloadflag = false;
-                this.showsupersignflag = false;
-                this.wxeasytypeflag = false;
-                this.wxredirectflag = false;
+                this.set_default_flag();
                 this.setbuttondefault(this.currentapp);
-                this.orgcurrentapp = deepCopy(this.currentapp)
+                this.orgcurrentapp = deepCopy(this.currentapp);
             }
         },
         mounted() {

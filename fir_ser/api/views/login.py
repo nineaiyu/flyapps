@@ -5,7 +5,7 @@ from api.utils.serializer import UserInfoSerializer
 from django.core.cache import cache
 from rest_framework.views import APIView
 import binascii
-import os, datetime
+import os, datetime, re
 from api.utils.utils import get_captcha, valid_captcha, is_valid_domain
 from api.utils.TokenManager import DownloadToken, generateNumericTokenOfLength
 from api.utils.auth import ExpiringTokenAuthentication
@@ -83,6 +83,7 @@ class LoginView(APIView):
         response.data = get_captcha()
         return Response(response.dict)
 
+
 class RegistView(APIView):
     def generate_key(self):
         return binascii.hexlify(os.urandom(32)).decode()
@@ -105,7 +106,8 @@ class RegistView(APIView):
                         response.msg = "邮箱已经存在，请更换其他邮箱"
                         response.code = 1002
                     except UserInfo.DoesNotExist:
-                        user_obj = UserInfo.objects.create_user(username, email=username, password=password,first_name=username)
+                        user_obj = UserInfo.objects.create_user(username, email=username, password=password,
+                                                                first_name=username[:8])
                         if user_obj:
                             response.msg = "注册成功"
                             response.code = 1000
@@ -126,7 +128,6 @@ class RegistView(APIView):
         response = BaseResponse()
         response.data = get_captcha()
         return Response(response.dict)
-
 
 
 class UserInfoView(APIView):
@@ -214,7 +215,15 @@ class UserInfoView(APIView):
             if sms_token:
                 sms_token_obj = DownloadToken()
                 if sms_token_obj.verify_token(sms_token, data.get("sms_code", None)):
-                    request.user.mobile = data.get("mobile", request.user.mobile)
+                    mobile = data.get("mobile", request.user.mobile)
+                    phone_pat = re.compile('^(13\d|14[5|7]|15\d|166|17[3|6|7]|18\d)\d{8}$')
+                    if mobile and re.search(phone_pat, mobile):
+                        request.user.mobile = data.get("mobile", request.user.mobile)
+                    else:
+                        res.code = 1005
+                        res.msg = "手机号校验失败"
+                        return Response(res.dict)
+
             try:
                 request.user.save()
             except Exception as e:
@@ -222,7 +231,7 @@ class UserInfoView(APIView):
                 res.data = serializer.data
                 res.code = 1004
                 res.msg = "信息保存失败"
-                logger.error("User %s info save failed. Excepiton:%s" % (request.user,e))
+                logger.error("User %s info save failed. Excepiton:%s" % (request.user, e))
                 return Response(res.dict)
             serializer = UserInfoSerializer(request.user)
             res.data = serializer.data
