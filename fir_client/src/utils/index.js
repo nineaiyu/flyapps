@@ -237,6 +237,7 @@ function getType(x) {
     }
 
 }
+
 //深拷贝
 export function deepCopy(data) {
     let type = getType(data);

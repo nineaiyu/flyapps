@@ -4,7 +4,6 @@ import router from "@/router";
 // import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import Vuex from 'vuex'
-
 import qiniu from 'qiniu-js'
 import oss from 'ali-oss'
 
@@ -84,7 +83,7 @@ import {
     Slider,
     DropdownMenu,
     Dropdown,
-    Breadcrumb,Avatar,DropdownItem,RadioButton,RadioGroup,OptionGroup,Progress,Timeline,TimelineItem,Card
+    Breadcrumb, Avatar, DropdownItem, RadioButton, RadioGroup, OptionGroup, Progress, Timeline, TimelineItem, Card
 } from "element-ui";
 
 Vue.use(Progress);

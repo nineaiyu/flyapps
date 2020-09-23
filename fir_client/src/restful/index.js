@@ -11,7 +11,8 @@ Axios.defaults.withCredentials = true;
 // });
 
 
-const DOMAIN = 'https://fly.harmonygames.cn';
+// const DOMAIN = 'https://fly.harmonygames.cn';
+const DOMAIN = window.g.baseUrl;
 // const DOMAIN = 'https://testapp.harmonygames.cn';
 // const DOMAIN = 'http://172.16.133.34:8000';
 const APIPATH = '/api/v1/fir/server';
@@ -84,6 +85,8 @@ function ErrorMsg(error) {
                 error.message = `连接出错(${error.response.status})!`;
         }
     } else {
+        // eslint-disable-next-line no-console
+        console.log(error)
         error.message = '连接服务器失败!';
     }
     if (error.response && error.response.status === 403) {
@@ -305,12 +308,12 @@ export function getapppicurl(app_id) {
     return USERSEVER + '/apps/' + app_id
 }
 
-export function getuploadurl(domain_name=null) {
-        if (domain_name) {
-            return domain_name + APIPATH + '/upload'
-        } else {
-            return USERSEVER + '/upload';
-        }
+export function getuploadurl(domain_name = null) {
+    if (domain_name) {
+        return domain_name + APIPATH + '/upload'
+    } else {
+        return USERSEVER + '/upload';
+    }
 }
 
 

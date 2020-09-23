@@ -98,7 +98,7 @@
                 userinfo: {
                     srccode: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
                 },
-                orguserinfo:{},
+                orguserinfo: {},
                 editphone: false,
                 editdomain_name: false,
                 editposition: false
@@ -119,7 +119,7 @@
             updateUserInfo(datainfo) {
                 userinfos(data => {
                     if (data.code === 1000) {
-                        let phonenumber=null;
+                        let phonenumber = null;
                         if (data.data.sms_code) {
                             phonenumber = this.userinfo.mobile;
                             this.$notify({
@@ -131,7 +131,7 @@
                         this.userinfo = data.data;
                         this.$store.dispatch("doUserinfo", data.data);
                         this.orguserinfo = deepCopy(data.data);
-                        if(phonenumber){
+                        if (phonenumber) {
                             this.userinfo.mobile = phonenumber;
                         }
 

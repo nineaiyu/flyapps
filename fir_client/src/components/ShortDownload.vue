@@ -1,5 +1,5 @@
 <template>
-    <el-container class="container">
+    <div class="container">
         <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
 
 
@@ -17,9 +17,9 @@
             <!--        <span class="pattern right"><img src="../assets/download_pattern_right.png"></span>-->
         </div>
 
-        <el-container class="out-container container" v-if="wxeasytypeflag">
+        <div class="out-container container" v-if="wxeasytypeflag">
 
-            <div class="main">
+            <div v-show='mcurrentappinfo.release_id' class="main">
                 <header>
                     <div class="table-container">
                         <div class="cell-container">
@@ -59,9 +59,9 @@
 
                                 <div id="actions" class="actions" v-if="agent !==''">
 
-                                    <el-button type="info" round v-if="agent === 'wxandroid' || agent === 'wxapple'">
+                                    <button type="info" round v-if="agent === 'wxandroid' || agent === 'wxapple'">
                                         不支持在微信内下载
-                                    </el-button>
+                                    </button>
 
                                     <button type="button" v-else-if="wrong">{{ msg }}</button>
                                     <div v-else>
@@ -76,10 +76,10 @@
                                                     <div><p>正在安装，请按 Home 键在桌面查看</p>
                                                         <p v-if="!this.currentappinfo.issupersign">
                                                             <button @click="gomobileaction">
-                                                                <el-link icon="el-icon-loadings" type="primary"
-                                                                         :underline="false">
+                                                                <a icon="el-icon-loadings" type="primary"
+                                                                   :underline="false">
                                                                     立即信任
-                                                                </el-link>
+                                                                </a>
                                                             </button>
 
                                                         </p>
@@ -90,17 +90,11 @@
 
                                         <div v-else>
                                             <div v-if="currentappinfo.need_password" style="margin:0 auto; width:166px">
-                                                <el-input prefix-icon="el-icon-lock" clearable
-                                                          placeholder="请输入密码" v-model="password"
-                                                          icon="el-icon-loadings" type="primary"
-                                                          :underline="false"></el-input>
+                                                <input class="passwd" placeholder="请输入密码" v-model="password"/>
                                             </div>
-                                            <el-divider v-if="currentappinfo.need_password"></el-divider>
+                                            <br/>
                                             <button @click="download">
-                                                <el-link icon="el-icon-loadings" type="primary"
-                                                         :underline="false">
-                                                    下载安装
-                                                </el-link>
+                                                <a icon="el-icon-loadings" type="primary" :underline="false"> 下载安装 </a>
                                             </button>
                                         </div>
 
@@ -170,16 +164,21 @@
 
                 </div>
             </div>
-
-        </el-container>
+            <div v-if='iserror' class="main">
+                <div class="error-container">
+                    <h1>404 - Not Found</h1>
+                    <header>您访问的 应用 不存在
+                    </header>
+                </div>
+            </div>
+        </div>
 
         <div v-else>
             <i>
                 {{this.currentappinfo.name | formatName}}
             </i>
         </div>
-
-    </el-container>
+    </div>
 
 
 </template>
@@ -187,10 +186,10 @@
 <script>
     import QRCode from 'qrcodejs2'
 
-    import {getShortAppinfo, getdownloadurl} from '../restful'
+    import {getShortAppinfo, getdownloadurl} from '../restful/download'
 
     export default {
-        name: "FirDownload",
+        name: "ShortDownload",
         data() {
             return {
                 currentappinfo: {},
@@ -206,6 +205,7 @@
                 dchoice: false,
                 downloadurl: "",
                 isdownload: false,
+                iserror: false,
                 udid: "",
                 wxeasytypeflag: false,
                 timer: '',
@@ -274,11 +274,7 @@
                             window.location.href = this.downloadurl;
                         } else {
                             this.isdownload = false;
-                            this.password = '';
-                            this.$message({
-                                message: "密码错误，或者下载链接失效",
-                                type: 'error',
-                            });
+                            alert("密码错误，或者下载链接失效")
                         }
                     }, {
                         'data': {
@@ -332,12 +328,8 @@
                         }
                         this.udid = data.udid;
                         if (!data.data.master_release.release_id) {
-                            this.$message({
-                                message: "该 release 版本不存在,请检查",
-                                type: 'error',
-                                duration: 0
-                            });
-                            return
+                            this.iserror = true;
+                            return false
                         }
 
                         if (this.agent === "android" || this.agent === "wxandroid") {
@@ -420,12 +412,9 @@
                                 window.location.href = this.mcurrentappinfo.binary_url
                             }
                         }
+
                     } else {
-                        this.$message({
-                            message: data.msg,
-                            type: 'error',
-                            duration: 0
-                        });
+                        this.iserror = true;
                     }
                 }, params)
             },

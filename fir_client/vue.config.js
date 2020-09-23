@@ -1,5 +1,4 @@
-'use strict';
-
+const IS_PROD = ['production', 'prod'].includes(process.env.NODE_ENV)
 module.exports = {
 
     pages: {
@@ -17,8 +16,72 @@ module.exports = {
             // 提取出来的通用 chunk 和 vendor chunk。
             chunks: ['chunk-vendors', 'chunk-common', 'index']
         },
+        short: {
+            // page 的入口
+            entry: 'src/short.js',
+            // entry: 'src/main.short.js',
+            // 模板来源
+            template: 'public/short.html',
+            // 在 dist/short.html 的输出
+            filename: 'short.html',
+            // 当使用 title 选项时，
+            // template 中的 title 标签需要是 <title><%= htmlWebpackPlugin.options.title %></title>
+            title: '应用下载',
+            // 在这个页面中包含的块，默认情况下会包含
+            // 提取出来的通用 chunk 和 vendor chunk。
+            chunks: ['chunk-vendors', 'chunk-common', 'short']
+        },
+        mshort: {
+            // page 的入口
+            // entry: 'src/short.js',
+            entry: 'src/main.short.js',
+            // 模板来源
+            template: 'public/short.html',
+            // 在 dist/short.html 的输出
+            filename: 'mshort.html',
+            // 当使用 title 选项时，
+            // template 中的 title 标签需要是 <title><%= htmlWebpackPlugin.options.title %></title>
+            title: '应用下载',
+            // 在这个页面中包含的块，默认情况下会包含
+            // 提取出来的通用 chunk 和 vendor chunk。
+            chunks: ['chunk-vendors', 'chunk-common', 'mshort']
+        }
 
     },
-    productionSourceMap:false
+    productionSourceMap: false,
+
+    chainWebpack: config => {
+
+        if (!IS_PROD) {
+            config.output
+                .filename(bundle => {
+                    return bundle.chunk.name === 'index' ? 'js/[name].js' : '[name]/[name].js'
+                })
+        }
+
+        if (IS_PROD) {
+            config.output
+                .filename(bundle => {
+                    return bundle.chunk.name === 'index' ? 'js/[name].[contenthash:8].js' : '[name]/[name].[contenthash:8].js'
+                })
+
+        }
+
+        config.optimization.splitChunks({
+            cacheGroups: {
+                vendors: {
+                    name: 'chunk-vendors',
+                    minChunks: 4,
+                    test: /node_modules/,
+                    priority: -10,
+                    chunks: 'initial'
+                },
+                common: {}
+            }
+        });
+
+
+    }
+
 };
 

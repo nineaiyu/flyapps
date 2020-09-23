@@ -44,24 +44,24 @@
                     </el-row>
                 </el-form-item>
 
-<!--                <el-form-item>-->
-<!--                    <el-input v-model="form.phone" prefix-icon="el-icon-mobile" placeholder="手机"-->
-<!--                              maxlength="11"></el-input>-->
-<!--                </el-form-item>-->
+                <!--                <el-form-item>-->
+                <!--                    <el-input v-model="form.phone" prefix-icon="el-icon-mobile" placeholder="手机"-->
+                <!--                              maxlength="11"></el-input>-->
+                <!--                </el-form-item>-->
 
-<!--                <el-form-item>-->
-<!--                    <el-row>-->
-<!--                        <el-col :span="16">-->
-<!--                            <el-input v-model="form.phonecode" prefix-icon="el-icon-mobile"-->
-<!--                                      placeholder="验证码"></el-input>-->
-<!--                        </el-col>-->
-<!--                        <el-col :span="8">-->
-<!--                            <el-button type="info" @click="getphonecode" plain-->
-<!--                                       style="margin:0px 4px;border-radius:4px;cursor:pointer;height: 40px">获取验证码-->
-<!--                            </el-button>-->
-<!--                        </el-col>-->
-<!--                    </el-row>-->
-<!--                </el-form-item>-->
+                <!--                <el-form-item>-->
+                <!--                    <el-row>-->
+                <!--                        <el-col :span="16">-->
+                <!--                            <el-input v-model="form.phonecode" prefix-icon="el-icon-mobile"-->
+                <!--                                      placeholder="验证码"></el-input>-->
+                <!--                        </el-col>-->
+                <!--                        <el-col :span="8">-->
+                <!--                            <el-button type="info" @click="getphonecode" plain-->
+                <!--                                       style="margin:0px 4px;border-radius:4px;cursor:pointer;height: 40px">获取验证码-->
+                <!--                            </el-button>-->
+                <!--                        </el-col>-->
+                <!--                    </el-row>-->
+                <!--                </el-form-item>-->
 
                 <el-form-item>
                     <el-button type="danger" @click="onRegist">注册</el-button>
@@ -125,7 +125,7 @@
                 if (this.isEmail(email)) {
                     let authcode = this.form.authcode;
                     if (authcode.length === this.cptch.length) {
-                        if(password === password2 && password.length >= 6){
+                        if (password === password2 && password.length >= 6) {
                             registerFun(data => {
                                 if (data.code == 1000) {
                                     this.$message({
@@ -150,7 +150,7 @@
                                     "cptch_key": this.cptch.cptch_key
                                 }
                             });
-                        }else {
+                        } else {
                             this.$message({
                                 message: '密码不一致或者密码长度小于6',
                                 type: 'warning'
@@ -184,7 +184,7 @@
         }
         ,
         created() {
-        },mounted() {
+        }, mounted() {
             this.get_auth_code();
         }
     }
