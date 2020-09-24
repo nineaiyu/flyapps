@@ -18,7 +18,7 @@ const router = new VueRouter({
             path: '/:short',
             name: 'FirDownload',
             // component: () => import("@/components/ShortDownload")
-            component: ()=>import("@/components/FirDownload")
+            component: () => import("@/components/FirDownload")
         }
     ]
 });

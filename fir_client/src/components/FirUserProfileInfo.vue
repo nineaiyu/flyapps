@@ -18,12 +18,13 @@
                                   placeholder="下载页域名"></el-input>
                     </el-col>
                     <el-col :span="2">
-                        <el-button icon="el-icon-edit" @click="changeQQValue">
+                        <el-button icon="el-icon-edit" @click="changeDomainValue">
                         </el-button>
                     </el-col>
                     <el-col :span="4" v-if="editdomain_name === true">
-                        <el-button type="success" @click="saveQQ" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px">保存
+                        <el-button type="success" @click="saveDomain" plain
+                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
+                            保存
                         </el-button>
                     </el-col>
                 </el-row>
@@ -41,7 +42,9 @@
                     </el-col>
                     <el-col :span="4" v-if="editposition === true">
                         <el-button type="success" @click="savePositionValue" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px">保存
+                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
+                            保存
+
                         </el-button>
                     </el-col>
                 </el-row>
@@ -60,7 +63,8 @@
                     </el-col>
                     <el-col :span="4" v-if="editphone === true">
                         <el-button type="success" @click="savePhone" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px">保存
+                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
+                            保存
                         </el-button>
                     </el-col>
                 </el-row>
@@ -74,7 +78,8 @@
                     </el-col>
                     <el-col :span="6">
                         <el-button type="info" @click="getphonecode" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px">获取验证码
+                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px;background-color: #ecf5ff;color: #dd6161">
+                            获取验证码
                         </el-button>
                     </el-col>
 
@@ -88,7 +93,7 @@
 </template>
 
 <script>
-    import {userinfos} from '../restful'
+    import {userinfos, getAuthTokenFun} from '../restful'
     import {deepCopy} from "../utils";
 
     export default {
@@ -104,9 +109,9 @@
                 editposition: false
             }
         }, methods: {
-            saveQQ() {
+            saveDomain() {
                 this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
-                this.changeQQValue()
+                this.changeDomainValue()
             },
             savePositionValue() {
                 this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
@@ -120,6 +125,7 @@
                 userinfos(data => {
                     if (data.code === 1000) {
                         let phonenumber = null;
+
                         if (data.data.sms_code) {
                             phonenumber = this.userinfo.mobile;
                             this.$notify({
@@ -164,7 +170,7 @@
                 }
 
             },
-            changeQQValue() {
+            changeDomainValue() {
                 this.editdomain_name = !this.editdomain_name;
                 if (this.$refs.domain_name.$el.children[0].style.backgroundColor) {
                     this.$refs.domain_name.$el.children[0].style.backgroundColor = ''
@@ -173,7 +179,18 @@
                 }
             },
             getphonecode() {
-                this.updateUserInfo({"methods": 'GET', 'data': {'act': 'sms'}});
+                getAuthTokenFun(data => {
+                    if (data.code === 1000) {
+                        this.$notify({
+                            title: '验证码',
+                            message: '您正在修改手机号码，验证码已经发送您手机',
+                            type: 'success'
+                        });
+                    }
+                    this.userinfo.auth_token = data.data.auth_token;
+
+                }, {"methods": 'GET', 'data': {'act': 'sms', 'phone': this.userinfo.mobile}})
+                // this.updateUserInfo({"methods": 'GET', 'data': {'act': 'sms','phone':this.userinfo.mobile}});
 
             }
         }, mounted() {

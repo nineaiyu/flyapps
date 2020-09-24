@@ -59,6 +59,7 @@
 
 <script>
     import {loginFun, set_auth_token} from "../restful";
+    import {checkEmail, checkphone} from "../utils";
 
     export default {
         name: "FirLogin",
@@ -78,7 +79,16 @@
                 let password = this.form.password;
                 let authcode = this.form.authcode;
                 if (authcode.length === this.cptch.length) {
-                    if (this.isEmail(email) && password.length > 6) {
+
+                    let checkp = checkphone(this.form.email);
+                    let checke = checkEmail(this.form.email);
+                    if (!checkp && !checke) {
+                        this.$message({
+                            message: '邮箱或者手机号输入有误',
+                            type: 'error'
+                        });
+                    }
+                    if (password.length > 6) {
                         loginFun(data => {
                             if (data.code == 1000) {
                                 this.$message({

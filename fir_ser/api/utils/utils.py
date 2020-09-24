@@ -10,9 +10,14 @@ from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
 from api.utils.app.randomstrings import make_app_uuid
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
+from api.utils.tempcaches import tmpCache
+from api.utils.TokenManager import DownloadToken, generateNumericTokenOfLength
+from api.utils.sendmsg.sendmsg import SendMessage
 from django.db.models import Sum
 from captcha.models import CaptchaStore
 from captcha.helpers import captcha_image_url
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -122,3 +127,40 @@ def is_valid_domain(value):
         r'([a-zA-Z]{2,13}|[a-zA-Z0-9-]{2,30}.[a-zA-Z]{2,3})$'
     )
     return True if pattern.match(value) else False
+
+
+def is_valid_phone(value):
+    phone_pat = re.compile('^(13\d|14[5|7]|15\d|166|17[3|6|7]|18\d)\d{8}$')
+    return True if value and re.search(phone_pat, value) else False
+
+
+def is_valid_email(email):
+    try:
+        validate_email(email)
+        return True
+    except ValidationError:
+        return False
+
+
+def get_sender_token(sender, user_id, target):
+    sms_token_obj = DownloadToken()
+    code = generateNumericTokenOfLength(6)
+    token = sms_token_obj.make_token(code, time_limit=300, key=user_id)
+    tmpCache.set_tmp_cache(user_id, token, target)
+    sender.send_change_msg(target, code)
+    return token, code
+
+
+def get_sender_sms_token(key, phone):
+    sender = SendMessage('sms')
+    return get_sender_token(sender, key, phone)
+
+
+def is_valid_sender_code(key, token, code):
+    sms_token_obj = DownloadToken()
+    return sms_token_obj.verify_token(token, code), tmpCache.get_tmp_cache(key, token)
+
+
+def get_sender_email_token(key, email):
+    sender = SendMessage('email')
+    return get_sender_token(sender, key, email)

@@ -83,7 +83,17 @@ import {
     Slider,
     DropdownMenu,
     Dropdown,
-    Breadcrumb, Avatar, DropdownItem, RadioButton, RadioGroup, OptionGroup, Progress, Timeline, TimelineItem, Card
+    Breadcrumb,
+    Avatar,
+    DropdownItem,
+    RadioButton,
+    RadioGroup,
+    OptionGroup,
+    Progress,
+    Timeline,
+    TimelineItem,
+    Card,
+    Notification
 } from "element-ui";
 
 Vue.use(Progress);
@@ -132,10 +142,10 @@ Vue.use(Tag);
 Vue.use(Tooltip);
 Vue.use(Switch);
 Vue.prototype.$message = Message;
-
-// Vue.use(MessageBox);
+Vue.prototype.$notify = Notification;
+Vue.prototype.$loading = Loading.service;
 Vue.prototype.$confirm = MessageBox.confirm;
-
+Vue.prototype.$prompt = MessageBox.prompt;
 
 // Vue.use(ElementUI);
 Vue.use(Vuex);

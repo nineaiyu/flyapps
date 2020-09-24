@@ -168,6 +168,24 @@ REST_FRAMEWORK_EXTENSIONS = {
     'DEFAULT_USE_CACHE': 'default',
 }
 
+# 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG.sender 信息
+REGISTER = {
+    "enable": True,
+    "ways": {
+        'sms': True,  # 短信注册
+        'email': True,  # 邮件注册
+        'code': False,  # 邀请码注册,邀请码必填写，需要和短信，邮件一起使用
+    }
+}
+
+LOGIN = {
+    "ways": [
+        {'sms': False},  # 短信登录
+        {'email': True},  # 邮件登录
+        {'code': False},  # 密码登录
+    ]
+}
+
 THIRD_PART_CONFIG = {
     # APP存储配置
     'storage': [

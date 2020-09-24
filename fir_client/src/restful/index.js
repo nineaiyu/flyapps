@@ -175,6 +175,21 @@ export function loginFun(callBack, params, load = true) {
     );
 }
 
+/**获取验证token */
+export function getAuthTokenFun(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/auth',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 /**用户注册 */
 export function registerFun(callBack, params, load = true) {
     getData(

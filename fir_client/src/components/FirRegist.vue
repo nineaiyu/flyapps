@@ -12,22 +12,20 @@
             </div>
 
         </el-header>
-        <el-main>
+        <el-main v-if="allow_r">
 
             <el-form ref="form" :model="form">
 
-                <el-form-item>
-                    <el-input v-model="form.email" prefix-icon="el-icon-user" placeholder="邮箱" autofocus></el-input>
+                <el-form-item v-if="allow_ways.code">
+                    <el-input v-model="form.icode" prefix-icon="el-icon-postcard" placeholder="邀请码必填" clearable
+                    ></el-input>
                 </el-form-item>
 
                 <el-form-item>
-                    <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
-                              show-password></el-input>
+                    <el-input v-model="form.email" prefix-icon="el-icon-user" :placeholder="rutitle" autofocus
+                              clearable></el-input>
                 </el-form-item>
-                <el-form-item>
-                    <el-input v-model="form.password2" prefix-icon="el-icon-lock" placeholder="确认密码"
-                              show-password></el-input>
-                </el-form-item>
+
 
                 <el-form-item style="height: 40px">
                     <el-row style="height: 40px">
@@ -44,24 +42,30 @@
                     </el-row>
                 </el-form-item>
 
-                <!--                <el-form-item>-->
-                <!--                    <el-input v-model="form.phone" prefix-icon="el-icon-mobile" placeholder="手机"-->
-                <!--                              maxlength="11"></el-input>-->
-                <!--                </el-form-item>-->
 
-                <!--                <el-form-item>-->
-                <!--                    <el-row>-->
-                <!--                        <el-col :span="16">-->
-                <!--                            <el-input v-model="form.phonecode" prefix-icon="el-icon-mobile"-->
-                <!--                                      placeholder="验证码"></el-input>-->
-                <!--                        </el-col>-->
-                <!--                        <el-col :span="8">-->
-                <!--                            <el-button type="info" @click="getphonecode" plain-->
-                <!--                                       style="margin:0px 4px;border-radius:4px;cursor:pointer;height: 40px">获取验证码-->
-                <!--                            </el-button>-->
-                <!--                        </el-col>-->
-                <!--                    </el-row>-->
-                <!--                </el-form-item>-->
+                <el-form-item>
+                    <el-row>
+                        <el-col :span="16">
+                            <el-input v-model="form.seicode" prefix-icon="el-icon-mobile"
+                                      placeholder="验证码"/>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-button type="info" @click="getphonecode" plain
+                                       style="margin:0px 4px;border-radius:4px;cursor:pointer;height: 40px">获取验证码
+                            </el-button>
+                        </el-col>
+                    </el-row>
+                </el-form-item>
+
+
+                <el-form-item>
+                    <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
+                              show-password></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-input v-model="form.password2" prefix-icon="el-icon-lock" placeholder="确认密码"
+                              show-password></el-input>
+                </el-form-item>
 
                 <el-form-item>
                     <el-button type="danger" @click="onRegist">注册</el-button>
@@ -80,7 +84,8 @@
 </template>
 
 <script>
-    import {loginFun, registerFun} from "../restful";
+    import {getAuthTokenFun, registerFun} from "../restful";
+    import {checkEmail, checkphone} from "../utils";
 
     export default {
         name: "FirRegist",
@@ -91,20 +96,49 @@
                     password: '',
                     password2: '',
                     authcode: '',
-                    srccode: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-                    phonecode: '',
-                    phone: '',
+                    srccode: '',
+                    seicode: '',
+                    authtoken: '',
+                    icode: '',
+                    auth_token: '',
 
                 },
                 cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
-
+                allow_r: false,
+                allow_ways: {},
+                rutitle: '',
             }
         },
         methods: {
+            set_rtitle() {
+                this.rutitle = '';
+                this.rctitle = '';
+                if (this.allow_ways.sms) {
+                    this.rutitle = this.rutitle + '手机号 ';
+                }
+                if (this.allow_ways.email) {
+                    this.rutitle = this.rutitle + '邮箱 ';
+                }
+
+                this.rutitle = this.rutitle.trim().replace(' ', '或');
+                this.rctitle = this.rctitle.trim().replace(' ', '或');
+            },
             get_auth_code() {
-                loginFun(data => {
+                registerFun(data => {
                     if (data.code == 1000) {
-                        this.cptch = data.data;
+                        let jdata = data.data;
+                        if (jdata.enable) {
+                            this.allow_r = true;
+                            this.allow_ways = jdata.ways;
+                            this.set_rtitle();
+                            this.cptch = data.data;
+                        } else {
+                            this.allow_r = false;
+                            this.$message({
+                                message: "该服务器不允许注册",
+                                type: 'error'
+                            });
+                        }
                     } else {
                         this.$message({
                             message: data.msg,
@@ -117,59 +151,136 @@
                 });
             },
             getphonecode() {
+                let act = 'ways';
+                if (!this.docheck()) {
+                    return
+                }
+                if (checkphone(this.form.email)) {
+                    act = 'sms'
+                }
+                if (checkEmail(this.form.email)) {
+                    act = 'email'
+                }
+                let authcode = this.form.authcode;
+                if (authcode.length === this.cptch.length) {
+                    let picode = {
+                        "authcode": authcode,
+                        "cptch_key": this.cptch.cptch_key,
+                        "icode": this.form.icode,
+                    };
+                    getAuthTokenFun(data => {
+                        if (data.code === 1000) {
+                            this.$notify({
+                                title: '验证码',
+                                message: '您正在进行注册，验证码已经发送您',
+                                type: 'success'
+                            });
+                            this.form.auth_token = data.data.auth_token;
+                        } else {
+                            this.$message({
+                                message: data.msg,
+                                type: 'error'
+                            });
+                        }
+                    }, {"methods": 'GET', 'data': {'act': act, 'target': this.form.email, 'ext': picode}})
+
+                } else {
+                    this.$message({
+                        message: '图片验证码有误',
+                        type: 'warning'
+                    });
+                }
+
+            },
+            docheck() {
+                let checkp = checkphone(this.form.email);
+                let checke = checkEmail(this.form.email);
+
+                if (this.allow_ways.sms && this.allow_ways.email) {
+                    if (!checke && !checkp) {
+                        this.$message({
+                            message: '请输入正确的邮箱地址或手机号码',
+                            type: 'warning'
+                        });
+                        return 0
+                    }
+                } else {
+                    if (this.allow_ways.email) {
+                        if (!checke) {
+                            this.$message({
+                                message: '请输入正确的邮箱地址',
+                                type: 'warning'
+                            });
+                            return 0
+                        }
+                    }
+                    if (this.allow_ways.sms) {
+                        if (!checkp) {
+                            this.$message({
+                                message: '请输入正确的手机号码',
+                                type: 'warning'
+                            });
+                            return 0
+                        }
+                    }
+                }
+                if (this.allow_ways.code && this.form.icode.length === 0) {
+                    this.$message({
+                        message: '请输入邀请码',
+                        type: 'warning'
+                    });
+                    return 0
+                }
+                return 1
             },
             onRegist() {
                 let email = this.form.email;
                 let password = this.form.password;
                 let password2 = this.form.password2;
-                if (this.isEmail(email)) {
-                    let authcode = this.form.authcode;
-                    if (authcode.length === this.cptch.length) {
-                        if (password === password2 && password.length >= 6) {
-                            registerFun(data => {
-                                if (data.code == 1000) {
-                                    this.$message({
-                                        message: '注册成功',
-                                        type: 'success'
-                                    });
-                                    this.$router.push({name: 'FirLogin'})
-                                } else {
-                                    this.$message({
-                                        message: data.msg,
-                                        type: 'error'
-                                    });
-                                    this.get_auth_code();
-                                }
-                            }, {
-                                "methods": "POST",
-                                "data": {
-                                    "username": email,
-                                    "password": password,
-                                    "password2": password2,
-                                    "authcode": authcode,
-                                    "cptch_key": this.cptch.cptch_key
-                                }
-                            });
-                        } else {
-                            this.$message({
-                                message: '密码不一致或者密码长度小于6',
-                                type: 'warning'
-                            });
-                        }
-
+                if (!this.docheck()) {
+                    return
+                }
+                let authcode = this.form.authcode;
+                if (authcode.length === this.cptch.length) {
+                    if (password === password2 && password.length >= 6) {
+                        registerFun(data => {
+                            if (data.code == 1000) {
+                                this.$message({
+                                    message: '注册成功',
+                                    type: 'success'
+                                });
+                                this.$router.push({name: 'FirLogin'})
+                            } else {
+                                this.$message({
+                                    message: data.msg,
+                                    type: 'error'
+                                });
+                                this.get_auth_code();
+                            }
+                        }, {
+                            "methods": "POST",
+                            "data": {
+                                "username": email,
+                                "password": password,
+                                "password2": password2,
+                                "auth_token": this.form.auth_token,
+                                "auth_key": this.form.seicode
+                            }
+                        });
                     } else {
                         this.$message({
-                            message: '验证码有误',
+                            message: '密码不一致或者密码长度小于6',
                             type: 'warning'
                         });
                     }
 
                 } else {
                     this.$message({
-                        message: '请输入正确的邮箱地址',
+                        message: '验证码有误',
                         type: 'warning'
                     });
                 }
+
 
             },
             onLogin() {

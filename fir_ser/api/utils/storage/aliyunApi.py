@@ -54,11 +54,11 @@ class StsToken(object):
 class AliYunOss(object):
 
     def __init__(self, access_key, secret_key, bucket_name, endpoint, sts_role_arn, is_https, domain_name=None):
-        self.access_key_id = access_key or os.getenv('OSS_TEST_STS_ID', 'LTAI4FeTyvz74CHKCbYuTDGc')
-        self.access_key_secret = secret_key or os.getenv('OSS_TEST_STS_KEY', 'uineAEE7tp1d1w4Mv0yLqxvV0IVNTy')
-        self.bucket_name = bucket_name or os.getenv('OSS_TEST_BUCKET', 'fir-storage')
-        self.endpoint = endpoint or os.getenv('OSS_TEST_ENDPOINT', 'oss-cn-beijing.aliyuncs.com')
-        self.sts_role_arn = sts_role_arn or os.getenv('OSS_TEST_STS_ARN', 'acs:ram::1622120977387033:role/appstorage')
+        self.access_key_id = access_key
+        self.access_key_secret = secret_key
+        self.bucket_name = bucket_name
+        self.endpoint = endpoint
+        self.sts_role_arn = sts_role_arn
         self.region_id = '-'.join(self.endpoint.split('.')[0].split("-")[1:3])
         self.token = StsToken()
         self.is_https = is_https

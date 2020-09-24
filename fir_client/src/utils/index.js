@@ -261,3 +261,13 @@ export function deepCopy(data) {
     }
     return obj;
 }
+
+export function checkEmail(email) {
+    let re = /^(\w-*\.*)+@(\w-?)+(\.\w{2,})+$/;
+    return re.test(email);
+}
+
+export function checkphone(email) {
+    let re = /^1\d{10}$/;
+    return re.test(email);
+}
