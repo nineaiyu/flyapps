@@ -42,7 +42,8 @@
 
             </el-form-item>
 
-            <el-form-item v-if="currentapp.type === 1" label-width="200px" label="自动超级签名">
+            <el-form-item v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active" label-width="200px"
+                          label="自动超级签名">
 
                 <el-tooltip :content="supersign.msg" placement="top">
                     <el-switch

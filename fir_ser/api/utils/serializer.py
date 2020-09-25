@@ -17,7 +17,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
         # fields="__all__"
         # exclude = ["password","is_active","user_permissions","role",]
         fields = ["username", "uid", "mobile", "job", "email", "domain_name", "last_login", "first_name",
-                  'head_img']
+                  'head_img', 'storage_active', 'supersign_active']
 
     head_img = serializers.SerializerMethodField()
 

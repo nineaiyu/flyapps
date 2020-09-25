@@ -34,7 +34,7 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
             if appudid_obj:
                 SuperSign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=udid,
                                                                     app_id_id=app_obj.get("pk")).first()
-                if SuperSign_obj:
+                if SuperSign_obj and SuperSign_obj.user_id.supersign_active:
                     APPToDeveloper_obj = APPToDeveloper.objects.filter(app_id_id=app_obj.get("pk"),
                                                                        developerid=SuperSign_obj.developerid).first()
                     if APPToDeveloper_obj:

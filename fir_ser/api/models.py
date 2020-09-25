@@ -23,6 +23,8 @@ class UserInfo(AbstractUser):
     mobile = models.BigIntegerField(verbose_name="手机", unique=True, help_text="用于手机验证码登录", null=True)
     qq = models.BigIntegerField(verbose_name="QQ", blank=True, null=True, db_index=True)
     is_active = models.BooleanField(default=True, verbose_name="账户状态，默认启用")
+    storage_active = models.BooleanField(default=False, verbose_name="配置存储，默认关闭")
+    supersign_active = models.BooleanField(default=False, verbose_name="配置超级签，默认关闭")
 
     job = models.TextField("职位", max_length=128, blank=True, null=True)
     company = models.CharField("公司", max_length=128, blank=True, null=True)
@@ -36,7 +38,7 @@ class UserInfo(AbstractUser):
 
     memo = models.TextField('备注', blank=True, null=True, default=None, )
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name="注册时间")
-    download_times = models.IntegerField(default=100, verbose_name="下载次数")
+    download_times = models.IntegerField(default=100, verbose_name="可用下载次数")
     all_download_times = models.BigIntegerField(default=0, verbose_name="总共下载次数")
     domain_name = models.CharField(verbose_name="下载页面域名", blank=True, null=True, max_length=64)
     history_release_limit = models.IntegerField(default=10, verbose_name="app 历史记录版本", blank=True, null=True)

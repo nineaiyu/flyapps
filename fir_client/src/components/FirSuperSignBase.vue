@@ -604,6 +604,7 @@
                     if (this.codeactiveVisible) {
                         this.codeactiveVisible = false;
                     }
+                    loading.close();
                 }, params)
             },
             iosdevicesudidFun(action, data) {

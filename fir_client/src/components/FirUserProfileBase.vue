@@ -19,7 +19,7 @@
             <div class="user_pro_tabs">
 
                 <el-row :gutter="12" class="row">
-                    <el-col :span="6" :offset="3">
+                    <el-col :span="tspan" :offset="3">
                         <div class="col-4">
                             <a @click="$router.push({name:'FirUserProfileInfo'})" ref="userinfo" class="">
                         <span>
@@ -29,7 +29,7 @@
                             </a>
                         </div>
                     </el-col>
-                    <el-col :span="6">
+                    <el-col :span="tspan">
                         <div class="col-4">
                             <a ref="changepwd" class="" @click="$router.push({name:'FirUserProfileChangePwd'})">
                                 <span><i class="el-icon-lock"></i></span>
@@ -39,7 +39,7 @@
 
                     </el-col>
 
-                    <el-col :span="6">
+                    <el-col :span="6" v-if="userinfo.storage_active">
                         <div class="col-4">
                             <a ref="storage" class="" @click="$router.push({name:'FirUserProfileStorage'})">
                                 <span><i class="el-icon-coin"></i></span>
@@ -72,6 +72,7 @@
                 imageUrl: '',
                 userinfo: {},
                 uploadconf: {},
+                tspan: 9,
             }
         },
         methods: {
@@ -129,7 +130,9 @@
                         this.$store.dispatch("doUserinfo", data.data);
                         this.$store.dispatch('doucurrentapp', {});
                         this.imageUrl = data.data.head_img;
-
+                        if (this.userinfo.storage_active) {
+                            this.tspan = 6
+                        }
                         if (datainfo.data) {
                             this.$message.success("更新成功")
                         }

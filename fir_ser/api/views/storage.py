@@ -6,7 +6,7 @@
 
 from rest_framework.views import APIView
 from api.utils.response import BaseResponse
-from api.utils.auth import ExpiringTokenAuthentication
+from api.utils.auth import ExpiringTokenAuthentication, StoragePermission
 from rest_framework.response import Response
 import json
 from api.utils.storage.caches import del_cache_storage
@@ -20,6 +20,7 @@ logger = logging.getLogger(__file__)
 
 class StorageView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [StoragePermission, ]
 
     def get(self, request):
         res = BaseResponse()

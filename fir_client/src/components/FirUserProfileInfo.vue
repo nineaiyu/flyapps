@@ -217,23 +217,23 @@
                     this.$message.error("密码至少6位");
                     return
                 }
-                this.updateUserInfo({"methods": 'PUT', 'data': {username:this.userinfo.username}});
+                this.updateUserInfo({"methods": 'PUT', 'data': {username: this.userinfo.username}});
                 this.changeUsernameValue()
             },
             saveDomain() {
-                this.updateUserInfo({"methods": 'PUT', 'data': {domain_name:this.userinfo.domain_name}});
+                this.updateUserInfo({"methods": 'PUT', 'data': {domain_name: this.userinfo.domain_name}});
                 this.changeDomainValue()
             },
             savePositionValue() {
-                this.updateUserInfo({"methods": 'PUT', 'data': {job:this.userinfo.job}});
+                this.updateUserInfo({"methods": 'PUT', 'data': {job: this.userinfo.job}});
                 this.changePositionValue()
             },
-            authinfo(){
+            authinfo() {
                 return {
-                    auth_token:this.userinfo.auth_token,
-                    auth_key:this.userinfo.auth_key,
-                    cptch_key:this.userinfo.cptch_key,
-                    authcode:this.userinfo.authcode,
+                    auth_token: this.userinfo.auth_token,
+                    auth_key: this.userinfo.auth_key,
+                    cptch_key: this.userinfo.cptch_key,
+                    authcode: this.userinfo.authcode,
                 };
             },
             saveemail() {
@@ -283,7 +283,7 @@
                 }, datainfo)
             },
             changeemailValue() {
-                if(this.editphone){
+                if (this.editphone) {
                     this.editphone = !this.editphone;
                 }
                 this.get_auth_code();
@@ -296,7 +296,7 @@
 
             },
             changePhoneValue() {
-                if(this.editemail){
+                if (this.editemail) {
                     this.editemail = !this.editemail;
                 }
                 this.get_auth_code();

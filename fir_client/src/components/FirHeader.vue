@@ -27,8 +27,10 @@
                         <el-dropdown-menu slot="dropdown">
                             <el-dropdown-item command="userinfo">个人资料</el-dropdown-item>
                             <el-dropdown-item command="chpasswd">修改密码</el-dropdown-item>
-                            <el-dropdown-item command="storage">存储管理</el-dropdown-item>
-                            <el-dropdown-item command="supersign">超级签名</el-dropdown-item>
+                            <el-dropdown-item command="storage" v-if="$store.state.userinfo.storage_active">存储管理
+                            </el-dropdown-item>
+                            <el-dropdown-item command="supersign" v-if="$store.state.userinfo.supersign_active">超级签名
+                            </el-dropdown-item>
 
                             <el-dropdown-item command="exit">退出</el-dropdown-item>
 

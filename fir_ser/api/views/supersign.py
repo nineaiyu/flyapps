@@ -6,7 +6,7 @@
 
 from rest_framework.views import APIView
 from api.utils.response import BaseResponse
-from api.utils.auth import ExpiringTokenAuthentication
+from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
 from rest_framework.response import Response
 from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID
 from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer
@@ -28,6 +28,7 @@ class AppsPageNumber(PageNumberPagination):
 
 class DeveloperView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [SuperSignPermission, ]
 
     def get(self, request):
 
@@ -170,6 +171,7 @@ class DeveloperView(APIView):
 
 class SuperSignUsedView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [SuperSignPermission, ]
 
     def get(self, request):
         res = BaseResponse()
@@ -199,6 +201,7 @@ class SuperSignUsedView(APIView):
 
 class AppUDIDUsedView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [SuperSignPermission, ]
 
     def get(self, request):
         res = BaseResponse()
