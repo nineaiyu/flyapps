@@ -283,6 +283,9 @@
                 }, datainfo)
             },
             changeemailValue() {
+                if(this.editphone){
+                    this.editphone = !this.editphone;
+                }
                 this.get_auth_code();
                 this.editemail = !this.editemail;
                 if (this.$refs.email.$el.children[0].style.backgroundColor) {
@@ -293,6 +296,9 @@
 
             },
             changePhoneValue() {
+                if(this.editemail){
+                    this.editemail = !this.editemail;
+                }
                 this.get_auth_code();
                 this.editphone = !this.editphone;
                 if (this.$refs.phone.$el.children[0].style.backgroundColor) {
