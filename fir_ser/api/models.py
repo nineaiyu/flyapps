@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 
 from django.contrib.contenttypes.models import ContentType
-from api.utils.app.randomstrings import make_random_uuid, make_app_uuid
+from api.utils.app.randomstrings import make_random_uuid
 from django.contrib.auth.models import AbstractUser
 
 

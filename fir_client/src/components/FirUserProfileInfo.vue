@@ -4,12 +4,115 @@
         <el-form ref="form" :model="userinfo">
             <el-form-item>
                 <el-row>
-                    <el-col :span="22">
-                        <el-input v-model="userinfo.username" prefix-icon="el-icon-user" placeholder="用户名"
-                                  disabled></el-input>
+                    <el-col :span="18">
+                        <el-input v-model="userinfo.username" :readonly="edituser_name !== true"
+                                  prefix-icon="el-icon-user" placeholder="用户名" ref="user_name"
+                        ></el-input>
+                    </el-col>
+
+                    <el-col :span="2">
+                        <el-button icon="el-icon-edit" @click="changeUsernameValue">
+                        </el-button>
+                    </el-col>
+                    <el-col :span="4" v-if="edituser_name === true">
+                        <el-button type="success" @click="saveUsername" plain
+                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
+                            保存
+                        </el-button>
+                    </el-col>
+
+                </el-row>
+            </el-form-item>
+
+
+            <el-form-item>
+                <el-row>
+                    <el-col :span="18">
+                        <el-input v-model="userinfo.mobile" ref="phone" :readonly="editphone !== true"
+                                  prefix-icon="el-icon-mobile" placeholder="手机" maxlength="11"></el-input>
+                    </el-col>
+                    <el-col :span="2">
+                        <el-button icon="el-icon-edit" @click="changePhoneValue">
+                        </el-button>
+                    </el-col>
+                    <el-col :span="4" v-if="editphone === true">
+                        <el-button type="success" @click="savePhone" plain
+                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
+                            保存
+                        </el-button>
                     </el-col>
                 </el-row>
             </el-form-item>
+
+            <el-form-item v-if="editphone === true">
+                <el-row :gutter="10">
+                    <el-col :span="12">
+                        <el-input v-model="userinfo.auth_key" prefix-icon="el-icon-mobile" placeholder="验证码"
+                                  maxlength="6"></el-input>
+                    </el-col>
+                    <el-col :span="6">
+                        <el-button type="info" @click="getsmsemailcode('sms',userinfo.mobile)" plain
+                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px;background-color: #ecf5ff;color: #dd6161">
+                            获取验证码
+                        </el-button>
+                    </el-col>
+
+                </el-row>
+            </el-form-item>
+
+
+            <el-form-item>
+                <el-row>
+                    <el-col :span="18">
+                        <el-input v-model="userinfo.email" ref="email" :readonly="editemail !== true"
+                                  prefix-icon="el-icon-bank-card" placeholder="邮箱" maxlength="20"></el-input>
+                    </el-col>
+                    <el-col :span="2">
+                        <el-button icon="el-icon-edit" @click="changeemailValue">
+                        </el-button>
+                    </el-col>
+                    <el-col :span="4" v-if="editemail === true">
+                        <el-button type="success" @click="saveemail" plain
+                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
+                            保存
+                        </el-button>
+                    </el-col>
+                </el-row>
+            </el-form-item>
+
+
+            <el-form-item style="height: 40px" v-if="editemail === true">
+                <el-row style="height: 40px" :gutter="10">
+                    <el-col :span="11">
+                        <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6"></el-input>
+                    </el-col>
+                    <el-col :span="8">
+                        <el-image
+                                style="margin:0px 4px;border-radius:4px;cursor:pointer;height: 40px"
+                                :src="cptch.cptch_image"
+                                fit="contain" @click="get_auth_code">
+                        </el-image>
+                    </el-col>
+                </el-row>
+            </el-form-item>
+
+            <el-form-item v-if="editemail === true">
+                <el-row :gutter="10">
+                    <el-col :span="12">
+                        <el-input v-model="userinfo.auth_key" prefix-icon="el-icon-mobile" placeholder="验证码"
+                                  maxlength="6"></el-input>
+                    </el-col>
+                    <el-col :span="6">
+                        <el-button type="info" @click="getsmsemailcode('email',userinfo.email)" plain
+                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px;background-color: #ecf5ff;color: #dd6161">
+                            获取验证码
+                        </el-button>
+                    </el-col>
+
+                </el-row>
+            </el-form-item>
+
+
             <el-form-item>
                 <el-row>
                     <el-col :span="18">
@@ -51,41 +154,6 @@
             </el-form-item>
 
 
-            <el-form-item>
-                <el-row>
-                    <el-col :span="18">
-                        <el-input v-model="userinfo.mobile" ref="phone" :readonly="editphone !== true"
-                                  prefix-icon="el-icon-mobile" placeholder="手机" maxlength="11"></el-input>
-                    </el-col>
-                    <el-col :span="2">
-                        <el-button icon="el-icon-edit" @click="changePhoneValue">
-                        </el-button>
-                    </el-col>
-                    <el-col :span="4" v-if="editphone === true">
-                        <el-button type="success" @click="savePhone" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
-                            保存
-                        </el-button>
-                    </el-col>
-                </el-row>
-            </el-form-item>
-
-            <el-form-item v-if="editphone === true">
-                <el-row :gutter="10">
-                    <el-col :span="12">
-                        <el-input v-model="userinfo.sms_code" prefix-icon="el-icon-mobile" placeholder="验证码"
-                                  maxlength="6"></el-input>
-                    </el-col>
-                    <el-col :span="6">
-                        <el-button type="info" @click="getphonecode" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px;background-color: #ecf5ff;color: #dd6161">
-                            获取验证码
-                        </el-button>
-                    </el-col>
-
-                </el-row>
-            </el-form-item>
-
         </el-form>
 
 
@@ -93,7 +161,7 @@
 </template>
 
 <script>
-    import {userinfos, getAuthTokenFun} from '../restful'
+    import {userinfos, getAuthcTokenFun, registerFun} from '../restful'
     import {deepCopy} from "../utils";
 
     export default {
@@ -105,10 +173,38 @@
                 },
                 orguserinfo: {},
                 editphone: false,
+                editemail: false,
                 editdomain_name: false,
-                editposition: false
+                edituser_name: false,
+                editposition: false,
+                cptch: '',
             }
         }, methods: {
+            get_auth_code() {
+                registerFun(data => {
+                    if (data.code === 1000) {
+                        this.cptch = data.data;
+                        this.userinfo.cptch_key = this.cptch.cptch_key;
+
+                    } else {
+                        this.$message({
+                            message: data.msg,
+                            type: 'error'
+                        });
+                    }
+                }, {
+                    "methods": "GET",
+                    "data": {}
+                });
+            },
+            saveemail() {
+                this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
+                this.changeemailValue()
+            },
+            saveUsername() {
+                this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
+                this.changeUsernameValue()
+            },
             saveDomain() {
                 this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
                 this.changeDomainValue()
@@ -122,24 +218,29 @@
                 this.changePhoneValue()
             },
             updateUserInfo(datainfo) {
+                if (datainfo.data.username.toString().length < 6) {
+                    this.$message.error("密码至少6位");
+                    return
+                }
+
                 userinfos(data => {
                     if (data.code === 1000) {
-                        let phonenumber = null;
+                        // let phonenumber = null;
 
-                        if (data.data.sms_code) {
-                            phonenumber = this.userinfo.mobile;
-                            this.$notify({
-                                title: '验证码',
-                                message: '您正在修改手机号码，验证码为:' + data.data.sms_code,
-                                type: 'success'
-                            });
-                        }
+                        // if (data.data.sms_code) {
+                        //     phonenumber = this.userinfo.mobile;
+                        //     this.$notify({
+                        //         title: '验证码',
+                        //         message: '您正在修改手机号码，验证码为:' + data.data.sms_code,
+                        //         type: 'success'
+                        //     });
+                        // }
                         this.userinfo = data.data;
                         this.$store.dispatch("doUserinfo", data.data);
                         this.orguserinfo = deepCopy(data.data);
-                        if (phonenumber) {
-                            this.userinfo.mobile = phonenumber;
-                        }
+                        // if (phonenumber) {
+                        //     this.userinfo.mobile = phonenumber;
+                        // }
 
                         if (datainfo.data) {
                             this.$message.success("更新成功")
@@ -151,6 +252,16 @@
 
                     }
                 }, datainfo)
+            },
+            changeemailValue() {
+                this.get_auth_code();
+                this.editemail = !this.editemail;
+                if (this.$refs.email.$el.children[0].style.backgroundColor) {
+                    this.$refs.email.$el.children[0].style.backgroundColor = ''
+                } else {
+                    this.$refs.email.$el.children[0].style.backgroundColor = '#f6ffdc';
+                }
+
             },
             changePhoneValue() {
                 this.editphone = !this.editphone;
@@ -170,6 +281,14 @@
                 }
 
             },
+            changeUsernameValue() {
+                this.edituser_name = !this.edituser_name;
+                if (this.$refs.user_name.$el.children[0].style.backgroundColor) {
+                    this.$refs.user_name.$el.children[0].style.backgroundColor = ''
+                } else {
+                    this.$refs.user_name.$el.children[0].style.backgroundColor = '#f6ffdc';
+                }
+            },
             changeDomainValue() {
                 this.editdomain_name = !this.editdomain_name;
                 if (this.$refs.domain_name.$el.children[0].style.backgroundColor) {
@@ -178,20 +297,29 @@
                     this.$refs.domain_name.$el.children[0].style.backgroundColor = '#f6ffdc';
                 }
             },
-            getphonecode() {
-                getAuthTokenFun(data => {
+            getsmsemailcode(act, target) {
+                let picode = {
+                    "authcode": this.userinfo.authcode,
+                    "cptch_key": this.cptch.cptch_key,
+                };
+                getAuthcTokenFun(data => {
                     if (data.code === 1000) {
+                        this.userinfo.act = act;
+                        let msg = '您正在修改手机号码，验证码已经发送您手机';
+                        if (act === "email") {
+                            msg = '您正在修改邮箱，验证码已经发送您邮箱';
+                        }
                         this.$notify({
                             title: '验证码',
-                            message: '您正在修改手机号码，验证码已经发送您手机',
+                            message: msg,
                             type: 'success'
                         });
+                        this.userinfo.auth_token = data.data.auth_token;
+                    } else {
+                        this.$message.error(data.msg)
                     }
-                    this.userinfo.auth_token = data.data.auth_token;
 
-                }, {"methods": 'GET', 'data': {'act': 'sms', 'phone': this.userinfo.mobile}})
-                // this.updateUserInfo({"methods": 'GET', 'data': {'act': 'sms','phone':this.userinfo.mobile}});
-
+                }, {"methods": 'GET', 'data': {'act': act, 'target': target, 'ext': picode}})
             }
         }, mounted() {
             this.$store.dispatch('douserInfoIndex', 0);

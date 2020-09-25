@@ -6,12 +6,12 @@
 import os, re
 from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
-    UDIDsyncDeveloper
+    UDIDsyncDeveloper, UserInfo
 from api.utils.app.randomstrings import make_app_uuid
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
 from api.utils.tempcaches import tmpCache
-from api.utils.TokenManager import DownloadToken, generateNumericTokenOfLength
+from api.utils.TokenManager import DownloadToken, generateNumericTokenOfLength, generateAlphanumericTokenOfLength
 from api.utils.sendmsg.sendmsg import SendMessage
 from django.db.models import Sum
 from captcha.models import CaptchaStore
@@ -164,3 +164,17 @@ def is_valid_sender_code(key, token, code):
 def get_sender_email_token(key, email):
     sender = SendMessage('email')
     return get_sender_token(sender, key, email)
+
+
+def check_username_exists(username):
+    user_obj = UserInfo.objects.filter(username=username).values("username").first()
+    if user_obj and user_obj['username'] == username:
+        return True
+    return False
+
+
+def get_random_username(length=16):
+    username = generateAlphanumericTokenOfLength(length)
+    if check_username_exists(username):
+        return get_random_username(length)
+    return username

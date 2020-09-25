@@ -190,6 +190,21 @@ export function getAuthTokenFun(callBack, params, load = true) {
     );
 }
 
+/**获取信息修改token */
+export function getAuthcTokenFun(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/authc',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 /**用户注册 */
 export function registerFun(callBack, params, load = true) {
     getData(

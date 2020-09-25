@@ -16,9 +16,21 @@
 
             <el-form ref="form" :model="form">
 
-                <el-form-item>
-                    <el-input v-model="form.email" prefix-icon="el-icon-user" placeholder="邮箱" autofocus></el-input>
-                </el-form-item>
+                <el-tabs v-model="activeName">
+                    <el-tab-pane label="用户名登录" name="username" v-if="allow_ways.up">
+                        <el-form-item>
+                            <el-input v-model="form.email" prefix-icon="el-icon-user" placeholder="用户名" autofocus
+                                      clearable></el-input>
+                        </el-form-item>
+                    </el-tab-pane>
+                    <el-tab-pane :label="rutitle+'登录'" name="smsemail" v-if="allow_ways.sms || allow_ways.email">
+                        <el-form-item>
+                            <el-input v-model="form.email" prefix-icon="el-icon-user" :placeholder="rutitle" autofocus
+                                      clearable></el-input>
+                        </el-form-item>
+                    </el-tab-pane>
+
+                </el-tabs>
 
                 <el-form-item>
                     <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
@@ -71,6 +83,11 @@
                     authcode: ''
                 },
                 cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
+                activeName: 'username',
+                allow_ways: {},
+                rutitle: '',
+                rctitle: ''
+
             }
         },
         methods: {
@@ -78,16 +95,42 @@
                 let email = this.form.email;
                 let password = this.form.password;
                 let authcode = this.form.authcode;
+                let login_type = 'up';
                 if (authcode.length === this.cptch.length) {
 
-                    let checkp = checkphone(this.form.email);
-                    let checke = checkEmail(this.form.email);
-                    if (!checkp && !checke) {
+                    if (this.activeName === "username") {
+                        if (email.length < 6) {
+                            this.$message({
+                                message: '用户名至少6位',
+                                type: 'error'
+                            });
+                            return
+                        }
+
+                    } else if (this.activeName === "smsemail") {
+                        let checkp = checkphone(this.form.email);
+                        let checke = checkEmail(this.form.email);
+                        if (!checkp && !checke) {
+                            this.$message({
+                                message: '邮箱或者手机号输入有误',
+                                type: 'error'
+                            });
+                            return
+                        }
+                        if (checkp) {
+                            login_type = 'sms';
+                        } else if (checke) {
+                            login_type = 'email';
+                        }
+                    } else {
                         this.$message({
-                            message: '邮箱或者手机号输入有误',
+                            message: '未知登录方式',
                             type: 'error'
                         });
+                        return
                     }
+
+
                     if (password.length > 6) {
                         loginFun(data => {
                             if (data.code == 1000) {
@@ -115,7 +158,8 @@
                                 "username": email,
                                 "password": password,
                                 "authcode": authcode,
-                                "cptch_key": this.cptch.cptch_key
+                                "cptch_key": this.cptch.cptch_key,
+                                "login_type": login_type,
                             }
                         });
 
@@ -136,16 +180,31 @@
             onRegister() {
                 this.$router.push({name: 'FirRegist'})
             },
-            isEmail(input) {
-                if (input.match(/^([a-zA-Z0-9_.-])+@(([a-zA-Z0-9-])+.)+([a-zA-Z0-9]{2,4})+$/)) {
-                    return true;
+            set_activename() {
+                if (this.allow_ways.up) {
+                    this.activeName = 'username';
+                } else {
+                    this.activeName = 'smsemail';
                 }
-                return false;
+            },
+            set_rtitle() {
+                this.rutitle = '';
+                if (this.allow_ways.sms) {
+                    this.rutitle = this.rutitle + '手机号 ';
+                }
+                if (this.allow_ways.email) {
+                    this.rutitle = this.rutitle + '邮箱 ';
+                }
+
+                this.rutitle = this.rutitle.trim().replace(' ', '或');
             },
             get_auth_code() {
                 loginFun(data => {
-                    if (data.code == 1000) {
+                    if (data.code === 1000) {
                         this.cptch = data.data;
+                        this.allow_ways = data.data.login_type;
+                        this.set_rtitle();
+                        this.set_activename();
                     } else {
                         this.$message({
                             message: data.msg,

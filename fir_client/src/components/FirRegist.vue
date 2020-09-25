@@ -26,11 +26,10 @@
                               clearable></el-input>
                 </el-form-item>
 
-
                 <el-form-item style="height: 40px">
                     <el-row style="height: 40px">
                         <el-col :span="16">
-                            <el-input placeholder="请输入验证码" v-model="form.authcode" maxlength="6"></el-input>
+                            <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6"></el-input>
                         </el-col>
                         <el-col :span="8">
                             <el-image
@@ -112,7 +111,6 @@
         methods: {
             set_rtitle() {
                 this.rutitle = '';
-                this.rctitle = '';
                 if (this.allow_ways.sms) {
                     this.rutitle = this.rutitle + '手机号 ';
                 }
@@ -121,15 +119,14 @@
                 }
 
                 this.rutitle = this.rutitle.trim().replace(' ', '或');
-                this.rctitle = this.rctitle.trim().replace(' ', '或');
             },
             get_auth_code() {
                 registerFun(data => {
-                    if (data.code == 1000) {
+                    if (data.code === 1000) {
                         let jdata = data.data;
                         if (jdata.enable) {
                             this.allow_r = true;
-                            this.allow_ways = jdata.ways;
+                            this.allow_ways = jdata.register_type;
                             this.set_rtitle();
                             this.cptch = data.data;
                         } else {
@@ -151,7 +148,7 @@
                 });
             },
             getphonecode() {
-                let act = 'ways';
+                let act = 'up';
                 if (!this.docheck()) {
                     return
                 }
@@ -244,7 +241,7 @@
                 if (authcode.length === this.cptch.length) {
                     if (password === password2 && password.length >= 6) {
                         registerFun(data => {
-                            if (data.code == 1000) {
+                            if (data.code === 1000) {
                                 this.$message({
                                     message: '注册成功',
                                     type: 'success'
@@ -286,12 +283,12 @@
             onLogin() {
                 this.$router.push({name: 'FirLogin'})
             },
-            isEmail(input) {
-                if (input.match(/^([a-zA-Z0-9_.-])+@(([a-zA-Z0-9-])+.)+([a-zA-Z0-9]{2,4})+$/)) {
-                    return true;
-                }
-                return false;
-            }
+            // isEmail(input) {
+            //     if (input.match(/^([a-zA-Z0-9_.-])+@(([a-zA-Z0-9-])+.)+([a-zA-Z0-9]{2,4})+$/)) {
+            //         return true;
+            //     }
+            //     return false;
+            // }
         }
         ,
         created() {
