@@ -44,6 +44,21 @@
                 </el-row>
             </el-form-item>
 
+            <el-form-item style="height: 40px" v-if="editphone === true">
+                <el-row style="height: 40px" :gutter="10">
+                    <el-col :span="11">
+                        <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6"></el-input>
+                    </el-col>
+                    <el-col :span="8">
+                        <el-image
+                                style="margin:0px 4px;border-radius:4px;cursor:pointer;height: 40px"
+                                :src="cptch.cptch_image"
+                                fit="contain" @click="get_auth_code">
+                        </el-image>
+                    </el-col>
+                </el-row>
+            </el-form-item>
+
             <el-form-item v-if="editphone === true">
                 <el-row :gutter="10">
                     <el-col :span="12">
@@ -185,7 +200,6 @@
                     if (data.code === 1000) {
                         this.cptch = data.data;
                         this.userinfo.cptch_key = this.cptch.cptch_key;
-
                     } else {
                         this.$message({
                             message: data.msg,
@@ -197,31 +211,46 @@
                     "data": {}
                 });
             },
-            saveemail() {
-                this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
-                this.changeemailValue()
-            },
+
             saveUsername() {
-                this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
-                this.changeUsernameValue()
-            },
-            saveDomain() {
-                this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
-                this.changeDomainValue()
-            },
-            savePositionValue() {
-                this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
-                this.changePositionValue()
-            },
-            savePhone() {
-                this.updateUserInfo({"methods": 'PUT', 'data': this.userinfo});
-                this.changePhoneValue()
-            },
-            updateUserInfo(datainfo) {
-                if (datainfo.data.username.toString().length < 6) {
+                if (this.userinfo.username.toString().length < 6) {
                     this.$message.error("密码至少6位");
                     return
                 }
+                this.updateUserInfo({"methods": 'PUT', 'data': {username:this.userinfo.username}});
+                this.changeUsernameValue()
+            },
+            saveDomain() {
+                this.updateUserInfo({"methods": 'PUT', 'data': {domain_name:this.userinfo.domain_name}});
+                this.changeDomainValue()
+            },
+            savePositionValue() {
+                this.updateUserInfo({"methods": 'PUT', 'data': {job:this.userinfo.job}});
+                this.changePositionValue()
+            },
+            authinfo(){
+                return {
+                    auth_token:this.userinfo.auth_token,
+                    auth_key:this.userinfo.auth_key,
+                    cptch_key:this.userinfo.cptch_key,
+                    authcode:this.userinfo.authcode,
+                };
+            },
+            saveemail() {
+                let data = this.authinfo();
+                data.email = this.userinfo.email;
+                this.updateUserInfo({"methods": 'PUT', 'data': data});
+                this.changeemailValue()
+            },
+            savePhone() {
+                let data = this.authinfo();
+                data.mobile = this.userinfo.mobile;
+                this.updateUserInfo({"methods": 'PUT', 'data': data});
+                this.changePhoneValue()
+            },
+
+            updateUserInfo(datainfo) {
+
 
                 userinfos(data => {
                     if (data.code === 1000) {
@@ -264,6 +293,7 @@
 
             },
             changePhoneValue() {
+                this.get_auth_code();
                 this.editphone = !this.editphone;
                 if (this.$refs.phone.$el.children[0].style.backgroundColor) {
                     this.$refs.phone.$el.children[0].style.backgroundColor = ''

@@ -319,11 +319,14 @@ class UserInfoView(APIView):
         oldpassword = data.get("oldpassword", None)
         surepassword = data.get("surepassword", None)
 
-        is_valid = valid_captcha(data.get("cptch_key", None), data.get("authcode", None), request)
-        if not is_valid:
-            res.code = 1008
-            res.msg = "图片验证码异常"
-            return Response(res.dict)
+        mobile = data.get("mobile", None)
+        email = data.get("email", None)
+        if mobile or email:
+            is_valid = valid_captcha(data.get("cptch_key", None), data.get("authcode", None), request)
+            if not is_valid:
+                res.code = 1008
+                res.msg = "图片验证码异常"
+                return Response(res.dict)
 
         if oldpassword and surepassword:
             user = auth.authenticate(username=request.user.username, password=oldpassword)
@@ -396,8 +399,7 @@ class UserInfoView(APIView):
                 act = data.get("act", None)
                 status, target = is_valid_sender_code(act, data.get("auth_token", None), data.get("auth_key", None))
                 if status:
-                    mobile = data.get("mobile", None)
-                    email = data.get("email", None)
+
                     if act == 'sms' and mobile:
                         if str(target) == str(mobile):
                             if is_valid_phone(mobile):

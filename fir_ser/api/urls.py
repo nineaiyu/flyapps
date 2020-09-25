@@ -32,8 +32,8 @@ from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedVie
 urlpatterns = [
     # path("",include(router.urls)),
     re_path("^login", LoginView.as_view()),
-    re_path("^auth", AuthorizationView.as_view()),
-    re_path("^authc", ChangeAuthorizationView.as_view()),
+    re_path("^auth$", AuthorizationView.as_view()),
+    re_path("^authc$", ChangeAuthorizationView.as_view()),
     re_path("^register", RegistView.as_view()),
     re_path("^logout", LogoutView.as_view()),
     re_path("^apps$", AppsView.as_view()),
