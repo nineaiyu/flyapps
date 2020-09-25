@@ -62,7 +62,7 @@ def CheckRegisterUerinfo(target, act, key):
                     res.code = 1005
                     res.msg = "手机号已经存在"
                 else:
-                    token, code = get_sender_sms_token(act, target)
+                    token, code = get_sender_sms_token(act, target,'register')
                     res.data["auth_token"] = token
             else:
                 res.code = 1009
@@ -79,7 +79,7 @@ def CheckRegisterUerinfo(target, act, key):
                     res.code = 1005
                     res.msg = "邮箱已经存在"
                 else:
-                    token, code = get_sender_email_token(act, target)
+                    token, code = get_sender_email_token(act, target,'register')
                     res.data["auth_token"] = token
             else:
                 res.code = 1009
@@ -94,7 +94,7 @@ def CheckRegisterUerinfo(target, act, key):
                 res.code = 1005
                 res.msg = "用户名已经存在"
             else:
-                token, code = get_sender_email_token(act, target)
+                token, code = get_sender_email_token(act, target,'register')
                 res.data["auth_token"] = token
         else:
             res.code = 1009
@@ -124,7 +124,7 @@ def CheckChangeUerinfo(target, act, key, user):
                     res.code = 1005
                     res.msg = "手机号已经存在"
                 else:
-                    token, code = get_sender_sms_token(act, target)
+                    token, code = get_sender_sms_token(act, target,'change')
                     res.data["auth_token"] = token
             else:
                 res.code = 1009
@@ -141,7 +141,7 @@ def CheckChangeUerinfo(target, act, key, user):
                     res.code = 1005
                     res.msg = "邮箱已经存在"
                 else:
-                    token, code = get_sender_email_token(act, target)
+                    token, code = get_sender_email_token(act, target,'change')
                     res.data["auth_token"] = token
             else:
                 res.code = 1009
@@ -156,7 +156,7 @@ def CheckChangeUerinfo(target, act, key, user):
                 res.code = 1005
                 res.msg = "用户名已经存在"
             else:
-                token, code = get_sender_email_token(act, target)
+                token, code = get_sender_email_token(act, target,'change')
                 res.data["auth_token"] = token
         else:
             res.code = 1009

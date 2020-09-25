@@ -142,7 +142,7 @@ def is_valid_email(email):
         return False
 
 
-def get_sender_token(sender, user_id, target):
+def get_sender_token(sender, user_id, target,action):
     sms_token_obj = DownloadToken()
     code = generateNumericTokenOfLength(6)
     token = sms_token_obj.make_token(code, time_limit=300, key=user_id)
@@ -151,9 +151,9 @@ def get_sender_token(sender, user_id, target):
     return token, code
 
 
-def get_sender_sms_token(key, phone):
+def get_sender_sms_token(key, phone,action):
     sender = SendMessage('sms')
-    return get_sender_token(sender, key, phone)
+    return get_sender_token(sender, key, phone,action)
 
 
 def is_valid_sender_code(key, token, code):
@@ -161,9 +161,9 @@ def is_valid_sender_code(key, token, code):
     return sms_token_obj.verify_token(token, code), tmpCache.get_tmp_cache(key, token)
 
 
-def get_sender_email_token(key, email):
+def get_sender_email_token(key, email,action):
     sender = SendMessage('email')
-    return get_sender_token(sender, key, email)
+    return get_sender_token(sender, key, email,action)
 
 
 def check_username_exists(username):
