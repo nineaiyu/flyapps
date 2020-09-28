@@ -154,7 +154,7 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "CONNECTION_POOL_KWARGS": {"max_connections": 100},
-            "PASSWORD": "nineven",
+            "PASSWORD": "",
             "DECODE_RESPONSES": True
         }
     },
@@ -225,6 +225,57 @@ THIRD_PART_CONFIG = {
             },
             'active': False
         }
+    ],
+    'sender': [
+        {
+            'name': 'email',
+            'type': 0,
+            'auth': {
+                'email_host': 'smtp.hehegames.cn',
+                'email_port': '25',
+                'username': 'git@hehegames.cn',
+                'password': 'QE.54272cd.ecQ.wSj',
+                'form': 'FlyApp Validation <noreply@hehegames.cn>',
+                'subject': '%(code)s验证',
+                'template_code': {
+                    'login': '验证码%(code)s，您正在登录，若非本人操作，请勿泄露。',
+                    'change': '验证码%(code)s，您正在尝试变更重要信息，请妥善保管账户信息。',
+                    'register': '验证码%(code)s，您正在注册成为新用户，感谢您的支持！',
+                }
+            },
+            'active': True
+        },
+        {
+            'name': 'aliyun',
+            'type': 1,
+            'auth': {
+                'access_key': 'LTAI4FmYZgtCRZcs4j32GUAR',
+                'secret_key': '7i7J34blLcxTYbwjR9ToK7lEglvJw0',
+                'region_id': 'cn-hangzhou',
+                'sing_name': '合合相亲',
+                'template_code': {
+                    'login': 'SMS_177185094',
+                    'change': 'SMS_177185090',
+                    'register': 'SMS_177185092',
+                }
+            },
+            'active': False
+        },
+        {
+            'name': 'jiguang',
+            'type': 2,
+            'auth': {
+                'app_key': 'd039807b5f13386e0b303b91',
+                'master_secret': '11dbb341abc02888ba277d3a',
+                'sign_id': '10823',
+                'template_code': {
+                    'login': '1',
+                    'change': '1',
+                    'register': '1',
+                }
+            },
+            'active': True
+        },
     ]
 
 }
