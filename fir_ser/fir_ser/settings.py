@@ -304,6 +304,7 @@ SYNC_CACHE_TO_DATABASE = {
     'try_login_times': 5,  # 当天登录失败次数，超过该失败次数，锁定24小时
     'auto_clean_apscheduler_log': 100000,  # 定时清理定时任务执行的日志,该日志存在数据库中，该参数为日志保留的数量
     'clean_local_tmp_file_from_mtime': 60 * 60,  # 清理最后一次修改时间超过限制时间的临时文件,单位秒
+    'auto_check_ios_developer_active_times': 60 * 60 * 12,  # ios开发者证书检测时间
 }
 
 SERVER_DOMAIN = {

@@ -142,12 +142,22 @@ def is_valid_email(email):
         return False
 
 
-def get_sender_token(sender, user_id, target, action):
+def get_sender_token(sender, user_id, target, action, msg=None):
     sms_token_obj = DownloadToken()
     code = generateNumericTokenOfLength(6)
     token = sms_token_obj.make_token(code, time_limit=300, key=user_id)
     tmpCache.set_tmp_cache(user_id, token, target)
-    sender.send_change_msg(target, code)
+    if action == 'change':
+        sender.send_change_msg(target, code)
+    elif action == 'register':
+        sender.send_register_msg(target, code)
+    elif action == 'login':
+        sender.send_login_msg(target, code)
+    elif action == 'msg':
+        sender.send_email_msg(target, msg)
+    else:
+        logger.error("get_sender_token failed. action is %s" % (action))
+        return None, None
     return token, code
 
 
@@ -161,9 +171,9 @@ def is_valid_sender_code(key, token, code):
     return sms_token_obj.verify_token(token, code), tmpCache.get_tmp_cache(key, token)
 
 
-def get_sender_email_token(key, email, action):
+def get_sender_email_token(key, email, action, msg=None):
     sender = SendMessage('email')
-    return get_sender_token(sender, key, email, action)
+    return get_sender_token(sender, key, email, action, msg)
 
 
 def check_username_exists(username):
@@ -178,3 +188,13 @@ def get_random_username(length=16):
     if check_username_exists(username):
         return get_random_username(length)
     return username
+
+
+def send_ios_developer_active_status(developer, msg):
+    user_info = developer.user_id
+    act = 'email'
+    email = user_info.email
+    if email:
+        get_sender_email_token(act, email, 'msg', msg)
+    else:
+        logger.info("user %s has no email. so %s can't send!" % (user_info, msg))

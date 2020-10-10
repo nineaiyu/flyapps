@@ -7,7 +7,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
 from fir_ser.settings import SYNC_CACHE_TO_DATABASE
-from api.utils.crontab.sync_cache import sync_download_times
+from api.utils.crontab.ctasks import sync_download_times
 
 # import atexit
 # import fcntl

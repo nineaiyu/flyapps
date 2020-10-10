@@ -10,7 +10,6 @@ import time, os
 from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION
 from api.utils.storage.storage import Storage, LocalStorage
-from api.utils.crontab.sync_cache import sync_download_times_by_app_id
 from api.utils.utils import file_format_path
 import logging
 
@@ -19,6 +18,18 @@ try:
     from api.utils.crontab import run
 except Exception as e:
     logger.error("import crontab.run failed Exception:%s" % (e))
+
+
+def sync_download_times_by_app_id(app_ids):
+    app_id_lists = []
+    for app_id in app_ids:
+        down_tem_key = "_".join([CACHE_KEY_TEMPLATE.get("download_times_key"), app_id.get("app_id")])
+        app_id_lists.append(down_tem_key)
+    down_times_lists = cache.get_many(app_id_lists)
+    for k, v in down_times_lists.items():
+        app_id = k.split(CACHE_KEY_TEMPLATE.get("download_times_key"))[1].strip('_')
+        Apps.objects.filter(app_id=app_id).update(count_hits=v)
+        logger.info("sync_download_times_by_app_id app_id:%s count_hits:%s" % (app_id, v))
 
 
 def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='', udid=None):

@@ -4,8 +4,10 @@
 # author: liuyu
 # date: 2020/4/7
 
-from api.models import Apps, UserInfo
+from api.models import Apps, UserInfo, AppIOSDeveloperInfo
 from api.utils.storage.storage import Storage
+from api.utils.app.supersignutils import IosUtils
+from api.utils.utils import send_ios_developer_active_status
 from django.core.cache import cache
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT
 import time, os
@@ -23,18 +25,6 @@ def sync_download_times():
         app_id = app_download.split(down_tem_key)[1].strip('_')
         Apps.objects.filter(app_id=app_id).update(count_hits=count_hits)
         logger.info("sync_download_times app_id:%s count_hits:%s" % (app_id, count_hits))
-
-
-def sync_download_times_by_app_id(app_ids):
-    app_id_lists = []
-    for app_id in app_ids:
-        down_tem_key = "_".join([CACHE_KEY_TEMPLATE.get("download_times_key"), app_id.get("app_id")])
-        app_id_lists.append(down_tem_key)
-    down_times_lists = cache.get_many(app_id_lists)
-    for k, v in down_times_lists.items():
-        app_id = k.split(CACHE_KEY_TEMPLATE.get("download_times_key"))[1].strip('_')
-        Apps.objects.filter(app_id=app_id).update(count_hits=v)
-        logger.info("sync_download_times_by_app_id app_id:%s count_hits:%s" % (app_id, v))
 
 
 def auto_clean_upload_tmp_file():
@@ -79,3 +69,20 @@ def auto_delete_tmp_file():
                     os.remove(file_path)
                 except Exception as e:
                     logger.error("auto_delete_tmp_file  %s Failed . Exception %s" % (file_path, e))
+
+
+def auto_check_ios_developer_active():
+    all_ios_developer = AppIOSDeveloperInfo.objects.filter(is_actived=True)
+    for ios_developer in all_ios_developer:
+        userinfo = ios_developer.user_id
+        if userinfo.supersign_active:
+            status, result = IosUtils.active_developer(ios_developer, userinfo)
+            msg = "auto_check_ios_developer_active  user:%s  ios.developer:%s  status:%s  result:%s" % (
+                ios_developer.user_id, ios_developer, status, result)
+            if status:
+                logger.info(msg)
+            else:
+                ios_developer.is_actived = False
+                ios_developer.save()
+                logger.error(msg)
+                send_ios_developer_active_status(ios_developer, msg)

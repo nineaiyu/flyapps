@@ -7,8 +7,8 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
 from fir_ser.settings import SYNC_CACHE_TO_DATABASE
-from api.utils.crontab.sync_cache import sync_download_times, auto_clean_upload_tmp_file, auto_delete_job_log, \
-    auto_delete_tmp_file
+from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_delete_job_log, \
+    auto_delete_tmp_file, auto_check_ios_developer_active
 import logging
 
 logger = logging.getLogger(__file__)
@@ -29,16 +29,15 @@ try:
         scheduler.add_jobstore(DjangoJobStore(), "default")
 
 
-        # 设置定时任务，选择方式为interval，时间间隔为10s
         # 另一种方式为每天固定时间执行任务，对应代码为：
         # @register_job(scheduler, 'cron', day_of_week='mon-fri', hour='9', minute='30', second='10',id='task_time')
+
         @register_job(scheduler, "interval", seconds=SYNC_CACHE_TO_DATABASE.get("download_times"))
         def sync_download_times_job():
             # 这里写你要执行的任务
             sync_download_times()
 
 
-        # @register_job(scheduler, 'cron', day_of_week='mon-fri', hour='9', minute='30', second='10',id='task_time')
         @register_job(scheduler, "interval", seconds=SYNC_CACHE_TO_DATABASE.get("auto_clean_tmp_file_times"))
         def auto_clean_upload_tmp_file_job():
             auto_clean_upload_tmp_file()
@@ -48,6 +47,12 @@ try:
         @register_job(scheduler, "interval", seconds=SYNC_CACHE_TO_DATABASE.get("auto_clean_local_tmp_file_times"))
         def auto_delete_tmp_file_job():
             auto_delete_tmp_file()
+
+
+        @register_job(scheduler, "interval",
+                      seconds=SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"))
+        def auto_check_ios_developer_active_job():
+            auto_check_ios_developer_active()
 
 
         register_events(scheduler)
