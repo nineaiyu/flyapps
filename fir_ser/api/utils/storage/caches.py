@@ -14,10 +14,6 @@ from api.utils.utils import file_format_path
 import logging
 
 logger = logging.getLogger(__file__)
-try:
-    from api.utils.crontab import run
-except Exception as e:
-    logger.error("import crontab.run failed Exception:%s" % (e))
 
 
 def sync_download_times_by_app_id(app_ids):
