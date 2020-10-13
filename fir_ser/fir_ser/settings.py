@@ -332,8 +332,8 @@ DEFAULT_MOBILEPROVISION = {
         'url': 'https://ali-static.jappstore.com/embedded.mobileprovision'
     },
     'supersign': {
-        # 超级签名，如果self 为True，则默认用自己的描述文件，否则同企业配置顺序一致
-        'self': True,
+        # 超级签名，如果self 为True，则默认用自己的描述文件，否则同企业配置顺序一致,自己的配置文件有时候有问题
+        'self': False,
         'path': os.path.join(MEDIA_ROOT, 'embedded.mobileprovision'),
         'url': 'https://ali-static.jappstore.com/embedded.mobileprovision'
     }

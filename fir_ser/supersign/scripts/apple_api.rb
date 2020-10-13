@@ -44,7 +44,13 @@ class DevelopPortalHandle
 	def createDistributionProvision(provisioningClass,appid,provisionName,certid)
 	    cert = Spaceship::Portal.certificate.Production.find(id=certid)
 	    if !cert then
-		    cert = Spaceship::Portal.certificate.production.all.last
+	        cert = Spaceship::Portal.certificate.production.all.last
+	        if !cert then
+	            cert = Spaceship::Portal.certificate.AppleDistribution.all.last
+	            if !cert then
+	                cert = Spaceship::Portal.certificate.AppleDistribution.find(id=certid)
+	            end
+	        end
 		end
 		profile = provisioningClass.create!(bundle_id: appid,certificate:cert,name:provisionName.split("/")[-1])
         return profile
