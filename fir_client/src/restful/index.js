@@ -86,7 +86,7 @@ function ErrorMsg(error) {
         }
     } else {
         // eslint-disable-next-line no-console
-        console.log(error)
+        console.log(error);
         error.message = '连接服务器失败!';
     }
     if (error.response && error.response.status === 403) {
@@ -100,7 +100,7 @@ function ErrorMsg(error) {
     }
 }
 
-function getData(methods = true, url, params = {}, callBack, load, isCode = false) {
+function getData(methods, url, params = {}, callBack, load, isCode = false) {
 
     if (methods === "DELETE") {
         Axios

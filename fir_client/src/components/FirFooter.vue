@@ -1,106 +1,52 @@
 <template>
     <div>
         <el-container class="navbar-wrapper">
-            <el-row :gutter="20">
-                <el-col :span="14" style="padding-top: 16px;margin-left: 60px">
+            <el-main align="center">
 
-                    <el-breadcrumb separator=">" style="height: 80px;font-size: 20px">
-                        <el-breadcrumb-item :to="{ name:'FirIndex' }"><i class="el-icon-s-home elbi"></i>
-                        </el-breadcrumb-item>
-                        <el-breadcrumb-item :to="{ name:'FirApps'}"><i class="el-icon-apple elbi"></i>
-                        </el-breadcrumb-item>
-                        <el-breadcrumb-item v-if="$store.state.currentapp.name">{{ $store.state.currentapp.name}}
-                        </el-breadcrumb-item>
-                    </el-breadcrumb>
+                <div style="width: 300px; margin: 0 auto; padding: 20px 0;">
+                    <el-link :underline="false">Copyright &copy;&nbsp;2017-2020&nbsp;第九系艾文&nbsp;&nbsp;版权所有.</el-link>
 
-                </el-col>
-                <el-col :span="2" :push="3">
-                    <div class="block">
-                        <el-avatar :size="66" :src="$store.state.userinfo.head_img"></el-avatar>
+                </div>
+
+                <div style="width: 300px; margin: 0 auto; padding: 20px 0;">
+                    <a style="display: inline-block; text-decoration: none; height: 20px; line-height: 20px;" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=41142202000049" target="_blank" rel="noopener">
+                    <img style="float: left;" src="https://blog.dvcloud.xin/beianlogo/beianlogo.png" />
+                        <el-link  :underline="false" style="float: left; height: 20px; line-height: 20px; margin: 0px 0px 0px 5px; color: #939393;">豫公网安备 41142202000049号</el-link>
+                    </a>
+
+                </div>
+
+                <div>
+                    <div  :underline="false" style="width: 200px; margin: 0 auto; padding: 10px 0;">
+                        <el-link :underline="false" href="https://beian.miit.gov.cn" target="_blank" rel="nofollow noopener">豫ICP备15004336号</el-link>
                     </div>
-                </el-col>
-                <el-col :span="4" :push="3">
-                    <el-dropdown style="padding-top: 12px;" @command="handleCommand">
-                        <el-button type="success" plain round>
-                            {{$store.state.userinfo.first_name }}<i class="el-icon-arrow-down el-icon--right"></i>
-                        </el-button>
-                        <el-dropdown-menu slot="dropdown">
-                            <el-dropdown-item command="userinfo">个人资料</el-dropdown-item>
-                            <el-dropdown-item command="chpasswd">修改密码</el-dropdown-item>
-                            <el-dropdown-item command="storage">存储管理</el-dropdown-item>
-                            <el-dropdown-item command="supersign">超级签名</el-dropdown-item>
+                </div>
 
-                            <el-dropdown-item command="exit">退出</el-dropdown-item>
-
-                        </el-dropdown-menu>
-                    </el-dropdown>
-
-                </el-col>
-
-            </el-row>
-
-
+            </el-main>
         </el-container>
 
     </div>
 </template>
 
 <script>
-    import {logout} from '../restful'
 
     export default {
-        name: "FirHeader",
+        name: "FirFooter",
         data() {
             return {
-                current_user: {},
-                appName: '',
+
             }
         }, methods: {
-            handleCommand(command) {
-                if (command === 'userinfo') {
-                    this.$router.push({name: 'FirUserProfileInfo'})
-                } else if (command === 'chpasswd') {
-                    this.$router.push({name: 'FirUserProfileChangePwd'})
-                } else if (command === 'storage') {
-                    this.$router.push({name: 'FirUserProfileStorage'})
-                } else if (command === 'supersign') {
-                    this.$store.dispatch('doucurrentapp', {});
-                    this.$router.push({"name": 'FirSuperSignBase', params: {act: "iosdeveloper"}})
-
-                } else if (command === 'exit') {
-                    logout(data => {
-                        if (data.code === 1000) {
-                            this.$message.success("退出成功");
-                            this.$cookies.remove("token");
-                            this.$cookies.remove("auth_token");
-                            this.$cookies.remove("username");
-                            this.$cookies.remove("first_name");
-                            this.$store.dispatch('doucurrentapp', {});
-                            this.$store.dispatch('doUserinfo', {});
-                            this.$router.push({name: 'FirLogin'});
-                        } else {
-                            this.$message.error("退出失败")
-                        }
-                    }, {})
-                }
-            }
 
         }, created() {
-            this.appName = this.$route.params.id
         }, watch: {
-            $route: function () {
-                this.appName = this.$route.params.id
-            }
+
         }
     }
 </script>
 
 <style scoped>
 
-    .el-container, .el-row {
-        margin: 10px auto;
-        width: 1166px;
-    }
 
     .el-container {
         margin: 10px auto 100px;
@@ -108,25 +54,10 @@
     }
 
     .navbar-wrapper {
-        background-color: #dbffeb;
         font-size: 0;
         border-radius: 10px;
     }
 
-    .el-dropdown {
-        vertical-align: top;
-    }
 
-    .el-dropdown + .el-dropdown {
-        margin-left: 15px;
-    }
-
-    .el-icon-arrow-down {
-        font-size: 12px;
-    }
-
-    .elbi {
-        color: #67c23a;
-    }
 
 </style>
