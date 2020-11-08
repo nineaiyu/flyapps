@@ -39,7 +39,7 @@
                 <el-form-item style="height: 40px">
                     <el-row style="height: 40px">
                         <el-col :span="16">
-                            <el-input placeholder="请输入验证码" v-model="form.authcode" maxlength="6"></el-input>
+                            <el-input placeholder="请输入验证码" v-model="form.authcode" maxlength="6" @keyup.enter.native="onSubmit"></el-input>
                         </el-col>
                         <el-col :span="8">
                             <el-image

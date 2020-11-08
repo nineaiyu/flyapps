@@ -63,7 +63,7 @@
                 </el-form-item>
                 <el-form-item>
                     <el-input v-model="form.password2" prefix-icon="el-icon-lock" placeholder="确认密码"
-                              show-password></el-input>
+                              show-password @keyup.enter.native="onRegist"></el-input>
                 </el-form-item>
 
                 <el-form-item>

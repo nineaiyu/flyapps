@@ -185,6 +185,7 @@
                                         placeholder="请输入名称搜索"
                                         v-model="keysearch"
                                         @click="searchapps"
+                                        @keyup.enter.native="searchapps"
                                         clearable>
                                 </el-input>
                             </el-col>
