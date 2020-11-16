@@ -336,9 +336,9 @@
                 }
                 getShortAppinfo(data => {
                     if (data.code === 1000) {
-                        // if (!this.auto_redircet_url(data.domain_name)) {
-                        //     return;
-                        // }
+                        if (!this.auto_redircet_url(data.domain_name)) {
+                            return;
+                        }
                         this.udid = data.udid;
                         if (!data.data.master_release.release_id) {
                             this.$message({
