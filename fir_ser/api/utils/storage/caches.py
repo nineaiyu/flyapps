@@ -45,8 +45,13 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
                     APPToDeveloper_obj = APPToDeveloper.objects.filter(app_id_id=app_obj.get("pk"),
                                                                        developerid=SuperSign_obj.developerid).first()
                     if APPToDeveloper_obj:
+                        release_obj = AppReleaseInfo.objects.filter(app_id_id=app_obj.get("pk"), is_master=True).first()
+                        if release_obj.release_id == APPToDeveloper_obj.release_file:
+                            binary_file = APPToDeveloper_obj.binary_file
+                        else:
+                            binary_file = APPToDeveloper_obj.release_file
                         return local_storage.get_download_url(
-                            APPToDeveloper_obj.binary_file + "." + download_url_type, limit), ""
+                            binary_file + "." + download_url_type, limit), ""
                     else:
                         return "", ""
                 else:

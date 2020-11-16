@@ -4,7 +4,7 @@
 # author: liuyu
 # date: 2020/3/6
 
-import uuid, xmltodict, os, re, logging
+import uuid, xmltodict, os, re, logging, time
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILECONFIG_SIGN_SSL
 from api.utils.app.iossignapi import AppDeveloperApi, ResignApp
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
@@ -13,7 +13,8 @@ from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
 from api.utils.serializer import get_developer_udided
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.caches import del_cache_response_by_short
-from api.utils.utils import file_format_path, delete_app_to_dev_and_file, delete_app_profile_file
+from api.utils.utils import file_format_path, delete_app_to_dev_and_file, delete_app_profile_file, \
+    send_ios_developer_active_status
 
 logger = logging.getLogger(__file__)
 
@@ -223,12 +224,26 @@ class IosUtils(object):
                     logger.info("udid %s exists app_id %s" % (self.udid_info.get('udid'), self.app_obj))
                     return
         logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
-        status, result = self.download_profile()
-        if not status:
+        fcount = 3
+        while fcount > 0:
+            status, result = self.download_profile()
+            if not status:
+                fcount -= 1
+                logger.warning("udid %s app %s  developer %s sign failed %s .try again " % (
+                    self.udid_info.get('udid'), self.app_obj, self.developer_obj, result))
+                time.sleep(3)
+            else:
+                fcount = -1
+        if fcount != -1:
             logger.error("udid %s app %s  developer %s sign failed %s" % (
                 self.udid_info.get('udid'), self.app_obj, self.developer_obj, result))
             self.developer_obj.is_actived = False
             self.developer_obj.save()
+            send_ios_developer_active_status(self.developer_obj,
+                                             'app %s developer %s sign failed %s. disable this developer' % (
+                                             self.app_obj, self.developer_obj, result))
+            self.get_developer_auth()
+            self.resign()
             return
 
         file_format_path_name = file_format_path(self.user_obj, self.auth)
