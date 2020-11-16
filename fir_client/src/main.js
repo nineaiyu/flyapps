@@ -93,7 +93,8 @@ import {
     Timeline,
     TimelineItem,
     Card,
-    Notification
+    Notification,
+    Footer
 } from "element-ui";
 
 Vue.use(Progress);
@@ -141,6 +142,7 @@ Vue.use(Loading);
 Vue.use(Tag);
 Vue.use(Tooltip);
 Vue.use(Switch);
+Vue.use(Footer);
 Vue.prototype.$message = Message;
 Vue.prototype.$notify = Notification;
 Vue.prototype.$loading = Loading.service;

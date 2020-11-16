@@ -17,7 +17,7 @@
             <!--        <span class="pattern right"><img src="../assets/download_pattern_right.png"></span>-->
         </div>
 
-        <el-container class="out-container container" v-if="wxeasytypeflag">
+        <el-container class="out-container " v-if="wxeasytypeflag">
 
             <div class="main">
                 <header>
@@ -48,6 +48,11 @@
                                 <p class="scan-tips" style="margin-left:170px">扫描二维码下载<br/>或用手机浏览器输入这个网址：<span
                                         class="text-black">{{ full_url }}</span></p>
 
+                                <div class="release-info" v-if="currentappinfo.description && agent === ''">
+                                    <p class="version">
+                                        应用描述：{{ currentappinfo.description }}
+                                    </p>
+                                </div>
                                 <div class="release-info">
                                     <p>{{ mcurrentappinfo.app_version }}（Build {{ mcurrentappinfo.build_version }}）-
                                         {{ mcurrentappinfo.binary_size }}</p>
@@ -78,7 +83,7 @@
                                                             <button @click="gomobileaction">
                                                                 <el-link icon="el-icon-loadings" type="primary"
                                                                          :underline="false">
-                                                                    立即信任
+                                                                    安装完成后,需立即信任
                                                                 </el-link>
                                                             </button>
 
@@ -165,6 +170,10 @@
                         <div class="info" v-if="mcurrentappinfo.changelog">
                             <h3>更新日志</h3>
                             {{ mcurrentappinfo.changelog }}
+                        </div>
+                        <div class="info" v-if="currentappinfo.description">
+                            <h3>应用描述</h3>
+                            {{ currentappinfo.description }}
                         </div>
                     </div>
 
@@ -327,9 +336,9 @@
                 }
                 getShortAppinfo(data => {
                     if (data.code === 1000) {
-                        if (!this.auto_redircet_url(data.domain_name)) {
-                            return;
-                        }
+                        // if (!this.auto_redircet_url(data.domain_name)) {
+                        //     return;
+                        // }
                         this.udid = data.udid;
                         if (!data.data.master_release.release_id) {
                             this.$message({
