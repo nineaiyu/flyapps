@@ -1,7 +1,7 @@
 class BaseResponse(object):
     def __init__(self):
         self.code = 1000
-        self.msg = ""
+        self.msg = "success"
         self.data = None
 
     @property

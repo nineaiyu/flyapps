@@ -487,3 +487,27 @@ class ChangeAuthorizationView(APIView):
 
         res = CheckChangeUerinfo(target, act, 'change', request.user)
         return Response(res.dict)
+
+
+class UserApiTokenView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+
+    def get(self, request):
+        res = BaseResponse()
+        res.data = {
+            'token': request.user.api_token
+        }
+        return Response(res.dict)
+
+    def put(self, request):
+        res = BaseResponse()
+        data = request.data
+
+        oldtoken = data.get("token", None)
+        if oldtoken == request.user.api_token:
+            request.user.api_token = 'reset'
+        try:
+            request.user.save()
+        except Exception as e:
+            logger.error("User %s api_token save failed. Excepiton:%s" % (request.user, e))
+        return self.get(request)

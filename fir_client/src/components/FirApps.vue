@@ -196,10 +196,6 @@
                             </el-col>
                         </el-row>
                     </el-col>
-                    <!--                    <el-col :span="1" class="surplus-card">-->
-                    <!--        -->
-                    <!--                    </el-col>-->
-
                     <el-col :span="8" class="surplus-card">
                         <el-row>
                             <el-col :span="8">

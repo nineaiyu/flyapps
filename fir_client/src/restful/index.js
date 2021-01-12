@@ -236,6 +236,20 @@ export function logout(callBack, params, load = true) {
     );
 }
 
+/**api token */
+export function apitoken(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/token',
+        params,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
 
 /**用户应用列表 */
 export function getapps(callBack, params, load = true) {

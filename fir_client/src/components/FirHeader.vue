@@ -1,6 +1,23 @@
 <template>
     <div>
         <el-container class="navbar-wrapper">
+
+            <el-dialog
+                    title="API  Token"
+                    :visible.sync="dialogVisible"
+                    width="30%"
+                    center
+                    >
+                <span>可用于调用公开 API，可用于登录 fly-cli，请勿泄露您的 token</span>
+               <el-main>
+                    <el-link type="primary" v-if="token" :underline="false">{{ token }}</el-link>
+               </el-main>
+                <span slot="footer" class="dialog-footer">
+                <el-button type="primary" @click="maketoken">重新生成</el-button>
+             </span>
+            </el-dialog>
+
+
             <el-row :gutter="20">
                 <el-col :span="14" style="padding-top: 16px;margin-left: 60px">
 
@@ -27,6 +44,7 @@
                         <el-dropdown-menu slot="dropdown">
                             <el-dropdown-item command="userinfo">个人资料</el-dropdown-item>
                             <el-dropdown-item command="chpasswd">修改密码</el-dropdown-item>
+                            <el-dropdown-item command="apitoken">API token</el-dropdown-item>
                             <el-dropdown-item command="storage" v-if="$store.state.userinfo.storage_active">存储管理
                             </el-dropdown-item>
                             <el-dropdown-item command="supersign" v-if="$store.state.userinfo.supersign_active">超级签名
@@ -48,7 +66,8 @@
 </template>
 
 <script>
-    import {logout} from '../restful'
+    // eslint-disable-next-line no-unused-vars
+    import {logout, apitoken} from '../restful'
 
     export default {
         name: "FirHeader",
@@ -56,8 +75,21 @@
             return {
                 current_user: {},
                 appName: '',
+                token:'',
+                dialogVisible:false
             }
         }, methods: {
+            maketoken(){
+                apitoken(data=>{
+                    if (data.code === 1000) {
+                        this.token = data.data.token;
+                        this.$message({
+                            type: 'success',
+                            message: '重新生成成功!'
+                        });
+                    }
+                },{methods: 'PUT',token:this.token});
+            },
             handleCommand(command) {
                 if (command === 'userinfo') {
                     this.$router.push({name: 'FirUserProfileInfo'})
@@ -68,6 +100,16 @@
                 } else if (command === 'supersign') {
                     this.$store.dispatch('doucurrentapp', {});
                     this.$router.push({"name": 'FirSuperSignBase', params: {act: "iosdeveloper"}})
+                }
+                else if (command === 'apitoken'){
+
+                    this.dialogVisible=true;
+
+                    apitoken(data=>{
+                        if (data.code === 1000) {
+                            this.token = data.data.token;
+                        }
+                    },{methods: 'GET',token:this.token});
 
                 } else if (command === 'exit') {
                     logout(data => {

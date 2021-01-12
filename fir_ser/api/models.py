@@ -5,6 +5,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from api.utils.app.randomstrings import make_random_uuid
 from django.contrib.auth.models import AbstractUser
+from api.utils.TokenManager import generateAlphanumericTokenOfLength
 
 
 ######################################## 用户表 ########################################
@@ -44,6 +45,7 @@ class UserInfo(AbstractUser):
     history_release_limit = models.IntegerField(default=10, verbose_name="app 历史记录版本", blank=True, null=True)
     storage = models.OneToOneField(to='AppStorage', related_name='app_storage',
                                    on_delete=models.SET_NULL, verbose_name="存储", null=True, blank=True)
+    api_token = models.CharField(max_length=256, verbose_name='api访问密钥', default='')
 
     class Meta:
         verbose_name = '账户信息'
@@ -55,6 +57,8 @@ class UserInfo(AbstractUser):
     def save(self, *args, **kwargs):
         if len(self.uid) < 8:
             self.uid = make_random_uuid()
+        if len(self.api_token) < 8:
+            self.api_token = self.uid+generateAlphanumericTokenOfLength(64)
         super(UserInfo, self).save(*args, **kwargs)
 
 

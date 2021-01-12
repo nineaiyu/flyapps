@@ -37,7 +37,7 @@ class AppAnalyseView(APIView):
 
         if bundleid and app_type:
             ap = 'apk'
-            if app_type == 'iOS':
+            if app_type.lower() == 'iOS'.lower():
                 ap = 'ipa'
             app_uuid = make_app_uuid(request.user, bundleid + ap)
             release_id = make_from_user_uuid(request.user)
@@ -126,6 +126,8 @@ class AppAnalyseView(APIView):
         except Exception as e:
             logger.error("user %s %s save app info failed Exception:%s" % (request.user, data.get("bundleid"), e))
             res.code = 10003
+            res.msg = 'save app info failed'
+
         return Response(res.dict)
 
 
@@ -199,7 +201,7 @@ class UploadView(APIView):
         try:
             certinfo = json.loads(certinfo)
             if not certinfo:
-                res.msg = "token 校验失败"
+                res.msg = "数据信息 校验失败"
                 res.code = 1006
                 return Response(res.dict)
         except Exception as e:

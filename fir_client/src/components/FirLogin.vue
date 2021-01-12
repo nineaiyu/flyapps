@@ -133,7 +133,7 @@
 
                     if (password.length > 6) {
                         loginFun(data => {
-                            if (data.code == 1000) {
+                            if (data.code === 1000) {
                                 this.$message({
                                     message: '登录成功',
                                     type: 'success'

@@ -6,7 +6,6 @@ Axios.defaults.withCredentials = true;
 //     keepAlive: true
 // });
 
-// const DOMAIN = 'https://fly.harmonygames.cn';
 const DOMAIN = window.g.baseUrl;
 const APIPATH = '/api/v1/fir/server';
 let USERSEVER = DOMAIN + APIPATH;

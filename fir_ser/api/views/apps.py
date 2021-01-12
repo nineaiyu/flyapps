@@ -35,10 +35,9 @@ class AppsView(APIView):
         app_type = request.query_params.get("type", None)
         act_type = request.query_params.get("act", None)
         res = BaseResponse()
-        res.hdata = {"all_hits_count": 0}
-        res.hdata["upload_domain"] = request.user.domain_name
-        res.hdata["ios_count"] = Apps.objects.filter(type=1, user_id=request.user).values('app_id').count()
-        res.hdata["android_count"] = Apps.objects.filter(type=0, user_id=request.user).values('app_id').count()
+        res.hdata = {"all_hits_count": 0, "upload_domain": request.user.domain_name,
+                     "ios_count": Apps.objects.filter(type=1, user_id=request.user).values('app_id').count(),
+                     "android_count": Apps.objects.filter(type=0, user_id=request.user).values('app_id').count()}
 
         android_app_ids = Apps.objects.filter(**{"user_id": request.user, "type": 0}).values('app_id')
         res.hdata["android_today_hits_count"] = get_app_today_download_times(android_app_ids)
