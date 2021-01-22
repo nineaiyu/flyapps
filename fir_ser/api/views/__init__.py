@@ -4,6 +4,7 @@
 # author: liuyu
 # date: 2020/10/12
 import logging
+
 logger = logging.getLogger(__file__)
 
 try:

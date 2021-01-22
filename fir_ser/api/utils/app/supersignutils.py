@@ -241,7 +241,7 @@ class IosUtils(object):
             self.developer_obj.save()
             send_ios_developer_active_status(self.developer_obj,
                                              'app %s developer %s sign failed %s. disable this developer' % (
-                                             self.app_obj, self.developer_obj, result))
+                                                 self.app_obj, self.developer_obj, result))
             self.get_developer_auth()
             self.resign()
             return

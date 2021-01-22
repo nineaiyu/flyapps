@@ -33,7 +33,6 @@ def upload_qiniuyunoss(key, token, file_path):
         raise AssertionError(info.text)
 
 
-
 class FLY_CLI_SER(object):
 
     def __init__(self, fly_cli_domain, fly_cli_token):
@@ -44,7 +43,7 @@ class FLY_CLI_SER(object):
             "APIAUTHORIZATION": fly_cli_token
         }
 
-    def  get_upload_token(self, bundleid, type):
+    def get_upload_token(self, bundleid, type):
         url = '%s/api/v2/fir/server/analyse' % self.fly_cli_domain
         data = {"bundleid": bundleid, "type": type}
         req = requests.post(url, json=data, headers=self._header)
@@ -62,7 +61,6 @@ class FLY_CLI_SER(object):
                 print("APP信息更新成功" + req.text)
                 return
         raise AssertionError(req.text)
-
 
     def upload_local_storage(self, upload_key, upload_token, app_id, file_path):
         url = '%s/api/v2/fir/server/upload' % self.fly_cli_domain
@@ -86,7 +84,6 @@ class FLY_CLI_SER(object):
                 print("数据上传存储成功." + req.text)
                 return
         raise AssertionError(req.text)
-
 
     def upload_app(self, app_path):
         appobj = AppInfo(app_path)
@@ -264,4 +261,3 @@ if __name__ == '__main__':
     if os.path.isfile(app_path):
         fly_obj.upload_app(app_path)
     raise FileNotFoundError(app_path)
-

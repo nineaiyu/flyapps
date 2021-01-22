@@ -15,7 +15,8 @@ Including another URLconf
 """
 from django.urls import path, re_path, include
 
-from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, UserApiTokenView
+from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, \
+    UserApiTokenView
 from api.views.logout import LogoutView
 from api.views.apps import AppsView, AppInfoView, AppReleaseinfoView
 from api.views.download import ShortDownloadView

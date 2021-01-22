@@ -58,7 +58,7 @@ class UserInfo(AbstractUser):
         if len(self.uid) < 8:
             self.uid = make_random_uuid()
         if len(self.api_token) < 8:
-            self.api_token = self.uid+generateAlphanumericTokenOfLength(64)
+            self.api_token = self.uid + generateAlphanumericTokenOfLength(64)
         super(UserInfo, self).save(*args, **kwargs)
 
 

@@ -22,4 +22,3 @@ logger = logging.getLogger(__name__)
 
 class CliUserInfoView(UserInfoView):
     authentication_classes = [ApiTokenAuthentication, ]
-
