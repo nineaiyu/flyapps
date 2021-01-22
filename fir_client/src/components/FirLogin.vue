@@ -36,7 +36,7 @@
                     <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
                               show-password></el-input>
                 </el-form-item>
-                <el-form-item style="height: 40px">
+                <el-form-item style="height: 40px" v-if="cptch.cptch_image">
                     <el-row style="height: 40px">
                         <el-col :span="16">
                             <el-input placeholder="请输入验证码" v-model="form.authcode" maxlength="6" @keyup.enter.native="onSubmit"></el-input>
@@ -96,7 +96,11 @@
                 let password = this.form.password;
                 let authcode = this.form.authcode;
                 let login_type = 'up';
-                if (authcode.length === this.cptch.length) {
+                let cptch_flag= authcode.length === this.cptch.length;
+                if(this.cptch.cptch_key === '' || !this.cptch.cptch_key){
+                    cptch_flag = true
+                }
+                if (cptch_flag) {
 
                     if (this.activeName === "username") {
                         if (email.length < 6) {
@@ -166,7 +170,7 @@
 
                     } else {
                         this.$message({
-                            message: '请输入正确的邮箱地址',
+                            message: '密码长度过短',
                             type: 'warning'
                         });
                     }

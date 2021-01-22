@@ -44,7 +44,7 @@
                 </el-row>
             </el-form-item>
 
-            <el-form-item style="height: 40px" v-if="editphone === true">
+            <el-form-item style="height: 40px" v-if="editphone === true && cptch.cptch_image">
                 <el-row style="height: 40px" :gutter="10">
                     <el-col :span="11">
                         <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6"></el-input>
@@ -96,7 +96,7 @@
             </el-form-item>
 
 
-            <el-form-item style="height: 40px" v-if="editemail === true">
+            <el-form-item style="height: 40px" v-if="editemail === true && cptch.cptch_image">
                 <el-row style="height: 40px" :gutter="10">
                     <el-col :span="11">
                         <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6"></el-input>
@@ -192,7 +192,7 @@
                 editdomain_name: false,
                 edituser_name: false,
                 editposition: false,
-                cptch: '',
+                cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
             }
         }, methods: {
             get_auth_code() {
@@ -254,23 +254,9 @@
 
                 userinfos(data => {
                     if (data.code === 1000) {
-                        // let phonenumber = null;
-
-                        // if (data.data.sms_code) {
-                        //     phonenumber = this.userinfo.mobile;
-                        //     this.$notify({
-                        //         title: '验证码',
-                        //         message: '您正在修改手机号码，验证码为:' + data.data.sms_code,
-                        //         type: 'success'
-                        //     });
-                        // }
                         this.userinfo = data.data;
                         this.$store.dispatch("doUserinfo", data.data);
                         this.orguserinfo = deepCopy(data.data);
-                        // if (phonenumber) {
-                        //     this.userinfo.mobile = phonenumber;
-                        // }
-
                         if (datainfo.data) {
                             this.$message.success("更新成功")
                         }

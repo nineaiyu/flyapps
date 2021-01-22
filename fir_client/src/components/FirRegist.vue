@@ -26,7 +26,7 @@
                               clearable></el-input>
                 </el-form-item>
 
-                <el-form-item style="height: 40px">
+                <el-form-item style="height: 40px" v-if="cptch.cptch_image">
                     <el-row style="height: 40px">
                         <el-col :span="16">
                             <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6"></el-input>
@@ -159,7 +159,11 @@
                     act = 'email'
                 }
                 let authcode = this.form.authcode;
-                if (authcode.length === this.cptch.length) {
+                let cptch_flag= authcode.length === this.cptch.length;
+                if(this.cptch.cptch_key === '' || !this.cptch.cptch_key){
+                    cptch_flag = true
+                }
+                if (cptch_flag) {
                     let picode = {
                         "authcode": authcode,
                         "cptch_key": this.cptch.cptch_key,
@@ -238,7 +242,11 @@
                     return
                 }
                 let authcode = this.form.authcode;
-                if (authcode.length === this.cptch.length) {
+                let cptch_flag= authcode.length === this.cptch.length;
+                if(this.cptch.cptch_key === '' || !this.cptch.cptch_key){
+                    cptch_flag = true
+                }
+                if (cptch_flag) {
                     if (password === password2 && password.length >= 6) {
                         registerFun(data => {
                             if (data.code === 1000) {

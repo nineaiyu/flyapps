@@ -176,7 +176,10 @@ class LoginView(APIView):
         response = BaseResponse()
         receive = request.data
         username = receive.get("username", None)
-        is_valid = valid_captcha(receive.get("cptch_key", None), receive.get("authcode", None), username)
+        if LOGIN.get("captcha"):
+            is_valid = valid_captcha(receive.get("cptch_key", None), receive.get("authcode", None), username)
+        else:
+            is_valid = True
         if is_valid:
             login_type = receive.get("login_type", None)
             if login_auth_failed("get", username):
@@ -226,7 +229,8 @@ class LoginView(APIView):
     def get(self, request):
         response = BaseResponse()
         response.data = {}
-        response.data = get_captcha()
+        if LOGIN.get("captcha"):
+            response.data = get_captcha()
         response.data['login_type'] = get_login_type()
         return Response(response.dict)
 
@@ -294,7 +298,8 @@ class RegistView(APIView):
         response.data = {}
         allow_f = REGISTER.get("enable")
         if allow_f:
-            response.data = get_captcha()
+            if REGISTER.get("captcha"):
+                response.data = get_captcha()
             response.data['register_type'] = get_register_type()
         response.data['enable'] = allow_f
         return Response(response.dict)
@@ -455,12 +460,14 @@ class AuthorizationView(APIView):
                 res.msg = "邀请码已失效"
                 return Response(res.dict)
 
-        if ext and valid_captcha(ext.get("cptch_key", None), ext.get("authcode", None), target):
-            pass
-        else:
-            res.code = 1008
-            res.msg = "图片验证码有误"
-            return Response(res.dict)
+        if REGISTER.get("captcha"):
+            is_valid = valid_captcha(ext.get("cptch_key", None), ext.get("authcode", None), target)
+            if ext and is_valid:
+                pass
+            else:
+                res.code = 1008
+                res.msg = "图片验证码有误"
+                return Response(res.dict)
 
         res = CheckRegisterUerinfo(target, act, 'register')
 
@@ -478,12 +485,13 @@ class ChangeAuthorizationView(APIView):
         ext = request.query_params.get("ext", None)
         if ext:
             ext = json.loads(ext)
-        if ext and valid_captcha(ext.get("cptch_key", None), ext.get("authcode", None), target):
-            pass
-        else:
-            res.code = 1008
-            res.msg = "图片验证码有误"
-            return Response(res.dict)
+        if REGISTER.get("captcha"):
+            if ext and valid_captcha(ext.get("cptch_key", None), ext.get("authcode", None), target):
+                pass
+            else:
+                res.code = 1009
+                res.msg = "图片验证码有误"
+                return Response(res.dict)
 
         res = CheckChangeUerinfo(target, act, 'change', request.user)
         return Response(res.dict)
