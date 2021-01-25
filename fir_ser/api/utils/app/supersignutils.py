@@ -483,6 +483,7 @@ class IosUtils(object):
                     "get_device_from_developer developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
                         developer_obj, user_obj, e))
 
+            UDIDsyncDeveloper.objects.filter(developerid=developer_obj, platform=1).delete()
             for devicestr in devices_info.split(">"):
                 formatdevice = re.findall(r'.*Device id="(.*)",.*name="(.*)",.*udid="(.*?)",.*model=(.*),.*', devicestr)
                 if formatdevice:
@@ -491,6 +492,7 @@ class IosUtils(object):
                         "product": formatdevice[0][1],
                         "udid": formatdevice[0][2],
                         "version": formatdevice[0][3],
+                        "platform": 1
                     }
                     app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj, udid=device.get("udid"))
                     if app_udid_obj:
