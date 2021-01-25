@@ -99,15 +99,16 @@ class AppInfoView(APIView):
             if apps_obj:
                 app_serializer = AppsSerializer(apps_obj, context={"storage": Storage(request.user)})
                 res.data = app_serializer.data
+                count = APPToDeveloper.objects.filter(app_id=apps_obj).count()
+                res.data["count"] = count
             else:
                 logger.error("app_id:%s is not found in user:%s " % (app_id, request.user))
                 res.msg = "未找到该应用"
                 res.code = 1003
+
             userserializer = UserInfoSerializer(request.user)
             res.userinfo = {}
             res.userinfo = userserializer.data
-            count = APPToDeveloper.objects.filter(app_id=apps_obj).count()
-            res.data["count"] = count
 
         return Response(res.dict)
 
