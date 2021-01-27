@@ -11,11 +11,6 @@ logger = logging.getLogger(__file__)
 token_obj = DownloadToken()
 
 
-def get_head_img(obj):
-    storage = Storage(obj)
-    return storage.get_download_url(obj.head_img)
-
-
 class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserInfo
@@ -25,6 +20,10 @@ class UserInfoSerializer(serializers.ModelSerializer):
                   'head_img', 'storage_active', 'supersign_active']
 
     head_img = serializers.SerializerMethodField()
+
+    def get_head_img(self, obj):
+        storage = Storage(obj)
+        return storage.get_download_url(obj.head_img)
 
 
 class AppsSerializer(serializers.ModelSerializer):
