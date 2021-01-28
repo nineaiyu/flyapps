@@ -16,7 +16,9 @@ from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
-
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, REGISTER, LOGIN
+from api.utils.storage.caches import set_default_app_wx_easy
+from api.utils.utils import  is_valid_domain
 logger = logging.getLogger(__name__)
 
 
@@ -152,6 +154,7 @@ class AppInfoView(APIView):
                 return Response(res.dict)
 
             has_combo = data.get("has_combo", None)
+            domain_name = data.get("domain_name", None)
             if has_combo:
                 actions = has_combo.get("action", None)
                 hcombo_id = has_combo.get("hcombo_id", None)
@@ -177,6 +180,40 @@ class AppInfoView(APIView):
                         logger.error("app_id:%s actions:%s hcombo_id:%s Exception:%s" % (app_id, actions, hcombo_id, e))
                         res.code = 1004
                         res.msg = "该应用已经关联"
+            elif domain_name:
+                apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
+                logger.info("app_id:%s update old data:%s" % (app_id, apps_obj.__dict__))
+                if domain_name:
+                    domain_name_list = domain_name.strip(' ').replace("http://", "").replace("https://", "").split("/")
+                    if len(domain_name_list) > 0:
+                        domain_name = domain_name_list[0]
+                        if len(domain_name) > 3 and is_valid_domain(domain_name_list[0]):
+                            if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
+                                admin_storage = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
+                                if admin_storage and admin_storage.uid == request.user.uid:
+                                    apps_obj.domain_name = domain_name
+                                    set_default_app_wx_easy(request.user, apps_obj)
+                                else:
+                                    serializer = UserInfoSerializer(request.user)
+                                    res.data = serializer.data
+                                    res.code = 1004
+                                    res.msg = "域名设置失败，请更换其他域名"
+                                    return Response(res.dict)
+                            else:
+                                apps_obj.domain_name = domain_name
+                                set_default_app_wx_easy(request.user, apps_obj)
+                        else:
+                            res.code = 1004
+                            res.msg = "域名校验失败"
+                            return Response(res.dict)
+
+                if domain_name == '':
+                    apps_obj.domain_name = None
+                    apps_obj.wxeasytype = True
+                    set_default_app_wx_easy(request.user, apps_obj)
+                apps_obj.save()
+                del_cache_response_by_short(apps_obj.app_id)
+                return Response(res.dict)
             else:
                 try:
                     apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
@@ -186,6 +223,7 @@ class AppInfoView(APIView):
                     apps_obj.name = data.get("name", apps_obj.name)
                     apps_obj.password = data.get("password", apps_obj.password)
                     apps_obj.isshow = data.get("isshow", apps_obj.isshow)
+                    apps_obj.domain_name = data.get("domain_name", apps_obj.domain_name)
                     if request.user.domain_name and len(request.user.domain_name) > 3:
                         apps_obj.wxeasytype = data.get("wxeasytype", apps_obj.wxeasytype)
                     else:

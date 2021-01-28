@@ -253,7 +253,10 @@ def login_auth_failed(act, email):
         cache.delete(auth_code_key)
 
 
-def set_default_app_wx_easy(user_obj):
-    app_obj_lists = Apps.objects.filter(user_id=user_obj)
-    for app_obj in app_obj_lists:
+def set_default_app_wx_easy(user_obj, app_obj=None):
+    if app_obj:
         del_cache_response_by_short(app_obj.app_id)
+    else:
+        app_obj_lists = Apps.objects.filter(user_id=user_obj)
+        for app_obj in app_obj_lists:
+            del_cache_response_by_short(app_obj.app_id)

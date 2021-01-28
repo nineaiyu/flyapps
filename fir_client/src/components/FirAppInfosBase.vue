@@ -137,7 +137,8 @@
                 }
             },
             appDownload() {
-                this.$router.push({name: 'FirDownload', params: {short: this.appinfos.short}})
+                window.open(location.origin + '/' + this.appinfos.short,'target','');
+                // this.$router.push({name: 'FirDownload', params: {short: this.appinfos.short}})
             },
             defaulttimeline() {
                 this.setfunactive('timeline', 5);

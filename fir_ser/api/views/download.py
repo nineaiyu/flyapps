@@ -162,7 +162,7 @@ class ShortDownloadView(APIView):
                                                                "storage": Storage(app_obj.user_id)})
         res.data = app_serializer.data
         res.udid = udid
-        res.domain_name = get_redirect_server_domain(request, app_obj.user_id)
+        res.domain_name = get_redirect_server_domain(request, app_obj.user_id, app_serializer.data['domain_name'])
         return Response(res.dict)
 
     # key的设置

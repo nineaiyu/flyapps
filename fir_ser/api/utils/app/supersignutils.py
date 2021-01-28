@@ -136,9 +136,12 @@ def get_http_server_doamin(request):
     return server_domain
 
 
-def get_redirect_server_domain(request, user_obj=None):
+def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
     if user_obj:
-        domain_name = user_obj.domain_name
+        if app_domain_name and len(app_domain_name) > 3:
+            domain_name = app_domain_name
+        else:
+            domain_name = user_obj.domain_name
     else:
         domain_name = None
     if domain_name and len(domain_name) > 3:

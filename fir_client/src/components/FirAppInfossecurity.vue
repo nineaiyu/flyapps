@@ -41,6 +41,13 @@
                 <el-link :underline="false" style="margin-left: 20px">默认开启，关闭之后用户无法通过短连接访问下载该应用</el-link>
 
             </el-form-item>
+            <el-form-item label-width="200px" label="应用专属域名">
+
+                <el-input v-model="currentapp.domain_name" clearable
+                          style="width: 60%;margin-right: 10px" prefix-icon="el-icon-download"
+                          :placeholder="defualt_dtitle"/>
+                <el-button @click="save_app_domain()">保存</el-button>
+            </el-form-item>
 
             <el-form-item v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active" label-width="200px"
                           label="自动超级签名">
@@ -122,7 +129,8 @@
                 wxeasytypeflag: false,
                 wxredirectflag: false,
                 clecount: 0,
-                wxeasy_disable: false
+                wxeasy_disable: false,
+                defualt_dtitle: '专属下载页域名',
             }
         },
         methods: {
@@ -136,6 +144,11 @@
             clean_app() {
                 this.saveappinfo({"clean": true});
                 this.currentapp.count = 0;
+            },
+            save_app_domain() {
+                this.saveappinfo({
+                    "domain_name": this.currentapp.domain_name,
+                });
             },
             saveappinfo(data) {
                 apputils(data => {
@@ -364,6 +377,11 @@
                 this.set_default_flag();
                 this.setbuttondefault(this.currentapp);
                 this.orgcurrentapp = deepCopy(this.currentapp);
+                if(!this.currentapp.domain_name || this.currentapp.domain_name.length < 3){
+                    if(this.$store.state.userinfo.domain_name && this.$store.state.userinfo.domain_name.length > 3){
+                        this.defualt_dtitle = this.$store.state.userinfo.domain_name;
+                    }
+                }
             }
         },
         mounted() {
