@@ -127,6 +127,7 @@
             },
             setfunactive(item, index) {
                 for (let key in this.$refs) {
+                    if(key === "qr") continue;
                     if (key === item) {
                         this.$refs[key].classList.add('active');
                         this.$store.dispatch('doappInfoIndex', [[index, index], [index, index]]);
