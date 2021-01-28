@@ -13,6 +13,25 @@
                         <span class="bundleid ng-binding">BundleID<b class="ng-binding">&nbsp;&nbsp;{{ appinfos.bundle_id }}</b></span>
                         <span class="version ng-scope">{{ master_release.minimum_os_version }}&nbsp; 或者高版本</span>
                         <span class="short ng-scope" v-if="appinfos.issupersign">已经开启超级签</span>
+
+                        <el-popover
+                                placement="right"
+                                width="288">
+                            <div style="text-align: center; margin: 0">
+                                <vue-qr :margin="qrinfo.margin"
+                                        :logoSrc="icon_url" :logoScale="qrinfo.logoScale"
+                                        :logoCornerRadius="qrinfo.logoCornerRadius"
+                                        :correctLevel="qrinfo.correctLevel"
+                                        :text="short_url()" :size="266"
+                                        ref="qr">
+                                </vue-qr>
+                                <el-button type="primary" size="small" @click="save_qr()">保存本地</el-button>
+                            </div>
+
+                            <span class="short ng-scope" slot="reference">下载码</span>
+                        </el-popover>
+
+
                     </div>
                     <div class="actions">
                         <el-button @click="appDownload" class="download" icon="el-icon-view">
@@ -65,11 +84,34 @@
 
 <script>
     import {apputils} from "../restful";
+    import VueQr from 'vue-qr';
 
     export default {
         name: "FirAppInfosBase",
+        components: {
+            VueQr
+        },
         data() {
             return {
+                save_qr() {
+                    let dtype = "I";
+                    if (this.master_release.release_type === 0) {
+                        dtype = "A";
+                    }
+                    let a = document.createElement('a');
+                    // 下载图名字
+                    a.download = this.appinfos.name + '_' + dtype + "_下载码";
+                    //url
+                    a.href = this.$refs.qr.$el.src;
+                    //合成函数，执行下载
+                    a.dispatchEvent(new MouseEvent('click'))
+                },
+                qrinfo: {
+                    logoScale: 0.3,
+                    logoCornerRadius: 12,
+                    correctLevel: 3,
+                    margin: 20
+                },
                 icon_url: "",
                 appinfos: {},
                 master_release: {},
@@ -80,6 +122,9 @@
             }
         },
         methods: {
+            short_url() {
+                return location.origin + '/' + this.appinfos.short;
+            },
             setfunactive(item, index) {
                 for (let key in this.$refs) {
                     if (key === item) {

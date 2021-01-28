@@ -32,7 +32,11 @@
 
                 </el-tabs>
 
-                <el-form-item>
+                <el-form-item v-if="is_cptch">
+                    <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"  @keyup.enter.native="onSubmit"
+                              show-password></el-input>
+                </el-form-item>
+                <el-form-item v-else>
                     <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
                               show-password></el-input>
                 </el-form-item>
@@ -91,12 +95,19 @@
             }
         },
         methods: {
+            is_cptch(){
+                let cptch_flag= this.form.authcode.length === this.cptch.length;
+                if(this.cptch.cptch_key === '' || !this.cptch.cptch_key){
+                    cptch_flag = true
+                }
+                return cptch_flag
+            },
             onSubmit() {
                 let email = this.form.email;
                 let password = this.form.password;
                 let authcode = this.form.authcode;
                 let login_type = 'up';
-                let cptch_flag= authcode.length === this.cptch.length;
+                let cptch_flag= this.form.authcode.length === this.cptch.length;
                 if(this.cptch.cptch_key === '' || !this.cptch.cptch_key){
                     cptch_flag = true
                 }
