@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('api', '0011_auto_20210125_1137'),
     ]
@@ -13,6 +12,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='udidsyncdeveloper',
             name='platform',
-            field=models.SmallIntegerField(choices=[(0, 'fly分发'), (1, 'app developer')], default=0, verbose_name='udid所在平台'),
+            field=models.SmallIntegerField(choices=[(0, 'fly分发'), (1, 'app developer')], default=0,
+                                           verbose_name='udid所在平台'),
         ),
     ]

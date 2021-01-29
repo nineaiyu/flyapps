@@ -427,6 +427,9 @@
 
                     } else {
                         this.iserror = true;
+                        if (data.msg) {
+                            document.title = data.msg;
+                        }
                     }
                 }, params)
             },

@@ -7,11 +7,11 @@
                     :visible.sync="dialogVisible"
                     width="30%"
                     center
-                    >
+            >
                 <span>可用于调用公开 API，可用于登录 fly-cli，请勿泄露您的 token</span>
-               <el-main>
+                <el-main>
                     <el-link type="primary" v-if="token" :underline="false">{{ token }}</el-link>
-               </el-main>
+                </el-main>
                 <span slot="footer" class="dialog-footer">
                 <el-button type="primary" @click="maketoken">重新生成</el-button>
              </span>
@@ -75,12 +75,12 @@
             return {
                 current_user: {},
                 appName: '',
-                token:'',
-                dialogVisible:false
+                token: '',
+                dialogVisible: false
             }
         }, methods: {
-            maketoken(){
-                apitoken(data=>{
+            maketoken() {
+                apitoken(data => {
                     if (data.code === 1000) {
                         this.token = data.data.token;
                         this.$message({
@@ -88,7 +88,7 @@
                             message: '重新生成成功!'
                         });
                     }
-                },{methods: 'PUT',token:this.token});
+                }, {methods: 'PUT', token: this.token});
             },
             handleCommand(command) {
                 if (command === 'userinfo') {
@@ -100,16 +100,15 @@
                 } else if (command === 'supersign') {
                     this.$store.dispatch('doucurrentapp', {});
                     this.$router.push({"name": 'FirSuperSignBase', params: {act: "iosdeveloper"}})
-                }
-                else if (command === 'apitoken'){
+                } else if (command === 'apitoken') {
 
-                    this.dialogVisible=true;
+                    this.dialogVisible = true;
 
-                    apitoken(data=>{
+                    apitoken(data => {
                         if (data.code === 1000) {
                             this.token = data.data.token;
                         }
-                    },{methods: 'GET',token:this.token});
+                    }, {methods: 'GET', token: this.token});
 
                 } else if (command === 'exit') {
                     logout(data => {

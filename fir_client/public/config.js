@@ -1,5 +1,5 @@
 window.g = {
-    baseUrl: 'https://fly.harmonygames.cn',
+    baseUrl: 'https://app.hehelucky.cn',
     footer:{
         copyright:'Copyright © 2017-2020 第九系艾文 版权所有.',
         ipcBeiAn:{

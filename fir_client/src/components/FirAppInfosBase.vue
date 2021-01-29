@@ -127,7 +127,7 @@
             },
             setfunactive(item, index) {
                 for (let key in this.$refs) {
-                    if(key === "qr") continue;
+                    if (key === "qr") continue;
                     if (key === item) {
                         this.$refs[key].classList.add('active');
                         this.$store.dispatch('doappInfoIndex', [[index, index], [index, index]]);
@@ -137,7 +137,7 @@
                 }
             },
             appDownload() {
-                window.open(location.origin + '/' + this.appinfos.short,'target','');
+                window.open(location.origin + '/' + this.appinfos.short, 'target', '');
                 // this.$router.push({name: 'FirDownload', params: {short: this.appinfos.short}})
             },
             defaulttimeline() {

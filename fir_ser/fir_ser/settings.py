@@ -181,7 +181,7 @@ REGISTER = {
 
 # 信息修改也会使用该配置
 LOGIN = {
-    "captcha": True,  # 是否开启登录字母验证码
+    "captcha": False,  # 是否开启登录字母验证码
     "login_type": {
         'sms': True,  # 短信登录
         'email': True,  # 邮件登录
@@ -196,7 +196,7 @@ THIRD_PART_CONFIG = {
             'name': 'local',
             'type': 0,
             'auth': {
-                'domain_name': 'fly.harmonygames.cn',  # 正式环境需要填写正式的访问域名
+                'domain_name': 'app.hehelucky.cn',  # 正式环境需要填写正式的访问域名
                 'is_https': True,
             },
             'active': True
@@ -311,19 +311,19 @@ SYNC_CACHE_TO_DATABASE = {
 
 SERVER_DOMAIN = {
     'IOS_PMFILE_DOWNLOAD_DOMAIN': {
-        "domain_name": 'fly.harmonygames.cn',
+        "domain_name": 'app.hehelucky.cn',
         'is_https': True,
     },  # ios 描述文件和plist文件下载域名，该域名用于后端，一般为api访问域名
-    'POST_UDID_DOMAIN': 'https://fly.harmonygames.cn',  # 超级签名 安装签名时 向该域名 发送udid数据，该域名用于后端，一般为 api 访问域名
-    'REDIRECT_UDID_DOMAIN': 'https://fly.harmonygames.cn',  # 超级签名 安装完成之后，跳转域名，该域名为前端web访问域名，如果用户定义了自己的域名，则跳转用户域名
-    'FILE_UPLOAD_DOMAIN': 'https://fly.harmonygames.cn',  # 本地文件上传域名，使用本地存储必须配置
+    'POST_UDID_DOMAIN': 'https://app.hehelucky.cn',  # 超级签名 安装签名时 向该域名 发送udid数据，该域名用于后端，一般为 api 访问域名
+    'REDIRECT_UDID_DOMAIN': 'https://app.hehelucky.cn',  # 超级签名 安装完成之后，跳转域名，该域名为前端web访问域名，如果用户定义了自己的域名，则跳转用户域名
+    'FILE_UPLOAD_DOMAIN': 'https://app.hehelucky.cn',  # 本地文件上传域名，使用本地存储必须配置
 }
 
 MOBILECONFIG_SIGN_SSL = {
     # 描述文件是否签名，默认是关闭状态；如果开启，并且ssl_key_path 和 ssl_pem_path 正常，则使用填写的ssl进行签名,否则默认不签名
     'open': False,
-    'ssl_key_path': '/data/cert/fly.harmonygames.cn.key',
-    'ssl_pem_path': '/data/cert/fly.harmonygames.cn.pem'
+    'ssl_key_path': '/data/cert/app.hehelucky.cn.key',
+    'ssl_pem_path': '/data/cert/app.hehelucky.cn.pem'
 }
 
 DEFAULT_MOBILEPROVISION = {

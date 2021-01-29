@@ -159,8 +159,8 @@
                     act = 'email'
                 }
                 let authcode = this.form.authcode;
-                let cptch_flag= authcode.length === this.cptch.length;
-                if(this.cptch.cptch_key === '' || !this.cptch.cptch_key){
+                let cptch_flag = authcode.length === this.cptch.length;
+                if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
                     cptch_flag = true
                 }
                 if (cptch_flag) {
@@ -242,8 +242,8 @@
                     return
                 }
                 let authcode = this.form.authcode;
-                let cptch_flag= authcode.length === this.cptch.length;
-                if(this.cptch.cptch_key === '' || !this.cptch.cptch_key){
+                let cptch_flag = authcode.length === this.cptch.length;
+                if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
                     cptch_flag = true
                 }
                 if (cptch_flag) {

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('api', '0010_userinfo_api_token'),
     ]
@@ -17,6 +16,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='udidsyncdeveloper',
             name='platform',
-            field=models.SmallIntegerField(choices=[(0, 'app developer'), (1, 'fly分发')], default=0, verbose_name='udid所在平台'),
+            field=models.SmallIntegerField(choices=[(0, 'app developer'), (1, 'fly分发')], default=0,
+                                           verbose_name='udid所在平台'),
         ),
     ]

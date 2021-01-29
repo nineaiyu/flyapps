@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
-from django.db.models import Sum, F
+from django.db.models import Sum
 from api.utils.app.supersignutils import IosUtils
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times
@@ -16,9 +16,10 @@ from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, REGISTER, LOGIN
+from fir_ser.settings import SERVER_DOMAIN
 from api.utils.storage.caches import set_default_app_wx_easy
-from api.utils.utils import  is_valid_domain
+from api.utils.utils import is_valid_domain
+
 logger = logging.getLogger(__name__)
 
 

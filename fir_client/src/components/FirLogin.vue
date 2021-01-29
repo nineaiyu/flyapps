@@ -33,7 +33,8 @@
                 </el-tabs>
 
                 <el-form-item v-if="is_cptch">
-                    <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"  @keyup.enter.native="onSubmit"
+                    <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
+                              @keyup.enter.native="onSubmit"
                               show-password></el-input>
                 </el-form-item>
                 <el-form-item v-else>
@@ -43,7 +44,8 @@
                 <el-form-item style="height: 40px" v-if="cptch.cptch_image">
                     <el-row style="height: 40px">
                         <el-col :span="16">
-                            <el-input placeholder="请输入验证码" v-model="form.authcode" maxlength="6" @keyup.enter.native="onSubmit"></el-input>
+                            <el-input placeholder="请输入验证码" v-model="form.authcode" maxlength="6"
+                                      @keyup.enter.native="onSubmit"></el-input>
                         </el-col>
                         <el-col :span="8">
                             <el-image
@@ -95,9 +97,9 @@
             }
         },
         methods: {
-            is_cptch(){
-                let cptch_flag= this.form.authcode.length === this.cptch.length;
-                if(this.cptch.cptch_key === '' || !this.cptch.cptch_key){
+            is_cptch() {
+                let cptch_flag = this.form.authcode.length === this.cptch.length;
+                if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
                     cptch_flag = true
                 }
                 return cptch_flag
@@ -107,8 +109,8 @@
                 let password = this.form.password;
                 let authcode = this.form.authcode;
                 let login_type = 'up';
-                let cptch_flag= this.form.authcode.length === this.cptch.length;
-                if(this.cptch.cptch_key === '' || !this.cptch.cptch_key){
+                let cptch_flag = this.form.authcode.length === this.cptch.length;
+                if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
                     cptch_flag = true
                 }
                 if (cptch_flag) {

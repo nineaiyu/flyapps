@@ -430,11 +430,14 @@
                             }
                         }
                     } else {
-                        this.$message({
-                            message: data.msg,
-                            type: 'error',
-                            duration: 0
-                        });
+                        if (data.msg) {
+                            document.title = data.msg;
+                            this.$message({
+                                message: data.msg,
+                                type: 'error',
+                                duration: 0
+                            });
+                        }
                     }
                 }, params)
             },
