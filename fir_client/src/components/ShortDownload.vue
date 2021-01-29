@@ -173,13 +173,7 @@
 
                 </div>
             </div>
-            <div v-if='iserror' class="main">
-                <div class="error-container">
-                    <h1>404 - Not Found</h1>
-                    <header>您访问的 应用 不存在
-                    </header>
-                </div>
-            </div>
+
         </div>
 
         <div v-else>
@@ -187,6 +181,15 @@
                 {{this.currentappinfo.name | formatName}}
             </i>
         </div>
+
+        <div v-if='iserror' class="main">
+            <div class="error-container">
+                <h1>404 - Not Found</h1>
+                <header>您访问的 应用 不存在
+                </header>
+            </div>
+        </div>
+
     </div>
 
 
