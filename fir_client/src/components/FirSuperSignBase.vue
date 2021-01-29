@@ -7,13 +7,32 @@
             <el-form ref="storageinfoform" :model="editdeveloperinfo"
                      label-width="80px" style="margin:0 auto;">
 
-                <el-form-item label-width="110px" label="APP_ID">
-                    <el-input :disabled='isedit' v-model="editdeveloperinfo.email"></el-input>
-                </el-form-item>
 
-                <el-form-item label-width="110px" label="password">
-                    <el-input v-model="editdeveloperinfo.password" :placeholder="placeholder"></el-input>
-                </el-form-item>
+                <div v-if="editdeveloperinfo.auth_type===0">
+                    <el-form-item label-width="110px" label="issuer_id">
+                        <el-input :disabled='isedit' v-model="editdeveloperinfo.issuer_id"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label-width="110px" label="private_key_id">
+                        <el-input v-model="editdeveloperinfo.private_key_id"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label-width="110px" label="p8key">
+                        <el-input type="textarea"
+                                  :rows="6" v-model="editdeveloperinfo.p8key" :placeholder="placeholder"></el-input>
+                    </el-form-item>
+                </div>
+
+                <div v-if="editdeveloperinfo.auth_type===1">
+                    <el-form-item label-width="110px" label="APP_ID">
+                        <el-input :disabled='isedit' v-model="editdeveloperinfo.email"></el-input>
+                    </el-form-item>
+
+                    <el-form-item label-width="110px" label="password">
+                        <el-input v-model="editdeveloperinfo.password" :placeholder="placeholder"></el-input>
+                    </el-form-item>
+                </div>
+
                 <el-form-item label-width="110px" label="设备数量">
                     <el-input v-model="editdeveloperinfo.usable_number"></el-input>
                 </el-form-item>
@@ -91,7 +110,7 @@
                             fixed
                             prop="email"
                             label="用户"
-                            width="220">
+                            width="300">
                         <template slot-scope="scope">
                             <el-popover trigger="hover" placement="top">
                                 <p>开发者账户已使用设备数: {{ scope.row.developer_used_number }}</p>
@@ -101,7 +120,12 @@
                                     ?scope.row.usable_number-scope.row.developer_used_number :0 }}</p>
 
                                 <div slot="reference" class="name-wrapper">
-                                    <el-tag size="medium">{{ scope.row.email }}</el-tag>
+                                    <el-tag size="medium" v-if="scope.row.email"><i class="el-icon-s-custom"></i> {{
+                                        scope.row.email }}
+                                    </el-tag>
+                                    <el-tag size="medium" v-if="scope.row.issuer_id"><i class="el-icon-key"></i> {{
+                                        scope.row.issuer_id }}
+                                    </el-tag>
                                 </div>
                             </el-popover>
                         </template>
@@ -139,7 +163,7 @@
                     <el-table-column
                             prop="usable_number"
                             label="可用设备"
-                            width="100">
+                            width="60">
                         <template slot-scope="scope">
                             <el-popover trigger="hover" placement="top">
                                 <p>可用设备数: {{ scope.row.usable_number-scope.row.developer_used_number > 0
@@ -156,7 +180,7 @@
                     <el-table-column
                             prop="use_number"
                             label="设备消耗"
-                            width="100">
+                            width="60">
                         <template slot-scope="scope">
                             <el-popover trigger="hover" placement="top">
                                 <p>开发者账户已使用设备数【本平台】: {{ scope.row.use_number }}</p>
@@ -205,13 +229,39 @@
                 <el-form ref="storageinfoform" :model="editdeveloperinfo"
                          label-width="80px" style="margin:0 auto;">
 
-                    <el-form-item label-width="110px" label="APP_ID">
-                        <el-input :disabled='isedit' v-model="editdeveloperinfo.email"></el-input>
+                    <el-form-item label-width="100px" label="认证类型">
+                        <el-select v-model="editdeveloperinfo.auth_type" placeholder="认证类型"
+                                   style="margin-left: -100px">
+                            <el-option v-for="st in apple_auth_list" :key="st.id" :label="st.name"
+                                       :value="st.id"></el-option>
+                        </el-select>
                     </el-form-item>
+                    <div v-if="editdeveloperinfo.auth_type===0">
+                        <el-form-item label-width="110px" label="issuer_id">
+                            <el-input :disabled='isedit' v-model="editdeveloperinfo.issuer_id"></el-input>
+                        </el-form-item>
 
-                    <el-form-item label-width="110px" label="password">
-                        <el-input v-model="editdeveloperinfo.password" :placeholder="placeholder"></el-input>
-                    </el-form-item>
+                        <el-form-item label-width="110px" label="private_key_id">
+                            <el-input v-model="editdeveloperinfo.private_key_id" :placeholder="placeholder"></el-input>
+                        </el-form-item>
+
+                        <el-form-item label-width="110px" label="p8key">
+                            <el-input type="textarea"
+                                      :rows="6" v-model="editdeveloperinfo.p8key" :placeholder="placeholder"></el-input>
+                        </el-form-item>
+                    </div>
+
+                    <div v-if="editdeveloperinfo.auth_type===1">
+                        <el-form-item label-width="110px" label="APP_ID">
+                            <el-input :disabled='isedit' v-model="editdeveloperinfo.email"></el-input>
+                        </el-form-item>
+
+                        <el-form-item label-width="110px" label="password">
+                            <el-input v-model="editdeveloperinfo.password" :placeholder="placeholder"></el-input>
+                        </el-form-item>
+                    </div>
+
+
                     <el-form-item label-width="110px" label="设备数量">
                         <el-input v-model="editdeveloperinfo.usable_number"></el-input>
                     </el-form-item>
@@ -401,7 +451,7 @@
                 appidseach: "",
                 dialogaddDeveloperVisible: false,
                 title: "",
-                editdeveloperinfo: {},
+                editdeveloperinfo: {auth_type: 0},
                 isedit: false,
                 placeholder: "",
                 codeactiveVisible: false,
@@ -410,6 +460,8 @@
                 percentage: 0,
                 authcode: "",
                 authemail: "",
+                apple_auth_list: [],
+                apple_auth_type: 0
             }
         },
         methods: {
@@ -479,7 +531,7 @@
             },
             canceledit() {
                 this.dialogaddDeveloperVisible = false;
-                this.editdeveloperinfo = {};
+                this.editdeveloperinfo = {auth_type: 0};
                 this.isedit = false;
                 this.placeholder = ""
             },
@@ -488,17 +540,29 @@
                 this.title = '编辑开发者账户';
                 this.dialogaddDeveloperVisible = true;
                 this.isedit = true;
-                this.placeholder = "为空表示不修改密码"
+                this.placeholder = "为空表示不修改该信息"
             },
             updateorcreate() {
                 if (this.isedit) {
                     this.iosdeveloperFun({"methods": "PUT", "data": this.editdeveloperinfo})
                 } else {
-                    if (this.editdeveloperinfo.email && this.editdeveloperinfo.password && this.editdeveloperinfo.usable_number) {
-                        this.iosdeveloperFun({"methods": "POST", "data": this.editdeveloperinfo});
+
+                    if (this.editdeveloperinfo.auth_type === 1) {
+                        if (this.editdeveloperinfo.email && this.editdeveloperinfo.password && this.editdeveloperinfo.usable_number) {
+                            this.iosdeveloperFun({"methods": "POST", "data": this.editdeveloperinfo});
+                        } else {
+                            this.$message.warning("输入格式有误")
+                        }
+                    } else if (this.editdeveloperinfo.auth_type === 0) {
+                        if (this.editdeveloperinfo.issuer_id && this.editdeveloperinfo.private_key_id && this.editdeveloperinfo.usable_number && this.editdeveloperinfo.p8key) {
+                            this.iosdeveloperFun({"methods": "POST", "data": this.editdeveloperinfo});
+                        } else {
+                            this.$message.warning("输入格式有误")
+                        }
                     } else {
-                        this.$message.warning("输入格式有误")
+                        this.$message.error("输入格式有误")
                     }
+
                 }
             },
             handleDeleteDeveloper(developer_info) {
@@ -527,6 +591,7 @@
                 } else if (tabname === "devicesudid") {
                     this.iosdevicesudidFun('GET', data)
                 } else if (tabname === "adddeveloper") {
+                    this.iosdeveloperFun({"methods": "GET", "data": data})
                     // this.title='新增私有开发者账户';
                     // this.dialogaddDeveloperVisible=true;
                 } else if (tabname === "iosdeveloper") {
@@ -577,6 +642,7 @@
                     if (data.code === 1000) {
                         this.app_developer_lists = data.data;
                         this.pagination.total = data.count;
+                        this.apple_auth_list = data.apple_auth_list;
                         loading.close();
                         if (data.use_num) {
                             this.developer_used_info = data.use_num;
@@ -589,12 +655,12 @@
                             this.canceledit();
                             this.$message.success("操作成功");
                             this.activeName = "iosdeveloper";
-                            this.editdeveloperinfo = {};
+                            this.editdeveloperinfo = {auth_type: 0};
                         }
-                        if (!this.edit && this.editdeveloperinfo.email) {
+                        if (!this.edit && (this.editdeveloperinfo.email || this.editdeveloperinfo.issuer_id)) {
                             this.$message.success("添加成功");
                             this.activeName = "iosdeveloper";
-                            this.editdeveloperinfo = {};
+                            this.editdeveloperinfo = {auth_type: 0};
                         }
                     } else if (data.code === 1008) {
                         this.$message.error(data.msg);

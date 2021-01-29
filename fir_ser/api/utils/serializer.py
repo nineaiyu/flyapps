@@ -232,7 +232,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppIOSDeveloperInfo
         # depth = 1
-        exclude = ["password", "id", "user_id"]
+        exclude = ["password", "id", "user_id", "p8key"]
 
     developer_used_number = serializers.SerializerMethodField()
     developer_used_other_number = serializers.SerializerMethodField()

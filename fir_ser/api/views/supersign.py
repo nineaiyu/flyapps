@@ -38,51 +38,46 @@ class DeveloperView(APIView):
         developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
         res.use_num = get_developer_devices(developer_obj)
         if appid:
-            developer_obj = developer_obj.filter(email=appid)
+            developer_obj1 = developer_obj.filter(email=appid)
+            developer_obj2 = developer_obj.filter(issuer_id=appid)
+            developer_obj = developer_obj1 | developer_obj2
 
         page_obj = AppsPageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=developer_obj.order_by("-updated_time"),
                                                          request=request,
                                                          view=self)
-        Developer_serializer = DeveloperSerializer(app_page_serializer, many=True, )
+        developer_serializer = DeveloperSerializer(app_page_serializer, many=True, )
 
-        res.data = Developer_serializer.data
+        res.data = developer_serializer.data
         res.count = developer_obj.count()
+
+        res.apple_auth_list = []
+        apple_auth_org_list = list(AppIOSDeveloperInfo.auth_type_choices)
+        for auth_t in apple_auth_org_list:
+            res.apple_auth_list.append({'id': auth_t[0], 'name': auth_t[1]})
+
         return Response(res.dict)
 
     def put(self, request):
         data = request.data
         email = data.get("email", None)
+        issuer_id = data.get("issuer_id", None)
         if email:
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, email=email).first()
-            if developer_obj:
-                act = data.get("act", None)
-                if act:
-                    res = BaseResponse()
-                    logger.info("user %s iosdeveloper %s act %s" % (request.user, developer_obj, act))
-                    if act == "preactive":
-                        developer_auth_code("del", request.user, developer_obj.email)
-                        status, result = IosUtils.active_developer(developer_obj, request.user)
-                        if status:
-                            if not developer_obj.certid:
-                                status, result = IosUtils.create_developer_cert(developer_obj, request.user)
-                                if status:
-                                    IosUtils.get_device_from_developer(developer_obj, request.user)
-                                else:
-                                    res.code = 1008
-                                    res.msg = result.get("err_info")
-                                    return Response(res.dict)
-                            return self.get(request)
-                        else:
-                            res.code = 1008
-                            res.msg = result.get("return_info")
-                            return Response(res.dict)
-                    elif act == "nowactive":
-                        code = data.get("code", None)
-                        if code:
-                            developer_auth_code("set", request.user, developer_obj.email, code)
+        elif issuer_id:
+            developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=issuer_id).first()
+        else:
+            return self.get(request)
 
-                    elif act == "ioscert":
+        if developer_obj:
+            act = data.get("act", None)
+            if act:
+                res = BaseResponse()
+                logger.info("user %s iosdeveloper %s act %s" % (request.user, developer_obj, act))
+                if act == "preactive":
+                    developer_auth_code("del", request.user, developer_obj.email)
+                    status, result = IosUtils.active_developer(developer_obj, request.user)
+                    if status:
                         if not developer_obj.certid:
                             status, result = IosUtils.create_developer_cert(developer_obj, request.user)
                             if status:
@@ -91,57 +86,92 @@ class DeveloperView(APIView):
                                 res.code = 1008
                                 res.msg = result.get("err_info")
                                 return Response(res.dict)
-                    elif act == "syncdevice":
-                        status, result = IosUtils.get_device_from_developer(developer_obj, request.user)
+                        return self.get(request)
+                    else:
+                        res.code = 1008
+                        res.msg = result.get("return_info")
+                        return Response(res.dict)
+                elif act == "nowactive":
+                    code = data.get("code", None)
+                    if code:
+                        developer_auth_code("set", request.user, developer_obj.email, code)
+
+                elif act == "ioscert":
+                    if not developer_obj.certid:
+                        status, result = IosUtils.create_developer_cert(developer_obj, request.user)
                         if status:
                             IosUtils.get_device_from_developer(developer_obj, request.user)
                         else:
                             res.code = 1008
                             res.msg = result.get("err_info")
                             return Response(res.dict)
-                    elif act == "checkauth":
-                        developer_auth_code("del", request.user, developer_obj.email)
-                        status, result = IosUtils.active_developer(developer_obj, request.user)
-                        if status:
-                            return self.get(request)
-                        else:
-                            res.code = 1008
-                            res.msg = result.get("return_info")
-                            return Response(res.dict)
-                else:
-                    logger.info("user %s iosdeveloper %s update input data %s" % (request.user, developer_obj, data))
-                    logger.info("user %s iosdeveloper %s update old data %s" % (
+                elif act == "syncdevice":
+                    status, result = IosUtils.get_device_from_developer(developer_obj, request.user)
+                    if status:
+                        IosUtils.get_device_from_developer(developer_obj, request.user)
+                    else:
+                        res.code = 1008
+                        res.msg = result.get("err_info")
+                        return Response(res.dict)
+                elif act == "checkauth":
+                    developer_auth_code("del", request.user, developer_obj.email)
+                    status, result = IosUtils.active_developer(developer_obj, request.user)
+                    if status:
+                        return self.get(request)
+                    else:
+                        res.code = 1008
+                        res.msg = result.get("return_info")
+                        return Response(res.dict)
+            else:
+                logger.info("user %s iosdeveloper %s update input data %s" % (request.user, developer_obj, data))
+                logger.info("user %s iosdeveloper %s update old data %s" % (
+                    request.user, developer_obj, developer_obj.__dict__))
+                try:
+                    usable_number = int(data.get("usable_number", developer_obj.usable_number))
+                    if 0 <= usable_number <= 100:
+                        developer_obj.usable_number = usable_number
+                except Exception as e:
+                    logger.error("developer %s usable_number %s get failed Exception:%s" % (
+                        developer_obj, data.get("usable_number", developer_obj.usable_number), e))
+                developer_obj.description = data.get("description", developer_obj.description)
+                password = data.get("password", developer_obj.password)
+                if password != "" and password != developer_obj.password:
+                    developer_obj.password = password
+                    developer_obj.is_actived = False
+                developer_obj.private_key_id = data.get("private_key_id", developer_obj.private_key_id)
+                p8key = data.get("p8key", developer_obj.p8key)
+                if p8key != "" and p8key != developer_obj.p8key:
+                    developer_obj.p8key = p8key
+                    developer_obj.is_actived = False
+                try:
+                    developer_obj.save()
+                    logger.info("user %s iosdeveloper %s update now data %s" % (
                         request.user, developer_obj, developer_obj.__dict__))
-                    try:
-                        usable_number = int(data.get("usable_number", developer_obj.usable_number))
-                        if usable_number >= 0 and usable_number <= 100:
-                            developer_obj.usable_number = usable_number
-                    except Exception as e:
-                        logger.error("developer %s usable_number %s get failed Exception:%s" % (
-                            developer_obj, data.get("usable_number", developer_obj.usable_number), e))
-                    developer_obj.description = data.get("description", developer_obj.description)
-                    password = data.get("password", developer_obj.password)
-                    if password != "" and password != developer_obj.password:
-                        developer_obj.password = password
-                        developer_obj.is_actived = False
-                    try:
-                        developer_obj.save()
-                        logger.info("user %s iosdeveloper %s update now data %s" % (
-                            request.user, developer_obj, developer_obj.__dict__))
-                    except Exception as e:
-                        logger.error("user %s iosdeveloper %s update error data %s Exception %s" % (
-                            request.user, developer_obj, data, e))
+                except Exception as e:
+                    logger.error("user %s iosdeveloper %s update error data %s Exception %s" % (
+                        request.user, developer_obj, data, e))
 
         return self.get(request)
 
     def post(self, request):
         data = request.data
-        datainfo = {
-            "usable_number": data.get("usable_number", ""),
-            "description": data.get("description", ""),
-            "password": data.get("password", ""),
-            "email": data.get("email", ""),
-        }
+        if data.get("auth_type") == 0:
+            datainfo = {
+                "usable_number": data.get("usable_number", ""),
+                "description": data.get("description", ""),
+                "issuer_id": data.get("issuer_id", ""),
+                "private_key_id": data.get("private_key_id", ""),
+                "p8key": data.get("p8key", ""),
+                "auth_type": 0
+            }
+        else:
+            datainfo = {
+                "usable_number": data.get("usable_number", ""),
+                "description": data.get("description", ""),
+                "password": data.get("password", ""),
+                "email": data.get("email", ""),
+                "auth_type": 1
+            }
         try:
             logger.error("user %s  add new developer %s  data %s" % (
                 request.user, data.get("email", ""), datainfo))

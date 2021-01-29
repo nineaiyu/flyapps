@@ -224,11 +224,25 @@ class AppIOSDeveloperInfo(models.Model):
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     description = models.TextField('备注', blank=True, null=True, default='')
+    issuer_id = models.CharField(max_length=64, blank=True, null=True, verbose_name="标识创建认证令牌的发放者")
+    private_key_id = models.CharField(max_length=64, blank=True, null=True, verbose_name="密钥 ID")
+    p8key = models.TextField(max_length=512, blank=True, null=True, verbose_name="p8key")
+    auth_type_choices = ((0, 'p8key认证'), (1, '用户名密码认证'))
+    auth_type = models.SmallIntegerField(choices=auth_type_choices, default=0, verbose_name="认证类型")
 
     class Meta:
         verbose_name = '苹果开发者账户'
         verbose_name_plural = "苹果开发者账户"
-        unique_together = ('user_id', 'email',)
+        unique_together = (('user_id', 'email',), ('user_id', 'issuer_id'))
+
+    def save(self, *args, **kwargs):
+        if self.auth_type == 0:
+            if self.issuer_id and self.private_key_id and self.p8key:
+                return super(AppIOSDeveloperInfo, self).save(*args, **kwargs)
+        if self.auth_type == 1:
+            if self.email and self.password:
+                return super(AppIOSDeveloperInfo, self).save(*args, **kwargs)
+        raise
 
     def __str__(self):
         return "%s-%s" % (self.user_id, self.email)
