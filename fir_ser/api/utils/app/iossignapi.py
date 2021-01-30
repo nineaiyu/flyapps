@@ -9,8 +9,9 @@ from fir_ser.settings import SUPER_SIGN_ROOT
 import os
 from api.utils.app.randomstrings import make_app_uuid
 import logging
-
+from api.utils.apple.appleapiv3 import AppStoreConnectApi
 logger = logging.getLogger(__file__)
+import base64
 
 
 def exec_shell(cmd, remote=False, timeout=None):
@@ -70,7 +71,7 @@ class AppDeveloperApi(object):
         self.cmd = self.cmd + " cert add  '%s'" % (self.file_format_path_name(user_obj))
         return exec_shell(self.cmd)
 
-    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName):
+    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName,auth=None):
         self.cmd = self.cmd + " profile add '%s' '%s' '%s' '%s' '%s' '%s'" % (
             bundleId, app_id, device_udid, device_name, self.certid, provisionName)
         return exec_shell(self.cmd)
@@ -120,4 +121,81 @@ class ResignApp(object):
 
     def sign(self, new_profile, org_ipa, new_ipa):
         self.cmd = self.cmd + " -p '%s' -o '%s'  '%s'" % (new_profile, new_ipa, org_ipa)
+        result = exec_shell(self.cmd)
+
+
+class AppDeveloperApiV2(object):
+    def __init__(self, issuer_id, private_key_id, p8key, certid):
+        self.issuer_id = issuer_id
+        self.private_key_id = private_key_id
+        self.p8key = p8key
+        self.certid = certid
+
+    def active(self,user_obj):
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            certificates = apple_obj.get_all_certificates()
+            logger.info("ios developer active result:%s" %certificates)
+            if len(certificates) > 0:
+                return True, result
+        except Exception as e:
+            logger.error("ios developer active Failed Exception:%s" % e)
+            result['return_info'] = "%s" %e
+        return False, result
+
+    def file_format_path_name(self, user_obj):
+        cert_dir_name = make_app_uuid(user_obj, self.issuer_id)
+        cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name)
+        if not os.path.isdir(cert_dir_path):
+            os.makedirs(cert_dir_path)
+        return os.path.join(cert_dir_path, cert_dir_name)
+
+    def create_cert(self, user_obj):
+        pass
+
+    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName,auth):
+        result={}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id,bundleId + app_id)
+            apple_obj.register_device(device_name,device_udid)
+            profile_obj = apple_obj.create_profile(bundle_obj.id,auth.get('certid'),provisionName.split("/")[-1])
+            if profile_obj:
+                n=base64.b64decode(profile_obj.profileContent)
+                if not os.path.isdir(os.path.basename(provisionName)):
+                    os.makedirs(os.path.basename(provisionName))
+                with open(provisionName,'wb') as f:
+                    f.write(n)
+                return True, profile_obj.profileContent
+        except Exception as e:
+            logger.error("ios developer active Failed Exception:%s" % e)
+            result['return_info'] = "%s" % e
+            return False, result
+
+    def del_profile(self, bundleId, app_id):
+        self.cmd = self.cmd + " profile del '%s' '%s'" % (bundleId, app_id)
+        result = exec_shell(self.cmd)
+
+    def set_device_status(self, status, device_udid):
+        if status == "enable":
+            self.cmd = self.cmd + " device enable '%s'" % (device_udid)
+        else:
+            self.cmd = self.cmd + " device disable '%s'" % (device_udid)
+        result = exec_shell(self.cmd)
+
+    def add_device(self, device_udid, device_name):
+        self.cmd = self.cmd + " device add '%s' '%s'" % (device_udid, device_name)
+        result = exec_shell(self.cmd)
+
+    def get_device(self, user_obj):
+        self.cmd = self.cmd + " device get '%s' " % (self.file_format_path_name(user_obj))
+        return exec_shell(self.cmd)
+
+    def add_app(self, bundleId, app_id):
+        self.cmd = self.cmd + " app add '%s' '%s'" % (bundleId, app_id)
+        result = exec_shell(self.cmd)
+
+    def del_app(self, bundleId, app_id):
+        self.cmd = self.cmd + " app del '%s' '%s'" % (bundleId, app_id)
         result = exec_shell(self.cmd)

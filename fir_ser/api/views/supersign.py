@@ -75,11 +75,18 @@ class DeveloperView(APIView):
                 res = BaseResponse()
                 logger.info("user %s iosdeveloper %s act %s" % (request.user, developer_obj, act))
                 if act == "preactive":
-                    developer_auth_code("del", request.user, developer_obj.email)
+                    if developer_obj.email:
+                        developer_auth_code("del", request.user, developer_obj.email)
+                    elif developer_obj.issuer_id:
+                        developer_auth_code("del", request.user, developer_obj.issuer_id)
+
                     status, result = IosUtils.active_developer(developer_obj, request.user)
                     if status:
                         if not developer_obj.certid:
-                            status, result = IosUtils.create_developer_cert(developer_obj, request.user)
+                            if developer_obj.email:
+                                status, result = IosUtils.create_developer_cert(developer_obj, request.user)
+                            elif developer_obj.issuer_id:
+                                return Response(res.dict)
                             if status:
                                 IosUtils.get_device_from_developer(developer_obj, request.user)
                             else:
@@ -89,7 +96,7 @@ class DeveloperView(APIView):
                         return self.get(request)
                     else:
                         res.code = 1008
-                        res.msg = result.get("return_info")
+                        res.msg = result.get("return_info","未知错误")
                         return Response(res.dict)
                 elif act == "nowactive":
                     code = data.get("code", None)
@@ -138,8 +145,11 @@ class DeveloperView(APIView):
                 if password != "" and password != developer_obj.password:
                     developer_obj.password = password
                     developer_obj.is_actived = False
-                developer_obj.private_key_id = data.get("private_key_id", developer_obj.private_key_id)
+                private_key_id = data.get("private_key_id", developer_obj.private_key_id)
                 p8key = data.get("p8key", developer_obj.p8key)
+                if private_key_id != "" and private_key_id != developer_obj.private_key_id:
+                    developer_obj.private_key_id = private_key_id
+                    developer_obj.is_actived = False
                 if p8key != "" and p8key != developer_obj.p8key:
                     developer_obj.p8key = p8key
                     developer_obj.is_actived = False

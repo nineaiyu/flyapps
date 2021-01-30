@@ -523,9 +523,14 @@
                 }
             },
             activedeveloperFun(developer, act) {
-                this.iosdeveloperFun({"methods": "PUT", "data": {"email": developer.email, "act": act}});
-                this.codeactiveVisible = true;
-                this.authemail = developer.email;
+                if(developer.email){
+                    this.iosdeveloperFun({"methods": "PUT", "data": {"email": developer.email, "act": act}});
+                    this.codeactiveVisible = true;
+                    this.authemail = developer.email;
+                }else if(developer.issuer_id){
+                    this.iosdeveloperFun({"methods": "PUT", "data": {"issuer_id": developer.issuer_id, "act": act}});
+                    this.codeactiveVisible = true;
+                }
 
                 // this.inputcode(developer)
             },

@@ -6,7 +6,7 @@
 
 import uuid, xmltodict, os, re, logging, time
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILECONFIG_SIGN_SSL
-from api.utils.app.iossignapi import AppDeveloperApi, ResignApp
+from api.utils.app.iossignapi import AppDeveloperApi, ResignApp, AppDeveloperApiV2
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
     UDIDsyncDeveloper
 from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
@@ -170,11 +170,22 @@ class IosUtils(object):
 
     def get_developer_auth(self):
         developer_obj = self.get_developer_user_by_app_udid()
-        auth = {
-            "username": developer_obj.email,
-            "password": developer_obj.password,
-            "certid": developer_obj.certid
-        }
+        if developer_obj.email:
+            auth = {
+                "username": developer_obj.email,
+                "password": developer_obj.password,
+                "certid": developer_obj.certid
+            }
+
+        elif developer_obj.issuer_id:
+            auth = {
+                "issuer_id": developer_obj.issuer_id,
+                "private_key_id": developer_obj.private_key_id,
+                "p8key": developer_obj.p8key,
+                "certid": developer_obj.certid
+            }
+        else:
+            auth={}
         self.developer_obj = developer_obj
         self.auth = auth
 
@@ -203,15 +214,22 @@ class IosUtils(object):
         return developer_obj
 
     def download_profile(self):
-        app_api_obj = AppDeveloperApi(**self.auth)
+        if self.auth.get("username",None):
+            app_api_obj = AppDeveloperApi(**self.auth)
+        else:
+            app_api_obj = AppDeveloperApiV2(**self.auth)
+
         bundleId = self.app_obj.bundle_id
         app_id = self.app_obj.app_id
         device_udid = self.udid_info.get('udid')
         device_name = self.udid_info.get('product')
-        return app_api_obj.get_profile(bundleId, app_id, device_udid, device_name, self.get_profile_full_path())
+        return app_api_obj.get_profile(bundleId, app_id, device_udid, device_name, self.get_profile_full_path(),self.auth)
 
     def get_profile_full_path(self):
-        cert_dir_name = make_app_uuid(self.user_obj, self.auth.get("username"))
+        mpkey = self.auth.get("username")
+        if self.auth.get("issuer_id"):
+            mpkey = self.auth.get("issuer_id")
+        cert_dir_name = make_app_uuid(self.user_obj, mpkey)
         cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name, "profile")
         if not os.path.isdir(cert_dir_path):
             os.makedirs(cert_dir_path)
@@ -430,12 +448,24 @@ class IosUtils(object):
         :param code:
         :return:
         '''
-        auth = {
-            "username": developer_obj.email,
-            "password": developer_obj.password,
-            "certid": developer_obj.certid
-        }
-        app_api_obj = AppDeveloperApi(**auth)
+        if developer_obj.email:
+            auth = {
+                "username": developer_obj.email,
+                "password": developer_obj.password,
+                "certid": developer_obj.certid
+            }
+            app_api_obj = AppDeveloperApi(**auth)
+
+        elif developer_obj.issuer_id:
+            auth = {
+                "issuer_id": developer_obj.issuer_id,
+                "private_key_id": developer_obj.private_key_id,
+                "p8key": developer_obj.p8key,
+                "certid": developer_obj.certid
+            }
+            app_api_obj = AppDeveloperApiV2(**auth)
+        else:
+            return False, {}
         status, result = app_api_obj.active(user_obj)
         if status:
             developer_obj.is_actived = True
