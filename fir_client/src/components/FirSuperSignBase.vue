@@ -500,9 +500,13 @@
                 })
             },
             syncdevices() {
+                let data={"email": this.editdeveloperinfo.email, "act": "syncdevice"};
+                if(this.editdeveloperinfo.issuer_id){
+                    data={"issuer_id": this.editdeveloperinfo.issuer_id, "act": "syncdevice"};
+                }
                 this.iosdeveloperFun({
                     "methods": "PUT",
-                    "data": {"email": this.editdeveloperinfo.email, "act": "syncdevice"}
+                    "data": data
                 });
             },
             isocertcert() {

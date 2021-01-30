@@ -169,33 +169,64 @@ class AppDeveloperApiV2(object):
                     f.write(n)
                 return True, profile_obj.profileContent
         except Exception as e:
-            logger.error("ios developer active Failed Exception:%s" % e)
+            logger.error("ios developer make profile Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
             return False, result
 
     def del_profile(self, bundleId, app_id):
-        self.cmd = self.cmd + " profile del '%s' '%s'" % (bundleId, app_id)
-        result = exec_shell(self.cmd)
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            profile_obj = apple_obj.list_profile_by_profile_name(app_id)
+            if profile_obj:
+                if apple_obj.delete_profile_by_id(profile_obj.id):
+                    return True, profile_obj
+        except Exception as e:
+            logger.error("ios developer delete profile Failed Exception:%s" % e)
+            result['return_info'] = "%s" % e
+            return False, result
 
     def set_device_status(self, status, device_udid):
-        if status == "enable":
-            self.cmd = self.cmd + " device enable '%s'" % (device_udid)
-        else:
-            self.cmd = self.cmd + " device disable '%s'" % (device_udid)
-        result = exec_shell(self.cmd)
+        apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+        result = {}
+        try:
+            if status == "enable":
+                device_obj = apple_obj.enabled_device(device_udid)
+            else:
+                device_obj = apple_obj.disabled_device(device_udid)
+            logger.info("device_obj %s result:%s" %(device_obj,status))
+            if device_obj and device_obj.id:
+                return True, result
+        except Exception as e:
+            logger.error("ios developer set devices status Failed Exception:%s" % e)
+            result['return_info'] = "%s" %e
+        return False, result
 
-    def add_device(self, device_udid, device_name):
-        self.cmd = self.cmd + " device add '%s' '%s'" % (device_udid, device_name)
-        result = exec_shell(self.cmd)
 
     def get_device(self, user_obj):
-        self.cmd = self.cmd + " device get '%s' " % (self.file_format_path_name(user_obj))
-        return exec_shell(self.cmd)
-
-    def add_app(self, bundleId, app_id):
-        self.cmd = self.cmd + " app add '%s' '%s'" % (bundleId, app_id)
-        result = exec_shell(self.cmd)
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            devices_obj_list = apple_obj.get_all_devices()
+            if devices_obj_list:
+                return True,devices_obj_list
+        except Exception as e:
+            logger.error("ios developer delete profile Failed Exception:%s" % e)
+            result['return_info'] = "%s" % e
+            return False, result
 
     def del_app(self, bundleId, app_id):
-        self.cmd = self.cmd + " app del '%s' '%s'" % (bundleId, app_id)
-        result = exec_shell(self.cmd)
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            profile_obj = apple_obj.list_profile_by_profile_name(app_id)
+            if profile_obj:
+                if apple_obj.delete_profile_by_id(profile_obj.id):
+                    pass
+            if apple_obj.delete_bundle_by_identifier(bundleId+app_id):
+                return True, profile_obj
+
+        except Exception as e:
+            logger.error("ios developer delete profile Failed Exception:%s" % e)
+            result['return_info'] = "%s" % e
+            return False, result
