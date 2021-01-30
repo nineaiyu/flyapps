@@ -3,6 +3,7 @@
 # project: 4月
 # author: liuyu
 # date: 2020/4/24
+import OpenSSL
 
 from api.utils.app.shellcmds import shell_command, use_user_pass, pshell_command
 from fir_ser.settings import SUPER_SIGN_ROOT
@@ -12,7 +13,8 @@ import logging
 from api.utils.apple.appleapiv3 import AppStoreConnectApi
 logger = logging.getLogger(__file__)
 import base64
-
+from OpenSSL.SSL import FILETYPE_PEM
+from OpenSSL.crypto import (dump_certificate_request, dump_privatekey, PKey, TYPE_RSA, X509Req,dump_certificate)
 
 def exec_shell(cmd, remote=False, timeout=None):
     if remote:
@@ -151,8 +153,54 @@ class AppDeveloperApiV2(object):
             os.makedirs(cert_dir_path)
         return os.path.join(cert_dir_path, cert_dir_name)
 
+    def make_csr_content(self,csr_file_path,private_key_path):
+            # create public/private key
+            key = PKey()
+            key.generate_key(TYPE_RSA, 2048)
+            # Generate CSR
+            req = X509Req()
+            req.get_subject().CN = 'BJ'
+            req.get_subject().O = 'FLY APP Inc'
+            req.get_subject().OU = 'IT'
+            req.get_subject().L = 'BJ'
+            req.get_subject().ST = 'BJ'
+            req.get_subject().C = 'CN'
+            req.get_subject().emailAddress = 'fly@fly.com'
+            req.set_pubkey(key)
+            req.sign(key, 'sha256')
+            csr_content = dump_certificate_request(FILETYPE_PEM, req)
+            with open(csr_file_path, 'wb+') as f:
+                f.write(csr_content)
+            with open(private_key_path, 'wb+') as f:
+                f.write(dump_privatekey(FILETYPE_PEM, key))
+
+            return csr_content
+
+    def make_pem(self,cer_content,pem_path):
+        cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1,cer_content)
+        with open(pem_path, 'wb+') as f:
+            f.write(dump_certificate(FILETYPE_PEM,cert))
+
     def create_cert(self, user_obj):
-        pass
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            csr_path = self.file_format_path_name(user_obj)
+            if not os.path.isdir(os.path.dirname(csr_path)):
+                os.makedirs(os.path.dirname(csr_path))
+            csr_content = self.make_csr_content(csr_path+".csr",csr_path+".key")
+            certificates = apple_obj.create_certificate(csr_content.decode("utf-8"))
+            if certificates:
+                n=base64.b64decode(certificates.certificateContent)
+                with open(csr_path+".cer",'wb') as f:
+                    f.write(n)
+                self.make_pem(n,csr_path+".pem")
+                logger.info("ios developer create  result:%s" % certificates.certificateContent)
+                return True, certificates
+        except Exception as e:
+            logger.error("ios developer active Failed Exception:%s" % e)
+            result['return_info'] = "%s" %e
+        return False, result
 
     def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName,auth):
         result={}

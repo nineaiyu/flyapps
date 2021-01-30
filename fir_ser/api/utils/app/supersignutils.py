@@ -463,18 +463,24 @@ class IosUtils(object):
         app_api_obj = get_api_obj(auth)
         status, result = app_api_obj.create_cert(user_obj)
         if status:
-            file_format_path_name = file_format_path(user_obj, auth)
-            cert_info = None
-            try:
-                with open(file_format_path_name + '.info', "r") as f:
-                    cert_info = f.read()
-            except Exception as e:
-                logger.error("create_developer_cert developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
-                    developer_obj, user_obj, e))
-            if cert_info:
-                cert_id = re.findall(r'.*\n\tid=(.*),.*', cert_info)[0].replace('"', '')
-                AppIOSDeveloperInfo.objects.filter(user_id=user_obj, email=auth.get("username")).update(is_actived=True,
+            if auth.get("issuer_id"):
+                cert_id = result.id
+                AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(is_actived=True,
                                                                                                         certid=cert_id)
+            else:
+
+                file_format_path_name = file_format_path(user_obj, auth)
+                cert_info = None
+                try:
+                    with open(file_format_path_name + '.info', "r") as f:
+                        cert_info = f.read()
+                except Exception as e:
+                    logger.error("create_developer_cert developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
+                        developer_obj, user_obj, e))
+                if cert_info:
+                    cert_id = re.findall(r'.*\n\tid=(.*),.*', cert_info)[0].replace('"', '')
+                    AppIOSDeveloperInfo.objects.filter(user_id=user_obj, email=auth.get("username")).update(is_actived=True,
+                                                                                                            certid=cert_id)
         return status, result
 
     @staticmethod

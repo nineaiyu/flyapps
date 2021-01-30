@@ -510,9 +510,13 @@
                 });
             },
             isocertcert() {
+                let data={"email": this.editdeveloperinfo.email, "act": "ioscert"};
+                if(this.editdeveloperinfo.issuer_id){
+                    data={"issuer_id": this.editdeveloperinfo.issuer_id, "act": "ioscert"};
+                }
                 this.iosdeveloperFun({
                     "methods": "PUT",
-                    "data": {"email": this.editdeveloperinfo.email, "act": "ioscert"}
+                    "data": data
                 });
             },
             inputcode() {
