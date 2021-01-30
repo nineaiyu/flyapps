@@ -219,12 +219,8 @@ class AppDeveloperApiV2(object):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            profile_obj = apple_obj.list_profile_by_profile_name(app_id)
-            if profile_obj:
-                if apple_obj.delete_profile_by_id(profile_obj.id):
-                    pass
-            if apple_obj.delete_bundle_by_identifier(bundleId+app_id):
-                return True, profile_obj
+            if apple_obj.delete_bundle_by_identifier(bundleId + app_id):
+                return True, {}
 
         except Exception as e:
             logger.error("ios developer delete profile Failed Exception:%s" % e)

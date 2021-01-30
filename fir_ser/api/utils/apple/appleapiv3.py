@@ -753,8 +753,8 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
 
     def delete_bundle_by_identifier(self, identifier):
         identifier_obj = self.list_bundle_ids_by_identifier(identifier)
-        if identifier_obj and isinstance(identifier_obj, list):
-            req = self.delete_bundle_id_by_id(identifier_obj[0].id)
+        if isinstance(identifier_obj,BundleIds):
+            req = self.delete_bundle_id_by_id(identifier_obj.id)
             if req.status_code == 204:
                 return True
 
