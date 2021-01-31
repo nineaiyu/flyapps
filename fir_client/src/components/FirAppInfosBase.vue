@@ -53,7 +53,8 @@
                                 <a class="" ref="combo" @click="combo"><i class="el-icon-copy-document"
                                                                           style="transform:rotateX(180deg);"></i>应用合并</a>
                             </el-col>
-                            <el-col :span="3" v-if="appinfos.type===1 && master_release.release_type ===1 ">
+                            <el-col :span="3"
+                                    v-if="(appinfos.type===1 && master_release.release_type ===1) || appinfos.issupersign ">
                                 <a class="" ref="devices" @click="devices"><i class="el-icon-mobile-phone"></i>设备列表</a>
                             </el-col>
 
