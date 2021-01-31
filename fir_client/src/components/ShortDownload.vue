@@ -80,7 +80,7 @@
                                                 <div class="actions type-ios">
                                                     <div><p>正在安装，请按 Home 键在桌面查看</p>
                                                         <p v-if="!this.currentappinfo.issupersign && this.mcurrentappinfo.release_type!==1">
-                                                        <button @click="gomobileaction">
+                                                            <button @click="gomobileaction">
                                                                 <a icon="el-icon-loadings" type="primary"
                                                                    :underline="false">
                                                                     安装完成后,需立即信任

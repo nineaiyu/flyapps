@@ -153,11 +153,13 @@ def get_api_obj(auth):
         app_api_obj = None
     return app_api_obj
 
+
 def get_apple_udid_key(auth):
     mpkey = auth.get("username")
     if auth.get("issuer_id"):
         mpkey = auth.get("issuer_id")
     return mpkey
+
 
 def get_http_server_doamin(request):
     server_domain = SERVER_DOMAIN.get('POST_UDID_DOMAIN', None)
@@ -237,8 +239,9 @@ class IosUtils(object):
         app_id = self.app_obj.app_id
         device_udid = self.udid_info.get('udid')
         device_name = self.udid_info.get('product')
-        return get_api_obj(self.auth).get_profile(bundleId, app_id, device_udid, device_name, self.get_profile_full_path(),
-                                       self.auth)
+        return get_api_obj(self.auth).get_profile(bundleId, app_id, device_udid, device_name,
+                                                  self.get_profile_full_path(),
+                                                  self.auth)
 
     def get_profile_full_path(self):
         cert_dir_name = make_app_uuid(self.user_obj, get_apple_udid_key(self.auth))
@@ -465,8 +468,9 @@ class IosUtils(object):
         if status:
             if auth.get("issuer_id"):
                 cert_id = result.id
-                AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(is_actived=True,
-                                                                                                        certid=cert_id)
+                AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
+                    is_actived=True,
+                    certid=cert_id)
             else:
 
                 file_format_path_name = file_format_path(user_obj, auth)
@@ -475,12 +479,14 @@ class IosUtils(object):
                     with open(file_format_path_name + '.info', "r") as f:
                         cert_info = f.read()
                 except Exception as e:
-                    logger.error("create_developer_cert developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
-                        developer_obj, user_obj, e))
+                    logger.error(
+                        "create_developer_cert developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
+                            developer_obj, user_obj, e))
                 if cert_info:
                     cert_id = re.findall(r'.*\n\tid=(.*),.*', cert_info)[0].replace('"', '')
-                    AppIOSDeveloperInfo.objects.filter(user_id=user_obj, email=auth.get("username")).update(is_actived=True,
-                                                                                                            certid=cert_id)
+                    AppIOSDeveloperInfo.objects.filter(user_id=user_obj, email=auth.get("username")).update(
+                        is_actived=True,
+                        certid=cert_id)
         return status, result
 
     @staticmethod
@@ -518,7 +524,8 @@ class IosUtils(object):
 
                 UDIDsyncDeveloper.objects.filter(developerid=developer_obj, platform=1).delete()
                 for devicestr in devices_info.split(">"):
-                    formatdevice = re.findall(r'.*Device id="(.*)",.*name="(.*)",.*udid="(.*?)",.*model=(.*),.*', devicestr)
+                    formatdevice = re.findall(r'.*Device id="(.*)",.*name="(.*)",.*udid="(.*?)",.*model=(.*),.*',
+                                              devicestr)
                     if formatdevice:
                         device = {
                             "serial": formatdevice[0][0],
@@ -527,7 +534,8 @@ class IosUtils(object):
                             "version": formatdevice[0][3],
                             "platform": 1
                         }
-                        app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj, udid=device.get("udid"))
+                        app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,
+                                                                        udid=device.get("udid"))
                         if app_udid_obj:
                             pass
                         else:

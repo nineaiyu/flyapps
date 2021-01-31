@@ -29,7 +29,7 @@ def file_format_path(user_obj, auth=None, email=None):
     else:
         pkey = auth.get("username")
         if auth.get("issuer_id"):
-            pkey= auth.get("issuer_id")
+            pkey = auth.get("issuer_id")
         cert_dir_name = make_app_uuid(user_obj, pkey)
     cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name)
     if not os.path.isdir(cert_dir_path):

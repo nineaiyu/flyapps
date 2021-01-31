@@ -500,9 +500,9 @@
                 })
             },
             syncdevices() {
-                let data={"email": this.editdeveloperinfo.email, "act": "syncdevice"};
-                if(this.editdeveloperinfo.issuer_id){
-                    data={"issuer_id": this.editdeveloperinfo.issuer_id, "act": "syncdevice"};
+                let data = {"email": this.editdeveloperinfo.email, "act": "syncdevice"};
+                if (this.editdeveloperinfo.issuer_id) {
+                    data = {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "syncdevice"};
                 }
                 this.iosdeveloperFun({
                     "methods": "PUT",
@@ -510,9 +510,9 @@
                 });
             },
             isocertcert() {
-                let data={"email": this.editdeveloperinfo.email, "act": "ioscert"};
-                if(this.editdeveloperinfo.issuer_id){
-                    data={"issuer_id": this.editdeveloperinfo.issuer_id, "act": "ioscert"};
+                let data = {"email": this.editdeveloperinfo.email, "act": "ioscert"};
+                if (this.editdeveloperinfo.issuer_id) {
+                    data = {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "ioscert"};
                 }
                 this.iosdeveloperFun({
                     "methods": "PUT",
@@ -531,11 +531,11 @@
                 }
             },
             activedeveloperFun(developer, act) {
-                if(developer.email){
+                if (developer.email) {
                     this.iosdeveloperFun({"methods": "PUT", "data": {"email": developer.email, "act": act}});
                     this.codeactiveVisible = true;
                     this.authemail = developer.email;
-                }else if(developer.issuer_id){
+                } else if (developer.issuer_id) {
                     this.iosdeveloperFun({"methods": "PUT", "data": {"issuer_id": developer.issuer_id, "act": act}});
                     this.codeactiveVisible = true;
                 }
@@ -586,9 +586,9 @@
                     cancelButtonText: '取消',
                     type: 'warning'
                 }).then(() => {
-                    let data={"email": developer_info.email};
-                    if(developer_info.issuer_id){
-                        data={"issuer_id": developer_info.issuer_id};
+                    let data = {"email": developer_info.email};
+                    if (developer_info.issuer_id) {
+                        data = {"issuer_id": developer_info.issuer_id};
                     }
                     this.iosdeveloperFun({"methods": "DELETE", "data": data});
                 }).catch(() => {

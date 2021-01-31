@@ -11,10 +11,12 @@ import os
 from api.utils.app.randomstrings import make_app_uuid
 import logging
 from api.utils.apple.appleapiv3 import AppStoreConnectApi
+
 logger = logging.getLogger(__file__)
 import base64
 from OpenSSL.SSL import FILETYPE_PEM
-from OpenSSL.crypto import (dump_certificate_request, dump_privatekey, PKey, TYPE_RSA, X509Req,dump_certificate)
+from OpenSSL.crypto import (dump_certificate_request, dump_privatekey, PKey, TYPE_RSA, X509Req, dump_certificate)
+
 
 def exec_shell(cmd, remote=False, timeout=None):
     if remote:
@@ -73,7 +75,7 @@ class AppDeveloperApi(object):
         self.cmd = self.cmd + " cert add  '%s'" % (self.file_format_path_name(user_obj))
         return exec_shell(self.cmd)
 
-    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName,auth=None):
+    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName, auth=None):
         self.cmd = self.cmd + " profile add '%s' '%s' '%s' '%s' '%s' '%s'" % (
             bundleId, app_id, device_udid, device_name, self.certid, provisionName)
         return exec_shell(self.cmd)
@@ -133,17 +135,17 @@ class AppDeveloperApiV2(object):
         self.p8key = p8key
         self.certid = certid
 
-    def active(self,user_obj):
+    def active(self, user_obj):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             certificates = apple_obj.get_all_certificates()
-            logger.info("ios developer active result:%s" %certificates)
+            logger.info("ios developer active result:%s" % certificates)
             if len(certificates) > 0:
                 return True, result
         except Exception as e:
             logger.error("ios developer active Failed Exception:%s" % e)
-            result['return_info'] = "%s" %e
+            result['return_info'] = "%s" % e
         return False, result
 
     def file_format_path_name(self, user_obj):
@@ -153,33 +155,33 @@ class AppDeveloperApiV2(object):
             os.makedirs(cert_dir_path)
         return os.path.join(cert_dir_path, cert_dir_name)
 
-    def make_csr_content(self,csr_file_path,private_key_path):
-            # create public/private key
-            key = PKey()
-            key.generate_key(TYPE_RSA, 2048)
-            # Generate CSR
-            req = X509Req()
-            req.get_subject().CN = 'FLY APP'
-            req.get_subject().O = 'FLY APP Inc'
-            req.get_subject().OU = 'IT'
-            req.get_subject().L = 'BJ'
-            req.get_subject().ST = 'BJ'
-            req.get_subject().C = 'CN'
-            req.get_subject().emailAddress = 'fly@fly.com'
-            req.set_pubkey(key)
-            req.sign(key, 'sha256')
-            csr_content = dump_certificate_request(FILETYPE_PEM, req)
-            with open(csr_file_path, 'wb+') as f:
-                f.write(csr_content)
-            with open(private_key_path, 'wb+') as f:
-                f.write(dump_privatekey(FILETYPE_PEM, key))
+    def make_csr_content(self, csr_file_path, private_key_path):
+        # create public/private key
+        key = PKey()
+        key.generate_key(TYPE_RSA, 2048)
+        # Generate CSR
+        req = X509Req()
+        req.get_subject().CN = 'FLY APP'
+        req.get_subject().O = 'FLY APP Inc'
+        req.get_subject().OU = 'IT'
+        req.get_subject().L = 'BJ'
+        req.get_subject().ST = 'BJ'
+        req.get_subject().C = 'CN'
+        req.get_subject().emailAddress = 'fly@fly.com'
+        req.set_pubkey(key)
+        req.sign(key, 'sha256')
+        csr_content = dump_certificate_request(FILETYPE_PEM, req)
+        with open(csr_file_path, 'wb+') as f:
+            f.write(csr_content)
+        with open(private_key_path, 'wb+') as f:
+            f.write(dump_privatekey(FILETYPE_PEM, key))
 
-            return csr_content
+        return csr_content
 
-    def make_pem(self,cer_content,pem_path):
-        cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1,cer_content)
+    def make_pem(self, cer_content, pem_path):
+        cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, cer_content)
         with open(pem_path, 'wb+') as f:
-            f.write(dump_certificate(FILETYPE_PEM,cert))
+            f.write(dump_certificate(FILETYPE_PEM, cert))
 
     def create_cert(self, user_obj):
         result = {}
@@ -188,32 +190,32 @@ class AppDeveloperApiV2(object):
             csr_path = self.file_format_path_name(user_obj)
             if not os.path.isdir(os.path.dirname(csr_path)):
                 os.makedirs(os.path.dirname(csr_path))
-            csr_content = self.make_csr_content(csr_path+".csr",csr_path+".key")
+            csr_content = self.make_csr_content(csr_path + ".csr", csr_path + ".key")
             certificates = apple_obj.create_certificate(csr_content.decode("utf-8"))
             if certificates:
-                n=base64.b64decode(certificates.certificateContent)
-                with open(csr_path+".cer",'wb') as f:
+                n = base64.b64decode(certificates.certificateContent)
+                with open(csr_path + ".cer", 'wb') as f:
                     f.write(n)
-                self.make_pem(n,csr_path+".pem")
+                self.make_pem(n, csr_path + ".pem")
                 logger.info("ios developer create  result:%s" % certificates.certificateContent)
                 return True, certificates
         except Exception as e:
             logger.error("ios developer active Failed Exception:%s" % e)
-            result['return_info'] = "%s" %e
+            result['return_info'] = "%s" % e
         return False, result
 
-    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName,auth):
-        result={}
+    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName, auth):
+        result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id,bundleId + app_id)
-            apple_obj.register_device(device_name,device_udid)
-            profile_obj = apple_obj.create_profile(bundle_obj.id,auth.get('certid'),provisionName.split("/")[-1])
+            bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id)
+            apple_obj.register_device(device_name, device_udid)
+            profile_obj = apple_obj.create_profile(bundle_obj.id, auth.get('certid'), provisionName.split("/")[-1])
             if profile_obj:
-                n=base64.b64decode(profile_obj.profileContent)
+                n = base64.b64decode(profile_obj.profileContent)
                 if not os.path.isdir(os.path.basename(provisionName)):
                     os.makedirs(os.path.basename(provisionName))
-                with open(provisionName,'wb') as f:
+                with open(provisionName, 'wb') as f:
                     f.write(n)
                 return True, profile_obj.profileContent
         except Exception as e:
@@ -242,14 +244,13 @@ class AppDeveloperApiV2(object):
                 device_obj = apple_obj.enabled_device(device_udid)
             else:
                 device_obj = apple_obj.disabled_device(device_udid)
-            logger.info("device_obj %s result:%s" %(device_obj,status))
+            logger.info("device_obj %s result:%s" % (device_obj, status))
             if device_obj and device_obj.id:
                 return True, result
         except Exception as e:
             logger.error("ios developer set devices status Failed Exception:%s" % e)
-            result['return_info'] = "%s" %e
+            result['return_info'] = "%s" % e
         return False, result
-
 
     def get_device(self, user_obj):
         result = {}
@@ -257,7 +258,7 @@ class AppDeveloperApiV2(object):
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             devices_obj_list = apple_obj.get_all_devices()
             if devices_obj_list:
-                return True,devices_obj_list
+                return True, devices_obj_list
         except Exception as e:
             logger.error("ios developer delete profile Failed Exception:%s" % e)
             result['return_info'] = "%s" % e

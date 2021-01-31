@@ -753,7 +753,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
 
     def delete_bundle_by_identifier(self, identifier):
         identifier_obj = self.list_bundle_ids_by_identifier(identifier)
-        if isinstance(identifier_obj,BundleIds):
+        if isinstance(identifier_obj, BundleIds):
             req = self.delete_bundle_id_by_id(identifier_obj.id)
             if req.status_code == 204:
                 return True
@@ -785,8 +785,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             return True
 
     def create_certificate(self, csr_content, certificate_type='IOS_DISTRIBUTION'):
-        req = super().create_certificate(csr_content,certificate_type)
+        req = super().create_certificate(csr_content, certificate_type)
         if req.status_code == 201:
             return self.__certificates_store(req, 201)
         raise KeyError(req.text)
-

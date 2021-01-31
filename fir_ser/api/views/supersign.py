@@ -96,7 +96,7 @@ class DeveloperView(APIView):
                         return self.get(request)
                     else:
                         res.code = 1008
-                        res.msg = result.get("return_info","未知错误")
+                        res.msg = result.get("return_info", "未知错误")
                         return Response(res.dict)
                 elif act == "nowactive":
                     code = data.get("code", None)
