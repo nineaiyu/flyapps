@@ -8,7 +8,7 @@ import uuid, xmltodict, os, re, logging, time
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILECONFIG_SIGN_SSL
 from api.utils.app.iossignapi import AppDeveloperApi, ResignApp, AppDeveloperApiV2
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
-    UDIDsyncDeveloper
+    UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID
 from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
 from api.utils.serializer import get_developer_udided
 from api.utils.storage.localApi import LocalStorage
@@ -234,14 +234,14 @@ class IosUtils(object):
                 return None
         return developer_obj
 
-    def download_profile(self):
+    def download_profile(self, developer_app_id, device_id_list):
         bundleId = self.app_obj.bundle_id
         app_id = self.app_obj.app_id
         device_udid = self.udid_info.get('udid')
         device_name = self.udid_info.get('product')
         return get_api_obj(self.auth).get_profile(bundleId, app_id, device_udid, device_name,
                                                   self.get_profile_full_path(),
-                                                  self.auth)
+                                                  self.auth, developer_app_id, device_id_list)
 
     def get_profile_full_path(self):
         cert_dir_name = make_app_uuid(self.user_obj, get_apple_udid_key(self.auth))
@@ -262,7 +262,19 @@ class IosUtils(object):
         logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
         fcount = 3
         while fcount > 0:
-            status, result = self.download_profile()
+            # apptodev_obj = APPToDeveloper.objects.filter(developerid=self.developer_obj, app_id=self.app_obj).first()
+            device_id_list = DeveloperDevicesID.objects.filter(app_id=self.app_obj,
+                                                               developerid=self.developer_obj).values_list('did')
+
+            # first_sign = True
+            # if apptodev_obj:
+            #     first_sign = False
+            developer_app_id = None
+            developer_appid_obj = DeveloperAppID.objects.filter(developerid=self.developer_obj,
+                                                                app_id=self.app_obj).first()
+            if developer_appid_obj:
+                developer_app_id = developer_appid_obj.aid
+            status, result = self.download_profile(developer_app_id, [did[0] for did in device_id_list])
             if not status:
                 fcount -= 1
                 logger.warning("udid %s app %s  developer %s sign failed %s .try again " % (
@@ -319,13 +331,22 @@ class IosUtils(object):
 
         del_cache_response_by_short(self.app_obj.app_id, udid=self.udid_info.get('udid'))
 
-        app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=self.developer_obj, udid=self.udid_info.get('udid'))
+        app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=self.developer_obj, udid=self.udid_info.get('udid')).first()
         if not app_udid_obj:
-            device = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).values("serial",
-                                                                                                         'product',
-                                                                                                         'udid',
-                                                                                                         'version').first()
-            UDIDsyncDeveloper.objects.create(developerid=self.developer_obj, **device)
+            appudid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid'))
+            device = appudid_obj.values("serial",
+                                        'product',
+                                        'udid',
+                                        'version').first()
+            if result.get("did", None):
+                device['serial']=result["did"]
+                app_udid_obj = UDIDsyncDeveloper.objects.create(developerid=self.developer_obj, **device)
+                DeveloperDevicesID.objects.create(did=result["did"], udid=app_udid_obj, developerid=self.developer_obj,
+                                                  app_id=self.app_obj)
+        else:
+            if result.get("did", None):
+                DeveloperDevicesID.objects.create(did=result["did"], udid=app_udid_obj, developerid=self.developer_obj,
+                                                  app_id=self.app_obj)
 
         # 创建
         apptodev_obj = APPToDeveloper.objects.filter(developerid=self.developer_obj, app_id=self.app_obj).first()
@@ -339,6 +360,9 @@ class IosUtils(object):
         else:
             APPToDeveloper.objects.create(developerid=self.developer_obj, app_id=self.app_obj,
                                           binary_file=random_file_name, release_file=release_obj.release_id)
+
+        if not developer_app_id and result.get("aid", None):
+            DeveloperAppID.objects.create(aid=result["aid"], developerid=self.developer_obj, app_id=self.app_obj)
 
     @staticmethod
     def disable_udid(udid_obj, app_id):
@@ -367,8 +391,14 @@ class IosUtils(object):
                 app_api_obj.del_profile(app_obj.bundle_id, app_obj.app_id)
                 app_api_obj2 = get_api_obj(auth)
                 app_api_obj2.del_app(app_obj.bundle_id, app_obj.app_id)
+                DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
                 delete_app_to_dev_and_file(developer_obj, app_id)
                 delete_app_profile_file(developer_obj, app_obj)
+
+            app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,
+                                                            udid=udid_obj.udid).first()
+            DeveloperDevicesID.objects.filter(udid=app_udid_obj, developerid=developer_obj, app_id_id=app_id).delete()
+            UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid, developerid=developer_obj).delete()
 
     @staticmethod
     def clean_udid_by_app_obj(app_obj, developer_obj):
@@ -414,7 +444,7 @@ class IosUtils(object):
     @staticmethod
     def clean_app_by_developer_obj(app_obj, developer_obj):
         auth = get_auth_form_developer(developer_obj)
-
+        DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
         app_api_obj = get_api_obj(auth)
         app_api_obj.del_profile(app_obj.bundle_id, app_obj.app_id)
         app_api_obj2 = get_api_obj(auth)

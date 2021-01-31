@@ -296,3 +296,32 @@ class UDIDsyncDeveloper(models.Model):
 
     def __str__(self):
         return "%s-%s-%s" % (self.product, self.udid, self.developerid)
+
+
+class DeveloperAppID(models.Model):
+    aid = models.CharField(max_length=64, null=False)  # ，apple APP 唯一标识
+    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
+    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
+
+    class Meta:
+        verbose_name = '超级签APP id'
+        verbose_name_plural = "超级签APP id"
+        unique_together = ('aid', 'developerid', 'app_id')
+
+    def __str__(self):
+        return "%s-%s-%s" % (self.aid, self.app_id, self.developerid)
+
+
+class DeveloperDevicesID(models.Model):
+    did = models.CharField(max_length=64, null=False)  # ，apple 设备唯一标识
+    udid = models.ForeignKey(to="UDIDsyncDeveloper", on_delete=models.CASCADE, verbose_name="所消耗的udid")
+    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
+    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
+
+    class Meta:
+        verbose_name = '超级签Devices id'
+        verbose_name_plural = "超级签Devices id"
+        unique_together = ('did', 'developerid', 'app_id')
+
+    def __str__(self):
+        return "%s-%s-%s-%s" % (self.id, self.app_id, self.developerid, self.udid)

@@ -75,7 +75,8 @@ class AppDeveloperApi(object):
         self.cmd = self.cmd + " cert add  '%s'" % (self.file_format_path_name(user_obj))
         return exec_shell(self.cmd)
 
-    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName, auth=None):
+    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName, auth=None, first_sign=None,
+                    device_id_list=None):
         self.cmd = self.cmd + " profile add '%s' '%s' '%s' '%s' '%s' '%s'" % (
             bundleId, app_id, device_udid, device_name, self.certid, provisionName)
         return exec_shell(self.cmd)
@@ -204,20 +205,32 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
         return False, result
 
-    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName, auth):
+    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName, auth, developer_app_id, device_id_list):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id)
-            apple_obj.register_device(device_name, device_udid)
-            profile_obj = apple_obj.create_profile(bundle_obj.id, auth.get('certid'), provisionName.split("/")[-1])
-            if profile_obj:
-                n = base64.b64decode(profile_obj.profileContent)
-                if not os.path.isdir(os.path.dirname(provisionName)):
-                    os.makedirs(os.path.dirname(provisionName))
-                with open(provisionName, 'wb') as f:
-                    f.write(n)
-                return True, profile_obj.profileContent
+            if developer_app_id:
+                pass
+                # bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id)
+            else:
+                # bundle_obj = apple_obj.list_bundle_ids_by_identifier(bundleId + app_id)
+                bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id)
+                developer_app_id = bundle_obj.id
+                result['aid'] = developer_app_id
+
+            device_obj = apple_obj.register_device(device_name, device_udid)
+            if device_obj:
+                result['did'] = device_obj.id
+                device_id_list.append(device_obj.id)
+                profile_obj = apple_obj.create_profile(developer_app_id, auth.get('certid'), provisionName.split("/")[-1],
+                                                       device_id_list)
+                if profile_obj:
+                    n = base64.b64decode(profile_obj.profileContent)
+                    if not os.path.isdir(os.path.dirname(provisionName)):
+                        os.makedirs(os.path.dirname(provisionName))
+                    with open(provisionName, 'wb') as f:
+                        f.write(n)
+                    return True, result
         except Exception as e:
             logger.error("ios developer make profile Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
