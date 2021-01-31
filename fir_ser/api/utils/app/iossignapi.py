@@ -213,8 +213,8 @@ class AppDeveloperApiV2(object):
             profile_obj = apple_obj.create_profile(bundle_obj.id, auth.get('certid'), provisionName.split("/")[-1])
             if profile_obj:
                 n = base64.b64decode(profile_obj.profileContent)
-                if not os.path.isdir(os.path.basename(provisionName)):
-                    os.makedirs(os.path.basename(provisionName))
+                if not os.path.isdir(os.path.dirname(provisionName)):
+                    os.makedirs(os.path.dirname(provisionName))
                 with open(provisionName, 'wb') as f:
                     f.write(n)
                 return True, profile_obj.profileContent
