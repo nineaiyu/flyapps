@@ -203,10 +203,8 @@
                     this.wxeasytypetip.val = 'off';
                 }
                 this.wxeasytypeflag = true;
-                this.wxeasy_disable = false;
-                if (!this.$store.state.userinfo.domain_name && !this.currentapp.domain_name) {
-                    this.wxeasy_disable = true;
-                }
+
+                this.wxeasy_disable = !this.$store.state.userinfo.domain_name && !this.currentapp.domain_name;
             },
             setwxredirectshow(currentapp) {
                 if (currentapp.wxredirect === 1) {
