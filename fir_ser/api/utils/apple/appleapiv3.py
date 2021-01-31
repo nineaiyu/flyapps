@@ -784,3 +784,9 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         if self.__do_success(req):
             return True
 
+    def create_certificate(self, csr_content, certificate_type='IOS_DISTRIBUTION'):
+        req = super().create_certificate(csr_content,certificate_type)
+        if req.status_code == 201:
+            self.__certificates_store(req, 201)
+        raise KeyError(req.text)
+
