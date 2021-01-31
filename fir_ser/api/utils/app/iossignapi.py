@@ -159,7 +159,7 @@ class AppDeveloperApiV2(object):
             key.generate_key(TYPE_RSA, 2048)
             # Generate CSR
             req = X509Req()
-            req.get_subject().CN = 'BJ'
+            req.get_subject().CN = 'FLY APP'
             req.get_subject().O = 'FLY APP Inc'
             req.get_subject().OU = 'IT'
             req.get_subject().L = 'BJ'

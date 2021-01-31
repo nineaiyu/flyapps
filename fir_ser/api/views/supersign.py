@@ -198,13 +198,19 @@ class DeveloperView(APIView):
 
     def delete(self, request):
         email = request.query_params.get("email", None)
+        issuer_id = request.query_params.get("issuer_id", None)
         if email:
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, email=email).first()
-            if developer_obj:
-                logger.error("user %s delete developer %s " % (
-                    request.user, developer_obj))
-                IosUtils.clean_developer(developer_obj, request.user)
-                developer_obj.delete()
+        elif issuer_id:
+            developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=issuer_id).first()
+        else:
+            return self.get(request)
+
+        if developer_obj:
+            logger.error("user %s delete developer %s " % (
+                request.user, developer_obj))
+            IosUtils.clean_developer(developer_obj, request.user)
+            developer_obj.delete()
 
         return self.get(request)
 

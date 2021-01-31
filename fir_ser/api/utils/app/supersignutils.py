@@ -429,7 +429,7 @@ class IosUtils(object):
             IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
             delete_app_to_dev_and_file(developer_obj, app_obj.id)
             IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
-        full_path = file_format_path(user_obj, email=developer_obj.email)
+        full_path = file_format_path(user_obj, get_auth_form_developer(developer_obj))
         try:
             for root, dirs, files in os.walk(full_path, topdown=False):
                 for name in files:

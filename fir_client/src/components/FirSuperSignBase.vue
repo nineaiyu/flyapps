@@ -586,7 +586,11 @@
                     cancelButtonText: '取消',
                     type: 'warning'
                 }).then(() => {
-                    this.iosdeveloperFun({"methods": "DELETE", "data": {"email": developer_info.email}});
+                    let data={"email": developer_info.email};
+                    if(developer_info.issuer_id){
+                        data={"issuer_id": developer_info.issuer_id};
+                    }
+                    this.iosdeveloperFun({"methods": "DELETE", "data": data});
                 }).catch(() => {
                     this.$message({
                         type: 'info',
