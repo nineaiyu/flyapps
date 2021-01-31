@@ -7,7 +7,7 @@
 from api.utils.app.apputils import get_random_short, SaveAppInfos
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
-from api.models import Apps, AppReleaseInfo, UserInfo
+from api.models import Apps, AppReleaseInfo, UserInfo, AppUDID
 from api.utils.app.randomstrings import make_app_uuid
 from rest_framework.views import APIView
 from api.utils.response import BaseResponse
@@ -16,6 +16,7 @@ from api.utils.app.randomstrings import make_from_user_uuid
 from rest_framework.response import Response
 from fir_ser import settings
 from api.utils.TokenManager import DownloadToken
+from api.utils.app.supersignutils import IosUtils
 import os, json, logging
 
 logger = logging.getLogger(__file__)
@@ -116,6 +117,18 @@ class AppAnalyseView(APIView):
                 # 需要将tmp 文件修改为正式文件
                 storage.rename_file(app_tmp_filename, app_new_filename)
                 storage.rename_file(png_tmp_filename, png_new_filename)
+
+                app_info = Apps.objects.filter(bundle_id=data.get("bundleid")).first()
+                if app_info:
+                    if app_info.issupersign and app_info.user_id.supersign_active:
+                        udid_obj = AppUDID.objects.filter(app_id=app_info).first()
+                        if udid_obj:
+                            udid_info = {'imei': udid_obj.imei, 'product': udid_obj.product,
+                                         'serial': udid_obj.serial, 'udid': udid_obj.udid,
+                                         'version': udid_obj.version}
+                            ios_obj = IosUtils(udid_info, app_info.user_id, app_info)
+                            ios_obj.resign()
+
             else:
                 storage.delete_file(app_tmp_filename)
                 storage.delete_file(png_tmp_filename)
