@@ -203,7 +203,8 @@
                     this.wxeasytypetip.val = 'off';
                 }
                 this.wxeasytypeflag = true;
-                if (!this.$store.state.userinfo.domain_name) {
+                this.wxeasy_disable = false;
+                if (!this.$store.state.userinfo.domain_name && !this.currentapp.domain_name) {
                     this.wxeasy_disable = true;
                 }
             },
@@ -375,13 +376,13 @@
             appinit() {
                 this.currentapp = this.$store.state.currentapp;
                 this.set_default_flag();
-                this.setbuttondefault(this.currentapp);
                 this.orgcurrentapp = deepCopy(this.currentapp);
                 if (!this.currentapp.domain_name || this.currentapp.domain_name.length < 3) {
                     if (this.$store.state.userinfo.domain_name && this.$store.state.userinfo.domain_name.length > 3) {
                         this.defualt_dtitle = this.$store.state.userinfo.domain_name;
                     }
                 }
+                this.setbuttondefault(this.currentapp);
             }
         },
         mounted() {
