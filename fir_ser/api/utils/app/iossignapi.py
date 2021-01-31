@@ -167,7 +167,7 @@ class AppDeveloperApiV2(object):
             req.get_subject().C = 'CN'
             req.get_subject().emailAddress = 'fly@fly.com'
             req.set_pubkey(key)
-            req.sign(key, b'sha256')
+            req.sign(key, 'sha256')
             csr_content = dump_certificate_request(FILETYPE_PEM, req)
             with open(csr_file_path, 'wb+') as f:
                 f.write(csr_content)
