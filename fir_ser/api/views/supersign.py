@@ -121,7 +121,10 @@ class DeveloperView(APIView):
                         res.msg = result.get("err_info")
                         return Response(res.dict)
                 elif act == "checkauth":
-                    developer_auth_code("del", request.user, developer_obj.email)
+                    if developer_obj.email:
+                        developer_auth_code("del", request.user, developer_obj.email)
+                    elif developer_obj.issuer_id:
+                        developer_auth_code("del", request.user, developer_obj.issuer_id)
                     status, result = IosUtils.active_developer(developer_obj, request.user)
                     if status:
                         return self.get(request)
