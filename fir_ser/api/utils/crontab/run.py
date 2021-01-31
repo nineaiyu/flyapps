@@ -49,10 +49,10 @@ try:
             auto_delete_tmp_file()
 
 
-        # @register_job(scheduler, "interval",
-        #               seconds=SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"))
-        # def auto_check_ios_developer_active_job():
-        #     auto_check_ios_developer_active()
+        @register_job(scheduler, "interval",
+                      seconds=SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"))
+        def auto_check_ios_developer_active_job():
+            auto_check_ios_developer_active()
 
 
         register_events(scheduler)

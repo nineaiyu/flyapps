@@ -260,4 +260,5 @@ if __name__ == '__main__':
     app_path = sys.argv[1]
     if os.path.isfile(app_path):
         fly_obj.upload_app(app_path)
-    raise FileNotFoundError(app_path)
+    else:
+        raise FileNotFoundError(app_path)
