@@ -235,6 +235,7 @@ THIRD_PART_CONFIG = {
             'auth': {
                 'email_host': 'smtp.hehegames.cn',
                 'email_port': '25',
+                'use_tls': False,
                 'username': 'git@hehegames.cn',
                 'password': 'QE.54272cd.ecQ.wSj',
                 'form': 'FlyApp Validation <noreply@hehegames.cn>',

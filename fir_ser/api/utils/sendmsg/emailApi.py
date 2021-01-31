@@ -9,11 +9,12 @@ from django.core.mail import send_mail
 
 
 class EmailMsgSender(object):
-    def __init__(self, email_host, email_port, subject, username, password, form, template_code):
+    def __init__(self, email_host, email_port, use_tls, subject, username, password, form, template_code):
         self.email_host = email_host
         self.email_port = email_port
         self.username = username
         self.password = password
+        self.use_tls = use_tls
         self.form = form
         self.subject = subject
         self.template_code = template_code
@@ -26,6 +27,7 @@ class EmailMsgSender(object):
         settings.EMAIL_HOST_USER = self.username
         settings.EMAIL_HOST_PASSWORD = self.password
         settings.EMAIL_FROM = self.form
+        settings.EMAIL_USE_TLS = self.use_tls
 
     def send_msg(self, template_code, email, code):
         try:
