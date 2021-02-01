@@ -263,7 +263,10 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
         return obj.udid.product
 
     def get_developer_id(self, obj):
-        return obj.developerid.email
+        developer_id = obj.developerid.email
+        if obj.developerid.issuer_id:
+            developer_id = obj.developerid.issuer_id
+        return developer_id
 
     def get_bundle_id(self, obj):
         return obj.app_id.bundle_id
