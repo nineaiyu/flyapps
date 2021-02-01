@@ -679,7 +679,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         return self.__device_store(req)
 
     def list_enabled_devices(self):
-        req = self.list_devices()
+        req = super().list_enabled_devices()
         return self.__device_store(req)
 
     def get_all_bundle_ids(self):

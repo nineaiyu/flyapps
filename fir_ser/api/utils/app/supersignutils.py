@@ -242,6 +242,11 @@ class IosUtils(object):
         return get_api_obj(self.auth).get_profile(bundleId, app_id, device_udid, device_name,
                                                   self.get_profile_full_path(),
                                                   self.auth, developer_app_id, device_id_list)
+    # 开启超级签直接在开发者账户创建
+    def create_app(self, app_obj):
+        bundleId = self.app_obj.bundle_id
+        app_id = self.app_obj.app_id
+        return get_api_obj(self.auth).create_app(bundleId, app_id)
 
     def get_profile_full_path(self):
         cert_dir_name = make_app_uuid(self.user_obj, get_apple_udid_key(self.auth))
@@ -261,14 +266,12 @@ class IosUtils(object):
                     return
         logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
         fcount = 3
+        result={}
         while fcount > 0:
             # apptodev_obj = APPToDeveloper.objects.filter(developerid=self.developer_obj, app_id=self.app_obj).first()
             device_id_list = DeveloperDevicesID.objects.filter(app_id=self.app_obj,
                                                                developerid=self.developer_obj).values_list('did')
 
-            # first_sign = True
-            # if apptodev_obj:
-            #     first_sign = False
             developer_app_id = None
             developer_appid_obj = DeveloperAppID.objects.filter(developerid=self.developer_obj,
                                                                 app_id=self.app_obj).first()

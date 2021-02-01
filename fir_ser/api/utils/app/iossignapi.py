@@ -100,7 +100,7 @@ class AppDeveloperApi(object):
         self.cmd = self.cmd + " device get '%s' " % (self.file_format_path_name(user_obj))
         return exec_shell(self.cmd)
 
-    def add_app(self, bundleId, app_id):
+    def create_app(self, bundleId, app_id):
         self.cmd = self.cmd + " app add '%s' '%s'" % (bundleId, app_id)
         result = exec_shell(self.cmd)
 
@@ -286,5 +286,19 @@ class AppDeveloperApiV2(object):
 
         except Exception as e:
             logger.error("ios developer delete profile Failed Exception:%s" % e)
+            result['return_info'] = "%s" % e
+            return False, result
+
+    def create_app(self, bundleId, app_id):
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id)
+            developer_app_id = bundle_obj.id
+            result['aid'] = developer_app_id
+            return True, result
+
+        except Exception as e:
+            logger.error("ios developer create app Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
             return False, result
