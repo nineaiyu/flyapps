@@ -380,6 +380,7 @@ class IosUtils(object):
             if udid_lists.count((udid_obj.udid,)) == 1:
                 app_api_obj = get_api_obj(auth)
                 app_api_obj.set_device_status("disable", udid_obj.udid)
+                UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid, developerid=developer_obj).delete()
 
                 if developer_obj.use_number > 0:
                     developer_obj.use_number = developer_obj.use_number - 1
@@ -401,7 +402,6 @@ class IosUtils(object):
             app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,
                                                             udid=udid_obj.udid).first()
             DeveloperDevicesID.objects.filter(udid=app_udid_obj, developerid=developer_obj, app_id_id=app_id).delete()
-            UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid, developerid=developer_obj).delete()
 
     @staticmethod
     def clean_udid_by_app_obj(app_obj, developer_obj):
@@ -417,6 +417,7 @@ class IosUtils(object):
             if udid_lists.count((udid_obj.udid,)) == 1:
                 app_api_obj = get_api_obj(auth)
                 app_api_obj.set_device_status("disable", udid_obj.udid)
+                UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid, developerid=developer_obj).delete()
 
                 if developer_obj.use_number > 0:
                     developer_obj.use_number = developer_obj.use_number - 1
