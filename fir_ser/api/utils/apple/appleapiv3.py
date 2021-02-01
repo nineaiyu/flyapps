@@ -678,6 +678,10 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         req = self.list_devices()
         return self.__device_store(req)
 
+    def list_enabled_devices(self):
+        req = self.list_devices()
+        return self.__device_store(req)
+
     def get_all_bundle_ids(self):
         req = self.list_bundle_ids()
         return self.__bundle_ids_store(req)
@@ -763,7 +767,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         if device_id_list is None:
             device_id_list = []
         if not device_id_list:
-            device_id_list = [device.id for device in self.get_all_devices()]
+            device_id_list = [device.id for device in self.list_enabled_devices()]
 
         profile_obj = self.list_profile_by_profile_name(profile_name)
         if isinstance(profile_obj, Profiles):
