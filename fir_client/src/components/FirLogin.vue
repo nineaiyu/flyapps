@@ -62,7 +62,7 @@
                     <el-button type="danger" @click="onSubmit">登录</el-button>
                 </el-form-item>
 
-                <el-form-item>
+                <el-form-item v-if="register_enable">
                     <el-button type="primary" @click="onRegister" plain>注册</el-button>
                 </el-form-item>
             </el-form>
@@ -92,7 +92,8 @@
                 activeName: 'username',
                 allow_ways: {},
                 rutitle: '',
-                rctitle: ''
+                rctitle: '',
+                register_enable: false,
 
             }
         },
@@ -220,6 +221,7 @@
                     if (data.code === 1000) {
                         this.cptch = data.data;
                         this.allow_ways = data.data.login_type;
+                        this.register_enable = data.data.register_enable;
                         this.set_rtitle();
                         this.set_activename();
                     } else {

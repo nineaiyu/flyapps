@@ -232,6 +232,8 @@ class LoginView(APIView):
         if LOGIN.get("captcha"):
             response.data = get_captcha()
         response.data['login_type'] = get_login_type()
+        allow_f = REGISTER.get("enable")
+        response.data['register_enable'] = allow_f
         return Response(response.dict)
 
 
