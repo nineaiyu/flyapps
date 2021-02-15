@@ -16,6 +16,9 @@ logger = logging.getLogger(__file__)
 import atexit
 import fcntl
 
+logging.basicConfig()
+logging.getLogger('apscheduler').setLevel(logging.ERROR)
+
 # 主要是为了防止多进程出现的多个定时任务同时执行
 f = open("scheduler.lock", "wb")
 try:
