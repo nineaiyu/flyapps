@@ -162,9 +162,7 @@ def del_cache_by_delete_app(app_id):
                              str(now.year), str(now.month), str(now.day), app_id])
     cache.delete(down_tem_key)
 
-    down_tem_key = "_".join([CACHE_KEY_TEMPLATE.get("download_times_key"), app_id])
-    download_times = cache.get(down_tem_key)
-    cache.delete(download_times)
+    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_times_key"), app_id]))
 
     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"), app_id]))
 
