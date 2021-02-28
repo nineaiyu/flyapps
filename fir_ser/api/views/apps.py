@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from django.db.models import Sum
 from api.utils.app.supersignutils import IosUtils
 from api.utils.storage.storage import Storage
-from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times
+from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
 from rest_framework.pagination import PageNumberPagination
@@ -132,6 +132,7 @@ class AppInfoView(APIView):
                             app_id))
                     apps_obj.has_combo.has_combo = None
                 del_cache_response_by_short(apps_obj.app_id)
+                del_cache_by_delete_app(apps_obj.app_id)
                 for appreleaseobj in AppReleaseInfo.objects.filter(app_id=apps_obj).all():
                     logger.info("delete app_id:%s  need clean all release,release_id:%s" % (
                         app_id, appreleaseobj.release_id))
@@ -302,6 +303,7 @@ class AppReleaseinfoView(APIView):
 
                     storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
                     storage.delete_file(appreleaseobj.icon_url)
+                    del_cache_by_delete_app(apps_obj.app_id)
 
                     appreleaseobj.delete()
 
