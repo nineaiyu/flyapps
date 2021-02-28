@@ -139,6 +139,7 @@ def del_cache_response_by_short(app_id, udid=''):
 def del_cache_response_by_short_util(short, app_id, udid):
     logger.info("del_cache_response_by_short short:%s app_id:%s udid:%s" % (short, app_id, udid))
     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short]))
+    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_times_key"), app_id]))
     key = "_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short, '*'])
     for app_download_key in cache.iter_keys(key):
         cache.delete(app_download_key)
