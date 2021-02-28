@@ -228,29 +228,39 @@ def upload_file_tmp_name(act, filename, user_obj_id):
         cache.delete(tmp_key)
 
 
-def login_auth_failed(act, email):
-    logger.error("login email:%s act:%s" % (email, act))
-    auth_code_key = "_".join([CACHE_KEY_TEMPLATE.get("login_failed_try_times_key"), email])
+def limit_cache_util(act, cache_key, cache_limit_times):
+    (limit_times, cache_times) = cache_limit_times
     if act == "set":
         data = {
             "count": 1,
             "time": time.time()
         }
-        cdata = cache.get(auth_code_key)
+        cdata = cache.get(cache_key)
         if cdata:
             data["count"] = cdata["count"] + 1
             data["time"] = time.time()
-        logger.info("auth_code_key:%s  data:%s" % (auth_code_key, data))
-        cache.set(auth_code_key, data, 60 * 60)
+        logger.info("limit_cache_util  cache_key:%s  data:%s" % (cache_key, data))
+        cache.set(cache_key, data, cache_times)
     elif act == "get":
-        cdata = cache.get(auth_code_key)
+        cdata = cache.get(cache_key)
         if cdata:
-            if cdata["count"] > SYNC_CACHE_TO_DATABASE.get("try_login_times"):
-                logging.error("email:%s login failed too many ,is locked . cdata:%s" % (email, cdata))
+            if cdata["count"] > limit_times:
+                logging.error("limit_cache_util cache_key %s  over limit ,is locked . cdata:%s" % (cache_key, cdata))
                 return False
         return True
     elif act == "del":
-        cache.delete(auth_code_key)
+        cache.delete(cache_key)
+
+
+def login_auth_failed(act, email):
+    logger.error("login email:%s act:%s" % (email, act))
+    auth_code_key = "_".join([CACHE_KEY_TEMPLATE.get("login_failed_try_times_key"), email])
+    return limit_cache_util(act, auth_code_key, SYNC_CACHE_TO_DATABASE.get("try_login_times"))
+
+
+def send_msg_over_limit(act, email):
+    auth_code_key = "_".join([CACHE_KEY_TEMPLATE.get("super_sign_failed_send_msg_times_key"), email])
+    return limit_cache_util(act, auth_code_key, SYNC_CACHE_TO_DATABASE.get("try_send_msg_over_limit_times"))
 
 
 def set_default_app_wx_easy(user_obj, app_obj=None):

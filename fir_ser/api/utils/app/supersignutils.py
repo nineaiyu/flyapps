@@ -12,7 +12,7 @@ from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppRe
 from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
 from api.utils.serializer import get_developer_udided
 from api.utils.storage.localApi import LocalStorage
-from api.utils.storage.caches import del_cache_response_by_short
+from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit
 from api.utils.utils import file_format_path, delete_app_to_dev_and_file, delete_app_profile_file, \
     send_ios_developer_active_status
 
@@ -200,19 +200,27 @@ def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
 
 class IosUtils(object):
     def __init__(self, udid_info, user_obj, app_obj=None):
+        self.developer_obj = None
+        self.auth = None
         self.udid_info = udid_info
         self.app_obj = app_obj
         self.user_obj = user_obj
         self.get_developer_auth()
 
     def get_developer_auth(self):
-        developer_obj = self.get_developer_user_by_app_udid()
-        if developer_obj:
-            self.developer_obj = developer_obj
-            self.auth = get_auth_form_developer(developer_obj)
+        self.developer_obj = self.get_developer_user_by_app_udid()
+        if self.developer_obj:
+            self.auth = get_auth_form_developer(self.developer_obj)
         else:
-            logger.error("user %s has no actived apple developer" % (self.user_obj))
-            raise ModuleNotFoundError("has no actived apple developer")
+            logger.error("user %s has no actived apple developer" % self.user_obj)
+            if self.user_obj.email:
+                if send_msg_over_limit("get", self.user_obj.email):
+                    send_msg_over_limit("set", self.user_obj.email)
+                    send_ios_developer_active_status(self.user_obj,
+                                                     'user %s app %s sign failed. has not exists enabled developer' % (
+                                                         self.user_obj, self.app_obj))
+                else:
+                    logger.error("user %s send msg failed. over limit" % self.user_obj)
 
     def get_developer_user_by_app_udid(self):
         usedeviceobj = APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'),
@@ -299,7 +307,7 @@ class IosUtils(object):
                 self.udid_info.get('udid'), self.app_obj, self.developer_obj, result))
             self.developer_obj.is_actived = False
             self.developer_obj.save()
-            send_ios_developer_active_status(self.developer_obj,
+            send_ios_developer_active_status(self.developer_obj.user_id,
                                              'app %s developer %s sign failed %s. disable this developer' % (
                                                  self.app_obj, self.developer_obj, result))
             self.get_developer_auth()

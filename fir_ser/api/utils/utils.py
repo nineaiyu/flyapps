@@ -196,11 +196,10 @@ def get_random_username(length=16):
     return username
 
 
-def send_ios_developer_active_status(developer, msg):
-    user_info = developer.user_id
+def send_ios_developer_active_status(user_info, msg):
     act = 'email'
     email = user_info.email
     if email:
         get_sender_email_token(act, email, 'msg', msg)
     else:
-        logger.info("user %s has no email. so %s can't send!" % (user_info, msg))
+        logger.warning("user %s has no email. so %s can't send!" % (user_info, msg))

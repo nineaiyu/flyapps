@@ -85,4 +85,4 @@ def auto_check_ios_developer_active():
                 ios_developer.is_actived = False
                 ios_developer.save()
                 logger.error(msg)
-                send_ios_developer_active_status(ios_developer, msg)
+                send_ios_developer_active_status(ios_developer.user_id, msg)

@@ -294,6 +294,7 @@ CACHE_KEY_TEMPLATE = {
     'developer_auth_code_key': 'developer_auth_code',
     'upload_file_tmp_name_key': 'upload_file_tmp_name',
     'login_failed_try_times_key': 'login_failed_try_times',
+    'super_sign_failed_send_msg_times_key': 'super_sign_failed_send_msg_times'
 }
 
 DATA_DOWNLOAD_KEY = "d_token"
@@ -302,10 +303,11 @@ FILE_UPLOAD_TMP_KEY = ".tmp"
 
 SYNC_CACHE_TO_DATABASE = {
     'download_times': 10,  # 下载次数同步时间
+    'try_login_times': (5, 24 * 60 * 60),  # 当天登录失败次数，超过该失败次数，锁定24小时
     'auto_clean_tmp_file_times': 60 * 30,  # 定时清理上传失误生成的临时文件
     'auto_clean_local_tmp_file_times': 60 * 30,  # 定时清理临时文件,现在包含超级签名描述临时文件
-    'try_login_times': 5,  # 当天登录失败次数，超过该失败次数，锁定24小时
     'auto_clean_apscheduler_log': 100000,  # 定时清理定时任务执行的日志,该日志存在数据库中，该参数为日志保留的数量
+    'try_send_msg_over_limit_times': (3, 60 * 60),  # 每小时用户发送信息次数
     'clean_local_tmp_file_from_mtime': 60 * 60,  # 清理最后一次修改时间超过限制时间的临时文件,单位秒
     'auto_check_ios_developer_active_times': 60 * 60 * 12,  # ios开发者证书检测时间
 }

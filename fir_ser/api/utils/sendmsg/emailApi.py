@@ -49,5 +49,8 @@ class EmailMsgSender(object):
         return self.send_msg(self.template_code.get('login'), phone, code)
 
     def send_email_msg(self, email, text):
-        response = send_mail(self.subject, text, self.form, email, )
-        return response
+        try:
+            response = send_mail("重要消息通知", text, self.form, [email], )
+        except Exception as e:
+            return -1, e
+        return response, text
