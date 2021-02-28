@@ -635,7 +635,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         }
         self.headers = headers
 
-    def __base_store(self, stype, req, success_code):
+    def __base_format(self, stype, req, success_code):
         if req.status_code == success_code:
             req_data = req.json()
             data = req_data.get('data')
@@ -663,16 +663,16 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             raise Exception('unknown error: %s  code:%s' % (req.text, req.status_code))
 
     def __device_store(self, req, success_code=200):
-        return self.__base_store('devices', req, success_code)
+        return self.__base_format('devices', req, success_code)
 
     def __profile_store(self, req, success_code=200):
-        return self.__base_store('profiles', req, success_code)
+        return self.__base_format('profiles', req, success_code)
 
     def __certificates_store(self, req, success_code=200):
-        return self.__base_store('certificates', req, success_code)
+        return self.__base_format('certificates', req, success_code)
 
     def __bundle_ids_store(self, req, success_code=200):
-        return self.__base_store('bundleIds', req, success_code)
+        return self.__base_format('bundleIds', req, success_code)
 
     def get_all_devices(self):
         req = self.list_devices()

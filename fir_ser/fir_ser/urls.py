@@ -15,9 +15,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, re_path, include
-from rest_framework.routers import DefaultRouter
-from api.views.login import LoginView
-from api.views.logout import LogoutView
 from django.views.static import serve
 from fir_ser import settings
 from api.views.download import DownloadView, InstallView
@@ -25,7 +22,6 @@ from api.views.receiveudids import IosUDIDView
 
 urlpatterns = [
     re_path('fly.admin/', admin.site.urls),
-    # path("",include(router.urls)),
     re_path("api/v1/fir/server/", include('api.urls')),
     re_path("api/v2/fir/server/", include('cli.urls')),
     re_path('^captcha/', include('captcha.urls')),

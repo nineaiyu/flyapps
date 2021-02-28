@@ -205,7 +205,8 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
         return False, result
 
-    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName, auth, developer_app_id, device_id_list):
+    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName, auth, developer_app_id,
+                    device_id_list):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
@@ -222,7 +223,8 @@ class AppDeveloperApiV2(object):
             if device_obj:
                 result['did'] = device_obj.id
                 device_id_list.append(device_obj.id)
-                profile_obj = apple_obj.create_profile(developer_app_id, auth.get('certid'), provisionName.split("/")[-1],
+                profile_obj = apple_obj.create_profile(developer_app_id, auth.get('certid'),
+                                                       provisionName.split("/")[-1],
                                                        device_id_list)
                 if profile_obj:
                     n = base64.b64decode(profile_obj.profileContent)

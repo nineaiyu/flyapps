@@ -170,7 +170,7 @@ REST_FRAMEWORK_EXTENSIONS = {
 
 # 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG.sender 信息
 REGISTER = {
-    "enable": True,
+    "enable": False,
     "captcha": True,  # 是否开启注册字母验证码
     "register_type": {
         'sms': False,  # 短信注册

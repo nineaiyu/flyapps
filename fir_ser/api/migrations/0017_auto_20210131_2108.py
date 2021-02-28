@@ -5,7 +5,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('api', '0016_developerappid_developerdevicesid'),
     ]
@@ -14,6 +13,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='developerdevicesid',
             name='udid',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.UDIDsyncDeveloper', verbose_name='所消耗的udid'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.UDIDsyncDeveloper',
+                                    verbose_name='所消耗的udid'),
         ),
     ]

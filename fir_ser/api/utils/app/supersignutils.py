@@ -207,8 +207,12 @@ class IosUtils(object):
 
     def get_developer_auth(self):
         developer_obj = self.get_developer_user_by_app_udid()
-        self.developer_obj = developer_obj
-        self.auth = get_auth_form_developer(developer_obj)
+        if developer_obj:
+            self.developer_obj = developer_obj
+            self.auth = get_auth_form_developer(developer_obj)
+        else:
+            logger.error("user %s has no actived apple developer" % (self.user_obj))
+            raise ModuleNotFoundError("has no actived apple developer")
 
     def get_developer_user_by_app_udid(self):
         usedeviceobj = APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'),
@@ -242,6 +246,7 @@ class IosUtils(object):
         return get_api_obj(self.auth).get_profile(bundleId, app_id, device_udid, device_name,
                                                   self.get_profile_full_path(),
                                                   self.auth, developer_app_id, device_id_list)
+
     # 开启超级签直接在开发者账户创建
     def create_app(self, app_obj):
         bundleId = self.app_obj.bundle_id
@@ -266,7 +271,7 @@ class IosUtils(object):
                     return
         logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
         fcount = 3
-        result={}
+        result = {}
         while fcount > 0:
             # apptodev_obj = APPToDeveloper.objects.filter(developerid=self.developer_obj, app_id=self.app_obj).first()
             device_id_list = DeveloperDevicesID.objects.filter(app_id=self.app_obj,
@@ -334,7 +339,8 @@ class IosUtils(object):
 
         del_cache_response_by_short(self.app_obj.app_id, udid=self.udid_info.get('udid'))
 
-        app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=self.developer_obj, udid=self.udid_info.get('udid')).first()
+        app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=self.developer_obj,
+                                                        udid=self.udid_info.get('udid')).first()
         if not app_udid_obj:
             appudid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid'))
             device = appudid_obj.values("serial",
@@ -342,7 +348,7 @@ class IosUtils(object):
                                         'udid',
                                         'version').first()
             if result.get("did", None):
-                device['serial']=result["did"]
+                device['serial'] = result["did"]
                 app_udid_obj = UDIDsyncDeveloper.objects.create(developerid=self.developer_obj, **device)
                 DeveloperDevicesID.objects.create(did=result["did"], udid=app_udid_obj, developerid=self.developer_obj,
                                                   app_id=self.app_obj)

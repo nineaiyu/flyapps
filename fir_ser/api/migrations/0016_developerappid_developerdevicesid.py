@@ -5,7 +5,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('api', '0015_auto_20210129_1730'),
     ]
@@ -16,9 +15,13 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('did', models.CharField(max_length=64)),
-                ('app_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.Apps', verbose_name='属于哪个APP')),
-                ('developerid', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.AppIOSDeveloperInfo', verbose_name='所使用苹果开发者账户')),
-                ('udid', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.AppUDID', verbose_name='所消耗的udid')),
+                ('app_id',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.Apps', verbose_name='属于哪个APP')),
+                ('developerid',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.AppIOSDeveloperInfo',
+                                   verbose_name='所使用苹果开发者账户')),
+                ('udid', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.AppUDID',
+                                           verbose_name='所消耗的udid')),
             ],
             options={
                 'verbose_name': '超级签Devices id',
@@ -31,8 +34,11 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('aid', models.CharField(max_length=64)),
-                ('app_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.Apps', verbose_name='属于哪个APP')),
-                ('developerid', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.AppIOSDeveloperInfo', verbose_name='所使用苹果开发者账户')),
+                ('app_id',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.Apps', verbose_name='属于哪个APP')),
+                ('developerid',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.AppIOSDeveloperInfo',
+                                   verbose_name='所使用苹果开发者账户')),
             ],
             options={
                 'verbose_name': '超级签APP id',
