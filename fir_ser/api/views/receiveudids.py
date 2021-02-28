@@ -25,8 +25,6 @@ class IosUDIDView(View):
 
             if app_info:
                 if app_info.issupersign and app_info.user_id.supersign_active:
-                    AppUDID.objects.update_or_create(app_id=app_info, udid=format_udid_info.get('udid'),
-                                                     defaults=format_udid_info)
                     ios_obj = IosUtils(format_udid_info, app_info.user_id, app_info)
                     ios_obj.resign()
                 else:

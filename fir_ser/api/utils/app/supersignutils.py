@@ -262,7 +262,11 @@ class IosUtils(object):
         return provisionName + '.mobileprovision'
 
     def resign(self):
-        if AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first().is_signed:
+        if not self.developer_obj:
+            logger.error("udid %s  app %s not exists apple developer" % (self.udid_info.get('udid'), self.app_obj))
+            return
+        app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
+        if app_udid_obj and app_udid_obj.is_signed:
             apptodev_obj = APPToDeveloper.objects.filter(app_id=self.app_obj).first()
             if apptodev_obj:
                 release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
@@ -301,6 +305,9 @@ class IosUtils(object):
             self.get_developer_auth()
             self.resign()
             return
+
+        AppUDID.objects.update_or_create(app_id=self.app_obj, udid=self.udid_info.get('udid'),
+                                         defaults=self.udid_info)
 
         file_format_path_name = file_format_path(self.user_obj, self.auth)
         my_local_key = file_format_path_name + ".key"
