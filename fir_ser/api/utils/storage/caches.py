@@ -139,7 +139,10 @@ def del_cache_response_by_short(app_id, udid=''):
 def del_cache_response_by_short_util(short, app_id, udid):
     logger.info("del_cache_response_by_short short:%s app_id:%s udid:%s" % (short, app_id, udid))
     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short]))
-    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_times_key"), app_id]))
+    now = timezone.now()
+    down_tem_key = "_".join([CACHE_KEY_TEMPLATE.get("download_today_times_key"),
+                             str(now.year), str(now.month), str(now.day), app_id])
+    cache.delete(down_tem_key)
     key = "_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short, '*'])
     for app_download_key in cache.iter_keys(key):
         cache.delete(app_download_key)
@@ -170,7 +173,7 @@ def del_cache_by_app_id(app_id, user_obj):
 
 
 def del_cache_storage(user_obj):
-    logger.info("del_cache_storage user:%s" % (user_obj))
+    logger.info("del_cache_storage user:%s" % user_obj)
     for app_obj in Apps.objects.filter(user_id=user_obj):
         del_cache_response_by_short(app_obj.app_id)
         del_cache_by_app_id(app_obj.app_id, user_obj)
