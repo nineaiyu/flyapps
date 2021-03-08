@@ -124,9 +124,14 @@ class ResignApp(object):
                   mobilconfig_path, sign_mobilconfig_path, ssl_pem_path, ssl_key_path, ssl_pem_path)
         return exec_shell(cmd)
 
-    def sign(self, new_profile, org_ipa, new_ipa):
-        self.cmd = self.cmd + " -p '%s' -o '%s'  '%s'" % (new_profile, new_ipa, org_ipa)
-        result = exec_shell(self.cmd)
+    def sign(self, new_profile, org_ipa, new_ipa, info_plist_properties=None):
+        if info_plist_properties is None:
+            info_plist_properties = {}
+        properties = ""
+        for k, v in info_plist_properties.items():
+            properties += " %s=%s " % (k, v)
+        self.cmd = self.cmd + " -i '%s' -p '%s' -o '%s'  '%s'" % (properties, new_profile, new_ipa, org_ipa)
+        return exec_shell(self.cmd)
 
 
 class AppDeveloperApiV2(object):
@@ -205,9 +210,11 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
         return False, result
 
-    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName, auth, developer_app_id,
+    def get_profile(self, app_obj, udid_info, provisionName, auth, developer_app_id,
                     device_id_list):
         result = {}
+        bundle_id = app_obj.bundleId
+        app_id = app_obj.app_id
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             if developer_app_id:
@@ -215,24 +222,30 @@ class AppDeveloperApiV2(object):
                 # bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id)
             else:
                 # bundle_obj = apple_obj.list_bundle_ids_by_identifier(bundleId + app_id)
-                bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id)
+                if app_obj.supersign_type == 0:
+                    bundle_obj = apple_obj.register_bundle_id(app_id, bundle_id + app_id)
+                else:
+                    bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundle_id + app_id)
                 developer_app_id = bundle_obj.id
                 result['aid'] = developer_app_id
+            if udid_info:
+                device_udid = udid_info.get('udid')
+                device_name = udid_info.get('product')
+                device_obj = apple_obj.register_device(device_name, device_udid)
+                if device_obj:
+                    result['did'] = device_obj.id
+                    device_id_list.append(device_obj.id)
 
-            device_obj = apple_obj.register_device(device_name, device_udid)
-            if device_obj:
-                result['did'] = device_obj.id
-                device_id_list.append(device_obj.id)
-                profile_obj = apple_obj.create_profile(developer_app_id, auth.get('certid'),
-                                                       provisionName.split("/")[-1],
-                                                       device_id_list)
-                if profile_obj:
-                    n = base64.b64decode(profile_obj.profileContent)
-                    if not os.path.isdir(os.path.dirname(provisionName)):
-                        os.makedirs(os.path.dirname(provisionName))
-                    with open(provisionName, 'wb') as f:
-                        f.write(n)
-                    return True, result
+            profile_obj = apple_obj.create_profile(developer_app_id, auth.get('certid'),
+                                                   provisionName.split("/")[-1],
+                                                   device_id_list)
+            if profile_obj:
+                n = base64.b64decode(profile_obj.profileContent)
+                if not os.path.isdir(os.path.dirname(provisionName)):
+                    os.makedirs(os.path.dirname(provisionName))
+                with open(provisionName, 'wb') as f:
+                    f.write(n)
+                return True, result
         except Exception as e:
             logger.error("ios developer make profile Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
@@ -302,5 +315,29 @@ class AppDeveloperApiV2(object):
 
         except Exception as e:
             logger.error("ios developer create app Failed Exception:%s" % e)
+            result['return_info'] = "%s" % e
+            return False, result
+
+    def modify_capability(self, app_obj, developer_app_id):
+        bundle_id = app_obj.bundleId
+        app_id = app_obj.app_id
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            if developer_app_id:
+                if app_obj.supersign_type == 0:
+                    result['code'] = apple_obj.disable_all_capability(developer_app_id)
+                else:
+                    result['code'] = apple_obj.enable_push_vpn_capability(developer_app_id)
+            else:
+                if app_obj.supersign_type == 0:
+                    bundle_obj = apple_obj.register_bundle_id(app_id, bundle_id + app_id)
+                else:
+                    bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundle_id + app_id)
+                developer_app_id = bundle_obj.id
+                result['aid'] = developer_app_id
+            return True, result
+        except Exception as e:
+            logger.error("ios developer modify_capability Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
             return False, result

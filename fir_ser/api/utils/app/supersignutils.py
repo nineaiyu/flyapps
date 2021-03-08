@@ -14,9 +14,24 @@ from api.utils.serializer import get_developer_udided
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit
 from api.utils.utils import file_format_path, delete_app_to_dev_and_file, delete_app_profile_file, \
-    send_ios_developer_active_status
+    send_ios_developer_active_status, get_profile_full_path
 
 logger = logging.getLogger(__file__)
+
+
+def resign_by_app_obj(app_obj, need_download_profile=True):
+    user_obj = app_obj.user_id
+    if app_obj.issupersign and user_obj.supersign_active:
+        for dappid_obj in DeveloperAppID.objects.filter(app_id=app_obj).all():
+            developer_obj = dappid_obj.developerid
+            developer_app_id = dappid_obj.aid
+            if need_download_profile:
+                IosUtils.modify_capability(developer_obj, app_obj, developer_app_id)
+                download_flag, result = IosUtils.exec_download_profile(app_obj, developer_obj, 2)
+            else:
+                download_flag = True
+            IosUtils.run_sign(user_obj, app_obj, developer_obj, download_flag, None,
+                              resign=True)
 
 
 def udid_bytes_to_dict(xml_stream):
@@ -247,11 +262,7 @@ class IosUtils(object):
         return developer_obj
 
     def download_profile(self, developer_app_id, device_id_list):
-        bundleId = self.app_obj.bundle_id
-        app_id = self.app_obj.app_id
-        device_udid = self.udid_info.get('udid')
-        device_name = self.udid_info.get('product')
-        return get_api_obj(self.auth).get_profile(bundleId, app_id, device_udid, device_name,
+        return get_api_obj(self.auth).get_profile(self.app_obj, self.udid_info,
                                                   self.get_profile_full_path(),
                                                   self.auth, developer_app_id, device_id_list)
 
@@ -261,75 +272,77 @@ class IosUtils(object):
         app_id = self.app_obj.app_id
         return get_api_obj(self.auth).create_app(bundleId, app_id)
 
+    @staticmethod
+    def modify_capability(developer_obj, app_obj, developer_app_id):
+        auth = get_auth_form_developer(developer_obj)
+        return get_api_obj(auth).modify_capability(app_obj, developer_app_id)
+
     def get_profile_full_path(self):
         cert_dir_name = make_app_uuid(self.user_obj, get_apple_udid_key(self.auth))
         cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name, "profile")
         if not os.path.isdir(cert_dir_path):
             os.makedirs(cert_dir_path)
-        provisionName = os.path.join(cert_dir_path, self.app_obj.app_id)
-        return provisionName + '.mobileprovision'
+        provision_name = os.path.join(cert_dir_path, self.app_obj.app_id)
+        return provision_name + '.mobileprovision'
 
-    def resign(self):
-        if not self.developer_obj:
-            logger.error("udid %s  app %s not exists apple developer" % (self.udid_info.get('udid'), self.app_obj))
-            return
-        app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
-        if app_udid_obj and app_udid_obj.is_signed:
-            apptodev_obj = APPToDeveloper.objects.filter(app_id=self.app_obj).first()
-            if apptodev_obj:
-                release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
-                if release_obj.release_id == apptodev_obj.release_file:
-                    logger.info("udid %s exists app_id %s" % (self.udid_info.get('udid'), self.app_obj))
-                    return
-        logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
-        fcount = 3
+    @staticmethod
+    def exec_download_profile(app_obj, developer_obj, sign_try_attempts=3):
         result = {}
-        while fcount > 0:
-            # apptodev_obj = APPToDeveloper.objects.filter(developerid=self.developer_obj, app_id=self.app_obj).first()
-            device_id_list = DeveloperDevicesID.objects.filter(app_id=self.app_obj,
-                                                               developerid=self.developer_obj).values_list('did')
-
+        developer_app_id = None
+        auth = get_auth_form_developer(developer_obj)
+        while sign_try_attempts > 0:
+            device_id_list = DeveloperDevicesID.objects.filter(app_id=app_obj,
+                                                               developerid=developer_obj).values_list('did')
             developer_app_id = None
-            developer_appid_obj = DeveloperAppID.objects.filter(developerid=self.developer_obj,
-                                                                app_id=self.app_obj).first()
+            developer_appid_obj = DeveloperAppID.objects.filter(developerid=developer_obj,
+                                                                app_id=app_obj).first()
             if developer_appid_obj:
                 developer_app_id = developer_appid_obj.aid
-            status, result = self.download_profile(developer_app_id, [did[0] for did in device_id_list])
+
+            status, result = get_api_obj(auth).get_profile(app_obj, None,
+                                                           get_profile_full_path(developer_obj, app_obj),
+                                                           auth, developer_app_id, [did[0] for did in device_id_list])
+
             if not status:
-                fcount -= 1
-                logger.warning("udid %s app %s  developer %s sign failed %s .try again " % (
-                    self.udid_info.get('udid'), self.app_obj, self.developer_obj, result))
+                sign_try_attempts -= 1
+                logger.warning("app %s  developer %s sign failed %s .try again " % (app_obj, developer_obj, result))
                 time.sleep(3)
             else:
-                fcount = -1
-        if fcount != -1:
-            logger.error("udid %s app %s  developer %s sign failed %s" % (
-                self.udid_info.get('udid'), self.app_obj, self.developer_obj, result))
-            self.developer_obj.is_actived = False
-            self.developer_obj.save()
-            send_ios_developer_active_status(self.developer_obj.user_id,
+                sign_try_attempts = -1
+        if sign_try_attempts != -1:
+            logger.error("app %s  developer %s sign failed %s" % (app_obj, developer_obj, result))
+            developer_obj.is_actived = False
+            developer_obj.save()
+            send_ios_developer_active_status(developer_obj.user_id,
                                              'app %s developer %s sign failed %s. disable this developer' % (
-                                                 self.app_obj, self.developer_obj, result))
-            self.get_developer_auth()
-            self.resign()
-            return
+                                                 app_obj, developer_obj, result))
+            return False, result
 
-        AppUDID.objects.update_or_create(app_id=self.app_obj, udid=self.udid_info.get('udid'),
-                                         defaults=self.udid_info)
+        if not developer_app_id and result.get("aid", None):
+            DeveloperAppID.objects.create(aid=result["aid"], developerid=developer_obj, app_id=app_obj)
 
-        file_format_path_name = file_format_path(self.user_obj, self.auth)
+        return True, result
+
+    @staticmethod
+    def exec_sign(user_obj, app_obj, developer_obj, random_file_name, release_obj):
+        auth = get_auth_form_developer(developer_obj)
+        file_format_path_name = file_format_path(user_obj, auth)
         my_local_key = file_format_path_name + ".key"
         app_dev_pem = file_format_path_name + ".pem"
-        ResignAppObj = ResignApp(my_local_key, app_dev_pem)
-
-        random_file_name = make_from_user_uuid(self.user_obj)
-
-        release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
-
+        resign_app_obj = ResignApp(my_local_key, app_dev_pem)
         org_file = os.path.join(MEDIA_ROOT, release_obj.release_id + ".ipa")
         new_file = os.path.join(MEDIA_ROOT, random_file_name + ".ipa")
-        ResignAppObj.sign(self.get_profile_full_path(), org_file, new_file)
+        status, result = resign_app_obj.sign(get_profile_full_path(developer_obj, app_obj), org_file, new_file,
+                                             app_obj.new_bundle_id)
+        if status:
+            logger.info("%s %s %s sign_ipa success" % (user_obj, developer_obj, app_obj))
+            return True
+        else:
+            logger.error(
+                "%s %s %s sign_ipa failed ERROR:%s" % (user_obj, developer_obj, app_obj, result.get("err_info")))
+            return False
 
+    def update_sign_data(self, random_file_name, release_obj, result):
         newdata = {
             "is_signed": True,
             "binary_file": random_file_name
@@ -385,8 +398,59 @@ class IosUtils(object):
             APPToDeveloper.objects.create(developerid=self.developer_obj, app_id=self.app_obj,
                                           binary_file=random_file_name, release_file=release_obj.release_id)
 
-        if not developer_app_id and result.get("aid", None):
-            DeveloperAppID.objects.create(aid=result["aid"], developerid=self.developer_obj, app_id=self.app_obj)
+        # if not developer_app_id and result.get("aid", None):
+        #     DeveloperAppID.objects.create(aid=result["aid"], developerid=self.developer_obj, app_id=self.app_obj)
+
+    @staticmethod
+    def run_sign(user_obj, app_obj, developer_obj, download_flag, obj, resign=False):
+        result = {}
+        start_time = time.time()
+        d_time1 = time.time()
+        if download_flag:
+            logger.info("app_id %s download profile success. time:%s" % (app_obj, d_time1 - start_time))
+            random_file_name = make_from_user_uuid(user_obj)
+
+            release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
+            if IosUtils.exec_sign(user_obj, app_obj, developer_obj, random_file_name, release_obj):
+                s_time1 = time.time()
+                logger.info("app_id %s exec sign ipa success. time:%s" % (app_obj, s_time1 - d_time1))
+                if not resign:
+                    obj.update_sign_data(random_file_name, release_obj, result)
+        else:
+            logger.error("app_id %s download profile failed. %s time:%s" % (app_obj, result, d_time1 - start_time))
+            return False
+        logger.info(
+            "app_id %s developer %s sign end... time:%s" % (app_obj, developer_obj, time.time() - start_time))
+        return True
+
+    def sign(self, sign_try_attempts=3, resign=False):
+        if not self.developer_obj:
+            logger.error("udid %s  app %s not exists apple developer" % (self.udid_info.get('udid'), self.app_obj))
+            return
+        if not resign:
+            app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
+            if app_udid_obj and app_udid_obj.is_signed:
+                apptodev_obj = APPToDeveloper.objects.filter(app_id=self.app_obj).first()
+                if apptodev_obj:
+                    release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
+                    if release_obj.release_id == apptodev_obj.release_file:
+                        logger.info("udid %s exists app_id %s" % (self.udid_info.get('udid'), self.app_obj))
+                        return
+            logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
+        else:
+            logger.info("resign app_id %s ,need resign" % self.app_obj)
+        call_flag = True
+        download_flag = False
+        while call_flag:
+            if self.developer_obj:
+                download_flag, result = IosUtils.exec_download_profile(self.app_obj, self.developer_obj,
+                                                                       sign_try_attempts)
+                if not download_flag:
+                    self.get_developer_auth()
+            else:
+                call_flag = False
+
+        IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, download_flag, self, resign=False)
 
     @staticmethod
     def disable_udid(udid_obj, app_id):

@@ -49,26 +49,6 @@
                 <el-button @click="save_app_domain()">保存</el-button>
             </el-form-item>
 
-            <el-form-item v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active" label-width="200px"
-                          label="自动超级签名">
-
-                <el-tooltip :content="supersign.msg" placement="top">
-                    <el-switch
-                            @change="supersignevent"
-                            v-model="supersign.val"
-                            active-color="#13ce66"
-                            inactive-color="#ff4949"
-                            active-value="on"
-                            inactive-value="off">
-                    </el-switch>
-                </el-tooltip>
-                <el-button @click="clean_app" v-if="currentapp.issupersign === 0 && currentapp.count !== 0"
-                           style="margin-left: 20px" size="small" type="info" plain>清理开发者账户脏数据
-                </el-button>
-                <el-link v-else :underline="false" style="margin-left: 20px">超级签名，iOS专用，需要配置好苹果开发者账户，方可开启</el-link>
-
-            </el-form-item>
-
             <el-form-item label-width="200px" label="微信内访问简易模式">
 
                 <el-tooltip :content="wxeasytypetip.msg" placement="top">
@@ -119,16 +99,13 @@
                 currentapp: {},
                 orgcurrentapp: {},
                 downtip: {'msg': ''},
-                supersign: {'msg': ''},
                 passwordtip: {'msg': ''},
                 wxeasytypetip: {'msg': ''},
                 wxredirecttip: {'msg': ''},
                 passwordflag: false,
                 showdownloadflag: false,
-                showsupersignflag: false,
                 wxeasytypeflag: false,
                 wxredirectflag: false,
-                clecount: 0,
                 wxeasy_disable: false,
                 defualt_dtitle: '专属下载页域名',
             }
@@ -137,13 +114,8 @@
             set_default_flag() {
                 this.passwordflag = false;
                 this.showdownloadflag = false;
-                this.showsupersignflag = false;
                 this.wxeasytypeflag = false;
                 this.wxredirectflag = false;
-            },
-            clean_app() {
-                this.saveappinfo({"clean": true});
-                this.currentapp.count = 0;
             },
             save_app_domain() {
                 this.saveappinfo({
@@ -184,16 +156,6 @@
                 }
                 this.showdownloadflag = true;
             },
-            setbuttonsignshow(currentapp) {
-                if (currentapp.issupersign === 1) {
-                    this.supersignevent("on");
-                    this.supersign.val = 'on';
-                } else {
-                    this.supersignevent("off");
-                    this.supersign.val = 'off';
-                }
-                this.showsupersignflag = true;
-            },
             setxeasytypeshow(currentapp) {
                 if (currentapp.wxeasytype === 1) {
                     this.wxeasytypeevent("on");
@@ -219,7 +181,6 @@
             setbuttondefault(currentapp) {
                 this.setbuttondefaltpass(currentapp);
                 this.setbuttondefaltshow(currentapp);
-                this.setbuttonsignshow(currentapp);
                 this.setxeasytypeshow(currentapp);
                 this.setwxredirectshow(currentapp);
             },
@@ -291,25 +252,6 @@
                         this.currentapp.isshow = 0;
                     }
                     this.downtip.msg = '下载页不可见'
-                }
-            },
-            supersignevent(newval) {
-                if (newval === "on") {
-                    if (this.showsupersignflag) {
-                        this.saveappinfo({
-                            "issupersign": 1,
-                        });
-                        this.currentapp.issupersign = 1;
-                    }
-                    this.supersign.msg = '已经开启超级签名';
-                } else {
-                    if (this.showsupersignflag) {
-                        this.saveappinfo({
-                            "issupersign": 0,
-                        });
-                        this.currentapp.issupersign = 0;
-                    }
-                    this.supersign.msg = '关闭'
                 }
             },
             showpasswordevent(newval) {

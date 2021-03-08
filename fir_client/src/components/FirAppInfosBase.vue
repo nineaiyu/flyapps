@@ -12,7 +12,7 @@
                         <span><i class="el-icon-cloudy"></i><b class="ng-binding">{{ appinfos.count_hits }}</b></span>
                         <span class="bundleid ng-binding">BundleID<b class="ng-binding">&nbsp;&nbsp;{{ appinfos.bundle_id }}</b></span>
                         <span class="version ng-scope">{{ master_release.minimum_os_version }}&nbsp; 或者高版本</span>
-                        <span class="short ng-scope" v-if="appinfos.issupersign">已经开启超级签</span>
+                        <span class="short ng-scope" v-if="appinfos.issupersign">超级签</span>
 
                         <el-popover
                                 placement="right"
@@ -53,10 +53,18 @@
                                 <a class="" ref="combo" @click="combo"><i class="el-icon-copy-document"
                                                                           style="transform:rotateX(180deg);"></i>应用合并</a>
                             </el-col>
+
                             <el-col :span="3"
                                     v-if="(appinfos.type===1 && master_release.release_type ===1) || appinfos.issupersign ">
                                 <a class="" ref="devices" @click="devices"><i class="el-icon-mobile-phone"></i>设备列表</a>
                             </el-col>
+
+                            <el-col :span="3"
+                                    v-if="(appinfos.type===1 && master_release.release_type ===1) || appinfos.issupersign ">
+                                <a class="" ref="supersign" @click="supersign"><i
+                                        class="el-icon-ship"></i>超级签名</a>
+                            </el-col>
+
 
                         </el-row>
                     </div>
@@ -169,6 +177,10 @@
                 } else {
                     this.$router.push({name: 'FirAppInfosdevices'});
                 }
+            },
+            supersign() {
+                this.setfunactive('supersign', 70);
+                this.$router.push({name: 'FirAppInfossupersign'});
             },
         }, created() {
 
@@ -357,11 +369,11 @@
         color: #4a4a4a
     }
 
-    .page-app .tabs-container .el-row .el-col:nth-child(5) {
+    .page-app .tabs-container .el-row .el-col:nth-child(6) {
         display: none
     }
 
-    .page-app .has-devices .tabs-container .el-row .el-col:nth-child(5) {
+    .page-app .has-devices .tabs-container .el-row .el-col:nth-child(6) {
         display: inline-block
     }
 

@@ -44,8 +44,8 @@ def get_profile_full_path(developer_obj, app_obj):
         pkey = developer_obj.issuer_id
     cert_dir_name = make_app_uuid(developer_obj.user_id, pkey)
     cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name, "profile")
-    provisionName = os.path.join(cert_dir_path, app_obj.app_id)
-    return provisionName + '.mobileprovision'
+    provision_name = os.path.join(cert_dir_path, app_obj.app_id)
+    return provision_name + '.mobileprovision'
 
 
 def delete_app_to_dev_and_file(developer_obj, app_id):

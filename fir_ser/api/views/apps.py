@@ -9,7 +9,7 @@ from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
 from django.db.models import Sum
-from api.utils.app.supersignutils import IosUtils
+from api.utils.app.supersignutils import IosUtils, resign_by_app_obj
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo
@@ -225,11 +225,32 @@ class AppInfoView(APIView):
                     apps_obj.name = data.get("name", apps_obj.name)
                     apps_obj.password = data.get("password", apps_obj.password)
                     apps_obj.isshow = data.get("isshow", apps_obj.isshow)
-                    apps_obj.domain_name = data.get("domain_name", apps_obj.domain_name)
-                    if request.user.domain_name and len(request.user.domain_name) > 3:
+                    domain_name = data.get("domain_name", None)
+                    if domain_name:
+                        domain_name_list = domain_name.strip(' ').replace("http://", "").replace("https://", "").split(
+                            "/")
+                        if len(domain_name_list) > 0:
+                            domain_name = domain_name_list[0]
+                            if len(domain_name) > 3 and is_valid_domain(domain_name):
+                                apps_obj.domain_name = data.get("domain_name", apps_obj.domain_name)
+
+                    if domain_name == '':
+                        apps_obj.domain_name = None
+
+                    if (request.user.domain_name and len(request.user.domain_name) > 3) or (
+                            apps_obj.domain_name and len(apps_obj.domain_name) > 3):
                         apps_obj.wxeasytype = data.get("wxeasytype", apps_obj.wxeasytype)
                     else:
                         apps_obj.wxeasytype = 1
+
+                    if apps_obj.issupersign:
+                        if apps_obj.supersign_type in [x[0] for x in list(apps_obj.supersign_type_choices)]:
+                            apps_obj.supersign_type = data.get("supersign_type", apps_obj.supersign_type)
+                        new_bundle_id = data.get("new_bundle_id", None)
+                        if new_bundle_id and new_bundle_id != apps_obj.bundle_id and len(new_bundle_id) > 3:
+                            apps_obj.new_bundle_id = new_bundle_id
+                        if new_bundle_id == '':
+                            apps_obj.new_bundle_id = None
 
                     apps_obj.wxredirect = data.get("wxredirect", apps_obj.wxredirect)
                     if apps_obj.type == 1 and data.get('issupersign', -1) != -1:
@@ -249,6 +270,12 @@ class AppInfoView(APIView):
                         apps_obj.issupersign = data.get("issupersign", apps_obj.issupersign)
                     logger.info("app_id:%s update new data:%s" % (app_id, apps_obj.__dict__))
                     apps_obj.save()
+                    if apps_obj.issupersign:
+                        if apps_obj.supersign_type != data.get("supersign_type", apps_obj.supersign_type):
+                            resign_by_app_obj(apps_obj)
+                        if apps_obj.new_bundle_id != data.get("new_bundle_id", apps_obj.new_bundle_id):
+                            resign_by_app_obj(apps_obj, need_download_profile=False)
+
                     del_cache_response_by_short(apps_obj.app_id)
                 except Exception as e:
                     logger.error("app_id:%s update Exception:%s" % (app_id, e))

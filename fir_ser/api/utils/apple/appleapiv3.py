@@ -731,7 +731,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             return True
         return False
 
-    def __enable_capability(self, bundle_id):
+    def enable_push_vpn_capability(self, bundle_id):
         # 'PUSH_NOTIFICATIONS',  # PERSONAL_VPN
         req = super().enable_capability(bundle_id, 'PUSH_NOTIFICATIONS')
         if self.__do_success(req, 201):
@@ -740,7 +740,14 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
                 return True
         return False
 
-    def __register_bundle_id(self, bundle_id_name, bundle_id_identifier, platform="IOS", seed_id=''):
+    def disable_all_capability(self, bundle_id):
+        # 'PUSH_NOTIFICATIONS',  # PERSONAL_VPN
+        req = super().disable_capability(bundle_id)
+        if self.__do_success(req, 204):
+            return True
+        return False
+
+    def register_bundle_id(self, bundle_id_name, bundle_id_identifier, platform="IOS", seed_id=''):
         identifier_obj = self.list_bundle_ids_by_identifier(bundle_id_identifier)
         if isinstance(identifier_obj, BundleIds):
             req = self.modify_bundle_id(identifier_obj.id, bundle_id_name)
@@ -750,9 +757,9 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             return self.__bundle_ids_store(req, 201)
 
     def register_bundle_id_enable_capability(self, bundle_id_name, bundle_id_identifier, platform="IOS", seed_id=''):
-        bundle_ids = self.__register_bundle_id(bundle_id_name, bundle_id_identifier, platform, seed_id)
+        bundle_ids = self.register_bundle_id(bundle_id_name, bundle_id_identifier, platform, seed_id)
         if isinstance(bundle_ids, BundleIds):
-            if self.__enable_capability(bundle_ids.id):
+            if self.enable_push_vpn_capability(bundle_ids.id):
                 return bundle_ids
 
     def delete_bundle_by_identifier(self, identifier):

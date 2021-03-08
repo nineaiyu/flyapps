@@ -96,6 +96,13 @@ const router = new VueRouter({
                             // component: FirAppInfoscombo,
                             component: () => import("@/components/FirAppInfoscombo"),
 
+                        },
+                        {
+                            path: 'supersign',
+                            name: 'FirAppInfossupersign',
+                            // component: FirAppInfossupersign,
+                            component: () => import("@/components/FirAppInfossupersign"),
+
                         }
                     ]
                 }

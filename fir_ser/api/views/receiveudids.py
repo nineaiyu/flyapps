@@ -26,7 +26,7 @@ class IosUDIDView(View):
             if app_info:
                 if app_info.issupersign and app_info.user_id.supersign_active:
                     ios_obj = IosUtils(format_udid_info, app_info.user_id, app_info)
-                    ios_obj.resign()
+                    ios_obj.sign()
                 else:
                     return HttpResponsePermanentRedirect(
                         "%s/%s" % (server_domain, short))

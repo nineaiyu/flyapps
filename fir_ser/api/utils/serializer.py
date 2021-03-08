@@ -39,6 +39,14 @@ class AppsSerializer(serializers.ModelSerializer):
             obj.has_combo.has_combo = None
             return AppsSerializer(obj.has_combo, context=self.context).data
 
+    sign_type_choice = serializers.SerializerMethodField()
+
+    def get_sign_type_choice(self, obj):
+        sign_type_choice = []
+        for auth_t in list(obj.supersign_type_choices):
+            sign_type_choice.append({'id': auth_t[0], 'name': auth_t[1]})
+        return sign_type_choice
+
     master_release = serializers.SerializerMethodField()
 
     def get_master_release(self, obj):

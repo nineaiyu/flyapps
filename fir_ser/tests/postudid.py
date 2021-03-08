@@ -37,7 +37,7 @@ udid_lists = [
 
 def postaaa(shorts='bncz'):
     for udid in udid_lists:
-        udid = udid + str(random.choice(short)) + str(random.choice(short)) + str(random.choice(short))+shorts
+        udid = udid + str(random.choice(short)) + str(random.choice(short)) + str(random.choice(short)) + shorts
         data = '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n\t<key>PRODUCT</key>\n\t<string>iPhone9,1</string>\n\t<key>SERIAL</key>\n\t<string>F71YD58GHG74</string>\n\t<key>UDID</key>\n\t<string>%s</string>\n\t<key>VERSION</key>\n\t<string>17E262</string>\n</dict>\n</plist>\n' % (
             udid)
         # uri = "https://app.hehelucky.cn/udid/%s" % (random.choice(short))
