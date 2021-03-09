@@ -299,22 +299,34 @@ class IosUtils(object):
     def exec_download_profile(app_obj, developer_obj, udid_info, sign_try_attempts=3):
         result = {}
         developer_app_id = None
+        add_did_flag = False
         auth = get_auth_form_developer(developer_obj)
         while sign_try_attempts > 0:
             logger.info("exec_download_profile appid:%s developer:%s sign_try_attempts:%s" % (
                 app_obj, developer_obj, sign_try_attempts))
             device_id_list = DeveloperDevicesID.objects.filter(app_id=app_obj,
                                                                developerid=developer_obj).values_list('did')
+            device_id_lists = [did[0] for did in device_id_list]
             developer_app_id = None
             developer_appid_obj = DeveloperAppID.objects.filter(developerid=developer_obj,
                                                                 app_id=app_obj).first()
             if developer_appid_obj:
                 developer_app_id = developer_appid_obj.aid
+            if udid_info:
+                sync_device_obj = UDIDsyncDeveloper.objects.filter(udid=udid_info.get('udid'),
+                                                                   developerid=developer_obj).first()
+                if sync_device_obj:
+                    device_id_lists.append(sync_device_obj.serial)
+                    udid_info = None
+                    add_did_flag = True
+                    logger.info(
+                        "app %s device %s already in developer %s" % (app_obj, sync_device_obj.serial, developer_obj))
 
             status, result = get_api_obj(auth).get_profile(app_obj, udid_info,
                                                            get_profile_full_path(developer_obj, app_obj),
-                                                           auth, developer_app_id, [did[0] for did in device_id_list])
-
+                                                           auth, developer_app_id, device_id_lists)
+            if add_did_flag:
+                result['did'] = sync_device_obj.serial
             if not status:
                 sign_try_attempts -= 1
                 logger.warning("app %s  developer %s sign failed %s .try again " % (app_obj, developer_obj, result))
