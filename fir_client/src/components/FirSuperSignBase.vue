@@ -690,6 +690,12 @@
                 }, params)
             },
             iosdevicesudidFun(action, data) {
+                const loading = this.$loading({
+                    lock: true,
+                    text: '执行中,请耐心等待...',
+                    spinner: 'el-icon-loading',
+                    background: 'rgba(0, 0, 0, 0.7)'
+                });
                 iosdevicesudid(data => {
                     if (data.code === 1000) {
                         if (action !== "DELETE") {
@@ -697,6 +703,7 @@
                             this.pagination.total = data.count;
                         }
                     }
+                    loading.close()
                 }, {
                     "methods": action, "data": data
                 })

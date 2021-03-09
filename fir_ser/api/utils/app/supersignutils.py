@@ -28,7 +28,7 @@ def resign_by_app_obj(app_obj, need_download_profile=True):
             d_time = time.time()
             if need_download_profile:
                 IosUtils.modify_capability(developer_obj, app_obj, developer_app_id)
-                download_flag, result = IosUtils.exec_download_profile(app_obj, developer_obj, 2)
+                download_flag, result = IosUtils.exec_download_profile(app_obj, developer_obj, None, 2)
             else:
                 download_flag = True
             IosUtils.run_sign(user_obj, app_obj, developer_obj, download_flag, None, d_time, {}, True)
@@ -296,7 +296,7 @@ class IosUtils(object):
         return provision_name + '.mobileprovision'
 
     @staticmethod
-    def exec_download_profile(app_obj, developer_obj, sign_try_attempts=3):
+    def exec_download_profile(app_obj, developer_obj, udid_info, sign_try_attempts=3):
         result = {}
         developer_app_id = None
         auth = get_auth_form_developer(developer_obj)
@@ -311,7 +311,7 @@ class IosUtils(object):
             if developer_appid_obj:
                 developer_app_id = developer_appid_obj.aid
 
-            status, result = get_api_obj(auth).get_profile(app_obj, None,
+            status, result = get_api_obj(auth).get_profile(app_obj, udid_info,
                                                            get_profile_full_path(developer_obj, app_obj),
                                                            auth, developer_app_id, [did[0] for did in device_id_list])
 
@@ -443,7 +443,7 @@ class IosUtils(object):
         d_result['msg'] = msg
         return True, d_result
 
-    def sign(self, sign_try_attempts=3, resign=False):
+    def sign(self, sign_try_attempts=3):
         d_result = {'code': 0, 'msg': 'success'}
         state, used_num = check_app_sign_limit(self.app_obj)
         if not state:
@@ -459,20 +459,18 @@ class IosUtils(object):
             d_result['msg'] = msg
             logger.error(d_result)
             return False, d_result
-        if not resign:
-            app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
-            if app_udid_obj and app_udid_obj.is_signed:
-                apptodev_obj = APPToDeveloper.objects.filter(app_id=self.app_obj).first()
-                if apptodev_obj:
-                    release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
-                    if release_obj.release_id == apptodev_obj.release_file:
-                        msg = "udid %s exists app_id %s" % (self.udid_info.get('udid'), self.app_obj)
-                        d_result['msg'] = msg
-                        logger.info(d_result)
-                        return True, d_result
-            logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
-        else:
-            logger.info("resign app_id %s ,need resign" % self.app_obj)
+        app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
+        if app_udid_obj and app_udid_obj.is_signed:
+            apptodev_obj = APPToDeveloper.objects.filter(app_id=self.app_obj).first()
+            if apptodev_obj:
+                release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
+                if release_obj.release_id == apptodev_obj.release_file:
+                    msg = "udid %s exists app_id %s" % (self.udid_info.get('udid'), self.app_obj)
+                    d_result['msg'] = msg
+                    logger.info(d_result)
+                    return True, d_result
+        logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
+
         call_flag = True
         download_flag = False
         count = 1
@@ -483,7 +481,7 @@ class IosUtils(object):
                 "call_loop download_profile appid:%s developer:%s count:%s" % (self.app_obj, self.developer_obj, count))
             if self.developer_obj:
                 download_flag, result = IosUtils.exec_download_profile(self.app_obj, self.developer_obj,
-                                                                       sign_try_attempts)
+                                                                       self.udid_info, sign_try_attempts)
                 if download_flag:
                     call_flag = False
                 else:
