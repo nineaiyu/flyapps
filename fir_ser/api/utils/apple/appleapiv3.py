@@ -10,12 +10,20 @@ import os
 import datetime
 import requests
 import jwt
+import logging
 from collections import namedtuple
+
+logger = logging.getLogger(__file__)
 
 
 # https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api
 #  https://appstoreconnect.apple.com/access/api 去申请秘钥
 #
+
+def request_format_log(req):
+    logger.info("url:%s header:%s code:%s body:%s" % (req.url, req.headers, req.status_code, req.content))
+    return req
+
 
 class DevicesAPI(object):
     # https://developer.apple.com/documentation/appstoreconnectapi/devices
@@ -40,7 +48,7 @@ class DevicesAPI(object):
         if query_parameters:
             for k, v in query_parameters.items():
                 params[k] = v
-        return requests.get(self.devices_url, params=params, headers=self.headers)
+        return request_format_log(requests.get(self.devices_url, params=params, headers=self.headers))
 
     def list_enabled_devices(self):
         return self.list_devices({"filter[status]": "ENABLED"})
@@ -73,7 +81,7 @@ class DevicesAPI(object):
                 }
             }
         }
-        return requests.post(self.devices_url, json=json, headers=self.headers)
+        return request_format_log(requests.post(self.devices_url, json=json, headers=self.headers))
 
     def read_device_information(self, device_id):
         """
@@ -88,7 +96,7 @@ class DevicesAPI(object):
         params = {
             "fields[devices]": "addedDate, deviceClass, model, name, platform, status, udid",
         }
-        return requests.get(base_url, params=params, headers=self.headers)
+        return request_format_log(requests.get(base_url, params=params, headers=self.headers))
 
     def enabled_device(self, device_id, device_name):
         return self.modify_registered_device(device_id, device_name, 'ENABLED')
@@ -119,7 +127,7 @@ class DevicesAPI(object):
                 }
             }
         }
-        return requests.patch(base_url, json=json, headers=self.headers)
+        return request_format_log(requests.patch(base_url, json=json, headers=self.headers))
 
 
 class BundleIDsAPI(object):
@@ -151,7 +159,7 @@ class BundleIDsAPI(object):
                 }
             }
         }
-        return requests.post(self.bundle_ids_url, json=json, headers=self.headers)
+        return request_format_log(requests.post(self.bundle_ids_url, json=json, headers=self.headers))
 
     def delete_bundle_id_by_id(self, bundle_id):
         """
@@ -165,7 +173,7 @@ class BundleIDsAPI(object):
         """
         base_url = '%s/%s' % (self.bundle_ids_url, bundle_id)
         json = {}
-        return requests.delete(base_url, json=json, headers=self.headers)
+        return request_format_log(requests.delete(base_url, json=json, headers=self.headers))
 
     def list_bundle_ids(self, query_parameters=None):
         """
@@ -183,7 +191,7 @@ class BundleIDsAPI(object):
         if query_parameters:
             for k, v in query_parameters.items():
                 params[k] = v
-        return requests.get(self.bundle_ids_url, params=params, headers=self.headers)
+        return request_format_log(requests.get(self.bundle_ids_url, params=params, headers=self.headers))
 
     def list_bundle_id_by_identifier(self, identifier):
         return self.list_bundle_ids({"filter[identifier]": identifier})
@@ -212,7 +220,7 @@ class BundleIDsAPI(object):
                 }
             }
         }
-        return requests.patch(base_url, json=json, headers=self.headers)
+        return request_format_log(requests.patch(base_url, json=json, headers=self.headers))
 
 
 class BundleIDsCapabilityAPI(object):
@@ -221,7 +229,7 @@ class BundleIDsCapabilityAPI(object):
         self.headers = jwt_headers
         self.bundle_ids_capability_url = '%s/bundleIdCapabilities' % base_uri
 
-    def disable_capability(self, bundle_id):
+    def disable_capability(self, bundle_id, capability_type):
         """
         :param bundle_id:
         :return:
@@ -231,9 +239,9 @@ class BundleIDsCapabilityAPI(object):
             404 ErrorResponse Not Found Resource not found. Content-Type: application/json
             409 ErrorResponse Conflict The provided resource data is not valid. Content-Type: application/json
         """
-        base_url = '%s/%s' % (self.bundle_ids_capability_url, bundle_id)
+        base_url = '%s/%s_%s' % (self.bundle_ids_capability_url, bundle_id, capability_type)
         json = {}
-        return requests.delete(base_url, json=json, headers=self.headers)
+        return request_format_log(requests.delete(base_url, json=json, headers=self.headers))
 
     def enable_capability(self, bundle_id, capability_type):
         """
@@ -262,7 +270,7 @@ class BundleIDsCapabilityAPI(object):
                 }
             }
         }
-        return requests.post(self.bundle_ids_capability_url, json=json, headers=self.headers)
+        return request_format_log(requests.post(self.bundle_ids_capability_url, json=json, headers=self.headers))
 
 
 class ProfilesAPI(object):
@@ -314,7 +322,7 @@ class ProfilesAPI(object):
                 }
             }
         }
-        return requests.post(self.profiles_url, json=json, headers=self.headers)
+        return request_format_log(requests.post(self.profiles_url, json=json, headers=self.headers))
 
     def delete_profile(self, profile_id):
         """
@@ -328,7 +336,7 @@ class ProfilesAPI(object):
         """
         base_url = '%s/%s' % (self.profiles_url, profile_id)
         json = {}
-        return requests.delete(base_url, json=json, headers=self.headers)
+        return request_format_log(requests.delete(base_url, json=json, headers=self.headers))
 
     def download_profile(self, profile_id):
         # n=base64.b64decode(profileContent)
@@ -353,7 +361,7 @@ class ProfilesAPI(object):
         if query_parameters:
             for k, v in query_parameters.items():
                 params[k] = v
-        return requests.get(self.profiles_url, params=params, headers=self.headers)
+        return request_format_log(requests.get(self.profiles_url, params=params, headers=self.headers))
 
     def list_profile_by_profile_id(self, profile_id):
         return self.list_profiles({"filter[id]": profile_id, "include": ""})
@@ -388,7 +396,7 @@ class CertificatesAPI(object):
                 }
             }
         }
-        return requests.post(self.certificates_url, json=json, headers=self.headers)
+        return request_format_log(requests.post(self.certificates_url, json=json, headers=self.headers))
 
     def download_certificate(self, certificate_id):
         # req.json()['data'][0]['attributes']['certificateContent']
@@ -413,7 +421,7 @@ class CertificatesAPI(object):
         if query_parameters:
             for k, v in query_parameters.items():
                 params[k] = v
-        return requests.get(self.certificates_url, params=params, headers=self.headers)
+        return request_format_log(requests.get(self.certificates_url, params=params, headers=self.headers))
 
     def list_certificate_by_certificate_id(self, certificate_id):
         return self.list_certificate({"filter[id]": certificate_id, })
@@ -430,7 +438,7 @@ class CertificatesAPI(object):
         """
         base_url = '%s/%s' % (self.certificates_url, certificate_id)
         json = {}
-        return requests.delete(base_url, json=json, headers=self.headers)
+        return request_format_log(requests.delete(base_url, json=json, headers=self.headers))
 
 
 class BaseInfoObj(object):
@@ -740,11 +748,13 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
                 return True
         return False
 
-    def disable_all_capability(self, bundle_id):
+    def disable_push_vpn_capability(self, bundle_id):
         # 'PUSH_NOTIFICATIONS',  # PERSONAL_VPN
-        req = super().disable_capability(bundle_id)
+        req = super().disable_capability(bundle_id, 'PUSH_NOTIFICATIONS')
         if self.__do_success(req, 204):
-            return True
+            req = super().disable_capability(bundle_id, 'PERSONAL_VPN')
+            if self.__do_success(req, 204):
+                return True
         return False
 
     def register_bundle_id(self, bundle_id_name, bundle_id_identifier, platform="IOS", seed_id=''):

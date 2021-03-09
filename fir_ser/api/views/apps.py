@@ -218,12 +218,15 @@ class AppInfoView(APIView):
                 return Response(res.dict)
             else:
                 try:
+                    do_sign_flag = 0
                     apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
                     logger.info("app_id:%s update old data:%s" % (app_id, apps_obj.__dict__))
                     apps_obj.description = data.get("description", apps_obj.description)
                     apps_obj.short = data.get("short", apps_obj.short)
                     apps_obj.name = data.get("name", apps_obj.name)
                     apps_obj.password = data.get("password", apps_obj.password)
+                    apps_obj.supersign_limit_number = data.get("supersign_limit_number",
+                                                               apps_obj.supersign_limit_number)
                     apps_obj.isshow = data.get("isshow", apps_obj.isshow)
                     domain_name = data.get("domain_name", None)
                     if domain_name:
@@ -245,11 +248,17 @@ class AppInfoView(APIView):
 
                     if apps_obj.issupersign:
                         if apps_obj.supersign_type in [x[0] for x in list(apps_obj.supersign_type_choices)]:
+                            if apps_obj.supersign_type != data.get("supersign_type", apps_obj.supersign_type):
+                                do_sign_flag = 1
                             apps_obj.supersign_type = data.get("supersign_type", apps_obj.supersign_type)
                         new_bundle_id = data.get("new_bundle_id", None)
                         if new_bundle_id and new_bundle_id != apps_obj.bundle_id and len(new_bundle_id) > 3:
+                            if new_bundle_id != apps_obj.new_bundle_id:
+                                do_sign_flag = 2
                             apps_obj.new_bundle_id = new_bundle_id
                         if new_bundle_id == '':
+                            if new_bundle_id != apps_obj.new_bundle_id:
+                                do_sign_flag = 2
                             apps_obj.new_bundle_id = None
 
                     apps_obj.wxredirect = data.get("wxredirect", apps_obj.wxredirect)
@@ -271,9 +280,9 @@ class AppInfoView(APIView):
                     logger.info("app_id:%s update new data:%s" % (app_id, apps_obj.__dict__))
                     apps_obj.save()
                     if apps_obj.issupersign:
-                        if apps_obj.supersign_type != data.get("supersign_type", apps_obj.supersign_type):
+                        if do_sign_flag == 1:
                             resign_by_app_obj(apps_obj)
-                        if apps_obj.new_bundle_id != data.get("new_bundle_id", apps_obj.new_bundle_id):
+                        if do_sign_flag == 2:
                             resign_by_app_obj(apps_obj, need_download_profile=False)
 
                     del_cache_response_by_short(apps_obj.app_id)

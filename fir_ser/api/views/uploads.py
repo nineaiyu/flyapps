@@ -121,7 +121,7 @@ class AppAnalyseView(APIView):
                 app_info = Apps.objects.filter(bundle_id=data.get("bundleid")).first()
                 if app_info:
                     if app_info.issupersign and app_info.user_id.supersign_active:
-                        resign_by_app_obj(app_info)
+                        resign_by_app_obj(app_info, need_download_profile=False)
 
             else:
                 storage.delete_file(app_tmp_filename)

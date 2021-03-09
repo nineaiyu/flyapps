@@ -117,6 +117,7 @@ class Apps(models.Model):
     supersign_type = models.SmallIntegerField(choices=supersign_type_choices, default=0, verbose_name="签名类型")
     new_bundle_id = models.CharField(max_length=64, blank=True, null=True, verbose_name="new_bundle_id",
                                      help_text="用于超级签某些因素下需要修改包名")
+    supersign_limit_number = models.IntegerField(verbose_name="签名使用限额", default=0)
     wxredirect = models.BigIntegerField(verbose_name="微信内第三方链接自动跳转", default=True)
     wxeasytype = models.BigIntegerField(verbose_name="微信内简易模式，避免微信封停", default=True)
     domain_name = models.CharField(verbose_name="专属访问域名", blank=True, null=True, max_length=64)

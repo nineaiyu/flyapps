@@ -129,8 +129,10 @@ class ResignApp(object):
             info_plist_properties = {}
         properties = ""
         for k, v in info_plist_properties.items():
-            properties += " %s=%s " % (k, v)
-        self.cmd = self.cmd + " -i '%s' -p '%s' -o '%s'  '%s'" % (properties, new_profile, new_ipa, org_ipa)
+            properties += "%s=%s," % (k, v)
+        if properties:
+            properties = " -i '%s' " % properties[0:-1]
+        self.cmd = self.cmd + " %s -p '%s' -o '%s'  '%s'" % (properties, new_profile, new_ipa, org_ipa)
         return exec_shell(self.cmd)
 
 
@@ -213,7 +215,7 @@ class AppDeveloperApiV2(object):
     def get_profile(self, app_obj, udid_info, provisionName, auth, developer_app_id,
                     device_id_list):
         result = {}
-        bundle_id = app_obj.bundleId
+        bundle_id = app_obj.bundle_id
         app_id = app_obj.app_id
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
@@ -319,14 +321,14 @@ class AppDeveloperApiV2(object):
             return False, result
 
     def modify_capability(self, app_obj, developer_app_id):
-        bundle_id = app_obj.bundleId
+        bundle_id = app_obj.bundle_id
         app_id = app_obj.app_id
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             if developer_app_id:
                 if app_obj.supersign_type == 0:
-                    result['code'] = apple_obj.disable_all_capability(developer_app_id)
+                    result['code'] = apple_obj.disable_push_vpn_capability(developer_app_id)
                 else:
                     result['code'] = apple_obj.enable_push_vpn_capability(developer_app_id)
             else:

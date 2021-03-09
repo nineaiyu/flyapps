@@ -232,71 +232,84 @@
             gomobileaction() {
                 window.location.href = this.mobileprovision;
             },
+            check_msg(callback) {
+                if (this.$route.query.msg && this.$route.query.udid) {
+                    this.wrong = true;
+                    this.msg = this.$route.query.msg;
+                    alert(this.msg)
+                } else (
+                    callback()
+                )
+            },
             download() {
                 if (this.currentappinfo.app_id) {
-                    this.isdownload = true;
-                    getdownloadurl(res => {
-                        if (res.code === 1000) {
-                            if (res.data.download_url === "") {
-                                window.location.href = this.full_url.split("?")[0];
-                                return
-                            }
-                            if (this.currentappinfo.type === 1) {
-                                if (this.currentappinfo.issupersign) {
-                                    if (this.$route.query.udid && this.udid === this.$route.query.udid) {
-                                        if (this.agent !== '') {
-                                            let download_url = res.data.download_url;
-                                            this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
+                    // eslint-disable-next-line no-unused-vars
+                    this.check_msg(_ => {
+                        this.isdownload = true;
+                        getdownloadurl(res => {
+                            if (res.code === 1000) {
+                                if (res.data.download_url === "") {
+                                    window.location.href = this.full_url.split("?")[0];
+                                    return
+                                }
+                                if (this.currentappinfo.type === 1) {
+                                    if (this.currentappinfo.issupersign) {
+                                        if (this.$route.query.udid && this.udid === this.$route.query.udid) {
+                                            if (this.agent !== '') {
+                                                let download_url = res.data.download_url;
+                                                this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
+                                                // eslint-disable-next-line no-unused-vars
+                                                this.timmer = setTimeout(data => {
+                                                    this.gomobile = false;
+                                                }, 5000);
+                                            }
+                                        } else {
+                                            if (this.agent !== '') {
+                                                this.downloadurl = res.data.download_url;
+                                                window.location.href = this.downloadurl;
+                                                if (res.data.extra_url !== "") {
+                                                    // eslint-disable-next-line no-unused-vars
+                                                    this.timmer = setTimeout(data => {
+                                                        window.location.href = res.data.extra_url;
+                                                    }, 3000);
+                                                }
+
+                                                return;
+                                            }
+                                        }
+                                    } else {
+                                        let download_url = res.data.download_url;
+                                        this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
+                                        if (res.data.extra_url !== "") {
+                                            this.mobileprovision = res.data.extra_url;
                                             // eslint-disable-next-line no-unused-vars
                                             this.timmer = setTimeout(data => {
                                                 this.gomobile = false;
                                             }, 5000);
                                         }
-                                    } else {
-                                        if (this.agent !== '') {
-                                            this.downloadurl = res.data.download_url;
-                                            window.location.href = this.downloadurl;
-                                            if (res.data.extra_url !== "") {
-                                                // eslint-disable-next-line no-unused-vars
-                                                this.timmer = setTimeout(data => {
-                                                    window.location.href = res.data.extra_url;
-                                                }, 3000);
-                                            }
-
-                                            return;
-                                        }
                                     }
                                 } else {
-                                    let download_url = res.data.download_url;
-                                    this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
-                                    if (res.data.extra_url !== "") {
-                                        this.mobileprovision = res.data.extra_url;
-                                        // eslint-disable-next-line no-unused-vars
-                                        this.timmer = setTimeout(data => {
-                                            this.gomobile = false;
-                                        }, 5000);
+                                    if (this.agent !== '') {
+                                        this.downloadurl = res.data.download_url;
                                     }
                                 }
-                            } else {
-                                if (this.agent !== '') {
-                                    this.downloadurl = res.data.download_url;
-                                }
-                            }
 
-                            window.location.href = this.downloadurl;
-                        } else {
-                            this.isdownload = false;
-                            alert("密码错误，或者下载链接失效")
-                        }
-                    }, {
-                        'data': {
-                            'token': this.mcurrentappinfo.download_token,
-                            'short': this.currentappinfo.short,
-                            'release_id': this.mcurrentappinfo.release_id,
-                            'password': this.password,
-                            'udid': this.udid,
-                        },
-                        'app_id': this.currentappinfo.app_id
+                                window.location.href = this.downloadurl;
+                            } else {
+                                this.isdownload = false;
+                                alert("密码错误，或者下载链接失效");
+                                window.location.reload();
+                            }
+                        }, {
+                            'data': {
+                                'token': this.mcurrentappinfo.download_token,
+                                'short': this.currentappinfo.short,
+                                'release_id': this.mcurrentappinfo.release_id,
+                                'password': this.password,
+                                'udid': this.udid,
+                            },
+                            'app_id': this.currentappinfo.app_id
+                        })
                     })
                 }
             },

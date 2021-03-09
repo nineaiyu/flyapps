@@ -25,6 +25,22 @@
 
             </el-form-item>
 
+            <el-form-item label-width="200px" label="签名限额"
+                          v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active ">
+
+
+                <el-tooltip content="本应用签名使用额度，超过该额度，新设备将无法安装本应用" placement="top">
+                    <el-input-number v-model="currentapp.supersign_limit_number" :disabled="supersign_disable"
+                                     :placeholder="defualt_dtitle" :min="0"
+                                     style="width: 60%;margin-right: 10px" label="签名限额"></el-input-number>
+                </el-tooltip>
+
+                <el-button @click="saveappinfo({supersign_limit_number:currentapp.supersign_limit_number})"
+                           :disabled="supersign_disable"
+                >保存
+                </el-button>
+            </el-form-item>
+
 
             <el-form-item label-width="200px" label="签名类型"
                           v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active ">
@@ -87,6 +103,12 @@
                 this.currentapp.count = 0;
             },
             saveappinfo(data) {
+                const loading = this.$loading({
+                    lock: true,
+                    text: '执行中,请耐心等待...',
+                    spinner: 'el-icon-loading',
+                    background: 'rgba(0, 0, 0, 0.7)'
+                });
                 apputils(data => {
                     if (data.code === 1000) {
                         this.$message.success('数据更新成功');
@@ -94,6 +116,7 @@
                         this.$message.error('操作失败,' + data.msg);
                         this.$store.dispatch('doucurrentapp', this.orgcurrentapp);
                     }
+                    loading.close();
                 }, {
                     "methods": "PUT",
                     "app_id": this.currentapp.app_id,
