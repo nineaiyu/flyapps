@@ -40,7 +40,7 @@ def check_app_sign_limit(app_obj):
     if limit_num <= 0:
         flag = True
     else:
-        flag = used_num <= limit_num
+        flag = used_num < limit_num
     return flag, used_num
 
 
