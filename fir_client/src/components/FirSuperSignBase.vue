@@ -283,12 +283,12 @@
                         clearable
                         placeholder="输入UDID"/>
                 <el-input
-                        style="width: 20%;margin-right: 30px;margin-bottom: 10px"
+                        style="width: 30%;margin-right: 30px;margin-bottom: 10px"
                         v-model="Bundleidsearch"
                         clearable
                         placeholder="输入BundleID"/>
                 <el-input
-                        style="width: 20%;margin-right: 30px;margin-bottom: 10px"
+                        style="width: 23%;margin-right: 30px;margin-bottom: 10px"
                         v-model="appidseach"
                         clearable
                         placeholder="输入用户APPID"/>
@@ -344,7 +344,7 @@
                         clearable
                         placeholder="输入UDID"/>
                 <el-input
-                        style="width: 20%;margin-right: 30px;margin-bottom: 10px"
+                        style="width: 30%;margin-right: 30px;margin-bottom: 10px"
                         v-model="Bundleidsearch"
                         clearable
                         placeholder="输入BundleID"/>
