@@ -26,7 +26,9 @@
                         </el-breadcrumb-item>
                         <el-breadcrumb-item :to="{ name:'FirApps'}"><i class="el-icon-apple elbi"></i>
                         </el-breadcrumb-item>
-                        <el-breadcrumb-item v-if="$store.state.currentapp.name">{{ $store.state.currentapp.name}}
+                        <el-breadcrumb-item v-if="$store.state.currentapp.name"
+                                            :to="{name: 'FirAppInfostimeline', params: {id: $store.state.currentapp.app_id}}">
+                            {{ $store.state.currentapp.name}}
                         </el-breadcrumb-item>
                     </el-breadcrumb>
 

@@ -2,7 +2,11 @@
 
 
     <div style="margin-top: 20px;width: 90%;margin-left: 8%">
-        <h2>UDID列表及用户信息</h2>
+        <el-link type="primary" v-if="this.currentapp.issupersign" style="margin-bottom: 30px;font-size: x-large"
+                 @click="$router.push({name:'FirSuperSignBase',params:{act:'useddevices'},query:{bundleid: currentapp.bundle_id}})">
+            该应用已经开启超级签，请点击查看最新设备列表
+        </el-link>
+        <!--        <h2>UDID列表及用户信息</h2>-->
         <el-table
                 :data="udidlists"
                 stripe

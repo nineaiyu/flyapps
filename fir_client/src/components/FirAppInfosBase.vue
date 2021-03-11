@@ -168,15 +168,15 @@
             },
             devices() {
                 this.setfunactive('devices', 57);
-                if (this.appinfos.issupersign) {
-                    this.$router.push({
-                        "name": 'FirSuperSignBase',
-                        params: {act: "useddevices"},
-                        query: {bundleid: this.appinfos.bundle_id}
-                    })
-                } else {
-                    this.$router.push({name: 'FirAppInfosdevices'});
-                }
+                // if (this.appinfos.issupersign) {
+                //     this.$router.push({
+                //         "name": 'FirSuperSignBase',
+                //         params: {act: "useddevices"},
+                //         query: {bundleid: this.appinfos.bundle_id}
+                //     })
+                // } else {
+                this.$router.push({name: 'FirAppInfosdevices'});
+                // }
             },
             supersign() {
                 this.setfunactive('supersign', 70);

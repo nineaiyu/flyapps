@@ -71,7 +71,7 @@
                                 <div class="grid-content bg-purple">
                                     <el-row :gutter="20" style="margin-top: 10px;">
                                         <el-col :span="18">
-                                            <el-input v-model="analyseappinfo.short">
+                                            <el-input v-model="short">
                                                 <template slot="prepend">{{analyseappinfo.domain_name}}/</template>
                                             </el-input>
                                         </el-col>
@@ -418,7 +418,8 @@
         name: "FirApps",
         data() {
             return {
-                analyseappinfo: {'appname': '', 'short': '', 'changelog': ''},
+                analyseappinfo: {},
+                short: '',
                 keysearch: '',
                 searchfromtype: '',
                 applists: [],
@@ -445,6 +446,7 @@
                 if (this.uploadsuccess === 2) {
                     delete this.analyseappinfo.icon;
                     this.$message.success(file.name + '上传成功');
+                    this.analyseappinfo.short = this.short;
                     analyseApps(data => {
                         if (data.code === 1000) {
                             let app_uuid = this.analyseappinfo.app_uuid;
@@ -498,6 +500,7 @@
                 analyseApps(data => {
                     if (data.code === 1000) {
                         this.analyseappinfo.short = data.data.short;
+                        this.short = data.data.short;
                         this.analyseappinfo.domain_name = data.data.domain_name;
                         this.analyseappinfo.app_uuid = data.data.app_uuid;
                         this.analyseappinfo.upload_token = data.data.upload_token;

@@ -29,16 +29,23 @@
                           v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active ">
 
 
-                <el-tooltip content="本应用签名使用额度，超过该额度，新设备将无法安装本应用" placement="top">
+                <el-tooltip content="本应用签名使用额度，超过该额度，新设备将无法安装本应用。0代表不限额" placement="top">
                     <el-input-number v-model="currentapp.supersign_limit_number" :disabled="supersign_disable"
                                      :placeholder="defualt_dtitle" :min="0"
-                                     style="width: 60%;margin-right: 10px" label="签名限额"></el-input-number>
+                                     style="width: 40%;margin-right: 10px" label="签名限额"></el-input-number>
                 </el-tooltip>
 
                 <el-button @click="saveappinfo({supersign_limit_number:currentapp.supersign_limit_number})"
                            :disabled="supersign_disable"
                 >保存
                 </el-button>
+                <el-tooltip content="点击查看使用详情" placement="top">
+                    <el-link :underline="false" type="primary" style="margin-left: 20px"
+                             @click="$router.push({name:'FirSuperSignBase',params:{act:'useddevices'},query:{bundleid: currentapp.bundle_id}})">
+                        已经使用 <a style="color: #dd6161;font-size: larger">{{ currentapp.supersign_used_number }}</a>
+                        个设备额度
+                    </el-link>
+                </el-tooltip>
             </el-form-item>
 
 

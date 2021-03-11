@@ -77,7 +77,7 @@
           </span>
         </el-dialog>
 
-
+        <!--        <div style="position:relative;">-->
         <el-tabs v-model="activeName" type="border-card" @tab-click="handleClick" tab-position="top">
             <el-tab-pane label="开发者账户" name="iosdeveloper">
                 <el-input
@@ -429,6 +429,9 @@
                 </el-pagination>
             </div>
         </el-tabs>
+        <!--            <el-button  class="goback" @click="$router.go(-1)">返回</el-button>-->
+        <!--        </div>-->
+
 
     </el-main>
 </template>
@@ -612,6 +615,9 @@
                     // this.dialogaddDeveloperVisible=true;
                 } else if (tabname === "iosdeveloper") {
                     this.iosdeveloperFun({"methods": "GET", "data": data})
+                } else if (tabname === "goback") {
+                    alert('goback')
+                    this.$router.go(-1);
                 }
             },
             // eslint-disable-next-line no-unused-vars
@@ -751,5 +757,13 @@
         -webkit-font-smoothing: antialiased;
         border-radius: 1%;
     }
+
+    /*.goback {*/
+    /*    display: block;*/
+    /*    cursor: pointer;*/
+    /*    position: absolute;*/
+    /*    top: 0;*/
+    /*    right: 0;*/
+    /*}*/
 
 </style>

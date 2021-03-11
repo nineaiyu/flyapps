@@ -47,6 +47,11 @@ class AppsSerializer(serializers.ModelSerializer):
             sign_type_choice.append({'id': auth_t[0], 'name': auth_t[1]})
         return sign_type_choice
 
+    supersign_used_number = serializers.SerializerMethodField()
+
+    def get_supersign_used_number(self, obj):
+        return models.APPSuperSignUsedInfo.objects.filter(app_id=obj).all().count()
+
     master_release = serializers.SerializerMethodField()
 
     def get_master_release(self, obj):
