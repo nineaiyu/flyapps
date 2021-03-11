@@ -267,9 +267,9 @@ class AppDeveloperApiV2(object):
             return False, result
 
     def set_device_status(self, status, device_udid):
-        apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
         result = {}
         try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             if status == "enable":
                 device_obj = apple_obj.enabled_device(device_udid)
             else:

@@ -701,8 +701,15 @@
                 return false;
             },
             delApp() {
+                let loadingobj = this.$loading({
+                    lock: true,
+                    text: '操作中，请耐心等待',
+                    spinner: 'el-icon-loading',
+                    // background: 'rgba(0, 0, 0, 0.7)'
+                });
                 this.willDeleteApp = false;
                 apputils(data => {
+                    loadingobj.close();
                     if (data.code === 1000) {
                         for (let i = 0; i < this.applists.length; i++) {
                             if (this.delapp.app_id === this.applists[i].app_id) {

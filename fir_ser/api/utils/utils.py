@@ -52,8 +52,9 @@ def delete_app_to_dev_and_file(developer_obj, app_id):
     APPToDeveloper_obj = APPToDeveloper.objects.filter(developerid=developer_obj, app_id_id=app_id)
     if APPToDeveloper_obj:
         binary_file = APPToDeveloper_obj.first().binary_file + ".ipa"
-        lsobj = LocalStorage("localhost", False)
-        lsobj.del_file(binary_file)
+        delete_local_files(binary_file)
+        storage = Storage(developer_obj.user_id)
+        storage.delete_file(binary_file)
         APPToDeveloper_obj.delete()
 
 
@@ -203,3 +204,16 @@ def send_ios_developer_active_status(user_info, msg):
         get_sender_email_token(act, email, 'msg', msg)
     else:
         logger.warning("user %s has no email. so %s can't send!" % (user_info, msg))
+
+
+def delete_local_files(filename, apptype=None):
+    storage = LocalStorage("localhost", False)
+    if apptype is not None:
+        if apptype == 0:
+            filename = filename + '.apk'
+        else:
+            filename = filename + '.ipa'
+    try:
+        return storage.del_file(filename)
+    except Exception as e:
+        logger.error("delete file  %s  failed  Exception %s" % (filename, e))

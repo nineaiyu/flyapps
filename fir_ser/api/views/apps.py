@@ -18,7 +18,7 @@ from rest_framework.pagination import PageNumberPagination
 import logging
 from fir_ser.settings import SERVER_DOMAIN
 from api.utils.storage.caches import set_default_app_wx_easy
-from api.utils.utils import is_valid_domain
+from api.utils.utils import is_valid_domain, delete_local_files
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +120,8 @@ class AppInfoView(APIView):
         if app_id:
             apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
             if apps_obj:
-                if apps_obj.issupersign:
+                count = APPToDeveloper.objects.filter(app_id=apps_obj).count()
+                if apps_obj.issupersign or count > 0:
                     logger.info("app_id:%s is supersign ,delete this app need clean IOS developer" % (app_id))
                     IosUtils.clean_app_by_user_obj(apps_obj, request.user)
 
@@ -137,6 +138,7 @@ class AppInfoView(APIView):
                     logger.info("delete app_id:%s  need clean all release,release_id:%s" % (
                         app_id, appreleaseobj.release_id))
                     storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
+                    delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
                     storage.delete_file(appreleaseobj.icon_url)
                     appreleaseobj.delete()
                 apps_obj.delete()
@@ -327,17 +329,19 @@ class AppReleaseinfoView(APIView):
                 if not appreleaseobj.is_master:
                     logger.info("delete app release %s" % (appreleaseobj))
                     storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
+                    delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
                     storage.delete_file(appreleaseobj.icon_url)
 
                     appreleaseobj.delete()
                 elif appreleaseobj.is_master and apprelease_count < 2:
                     logger.info("delete app master release %s and clean app %s " % (appreleaseobj, apps_obj))
-
-                    if apps_obj.issupersign:
+                    count = APPToDeveloper.objects.filter(app_id=apps_obj).count()
+                    if apps_obj.issupersign or count > 0:
                         logger.info("app_id:%s is supersign ,delete this app need clean IOS developer" % (app_id))
                         IosUtils.clean_app_by_user_obj(apps_obj, request.user)
 
                     storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
+                    delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
                     storage.delete_file(appreleaseobj.icon_url)
                     del_cache_by_delete_app(apps_obj.app_id)
 
