@@ -211,7 +211,8 @@ THIRD_PART_CONFIG = {
                 'sts_role_arn': 'ap-sage',
                 'endpoint': 'oss-cn-beijing.aliyuncs.com',
                 'is_https': True,
-                'domain_name': 'aoud.xin'
+                'domain_name': 'aoud.xin',
+                'download_auth_type': 1  # 1:oss 2:cdn
             },
             'active': False
         },

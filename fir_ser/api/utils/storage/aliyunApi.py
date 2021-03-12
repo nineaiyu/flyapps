@@ -8,11 +8,15 @@
 
 import json
 import os
-
 from aliyunsdkcore import client
 from aliyunsdksts.request.v20150401 import AssumeRoleRequest
-
 import oss2
+import re
+import hashlib
+import time
+import logging
+
+logger = logging.getLogger(__file__)
 
 
 # 以下代码展示了STS的用法，包括角色扮演获取临时用户的密钥、使用临时用户的密钥访问OSS。
@@ -31,6 +35,46 @@ import oss2
 #   http://oss-cn-hangzhou.aliyuncs.com
 #   https://oss-cn-hangzhou.aliyuncs.com
 # 分别以HTTP、HTTPS协议访问。
+
+def md5sum(src):
+    m = hashlib.md5()
+    m.update(src)
+    return m.hexdigest()
+
+
+class AliYunCdn(object):
+    def __init__(self, key, is_https, domain_name):
+        uri = 'http://'
+        if is_https:
+            uri = 'https://'
+        self.domain = uri + domain_name
+        self.key = key
+
+    # 鉴权方式A
+    def a_auth(self, uri, exp):
+        p = re.compile("^(http://|https://)?([^/?]+)(/[^?]*)?(\\?.*)?$")
+        if not p:
+            return None
+        m = p.match(uri)
+        scheme, host, path, args = m.groups()
+        if not scheme: scheme = "http://"
+        if not path: path = "/"
+        if not args: args = ""
+        rand = "0"  # "0" by default, other value is ok
+        uid = "0"  # "0" by default, other value is ok
+        sstring = "%s-%s-%s-%s-%s" % (path, exp, rand, uid, self.key)
+        hashvalue = md5sum(sstring.encode("utf-8"))
+        auth_key = "%s-%s-%s-%s" % (exp, rand, uid, hashvalue)
+        if args:
+            return "%s%s%s%s&auth_key=%s" % (scheme, host, path, args, auth_key)
+        else:
+            return "%s%s%s%s?auth_key=%s" % (scheme, host, path, args, auth_key)
+
+    def get_cdn_download_token(self, filename, expires=1800):
+        uri = "%s/%s" % (self.domain, filename)
+        exp = int(time.time()) + expires
+        return self.a_auth(uri, exp)
+
 
 class StsToken(object):
     """AssumeRole返回的临时用户密钥
@@ -53,7 +97,8 @@ class StsToken(object):
 
 class AliYunOss(object):
 
-    def __init__(self, access_key, secret_key, bucket_name, endpoint, sts_role_arn, is_https, domain_name=None):
+    def __init__(self, access_key, secret_key, bucket_name, endpoint, sts_role_arn, is_https, domain_name=None,
+                 download_auth_type=1, cnd_auth_key=None):
         self.access_key_id = access_key
         self.access_key_secret = secret_key
         self.bucket_name = bucket_name
@@ -62,6 +107,8 @@ class AliYunOss(object):
         self.region_id = '-'.join(self.endpoint.split('.')[0].split("-")[1:3])
         self.token = StsToken()
         self.is_https = is_https
+        self.download_auth_type = download_auth_type
+        self.cnd_auth_key = cnd_auth_key
         self.domain_name = domain_name
         self.get_auth_bucket('init', 900)
 
@@ -91,6 +138,7 @@ class AliYunOss(object):
         self.token.expiration = oss2.utils.to_unixtime(j['Credentials']['Expiration'], '%Y-%m-%dT%H:%M:%SZ')
         self.token.bucket = self.bucket_name
         self.token.endpoint = self.endpoint
+        logger.info("get aliyun sts token %s" % self.token.__dict__)
         return self.token.__dict__
 
     def get_upload_token(self, name, expires=1800):
@@ -103,7 +151,7 @@ class AliYunOss(object):
             uri = 'https://'
         url = self.endpoint
         is_cname = False
-        if self.domain_name:
+        if self.domain_name and self.download_auth_type == 1:
             url = self.domain_name
             is_cname = True
 

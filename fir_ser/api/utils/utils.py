@@ -3,10 +3,10 @@
 # project: 5月
 # author: liuyu
 # date: 2020/5/7
-import os, re
+import os, re, json, requests
 from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
-    UDIDsyncDeveloper, UserInfo
+    UDIDsyncDeveloper, UserInfo, AppReleaseInfo
 from api.utils.app.randomstrings import make_app_uuid
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
@@ -206,14 +206,98 @@ def send_ios_developer_active_status(user_info, msg):
         logger.warning("user %s has no email. so %s can't send!" % (user_info, msg))
 
 
+def get_filename_from_apptype(filename, apptype):
+    if apptype == 0:
+        filename = filename + '.apk'
+    else:
+        filename = filename + '.ipa'
+    return filename
+
+
 def delete_local_files(filename, apptype=None):
     storage = LocalStorage("localhost", False)
     if apptype is not None:
-        if apptype == 0:
-            filename = filename + '.apk'
-        else:
-            filename = filename + '.ipa'
+        filename = get_filename_from_apptype(filename, apptype)
     try:
         return storage.del_file(filename)
     except Exception as e:
         logger.error("delete file  %s  failed  Exception %s" % (filename, e))
+
+
+def check_storage_additionalparameter(request, res):
+    data = request.data
+    try:
+        extra_parameters = data.get('additionalparameter', '')
+        if extra_parameters:
+            if not extra_parameters.get("download_auth_type", None):
+                extra_parameters['download_auth_type'] = 1
+            if extra_parameters.get("download_auth_type", None) == 2:
+                if not extra_parameters.get("cnd_auth_key", None):
+                    logger.error("user %s add new storage failed" % (request.user))
+                    res.msg = "cdn 鉴权KEY 缺失"
+                    res.code = 1006
+                    return False, res
+        data['additionalparameters'] = json.dumps(extra_parameters)
+    except Exception as e:
+        logger.error("user:%s additionalparameters %s dumps failed Exception:%s" % (
+            request.user, data.get('additionalparameter', ''), e))
+    return True, res
+
+
+def change_storage_and_change_head_img(user_obj, new_storage_obj):
+    migrating_storage_file_data(user_obj, user_obj.head_img, new_storage_obj)
+
+
+def download_files_form_oss(storage_obj, org_file):
+    download_url = storage_obj.get_download_url(os.path.basename(org_file), 600, key='check_org_file', force_new=True)
+    req = requests.get(download_url)
+    if req.status_code == 200:
+        logger.info("download  file %s success" % org_file)
+    else:
+        logger.error("download  file %s failed %s" % (org_file, req.content))
+        return False
+
+    with open(org_file + ".check.tmp", "wb") as f:
+        f.write(req.content)
+    try:
+        if os.path.isfile(org_file):
+            os.remove(org_file)
+        os.rename(os.path.join(org_file + ".check.tmp"), org_file)
+        return True
+    except Exception as e:
+        logger.error("check org file and mv file %s failed Exception %s" % (org_file, e))
+        return False
+
+
+def migrating_storage_file_data(user_obj, filename, new_storage_obj):
+    local_file_full_path = os.path.join(MEDIA_ROOT, filename)
+    old_storage_obj = Storage(user_obj)
+    if not new_storage_obj:
+        new_storage_obj = Storage(user_obj, None, True)
+    else:
+        new_storage_obj = Storage(user_obj, new_storage_obj)
+
+    if old_storage_obj.get_storage_type() == 3:
+        if new_storage_obj.get_storage_type() == 3:
+            pass
+        else:
+            # 本地向云存储上传,并删除本地数据
+            new_storage_obj.upload_file(local_file_full_path)
+            delete_local_files(filename)
+    else:
+        if new_storage_obj.get_storage_type() == 3:
+            # 云存储下载 本地，并删除云存储
+            if download_files_form_oss(old_storage_obj, local_file_full_path):
+                old_storage_obj.delete_file(filename)
+        else:
+            # 云存储互传，先下载本地，然后上传新云存储，删除本地和老云存储
+            if download_files_form_oss(old_storage_obj, local_file_full_path):
+                new_storage_obj.upload_file(local_file_full_path)
+                delete_local_files(filename)
+                old_storage_obj.delete_file(filename)
+
+
+def migrating_storage_data(user_obj, new_storage_obj):
+    for app_release_obj in AppReleaseInfo.objects.filter(app_id__user_id=user_obj).all():
+        filename = get_filename_from_apptype(app_release_obj.release_id, app_release_obj.release_type)
+        migrating_storage_file_data(user_obj, filename, new_storage_obj)

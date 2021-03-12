@@ -5,7 +5,7 @@
 # date: 2020/3/23
 
 from api.models import UserInfo
-from .aliyunApi import AliYunOss
+from .aliyunApi import AliYunOss, AliYunCdn
 from .qiniuApi import QiNiuOss
 from .localApi import LocalStorage
 import json, time, base64
@@ -17,9 +17,9 @@ logger = logging.getLogger(__file__)
 
 
 class Storage(object):
-    def __init__(self, user, storage_obj=None):
+    def __init__(self, user, storage_obj=None, use_default_storage=False):
         try:
-            self.storage = self.get_storage(user, storage_obj)
+            self.storage = self.get_storage(user, storage_obj, use_default_storage)
         except Exception as e:
             logger.error("get %s storage failed Exception:%s" % (user, e))
             self.storage = None
@@ -36,8 +36,11 @@ class Storage(object):
             if download_val and not force_new:
                 if download_val.get("time") > now - 60:
                     return download_val.get("download_url")
-
-            download_url = self.storage.get_download_url(filename, expires, force_new=True)
+            if self.storage.__dict__.get("download_auth_type", None) == 2:
+                cdn_obj = AliYunCdn(self.storage.cnd_auth_key, self.storage.is_https, self.storage.domain_name)
+                download_url = cdn_obj.get_cdn_download_token(filename, expires)
+            else:
+                download_url = self.storage.get_download_url(filename, expires, force_new=True)
             cache.set(down_key, {"download_url": download_url, "time": now + expires}, expires)
             return download_url
 
@@ -67,11 +70,14 @@ class Storage(object):
             except Exception as e:
                 logger.error("oss upload  %s failed  Exception %s" % (local_file_full_path, e))
 
-    def get_storage(self, user, storage_obj):
+    def get_storage(self, user, storage_obj, use_default_storage):
         if storage_obj:
             self.storage_obj = storage_obj
         else:
             self.storage_obj = user.storage
+        if use_default_storage:
+            self.storage_obj = None
+
         if self.storage_obj:
             auth = self.get_storage_auth(self.storage_obj)
             storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'), user.uid,
@@ -79,6 +85,7 @@ class Storage(object):
             storage_type = self.storage_obj.storage_type
             new_storage_obj = cache.get(storage_key)
             if new_storage_obj and not storage_obj:
+                logger.info("user %s get storage obj cache %s" % (user, new_storage_obj))
                 return new_storage_obj
             else:
                 if storage_type == 1:
@@ -87,17 +94,20 @@ class Storage(object):
                     new_storage_obj = AliYunOss(**auth)
                 else:
                     new_storage_obj = LocalStorage(**auth)
-
+                logger.info("user %s make storage obj %s" % (user, new_storage_obj))
                 new_storage_obj.storage_type = storage_type
                 cache.set(storage_key, new_storage_obj, 600)
                 return new_storage_obj
         else:
-            return self.get_default_storage(user, storage_obj)
+            logger.info("user %s has not storage obj, so get default" % user)
+            return self.get_default_storage(user, storage_obj, False)
 
-    def get_default_storage(self, user, storage_obj):
+    def get_default_storage(self, user, storage_obj, use_default_storage):
         admin_obj = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
         if admin_obj and admin_obj.storage:
-            return self.get_storage(admin_obj, storage_obj)
+            logger.info("user %s has not storage obj, from admin "
+                        "get default storage" % user)
+            return self.get_storage(admin_obj, storage_obj, use_default_storage)
         else:
             storage_lists = THIRD_PART_CONFIG.get('storage')
             for storage in storage_lists:
@@ -120,6 +130,8 @@ class Storage(object):
                             new_storage_obj = LocalStorage(**auth)
                             new_storage_obj.storage_type = 3
                         cache.set(storage_key, new_storage_obj, 600)
+                        logger.info("user %s has not storage obj, admin already has not storage obj, from settings "
+                                    "get default storage %s" % (user, new_storage_obj))
                         return new_storage_obj
         return None
 

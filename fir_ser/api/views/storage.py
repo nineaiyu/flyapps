@@ -8,10 +8,10 @@ from rest_framework.views import APIView
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication, StoragePermission
 from rest_framework.response import Response
-import json
 from api.utils.storage.caches import del_cache_storage
 from api.models import AppStorage, UserInfo
-from api.utils.utils import upload_oss_default_head_img
+from api.utils.utils import upload_oss_default_head_img, check_storage_additionalparameter, \
+    change_storage_and_change_head_img
 from api.utils.serializer import StorageSerializer
 import logging
 
@@ -59,12 +59,9 @@ class StorageView(APIView):
         res = BaseResponse()
         data = request.data
         logger.info("user %s add new storage data:%s" % (request.user, data))
-        try:
-            data['additionalparameters'] = json.dumps(data.get('additionalparameter', ''))
-        except Exception as e:
-            logger.error("user:%s additionalparameters %s dumps failed Exception:%s" % (
-                request.user, data.get('additionalparameter', ''), e))
-
+        status, msg = check_storage_additionalparameter(request, res)
+        if not status:
+            return Response(msg.dict)
         serializer = StorageSerializer(data=data, context={'user_obj': request.user})
         if serializer.is_valid():
             storage_obj = serializer.save()
@@ -96,10 +93,17 @@ class StorageView(APIView):
         if use_storage_id:
             try:
                 if use_storage_id == -1:
+                    change_storage_and_change_head_img(request.user, None)
                     UserInfo.objects.filter(pk=request.user.pk).update(storage=None)
+
                 else:
+                    new_storage_obj = AppStorage.objects.filter(pk=use_storage_id).first()
+                    change_storage_and_change_head_img(request.user, new_storage_obj)
                     UserInfo.objects.filter(pk=request.user.pk).update(storage_id=use_storage_id)
+
                 del_cache_storage(request.user)
+                # change_storage_and_change_head_img(request.user, old_storage_obj, new_storage_obj)
+
             except Exception as e:
                 logger.error("update user %s storage failed Exception:%s" % (request.user, e))
                 res.code = 1006
@@ -112,13 +116,9 @@ class StorageView(APIView):
                 res.msg = '存储正在使用中，无法修改'
                 res.code = 1007
                 return Response(res.dict)
-            try:
-                data['additionalparameters'] = json.dumps(data.get('additionalparameter', ''))
-            except Exception as e:
-                del data['additionalparameters']
-                logger.error("user:%s additionalparameters %s dumps failed Exception:%s" % (
-                    request.user, data.get('additionalparameter', ''), e))
-
+            status, msg = check_storage_additionalparameter(request, res)
+            if not status:
+                return Response(msg.dict)
             storage_obj = AppStorage.objects.filter(id=storage_id, user_id=request.user).first()
             storage_obj_bak = AppStorage.objects.filter(id=storage_id, user_id=request.user).first()
             serializer = StorageSerializer(instance=storage_obj, data=data, context={'user_obj': request.user},

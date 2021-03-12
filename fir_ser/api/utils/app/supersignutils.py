@@ -11,10 +11,9 @@ from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppRe
     UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID
 from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
 from api.utils.serializer import get_developer_udided
-from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit
 from api.utils.utils import file_format_path, delete_app_to_dev_and_file, delete_app_profile_file, \
-    send_ios_developer_active_status, get_profile_full_path, delete_local_files
+    send_ios_developer_active_status, get_profile_full_path, delete_local_files, download_files_form_oss
 from api.utils.storage.storage import Storage
 
 logger = logging.getLogger(__file__)
@@ -28,20 +27,7 @@ def check_org_file(user_obj, org_file):
         return
 
     storage_obj = Storage(user_obj)
-    download_url = storage_obj.get_download_url(os.path.basename(org_file), 600, key='check_org_file', force_new=True)
-    req = requests.get(download_url)
-    logger.info("download user %s file %s success" % (user_obj, org_file))
-
-    with open(org_file + ".check.tmp", "wb") as f:
-        f.write(req.content)
-    try:
-        if os.path.isfile(org_file):
-            os.remove(org_file)
-        os.rename(os.path.join(org_file + ".check.tmp"), org_file)
-        return True
-    except Exception as e:
-        logger.error("check org file and mv file %s failed Exception %s" % (org_file, e))
-        return False
+    return download_files_form_oss(storage_obj, org_file)
 
 
 def resign_by_app_obj(app_obj, need_download_profile=True):
