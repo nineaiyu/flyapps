@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from api.utils.storage.caches import del_cache_storage
 from api.models import AppStorage, UserInfo
 from api.utils.utils import upload_oss_default_head_img, check_storage_additionalparameter, \
-    change_storage_and_change_head_img
+    change_storage_and_change_head_img, migrating_storage_data, clean_storage_data
 from api.utils.serializer import StorageSerializer
 import logging
 
@@ -91,18 +91,23 @@ class StorageView(APIView):
 
         use_storage_id = data.get("use_storage_id", None)
         if use_storage_id:
+            if request.user.storage and use_storage_id == request.user.storage.id:
+                return Response(res.dict)
             try:
                 if use_storage_id == -1:
                     change_storage_and_change_head_img(request.user, None)
-                    UserInfo.objects.filter(pk=request.user.pk).update(storage=None)
-
+                    if migrating_storage_data(request.user, None, False):
+                        clean_storage_data(request.user)
+                        UserInfo.objects.filter(pk=request.user.pk).update(storage=None)
                 else:
                     new_storage_obj = AppStorage.objects.filter(pk=use_storage_id).first()
                     change_storage_and_change_head_img(request.user, new_storage_obj)
-                    UserInfo.objects.filter(pk=request.user.pk).update(storage_id=use_storage_id)
+
+                    if migrating_storage_data(request.user, new_storage_obj, False):
+                        clean_storage_data(request.user)
+                        UserInfo.objects.filter(pk=request.user.pk).update(storage_id=use_storage_id)
 
                 del_cache_storage(request.user)
-                # change_storage_and_change_head_img(request.user, old_storage_obj, new_storage_obj)
 
             except Exception as e:
                 logger.error("update user %s storage failed Exception:%s" % (request.user, e))

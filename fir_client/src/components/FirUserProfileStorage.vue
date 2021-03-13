@@ -90,8 +90,10 @@
                         </el-option>
                     </el-option-group>
                 </el-select>
-                <el-button style="margin-left: 10px" round type="info" icon="el-icon-thumb"
-                           @click="change_storage_info">保存
+                <el-button v-if="use_storage_id!==org_storage_id" style="margin-left: 10px" round type="info"
+                           icon="el-icon-thumb"
+                           @click="change_storage_info">
+                    迁移数据并保存
                 </el-button>
 
                 <!--                <el-button-group style="margin-left: 10px">-->
