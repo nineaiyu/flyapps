@@ -241,7 +241,7 @@ def check_storage_additionalparameter(request, res):
     except Exception as e:
         logger.error("user:%s additionalparameters %s dumps failed Exception:%s" % (
             request.user, data.get('additionalparameter', ''), e))
-    return True, res
+    return True, data
 
 
 def change_storage_and_change_head_img(user_obj, new_storage_obj):
@@ -256,20 +256,22 @@ def download_files_form_oss(storage_obj, org_file):
     else:
         logger.error("download  file %s failed %s" % (org_file, req.content))
         return False
-
-    with open(org_file + ".check.tmp", "wb") as f:
-        f.write(req.content)
     try:
+        with open(org_file + ".check.tmp", "wb") as f:
+            for chunk in req.iter_content(chunk_size=5120):
+                if chunk:
+                    f.write(chunk)
+        logger.info("save download  file %s success" % org_file)
         if os.path.isfile(org_file):
             os.remove(org_file)
         os.rename(os.path.join(org_file + ".check.tmp"), org_file)
         return True
     except Exception as e:
-        logger.error("check org file and mv file %s failed Exception %s" % (org_file, e))
+        logger.error("check download file and move file %s failed Exception %s" % (org_file, e))
         return False
 
 
-def migrating_storage_file_data(user_obj, filename, new_storage_obj):
+def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data=True):
     local_file_full_path = os.path.join(MEDIA_ROOT, filename)
     old_storage_obj = Storage(user_obj)
     if not new_storage_obj:
@@ -279,25 +281,46 @@ def migrating_storage_file_data(user_obj, filename, new_storage_obj):
 
     if old_storage_obj.get_storage_type() == 3:
         if new_storage_obj.get_storage_type() == 3:
+            # 都是本地存储，无需操作
             pass
         else:
             # 本地向云存储上传,并删除本地数据
             new_storage_obj.upload_file(local_file_full_path)
-            delete_local_files(filename)
+            if clean_old_data:
+                delete_local_files(filename)
     else:
         if new_storage_obj.get_storage_type() == 3:
             # 云存储下载 本地，并删除云存储
             if download_files_form_oss(old_storage_obj, local_file_full_path):
-                old_storage_obj.delete_file(filename)
+                if clean_old_data:
+                    old_storage_obj.delete_file(filename)
         else:
             # 云存储互传，先下载本地，然后上传新云存储，删除本地和老云存储
             if download_files_form_oss(old_storage_obj, local_file_full_path):
                 new_storage_obj.upload_file(local_file_full_path)
                 delete_local_files(filename)
-                old_storage_obj.delete_file(filename)
+                if clean_old_data:
+                    old_storage_obj.delete_file(filename)
 
 
-def migrating_storage_data(user_obj, new_storage_obj):
+def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
     for app_release_obj in AppReleaseInfo.objects.filter(app_id__user_id=user_obj).all():
+        #迁移APP数据
         filename = get_filename_from_apptype(app_release_obj.release_id, app_release_obj.release_type)
-        migrating_storage_file_data(user_obj, filename, new_storage_obj)
+        migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data)
+        migrating_storage_file_data(user_obj, app_release_obj.icon_url, new_storage_obj, clean_old_data)
+
+        #迁移超级签数据
+        for apptodev_obj in APPToDeveloper.objects.filter(app_id=app_release_obj.app_id).all():
+            filename = get_filename_from_apptype(apptodev_obj.binary_file, app_release_obj.release_type)
+            migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data)
+
+
+def clean_storage_data(user_obj, storage_obj=None):
+    storage_obj = Storage(user_obj, storage_obj)
+    for app_release_obj in AppReleaseInfo.objects.filter(app_id__user_id=user_obj).all():
+        storage_obj.delete_file(app_release_obj.release_id, app_release_obj.release_type)
+        storage_obj.delete_file(app_release_obj.icon_url)
+        for apptodev_obj in APPToDeveloper.objects.filter(app_id=app_release_obj.app_id).all():
+            storage_obj.delete_file(apptodev_obj.binary_file, app_release_obj.release_type)
+

@@ -59,9 +59,9 @@ class StorageView(APIView):
         res = BaseResponse()
         data = request.data
         logger.info("user %s add new storage data:%s" % (request.user, data))
-        status, msg = check_storage_additionalparameter(request, res)
+        status, data = check_storage_additionalparameter(request, res)
         if not status:
-            return Response(msg.dict)
+            return Response(data.dict)
         serializer = StorageSerializer(data=data, context={'user_obj': request.user})
         if serializer.is_valid():
             storage_obj = serializer.save()
@@ -116,9 +116,9 @@ class StorageView(APIView):
                 res.msg = '存储正在使用中，无法修改'
                 res.code = 1007
                 return Response(res.dict)
-            status, msg = check_storage_additionalparameter(request, res)
+            status, data = check_storage_additionalparameter(request, res)
             if not status:
-                return Response(msg.dict)
+                return Response(data.dict)
             storage_obj = AppStorage.objects.filter(id=storage_id, user_id=request.user).first()
             storage_obj_bak = AppStorage.objects.filter(id=storage_id, user_id=request.user).first()
             serializer = StorageSerializer(instance=storage_obj, data=data, context={'user_obj': request.user},
