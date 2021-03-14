@@ -4,7 +4,7 @@
 # author: liuyu
 # date: 2020/3/6
 
-import uuid, xmltodict, os, re, logging, time, requests
+import uuid, xmltodict, os, re, logging, time
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILECONFIG_SIGN_SSL
 from api.utils.app.iossignapi import AppDeveloperApi, ResignApp, AppDeveloperApiV2
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
@@ -15,6 +15,7 @@ from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_
 from api.utils.utils import file_format_path, delete_app_to_dev_and_file, delete_app_profile_file, \
     send_ios_developer_active_status, get_profile_full_path, delete_local_files, download_files_form_oss
 from api.utils.storage.storage import Storage
+from django.core.cache import cache
 
 logger = logging.getLogger(__file__)
 
@@ -488,8 +489,9 @@ class IosUtils(object):
             logger.info(
                 "call_loop download_profile appid:%s developer:%s count:%s" % (self.app_obj, self.developer_obj, count))
             if self.developer_obj:
-                download_flag, result = IosUtils.exec_download_profile(self.app_obj, self.developer_obj,
-                                                                       self.udid_info, sign_try_attempts)
+                with cache.lock("%s_%s_%s" % ('download_profile', self.app_obj, self.developer_obj)):
+                    download_flag, result = IosUtils.exec_download_profile(self.app_obj, self.developer_obj,
+                                                                           self.udid_info, sign_try_attempts)
                 if download_flag:
                     call_flag = False
                 else:
@@ -521,8 +523,10 @@ class IosUtils(object):
                                                           developerid=self.developer_obj,
                                                           app_id=self.app_obj)
 
-        return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, download_flag, self, start_time,
-                                 result)
+        with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj, self.developer_obj)):
+            logger.info("start run_sign ...")
+            return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, download_flag, self, start_time,
+                                     result)
 
     @staticmethod
     def disable_udid(udid_obj, app_id):

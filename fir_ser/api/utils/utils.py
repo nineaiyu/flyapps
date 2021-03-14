@@ -305,16 +305,17 @@ def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_d
 
 def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
     for app_release_obj in AppReleaseInfo.objects.filter(app_id__user_id=user_obj).all():
-        #迁移APP数据
+        # 迁移APP数据
         filename = get_filename_from_apptype(app_release_obj.release_id, app_release_obj.release_type)
         migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data)
         migrating_storage_file_data(user_obj, app_release_obj.icon_url, new_storage_obj, clean_old_data)
 
-        #迁移超级签数据
+        # 迁移超级签数据
         for apptodev_obj in APPToDeveloper.objects.filter(app_id=app_release_obj.app_id).all():
             filename = get_filename_from_apptype(apptodev_obj.binary_file, app_release_obj.release_type)
             migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data)
     return True
+
 
 def clean_storage_data(user_obj, storage_obj=None):
     storage_obj = Storage(user_obj, storage_obj)

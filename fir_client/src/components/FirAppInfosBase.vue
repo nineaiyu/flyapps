@@ -60,7 +60,7 @@
                             </el-col>
 
                             <el-col :span="3"
-                                    v-if="(appinfos.type===1 && master_release.release_type ===1) || appinfos.issupersign ">
+                                    v-if="appinfos.type===1  || appinfos.issupersign ">
                                 <a class="" ref="supersign" @click="supersign"><i
                                         class="el-icon-ship"></i>超级签名</a>
                             </el-col>

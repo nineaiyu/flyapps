@@ -118,6 +118,7 @@ class Storage(object):
                                             base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
                     new_storage_obj = cache.get(storage_key)
                     if new_storage_obj:
+                        logger.info("user %s get default storage obj cache %s" % (user, new_storage_obj))
                         return new_storage_obj
                     else:
                         if storage_type == 1:

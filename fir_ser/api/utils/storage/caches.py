@@ -189,6 +189,9 @@ def del_cache_storage(user_obj):
     for storage_key in cache.iter_keys(storage_keys):
         cache.delete(storage_key)
 
+    download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
+    cache.delete("_".join(['', download_val, os.path.basename(user_obj.head_img)]))
+
 
 def set_app_today_download_times(app_id):
     now = timezone.now()
