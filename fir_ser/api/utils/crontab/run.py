@@ -10,6 +10,7 @@ from fir_ser.settings import SYNC_CACHE_TO_DATABASE
 from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_delete_job_log, \
     auto_delete_tmp_file, auto_check_ios_developer_active
 import logging
+from api.utils.storage.storage import get_local_storage
 
 logger = logging.getLogger(__file__)
 
@@ -60,6 +61,9 @@ try:
 
         register_events(scheduler)
         scheduler.start()
+
+        get_local_storage(True)
+
     except Exception as e:
         logger.error("scheduler failed,so shutdown it Exception:%s" % (e))
         # 有错误就停止定时器

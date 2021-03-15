@@ -155,3 +155,27 @@ class Storage(object):
                 storage_obj.user_id, storage_obj.additionalparameters, e))
             additionalparameters = {}
         return {**auth_dict, **additionalparameters}
+
+
+def get_local_storage(clean_cache=False):
+    storage_lists = THIRD_PART_CONFIG.get('storage')
+    for storage in storage_lists:
+        storage_type = storage.get('type', None)
+        if storage_type == 0:
+            auth = storage.get('auth', {})
+            storage_key = "_".join(['local_storage_', CACHE_KEY_TEMPLATE.get('user_storage_key'), "_system_",
+                                    base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
+            if clean_cache:
+                logger.info("system clean local storage obj cache storage_key %s" % storage_key)
+                cache.delete(storage_key)
+            new_storage_obj = cache.get(storage_key)
+            if new_storage_obj:
+                logger.info("system get local storage obj cache %s" % new_storage_obj)
+                return new_storage_obj
+            else:
+                new_storage_obj = LocalStorage(**auth)
+                new_storage_obj.storage_type = 3
+                # cache.set(storage_key, new_storage_obj, 600)
+                logger.info("system get local storage obj, from settings "
+                            "storage %s" % new_storage_obj)
+                return new_storage_obj

@@ -196,8 +196,10 @@ THIRD_PART_CONFIG = {
             'name': 'local',
             'type': 0,
             'auth': {
-                'domain_name': 'app.hehelucky.cn',  # 正式环境需要填写正式的访问域名
+                'domain_name': 'app.hehelucky.cn',  # 正式环境需要填写正式的访问域名,如果配置cdn，可以填写cdn的域名，仅支持阿里云 cdn
                 'is_https': True,
+                'download_auth_type': 0,  # 0:不开启token 1:本地token 2:cdn 开启cdn，并且使用本地存储，使用阿里云cdn进行url鉴权，
+                'cnd_auth_key': '',  # 当cdn为阿里云并且 download_auth_type=2 的时候 生效,需要 开启阿里云OSS私有Bucket回源
             },
             'active': True
         },
@@ -212,7 +214,8 @@ THIRD_PART_CONFIG = {
                 'endpoint': 'oss-cn-beijing.aliyuncs.com',
                 'is_https': True,
                 'domain_name': 'aoud.xin',
-                'download_auth_type': 1  # 1:oss 2:cdn
+                'download_auth_type': 1,  # 1:oss 2:cdn
+                'cnd_auth_key': '',  # 当cdn为阿里云并且 download_auth_type=2 的时候 生效,需要 开启阿里云OSS私有Bucket回源
             },
             'active': False
         },
@@ -299,7 +302,6 @@ CACHE_KEY_TEMPLATE = {
 }
 
 DATA_DOWNLOAD_KEY = "d_token"
-DATA_DOWNLOAD_KEY_OPEN = True  # 是否开启图片和应用下载token，只本地存储支持该操作
 FILE_UPLOAD_TMP_KEY = ".tmp"
 
 SYNC_CACHE_TO_DATABASE = {
@@ -317,7 +319,7 @@ SERVER_DOMAIN = {
     'IOS_PMFILE_DOWNLOAD_DOMAIN': {
         "domain_name": 'app.hehelucky.cn',
         'is_https': True,
-    },  # ios 描述文件和plist文件下载域名，该域名用于后端，一般为api访问域名
+    },  # 验证码，ios 描述文件和plist文件下载域名，该域名用于后端，一般为api访问域名
     'POST_UDID_DOMAIN': 'https://app.hehelucky.cn',  # 超级签名 安装签名时 向该域名 发送udid数据，该域名用于后端，一般为 api 访问域名
     'REDIRECT_UDID_DOMAIN': 'https://app.hehelucky.cn',  # 超级签名 安装完成之后，跳转域名，该域名为前端web访问域名，如果用户定义了自己的域名，则跳转用户域名
     'FILE_UPLOAD_DOMAIN': 'https://app.hehelucky.cn',  # 本地文件上传域名，使用本地存储必须配置

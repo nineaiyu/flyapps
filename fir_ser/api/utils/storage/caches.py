@@ -277,10 +277,13 @@ def send_msg_over_limit(act, email):
     return limit_cache_util(act, auth_code_key, SYNC_CACHE_TO_DATABASE.get("try_send_msg_over_limit_times"))
 
 
-def set_default_app_wx_easy(user_obj, app_obj=None):
-    if app_obj:
-        del_cache_response_by_short(app_obj.app_id)
-    else:
-        app_obj_lists = Apps.objects.filter(user_id=user_obj)
-        for app_obj in app_obj_lists:
+def set_default_app_wx_easy(user_obj, only_clean_cache=False):
+    app_obj_lists = Apps.objects.filter(user_id=user_obj)
+    for app_obj in app_obj_lists:
+        if only_clean_cache:
             del_cache_response_by_short(app_obj.app_id)
+        else:
+            if not app_obj.domain_name:
+                app_obj.wxeasytype = True
+                app_obj.save()
+                del_cache_response_by_short(app_obj.app_id)

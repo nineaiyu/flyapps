@@ -17,7 +17,6 @@ from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoS
 from rest_framework.pagination import PageNumberPagination
 import logging
 from fir_ser.settings import SERVER_DOMAIN
-from api.utils.storage.caches import set_default_app_wx_easy
 from api.utils.utils import is_valid_domain, delete_local_files
 
 logger = logging.getLogger(__name__)
@@ -187,34 +186,32 @@ class AppInfoView(APIView):
             elif domain_name:
                 apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
                 logger.info("app_id:%s update old data:%s" % (app_id, apps_obj.__dict__))
-                if domain_name:
-                    domain_name_list = domain_name.strip(' ').replace("http://", "").replace("https://", "").split("/")
-                    if len(domain_name_list) > 0:
-                        domain_name = domain_name_list[0]
-                        if len(domain_name) > 3 and is_valid_domain(domain_name_list[0]):
-                            if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
-                                admin_storage = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
-                                if admin_storage and admin_storage.uid == request.user.uid:
-                                    apps_obj.domain_name = domain_name
-                                    set_default_app_wx_easy(request.user, apps_obj)
-                                else:
-                                    serializer = UserInfoSerializer(request.user)
-                                    res.data = serializer.data
-                                    res.code = 1004
-                                    res.msg = "域名设置失败，请更换其他域名"
-                                    return Response(res.dict)
-                            else:
+                domain_name_list = domain_name.strip(' ').replace("http://", "").replace("https://", "").split("/")
+                if len(domain_name_list) > 0:
+                    domain_name = domain_name_list[0]
+                    if len(domain_name) > 3 and is_valid_domain(domain_name):
+                        if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
+                            user_admin_obj = UserInfo.objects.filter(is_superuser=True, uid=request.user.uid).order_by(
+                                'pk').first()
+                            if user_admin_obj:
                                 apps_obj.domain_name = domain_name
-                                set_default_app_wx_easy(request.user, apps_obj)
+                            else:
+                                serializer = UserInfoSerializer(request.user)
+                                res.data = serializer.data
+                                res.code = 1004
+                                res.msg = "域名设置失败，请更换其他域名"
+                                return Response(res.dict)
                         else:
-                            res.code = 1004
-                            res.msg = "域名校验失败"
-                            return Response(res.dict)
+                            apps_obj.domain_name = domain_name
+                    else:
+                        res.code = 1004
+                        res.msg = "域名校验失败"
+                        return Response(res.dict)
 
                 if domain_name == '':
                     apps_obj.domain_name = None
-                    apps_obj.wxeasytype = True
-                    set_default_app_wx_easy(request.user, apps_obj)
+                    if not request.user.domain_name:
+                        apps_obj.wxeasytype = True
                 apps_obj.save()
                 del_cache_response_by_short(apps_obj.app_id)
                 return Response(res.dict)
@@ -230,17 +227,6 @@ class AppInfoView(APIView):
                     apps_obj.supersign_limit_number = data.get("supersign_limit_number",
                                                                apps_obj.supersign_limit_number)
                     apps_obj.isshow = data.get("isshow", apps_obj.isshow)
-                    domain_name = data.get("domain_name", None)
-                    if domain_name:
-                        domain_name_list = domain_name.strip(' ').replace("http://", "").replace("https://", "").split(
-                            "/")
-                        if len(domain_name_list) > 0:
-                            domain_name = domain_name_list[0]
-                            if len(domain_name) > 3 and is_valid_domain(domain_name):
-                                apps_obj.domain_name = data.get("domain_name", apps_obj.domain_name)
-
-                    if domain_name == '':
-                        apps_obj.domain_name = None
 
                     if (request.user.domain_name and len(request.user.domain_name) > 3) or (
                             apps_obj.domain_name and len(apps_obj.domain_name) > 3):

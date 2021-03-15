@@ -11,7 +11,7 @@ from api.utils.TokenManager import DownloadToken
 from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.apputils import make_resigned
 from api.utils.app.supersignutils import make_sign_udid_mobileconfig, get_post_udid_url, get_redirect_server_domain
-from api.utils.storage.storage import Storage
+from api.utils.storage.storage import Storage, get_local_storage
 from api.utils.storage.caches import get_app_instance_by_cache, get_download_url_by_cache, set_app_download_by_cache, \
     del_cache_response_by_short
 import os
@@ -35,7 +35,8 @@ class DownloadView(APIView):
         downtoken = request.query_params.get(settings.DATA_DOWNLOAD_KEY, None)
         ftype = filename.split(".")[-1]
         flag = True
-        if settings.DATA_DOWNLOAD_KEY_OPEN:
+        storage_obj = get_local_storage()
+        if storage_obj.download_auth_type == 1:
             if not downtoken:
                 res.code = 1004
                 res.msg = "缺失token"

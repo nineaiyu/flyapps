@@ -150,12 +150,6 @@ def make_udid_mobileconfig(udid_url, PayloadOrganization, appname, PayloadUUID=u
 
 def get_post_udid_url(request, short):
     server_domain = get_http_server_doamin(request)
-    # PATH_INFO = request.META.get('PATH_INFO')
-    # PATH_INFO_lists = PATH_INFO.strip('/').split('/')
-    # PATH_INFO_lists[-1] = 'udid'
-    # PATH_INFO_lists.pop(-2)
-    # PATH_INFO_lists.append(short)
-    # PATH_INFO_lists.insert(0, server_domain)
     PATH_INFO_lists = [server_domain, "udid", short]
     udid_url = "/".join(PATH_INFO_lists)
     return udid_url
@@ -198,8 +192,7 @@ def get_apple_udid_key(auth):
     return mpkey
 
 
-def get_http_server_doamin(request):
-    server_domain = SERVER_DOMAIN.get('POST_UDID_DOMAIN', None)
+def get_server_domain_from_request(request, server_domain):
     if not server_domain or not server_domain.startswith("http"):
         HTTP_HOST = request.META.get('HTTP_HOST')
         SERVER_PROTOCOL = request.META.get('SERVER_PROTOCOL')
@@ -210,12 +203,19 @@ def get_http_server_doamin(request):
     return server_domain
 
 
+def get_http_server_doamin(request):
+    server_domain = SERVER_DOMAIN.get('POST_UDID_DOMAIN', None)
+    return get_server_domain_from_request(request, server_domain)
+
+
 def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
     if user_obj:
         if app_domain_name and len(app_domain_name) > 3:
             domain_name = app_domain_name
         else:
             domain_name = user_obj.domain_name
+    elif app_domain_name and len(app_domain_name) > 3:
+        domain_name = app_domain_name
     else:
         domain_name = None
     if domain_name and len(domain_name) > 3:
@@ -225,14 +225,7 @@ def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
             server_domain = "%s://%s" % ('http', domain_name)  # 第三方域名暂时不支持HTTPS
     else:
         server_domain = SERVER_DOMAIN.get('REDIRECT_UDID_DOMAIN', None)
-    if not server_domain or not server_domain.startswith("http"):
-        HTTP_HOST = request.META.get('HTTP_HOST')
-        SERVER_PROTOCOL = request.META.get('SERVER_PROTOCOL')
-        protocol = 'https'
-        if SERVER_PROTOCOL == 'HTTP/1.1':
-            protocol = 'http'
-        server_domain = "%s://%s" % (protocol, HTTP_HOST)
-    return server_domain
+    return get_server_domain_from_request(request, server_domain)
 
 
 class IosUtils(object):

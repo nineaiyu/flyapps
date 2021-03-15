@@ -360,12 +360,13 @@ class UserInfoView(APIView):
                 domain_name_list = domain_name.strip(' ').replace("http://", "").replace("https://", "").split("/")
                 if len(domain_name_list) > 0:
                     domain_name = domain_name_list[0]
-                    if len(domain_name) > 3 and is_valid_domain(domain_name_list[0]):
+                    if len(domain_name) > 3 and is_valid_domain(domain_name):
                         if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
-                            admin_storage = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
-                            if admin_storage and admin_storage.uid == request.user.uid:
+                            user_admin_obj = UserInfo.objects.filter(is_superuser=True, uid=request.user.uid).order_by(
+                                'pk').first()
+                            if user_admin_obj:
                                 request.user.domain_name = domain_name
-                                set_default_app_wx_easy(request.user)
+                                set_default_app_wx_easy(request.user, True)
                             else:
                                 serializer = UserInfoSerializer(request.user)
                                 res.data = serializer.data
@@ -374,7 +375,7 @@ class UserInfoView(APIView):
                                 return Response(res.dict)
                         else:
                             request.user.domain_name = domain_name
-                            set_default_app_wx_easy(request.user)
+                            set_default_app_wx_easy(request.user, True)
                     else:
                         serializer = UserInfoSerializer(request.user)
                         res.data = serializer.data
@@ -384,7 +385,6 @@ class UserInfoView(APIView):
 
             if domain_name == '':
                 request.user.domain_name = None
-                Apps.objects.filter(user_id=request.user).update(wxeasytype=True)
                 set_default_app_wx_easy(request.user)
 
             username = data.get("username", None)

@@ -73,7 +73,9 @@ class AliYunCdn(object):
     def get_cdn_download_token(self, filename, expires=1800):
         uri = "%s/%s" % (self.domain, filename)
         exp = int(time.time()) + expires
-        return self.a_auth(uri, exp)
+        download_url = self.a_auth(uri, exp)
+        logger.info("make cdn download url %s" % download_url)
+        return download_url
 
 
 class StsToken(object):
