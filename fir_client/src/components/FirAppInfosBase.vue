@@ -19,7 +19,7 @@
                                 width="288">
                             <div style="text-align: center; margin: 0">
                                 <vue-qr :margin="qrinfo.margin"
-                                        :logoSrc="icon_url" :logoScale="qrinfo.logoScale"
+                                        :logoSrc="b64_icon_url" :logoScale="qrinfo.logoScale"
                                         :logoCornerRadius="qrinfo.logoCornerRadius"
                                         :correctLevel="qrinfo.correctLevel"
                                         :text="short_url()" :size="266"
@@ -94,6 +94,7 @@
 <script>
     import {apputils} from "../restful";
     import VueQr from 'vue-qr';
+    import {ImgToBase64} from "../utils"
 
     export default {
         name: "FirAppInfosBase",
@@ -122,6 +123,7 @@
                     margin: 20
                 },
                 icon_url: "",
+                b64_icon_url: '',
                 appinfos: {},
                 master_release: {},
                 allapp: [],
@@ -182,6 +184,12 @@
                 this.setfunactive('supersign', 70);
                 this.$router.push({name: 'FirAppInfossupersign'});
             },
+            set_icon_url() {
+                this.icon_url = this.$store.state.currentapp.master_release.icon_url;
+                ImgToBase64(this.icon_url, dataURL => {
+                    this.b64_icon_url = dataURL;
+                })
+            },
         }, created() {
 
         }, filters: {
@@ -215,11 +223,11 @@
                 "app_id": this.$route.params.id
             });
             if (this.$store.state.currentapp.master_release) {
-                this.icon_url = this.$store.state.currentapp.master_release.icon_url
+                this.set_icon_url()
             }
         }, watch: {
             '$store.state.currentapp.master_release.icon_url': function () {
-                this.icon_url = this.$store.state.currentapp.master_release.icon_url
+                this.set_icon_url()
             },
             '$store.state.currentapp': function () {
                 this.appinfos = this.$store.state.currentapp;
