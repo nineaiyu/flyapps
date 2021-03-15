@@ -98,7 +98,7 @@
                 } else if (command === 'chpasswd') {
                     this.$router.push({name: 'FirUserProfileChangePwd'})
                 } else if (command === 'storage') {
-                    this.$router.push({name: 'FirUserProfileStorage'})
+                    this.$router.push({name: 'FirUserStorage', params: {act: "change"}})
                 } else if (command === 'supersign') {
                     this.$store.dispatch('doucurrentapp', {});
                     this.$router.push({"name": 'FirSuperSignBase', params: {act: "iosdeveloper"}})

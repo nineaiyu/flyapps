@@ -132,13 +132,7 @@ const router = new VueRouter({
                             // component: FirUserProfileChangePwd
                             component: () => import("@/components/FirUserProfileChangePwd"),
 
-                        }, {
-                            path: 'storage',
-                            name: 'FirUserProfileStorage',
-                            // component: FirUserProfileStorage
-                            component: () => import("@/components/FirUserProfileStorage"),
-
-                        }
+                        },
                     ]
                 }
 
@@ -162,6 +156,21 @@ const router = new VueRouter({
                     name: 'FirSuperSignBase',
                     // component: FirSuperSignBase,
                     component: () => import("@/components/FirSuperSignBase"),
+
+                }
+            ]
+        },
+        {
+            path: '/storage',
+            // component: FirAppBase,
+            component: () => import("@/components/FirAppBase"),
+
+            children: [
+                {
+                    path: ':act',
+                    name: 'FirUserStorage',
+                    // component: FirUserProfileStorage
+                    component: () => import("@/components/FirUserStorage"),
 
                 }
             ]

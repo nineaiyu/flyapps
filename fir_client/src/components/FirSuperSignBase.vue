@@ -615,9 +615,6 @@
                     // this.dialogaddDeveloperVisible=true;
                 } else if (tabname === "iosdeveloper") {
                     this.iosdeveloperFun({"methods": "GET", "data": data})
-                } else if (tabname === "goback") {
-                    alert('goback')
-                    this.$router.go(-1);
                 }
             },
             // eslint-disable-next-line no-unused-vars

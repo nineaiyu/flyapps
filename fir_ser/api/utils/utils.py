@@ -279,6 +279,10 @@ def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_d
     else:
         new_storage_obj = Storage(user_obj, new_storage_obj)
 
+    if old_storage_obj.get_storage_type() == new_storage_obj.get_storage_type():
+        # 同一个存储，无需迁移数据
+        return True
+
     if old_storage_obj.get_storage_type() == 3:
         if new_storage_obj.get_storage_type() == 3:
             # 都是本地存储，无需操作

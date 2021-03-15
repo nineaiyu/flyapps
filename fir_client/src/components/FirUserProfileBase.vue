@@ -39,15 +39,15 @@
 
                     </el-col>
 
-                    <el-col :span="6" v-if="userinfo.storage_active">
-                        <div class="col-4">
-                            <a ref="storage" class="" @click="$router.push({name:'FirUserProfileStorage'})">
-                                <span><i class="el-icon-coin"></i></span>
-                                存储配置
-                            </a>
-                        </div>
+                    <!--                    <el-col :span="6" v-if="userinfo.storage_active">-->
+                    <!--                        <div class="col-4">-->
+                    <!--                            <a ref="storage" class="" @click="$router.push({name:'FirUserStorage'})">-->
+                    <!--                                <span><i class="el-icon-coin"></i></span>-->
+                    <!--                                存储配置-->
+                    <!--                            </a>-->
+                    <!--                        </div>-->
 
-                    </el-col>
+                    <!--                    </el-col>-->
 
                 </el-row>
 
@@ -131,7 +131,8 @@
                         this.$store.dispatch('doucurrentapp', {});
                         this.imageUrl = data.data.head_img;
                         if (this.userinfo.storage_active) {
-                            this.tspan = 6
+                            // this.tspan = 6
+                            this.tspan = 9
                         }
                         if (datainfo.data) {
                             this.$message.success("更新成功")

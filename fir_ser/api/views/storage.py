@@ -24,6 +24,16 @@ class StorageView(APIView):
 
     def get(self, request):
         res = BaseResponse()
+        res.storage_list = []
+        storage_org_list = list(AppStorage.storage_choices)
+        for storage_t in storage_org_list:
+            if storage_t[0] in [0, 3]: continue
+            res.storage_list.append({'id': storage_t[0], 'name': storage_t[1]})
+
+        act = request.query_params.get("act", None)
+        if act == 'storage_type':
+            return Response(res.dict)
+
         # [1,2] 表示七牛存储和阿里云存储
         storage_obj = AppStorage.objects.filter(user_id=request.user, storage_type__in=[1, 2])
         if storage_obj:
@@ -42,12 +52,6 @@ class StorageView(APIView):
             res.storage = use_storage_obj.id
         else:
             res.storage = -1  # 默认存储
-
-        res.storage_list = []
-        storage_org_list = list(AppStorage.storage_choices)
-        for storage_t in storage_org_list:
-            if storage_t[0] in [0, 3]: continue
-            res.storage_list.append({'id': storage_t[0], 'name': storage_t[1]})
 
         admin_storage = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
         res.is_admin_storage = False

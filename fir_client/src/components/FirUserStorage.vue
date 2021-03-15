@@ -1,5 +1,5 @@
 <template>
-    <div style="text-align:center">
+    <el-main style="text-align:center">
         <h2 v-if="is_admin_storage">管理员存储，您配置的存储将决定其他用户配置的默认存储，请谨慎修改</h2>
         <el-dialog :title="title" :visible.sync="dialogstorageVisible" :destroy-on-close="true"
                    :close-on-click-modal="false">
@@ -73,8 +73,8 @@
             </el-form>
         </el-dialog>
 
-        <el-tabs v-model="activeName" @tab-click="handleClick" tab-position="right">
-            <el-tab-pane label="存储选择" name="chostorage">
+        <el-tabs v-model="activeName" @tab-click="handleClick" tab-position="top" type="border-card">
+            <el-tab-pane label="存储选择" name="change">
 
 
                 <el-select v-model="use_storage_id" filterable :placeholder="selectlabel" @change="select_storage">
@@ -169,7 +169,7 @@
                 </el-form>
 
             </el-tab-pane>
-            <el-tab-pane label="存储管理" name="setstorage">
+            <el-tab-pane label="存储管理" name="edit">
                 <el-table
                         :data="storage_info_lists"
                         border
@@ -190,12 +190,12 @@
                     <el-table-column
                             prop="domain_name"
                             label="下载域名"
-                            width="160">
+                            width="180">
                     </el-table-column>
                     <el-table-column
                             prop="bucket_name"
                             label="bucket_name"
-                            width="120">
+                            width="130">
                     </el-table-column>
 
                     <el-table-column
@@ -207,12 +207,12 @@
                     <el-table-column
                             prop="description"
                             label="备注"
-                            width="160">
+                            width="200">
                     </el-table-column>
                     <el-table-column
                             fixed="right"
                             label="操作"
-                            width="120">
+                    >
                         <template slot-scope="scope">
                             <div v-if="scope.row.id === org_storage_id">
                                 <el-button v-if="scope.row.id === org_storage_id" @click="showstorage(scope.row)"
@@ -229,20 +229,86 @@
                     </el-table-column>
                 </el-table>
             </el-tab-pane>
-            <el-tab-pane label="新增存储" name="addstorage">
+            <el-tab-pane label="存储新增" name="add">
+                <el-form ref="storageinfoform" :model="editstorageinfo"
+                         label-width="80px" style="margin:0 auto;">
+                    <el-form-item label-width="100px" label="存储类型">
+                        <el-select v-model="editstorageinfo.storage_type" placeholder="存储类型"
+                                   style="margin-left: -100px">
+                            <el-option v-for="st in storage_list" :key="st.id" :label="st.name"
+                                       :value="st.id"></el-option>
+                        </el-select>
+                    </el-form-item>
+
+                    <div v-if="editstorageinfo.storage_type">
+                        <el-form-item label-width="110px" label="存储名称">
+                            <el-input v-model="editstorageinfo.name"></el-input>
+                        </el-form-item>
+
+                        <el-form-item label-width="110px" label="key">
+                            <el-input v-model="editstorageinfo.access_key"></el-input>
+                        </el-form-item>
+                        <el-form-item label-width="110px" label="secret">
+                            <el-input v-model="editstorageinfo.secret_key"></el-input>
+                        </el-form-item>
+
+                        <el-form-item label-width="110px" label="bucket_name">
+                            <el-input v-model="editstorageinfo.bucket_name"></el-input>
+                        </el-form-item>
+                        <el-form-item label-width="110px" label="下载域名">
+                            <el-input v-model="editstorageinfo.domain_name"></el-input>
+                        </el-form-item>
+
+                        <div v-if="editstorageinfo.storage_type === 2">
+                            <el-form-item label-width="110px" label="sts_role_arn">
+                                <el-input
+                                        v-model="editstorageinfo.additionalparameter.sts_role_arn"></el-input>
+                            </el-form-item>
+
+                            <el-form-item label-width="110px" label="endpoint">
+                                <el-input
+                                        v-model="editstorageinfo.additionalparameter.endpoint"></el-input>
+                            </el-form-item>
+
+                            <el-form-item label-width="110px" label="下载授权方式">
+                                <el-select v-model="editstorageinfo.additionalparameter.download_auth_type"
+                                           placeholder="下载授权方式"
+                                           style="width: 80%">
+                                    <el-option v-for="st in download_auth_type_list" :key="st.id" :label="st.name"
+                                               :value="st.id"></el-option>
+                                </el-select>
+
+                                <el-form-item label-width="120px" style="margin-top: 10px;margin-left: 70px;width: 60%"
+                                              label="CDN鉴权主KEY"
+                                              v-if="editstorageinfo.additionalparameter.download_auth_type === 2">
+                                    <el-input placeholder="CDN鉴权主KEY"
+                                              v-model="editstorageinfo.additionalparameter.cnd_auth_key"/>
+                                </el-form-item>
+
+                            </el-form-item>
+
+                        </div>
+
+                        <el-form-item label-width="110px" label="备注">
+                            <el-input v-model="editstorageinfo.description"></el-input>
+                        </el-form-item>
+
+                        <el-button @click="updateorcreate">校验并保存</el-button>
+                    </div>
+                </el-form>
             </el-tab-pane>
 
         </el-tabs>
 
-    </div>
+    </el-main>
 </template>
 
 <script>
-    import {getStorageinfo} from "../restful";
+    import {getStorageinfo, userinfos} from "../restful";
     import {deepCopy} from "../utils";
 
     export default {
-        name: "FirUserProfileStorage",
+        name: "FirUserStorage",
         data() {
             return {
                 fstorage_lists: [],
@@ -257,16 +323,24 @@
                 storage_list: [],
                 disabled: true,
                 isaddflag: false,
-                activeName: 'chostorage',
+                activeName: 'change',
                 storage_info_lists: [],
                 is_admin_storage: false,
                 download_auth_type_list: [{id: 1, name: 'OSS模式： 需要把OSS权限开启私有模式'}, {
                     id: 2,
                     name: 'CDN模式： 请先配置好阿里云CDN，开启阿里云OSS私有Bucket回源，将使用鉴权A方式'
-                },]
+                },],
             }
         }, methods: {
-
+            getUserInfoFun() {
+                userinfos(data => {
+                    if (data.code === 1000) {
+                        this.$store.dispatch("doUserinfo", data.data);
+                    } else {
+                        this.$message.error("用户信息获取失败")
+                    }
+                }, {"methods": "GET"})
+            },
             showstorage(editstorageinfo) {
                 this.title = '查看存储信息';
                 this.disabled = true;
@@ -288,9 +362,7 @@
             },
             // eslint-disable-next-line no-unused-vars
             handleClick(tab, event) {
-                if (tab.name === 'addstorage') {
-                    this.add_storage_click()
-                }
+                this.get_data_from_tabname(tab.name);
             },
             updateorcreate() {
                 let methods = "PUT";
@@ -342,7 +414,14 @@
                     cancelButtonText: '取消',
                     type: 'warning'
                 }).then(() => {
+                    const loading = this.$loading({
+                        lock: true,
+                        text: '执行中,请耐心等待...',
+                        spinner: 'el-icon-loading',
+                        background: 'rgba(0, 0, 0, 0.7)'
+                    });
                     getStorageinfo(data => {
+                        loading.close();
                         if (data.code === 1000) {
                             this.$message.success('修改成功');
                             this.getstorageinfoFun();
@@ -430,13 +509,55 @@
                 } else
                     return '';
             },
+            // eslint-disable-next-line no-unused-vars
+            get_data_from_tabname(tabname, data = {}) {
+                this.$router.push({"name": 'FirUserStorage', params: {act: tabname}});
+                if (tabname === "change") {
+                    this.getstorageinfoFun();
+                } else if (tabname === "edit") {
+                    this.getstorageinfoFun();
+                } else if (tabname === "add") {
+                    getStorageinfo(data => {
+                        if (data.code === 1000) {
+                            this.storage_list = data.storage_list;
+                            this.editstorageinfo = {
+                                'additionalparameter': {download_auth_type: 1},
+                                storage_type: this.storage_list[0].id
+                            };
+                            this.isaddflag = true;
+                        } else {
+                            this.$message.error('存储列表获取失败,' + data);
+                        }
+                    }, {"methods": 'GET', "data": {'act': 'storage_type'}});
+                }
+            },
         }, mounted() {
-            this.$store.dispatch('douserInfoIndex', 2);
-            this.getstorageinfoFun();
+            this.getUserInfoFun();
+            if (this.$route.params.act) {
+                let activeName = this.$route.params.act;
+                let activeName_list = ["change", "edit", "add"];
+                for (let index in activeName_list) {
+                    if (activeName_list[index] === activeName) {
+                        this.activeName = activeName;
+                        this.get_data_from_tabname(activeName);
+                        return
+                    }
+                }
+            }
+            this.get_data_from_tabname(this.activeName);
         }, filters: {}
     }
 </script>
 
 <style scoped>
-
+    .el-main {
+        margin: 10px auto 100px;
+        width: 1166px;
+        position: relative;
+        padding-bottom: 1px;
+        background-color: #bfe7f9;
+        color: #9b9b9b;
+        -webkit-font-smoothing: antialiased;
+        border-radius: 1%;
+    }
 </style>
