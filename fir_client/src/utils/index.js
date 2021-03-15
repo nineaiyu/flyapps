@@ -276,7 +276,7 @@ export function ImgToBase64(url, callback) {
     let Img = new Image(),
         dataURL = '';
     Img.src = url + '?v=' + Math.random();
-    Img.setAttribute('crossOrigin', 'Anonymous');
+    Img.crossOrigin = 'Anonymous';
     Img.onload = function () {
         let canvas = document.createElement('canvas'),
             width = Img.width,

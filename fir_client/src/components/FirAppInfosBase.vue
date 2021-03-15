@@ -4,7 +4,7 @@
             <div class="banner">
                 <div class="middle-wrapper">
                     <div @click="defaulttimeline">
-                        <img :src="icon_url" class="appicon" style="width:100px; height:100px">
+                        <img ref="icon_url" :src="icon_url" class="appicon" style="width:100px; height:100px" alt="">
                     </div>
                     <div class="badges">
                         <span class="bundleid">SHORT<b class="short">&nbsp;&nbsp;{{ appinfos.short }}</b></span>
@@ -19,7 +19,7 @@
                                 width="288">
                             <div style="text-align: center; margin: 0">
                                 <vue-qr :margin="qrinfo.margin"
-                                        :logoSrc="b64_icon_url" :logoScale="qrinfo.logoScale"
+                                        :logoSrc="icon_url" :logoScale="qrinfo.logoScale"
                                         :logoCornerRadius="qrinfo.logoCornerRadius"
                                         :correctLevel="qrinfo.correctLevel"
                                         :text="short_url()" :size="266"
@@ -94,7 +94,6 @@
 <script>
     import {apputils} from "../restful";
     import VueQr from 'vue-qr';
-    import {ImgToBase64} from "../utils"
 
     export default {
         name: "FirAppInfosBase",
@@ -103,19 +102,6 @@
         },
         data() {
             return {
-                save_qr() {
-                    let dtype = "I";
-                    if (this.master_release.release_type === 0) {
-                        dtype = "A";
-                    }
-                    let a = document.createElement('a');
-                    // 下载图名字
-                    a.download = this.appinfos.name + '_' + dtype + "_下载码";
-                    //url
-                    a.href = this.$refs.qr.$el.src;
-                    //合成函数，执行下载
-                    a.dispatchEvent(new MouseEvent('click'))
-                },
                 qrinfo: {
                     logoScale: 0.3,
                     logoCornerRadius: 12,
@@ -123,7 +109,6 @@
                     margin: 20
                 },
                 icon_url: "",
-                b64_icon_url: '',
                 appinfos: {},
                 master_release: {},
                 allapp: [],
@@ -133,6 +118,19 @@
             }
         },
         methods: {
+            save_qr() {
+                let dtype = "I";
+                if (this.master_release.release_type === 0) {
+                    dtype = "A";
+                }
+                let a = document.createElement('a');
+                // 下载图名字
+                a.download = this.appinfos.name + '_' + dtype + "_下载码";
+                //url
+                a.href = this.$refs.qr.$el.src;
+                //合成函数，执行下载
+                a.dispatchEvent(new MouseEvent('click'))
+            },
             short_url() {
                 return location.origin + '/' + this.appinfos.short;
             },
@@ -186,9 +184,6 @@
             },
             set_icon_url() {
                 this.icon_url = this.$store.state.currentapp.master_release.icon_url;
-                ImgToBase64(this.icon_url, dataURL => {
-                    this.b64_icon_url = dataURL;
-                })
             },
         }, created() {
 
