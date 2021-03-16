@@ -2,6 +2,7 @@ from rest_framework import serializers
 from api import models
 from api.utils.app.apputils import bytes2human
 from api.utils.TokenManager import DownloadToken
+from api.utils.app.supersignutils import get_redirect_server_domain
 from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided
 import os, json, logging
@@ -42,14 +43,7 @@ class AppsSerializer(serializers.ModelSerializer):
     preview_url = serializers.SerializerMethodField()
 
     def get_preview_url(self, obj):
-        preview_url = ''
-        if obj.domain_name:
-            preview_url = obj.domain_name
-        elif obj.user_id.domain_name:
-            preview_url = obj.user_id.domain_name
-        if preview_url:
-            return "http://%s" % preview_url
-        return ''
+        return get_redirect_server_domain(None, obj.user_id, obj.domain_name)
 
     sign_type_choice = serializers.SerializerMethodField()
 
@@ -172,7 +166,7 @@ class AppReleaseSerializer(serializers.ModelSerializer):
         fields = ["app_version", "icon_url", "build_version",
                   "release_type", "minimum_os_version",
                   "created_time", "binary_size", "release_id", "size", "type", "editing", "master_color", "changelog",
-                  "is_master", 'download_token', 'binary_url', 'udid']
+                  "is_master", 'download_token', 'binary_url', 'udid', 'distribution_name']
 
     download_token = serializers.SerializerMethodField()
     size = serializers.SerializerMethodField()

@@ -147,7 +147,7 @@ class AppReleaseInfo(models.Model):
     icon_url = models.CharField(max_length=128, blank=True, verbose_name="图标url")
     changelog = models.TextField('更新日志', blank=True, null=True, default=None, )
     udid = models.TextField('ios内测版 udid', blank=True, null=True, default='', )
-
+    distribution_name = models.CharField(max_length=128, null=True, blank=True, default='', verbose_name="企业签名")
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
 
     class Meta:

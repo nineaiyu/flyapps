@@ -42,7 +42,12 @@
                                     <el-row :gutter="20" style="margin-top: 8px;">
                                         <el-col :span="18">
                                             {{ analyseappinfo.version}} (Build {{ analyseappinfo.buildversion}}) {{
-                                            analyseappinfo.release_type_id|getiOStype}}
+                                            analyseappinfo|getiOStype}}
+                                            <el-link :underline="false"
+                                                     v-if="analyseappinfo.udid && analyseappinfo.udid.length > 0"
+                                                     @click="showUDID(analyseappinfo)">- {{ analyseappinfo.udid.length
+                                                }} UDID
+                                            </el-link>
                                         </el-col>
                                     </el-row>
                                     <el-row :gutter="20" style="margin-top: 18px;">
@@ -441,6 +446,16 @@
                 loadingobj: null
             }
         }, methods: {
+            showUDID(appinfo) {
+                let udidstr = '';
+                for (let i = 0; i < appinfo.udid.length; i++) {
+                    udidstr = udidstr + "<p>" + appinfo.udid[i] + "</p>"
+                }
+                this.$alert(udidstr, appinfo.appname + ' UDID', {
+                    confirmButtonText: '确定',
+                    dangerouslyUseHTMLString: true,
+                });
+            },
             updateappinfo(file) {
                 this.uploadsuccess += 1;
                 if (this.uploadsuccess === 2) {
@@ -750,11 +765,11 @@
             },
         },
         filters: {
-            getiOStype: function (type) {
+            getiOStype: function (appinfo) {
                 let ftype = '';
-                if (type === 1) {
+                if (appinfo.release_type_id === 1) {
                     ftype = '内测版'
-                } else if (type === 2) {
+                } else if (appinfo.release_type_id === 2) {
                     ftype = '企业版'
                 }
                 return ftype

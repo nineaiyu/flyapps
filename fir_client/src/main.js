@@ -150,6 +150,7 @@ Vue.prototype.$notify = Notification;
 Vue.prototype.$loading = Loading.service;
 Vue.prototype.$confirm = MessageBox.confirm;
 Vue.prototype.$prompt = MessageBox.prompt;
+Vue.prototype.$alert = MessageBox.alert;
 
 // Vue.use(ElementUI);
 Vue.use(Vuex);

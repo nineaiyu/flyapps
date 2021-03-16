@@ -6,7 +6,7 @@
                  @click="$router.push({name:'FirSuperSignBase',params:{act:'useddevices'},query:{bundleid: currentapp.bundle_id}})">
             该应用已经开启超级签，请点击查看最新设备列表
         </el-link>
-        <!--        <h2>UDID列表及用户信息</h2>-->
+        <h2>UDID列表及用户信息 - {{ udidlists.length }}个设备</h2>
         <el-table
                 :data="udidlists"
                 stripe
@@ -44,7 +44,9 @@
             this.$store.dispatch('doappInfoIndex', [[57, 57], [57, 57]]);
             if (!this.currentapp.app_id) {
                 this.currentapp = this.$store.state.currentapp;
-                this.udidlists = this.currentapp.master_release.udid;
+                if (this.currentapp.master_release) {
+                    this.udidlists = this.currentapp.master_release.udid;
+                }
             }
         },
         watch: {

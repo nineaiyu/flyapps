@@ -161,6 +161,7 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
         "is_master": True,
         "changelog": appinfo.get("changelog", ''),
         "udid": appinfo.get("udid", ''),
+        "distribution_name": appinfo.get("distribution_name", ''),
     }
     try:
         AppReleaseInfo.objects.create(**release_data)

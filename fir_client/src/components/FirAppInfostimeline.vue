@@ -28,6 +28,7 @@
                         </small> &nbsp;&nbsp;·&nbsp;&nbsp;
 
                         <small>{{app.release_type|getiOStype}}</small>
+                        <small v-if="app.distribution_name" style="margin-left: 5px">&nbsp;&nbsp;·&nbsp;{{app.distribution_name}}</small>
                     </div>
 
                     <p>{{app.changelog}}</p>

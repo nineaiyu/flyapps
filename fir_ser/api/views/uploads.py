@@ -16,7 +16,7 @@ from api.utils.app.randomstrings import make_from_user_uuid
 from rest_framework.response import Response
 from fir_ser import settings
 from api.utils.TokenManager import DownloadToken
-from api.utils.app.supersignutils import resign_by_app_obj
+from api.utils.app.supersignutils import resign_by_app_obj, get_redirect_server_domain
 import os, json, logging
 
 logger = logging.getLogger(__file__)
@@ -74,7 +74,7 @@ class AppAnalyseView(APIView):
             upload_file_tmp_name("set", png_key, request.user.id)
             upload_file_tmp_name("set", upload_key, request.user.id)
             res.data = {"app_uuid": app_uuid, "short": short,
-                        "domain_name": settings.SERVER_DOMAIN.get("FILE_UPLOAD_DOMAIN", None),
+                        "domain_name": get_redirect_server_domain(request, request.user, None),
                         "upload_token": upload_token,
                         "upload_key": upload_key,
                         "png_token": png_token,
@@ -102,6 +102,7 @@ class AppAnalyseView(APIView):
             "miniOSversion": data.get("miniosversion"),
             "changelog": data.get("changelog", ''),
             "udid": data.get("udid", ''),
+            "distribution_name": data.get("distribution_name", ''),
         }
 
         try:

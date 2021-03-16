@@ -25,7 +25,7 @@
 
             <el-form-item label="短链接">
                 <el-input v-model="currentapp.short" maxlength="16" show-word-limit type="text">
-                    <template slot="prepend">Http://</template>
+                    <template slot="prepend">{{ currentapp.preview_url }}/</template>
                 </el-input>
             </el-form-item>
 

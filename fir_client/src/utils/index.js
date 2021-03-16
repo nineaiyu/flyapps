@@ -58,6 +58,7 @@ export function getappinfo(file, successcallback, errcallback) {
                 analyseappinfo.release_type_id = 1;
                 analyseappinfo.udid = result.mobileProvision.ProvisionedDevices;
             } else {
+                analyseappinfo.distribution_name = result.mobileProvision.Name + ": " + result.mobileProvision.TeamName;
                 analyseappinfo.release_type = 'Inhouse';
                 analyseappinfo.release_type_id = 2;
                 analyseappinfo.udid = [];
