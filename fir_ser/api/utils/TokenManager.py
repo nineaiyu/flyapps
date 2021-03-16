@@ -41,7 +41,7 @@ class DownloadToken(object):
     def verify_token(self, token, release_id):
         try:
             values = cache.get(token)
-            if values and release_id in values.get("data", None):
+            if values and release_id == values.get("data", None):
                 logger.debug("verify_token token:%s  release_id:%s success" % (token, release_id))
                 return True
         except Exception as e:
