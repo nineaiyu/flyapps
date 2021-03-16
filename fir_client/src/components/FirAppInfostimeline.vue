@@ -148,11 +148,16 @@
                 })
             },
             previewRelase(app) {
-                this.$router.push({
+                let routeData = this.$router.resolve({
                     name: 'FirDownload',
                     params: {short: this.currentapp.short},
                     query: {release_id: app.release_id}
-                })
+                });
+                let p_url = routeData.href;
+                if (this.currentapp.preview_url && this.currentapp.preview_url.length > 6) {
+                    p_url = this.currentapp.preview_url + p_url
+                }
+                window.open(p_url, 'target', '');
 
             },
             getapptimelineFun() {

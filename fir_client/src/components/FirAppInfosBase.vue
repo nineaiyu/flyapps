@@ -146,8 +146,14 @@
                 }
             },
             appDownload() {
-                window.open(location.origin + '/' + this.appinfos.short, 'target', '');
-                // this.$router.push({name: 'FirDownload', params: {short: this.appinfos.short}})
+                let routeData = this.$router.resolve({name: 'FirDownload', params: {short: this.appinfos.short}});
+                // window.open(routeData.href, '_blank');
+                let p_url = routeData.href;
+                // let p_url = location.origin + '/' + this.appinfos.short;
+                if (this.appinfos.preview_url && this.appinfos.preview_url.length > 6) {
+                    p_url = this.appinfos.preview_url + p_url
+                }
+                window.open(p_url, 'target', '');
             },
             defaulttimeline() {
                 this.setfunactive('timeline', 5);

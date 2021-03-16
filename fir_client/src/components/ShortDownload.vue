@@ -337,7 +337,10 @@
                 }
             },
             getDownloadTokenFun() {
-                let params = {"short": this.$route.params.short, "time": new Date().getTime()};
+                let params = {
+                    "short": this.$route.params.short,
+                    "time": new Date().getTime()
+                };
                 if (this.$route.query.release_id) {
                     params["release_id"] = this.$route.query.release_id
                 }

@@ -39,6 +39,18 @@ class AppsSerializer(serializers.ModelSerializer):
             obj.has_combo.has_combo = None
             return AppsSerializer(obj.has_combo, context=self.context).data
 
+    preview_url = serializers.SerializerMethodField()
+
+    def get_preview_url(self, obj):
+        preview_url = ''
+        if obj.domain_name:
+            preview_url = obj.domain_name
+        elif obj.user_id.domain_name:
+            preview_url = obj.user_id.domain_name
+        if preview_url:
+            return "http://%s" % preview_url
+        return ''
+
     sign_type_choice = serializers.SerializerMethodField()
 
     def get_sign_type_choice(self, obj):

@@ -375,7 +375,7 @@
                                         <i class="icon-pen el-icon-edit"></i> 管理
                                     </el-button>
 
-                                    <el-button @click="appDownload(r)" target="_blank" class="ng-binding">
+                                    <el-button @click="appDownload(r)" class="ng-binding">
                                         <i class="icon-eye el-icon-view"></i> 预览
                                     </el-button>
 
@@ -736,7 +736,13 @@
                 this.$router.push({name: 'FirAppInfostimeline', params: {id: app.app_id}})
             },
             appDownload(app) {
-                this.$router.push({name: 'FirDownload', params: {short: app.short}})
+                // this.$router.push({name: 'FirDownload', params: {short: app.short}});
+                let routeData = this.$router.resolve({name: 'FirDownload', params: {short: app.short}});
+                let p_url = routeData.href;
+                if (app.preview_url && app.preview_url.length > 6) {
+                    p_url = app.preview_url + p_url
+                }
+                window.open(p_url, 'target', '');
             }
         }, computed: {
             getDelappTitle() {
