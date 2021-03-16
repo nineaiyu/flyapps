@@ -341,7 +341,7 @@
                         this.$message.error(data.msg)
                     }
 
-                }, {"methods": 'GET', 'data': {'act': act, 'target': target, 'ext': picode}})
+                }, {"methods": 'POST', 'data': {'act': act, 'target': target, 'ext': picode}})
             }
         }, mounted() {
             this.$store.dispatch('douserInfoIndex', 0);

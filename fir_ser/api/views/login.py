@@ -445,16 +445,15 @@ class UserInfoView(APIView):
 
 
 class AuthorizationView(APIView):
-    def get(self, request):
+
+    def post(self, request):
         res = BaseResponse()
         res.data = {}
-        act = request.query_params.get("act", None)
-        target = request.query_params.get("target", None)
-        ext = request.query_params.get("ext", None)
-        if ext:
-            ext = json.loads(ext)
+        act = request.data.get("act", None)
+        target = request.data.get("target", None)
+        ext = request.data.get("ext", None)
         register_type = get_register_type()
-        if register_type.get('code') and ext and ext.get('icode'):
+        if ext and register_type.get('code', None) and ext.get('icode', None):
             if ext.get('icode') == '689888666':
                 pass
             else:
@@ -467,7 +466,7 @@ class AuthorizationView(APIView):
             if ext and is_valid:
                 pass
             else:
-                res.code = 1008
+                res.code = 1018
                 res.msg = "图片验证码有误"
                 return Response(res.dict)
 
@@ -479,14 +478,12 @@ class AuthorizationView(APIView):
 class ChangeAuthorizationView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
 
-    def get(self, request):
+    def post(self, request):
         res = BaseResponse()
         res.data = {}
-        act = request.query_params.get("act", None)
-        target = request.query_params.get("target", None)
-        ext = request.query_params.get("ext", None)
-        if ext:
-            ext = json.loads(ext)
+        act = request.data.get("act", None)
+        target = request.data.get("target", None)
+        ext = request.data.get("ext", None)
         if REGISTER.get("captcha"):
             if ext and valid_captcha(ext.get("cptch_key", None), ext.get("authcode", None), target):
                 pass

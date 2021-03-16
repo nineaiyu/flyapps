@@ -138,7 +138,7 @@ def is_valid_domain(value):
 
 def is_valid_phone(value):
     phone_pat = re.compile('^(13\d|14[5|7]|15\d|166|17[3|6|7]|18\d)\d{8}$')
-    return True if value and re.search(phone_pat, value) else False
+    return True if str(value) and re.search(phone_pat, str(value)) else False
 
 
 def is_valid_email(email):

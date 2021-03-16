@@ -183,7 +183,7 @@
                                 type: 'error'
                             });
                         }
-                    }, {"methods": 'GET', 'data': {'act': act, 'target': this.form.email, 'ext': picode}})
+                    }, {"methods": 'POST', 'data': {'act': act, 'target': this.form.email, 'ext': picode}})
 
                 } else {
                     this.$message({
