@@ -12,6 +12,33 @@ logger = logging.getLogger(__file__)
 token_obj = DownloadToken()
 
 
+def get_download_url_from_context(self, key, url, force_new=False):
+    icon_url = ""
+    if self.context.get("key", None) and self.context.get("key") != "undefined":
+        key = self.context.get("key", '')
+    if self.context.get("storage", None) and self.context.get("storage") != "undefined":
+        storage = self.context.get("storage", None)
+        icon_url = storage.get_download_url(os.path.basename(url), 600, key, force_new)
+    return icon_url
+
+
+def get_app_master_obj_from_context(self, obj):
+    master_release_obj = models.AppReleaseInfo.objects.filter(app_id=obj, is_master=True).first()
+    if self.context.get("release_id", None) and self.context.get("release_id") != "undefined":
+        master_release_obj = models.AppReleaseInfo.objects.filter(app_id=obj,
+                                                                  release_id=self.context.get("release_id")).first()
+    return master_release_obj
+
+
+def get_screenshots_from_self(self, obj, force_new=False):
+    screenshots_list = []
+    for screenshot_obj in models.AppScreenShot.objects.filter(app_id=obj).all():
+        key = ''
+        icon_url = get_download_url_from_context(self, key, screenshot_obj.screenshot_url, force_new)
+        screenshots_list.append({'id': screenshot_obj.pk, 'url': icon_url})
+    return screenshots_list
+
+
 class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserInfo
@@ -58,22 +85,18 @@ class AppsSerializer(serializers.ModelSerializer):
     def get_supersign_used_number(self, obj):
         return models.APPSuperSignUsedInfo.objects.filter(app_id=obj).all().count()
 
+    screenshots = serializers.SerializerMethodField()
+
+    def get_screenshots(self, obj):
+        return get_screenshots_from_self(self, obj)
+
     master_release = serializers.SerializerMethodField()
 
     def get_master_release(self, obj):
-        master_release_obj = models.AppReleaseInfo.objects.filter(app_id=obj, is_master=True).first()
-        if self.context.get("release_id", None) and self.context.get("release_id") != "undefined":
-            master_release_obj = models.AppReleaseInfo.objects.filter(app_id=obj,
-                                                                      release_id=self.context.get("release_id")).first()
+        master_release_obj = get_app_master_obj_from_context(self, obj)
         if master_release_obj:
-
-            icon_url = ""
             key = ''
-            if self.context.get("key", None) and self.context.get("key") != "undefined":
-                key = self.context.get("key", '')
-            if self.context.get("storage", None) and self.context.get("storage") != "undefined":
-                storage = self.context.get("storage", None)
-                icon_url = storage.get_download_url(os.path.basename(master_release_obj.icon_url), 600, key=key)
+            icon_url = get_download_url_from_context(self, key, master_release_obj.icon_url)
             datainfo = {
                 "app_version": master_release_obj.app_version,
                 "icon_url": icon_url,
@@ -107,7 +130,12 @@ class AppsShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Apps
         fields = ["app_id", "name", "short", "has_combo", "isshow", "description", "need_password", 'master_release',
-                  'type', 'issupersign', 'wxeasytype', 'wxredirect', 'domain_name']
+                  'type', 'issupersign', 'wxeasytype', 'wxredirect', 'domain_name', 'screenshots']
+
+    screenshots = serializers.SerializerMethodField()
+
+    def get_screenshots(self, obj):
+        return get_screenshots_from_self(self, obj, True)
 
     need_password = serializers.SerializerMethodField()
 
@@ -127,20 +155,10 @@ class AppsShortSerializer(serializers.ModelSerializer):
     master_release = serializers.SerializerMethodField()
 
     def get_master_release(self, obj):
-        master_release_obj = models.AppReleaseInfo.objects.filter(app_id=obj, is_master=True).first()
-        if self.context.get("release_id", None) and self.context.get("release_id") != "undefined":
-            master_release_obj = models.AppReleaseInfo.objects.filter(app_id=obj,
-                                                                      release_id=self.context.get("release_id")).first()
+        master_release_obj = get_app_master_obj_from_context(self, obj)
         if master_release_obj:
-
-            icon_url = ""
             key = ''
-            if self.context.get("key", None) and self.context.get("key") != "undefined":
-                key = self.context.get("key", '')
-            if self.context.get("storage", None) and self.context.get("storage") != "undefined":
-                storage = self.context.get("storage", None)
-                icon_url = storage.get_download_url(os.path.basename(master_release_obj.icon_url), 600, key=key,
-                                                    force_new=True)
+            icon_url = get_download_url_from_context(self, key, os.path.basename(master_release_obj.icon_url), True)
             datainfo = {
                 "app_version": master_release_obj.app_version,
                 "icon_url": icon_url,
@@ -191,21 +209,10 @@ class AppReleaseSerializer(serializers.ModelSerializer):
         return bytes2human(obj.binary_size)
 
     def get_download_token(self, obj):
-
-        download_token = token_obj.make_token(obj.release_id, 600)
-
-        return download_token
+        return token_obj.make_token(obj.release_id, 600)
 
     def get_icon_url(self, obj):
-        icon_url = ""
-        key = ''
-        if self.context.get("key", None) and self.context.get("key") != "undefined":
-            key = self.context.get("key", '')
-        if self.context.get("storage", None) and self.context.get("storage") != "undefined":
-            storage = self.context.get("storage", None)
-            icon_url = storage.get_download_url(os.path.basename(obj.icon_url), 600, key=key)
-
-        return icon_url
+        return get_download_url_from_context(self, '', os.path.basename(obj.icon_url), force_new=False)
 
     def get_master_color(self, obj):
         if obj.is_master:

@@ -7,7 +7,7 @@
 from api.utils.app.apputils import get_random_short, SaveAppInfos
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
-from api.models import Apps, AppReleaseInfo, UserInfo
+from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot
 from api.utils.app.randomstrings import make_app_uuid
 from rest_framework.views import APIView
 from api.utils.response import BaseResponse
@@ -157,7 +157,7 @@ class UploadView(APIView):
         app_id = request.query_params.get("app_id", None)
         ftype = request.query_params.get("ftype", None)
         if ftype and app_id and request_upload_key:
-            if ftype == 'app':
+            if ftype == 'app' or ftype == 'screen':
                 app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
 
             elif ftype and ftype == 'head':
@@ -224,7 +224,7 @@ class UploadView(APIView):
 
             app_id = certinfo.get("app_id", None)
             ftype = certinfo.get("ftype", None)
-            if ftype and ftype == 'app':
+            if ftype and ftype in ['app', 'screen']:
                 pass
                 # app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
                 # if not app_obj:
@@ -308,6 +308,19 @@ class UploadView(APIView):
                         del_cache_response_by_short(app_id)
                         storage.delete_file(old_file_key)
                         return Response(res.dict)
+            elif ftype and app_id and ftype == 'screen':
+                app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
+                if app_obj:
+                    scount = AppScreenShot.objects.filter(app_id=app_obj).count()
+                    if scount >= 5:
+                        storage.delete_file(certinfo.get("upload_key"))
+                        res.msg = '最多支持五张截图'
+                        res.code = 1009
+                        return Response(res.dict)
+                    AppScreenShot.objects.create(app_id=app_obj, screenshot_url=certinfo.get("upload_key"))
+                    del_cache_response_by_short(app_id)
+                    return Response(res.dict)
+
             elif ftype and app_id and ftype == 'head':
                 if request.user.uid != app_id:
                     res.code = 1007

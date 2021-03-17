@@ -133,6 +133,20 @@ class Apps(models.Model):
         return "%s %s-%s %s" % (self.name, self.get_type_display(), self.short, self.issupersign)
 
 
+class AppScreenShot(models.Model):
+    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
+    screenshot_url = models.CharField(max_length=128, blank=True, verbose_name="应用截图URL")
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+
+    class Meta:
+        verbose_name = '应用截图'
+        verbose_name_plural = "应用截图"
+        indexes = [models.Index(fields=['app_id'])]
+
+    def __str__(self):
+        return "%s-%s" % (self.app_id, self.screenshot_url)
+
+
 class AppReleaseInfo(models.Model):
     is_master = models.BooleanField(verbose_name="是否master版本", default=True)
     release_id = models.CharField(max_length=64, unique=True, verbose_name="release 版本id", db_index=True)
@@ -155,7 +169,7 @@ class AppReleaseInfo(models.Model):
         verbose_name_plural = "应用详情"
 
     def __str__(self):
-        return "%s" % (self.release_id)
+        return "%s-%s" % (self.app_id, self.release_id)
 
 
 class AppStorage(models.Model):

@@ -12,7 +12,7 @@ from django.db.models import Sum
 from api.utils.app.supersignutils import IosUtils, resign_by_app_obj
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
-from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo
+from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo, AppScreenShot
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
@@ -20,6 +20,15 @@ from fir_ser.settings import SERVER_DOMAIN
 from api.utils.utils import is_valid_domain, delete_local_files
 
 logger = logging.getLogger(__name__)
+
+
+def get_release_apps(res, app_serializer, apps_obj, storage):
+    res.data["currentapp"] = app_serializer.data
+    app_release_obj = AppReleaseInfo.objects.filter(app_id=apps_obj).all().order_by("-created_time")
+    app_release_serializer = AppReleaseSerializer(app_release_obj, many=True,
+                                                  context={"storage": storage})
+    res.data["release_apps"] = app_release_serializer.data
+    return res
 
 
 class AppsPageNumber(PageNumberPagination):
@@ -291,14 +300,9 @@ class AppReleaseinfoView(APIView):
         if app_id:
             apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
             if apps_obj:
-                app_serializer = AppsSerializer(apps_obj, context={"storage": Storage(request.user)})
-                res.data["currentapp"] = app_serializer.data
-
-                app_release_obj = AppReleaseInfo.objects.filter(app_id=apps_obj).all().order_by("-created_time")
-                app_release_serializer = AppReleaseSerializer(app_release_obj, many=True,
-                                                              context={"storage": Storage(request.user)})
-                res.data["release_apps"] = app_release_serializer.data
-
+                storage = Storage(request.user)
+                app_serializer = AppsSerializer(apps_obj, context={"storage": storage})
+                res = get_release_apps(res, app_serializer, apps_obj, storage)
             else:
                 res.msg = "未找到该应用"
                 res.code = 1003
@@ -310,6 +314,16 @@ class AppReleaseinfoView(APIView):
             apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
             if apps_obj:
                 storage = Storage(request.user)
+                if act == 'screen':
+                    screen_id = request.query_params.get('screen_id', None)
+                    if screen_id:
+                        screen_obj = AppScreenShot.objects.filter(pk=screen_id, app_id=apps_obj).first()
+                        if screen_obj:
+                            storage.delete_file(screen_obj.screenshot_url)
+                            screen_obj.delete()
+                            del_cache_response_by_short(apps_obj.app_id)
+                    return Response(res.dict)
+
                 apprelease_count = AppReleaseInfo.objects.filter(app_id=apps_obj).values("release_id").count()
                 appreleaseobj = AppReleaseInfo.objects.filter(app_id=apps_obj, release_id=act).first()
                 if not appreleaseobj.is_master:
@@ -377,11 +391,6 @@ class AppReleaseinfoView(APIView):
 
                 del_cache_response_by_short(apps_obj.app_id)
                 app_serializer = AppsSerializer(apps_obj)
-                res.data["currentapp"] = app_serializer.data
-
-                app_release_obj = AppReleaseInfo.objects.filter(app_id=apps_obj).all().order_by("-created_time")
-                app_release_serializer = AppReleaseSerializer(app_release_obj, many=True,
-                                                              context={"storage": Storage(request.user)})
-                res.data["release_apps"] = app_release_serializer.data
+                res = get_release_apps(res, app_serializer, apps_obj, Storage(request.user))
 
         return Response(res.dict)

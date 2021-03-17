@@ -1,9 +1,9 @@
 <template>
 
 
-    <div style="margin-top: 20px;width: 56%;margin-left: 8%">
+    <div style="margin-top: 20px;width: 100%;margin-left: 8%">
         <el-form ref="form" label-width="80px">
-            <el-form-item label="应用ID">
+            <el-form-item label="应用ID" style="width: 55%">
 
                 <el-row>
                     <el-col :span="19">
@@ -19,23 +19,23 @@
 
             </el-form-item>
 
-            <el-form-item label="应用名称">
+            <el-form-item label="应用名称" style="width: 56%">
                 <el-input v-model="currentapp.name"></el-input>
             </el-form-item>
 
-            <el-form-item label="短链接">
+            <el-form-item label="短链接" style="width: 56%">
                 <el-input v-model="currentapp.short" maxlength="16" show-word-limit type="text">
                     <template slot="prepend">{{ currentapp.preview_url }}/</template>
                 </el-input>
             </el-form-item>
 
-            <el-form-item label="应用图标">
+            <el-form-item label="应用图标" style="width: 56%">
                 <el-upload
                         class="avatar-uploader"
                         action="#"
                         :show-file-list="false"
                         accept=".png , .jpg , .jpeg"
-                        :before-upload="beforeAvatarUpload">
+                        :before-upload="upload_app_icon">
                     <img v-if="currentapp.icon_url" :src="currentapp.icon_url"
                          class="avatar">
                     <i v-else class="el-icon-plus avatar-uploader-icon"></i>
@@ -43,12 +43,38 @@
 
             </el-form-item>
 
-            <el-form-item label="应用描述">
+            <el-form-item label="应用描述" style="width: 66%">
                 <el-input type="textarea" v-model="currentapp.description"
                           :autosize="{ minRows: 6, maxRows: 18}"></el-input>
             </el-form-item>
+
+            <el-divider></el-divider>
+
+            <el-form-item label="应用截图" style="width: 100%">
+
+                <div class="appdownload">
+                    <el-image
+                            style="width: 155px;height: 288px;margin-right: 20px;background-color: #d1eef9;float: left"
+                            fit="scale-down"
+                            @click="delscreen(screen.id)"
+                            v-for="(screen) in currentapp.screenshots" :key="screen.id" :src="screen.url" alt=""/>
+                    <div style="width: 155px;height: 288px;background-color: #d1eef9;float: left"
+                         v-if="currentapp.screenshots && currentapp.screenshots.length < 5">
+                        <el-upload
+                                drag
+                                action="#"
+                                accept=".png , .jpg , .jpeg"
+                                :before-upload="upload_app_screen">
+                            <i class="el-icon-upload"></i>
+                        </el-upload>
+                    </div>
+
+                </div>
+
+            </el-form-item>
+
             <el-form-item>
-                <el-button type="primary" @click="saveappinfo">保存</el-button>
+                <el-button type="primary" @click="saveappinfo('save')">保存</el-button>
             </el-form-item>
         </el-form>
 
@@ -58,7 +84,7 @@
 </template>
 
 <script>
-    import {apputils, getapppicurl, uploadimgs, getuploadurl} from "../restful"
+    import {apputils, getapppicurl, uploadimgs, getuploadurl, releaseapputils} from "../restful"
     import {uploadaliyunoss, uploadlocalstorage, uploadqiniuoss} from "../utils";
 
     export default {
@@ -68,20 +94,47 @@
                 currentapp: {},
                 imageUrl: "",
                 uploadconf: {},
-                uploadprocess: 0
+                uploadprocess: 0,
+                dialogImageUrl: '',
+                dialogVisible: false
             }
         },
         methods: {
+            // eslint-disable-next-line no-unused-vars
+            delscreen(screen_id) {
+                this.$confirm('确定要删除该应用截图?', '警告', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    releaseapputils(data => {
+                        if (data.code === 1000) {
+                            this.$message.success('删除成功');
+                            this.updateinfo();
+                        } else if (data.code === 1003) {
+                            this.$router.push({name: 'FirApps'});
+                        }
+                    }, {
+                        "methods": "DELETE",
+                        "app_id": this.$route.params.id,
+                        "release_id": "screen",
+                        "data": {'screen_id': screen_id}
+                    })
+
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消操作'
+                    });
+                });
+            },
             updateimgs(certinfo) {
                 uploadimgs(data => {
                     if (data.code === 1000) {
-                        // eslint-disable-next-line no-console
-                        // console.log(data.data);
                         this.$message.success('上传成功');
                         this.updateinfo();
-
                     } else {
-                        this.$message.error('更新失败');
+                        this.$message.error('更新失败: ' + data.msg);
                     }
                 }, {'methods': 'PUT', 'data': {'certinfo': certinfo}});
 
@@ -189,7 +242,13 @@
                     }
                 });
             },
-            beforeAvatarUpload(file) {
+            upload_app_icon(file) {
+                return this.beforeAvatarUpload(file, 'app')
+            },
+            upload_app_screen(file) {
+                return this.beforeAvatarUpload(file, 'screen')
+            },
+            beforeAvatarUpload(file, act) {
                 const isLt2M = file.size / 1024 / 1024 < 2;
                 if (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg') {
                     if (isLt2M) {
@@ -200,7 +259,7 @@
                             }
                         }, {
                             'methods': 'GET',
-                            'data': {'app_id': this.currentapp.app_id, 'upload_key': file.name, 'ftype': 'app'}
+                            'data': {'app_id': this.currentapp.app_id, 'upload_key': file.name, 'ftype': act}
                         });
                     } else {
                         this.$message.error('上传应用图片大小不能超过 2MB!');
@@ -234,7 +293,15 @@
 </script>
 
 <style scoped>
+    .appdownload /deep/ .el-upload-dragger {
+        background: #d1eef9;
+        width: 155px;
+        height: 288px;
+    }
 
+    .appdownload /deep/ .el-icon-upload {
+        margin-top: 80%;
+    }
 
     .avatar-uploader .el-upload {
         border: 1px dashed #d9d9d9;
@@ -245,7 +312,7 @@
 
     }
 
-    .avatar-uploader .el-upload:hover {
+    .avatar-uploader .el-image:hover {
         border-color: #409EFF;
     }
 

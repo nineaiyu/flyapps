@@ -85,7 +85,7 @@
                         this.updateUserInfo({"methods": 'GET'});
 
                     } else {
-                        this.$message.error('更新失败');
+                        this.$message.error('更新失败: ' + data.msg);
                     }
                 }, {'methods': 'PUT', 'data': {'certinfo': certinfo}});
             },
