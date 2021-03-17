@@ -172,6 +172,18 @@
                     </div>
 
                 </div>
+                <br/>
+                <div class="screenshots-section" v-if="imagelist && imagelist.length > 0">
+                    <h3>应用截图</h3>
+                    <div class="list-wrapper">
+                        <ul>
+                            <li v-for="screen in imagelist" :key="screen">
+                                <img :src="screen"/>
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
             </div>
 
         </div>
@@ -204,6 +216,7 @@
         name: "ShortDownload",
         data() {
             return {
+                imagelist: [],
                 currentappinfo: {},
                 iscomboappinfo: {},
                 mcurrentappinfo: {},
@@ -440,7 +453,11 @@
                                 window.location.href = this.mcurrentappinfo.binary_url
                             }
                         }
-
+                        if (this.currentappinfo.screenshots && this.currentappinfo.screenshots.length > 0) {
+                            for (let i = 0; i < this.currentappinfo.screenshots.length; i++) {
+                                this.imagelist.push(this.currentappinfo.screenshots[i].url)
+                            }
+                        }
                     } else {
                         this.iserror = true;
                         if (data.msg) {

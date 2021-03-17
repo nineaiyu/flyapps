@@ -178,6 +178,21 @@
                     </div>
 
                 </div>
+
+                <el-divider></el-divider>
+
+                <div class="screenshots-section" v-if="imagelist && imagelist.length > 0">
+                    <h3>应用截图</h3>
+                    <div class="list-wrapper">
+                        <ul>
+                            <li v-for="screen in imagelist" :key="screen">
+                                <img :src="screen"/>
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+
             </div>
 
         </el-container>
@@ -202,6 +217,7 @@
         name: "FirDownload",
         data() {
             return {
+                imagelist: [],
                 currentappinfo: {},
                 iscomboappinfo: {},
                 mcurrentappinfo: {},
@@ -448,6 +464,11 @@
                         if (this.currentappinfo.wxredirect) {
                             if (this.mcurrentappinfo.binary_url && this.agent !== '' && this.wrong === false) {
                                 window.location.href = this.mcurrentappinfo.binary_url
+                            }
+                        }
+                        if (this.currentappinfo.screenshots && this.currentappinfo.screenshots.length > 0) {
+                            for (let i = 0; i < this.currentappinfo.screenshots.length; i++) {
+                                this.imagelist.push(this.currentappinfo.screenshots[i].url)
                             }
                         }
                     } else {
