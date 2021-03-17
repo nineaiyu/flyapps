@@ -179,10 +179,19 @@
 
                 </div>
 
-                <el-divider></el-divider>
 
                 <div class="screenshots-section" v-if="imagelist && imagelist.length > 0">
-                    <h3>应用截图</h3>
+                    <el-divider></el-divider>
+                    <div v-if="miscomboappinfo.release_id">
+                        <h3 v-if="currentappinfo.type === 0">
+                            Android 应用截图
+                        </h3>
+                        <h3 v-else>iOS 应用截图</h3>
+                    </div>
+                    <div v-else>
+                        <h3>应用截图</h3>
+                    </div>
+
                     <div class="list-wrapper">
                         <ul>
                             <li v-for="screen in imagelist" :key="screen">
