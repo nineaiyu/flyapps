@@ -192,6 +192,11 @@
                     </div>
 
                 </div>
+                <div class="footer" style="margin-top: 20px;background-color: #d1eef9">
+                    免责声明：<br>
+                    本网站仅提供下载托管，应用为用户自行上传，请甄别应用风险后进行下载！
+                </div>
+
             </div>
 
         </div>
@@ -209,6 +214,44 @@
                 </header>
             </div>
         </div>
+
+
+        <div id="signhelp" class="signhelp screenshots-section">
+            <div class="signhelp-title">
+                超级签安装教程
+                <span><a id="closeBtn" @click="jiaocheng('close')">关闭</a></span>
+            </div>
+
+            <div class="list-wrapper" style="width: 300px;">
+                <ul>
+                    <li><img src="../assets/sign/step1.jpg"/>
+                        <p>
+                            安装引导<br>第一步 允许打开配置描述文件
+                        </p>
+                    </li>
+                    <li><img src="../assets/sign/step2.jpg"/>
+                        <p>
+                            安装引导<br>第二步 点击右上角安装按钮
+                        </p>
+                    </li>
+                    <li><img src="../assets/sign/step3.jpg"/>
+                        <p>
+                            安装引导<br>第三步 输入开机解锁密码
+                        </p>
+                    </li>
+                    <li><img src="../assets/sign/step4.jpg"/>
+                        <p>
+                            安装引导<br>第四步 点击下方安装按钮
+                        </p>
+                    </li>
+
+                </ul>
+            </div>
+
+
+        </div>
+        <div id="bg" class="bg"></div>
+
 
     </div>
 
@@ -250,6 +293,17 @@
             clearTimeout(this.timer);
         },
         methods: {
+            jiaocheng(act) {
+                let signhelp = document.getElementById('signhelp');
+                let bg = document.getElementById('bg');
+                if (act === 'open') {
+                    signhelp.style.display = "block";
+                    bg.style.display = "block";
+                } else {
+                    signhelp.style.display = "none";
+                    bg.style.display = "none";
+                }
+            },
             gomobileaction() {
                 window.location.href = this.mobileprovision;
             },
@@ -1707,4 +1761,68 @@
         }
     }
 
+    .signhelp {
+        position: absolute;
+        width: 90%;
+        max-width: 300px;
+        max-height: 366px;
+        z-index: 9999;
+        display: none;
+        background-color: white;
+        /* 这里要注意绝对定位的盒子怎么在屏幕显示居中 */
+        left: 50%;
+        margin-left: -150px;
+        margin-top: 10%;
+        border: 1px solid gray;
+    }
+
+    .signhelp ul li img {
+        width: 300px;
+        height: 222px;
+    }
+
+    .signhelp ul li p {
+        text-align: center;
+        font-size: 14px;
+        color: #0491f7;
+        margin: 10px 0;
+    }
+
+
+    /* 遮盖层 */
+    .bg {
+        background-color: #000;
+        width: 100%;
+        height: 100%;
+        top: 0px;
+        position: fixed;
+        opacity: 0.3;
+        -webkit-opacity: 0.3;
+        -moz-opacity: 0.3;
+        display: none;
+    }
+
+    /* 登陆框标题 */
+    .signhelp-title {
+        width: 100%;
+        height: 40px;
+        line-height: 40px;
+        text-align: center;
+        margin-bottom: 20px;
+        cursor: move;
+    }
+
+    .signhelp-title span a {
+        text-decoration: none;
+        border: 1px solid gray;
+        font-size: 12px;
+        color: black;
+        border-radius: 20px;
+        width: 40px;
+        height: 40px;
+        background-color: #fff;
+        position: absolute;
+        top: -20px;
+        right: -20px;
+    }
 </style>
