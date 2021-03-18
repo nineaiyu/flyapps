@@ -93,7 +93,7 @@
                                             </div>
                                         </div>
 
-                                        <div v-else>
+                                        <div v-else style="margin-top: 10%;margin-bottom: 10%">
                                             <div v-if="currentappinfo.need_password" style="margin:0 auto; width:166px">
                                                 <el-input prefix-icon="el-icon-lock" clearable
                                                           placeholder="请输入密码" v-model="password"
@@ -109,7 +109,7 @@
                                             </button>
                                             <a v-if="currentappinfo.issupersign && !$route.query.udid"
                                                @click="jiaocheng('open')"
-                                               style="float: right;width: 30px;height: 30px;text-align: center;border-radius: 15px;background-color:#32b2a7;color: white;font-size: 20px">?</a>
+                                               class="jiaocheng" style="color: white;font-size: 20px;">?</a>
                                         </div>
 
                                     </div>
@@ -120,7 +120,6 @@
                         </div>
                     </div>
                 </header>
-
                 <div class="per-type-info section" v-if="currentappinfo.app_id && agent === ''">
                     <div class="type" v-if="miscomboappinfo.release_id">
                         <div class="info">
@@ -183,7 +182,7 @@
                 </div>
 
 
-                <div class="screenshots-section" v-if="imagelist && imagelist.length > 0">
+                <div class="screenshots-section" v-if="imagelist && imagelist.length > 0" style="margin-top: 30%">
                     <el-divider></el-divider>
                     <div v-if="miscomboappinfo.release_id">
                         <h3 v-if="currentappinfo.type === 0">
@@ -205,7 +204,7 @@
 
                 </div>
 
-                <div class="footer" style="margin-top: 20px;background-color: #d1eef9">
+                <div class="footer" style="margin-top: 30%;background-color: #d1eef9">
                     免责声明：<br>
                     本网站仅提供下载托管，应用为用户自行上传，请甄别应用风险后进行下载！
                 </div>
@@ -372,12 +371,14 @@
                                 window.location.href = this.downloadurl;
                             } else {
                                 this.isdownload = false;
-                                this.password = '';
                                 this.$message({
                                     message: "密码错误，或者下载链接失效",
                                     type: 'error',
                                 });
-                                window.location.reload();
+                                if (!this.password) {
+                                    window.location.reload();
+                                }
+                                this.password = '';
                             }
                         }, {
                             'data': {
@@ -627,6 +628,17 @@
 
     .text-black {
         color: #505556
+    }
+
+    .jiaocheng {
+        float: right;
+        width: 30px;
+        height: 30px;
+        text-align: center;
+        border-radius: 15px;
+        background-color: #32b2a7;
+        margin-right: -30px;
+        margin-top: 7px;
     }
 
     .wechat_tip, .wechat_tip > i {
