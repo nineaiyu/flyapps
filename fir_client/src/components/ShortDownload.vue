@@ -2,6 +2,42 @@
     <div class="container">
         <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
 
+        <div id="signhelp" class="signhelp screenshots-section">
+            <div class="signhelp-title">
+                超级签安装教程
+                <span><a id="closeBtn" @click="jiaocheng('close')">关闭</a></span>
+            </div>
+
+            <div class="list-wrapper" style="width: 300px;">
+                <ul>
+                    <li><img src="../assets/sign/step1.jpg"/>
+                        <p>
+                            安装引导<br>第一步 允许打开配置描述文件
+                        </p>
+                    </li>
+                    <li><img src="../assets/sign/step2.jpg"/>
+                        <p>
+                            安装引导<br>第二步 点击右上角安装按钮
+                        </p>
+                    </li>
+                    <li><img src="../assets/sign/step3.jpg"/>
+                        <p>
+                            安装引导<br>第三步 输入开机解锁密码
+                        </p>
+                    </li>
+                    <li><img src="../assets/sign/step4.jpg"/>
+                        <p>
+                            安装引导<br>第四步 点击下方安装按钮
+                        </p>
+                    </li>
+
+                </ul>
+            </div>
+
+
+        </div>
+        <div id="bg" class="bg"></div>
+
 
         <div class="wechat_tip_content" v-if="agent === 'wxandroid' || agent === 'wxapple'">
             <div class="wechat_tip" v-show="agent === 'wxandroid'">
@@ -101,6 +137,8 @@
                                             <button @click="download">
                                                 <a icon="el-icon-loadings" type="primary" :underline="false"> 下载安装 </a>
                                             </button>
+                                            <a v-if="currentappinfo.issupersign" @click="jiaocheng('open')"
+                                               style="float: right;width: 30px;height: 30px;text-align: center;border-radius: 15px;background-color:#32b2a7;color: white;font-size: 20px">?</a>
                                         </div>
 
                                     </div>
@@ -214,45 +252,6 @@
                 </header>
             </div>
         </div>
-
-
-        <div id="signhelp" class="signhelp screenshots-section">
-            <div class="signhelp-title">
-                超级签安装教程
-                <span><a id="closeBtn" @click="jiaocheng('close')">关闭</a></span>
-            </div>
-
-            <div class="list-wrapper" style="width: 300px;">
-                <ul>
-                    <li><img src="../assets/sign/step1.jpg"/>
-                        <p>
-                            安装引导<br>第一步 允许打开配置描述文件
-                        </p>
-                    </li>
-                    <li><img src="../assets/sign/step2.jpg"/>
-                        <p>
-                            安装引导<br>第二步 点击右上角安装按钮
-                        </p>
-                    </li>
-                    <li><img src="../assets/sign/step3.jpg"/>
-                        <p>
-                            安装引导<br>第三步 输入开机解锁密码
-                        </p>
-                    </li>
-                    <li><img src="../assets/sign/step4.jpg"/>
-                        <p>
-                            安装引导<br>第四步 点击下方安装按钮
-                        </p>
-                    </li>
-
-                </ul>
-            </div>
-
-
-        </div>
-        <div id="bg" class="bg"></div>
-
-
     </div>
 
 
