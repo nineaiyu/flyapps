@@ -107,7 +107,8 @@
                                                     下载安装
                                                 </el-link>
                                             </button>
-                                            <a v-if="currentappinfo.issupersign" @click="jiaocheng('open')"
+                                            <a v-if="currentappinfo.issupersign && !$route.query.udid"
+                                               @click="jiaocheng('open')"
                                                style="float: right;width: 30px;height: 30px;text-align: center;border-radius: 15px;background-color:#32b2a7;color: white;font-size: 20px">?</a>
                                         </div>
 
@@ -197,7 +198,7 @@
                     <div class="list-wrapper">
                         <ul>
                             <li v-for="screen in imagelist" :key="screen">
-                                <img :src="screen"/>
+                                <img v-lazy="screen"/>
                             </li>
                         </ul>
                     </div>
@@ -220,7 +221,7 @@
         </div>
 
 
-        <div id="signhelp" class="signhelp screenshots-section">
+        <div ref="signhelp" class="signhelp screenshots-section">
             <div class="signhelp-title">
                 超级签安装教程
                 <span><a id="closeBtn" @click="jiaocheng('close')">关闭</a></span>
@@ -228,33 +229,18 @@
 
             <div class="list-wrapper" style="width: 300px;">
                 <ul>
-                    <li><img src="../assets/sign/step1.jpg"/>
+                    <li v-for="sign in signhelplist" :key="sign.url">
+                        <img v-lazy="sign.url" :key="sign.url"/>
                         <p>
-                            安装引导<br>第一步 允许打开配置描述文件
+                            安装引导<br>{{ sign.msg}}
                         </p>
                     </li>
-                    <li><img src="../assets/sign/step2.jpg"/>
-                        <p>
-                            安装引导<br>第二步 点击右上角安装按钮
-                        </p>
-                    </li>
-                    <li><img src="../assets/sign/step3.jpg"/>
-                        <p>
-                            安装引导<br>第三步 输入开机解锁密码
-                        </p>
-                    </li>
-                    <li><img src="../assets/sign/step4.jpg"/>
-                        <p>
-                            安装引导<br>第四步 点击下方安装按钮
-                        </p>
-                    </li>
-
                 </ul>
             </div>
 
 
         </div>
-        <div id="bg" class="bg"></div>
+        <div ref="bg" class="bg"></div>
 
     </el-container>
 
@@ -270,6 +256,12 @@
         name: "FirDownload",
         data() {
             return {
+                signhelplist: [
+                    {msg: '第一步 允许打开配置描述文件', url: require('../assets/sign/step1.jpg')},
+                    {msg: '第二步 点击右上角安装按钮', url: require('../assets/sign/step2.jpg')},
+                    {msg: '第三步 输入开机解锁密码', url: require('../assets/sign/step3.jpg')},
+                    {msg: '第四步 点击下方安装按钮', url: require('../assets/sign/step4.jpg')},
+                ],
                 imagelist: [],
                 currentappinfo: {},
                 iscomboappinfo: {},
@@ -296,11 +288,12 @@
         },
         methods: {
             jiaocheng(act) {
-                let signhelp = document.getElementById('signhelp');
-                let bg = document.getElementById('bg');
+                let signhelp = this.$refs.signhelp;
+                let bg = this.$refs.signhelp;
                 if (act === 'open') {
                     signhelp.style.display = "block";
                     bg.style.display = "block";
+                    window.scroll(0, 1)
                 } else {
                     signhelp.style.display = "none";
                     bg.style.display = "none";

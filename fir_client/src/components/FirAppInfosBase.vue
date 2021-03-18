@@ -153,7 +153,7 @@
                 if (this.appinfos.preview_url && this.appinfos.preview_url.length > 6) {
                     p_url = this.appinfos.preview_url + p_url
                 }
-                window.open(p_url, 'target', '');
+                window.open(p_url, '_blank', '');
             },
             defaulttimeline() {
                 this.setfunactive('timeline', 5);

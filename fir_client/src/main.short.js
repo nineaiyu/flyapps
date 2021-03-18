@@ -24,6 +24,12 @@ Vue.prototype.$message = Message;
 
 
 Vue.config.productionTip = false;
+import VueLazyload from 'vue-lazyload'
+
+Vue.use(VueLazyload, {
+    loading: require('./assets/loading.gif'),
+    preLoad: 1
+});
 
 new Vue({
     render: h => h(Download),

@@ -154,7 +154,12 @@ Vue.prototype.$alert = MessageBox.alert;
 
 // Vue.use(ElementUI);
 Vue.use(Vuex);
+import VueLazyload from 'vue-lazyload'
 
+Vue.use(VueLazyload, {
+    loading: require('./assets/loading.gif'),
+    preLoad: 1
+});
 
 new Vue({
     render: h => h(App),
