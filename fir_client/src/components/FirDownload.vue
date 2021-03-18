@@ -93,7 +93,7 @@
                                             </div>
                                         </div>
 
-                                        <div v-else style="margin-top: 10%;margin-bottom: 10%">
+                                        <div v-else style="margin-top: 20%;margin-bottom: 20%">
                                             <div v-if="currentappinfo.need_password" style="margin:0 auto; width:166px">
                                                 <el-input prefix-icon="el-icon-lock" clearable
                                                           placeholder="请输入密码" v-model="password"
