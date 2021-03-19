@@ -6,7 +6,7 @@
 import os, re, json, requests
 from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
-    UDIDsyncDeveloper, UserInfo, AppReleaseInfo
+    UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot
 from api.utils.app.randomstrings import make_app_uuid
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
@@ -222,6 +222,12 @@ def delete_local_files(filename, apptype=None):
         return storage.del_file(filename)
     except Exception as e:
         logger.error("delete file  %s  failed  Exception %s" % (filename, e))
+
+
+def delete_app_screenshots_files(storage_obj, app_obj):
+    for screenshot_obj in AppScreenShot.objects.filter(app_id=app_obj).all():
+        storage_obj.delete_file(screenshot_obj.screenshot_url)
+        screenshot_obj.delete()
 
 
 def check_storage_additionalparameter(request, res):

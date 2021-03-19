@@ -52,6 +52,7 @@ class Storage(object):
                 else:
                     filename = filename + '.ipa'
             try:
+                logger.info("storage %s delete file  %s" % (self.storage, filename))
                 return self.storage.del_file(filename)
             except Exception as e:
                 logger.error("delete file  %s  failed  Exception %s" % (filename, e))

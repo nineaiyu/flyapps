@@ -17,7 +17,7 @@ from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoS
 from rest_framework.pagination import PageNumberPagination
 import logging
 from fir_ser.settings import SERVER_DOMAIN
-from api.utils.utils import is_valid_domain, delete_local_files
+from api.utils.utils import is_valid_domain, delete_local_files, delete_app_screenshots_files
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +149,7 @@ class AppInfoView(APIView):
                     delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
                     storage.delete_file(appreleaseobj.icon_url)
                     appreleaseobj.delete()
+                delete_app_screenshots_files(storage, apps_obj)
                 apps_obj.delete()
 
         return Response(res.dict)
@@ -346,7 +347,7 @@ class AppReleaseinfoView(APIView):
                     del_cache_by_delete_app(apps_obj.app_id)
 
                     appreleaseobj.delete()
-
+                    delete_app_screenshots_files(storage, apps_obj)
                     has_combo = apps_obj.has_combo
                     if has_combo:
                         apps_obj.has_combo.has_combo = None

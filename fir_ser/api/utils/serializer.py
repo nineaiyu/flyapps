@@ -43,7 +43,6 @@ class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserInfo
         # fields="__all__"
-        # exclude = ["password","is_active","user_permissions","role",]
         fields = ["username", "uid", "mobile", "job", "email", "domain_name", "last_login", "first_name",
                   'head_img', 'storage_active', 'supersign_active']
 
