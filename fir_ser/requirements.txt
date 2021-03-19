@@ -19,7 +19,7 @@ crcmod==1.7
 cryptography==3.4.6
 cycler==0.10.0
 decorator==4.4.2
-Django==3.0.3
+Django==3.1.6
 django-apscheduler==0.3.0
 django-qrcode==0.3
 django-ranged-response==0.2.0
