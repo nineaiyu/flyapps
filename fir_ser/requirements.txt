@@ -36,7 +36,7 @@ ipython-genutils==0.2.0
 jedi==0.16.0
 jmespath==0.9.5
 kiwisolver==1.1.0
-lxml==4.5.0
+lxml==4.6.2
 matplotlib==3.2.0
 memoizer==0.0.1
 mysqlclient==1.4.6
