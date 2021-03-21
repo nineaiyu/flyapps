@@ -122,7 +122,7 @@
                                             <button @click="download">
                                                 <a icon="el-icon-loadings" type="primary" :underline="false"> 下载安装 </a>
                                             </button>
-                                            <a v-if="currentappinfo.issupersign && !$route.query.udid"
+                                            <a v-if="(currentappinfo.issupersign || mcurrentappinfo.release_type === 2) && !$route.query.udid"
                                                @click="jiaocheng('open')"
                                                class="jiaocheng" style="color: white;font-size: 20px;">?</a>
                                         </div>
@@ -257,6 +257,20 @@
                     {msg: '第二步 点击右上角安装按钮', url: require('../assets/sign/step2.jpg')},
                     {msg: '第三步 输入开机解锁密码', url: require('../assets/sign/step3.jpg')},
                     {msg: '第四步 点击下方安装按钮', url: require('../assets/sign/step4.jpg')},
+                ],
+                inhousehelplist: [
+                    {
+                        msg: '因苹果公司的政策原因，在 iOS 系统中首次安装企业版应用时会出现"未受信任的企业级开发者" 提示，解决方法如下（以iOS12系统为例）',
+                        url: require('../assets/inhouse/b1.png')
+                    },
+                    {msg: '第一步 在手机中打开设置功能，选择"通用"', url: require('../assets/inhouse/b2.png')},
+                    {msg: '第二步 在通用中，选择"描述文件与设备管理"功能', url: require('../assets/inhouse/b3.png')},
+                    {
+                        msg: '第三步 在描述文件与设备管理中的企业级应用分类中，选择要安装的企业应用的文件名称（与打开时的提示一致），点击进入',
+                        url: require('../assets/inhouse/b4.png')
+                    },
+                    {msg: '第四步 进入企业签名页面后，确认企业签名中的公司名称与应用名称后，点击信任"企业签名公司名称"', url: require('../assets/inhouse/b5.png')},
+                    {msg: '第五步 回到桌面，重新打开应用即可使用"', url: require('../assets/inhouse/b6.png')},
                 ],
                 imagelist: [],
                 currentappinfo: {},
@@ -514,6 +528,9 @@
                             for (let i = 0; i < this.currentappinfo.screenshots.length; i++) {
                                 this.imagelist.push(this.currentappinfo.screenshots[i].url)
                             }
+                        }
+                        if (this.mcurrentappinfo.release_type === 2 && !this.currentappinfo.issupersign) {
+                            this.signhelplist = this.inhousehelplist;
                         }
                     } else {
                         this.iserror = true;
