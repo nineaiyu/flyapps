@@ -260,17 +260,17 @@
                 ],
                 inhousehelplist: [
                     {
-                        msg: '因苹果公司的政策原因，在 iOS 系统中首次安装企业版应用时会出现"未受信任的企业级开发者" 提示，解决方法如下（以iOS12系统为例）',
+                        msg: '首次安装企业版应用时会出现"未受信任的企业级开发者" 提示',
                         url: require('../assets/inhouse/b1.png')
                     },
-                    {msg: '第一步 在手机中打开设置功能，选择"通用"', url: require('../assets/inhouse/b2.png')},
-                    {msg: '第二步 在通用中，选择"描述文件与设备管理"功能', url: require('../assets/inhouse/b3.png')},
+                    {msg: '第一步 在手机中打开设置功能，选择 "通用" 功能', url: require('../assets/inhouse/b2.png')},
+                    {msg: '第二步 在通用中，选择 "描述文件与设备管理" 功能', url: require('../assets/inhouse/b3.png')},
                     {
-                        msg: '第三步 在描述文件与设备管理中的企业级应用分类中，选择要安装的企业应用的文件名称（与打开时的提示一致），点击进入',
+                        msg: '第三步 选择要安装的企业应用的文件名称（与打开时的提示一致），点击进入',
                         url: require('../assets/inhouse/b4.png')
                     },
-                    {msg: '第四步 进入企业签名页面后，确认企业签名中的公司名称与应用名称后，点击信任"企业签名公司名称"', url: require('../assets/inhouse/b5.png')},
-                    {msg: '第五步 回到桌面，重新打开应用即可使用"', url: require('../assets/inhouse/b6.png')},
+                    {msg: '第四步 确认企业签名中的公司名称与应用名称后，点击信任"企业签名公司名称"', url: require('../assets/inhouse/b5.png')},
+                    {msg: '第五步 回到桌面，重新打开应用即可使用', url: require('../assets/inhouse/b6.png')},
                 ],
                 imagelist: [],
                 currentappinfo: {},
