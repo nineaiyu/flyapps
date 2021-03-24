@@ -463,9 +463,8 @@ class IosUtils(object):
             return False, d_result
         app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
         if app_udid_obj and app_udid_obj.is_signed:
-            apptodev_obj = APPToDeveloper.objects.filter(app_id=self.app_obj).first()
-            if apptodev_obj:
-                release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
+            release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
+            for apptodev_obj in APPToDeveloper.objects.filter(app_id=self.app_obj).all():
                 if release_obj.release_id == apptodev_obj.release_file:
                     msg = "udid %s exists app_id %s" % (self.udid_info.get('udid'), self.app_obj)
                     d_result['msg'] = msg

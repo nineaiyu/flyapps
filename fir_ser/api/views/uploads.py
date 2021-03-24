@@ -74,7 +74,7 @@ class AppAnalyseView(APIView):
             upload_file_tmp_name("set", png_key, request.user.id)
             upload_file_tmp_name("set", upload_key, request.user.id)
             res.data = {"app_uuid": app_uuid, "short": short,
-                        "domain_name": get_redirect_server_domain(request, request.user, None),
+                        "domain_name": settings.SERVER_DOMAIN.get("FILE_UPLOAD_DOMAIN", None),
                         "upload_token": upload_token,
                         "upload_key": upload_key,
                         "png_token": png_token,

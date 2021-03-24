@@ -91,7 +91,7 @@
 
                                     <button type="button" v-else-if="wrong">{{ msg }}</button>
                                     <div v-else>
-                                        <div v-if="isdownload">
+                                        <div v-if="isdownload" style="margin-top: 20%;margin-bottom: 20%">
                                             <div v-if="gomobile">
                                                 <button disabled="" class="loading"
                                                         style="min-width: 42px; width: 42px; padding: 21px 0; border-top-color: transparent; border-left-color: transparent;">
@@ -631,13 +631,13 @@
 
     .jiaocheng {
         float: right;
-        width: 30px;
-        height: 30px;
+        width: 25px;
+        height: 25px;
         text-align: center;
-        border-radius: 15px;
-        background-color: #32b2a7;
-        margin-right: -30px;
-        margin-top: 7px;
+        border-radius: 20px;
+        background-color: #a9b6cc;
+        margin-left: -25px;
+        margin-top: 10px;
     }
 
     .wechat_tip, .wechat_tip > i {
