@@ -5,7 +5,7 @@ from api.utils.serializer import UserInfoSerializer
 from django.core.cache import cache
 from rest_framework.views import APIView
 import binascii
-import os, datetime, json
+import os, datetime
 from api.utils.utils import get_captcha, valid_captcha, is_valid_domain, is_valid_phone, \
     get_sender_sms_token, is_valid_email, is_valid_sender_code, get_sender_email_token, get_random_username, \
     check_username_exists
@@ -391,10 +391,12 @@ class UserInfoView(APIView):
             if username and username != request.user.username:
                 if check_username_exists(username):
                     res.msg = "用户名已经存在"
+                    res.code = 1005
                     logger.error("User %s info save failed. Excepiton:%s" % (request.user, 'username already exists'))
                     return Response(res.dict)
                 if len(username) < 6:
                     res.msg = "用户名至少6位"
+                    res.code = 1006
                     return Response(res.dict)
 
             request.user.job = data.get("job", request.user.job)
