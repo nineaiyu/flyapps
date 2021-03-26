@@ -5,6 +5,7 @@ from api.utils.TokenManager import DownloadToken
 from api.utils.app.supersignutils import get_redirect_server_domain
 from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided
+from api.utils.storage.caches import get_user_free_download_times
 import os, json, logging
 
 logger = logging.getLogger(__file__)
@@ -44,13 +45,18 @@ class UserInfoSerializer(serializers.ModelSerializer):
         model = models.UserInfo
         # fields="__all__"
         fields = ["username", "uid", "mobile", "job", "email", "domain_name", "last_login", "first_name",
-                  'head_img', 'storage_active', 'supersign_active']
+                  'head_img', 'storage_active', 'supersign_active', 'free_download_times', 'download_times']
 
     head_img = serializers.SerializerMethodField()
 
     def get_head_img(self, obj):
         storage = Storage(obj)
         return storage.get_download_url(obj.head_img)
+
+    free_download_times = serializers.SerializerMethodField()
+
+    def get_free_download_times(self, obj):
+        return get_user_free_download_times(obj.id)
 
 
 class AppsSerializer(serializers.ModelSerializer):

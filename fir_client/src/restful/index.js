@@ -63,6 +63,9 @@ function ErrorMsg(error) {
             case 408:
                 error.message = '请求超时(408)';
                 break;
+            case 429:
+                error.message = '您的 IP 访问频繁，请稍后再次尝试';
+                break;
             case 500:
                 error.message = '服务器错误(500)';
                 break;
@@ -82,7 +85,7 @@ function ErrorMsg(error) {
                 error.message = 'HTTP版本不受支持(505)';
                 break;
             default:
-                error.message = `连接出错(${error.response.status})!`;
+                error.message = `连接出错(${error.response.status}, ${JSON.stringify(error.response.data)})!`;
         }
     } else {
         // eslint-disable-next-line no-console

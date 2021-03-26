@@ -136,6 +136,8 @@
                 getdownloadurl(res => {
                     if (res.code === 1000) {
                         window.location.href = res.data.download_url;
+                    } else {
+                        this.$message.error(res.msg);
                     }
                 }, {
                     'data': {

@@ -116,7 +116,19 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
-    )
+    ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'api.utils.throttle.LoginUserThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'ShortAccessUser1': '80/m',
+        'ShortAccessUser2': '1000/h',
+        'LoginUser': '200/m',
+        'RegisterUser1': '30/m',
+        'RegisterUser2': '300/h',
+        'GetAuthC1': '8/m',
+        'GetAuthC2': '30/h',
+    }
 }
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
@@ -156,7 +168,8 @@ CACHES = {
             "CONNECTION_POOL_KWARGS": {"max_connections": 100},
             "PASSWORD": "",
             "DECODE_RESPONSES": True
-        }
+        },
+        "TIMEOUT": 60 * 15
     },
 }
 
@@ -168,10 +181,18 @@ REST_FRAMEWORK_EXTENSIONS = {
     'DEFAULT_USE_CACHE': 'default',
 }
 
+# geetest 配置信息
+GEETEST_ID = "d3f3cf73200a70bd3a0c32ea22e5003a"
+GEETEST_KEY = "6f4ab6185c230a4b1f8430f28ebe4804"
+GEETEST_CYCLE_TIME = 10
+GEETEST_BYPASS_STATUS_KEY = "gt_server_bypass_status"
+GEETEST_BYPASS_URL = "http://bypass.geetest.com/v1/bypass_status.php"
+
 # 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG.sender 信息
 REGISTER = {
     "enable": True,
-    "captcha": True,  # 是否开启注册字母验证码
+    "captcha": False,  # 是否开启注册字母验证码
+    "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
     "register_type": {
         'sms': False,  # 短信注册
         'email': True,  # 邮件注册
@@ -182,6 +203,7 @@ REGISTER = {
 # 信息修改也会使用该配置
 LOGIN = {
     "captcha": False,  # 是否开启登录字母验证码
+    "geetest": True,  # 是否开启geetest验证
     "login_type": {
         'sms': True,  # 短信登录
         'email': True,  # 邮件登录
@@ -200,7 +222,7 @@ THIRD_PART_CONFIG = {
                 # 正式环境需要填写正式的访问域名,如果配置cdn，可以填写cdn的域名，仅支持阿里云 cdn,
                 # 开启cdn之后，如果该域名和服务器域名不相同，需要设置阿里云cdn 缓存配置，自定义HTTP响应头 添加 Access-Control-Allow-Origin * 才可以
                 'is_https': True,
-                'download_auth_type': 0,  # 0:不开启token 1:本地token 2:cdn 开启cdn，并且使用本地存储，使用阿里云cdn进行url鉴权，
+                'download_auth_type': 1,  # 0:不开启token 1:本地token 2:cdn 开启cdn，并且使用本地存储，使用阿里云cdn进行url鉴权，
                 'cnd_auth_key': '',  # 当cdn为阿里云并且 download_auth_type=2 的时候 生效,需要 开启阿里云OSS私有Bucket回源
             },
             'active': True
@@ -289,6 +311,7 @@ THIRD_PART_CONFIG = {
 
 }
 CACHE_KEY_TEMPLATE = {
+    'user_can_download_key': 'user_can_download',
     'download_times_key': 'app_download_times',
     'make_token_key': 'make_token',
     'download_short_key': 'download_short',
@@ -300,11 +323,13 @@ CACHE_KEY_TEMPLATE = {
     'developer_auth_code_key': 'developer_auth_code',
     'upload_file_tmp_name_key': 'upload_file_tmp_name',
     'login_failed_try_times_key': 'login_failed_try_times',
+    'user_free_download_times_key': 'user_free_download_times',
     'super_sign_failed_send_msg_times_key': 'super_sign_failed_send_msg_times'
 }
 
 DATA_DOWNLOAD_KEY = "d_token"
 FILE_UPLOAD_TMP_KEY = ".tmp"
+USER_FREE_DOWNLOAD_TIMES = 10
 
 SYNC_CACHE_TO_DATABASE = {
     'download_times': 10,  # 下载次数同步时间

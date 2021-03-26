@@ -57,9 +57,12 @@
                     </el-row>
                 </el-form-item>
 
+                <el-form-item>
+                    <div id="captcha" ref="captcha"></div>
+                </el-form-item>
 
                 <el-form-item>
-                    <el-button type="danger" @click="onSubmit">登录</el-button>
+                    <el-button type="danger" :disabled="login_disable" @click="onSubmit">登录</el-button>
                 </el-form-item>
 
                 <el-form-item v-if="register_enable">
@@ -77,7 +80,7 @@
 
 <script>
     import {loginFun, set_auth_token} from "../restful";
-    import {checkEmail, checkphone} from "../utils";
+    import {checkEmail, checkphone, geetest} from "../utils";
 
     export default {
         name: "FirLogin",
@@ -94,7 +97,7 @@
                 rutitle: '',
                 rctitle: '',
                 register_enable: false,
-
+                login_disable: false,
             }
         },
         methods: {
@@ -150,38 +153,21 @@
 
 
                     if (password.length > 6) {
-                        loginFun(data => {
-                            if (data.code === 1000) {
-                                this.$message({
-                                    message: '登录成功',
-                                    type: 'success'
-                                });
-                                this.$cookies.remove("auth_token");
-                                this.$cookies.set("token", data['token'], 3600 * 24 * 30);
-                                this.$cookies.set("username", data.userinfo.username, 3600 * 24 * 30);
-                                this.$cookies.set("first_name", data.userinfo.first_name, 3600 * 24 * 30);
-                                this.$store.dispatch("doUserinfo", data.userinfo);
-                                set_auth_token();
-                                this.$router.push({name: 'FirApps'})
-                            } else {
-                                this.$message({
-                                    message: data.msg,
-                                    type: 'error'
-                                });
-                                this.get_auth_code();
-                            }
-                        }, {
-                            "methods": "POST",
-                            "data": {
-                                "username": email,
-                                "password": password,
-                                "authcode": authcode,
-                                "cptch_key": this.cptch.cptch_key,
-                                "login_type": login_type,
-                            }
-                        });
-
-
+                        let params = {
+                            "username": email,
+                            "password": password,
+                            "authcode": authcode,
+                            "cptch_key": this.cptch.cptch_key,
+                            "login_type": login_type,
+                        };
+                        this.login_disable = true;
+                        if (this.cptch.geetest) {
+                            geetest(this, params, (n_params) => {
+                                this.do_login(n_params);
+                            })
+                        } else {
+                            this.do_login(params)
+                        }
                     } else {
                         this.$message({
                             message: '密码长度过短',
@@ -194,6 +180,33 @@
                         type: 'warning'
                     });
                 }
+            },
+            do_login(params) {
+                loginFun(data => {
+                    if (data.code === 1000) {
+                        this.$message({
+                            message: '登录成功',
+                            type: 'success'
+                        });
+                        this.$cookies.remove("auth_token");
+                        this.$cookies.set("token", data['token'], 3600 * 24 * 30);
+                        this.$cookies.set("username", data.userinfo.username, 3600 * 24 * 30);
+                        this.$cookies.set("first_name", data.userinfo.first_name, 3600 * 24 * 30);
+                        this.$store.dispatch("doUserinfo", data.userinfo);
+                        set_auth_token();
+                        this.$router.push({name: 'FirApps'})
+                    } else {
+                        this.$message({
+                            message: data.msg,
+                            type: 'error'
+                        });
+                        this.get_auth_code();
+                    }
+                    this.login_disable = false;
+                }, {
+                    "methods": "POST",
+                    "data": params
+                });
             },
             onRegister() {
                 this.$router.push({name: 'FirRegist'})
@@ -299,5 +312,4 @@
     .el-header div:after {
         margin: 0 -50% 0 0
     }
-
 </style>

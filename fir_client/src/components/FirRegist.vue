@@ -67,7 +67,11 @@
                 </el-form-item>
 
                 <el-form-item>
-                    <el-button type="danger" @click="onRegist">注册</el-button>
+                    <div id="captcha" ref="captcha"></div>
+                </el-form-item>
+
+                <el-form-item>
+                    <el-button type="danger" @click="onRegist" :disabled="register_disable">注册</el-button>
                 </el-form-item>
 
                 <el-form-item>
@@ -84,7 +88,7 @@
 
 <script>
     import {getAuthTokenFun, registerFun} from "../restful";
-    import {checkEmail, checkphone} from "../utils";
+    import {checkEmail, checkphone, geetest} from "../utils";
 
     export default {
         name: "FirRegist",
@@ -106,6 +110,7 @@
                 allow_r: false,
                 allow_ways: {},
                 rutitle: '',
+                register_disable: false,
             }
         },
         methods: {
@@ -147,6 +152,23 @@
                     "data": {}
                 });
             },
+            do_get_auth_token(params) {
+                getAuthTokenFun(data => {
+                    if (data.code === 1000) {
+                        this.$notify({
+                            title: '验证码',
+                            message: '您正在进行注册，验证码已经发送您',
+                            type: 'success'
+                        });
+                        this.form.auth_token = data.data.auth_token;
+                    } else {
+                        this.$message({
+                            message: data.msg,
+                            type: 'error'
+                        });
+                    }
+                }, {"methods": 'POST', 'data': params})
+            },
             getphonecode() {
                 let act = 'up';
                 if (!this.docheck()) {
@@ -169,22 +191,14 @@
                         "cptch_key": this.cptch.cptch_key,
                         "icode": this.form.icode,
                     };
-                    getAuthTokenFun(data => {
-                        if (data.code === 1000) {
-                            this.$notify({
-                                title: '验证码',
-                                message: '您正在进行注册，验证码已经发送您',
-                                type: 'success'
-                            });
-                            this.form.auth_token = data.data.auth_token;
-                        } else {
-                            this.$message({
-                                message: data.msg,
-                                type: 'error'
-                            });
-                        }
-                    }, {"methods": 'POST', 'data': {'act': act, 'target': this.form.email, 'ext': picode}})
-
+                    let params = {'act': act, 'target': this.form.email, 'ext': picode};
+                    if (this.cptch.geetest) {
+                        geetest(this, params, (n_params) => {
+                            this.do_get_auth_token(n_params);
+                        })
+                    } else {
+                        this.do_get_auth_token(params);
+                    }
                 } else {
                     this.$message({
                         message: '图片验证码有误',
@@ -234,6 +248,27 @@
                 }
                 return 1
             },
+            do_register(params) {
+                registerFun(data => {
+                    if (data.code === 1000) {
+                        this.$message({
+                            message: '注册成功',
+                            type: 'success'
+                        });
+                        this.$router.push({name: 'FirLogin'})
+                    } else {
+                        this.$message({
+                            message: data.msg,
+                            type: 'error'
+                        });
+                        this.get_auth_code();
+                    }
+                }, {
+                    "methods": "POST",
+                    "data": params
+                });
+                this.register_disable = false;
+            },
             onRegist() {
                 let email = this.form.email;
                 let password = this.form.password;
@@ -248,30 +283,22 @@
                 }
                 if (cptch_flag) {
                     if (password === password2 && password.length >= 6) {
-                        registerFun(data => {
-                            if (data.code === 1000) {
-                                this.$message({
-                                    message: '注册成功',
-                                    type: 'success'
-                                });
-                                this.$router.push({name: 'FirLogin'})
-                            } else {
-                                this.$message({
-                                    message: data.msg,
-                                    type: 'error'
-                                });
-                                this.get_auth_code();
-                            }
-                        }, {
-                            "methods": "POST",
-                            "data": {
-                                "username": email,
-                                "password": password,
-                                "password2": password2,
-                                "auth_token": this.form.auth_token,
-                                "auth_key": this.form.seicode
-                            }
-                        });
+                        let params = {
+                            "username": email,
+                            "password": password,
+                            "password2": password2,
+                            "auth_token": this.form.auth_token,
+                            "auth_key": this.form.seicode
+                        };
+                        this.register_disable = true;
+                        if (this.cptch.geetest) {
+                            geetest(this, params, (n_params) => {
+                                this.do_register(n_params);
+                            })
+                        } else {
+                            this.do_register(params);
+                        }
+
                     } else {
                         this.$message({
                             message: '密码不一致或者密码长度小于6',

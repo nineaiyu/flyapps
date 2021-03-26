@@ -8,10 +8,12 @@ from django.core.cache import cache
 from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, APPSuperSignUsedInfo
 import time, os
 from django.utils import timezone
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
+    USER_FREE_DOWNLOAD_TIMES
 from api.utils.storage.storage import Storage, LocalStorage
 from api.utils.utils import file_format_path
 import logging
+from django.db.models import F
 
 logger = logging.getLogger(__file__)
 
@@ -287,3 +289,66 @@ def set_default_app_wx_easy(user_obj, only_clean_cache=False):
                 app_obj.wxeasytype = True
                 app_obj.save()
                 del_cache_response_by_short(app_obj.app_id)
+
+
+def enable_user_download_times_flag(user_id):
+    set_user_download_times_flag(user_id, 1)
+
+
+def disable_user_download_times_flag(user_id):
+    set_user_download_times_flag(user_id, 0)
+
+
+def check_user_can_download(user_id):
+    return set_user_download_times_flag(user_id, 2)
+
+
+def set_user_download_times_flag(user_id, act):
+    user_can_download_key = "_".join(
+        [CACHE_KEY_TEMPLATE.get("user_can_download_key"), str(user_id)])
+    if act == 2:
+        result = cache.get(user_can_download_key)
+        if result is None:
+            return True
+        return result
+    return cache.set(user_can_download_key, act, 3600 * 24)
+
+
+def get_user_free_download_times(user_id, act='get'):
+    now = timezone.now()
+    user_free_download_times_key = "_".join(
+        [CACHE_KEY_TEMPLATE.get("user_free_download_times_key"), str(now.year), str(now.month), str(now.day),
+         str(user_id)])
+    user_free_download_times = cache.get(user_free_download_times_key)
+    if user_free_download_times is not None:
+        if act == 'set':
+            return cache.incr(user_free_download_times_key, -1)
+        else:
+            return user_free_download_times
+    else:
+        cache.set(user_free_download_times_key, USER_FREE_DOWNLOAD_TIMES, 3600 * 24)
+        if act == 'set':
+            return cache.incr(user_free_download_times_key, -1)
+        else:
+            return USER_FREE_DOWNLOAD_TIMES
+
+
+def consume_user_download_times(user_id, app_id):
+    with cache.lock("%s_%s" % ('consume_user_download_times', user_id)):
+        if get_user_free_download_times(user_id) > 0:
+            get_user_free_download_times(user_id, 'set')
+        else:
+            if not check_user_can_download(user_id):
+                return False
+            try:
+                UserInfo.objects.filter(pk=user_id).update(download_times=F('download_times') - 1)
+            except Exception as e:
+                logger.error("%s download_times less then 0. Exception:%s" % (user_id, e))
+                disable_user_download_times_flag(user_id)
+                del_cache_response_by_short(app_id)
+                return False
+        return True
+
+
+def check_user_has_all_download_times(user_id):
+    return get_user_free_download_times(user_id) > 0 or check_user_can_download(user_id)

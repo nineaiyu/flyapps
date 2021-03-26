@@ -1,5 +1,5 @@
 from django.contrib import auth
-from api.models import Token, UserInfo, Apps
+from api.models import Token, UserInfo
 from rest_framework.response import Response
 from api.utils.serializer import UserInfoSerializer
 from django.core.cache import cache
@@ -14,6 +14,8 @@ from api.utils.response import BaseResponse
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, REGISTER, LOGIN
 from api.utils.storage.caches import login_auth_failed, set_default_app_wx_easy
 import logging
+from api.utils.geetest.geetest_utils import first_register, second_validate
+from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle, GetAuthC1Throttle, GetAuthC2Throttle
 
 logger = logging.getLogger(__name__)
 
@@ -169,6 +171,8 @@ def CheckChangeUerinfo(target, act, key, user):
 
 
 class LoginView(APIView):
+    throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
+
     def generate_key(self):
         return binascii.hexlify(os.urandom(32)).decode()
 
@@ -181,6 +185,15 @@ class LoginView(APIView):
         else:
             is_valid = True
         if is_valid:
+            if LOGIN.get("geetest"):
+                geetest = receive.get("geetest", None)
+                if geetest and second_validate(geetest).get("result", "") == "success":
+                    pass
+                else:
+                    response.code = 1001
+                    response.msg = "geetest 验证有误"
+                    return Response(response.dict)
+
             login_type = receive.get("login_type", None)
             if login_auth_failed("get", username):
                 password = receive.get("password")
@@ -231,13 +244,25 @@ class LoginView(APIView):
         response.data = {}
         if LOGIN.get("captcha"):
             response.data = get_captcha()
+        if LOGIN.get("geetest"):
+            response.data['geetest'] = True
         response.data['login_type'] = get_login_type()
         allow_f = REGISTER.get("enable")
         response.data['register_enable'] = allow_f
         return Response(response.dict)
 
+    def put(self, request):
+        import hashlib
+        response = BaseResponse()
+        user_id = request.data.get('user_id', None)
+        sha = hashlib.sha1(user_id.encode("utf-8"))
+        response.data = first_register(sha.hexdigest(), request.META.get('REMOTE_ADDR'))
+        return Response(response.dict)
+
 
 class RegistView(APIView):
+    throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
+
     def generate_key(self):
         return binascii.hexlify(os.urandom(32)).decode()
 
@@ -260,6 +285,15 @@ class RegistView(APIView):
             response.code = 1002
             response.msg = "不允许该类型注册"
             return Response(response.dict)
+
+        if REGISTER.get("geetest"):
+            geetest = request.data.get("geetest", None)
+            if geetest and second_validate(geetest).get("result", "") == "success":
+                pass
+            else:
+                response.code = 1018
+                response.msg = "geetest验证有误"
+                return Response(response.dict)
 
         is_valid, target = is_valid_sender_code(act, receive.get("auth_token", None), receive.get("auth_key", None))
         if is_valid and str(target) == str(username):
@@ -302,6 +336,8 @@ class RegistView(APIView):
         if allow_f:
             if REGISTER.get("captcha"):
                 response.data = get_captcha()
+            if REGISTER.get("geetest"):
+                response.data['geetest'] = True
             response.data['register_type'] = get_register_type()
         response.data['enable'] = allow_f
         return Response(response.dict)
@@ -447,6 +483,7 @@ class UserInfoView(APIView):
 
 
 class AuthorizationView(APIView):
+    throttle_classes = [GetAuthC1Throttle, GetAuthC2Throttle]
 
     def post(self, request):
         res = BaseResponse()
@@ -472,6 +509,15 @@ class AuthorizationView(APIView):
                 res.msg = "图片验证码有误"
                 return Response(res.dict)
 
+        if REGISTER.get("geetest"):
+            geetest = request.data.get("geetest", None)
+            if geetest and second_validate(geetest).get("result", "") == "success":
+                pass
+            else:
+                res.code = 1018
+                res.msg = "geetest验证有误"
+                return Response(res.dict)
+
         res = CheckRegisterUerinfo(target, act, 'register')
 
         return Response(res.dict)
@@ -479,6 +525,7 @@ class AuthorizationView(APIView):
 
 class ChangeAuthorizationView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
+    throttle_classes = [GetAuthC1Throttle, GetAuthC2Throttle]
 
     def post(self, request):
         res = BaseResponse()

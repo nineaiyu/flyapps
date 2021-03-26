@@ -201,9 +201,9 @@
                             </el-col>
                         </el-row>
                     </el-col>
-                    <el-col :span="8" class="surplus-card">
+                    <el-col :span="5" class="surplus-card">
                         <el-row>
-                            <el-col :span="8">
+                            <el-col :span="10">
                                 <div>
                                     <span class="name">iOS应用</span>
                                     <el-divider direction="vertical"></el-divider>
@@ -214,7 +214,7 @@
                                 </div>
                             </el-col>
 
-                            <el-col :span="8">
+                            <el-col :span="12">
                                 <div>
                                     <span class="name">Android应用</span>
                                     <el-divider direction="vertical"></el-divider>
@@ -224,23 +224,12 @@
                                     <el-divider direction="vertical"></el-divider>
                                 </div>
                             </el-col>
-
-                            <el-col :span="8">
-                                <div>
-                                    <span class="name">总应用</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                                <div>
-                                    <span class="value">{{ hdata.ios_count + hdata.android_count}}</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                            </el-col>
                         </el-row>
                     </el-col>
 
-                    <el-col :span="8" class="surplus-card">
+                    <el-col :span="5" class="surplus-card">
                         <el-row>
-                            <el-col :span="8">
+                            <el-col :span="12">
                                 <div>
                                     <span class="name">今日苹果下载次数</span>
                                     <el-divider direction="vertical"></el-divider>
@@ -251,7 +240,7 @@
                                 </div>
                             </el-col>
 
-                            <el-col :span="8">
+                            <el-col :span="12">
                                 <div>
                                     <span class="name">今日安卓下载次数</span>
                                     <el-divider direction="vertical"></el-divider>
@@ -262,18 +251,47 @@
                                 </div>
                             </el-col>
 
-                            <el-col :span="8">
+                            <!--                            <el-col :span="8">-->
+                            <!--                                <div>-->
+                            <!--                                    <span class="name">总共下载次数</span>-->
+                            <!--                                    <el-divider direction="vertical"></el-divider>-->
+                            <!--                                </div>-->
+                            <!--                                <div>-->
+                            <!--                                    <span class="value">{{ hdata.all_hits_count}}</span>-->
+                            <!--                                    <el-divider direction="vertical"></el-divider>-->
+                            <!--                                </div>-->
+                            <!--                            </el-col>-->
+                        </el-row>
+                    </el-col>
+
+
+                    <el-col :span="6" class="surplus-card">
+                        <el-row>
+                            <el-col :span="12">
                                 <div>
-                                    <span class="name">总共下载次数</span>
+                                    <span class="name">今日剩余免费下载次数</span>
                                     <el-divider direction="vertical"></el-divider>
                                 </div>
                                 <div>
-                                    <span class="value">{{ hdata.all_hits_count}}</span>
+                                    <span class="value">{{$store.state.userinfo.free_download_times }}</span>
                                     <el-divider direction="vertical"></el-divider>
                                 </div>
                             </el-col>
+
+                            <el-col :span="12">
+                                <div>
+                                    <span class="name">剩余付费下载次数</span>
+                                    <el-divider direction="vertical"></el-divider>
+                                </div>
+                                <div>
+                                    <span class="value">{{$store.state.userinfo.download_times }}</span>
+                                    <el-divider direction="vertical"></el-divider>
+                                </div>
+                            </el-col>
+
                         </el-row>
                     </el-col>
+
 
                 </el-row>
 

@@ -83,7 +83,8 @@
                                     </p>
                                 </div>
 
-                                <div id="actions" class="actions" v-if="agent !==''">
+                                <div id="actions" class="actions" v-if="agent !==''"
+                                     style="margin-top: 20%;margin-bottom: 20%">
 
                                     <button type="info" round v-if="agent === 'wxandroid' || agent === 'wxapple'">
                                         不支持在微信内下载
@@ -233,8 +234,8 @@
 
         <div v-if='iserror' class="main">
             <div class="error-container">
-                <h1>404 - Not Found</h1>
-                <header>您访问的 应用 不存在
+                <h1>{{ error_msg.head }}</h1>
+                <header>{{ error_msg.body }}
                 </header>
             </div>
         </div>
@@ -287,6 +288,7 @@
                 downloadurl: "",
                 isdownload: false,
                 iserror: false,
+                error_msg: {head: '404 - Not Found', body: '您访问的 应用 不存在'},
                 udid: "",
                 wxeasytypeflag: false,
                 timer: '',
@@ -376,6 +378,11 @@
                                 }
 
                                 window.location.href = this.downloadurl;
+                            } else if (res.code === 1009) {
+                                this.isdownload = false;
+                                document.title = res.msg;
+                                this.wrong = true;
+                                this.msg = res.msg;
                             } else {
                                 this.isdownload = false;
                                 alert("密码错误，或者下载链接失效");
@@ -534,6 +541,12 @@
                         }
                     } else {
                         this.iserror = true;
+                        if (data.code === 1009) {
+                            this.error_msg.head = '温馨提示';
+                        }
+                        if (data.code === 1004) {
+                            this.error_msg.head = '403 - Forbidden';
+                        }
                         if (data.msg) {
                             document.title = data.msg;
                         }

@@ -13,7 +13,7 @@ from api.utils.app.apputils import make_resigned
 from api.utils.app.supersignutils import make_sign_udid_mobileconfig, get_post_udid_url, get_redirect_server_domain
 from api.utils.storage.storage import Storage, get_local_storage
 from api.utils.storage.caches import get_app_instance_by_cache, get_download_url_by_cache, set_app_download_by_cache, \
-    del_cache_response_by_short
+    del_cache_response_by_short, consume_user_download_times, check_user_has_all_download_times
 import os
 from rest_framework_extensions.cache.decorators import cache_response
 from api.utils.serializer import AppsShortSerializer
@@ -21,6 +21,7 @@ from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInf
 from django.http import FileResponse
 import logging
 from api.utils.utils import get_profile_full_path
+from api.utils.throttle import VisitShortThrottle, InstallShortThrottle
 
 logger = logging.getLogger(__file__)
 
@@ -138,6 +139,7 @@ class DownloadView(APIView):
 
 
 class ShortDownloadView(APIView):
+    throttle_classes = [VisitShortThrottle, InstallShortThrottle]
     '''
     根据下载短链接，获取应用信息
     '''
@@ -152,12 +154,23 @@ class ShortDownloadView(APIView):
             res.code = 1003
             res.msg = "该应用不存在"
             return Response(res.dict)
-        if udid:
-            del_cache_response_by_short(app_obj.app_id, udid=udid)
+
+        if not check_user_has_all_download_times(app_obj.user_id_id):
+            res.code = 1009
+            res.msg = "可用下载额度不足，请联系开发者"
+            return Response(res.dict)
+
         if not app_obj.isshow:
             res.code = 1004
             res.msg = "您没有权限访问该应用"
             return Response(res.dict)
+
+        if udid:
+            if not app_obj.issupersign:
+                res.code = 1002
+                res.msg = "参数有误"
+                return Response(res.dict)
+            del_cache_response_by_short(app_obj.app_id, udid=udid)
 
         app_serializer = AppsShortSerializer(app_obj, context={"key": "ShortDownloadView", "release_id": release_id,
                                                                "storage": Storage(app_obj.user_id)})
@@ -183,6 +196,7 @@ class ShortDownloadView(APIView):
 
 
 class InstallView(APIView):
+    throttle_classes = [VisitShortThrottle, InstallShortThrottle]
     '''
     安装操作，前端通过token 认证，认证成功之后，返回 下载连接，并且 让下载次数加一
     '''
@@ -220,12 +234,17 @@ class InstallView(APIView):
 
                 res.data = {"download_url": download_url, "extra_url": extra_url}
                 if download_url != "" and "mobileconifg" not in download_url:
-                    set_app_download_by_cache(app_id)
                     if request.META.get('HTTP_X_FORWARDED_FOR', None):
                         ip = request.META['HTTP_X_FORWARDED_FOR']
                     else:
                         ip = request.META['REMOTE_ADDR']
                     logger.info("remote ip %s short %s download_url %s app_obj %s" % (ip, short, download_url, app_obj))
+                if not consume_user_download_times(app_obj.get("user_id"), app_id):
+                    res.code = 1009
+                    res.msg = "可用下载额度不足"
+                    del res.data
+                    return Response(res.dict)
+                set_app_download_by_cache(app_id)
                 return Response(res.dict)
         else:
             res.code = 1004

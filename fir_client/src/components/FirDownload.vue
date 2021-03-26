@@ -62,7 +62,8 @@
                                     </p>
                                 </div>
 
-                                <div id="actions" class="actions" v-if="agent !==''">
+                                <div id="actions" class="actions" v-if="agent !==''"
+                                     style="margin-top: 20%;margin-bottom: 20%">
 
                                     <el-button type="info" round v-if="agent === 'wxandroid' || agent === 'wxapple'">
                                         不支持在微信内下载
@@ -383,6 +384,15 @@
                                 }
 
                                 window.location.href = this.downloadurl;
+                            } else if (res.code === 1009) {
+                                this.isdownload = false;
+                                document.title = res.msg;
+                                this.wrong = true;
+                                this.msg = res.msg;
+                                this.$message({
+                                    message: res.msg,
+                                    type: 'error',
+                                });
                             } else {
                                 this.isdownload = false;
                                 this.$message({

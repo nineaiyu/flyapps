@@ -171,7 +171,7 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
 }
 
 
-import {uploadstorage} from '../restful'
+import {loginFun, uploadstorage} from '../restful'
 
 export function uploadlocalstorage(file, certinfo, app, successcallback, processcallback) {
     uploadstorage(certinfo, file, successcallback, processcallback)
@@ -288,4 +288,42 @@ export function ImgToBase64(url, callback) {
         dataURL = canvas.toDataURL('image/jpeg',);
         return callback ? callback(dataURL) : null;
     };
+}
+
+export function geetest(self, params, callback) {
+    loginFun(res => {
+        if (res.code === 1000) {
+            let data = res.data;
+            // eslint-disable-next-line no-undef
+            initGeetest({
+                gt: data.gt,
+                challenge: data.challenge,
+                new_captcha: data.new_captcha, // 用于宕机时表示是新验证码的宕机
+                offline: !data.success, // 表示用户后台检测极验服务器是否宕机，一般不需要关注
+                product: "float", // 产品形式，包括：float，popup
+                width: "100%"
+            }, (captchaObj) => {
+                self.$refs.captcha.innerHTML = '';
+                captchaObj.appendTo("#captcha");
+                captchaObj.onReady(() => {
+                    //your code
+                }).onSuccess(() => {
+                    params.geetest = captchaObj.getValidate();
+                    callback(params);
+                }).onError(() => {
+                    captchaObj.destroy();
+                });
+            });
+
+        } else {
+
+            self.$message({
+                message: res.msg,
+                type: 'error'
+            });
+        }
+    }, {
+        "methods": "PUT",
+        "data": {user_id: self.form.email}
+    });
 }
