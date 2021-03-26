@@ -5,6 +5,39 @@
             <el-header style="height: 100px">
 
                 <el-dialog
+                        :visible.sync="show_buy_download_times"
+                        width="780px"
+                        :close-on-click-modal="false"
+                        :close-on-press-escape="false"
+                        center>
+
+                    <span slot="title" style="color: #313639;font-size: 28px; margin-bottom: 14px;">
+                        购买下载次数包
+                    </span>
+
+                    <div class="packages" style="max-width: 768px;">
+                        <div class="package-item" v-for="(packages,index) in data_package_prices" :key="packages.name">
+                            <div class="arraw-badge" v-if="index===1"><span>荐</span> <span class="arraw"></span></div>
+                            <div class="package-content">
+                                <div class="money ">￥{{ packages.price / 100 }}</div>
+                                <div class="times ">{{ packages.package_size |formatMoney }}</div>
+                                <div class="unit" style="font-size: 14px;color: #869096">累计下载次数</div>
+                                <div class="text-gift" v-if="packages.download_count_gift">{ 赠 <span>{{ packages.download_count_gift }}</span>
+                                    次 }
+                                </div>
+                            </div>
+                            <div class="package-actions">
+                                <button type="button" class="btn" @click="buy(packages)">购买</button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <span slot="footer">
+                        如对充值订单有疑问，请联系 nineven@qq.com
+                    </span>
+                </el-dialog>
+
+                <el-dialog
                         :title="getDelappTitle"
                         :visible.sync="willDeleteApp"
                         width="50%">
@@ -201,9 +234,9 @@
                             </el-col>
                         </el-row>
                     </el-col>
-                    <el-col :span="5" class="surplus-card">
+                    <el-col :span="4" class="surplus-card">
                         <el-row>
-                            <el-col :span="10">
+                            <el-col :span="12">
                                 <div>
                                     <span class="name">iOS应用</span>
                                     <el-divider direction="vertical"></el-divider>
@@ -265,11 +298,14 @@
                     </el-col>
 
 
-                    <el-col :span="6" class="surplus-card">
+                    <el-col :span="7" class="surplus-card">
                         <el-row>
-                            <el-col :span="12">
+                            <el-col :span="9">
                                 <div>
-                                    <span class="name">今日剩余免费下载次数</span>
+                                    <el-tooltip placement="top">
+                                        <div slot="content">1.账号下所有应用共用此剩余下载次数<br/>2.每日凌晨 0 点自动重置下载次数</div>
+                                        <span class="name">今日剩余免费次数</span>
+                                    </el-tooltip>
                                     <el-divider direction="vertical"></el-divider>
                                 </div>
                                 <div>
@@ -278,9 +314,12 @@
                                 </div>
                             </el-col>
 
-                            <el-col :span="12">
+                            <el-col :span="8">
                                 <div>
-                                    <span class="name">剩余付费下载次数</span>
+                                    <el-tooltip placement="top">
+                                        <div slot="content">1.下载次数包没有时间限制，用完为止<br/>2.购买的下载次数包为总下载量，不会每日重置</div>
+                                        <span class="name">剩余付费次数</span>
+                                    </el-tooltip>
                                     <el-divider direction="vertical"></el-divider>
                                 </div>
                                 <div>
@@ -289,10 +328,18 @@
                                 </div>
                             </el-col>
 
+                            <el-col :span="6">
+                                <div>
+                                    <span class="name">购买次数</span>
+                                </div>
+                                <div>
+                                    <el-button class="action" size="small" icon="el-icon-shopping-cart-1"
+                                               @click="show_buy_download_times=true"></el-button>
+                                </div>
+                            </el-col>
+
                         </el-row>
                     </el-col>
-
-
                 </el-row>
 
             </el-header>
@@ -434,7 +481,8 @@
         uploadqiniuoss,
         dataURLtoFile,
         uploadaliyunoss,
-        uploadlocalstorage
+        uploadlocalstorage,
+        format_money
     } from "../utils";
 
     export default {
@@ -461,9 +509,36 @@
                 currentfile: null,
                 uploadprocess: 0,
                 uploadsuccess: 0,
-                loadingobj: null
+                loadingobj: null,
+                show_buy_download_times: false,
+                data_package_prices: [{
+                    "name": "1k_times",
+                    "title": "1k_times",
+                    "description": "1k_times",
+                    "price": 2500,
+                    "package_size": 1000,
+                    "download_count_gift": 111
+                }, {
+                    "name": "10k_times",
+                    "title": "10k_times",
+                    "description": "10k_times",
+                    "price": 22500,
+                    "package_size": 10000,
+                    "download_count_gift": 222
+                }, {
+                    "name": "100k_times",
+                    "title": "100k_times",
+                    "description": "100k_times",
+                    "price": 200000,
+                    "package_size": 100000,
+                    "download_count_gift": 333
+                }]
             }
         }, methods: {
+            buy(packages) {
+                // eslint-disable-next-line no-console
+                console.log(packages)
+            },
             showUDID(appinfo) {
                 let udidstr = '';
                 for (let i = 0; i < appinfo.udid.length; i++) {
@@ -783,6 +858,9 @@
             },
         },
         filters: {
+            formatMoney: function (money) {
+                return format_money(money, 19);
+            },
             getiOStype: function (appinfo) {
                 let ftype = '';
                 if (appinfo.release_type_id === 1) {
@@ -899,6 +977,16 @@
     .surplus-card .value {
         font-size: 16px;
         color: #434343;
+    }
+
+    .surplus-card .action {
+        width: 50px;
+        height: 24px;
+        line-height: 24px;
+        padding: 0;
+        border-radius: 30px;
+        background-color: #fff;
+        border: 1px solid #B6BDC1;
     }
 
     .appdownload {
@@ -1266,5 +1354,95 @@
 
     .cube:hover .out_bottom {
         transform: rotateX(-90deg) translateZ(200px);
+    }
+
+    .text-gift {
+        color: #8E7BF8;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .package-item .unit {
+        font-size: 14px;
+        color: #869096;
+    }
+
+    .package-item .times {
+        font-size: 24px;
+        line-height: 28px;
+        color: #4F5156;
+    }
+
+    .package-item .money {
+        font-size: 30px;
+        color: #7e5ef8;
+        line-height: 42px;
+    }
+
+    .package-item .package-content {
+        margin-bottom: 0;
+    }
+
+    .package-item {
+        -ms-flex: 1;
+        flex: 1;
+        border-right: 1px solid transparent;
+        padding: 8px 48px;
+        text-align: center;
+        position: relative;
+    }
+
+    .package-item:not(:last-child) {
+        border-right-color: #DBE0E3;
+    }
+
+    .packages {
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-align: center;
+        align-items: center;
+        margin-bottom: 22px;
+    }
+
+    .package-actions .btn:hover {
+        color: #fff;
+        background-color: #7CB1F8;
+        border-color: #7CB1F8;
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+
+    .package-actions .btn {
+        background-color: #fff;
+        border: 1px solid #B6BDC1;
+        border-radius: 30px;
+        min-width: 120px;
+        height: 40px;
+    }
+
+    .arraw-badge {
+        position: absolute;
+        background-color: #1dcaf8;
+        color: #fff;
+        left: -1px;
+        top: 0;
+        width: 30px;
+        height: 40px;
+        text-align: center;
+        padding-top: 5px;
+    }
+
+    .arraw-badge .arraw {
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        border: 15px solid transparent;
+        border-bottom: 10px solid #fff;
+        border-top: none;
+        position: absolute;
+        bottom: 0;
+        left: 0;
     }
 </style>
