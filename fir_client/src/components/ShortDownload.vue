@@ -4,7 +4,7 @@
 
         <div ref="signhelp" class="signhelp screenshots-section">
             <div class="signhelp-title">
-                超级签安装教程
+                iOS安装教程
                 <span><a id="closeBtn" @click="jiaocheng('close')">关闭</a></span>
             </div>
 
@@ -539,6 +539,8 @@
                         if (this.mcurrentappinfo.release_type === 2 && !this.currentappinfo.issupersign) {
                             this.signhelplist = this.inhousehelplist;
                         }
+                    } else if (data.code === 1002) {
+                        window.location.href = location.href.replace(location.search, '');
                     } else {
                         this.iserror = true;
                         if (data.code === 1009) {

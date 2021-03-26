@@ -239,12 +239,17 @@ class InstallView(APIView):
                     else:
                         ip = request.META['REMOTE_ADDR']
                     logger.info("remote ip %s short %s download_url %s app_obj %s" % (ip, short, download_url, app_obj))
-                if not consume_user_download_times(app_obj.get("user_id"), app_id):
-                    res.code = 1009
-                    res.msg = "可用下载额度不足"
-                    del res.data
-                    return Response(res.dict)
-                set_app_download_by_cache(app_id)
+                    set_app_download_by_cache(app_id)
+                    amount = 1
+                    # 超级签需要消耗2个下载次数
+                    if app_obj.get("issupersign"):
+                        amount += 1
+
+                    if not consume_user_download_times(app_obj.get("user_id"), app_id, amount):
+                        res.code = 1009
+                        res.msg = "可用下载额度不足"
+                        del res.data
+                        return Response(res.dict)
                 return Response(res.dict)
         else:
             res.code = 1004

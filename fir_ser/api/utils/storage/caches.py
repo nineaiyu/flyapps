@@ -314,7 +314,7 @@ def set_user_download_times_flag(user_id, act):
     return cache.set(user_can_download_key, act, 3600 * 24)
 
 
-def get_user_free_download_times(user_id, act='get'):
+def get_user_free_download_times(user_id, act='get', amount=1):
     now = timezone.now()
     user_free_download_times_key = "_".join(
         [CACHE_KEY_TEMPLATE.get("user_free_download_times_key"), str(now.year), str(now.month), str(now.day),
@@ -322,26 +322,26 @@ def get_user_free_download_times(user_id, act='get'):
     user_free_download_times = cache.get(user_free_download_times_key)
     if user_free_download_times is not None:
         if act == 'set':
-            return cache.incr(user_free_download_times_key, -1)
+            return cache.incr(user_free_download_times_key, -amount)
         else:
             return user_free_download_times
     else:
         cache.set(user_free_download_times_key, USER_FREE_DOWNLOAD_TIMES, 3600 * 24)
         if act == 'set':
-            return cache.incr(user_free_download_times_key, -1)
+            return cache.incr(user_free_download_times_key, -amount)
         else:
             return USER_FREE_DOWNLOAD_TIMES
 
 
-def consume_user_download_times(user_id, app_id):
+def consume_user_download_times(user_id, app_id, amount=1):
     with cache.lock("%s_%s" % ('consume_user_download_times', user_id)):
-        if get_user_free_download_times(user_id) > 0:
-            get_user_free_download_times(user_id, 'set')
+        if get_user_free_download_times(user_id, 'get', amount) > 0:
+            get_user_free_download_times(user_id, 'set', amount)
         else:
             if not check_user_can_download(user_id):
                 return False
             try:
-                UserInfo.objects.filter(pk=user_id).update(download_times=F('download_times') - 1)
+                UserInfo.objects.filter(pk=user_id).update(download_times=F('download_times') - amount)
             except Exception as e:
                 logger.error("%s download_times less then 0. Exception:%s" % (user_id, e))
                 disable_user_download_times_flag(user_id)
