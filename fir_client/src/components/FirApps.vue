@@ -77,7 +77,7 @@
                                     <el-row :gutter="20" style="margin-top: 8px;">
                                         <el-col :span="18">
                                             {{ analyseappinfo.version}} (Build {{ analyseappinfo.buildversion}}) {{
-                                            analyseappinfo|getiOStype}}
+                                            analyseappinfo.release_type_id|getiOStype}}
                                             <el-link :underline="false"
                                                      v-if="analyseappinfo.udid && analyseappinfo.udid.length > 0"
                                                      @click="showUDID(analyseappinfo)">- {{ analyseappinfo.udid.length
@@ -872,11 +872,11 @@
             formatMoney: function (money) {
                 return format_money(money, 19);
             },
-            getiOStype: function (appinfo) {
+            getiOStype: function (release_type_id) {
                 let ftype = '';
-                if (appinfo.release_type_id === 1) {
+                if (release_type_id === 1) {
                     ftype = '内测版'
-                } else if (appinfo.release_type_id === 2) {
+                } else if (release_type_id === 2) {
                     ftype = '企业版'
                 }
                 return ftype
