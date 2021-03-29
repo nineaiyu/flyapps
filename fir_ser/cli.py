@@ -88,7 +88,7 @@ class FLY_CLI_SER(object):
     def upload_app(self, app_path):
         appobj = AppInfo(app_path)
         appinfo = appobj.get_app_data()
-        icon_path = appobj.make_app_png()
+        icon_path = appobj.make_app_png(icon_path=appinfo.get("icon_path", None))
         bundle_id = appinfo.get("bundle_id")
         upcretsdata = self.get_upload_token(bundle_id, appinfo.get("type"))
         if upcretsdata['storage'] == 1:
@@ -121,7 +121,7 @@ class FLY_CLI_SER(object):
             "version": appinfo['version'],
             "buildversion": appinfo['versioncode'],
             "miniosversion": appinfo['miniosversion'],
-            "release_type": appinfo['release_type'],
+            "release_type": appinfo.get('release_type', ''),
             "release_type_id": 2,
             "udid": appinfo.get('udid', []),
             "type": appinfo['type'],
@@ -134,30 +134,36 @@ class AppInfo(object):
         self.app_path = app_path
         self.result = {}
 
-    def make_app_png(self):
+    def make_app_png(self, icon_path):
         zf = zipfile.ZipFile(self.app_path)
-        name_list = zf.namelist()
-        if self.app_path.endswith("apk"):
-            pattern = re.compile(r'res/drawable[^/]*/app_icon.png')
-        elif self.app_path.endswith("ipa"):
-            pattern = re.compile(r'Payload/[^/]*.app/AppIcon[^/]*[^(ipad)].png')
-        else:
-            raise Exception("File type error")
-
-        size = 0
         iconfile = ""
-        for path in name_list:
-            m = pattern.match(path)
-            if m is not None:
-                filepath = m.group()
-                fsize = len(zf.read(filepath))
-                if size == 0:
-                    iconfile = filepath
-                if size < fsize:
-                    size = fsize
-                    iconfile = filepath
+        if icon_path:
+            size = len(zf.read(icon_path))
+            iconfile = icon_path
+        else:
+            name_list = zf.namelist()
+            if self.app_path.endswith("apk"):
+                pattern = re.compile(r'res/drawable[^/]*/app_icon.png')
+            elif self.app_path.endswith("ipa"):
+                pattern = re.compile(r'Payload/[^/]*.app/AppIcon[^/]*[^(ipad)].png')
+            else:
+                raise Exception("File type error")
+
+            size = 0
+            for path in name_list:
+                m = pattern.match(path)
+                if m is not None:
+                    filepath = m.group()
+                    fsize = len(zf.read(filepath))
+                    if size == 0:
+                        iconfile = filepath
+                    if size < fsize:
+                        size = fsize
+                        iconfile = filepath
         if size == 0:
             raise Exception("File size error")
+        if iconfile == "":
+            raise Exception("read File icon error")
 
         filename = ''.join(random.sample(
             ['z', 'y', 'x', 'w', 'v', 'u', 't', 's', 'r', 'q', 'p', 'o', 'n', 'm', 'l', 'k', 'j', 'i', 'h', 'g', 'f',
@@ -201,7 +207,8 @@ class AppInfo(object):
                     "versioncode": versioncode,
                     "version": version,
                     "type": "Android",
-                    "miniosversion": apkobj.get_min_sdk_version()
+                    "miniosversion": apkobj.get_min_sdk_version(),
+                    "icon_path": apkobj.get_app_icon()
                 }
         return self.result
 
