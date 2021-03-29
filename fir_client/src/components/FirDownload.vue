@@ -110,7 +110,7 @@
                                             </button>
                                             <a v-if="(currentappinfo.issupersign || mcurrentappinfo.release_type === 2) && !$route.query.udid"
                                                @click="jiaocheng('open')"
-                                               class="jiaocheng" style="color: white;font-size: 20px;">?</a>
+                                               class="jiaocheng" style="color: white;font-size: 18px;">?</a>
                                         </div>
 
                                     </div>
