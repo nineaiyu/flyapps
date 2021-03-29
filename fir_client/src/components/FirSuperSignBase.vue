@@ -755,12 +755,5 @@
         border-radius: 1%;
     }
 
-    /*.goback {*/
-    /*    display: block;*/
-    /*    cursor: pointer;*/
-    /*    position: absolute;*/
-    /*    top: 0;*/
-    /*    right: 0;*/
-    /*}*/
 
 </style>

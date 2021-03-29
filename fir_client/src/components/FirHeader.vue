@@ -51,7 +51,7 @@
                             </el-dropdown-item>
                             <el-dropdown-item command="supersign" v-if="$store.state.userinfo.supersign_active">超级签名
                             </el-dropdown-item>
-
+                            <el-dropdown-item command="myorder">订单信息</el-dropdown-item>
                             <el-dropdown-item command="exit">退出</el-dropdown-item>
 
                         </el-dropdown-menu>
@@ -89,6 +89,8 @@
                             type: 'success',
                             message: '重新生成成功!'
                         });
+                    } else {
+                        this.$message.error("失败了 " + data.msg)
                     }
                 }, {methods: 'PUT', token: this.token});
             },
@@ -103,15 +105,18 @@
                     this.$store.dispatch('doucurrentapp', {});
                     this.$router.push({"name": 'FirSuperSignBase', params: {act: "iosdeveloper"}})
                 } else if (command === 'apitoken') {
-
-                    this.dialogVisible = true;
-
                     apitoken(data => {
                         if (data.code === 1000) {
                             this.token = data.data.token;
+                            this.dialogVisible = true;
+                        } else {
+                            this.dialogVisible = false;
+                            this.$message.error("获取失败了 " + data.msg)
                         }
                     }, {methods: 'GET', token: this.token});
 
+                } else if (command === 'myorder') {
+                    this.$router.push({"name": 'FirUserOrders'})
                 } else if (command === 'exit') {
                     logout(data => {
                         if (data.code === 1000) {

@@ -3,7 +3,7 @@
 # project: 5月
 # author: liuyu
 # date: 2020/5/7
-import os, re, json, requests
+import os, re, json, requests, datetime, random
 from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
     UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot
@@ -335,3 +335,11 @@ def clean_storage_data(user_obj, storage_obj=None):
         for apptodev_obj in APPToDeveloper.objects.filter(app_id=app_release_obj.app_id).all():
             storage_obj.delete_file(apptodev_obj.binary_file, app_release_obj.release_type)
     return True
+
+
+def get_order_num(order_type=1):
+    now = datetime.datetime.now()
+    date_str = "{0}{1}{2}{3}{4}{5}{6}".format(order_type, now.year, now.month, now.day, now.hour, now.minute,
+                                              now.second)
+    return date_str + str(random.randint(1000, 9999)) + str(random.randint(1000, 9999)) + str(
+        random.randint(1000, 9999))

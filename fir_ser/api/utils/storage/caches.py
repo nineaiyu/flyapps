@@ -350,5 +350,18 @@ def consume_user_download_times(user_id, app_id, amount=1):
         return True
 
 
+def add_user_download_times(user_id, download_times=0):
+    with cache.lock("%s_%s" % ('consume_user_download_times', user_id)):
+        try:
+            UserInfo.objects.filter(pk=user_id).update(download_times=F('download_times') + download_times)
+            enable_user_download_times_flag(user_id)
+            for app_obj in Apps.objects.filter(pk=user_id):
+                del_cache_response_by_short(app_obj.app_id)
+            return True
+        except Exception as e:
+            logger.error("%s download_times less then 0. Exception:%s" % (user_id, e))
+            return False
+
+
 def check_user_has_all_download_times(user_id):
     return get_user_free_download_times(user_id) > 0 or check_user_can_download(user_id)

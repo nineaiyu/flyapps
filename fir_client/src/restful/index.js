@@ -483,3 +483,33 @@ export function iosdevicesudid(callBack, params, load = true) {
         true
     );
 }
+
+/**获取充值价格信息 */
+export function get_package_prices(callBack, params, load = true) {
+    getData(
+        'GET',
+        USERSEVER + '/package_prices',
+        params,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+/**用户订单 */
+export function my_order(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/orders',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}

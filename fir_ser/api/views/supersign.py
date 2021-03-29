@@ -19,7 +19,7 @@ import logging
 logger = logging.getLogger(__file__)
 
 
-class AppsPageNumber(PageNumberPagination):
+class PageNumber(PageNumberPagination):
     page_size = 10  # 每页显示多少条
     page_size_query_param = 'size'  # URL中每页显示条数的参数
     page_query_param = 'page'  # URL中页码的参数
@@ -42,7 +42,7 @@ class DeveloperView(APIView):
             developer_obj2 = developer_obj.filter(issuer_id=appid)
             developer_obj = developer_obj1 | developer_obj2
 
-        page_obj = AppsPageNumber()
+        page_obj = PageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=developer_obj.order_by("-updated_time"),
                                                          request=request,
                                                          view=self)
@@ -238,7 +238,7 @@ class SuperSignUsedView(APIView):
         if bundleid:
             SuperSignUsed_obj = SuperSignUsed_obj.filter(app_id__bundle_id=bundleid)
 
-        page_obj = AppsPageNumber()
+        page_obj = PageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=SuperSignUsed_obj.order_by("-created_time"),
                                                          request=request,
                                                          view=self)
@@ -263,7 +263,7 @@ class AppUDIDUsedView(APIView):
         if bundleid:
             AppUDID_obj = AppUDID_obj.filter(app_id__bundle_id=bundleid)
 
-        page_obj = AppsPageNumber()
+        page_obj = PageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=AppUDID_obj.order_by("-created_time"),
                                                          request=request,
                                                          view=self)

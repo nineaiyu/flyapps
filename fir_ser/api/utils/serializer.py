@@ -320,3 +320,15 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
 
     def get_bundle_name(self, obj):
         return obj.app_id.name
+
+
+class PriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Price
+        exclude = ["id"]
+
+
+class OrdersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Order
+        exclude = ["id"]

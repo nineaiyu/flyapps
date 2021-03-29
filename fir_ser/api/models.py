@@ -344,3 +344,53 @@ class DeveloperDevicesID(models.Model):
 
     def __str__(self):
         return "%s-%s-%s-%s" % (self.id, self.app_id, self.developerid, self.udid)
+
+
+######################################## 订单表 ########################################
+
+class Order(models.Model):
+    """订单"""
+    payment_type_choices = ((0, '微信'), (1, '支付宝'), (2, '优惠码'), (4, '银联'))
+    payment_type = models.SmallIntegerField(choices=payment_type_choices)
+    payment_number = models.CharField(max_length=128, verbose_name="支付第3方订单号", null=True, blank=True)
+    order_number = models.CharField(max_length=128, verbose_name="订单号", unique=True)  # 考虑到订单合并支付的问题
+    account = models.ForeignKey("UserInfo", on_delete=models.CASCADE)
+    actual_amount = models.BigIntegerField(verbose_name="实付金额,单位分")
+    actual_download_times = models.BigIntegerField(verbose_name="实际购买的数量", default=0)
+    actual_download_gift_times = models.BigIntegerField(verbose_name="实际赠送的数量", default=0)
+    status_choices = ((0, '交易成功'), (1, '待支付'), (2, '退费申请中'), (3, '已退费'), (4, '主动取消'), (5, '超时取消'))
+    status = models.SmallIntegerField(choices=status_choices, verbose_name="状态")
+    order_type_choices = ((0, '用户下单'), (1, '后台充值'),)
+    order_type = models.SmallIntegerField(choices=order_type_choices, default=0, verbose_name="订单类型")
+    pay_time = models.DateTimeField(blank=True, null=True, verbose_name="付款时间")
+    cancel_time = models.DateTimeField(blank=True, null=True, verbose_name="订单取消时间")
+    created_time = models.DateTimeField(verbose_name="订单创建时间", auto_now_add=True)
+    description = models.TextField('备注', blank=True, null=True, default='')
+
+
+def __str__(self):
+    return "%s-%s-%s元" % (self.account, self.order_number, self.actual_amount / 100)
+
+
+class Price(models.Model):
+    name = models.CharField(max_length=128, unique=True, verbose_name="下载包唯一名称")
+    title = models.CharField(max_length=128, verbose_name="下载包名称")
+    description = models.CharField(max_length=128, verbose_name="下载包描述")
+    price = models.BigIntegerField(null=False, verbose_name="下载包价格，单位分")
+    package_size = models.BigIntegerField(null=False, verbose_name="下载包次数")
+    download_count_gift = models.IntegerField(default=0, null=False, verbose_name="赠送下载次数")
+    is_enable = models.BooleanField(default=True, verbose_name="是否启用该价格")
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = '价格列表'
+        verbose_name_plural = "价格列表"
+        unique_together = ('price', 'package_size')
+
+    def save(self, *args, **kwargs):
+        if Price.objects.filter(is_enable=True).count() > 3:  # 最多3个启用的价格表
+            raise
+        super(Price, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return "%s-%s-%s-%s" % (self.name, self.price, self.package_size, self.download_count_gift)

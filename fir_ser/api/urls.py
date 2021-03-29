@@ -23,7 +23,7 @@ from api.views.download import ShortDownloadView
 from api.views.uploads import AppAnalyseView, UploadView
 from api.views.storage import StorageView
 from api.views.receiveudids import IosUDIDView
-
+from api.views.order import PriceView, OrderView
 from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView
 
 # router=DefaultRouter()
@@ -49,5 +49,7 @@ urlpatterns = [
     re_path("^supersign/developer$", DeveloperView.as_view()),
     re_path("^supersign/devices$", SuperSignUsedView.as_view()),
     re_path("^supersign/udid$", AppUDIDUsedView.as_view()),
+    re_path("^package_prices$", PriceView.as_view()),
+    re_path("^orders$", OrderView.as_view()),
 
 ]

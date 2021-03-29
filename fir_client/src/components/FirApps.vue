@@ -27,7 +27,9 @@
                                 </div>
                             </div>
                             <div class="package-actions">
-                                <button type="button" class="btn" @click="buy(packages)">购买</button>
+                                <button type="button" class="btn" @click="buy(packages)" :disabled="buy_button_disable">
+                                    购买
+                                </button>
                             </div>
                         </div>
 
@@ -334,7 +336,7 @@
                                 </div>
                                 <div>
                                     <el-button class="action" size="small" icon="el-icon-shopping-cart-1"
-                                               @click="show_buy_download_times=true"></el-button>
+                                               @click="show_package_prices"></el-button>
                                 </div>
                             </el-col>
 
@@ -472,7 +474,7 @@
 </template>
 
 <script>
-    import {getapps, apputils, analyseApps, getuploadurl} from "../restful";
+    import {getapps, apputils, analyseApps, getuploadurl, get_package_prices, my_order} from "../restful";
     import {
         getScrollHeight,
         getScrollTop,
@@ -511,33 +513,42 @@
                 uploadsuccess: 0,
                 loadingobj: null,
                 show_buy_download_times: false,
-                data_package_prices: [{
-                    "name": "1k_times",
-                    "title": "1k_times",
-                    "description": "1k_times",
-                    "price": 2500,
-                    "package_size": 1000,
-                    "download_count_gift": 111
-                }, {
-                    "name": "10k_times",
-                    "title": "10k_times",
-                    "description": "10k_times",
-                    "price": 22500,
-                    "package_size": 10000,
-                    "download_count_gift": 222
-                }, {
-                    "name": "100k_times",
-                    "title": "100k_times",
-                    "description": "100k_times",
-                    "price": 200000,
-                    "package_size": 100000,
-                    "download_count_gift": 333
-                }]
+                data_package_prices: [],
+                buy_button_disable: false,
             }
         }, methods: {
+            show_package_prices() {
+                get_package_prices(res => {
+                    if (res.code === 1000) {
+                        this.show_buy_download_times = true;
+                        this.data_package_prices = res.data;
+                    } else {
+                        this.$message.error("获取价格异常");
+                        this.show_buy_download_times = false;
+                    }
+                }, {})
+
+            },
             buy(packages) {
-                // eslint-disable-next-line no-console
-                console.log(packages)
+                this.buy_button_disable = true;
+                my_order(res => {
+                    if (res.code === 1000) {
+                        this.$message.success("下订单成功，正在跳转，请去我的订单进行支付");
+                        // eslint-disable-next-line no-unused-vars
+                        this.timmer = setTimeout(data => {
+                            this.$router.push({"name": 'FirUserOrders'});
+                            this.buy_button_disable = false;
+                        }, 2000);
+                    } else {
+                        this.$message.error("异常" + res.msg);
+                        this.buy_button_disable = false;
+
+                    }
+                }, {
+                    methods: 'POST', data: {
+                        price_id: packages.name
+                    }
+                })
             },
             showUDID(appinfo) {
                 let udidstr = '';
