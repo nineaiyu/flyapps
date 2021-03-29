@@ -213,13 +213,14 @@
         },
         methods: {
             goto_pay(order) {
-                // eslint-disable-next-line no-console
-                console.log(order)
                 my_order(res => {
                     // 应该跳转到第三方平台进行支付，然后第三方回调
                     if (res.code === 1000) {
                         this.$message.success("支付成功");
-                        this.get_data_from_tabname();
+                        this.get_data_from_tabname({
+                            "size": this.pagination.pagesize,
+                            "page": this.pagination.currentPage
+                        });
                     } else {
                         this.$message.error("失败了 " + res.msg)
                     }

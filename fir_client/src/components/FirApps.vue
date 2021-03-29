@@ -538,7 +538,7 @@
                         this.timmer = setTimeout(data => {
                             this.$router.push({"name": 'FirUserOrders'});
                             this.buy_button_disable = false;
-                        }, 2000);
+                        }, 1000);
                     } else {
                         this.$message.error("异常" + res.msg);
                         this.buy_button_disable = false;
