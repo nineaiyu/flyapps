@@ -44,7 +44,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserInfo
         # fields="__all__"
-        fields = ["username", "uid", "mobile", "job", "email", "domain_name", "last_login", "first_name",
+        fields = ["username", "uid", "mobile", "job", "email", "domain_name", "role", "first_name",
                   'head_img', 'storage_active', 'supersign_active', 'free_download_times', 'download_times']
 
     head_img = serializers.SerializerMethodField()

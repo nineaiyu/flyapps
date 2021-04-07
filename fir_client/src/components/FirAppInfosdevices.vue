@@ -41,7 +41,7 @@
         },
         methods: {},
         mounted() {
-            this.$store.dispatch('doappInfoIndex', [[57, 57], [57, 57]]);
+            this.$store.dispatch('doappInfoIndex', [[70, 70], [70, 70]]);
             if (!this.currentapp.app_id) {
                 this.currentapp = this.$store.state.currentapp;
                 if (this.currentapp.master_release) {

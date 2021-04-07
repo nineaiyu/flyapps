@@ -7,16 +7,23 @@
                         <img ref="icon_url" :src="icon_url" class="appicon" style="width:100px; height:100px" alt="">
                     </div>
                     <div class="badges">
-                        <span class="bundleid">SHORT<b class="short">&nbsp;&nbsp;{{ appinfos.short }}</b></span>
+                        <el-tooltip content="复制到剪切板" placement="top">
+                             <span class="bundleid short"
+                                   v-clipboard:copy="short_full_url"
+                                   v-clipboard:success="copy_success"
+                             >&nbsp;{{short_full_url }}</span>
+                        </el-tooltip>
                         <span>{{ master_release.release_type |getapptype }}</span>
-                        <span><i class="el-icon-cloudy"></i><b class="ng-binding">{{ appinfos.count_hits }}</b></span>
+                        <el-tooltip content="下载量" placement="top">
+                            <span><i class="el-icon-cloudy"></i><b class="short">{{ appinfos.count_hits }}</b></span>
+                        </el-tooltip>
                         <span class="bundleid ng-binding">BundleID<b class="ng-binding">&nbsp;&nbsp;{{ appinfos.bundle_id }}</b></span>
                         <span class="version ng-scope">{{ master_release.minimum_os_version }}&nbsp; 或者高版本</span>
                         <span class="short ng-scope" v-if="appinfos.issupersign">超级签</span>
 
-                        <el-popover
-                                placement="right"
-                                width="288">
+                        <el-popover v-if="$store.state.userinfo.role === 3"
+                                    placement="right"
+                                    width="288">
                             <div style="text-align: center; margin: 0">
                                 <vue-qr :margin="qrinfo.margin"
                                         :logoSrc="icon_url" :logoScale="qrinfo.logoScale"
@@ -55,16 +62,15 @@
                             </el-col>
 
                             <el-col :span="3"
-                                    v-if="(appinfos.type===1 && master_release.release_type ===1) || appinfos.issupersign ">
-                                <a class="" ref="devices" @click="devices"><i class="el-icon-mobile-phone"></i>设备列表</a>
-                            </el-col>
-
-                            <el-col :span="3"
                                     v-if="appinfos.type===1  || appinfos.issupersign ">
                                 <a class="" ref="supersign" @click="supersign"><i
                                         class="el-icon-ship"></i>超级签名</a>
                             </el-col>
 
+                            <el-col :span="3"
+                                    v-if="(appinfos.type===1 && master_release.release_type ===1) || appinfos.issupersign ">
+                                <a class="" ref="devices" @click="devices"><i class="el-icon-mobile-phone"></i>设备列表</a>
+                            </el-col>
 
                         </el-row>
                     </div>
@@ -115,9 +121,13 @@
                 activity: {
                     editing: false
                 },
+                short_full_url: '',
             }
         },
         methods: {
+            copy_success() {
+                this.$message.success('复制剪切板成功');
+            },
             save_qr() {
                 let dtype = "I";
                 if (this.master_release.release_type === 0) {
@@ -138,10 +148,14 @@
                 for (let key in this.$refs) {
                     if (key === "qr") continue;
                     if (key === item) {
-                        this.$refs[key].classList.add('active');
-                        this.$store.dispatch('doappInfoIndex', [[index, index], [index, index]]);
+                        if (this.$refs[key]) {
+                            this.$refs[key].classList.add('active');
+                            this.$store.dispatch('doappInfoIndex', [[index, index], [index, index]]);
+                        }
                     } else {
-                        this.$refs[key].classList.remove('active');
+                        if (this.$refs[key]) {
+                            this.$refs[key].classList.remove('active');
+                        }
                     }
                 }
             },
@@ -173,7 +187,7 @@
                 this.$router.push({name: 'FirAppInfoscombo'});
             },
             devices() {
-                this.setfunactive('devices', 57);
+                this.setfunactive('devices', 70);
                 // if (this.appinfos.issupersign) {
                 //     this.$router.push({
                 //         "name": 'FirSuperSignBase',
@@ -185,7 +199,7 @@
                 // }
             },
             supersign() {
-                this.setfunactive('supersign', 70);
+                this.setfunactive('supersign', 57);
                 this.$router.push({name: 'FirAppInfossupersign'});
             },
             set_icon_url() {
@@ -213,6 +227,7 @@
                     this.$store.dispatch("doUserinfo", data.userinfo);
                     this.appinfos["icon_url"] = this.master_release.icon_url;
                     this.$store.dispatch('doucurrentapp', this.appinfos);
+                    this.short_full_url = this.appinfos.preview_url + "/" + this.appinfos.short;
                 } else if (data.code === 1003) {
                     this.$router.push({name: 'FirApps'});
                 } else {
@@ -325,6 +340,10 @@
 
     .page-app .badges .short {
         color: #6f6ef8
+    }
+
+    .page-app .badges .short:hover {
+        cursor: pointer;
     }
 
     .page-app .badges b {

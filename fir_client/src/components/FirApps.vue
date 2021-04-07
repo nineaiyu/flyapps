@@ -1,7 +1,6 @@
 <template>
     <div>
         <el-container>
-
             <el-header style="height: 100px">
 
                 <el-dialog
@@ -56,14 +55,14 @@
 
 
                 <el-dialog class="upload-app"
+                           style="position: fixed"
                            :visible.sync="willuploadApp"
                            :destroy-on-close="true"
                            :show-close="!uploading"
                            width="40%"
                            :close-on-click-modal="false"
                            @closed="closeUpload">
-
-                    <div v-if="!uploading" style="">
+                    <div v-if="!uploading">
                         <el-row :gutter="20">
                             <el-col :span="6">
                                 <div class="grid-content bg-purple">
@@ -147,59 +146,59 @@
                         </el-row>
 
                     </div>
+                    <div v-if="uploading">
+                        <canvas ref="canvas" class="canvas"/>
+                        <div class="wrap">
+                            <!--包裹所有元素的容器-->
+                            <div class="cube">
+                                <!--前面图片 -->
+                                <div class="out_front">
+                                    <img src="../assets/imgs/1.png" class="pic">
+                                </div>
+                                <!--后面图片 -->
+                                <div class="out_back">
+                                    <img src="../assets/imgs/5.png" class="pic">
+                                </div>
+                                <!--左面图片 -->
+                                <div class="out_left">
+                                    <img src="../assets/imgs/6.png" class="pic">
+                                </div>
+                                <!--右面图片 -->
+                                <div class="out_right">
+                                    <img src="../assets/imgs/7.png" class="pic">
+                                </div>
+                                <!--上面图片 -->
+                                <div class="out_top">
+                                    <img src="../assets/imgs/8.png" class="pic">
+                                </div>
+                                <!--下面图片 -->
+                                <div class="out_bottom">
+                                    <img src="../assets/imgs/9.png" class="pic">
+                                </div>
 
-                    <div v-if="uploading" class="wrap">
-                        <!--包裹所有元素的容器-->
-                        <div class="cube">
-                            <!--前面图片 -->
-                            <div class="out_front">
-                                <img src="../assets/imgs/1.png" class="pic">
-                            </div>
-                            <!--后面图片 -->
-                            <div class="out_back">
-                                <img src="../assets/imgs/5.png" class="pic">
-                            </div>
-                            <!--左面图片 -->
-                            <div class="out_left">
-                                <img src="../assets/imgs/6.png" class="pic">
-                            </div>
-                            <!--右面图片 -->
-                            <div class="out_right">
-                                <img src="../assets/imgs/7.png" class="pic">
-                            </div>
-                            <!--上面图片 -->
-                            <div class="out_top">
-                                <img src="../assets/imgs/8.png" class="pic">
-                            </div>
-                            <!--下面图片 -->
-                            <div class="out_bottom">
-                                <img src="../assets/imgs/9.png" class="pic">
+                                <!--小正方体 -->
+                                <span class="in_front">
+                                    <img :src="this.analyseappinfo.icon" class="in_pic">
+                                </span>
+                                <span class="in_back">
+                                     <img :src="this.analyseappinfo.icon" class="in_pic">
+                                </span>
+                                <span class="in_left">
+                                    <img :src="this.analyseappinfo.icon" class="in_pic">
+                                </span>
+                                <span class="in_right">
+                                    <img :src="this.analyseappinfo.icon" class="in_pic">
+                                </span>
+                                <span class="in_top">
+                                    <img :src="this.analyseappinfo.icon" class="in_pic">
+                                </span>
+                                <span class="in_bottom">
+                                    <img :src="this.analyseappinfo.icon" class="in_pic">
+                                </span>
                             </div>
 
-                            <!--小正方体 -->
-                            <span class="in_front">
-                <img :src="this.analyseappinfo.icon" class="in_pic">
-            </span>
-                            <span class="in_back">
-                 <img :src="this.analyseappinfo.icon" class="in_pic">
-            </span>
-                            <span class="in_left">
-                <img :src="this.analyseappinfo.icon" class="in_pic">
-            </span>
-                            <span class="in_right">
-                <img :src="this.analyseappinfo.icon" class="in_pic">
-            </span>
-                            <span class="in_top">
-                <img :src="this.analyseappinfo.icon" class="in_pic">
-            </span>
-                            <span class="in_bottom">
-                <img :src="this.analyseappinfo.icon" class="in_pic">
-            </span>
                         </div>
-
                     </div>
-
-
                     <span slot="footer" class="dialog-footer">
                         <el-progress :text-inside="true" :stroke-width="26" :percentage="uploadprocess"
                                      v-if="uploadflag === true"></el-progress>
@@ -484,7 +483,7 @@
         dataURLtoFile,
         uploadaliyunoss,
         uploadlocalstorage,
-        format_money
+        format_money, show_beautpic
     } from "../utils";
 
     export default {
@@ -667,6 +666,11 @@
             uploadstorage() {
                 this.uploadflag = true;
                 this.uploading = true;
+                // eslint-disable-next-line no-unused-vars
+                this.timmer = setTimeout(data => {
+                    let canvas = this.$refs.canvas;
+                    show_beautpic(this, canvas, 999);
+                }, 100);
 
                 let file = dataURLtoFile(this.analyseappinfo.icon, this.analyseappinfo.png_key);
 
@@ -1025,6 +1029,12 @@
     }
 
 
+    /*/deep/ .el-dialog__body {*/
+    /*    background-image: url("../assets/b6.png");*/
+    /*    border: 0;*/
+    /*}*/
+
+
     .page-apps .card.app .action a, .page-apps .card.app .appname, .page-apps .card.app table tr td, .upload-modal .state-form .release-body .input-addon {
         font-family: 'Open Sans', sans-serif
     }
@@ -1244,6 +1254,7 @@
         /*margin: 119px;*/
         margin: 120px auto 119px auto;
         position: relative;
+        z-index: 9999;
     }
 
     /*包裹所有容器样式*/
@@ -1455,5 +1466,14 @@
         position: absolute;
         bottom: 0;
         left: 0;
+    }
+
+    .canvas {
+        position: absolute;
+        left: -0px;
+        margin-top: -60px;
+        height: 100%;
+        z-index: 999;
+        width: 100%;
     }
 </style>

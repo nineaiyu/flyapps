@@ -161,6 +161,12 @@ Vue.use(VueLazyload, {
     preLoad: 1
 });
 
+// 引入点击复制组件
+import VueClipboard from 'vue-clipboard2'
+
+VueClipboard.config.autoSetContainer = true;
+Vue.use(VueClipboard);
+
 new Vue({
     render: h => h(App),
     router,

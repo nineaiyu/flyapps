@@ -71,5 +71,13 @@
         content: "\e625";
     }
 
+    .canvas {
+        position: fixed;
+        left: -0px;
+        top: 58px;
+        height: 100%;
+        z-index: -2;
+        width: 100%;
+    }
 
 </style>
