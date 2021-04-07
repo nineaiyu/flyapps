@@ -113,6 +113,11 @@ const router = new VueRouter({
                             // component: FirUserProfileChangePwd
                             component: () => import("@/components/FirUserProfileChangePwd"),
 
+                        }, {
+                            path: 'certification',
+                            name: 'FirUserProfileCertification',
+                            component: () => import("@/components/FirUserProfileCertification"),
+
                         },
                     ]
                 }

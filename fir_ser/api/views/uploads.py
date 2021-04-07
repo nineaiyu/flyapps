@@ -160,7 +160,7 @@ class UploadView(APIView):
             if ftype == 'app' or ftype == 'screen':
                 app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
 
-            elif ftype and ftype == 'head':
+            elif ftype and ftype in ['head', 'certification']:
                 if request.user.uid != app_id:
                     res.code = 1007
                     res.msg = '该用户不存在'
@@ -176,7 +176,7 @@ class UploadView(APIView):
                     res.code = 1006
                     res.msg = '类型不允许'
                 else:
-                    upload_key = make_from_user_uuid(request.user) + '.' + app_type
+                    upload_key = make_from_user_uuid(request.user) + '.' + app_type + settings.FILE_UPLOAD_TMP_KEY
                     upload_token = storage.get_upload_token(upload_key)
                     storage_type = storage.get_storage_type()
                     res.data = {
@@ -231,7 +231,7 @@ class UploadView(APIView):
                 #     res.code = 1006
                 #     res.msg = '该应用不存在'
                 #     return Response(res.dict)
-            elif ftype and ftype == 'head':
+            elif ftype and ftype in ['head', 'certification']:
                 if request.user.uid != app_id:
                     res.code = 1007
                     res.msg = '该用户不存在'
@@ -296,15 +296,23 @@ class UploadView(APIView):
             logger.info("user %s update img %s info" % (request.user, app_id))
 
             ftype = certinfo.get('ftype', None)
-            storage = Storage(request.user)
+            upload_key = certinfo.get("upload_key", None)
+            if ftype and upload_key:
+                storage = Storage(request.user)
+                new_upload_key = upload_key.strip(settings.FILE_UPLOAD_TMP_KEY)
+            else:
+                res.msg = '参数有误'
+                res.code = 1008
+                return Response(res.dict)
             if ftype and app_id and ftype == 'app':
                 app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
                 if app_obj:
                     release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
                     if release_obj:
                         old_file_key = release_obj.icon_url
-                        release_obj.icon_url = certinfo.get("upload_key")
+                        release_obj.icon_url = new_upload_key
                         release_obj.save()
+                        storage.rename_file(upload_key, new_upload_key)
                         del_cache_response_by_short(app_id)
                         storage.delete_file(old_file_key)
                         return Response(res.dict)
@@ -313,23 +321,35 @@ class UploadView(APIView):
                 if app_obj:
                     scount = AppScreenShot.objects.filter(app_id=app_obj).count()
                     if scount >= 5:
-                        storage.delete_file(certinfo.get("upload_key"))
+                        storage.delete_file(upload_key)
                         res.msg = '最多支持五张截图'
                         res.code = 1009
                         return Response(res.dict)
-                    AppScreenShot.objects.create(app_id=app_obj, screenshot_url=certinfo.get("upload_key"))
+                    AppScreenShot.objects.create(app_id=app_obj, screenshot_url=new_upload_key)
+                    storage.rename_file(upload_key, new_upload_key)
                     del_cache_response_by_short(app_id)
                     return Response(res.dict)
 
-            elif ftype and app_id and ftype == 'head':
+            elif ftype and app_id and ftype in ['head', 'certification']:
                 if request.user.uid != app_id:
                     res.code = 1007
                     res.msg = '该用户不存在'
                     return Response(res.dict)
-                old_file_key = request.user.head_img
-                UserInfo.objects.filter(pk=request.user.id).update(head_img=certinfo.get("upload_key"))
-                if old_file_key != "" or old_file_key != 'head_img.jpeg':
-                    storage.delete_file(old_file_key)
+                if ftype == 'head':
+                    old_file_key = request.user.head_img
+                    UserInfo.objects.filter(pk=request.user.id).update(head_img=new_upload_key)
+                    if old_file_key != "" or old_file_key != 'head_img.jpeg':
+                        storage.delete_file(old_file_key)
+                        storage.rename_file(upload_key, new_upload_key)
+                elif ftype == 'certification':
+                    ext = certinfo.get('ext', None)
+                    if ext:
+                        ptype = ext.get('type', None)
+                        if ptype is not None:
+                            pass
+                    pass
+                else:
+                    pass
 
                 return Response(res.dict)
             else:

@@ -171,7 +171,7 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
 }
 
 
-import {loginFun, uploadstorage} from '../restful'
+import {getuploadurl, loginFun, uploadimgs, uploadstorage} from '../restful'
 
 export function uploadlocalstorage(file, certinfo, app, successcallback, processcallback) {
     uploadstorage(certinfo, file, successcallback, processcallback)
@@ -475,4 +475,86 @@ export function show_beautpic(father, canvas, nb = 666) {
 
     createDots();
     requestAnimationFrame(animateDots);
+}
+
+
+function updateimgs(fthis, certinfo, callabck) {
+    uploadimgs(data => {
+        if (data.code === 1000) {
+            fthis.$message.success('上传成功');
+            callabck()
+        } else {
+            fthis.$message.error('更新失败: ' + data.msg);
+        }
+    }, {'methods': 'PUT', 'data': {'certinfo': certinfo}});
+}
+
+function uploadtostorage(fthis, file, certinfo, callabck) {
+
+    if (certinfo.storage === 1) {
+        // eslint-disable-next-line no-unused-vars,no-unreachable
+        uploadqiniuoss(file, certinfo, this, res => {
+            updateimgs(fthis, certinfo, callabck);
+
+        }, process => {
+            fthis.uploadprocess = process;
+        })
+    } else if (certinfo.storage === 2) {
+        // eslint-disable-next-line no-unused-vars
+        uploadaliyunoss(file, certinfo, this, res => {
+            updateimgs(fthis, certinfo, callabck);
+        }, process => {
+            fthis.uploadprocess = process;
+        });
+
+    } else {
+        //本地
+        if (certinfo.domain_name) {
+            certinfo.upload_url = getuploadurl(certinfo.domain_name)
+        } else {
+            certinfo.upload_url = getuploadurl();
+        }
+        // eslint-disable-next-line no-unused-vars,no-unreachable
+        uploadlocalstorage(file, certinfo, this, res => {
+            updateimgs(fthis, certinfo, callabck);
+        }, process => {
+            fthis.uploadprocess = process;
+        })
+    }
+
+}
+
+/**
+ * @return {boolean}
+ */
+export function AvatarUploadUtils(fthis, file, params, callabck) {
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg') {
+        if (isLt2M) {
+            uploadimgs(data => {
+                if (data.code === 1000) {
+                    // eslint-disable-next-line no-console
+                    // console.log(data.data);
+                    let certinfo = data.data;
+                    certinfo.ext = params.ext;
+                    uploadtostorage(fthis, file, certinfo, callabck);
+                } else {
+                    fthis.$message.error('参数有误');
+                }
+            }, {
+                'methods': 'GET',
+                'data': params
+            });
+
+            return false;
+        } else {
+            fthis.$message.error('上传头像图片大小不能超过 2MB!');
+
+        }
+    } else {
+        fthis.$message.error('上传头像图片只能是 JPG/PNG/JPEG 格式!');
+
+    }
+    return false;
+
 }

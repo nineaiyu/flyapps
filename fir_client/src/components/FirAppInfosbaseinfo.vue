@@ -57,7 +57,12 @@
                             style="width: 155px;height: 288px;margin-right: 20px;background-color: #d1eef9;float: left"
                             fit="scale-down"
                             @click="delscreen(screen.id)"
-                            v-for="(screen) in currentapp.screenshots" :key="screen.id" :src="screen.url" alt=""/>
+                            v-for="(screen) in currentapp.screenshots" :key="screen.id" :src="screen.url" alt="">
+                        <div slot="error" class="image-slot" @click="delscreen(screen.id)"
+                             style="text-align: center;margin-top: 80%">
+                            <i class="el-icon-picture-outline"> 加载失败</i>
+                        </div>
+                    </el-image>
                     <div style="width: 155px;height: 288px;background-color: #d1eef9;float: left"
                          v-if="currentapp.screenshots && currentapp.screenshots.length < 5">
                         <el-upload
@@ -84,8 +89,8 @@
 </template>
 
 <script>
-    import {apputils, getapppicurl, uploadimgs, getuploadurl, releaseapputils} from "../restful"
-    import {uploadaliyunoss, uploadlocalstorage, uploadqiniuoss} from "../utils";
+    import {apputils, getapppicurl, releaseapputils} from "../restful"
+    import {AvatarUploadUtils} from "../utils";
 
     export default {
         name: "FirAppInfosbaseinfo",
@@ -96,7 +101,8 @@
                 uploadconf: {},
                 uploadprocess: 0,
                 dialogImageUrl: '',
-                dialogVisible: false
+                dialogVisible: false,
+                appinfos: {},
             }
         },
         methods: {
@@ -110,7 +116,7 @@
                     releaseapputils(data => {
                         if (data.code === 1000) {
                             this.$message.success('删除成功');
-                            this.updateinfo();
+                            this.getappinfo();
                         } else if (data.code === 1003) {
                             this.$router.push({name: 'FirApps'});
                         }
@@ -128,51 +134,7 @@
                     });
                 });
             },
-            updateimgs(certinfo) {
-                uploadimgs(data => {
-                    if (data.code === 1000) {
-                        this.$message.success('上传成功');
-                        this.updateinfo();
-                    } else {
-                        this.$message.error('更新失败: ' + data.msg);
-                    }
-                }, {'methods': 'PUT', 'data': {'certinfo': certinfo}});
 
-            },
-            uploadtostorage(file, certinfo) {
-
-                if (certinfo.storage === 1) {
-                    // eslint-disable-next-line no-unused-vars,no-unreachable
-                    uploadqiniuoss(file, certinfo, this, res => {
-                        this.updateimgs(certinfo);
-
-                    }, process => {
-                        this.uploadprocess = process;
-                    })
-                } else if (certinfo.storage === 2) {
-                    // eslint-disable-next-line no-unused-vars
-                    uploadaliyunoss(file, certinfo, this, res => {
-                        this.updateimgs(certinfo);
-                    }, process => {
-                        this.uploadprocess = process;
-                    });
-
-                } else {
-                    //本地
-                    if (certinfo.domain_name) {
-                        certinfo.upload_url = getuploadurl(certinfo.domain_name)
-                    } else {
-                        certinfo.upload_url = getuploadurl();
-                    }
-                    // eslint-disable-next-line no-unused-vars,no-unreachable
-                    uploadlocalstorage(file, certinfo, this, res => {
-                        this.updateimgs(certinfo);
-                    }, process => {
-                        this.uploadprocess = process;
-                    })
-                }
-
-            },
             delApp() {
                 //发送删除APP的操作
                 this.$confirm('确认删除 ' + this.currentapp.name + ' ?')
@@ -202,9 +164,8 @@
                     .catch(err => {
                         this.willDeleteApp = false;
                     });
-                // alert('发送删除APP',this.delapp.name)
             },
-            updateinfo() {
+            getappinfo() {
                 apputils(data => {
 
                     if (data.code === 1000) {
@@ -249,26 +210,14 @@
                 return this.beforeAvatarUpload(file, 'screen')
             },
             beforeAvatarUpload(file, act) {
-                const isLt2M = file.size / 1024 / 1024 < 2;
-                if (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg') {
-                    if (isLt2M) {
-                        uploadimgs(data => {
-                            if (data.code === 1000) {
-                                let certinfo = data.data;
-                                this.uploadtostorage(file, certinfo);
-                            }
-                        }, {
-                            'methods': 'GET',
-                            'data': {'app_id': this.currentapp.app_id, 'upload_key': file.name, 'ftype': act}
-                        });
-                    } else {
-                        this.$message.error('上传应用图片大小不能超过 2MB!');
-                    }
-                } else {
-                    this.$message.error('上传应用图片只能是 JPG/PNG/JPEG 格式!');
-
-                }
-                return false;
+                // eslint-disable-next-line no-unused-vars
+                return AvatarUploadUtils(this, file, {
+                    'app_id': this.currentapp.app_id,
+                    'upload_key': file.name,
+                    'ftype': act
+                }, res => {
+                    this.getappinfo();
+                });
             }
         },
         mounted() {

@@ -394,3 +394,37 @@ class Price(models.Model):
 
     def __str__(self):
         return "%s-%s-%s-%s" % (self.name, self.price, self.package_size, self.download_count_gift)
+
+
+class UserCertificationInfo(models.Model):
+    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    name = models.CharField(max_length=128, null=False, verbose_name="真实姓名")
+    card = models.CharField(max_length=128, null=False, verbose_name="身份证号码")
+    addr = models.CharField(max_length=128, null=False, verbose_name="居住地")
+    mobile = models.BigIntegerField(verbose_name="手机号码", unique=True, null=False)
+    status_choices = ((0, '审核中'), (1, '审核成功'), (2, '审核失败'))
+    status = models.SmallIntegerField(choices=status_choices, default=0, verbose_name="审核状态")
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+
+    class Meta:
+        verbose_name = '用户认证信息'
+        verbose_name_plural = "用户认证信息"
+        indexes = [models.Index(fields=['card'])]
+
+    def __str__(self):
+        return "%s-%s" % (self.user_id, self.name)
+
+
+class CertificationInfo(models.Model):
+    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    certification_url = models.CharField(max_length=128, blank=True, verbose_name="认证URL")
+    type_choices = ((0, '未知'), (1, '国徽面照片'), (2, '人像面照片'), (3, '手持身份证照片'))
+    type = models.SmallIntegerField(choices=type_choices, default=0, verbose_name="图像类型")
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+
+    class Meta:
+        verbose_name = '身份证截图'
+        verbose_name_plural = "身份证截图"
+
+    def __str__(self):
+        return "%s-%s" % (self.user_id, self.certification_url)
