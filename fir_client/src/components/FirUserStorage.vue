@@ -173,6 +173,7 @@
                 <el-table
                         :data="storage_info_lists"
                         border
+                        v-loading="loading"
                         stripe
                         style="width: 100%">
 
@@ -330,6 +331,7 @@
                     id: 2,
                     name: 'CDN模式： 请先配置好阿里云CDN，开启阿里云OSS私有Bucket回源，将使用鉴权A方式'
                 },],
+                loading: false,
             }
         }, methods: {
             getUserInfoFun() {
@@ -486,6 +488,7 @@
 
             },
             getstorageinfoFun() {
+                this.loading = true;
                 getStorageinfo(data => {
                     if (data.code === 1000) {
                         this.org_storage_id = this.use_storage_id = data.storage;
@@ -498,6 +501,7 @@
                     } else {
                         this.$message.error('存储获取失败,' + data);
                     }
+                    this.loading = false;
                 }, {"methods": 'GET'});
             },
             // eslint-disable-next-line no-unused-vars

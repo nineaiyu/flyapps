@@ -3,12 +3,12 @@
         <el-container class="navbar-wrapper">
             <el-main align="center">
 
-                <div style="width: 300px; margin: 0 auto; padding: 20px 0;">
+                <div style="width: 300px; margin: 0 auto; padding: 5px 0;">
                     <el-link :underline="false"> {{ footer.copyright }}</el-link>
 
                 </div>
 
-                <div style="width: 300px; margin: 0 auto; padding: 20px 0;">
+                <div style="width: 300px; margin: 0 auto; padding: 5px 0;">
                     <a style="display: inline-block; text-decoration: none; height: 20px; line-height: 20px;"
                        :href="footer.gongAnBeiAn.url"
                        target="_blank" rel="noopener">
@@ -22,7 +22,7 @@
                 </div>
 
                 <div>
-                    <div :underline="false" style="width: 200px; margin: 0 auto; padding: 10px 0;">
+                    <div :underline="false" style="width: 200px; margin: 0 auto; padding: 5px 0;">
                         <el-link :underline="false" :href="footer.ipcBeiAn.url" target="_blank"
                                  rel="nofollow noopener">{{ footer.ipcBeiAn.text }}
                         </el-link>

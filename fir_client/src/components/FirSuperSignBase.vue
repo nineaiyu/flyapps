@@ -77,7 +77,6 @@
           </span>
         </el-dialog>
 
-        <!--        <div style="position:relative;">-->
         <el-tabs v-model="activeName" type="border-card" @tab-click="handleClick" tab-position="top">
             <el-tab-pane label="开发者账户" name="iosdeveloper">
                 <el-input
@@ -103,6 +102,7 @@
                 <el-table
                         :data="app_developer_lists"
                         border
+                        v-loading="loading"
                         stripe
                         style="width: 100%">
 
@@ -298,6 +298,7 @@
 
                 <el-table
                         :data="app_devices_lists"
+                        v-loading="loading"
                         border
                         stripe
                         style="width: 100%">
@@ -355,6 +356,7 @@
 
                 <el-table
                         :data="app_udid_lists"
+                        v-loading="loading"
                         border
                         stripe
                         style="width: 100%">
@@ -429,9 +431,6 @@
                 </el-pagination>
             </div>
         </el-tabs>
-        <!--            <el-button  class="goback" @click="$router.go(-1)">返回</el-button>-->
-        <!--        </div>-->
-
 
     </el-main>
 </template>
@@ -464,7 +463,9 @@
                 authcode: "",
                 authemail: "",
                 apple_auth_list: [],
-                apple_auth_type: 0
+                apple_auth_type: 0,
+                loadingfun: {},
+                loading: false
             }
         },
         methods: {
@@ -492,7 +493,7 @@
                 this.pagination.pagesize = val;
                 this.get_data_from_tabname(this.activeName, {
                     "size": this.pagination.pagesize,
-                    "page": this.pagination.currentPage
+                    "page": 1
                 })
             },
             handleCurrentChange(val) {
@@ -641,28 +642,33 @@
                     return '';
             },
             iosdevicesFun(methods, data) {
+                this.loading = true;
                 iosdevices(data => {
                     if (data.code === 1000) {
                         this.app_devices_lists = data.data;
                         this.pagination.total = data.count;
                     }
+                    this.loading = false;
                 }, {
                     "methods": methods, "data": data
                 })
             },
             iosdeveloperFun(params) {
-                const loading = this.$loading({
-                    lock: true,
-                    text: '执行中,请耐心等待...',
-                    spinner: 'el-icon-loading',
-                    background: 'rgba(0, 0, 0, 0.7)'
-                });
+                if (params.methods !== 'GET') {
+                    this.loadingfun = this.$loading({
+                        lock: true,
+                        text: '执行中,请耐心等待...',
+                        spinner: 'el-icon-loading',
+                        background: 'rgba(0, 0, 0, 0.7)'
+                    });
+                } else {
+                    this.loading = true
+                }
                 iosdeveloper(data => {
                     if (data.code === 1000) {
                         this.app_developer_lists = data.data;
                         this.pagination.total = data.count;
                         this.apple_auth_list = data.apple_auth_list;
-                        loading.close();
                         if (data.use_num) {
                             this.developer_used_info = data.use_num;
                             if (this.developer_used_info.all_usable_number !== 0) {
@@ -689,16 +695,24 @@
                     if (this.codeactiveVisible) {
                         this.codeactiveVisible = false;
                     }
-                    loading.close();
+                    if (params.methods !== 'GET') {
+                        this.loadingfun.close();
+                    } else {
+                        this.loading = false
+                    }
                 }, params)
             },
             iosdevicesudidFun(action, data) {
-                const loading = this.$loading({
-                    lock: true,
-                    text: '执行中,请耐心等待...',
-                    spinner: 'el-icon-loading',
-                    background: 'rgba(0, 0, 0, 0.7)'
-                });
+                if (action !== 'GET') {
+                    this.loadingfun = this.$loading({
+                        lock: true,
+                        text: '执行中,请耐心等待...',
+                        spinner: 'el-icon-loading',
+                        background: 'rgba(0, 0, 0, 0.7)'
+                    });
+                } else {
+                    this.loading = true
+                }
                 iosdevicesudid(data => {
                     if (data.code === 1000) {
                         if (action !== "DELETE") {
@@ -706,7 +720,11 @@
                             this.pagination.total = data.count;
                         }
                     }
-                    loading.close()
+                    if (action !== 'GET') {
+                        this.loadingfun.close()
+                    } else {
+                        this.loading = false
+                    }
                 }, {
                     "methods": action, "data": data
                 })
