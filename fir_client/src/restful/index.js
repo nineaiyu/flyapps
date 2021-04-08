@@ -513,3 +513,18 @@ export function my_order(callBack, params, load = true) {
         true
     );
 }
+
+/**实名认证 */
+export function user_certification(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/certification',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}

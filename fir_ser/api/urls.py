@@ -16,7 +16,7 @@ Including another URLconf
 from django.urls import path, re_path, include
 
 from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, \
-    UserApiTokenView
+    UserApiTokenView, CertificationView
 from api.views.logout import LogoutView
 from api.views.apps import AppsView, AppInfoView, AppReleaseinfoView
 from api.views.download import ShortDownloadView
@@ -51,5 +51,6 @@ urlpatterns = [
     re_path("^supersign/udid$", AppUDIDUsedView.as_view()),
     re_path("^package_prices$", PriceView.as_view()),
     re_path("^orders$", OrderView.as_view()),
+    re_path("^certification$", CertificationView.as_view()),
 
 ]

@@ -95,11 +95,11 @@
                 this.updateUserInfo({"methods": 'PUT', 'data': {"first_name": this.userinfo.first_name}});
             },
             beforeAvatarUpload(file) {
-                // eslint-disable-next-line no-unused-vars
                 return AvatarUploadUtils(this, file, {
                     'app_id': this.userinfo.uid,
                     'upload_key': file.name,
                     'ftype': 'head'
+                    // eslint-disable-next-line no-unused-vars
                 }, res => {
                     this.updateUserInfo({"methods": 'GET'});
                 });

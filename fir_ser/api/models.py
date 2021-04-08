@@ -404,7 +404,9 @@ class UserCertificationInfo(models.Model):
     mobile = models.BigIntegerField(verbose_name="手机号码", unique=True, null=False)
     status_choices = ((0, '审核中'), (1, '审核成功'), (2, '审核失败'))
     status = models.SmallIntegerField(choices=status_choices, default=0, verbose_name="审核状态")
+    msg = models.CharField(max_length=512, null=True, blank=True, verbose_name="备注")
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    reviewed_time = models.DateTimeField(auto_now_add=False, verbose_name="审核时间")
 
     class Meta:
         verbose_name = '用户认证信息'

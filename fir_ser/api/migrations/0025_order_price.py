@@ -47,7 +47,8 @@ class Migration(migrations.Migration):
                 ('pay_time', models.DateTimeField(blank=True, null=True, verbose_name='付款时间')),
                 ('cancel_time', models.DateTimeField(blank=True, null=True, verbose_name='订单取消时间')),
                 (
-                'account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                    'account',
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
     ]

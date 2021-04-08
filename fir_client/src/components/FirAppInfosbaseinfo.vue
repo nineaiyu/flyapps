@@ -210,11 +210,11 @@
                 return this.beforeAvatarUpload(file, 'screen')
             },
             beforeAvatarUpload(file, act) {
-                // eslint-disable-next-line no-unused-vars
                 return AvatarUploadUtils(this, file, {
                     'app_id': this.currentapp.app_id,
                     'upload_key': file.name,
                     'ftype': act
+                    // eslint-disable-next-line no-unused-vars
                 }, res => {
                     this.getappinfo();
                 });

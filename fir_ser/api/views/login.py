@@ -1,7 +1,7 @@
 from django.contrib import auth
-from api.models import Token, UserInfo
+from api.models import Token, UserInfo, UserCertificationInfo, CertificationInfo
 from rest_framework.response import Response
-from api.utils.serializer import UserInfoSerializer
+from api.utils.serializer import UserInfoSerializer, CertificationSerializer, UserCertificationSerializer
 from django.core.cache import cache
 from rest_framework.views import APIView
 import binascii
@@ -16,6 +16,7 @@ from api.utils.storage.caches import login_auth_failed, set_default_app_wx_easy
 import logging
 from api.utils.geetest.geetest_utils import first_register, second_validate
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle, GetAuthC1Throttle, GetAuthC2Throttle
+from api.utils.storage.storage import Storage
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ def CheckRegisterUerinfo(target, act, key):
                     res.data["auth_token"] = token
             else:
                 res.code = 1009
-                res.msg = "该手机号今日注册次数已经达到上限"
+                res.msg = "该手机号今日使用次数已经达到上限"
         else:
             res.code = 1005
             res.msg = "手机号校验失败"
@@ -108,7 +109,7 @@ def CheckRegisterUerinfo(target, act, key):
     return res
 
 
-def CheckChangeUerinfo(target, act, key, user):
+def CheckChangeUerinfo(target, act, key, user, ftype=None):
     res = BaseResponse()
     res.data = {}
 
@@ -122,7 +123,7 @@ def CheckChangeUerinfo(target, act, key, user):
         if is_valid_phone(target) and str(user.mobile) != str(target):
             if login_auth_failed("get", times_key):
                 login_auth_failed("set", times_key)
-                if UserInfo.objects.filter(mobile=target):
+                if UserInfo.objects.filter(mobile=target) and ftype is None:
                     res.code = 1005
                     res.msg = "手机号已经存在"
                 else:
@@ -255,8 +256,12 @@ class LoginView(APIView):
         import hashlib
         response = BaseResponse()
         user_id = request.data.get('user_id', None)
-        sha = hashlib.sha1(user_id.encode("utf-8"))
-        response.data = first_register(sha.hexdigest(), request.META.get('REMOTE_ADDR'))
+        if user_id:
+            sha = hashlib.sha1(user_id.encode("utf-8"))
+            response.data = first_register(sha.hexdigest(), request.META.get('REMOTE_ADDR'))
+        else:
+            response.code = 1002
+            response.msg = '参数错误'
         return Response(response.dict)
 
 
@@ -533,6 +538,7 @@ class ChangeAuthorizationView(APIView):
         act = request.data.get("act", None)
         target = request.data.get("target", None)
         ext = request.data.get("ext", None)
+        ftype = request.data.get("ftype", None)
         if REGISTER.get("captcha"):
             if ext and valid_captcha(ext.get("cptch_key", None), ext.get("authcode", None), target):
                 pass
@@ -541,7 +547,16 @@ class ChangeAuthorizationView(APIView):
                 res.msg = "图片验证码有误"
                 return Response(res.dict)
 
-        res = CheckChangeUerinfo(target, act, 'change', request.user)
+        if REGISTER.get("geetest"):
+            geetest = request.data.get("geetest", None)
+            if geetest and second_validate(geetest).get("result", "") == "success":
+                pass
+            else:
+                res.code = 1018
+                res.msg = "geetest验证有误"
+                return Response(res.dict)
+
+        res = CheckChangeUerinfo(target, act, 'change', request.user, ftype)
         return Response(res.dict)
 
 
@@ -567,3 +582,69 @@ class UserApiTokenView(APIView):
         except Exception as e:
             logger.error("User %s api_token save failed. Excepiton:%s" % (request.user, e))
         return self.get(request)
+
+
+class CertificationView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+
+    def get(self, request):
+        res = BaseResponse()
+        res.data = {}
+        act = request.query_params.get("act", "")
+        user_certification_obj = UserCertificationInfo.objects.filter(user_id=request.user).first()
+        if user_certification_obj and user_certification_obj.status == 1:
+            return Response(res.dict)
+
+        if 'certinfo' in act:
+            if user_certification_obj:
+                user_certification_serializer = UserCertificationSerializer(user_certification_obj)
+                res.data["user_certification"] = user_certification_serializer.data
+        if 'certpic' in act:
+            certification_obj = CertificationInfo.objects.filter(user_id=request.user).all()
+            if certification_obj:
+                storage = Storage(request.user)
+                certification_serializer = CertificationSerializer(certification_obj, many=True,
+                                                                   context={"storage": storage})
+                res.data["certification"] = certification_serializer.data
+        return Response(res.dict)
+
+    def post(self, request):
+        res = BaseResponse()
+        data = request.data
+
+        user_certification_obj = UserCertificationInfo.objects.filter(user_id=request.user).first()
+        if user_certification_obj and user_certification_obj.status == 1:
+            return Response(res.dict)
+
+        try:
+            if REGISTER.get("captcha"):
+                if data and valid_captcha(data.get("cptch_key", None), data.get("authcode", None), data.get("mobile")):
+                    pass
+                else:
+                    res.code = 1009
+                    res.msg = "图片验证码有误"
+                    return Response(res.dict)
+
+            is_valid, target = is_valid_sender_code('sms', data.get("auth_token", None), data.get("auth_key", None))
+            if is_valid and str(target) == str(data.get("mobile")):
+                if login_auth_failed("get", data.get("mobile")):
+                    del data["cptch_key"]
+                    del data["authcode"]
+                    del data["auth_key"]
+                    del data["auth_token"]
+                    UserCertificationInfo.objects.update_or_create(user_id=request.user, status=0, defaults=data)
+                    return self.get(request)
+
+                else:
+                    res.code = 1006
+                    logger.error("username:%s failed too try , locked" % (request.user,))
+                    res.msg = "用户注册失败次数过多，已被锁定，请1小时之后再次尝试"
+            else:
+                res.code = 1001
+                res.msg = "短信验证码有误"
+
+        except Exception as e:
+            logger.error("%s UserCertificationInfo save %s failed Exception: %s" % (request.user, data, e))
+            res.msg = "数据异常，请检查"
+            res.code = 1002
+        return Response(res.dict)

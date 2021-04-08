@@ -45,7 +45,8 @@ class UserInfoSerializer(serializers.ModelSerializer):
         model = models.UserInfo
         # fields="__all__"
         fields = ["username", "uid", "mobile", "job", "email", "domain_name", "role", "first_name",
-                  'head_img', 'storage_active', 'supersign_active', 'free_download_times', 'download_times']
+                  'head_img', 'storage_active', 'supersign_active', 'free_download_times', 'download_times',
+                  'certification']
 
     head_img = serializers.SerializerMethodField()
 
@@ -57,6 +58,25 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     def get_free_download_times(self, obj):
         return get_user_free_download_times(obj.id)
+
+    certification = serializers.SerializerMethodField()
+
+    def get_certification(self, obj):
+        result = {'code': -1}
+        certification_obj = models.UserCertificationInfo.objects.filter(user_id=obj).first()
+        if certification_obj:
+            result['code'] = 0
+            card = certification_obj.card
+            data = {
+                'name': certification_obj.name,
+                'addr': certification_obj.addr,
+                'card': "%s%s%s" % (card[:4], '*' * (len(card) - 8), card[-4:]),
+                'mobile': certification_obj.mobile,
+                'status': certification_obj.status,
+                'msg': certification_obj.msg,
+            }
+            result.update(data)
+        return result
 
 
 class AppsSerializer(serializers.ModelSerializer):
@@ -332,3 +352,20 @@ class OrdersSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Order
         exclude = ["id"]
+
+
+class CertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CertificationInfo
+        fields = ["certification_url", "type"]
+
+    certification_url = serializers.SerializerMethodField()
+
+    def get_certification_url(self, obj):
+        return get_download_url_from_context(self, '', obj.certification_url)
+
+
+class UserCertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserCertificationInfo
+        exclude = ["id", "user_id", "created_time"]

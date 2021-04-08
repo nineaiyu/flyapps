@@ -7,7 +7,7 @@
 from api.utils.app.apputils import get_random_short, SaveAppInfos
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
-from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot
+from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo
 from api.utils.app.randomstrings import make_app_uuid
 from rest_framework.views import APIView
 from api.utils.response import BaseResponse
@@ -344,13 +344,21 @@ class UploadView(APIView):
                 elif ftype == 'certification':
                     ext = certinfo.get('ext', None)
                     if ext:
-                        ptype = ext.get('type', None)
-                        if ptype is not None:
-                            pass
-                    pass
-                else:
-                    pass
+                        ptype = ext.get('ptype', None)
+                        if ptype is not None and ptype in [1, 2, 3]:
+                            certification_obj = CertificationInfo.objects.filter(user_id=request.user,
+                                                                                 type=ptype).first()
+                            if certification_obj:
+                                old_certification_url = certification_obj.certification_url
+                                certification_obj.certification_url = new_upload_key
+                                certification_obj.save()
+                                storage.delete_file(old_certification_url)
+                            else:
+                                CertificationInfo.objects.create(user_id=request.user, type=ptype,
+                                                                 certification_url=new_upload_key)
+                            storage.rename_file(upload_key, new_upload_key)
 
+                        return Response(res.dict)
                 return Response(res.dict)
             else:
                 pass
