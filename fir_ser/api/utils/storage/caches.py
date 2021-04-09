@@ -9,7 +9,7 @@ from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, 
 import time, os
 from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
-    USER_FREE_DOWNLOAD_TIMES
+    USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
 from api.utils.storage.storage import Storage, LocalStorage
 from api.utils.utils import file_format_path
 import logging
@@ -95,12 +95,14 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
 
 def get_app_instance_by_cache(app_id, password, limit, udid):
     if udid:
-        return Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type', 'password', 'issupersign').first()
+        return Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type', 'password', 'issupersign',
+                                                         'user_id__certification__status').first()
     app_key = "_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"), app_id])
     app_obj_cache = cache.get(app_key)
     if not app_obj_cache:
         app_obj_cache = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type', 'password',
-                                                                  'issupersign').first()
+                                                                  'issupersign',
+                                                                  'user_id__certification__status').first()
         cache.set(app_key, app_obj_cache, limit)
 
     app_password = app_obj_cache.get("password")
@@ -314,7 +316,10 @@ def set_user_download_times_flag(user_id, act):
     return cache.set(user_can_download_key, act, 3600 * 24)
 
 
-def get_user_free_download_times(user_id, act='get', amount=1):
+def get_user_free_download_times(user_id, act='get', amount=1, auth_status=False):
+    free_download_times = USER_FREE_DOWNLOAD_TIMES
+    if auth_status:
+        free_download_times = AUTH_USER_FREE_DOWNLOAD_TIMES
     now = timezone.now()
     user_free_download_times_key = "_".join(
         [CACHE_KEY_TEMPLATE.get("user_free_download_times_key"), str(now.year), str(now.month), str(now.day),
@@ -326,17 +331,17 @@ def get_user_free_download_times(user_id, act='get', amount=1):
         else:
             return user_free_download_times
     else:
-        cache.set(user_free_download_times_key, USER_FREE_DOWNLOAD_TIMES, 3600 * 24)
+        cache.set(user_free_download_times_key, free_download_times, 3600 * 24)
         if act == 'set':
             return cache.incr(user_free_download_times_key, -amount)
         else:
-            return USER_FREE_DOWNLOAD_TIMES
+            return free_download_times
 
 
-def consume_user_download_times(user_id, app_id, amount=1):
+def consume_user_download_times(user_id, app_id, amount=1, auth_status=False):
     with cache.lock("%s_%s" % ('consume_user_download_times', user_id)):
-        if get_user_free_download_times(user_id, 'get', amount) > 0:
-            get_user_free_download_times(user_id, 'set', amount)
+        if get_user_free_download_times(user_id, 'get', amount, auth_status) > 0:
+            get_user_free_download_times(user_id, 'set', amount, auth_status)
         else:
             if not check_user_can_download(user_id):
                 return False
@@ -350,18 +355,34 @@ def consume_user_download_times(user_id, app_id, amount=1):
         return True
 
 
+def enable_user_download(user_id):
+    enable_user_download_times_flag(user_id)
+    for app_obj in Apps.objects.filter(pk=user_id):
+        del_cache_response_by_short(app_obj.app_id)
+    return True
+
+
 def add_user_download_times(user_id, download_times=0):
     with cache.lock("%s_%s" % ('consume_user_download_times', user_id)):
         try:
             UserInfo.objects.filter(pk=user_id).update(download_times=F('download_times') + download_times)
-            enable_user_download_times_flag(user_id)
-            for app_obj in Apps.objects.filter(pk=user_id):
-                del_cache_response_by_short(app_obj.app_id)
-            return True
+            return enable_user_download(user_id)
         except Exception as e:
             logger.error("%s download_times less then 0. Exception:%s" % (user_id, e))
             return False
 
 
-def check_user_has_all_download_times(user_id):
-    return get_user_free_download_times(user_id) > 0 or check_user_can_download(user_id)
+def check_user_has_all_download_times(app_obj):
+    user_id = app_obj.user_id_id
+    auth_status = app_obj.user_id__certification__status
+    return get_user_free_download_times(user_id, auth_status=auth_status) > 0 or check_user_can_download(user_id)
+
+
+def user_auth_success(user_id):
+    '''
+    认证成功，需要调用该方法增加次数
+    :param user_id:
+    :return:
+    '''
+    get_user_free_download_times(user_id, 'set', USER_FREE_DOWNLOAD_TIMES - AUTH_USER_FREE_DOWNLOAD_TIMES)
+    return enable_user_download(user_id)

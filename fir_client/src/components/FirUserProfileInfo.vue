@@ -2,21 +2,21 @@
     <div>
 
         <el-form ref="form" :model="userinfo">
-            <el-form-item>
-                <el-row>
-                    <el-col :span="18">
+            <el-form-item label="用户名">
+                <el-row :gutter="36">
+                    <el-col :span="13">
                         <el-input v-model="userinfo.username" :readonly="edituser_name !== true"
                                   prefix-icon="el-icon-user" placeholder="用户名" ref="user_name"
-                        ></el-input>
+                                  clearable/>
                     </el-col>
 
-                    <el-col :span="2">
+                    <el-col :span="1">
                         <el-button icon="el-icon-edit" @click="changeUsernameValue">
                         </el-button>
                     </el-col>
                     <el-col :span="4" v-if="edituser_name === true">
                         <el-button type="success" @click="saveUsername" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
+                                   class="save-button">
                             保存
                         </el-button>
                     </el-col>
@@ -25,33 +25,33 @@
             </el-form-item>
 
 
-            <el-form-item>
-                <el-row>
-                    <el-col :span="18">
+            <el-form-item label="手机号码">
+                <el-row :gutter="36">
+                    <el-col :span="13">
                         <el-input v-model="userinfo.mobile" ref="phone" :readonly="editphone !== true"
-                                  prefix-icon="el-icon-mobile" placeholder="手机" maxlength="11"></el-input>
+                                  prefix-icon="el-icon-mobile" placeholder="手机" maxlength="11" clearable/>
                     </el-col>
-                    <el-col :span="2">
+                    <el-col :span="1">
                         <el-button icon="el-icon-edit" @click="changePhoneValue">
                         </el-button>
                     </el-col>
                     <el-col :span="4" v-if="editphone === true">
                         <el-button type="success" @click="savePhone" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
+                                   class="save-button">
                             保存
                         </el-button>
                     </el-col>
                 </el-row>
             </el-form-item>
 
-            <el-form-item style="height: 40px" v-if="editphone === true && cptch.cptch_image">
-                <el-row style="height: 40px" :gutter="10">
-                    <el-col :span="11">
-                        <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6"></el-input>
+            <el-form-item label="图片验证码" style="height: 40px" v-if="editphone === true && cptch.cptch_image">
+                <el-row style="height: 40px" :gutter="36">
+                    <el-col :span="10">
+                        <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6" clearable/>
                     </el-col>
                     <el-col :span="8">
                         <el-image
-                                style="margin:0px 4px;border-radius:4px;cursor:pointer;height: 40px"
+                                style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px"
                                 :src="cptch.cptch_image"
                                 fit="contain" @click="get_auth_code">
                         </el-image>
@@ -59,15 +59,15 @@
                 </el-row>
             </el-form-item>
 
-            <el-form-item v-if="editphone === true">
-                <el-row :gutter="10">
-                    <el-col :span="12">
+            <el-form-item label="手机验证码" v-if="editphone === true">
+                <el-row :gutter="36">
+                    <el-col :span="10">
                         <el-input v-model="userinfo.auth_key" prefix-icon="el-icon-mobile" placeholder="验证码"
-                                  maxlength="6"></el-input>
+                                  maxlength="6" clearable/>
                     </el-col>
-                    <el-col :span="6">
+                    <el-col :span="8">
                         <el-button type="info" @click="getsmsemailcode('sms',userinfo.mobile)" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px;background-color: #ecf5ff;color: #dd6161">
+                                   class="save-button">
                             获取验证码
                         </el-button>
                     </el-col>
@@ -76,19 +76,19 @@
             </el-form-item>
 
 
-            <el-form-item>
-                <el-row>
-                    <el-col :span="18">
+            <el-form-item label="邮箱地址">
+                <el-row :gutter="36">
+                    <el-col :span="13">
                         <el-input v-model="userinfo.email" ref="email" :readonly="editemail !== true"
-                                  prefix-icon="el-icon-bank-card" placeholder="邮箱" maxlength="20"></el-input>
+                                  prefix-icon="el-icon-bank-card" placeholder="邮箱" maxlength="20" clearable/>
                     </el-col>
-                    <el-col :span="2">
+                    <el-col :span="1">
                         <el-button icon="el-icon-edit" @click="changeemailValue">
                         </el-button>
                     </el-col>
                     <el-col :span="4" v-if="editemail === true">
                         <el-button type="success" @click="saveemail" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
+                                   class="save-button">
                             保存
                         </el-button>
                     </el-col>
@@ -96,14 +96,14 @@
             </el-form-item>
 
 
-            <el-form-item style="height: 40px" v-if="editemail === true && cptch.cptch_image">
-                <el-row style="height: 40px" :gutter="10">
-                    <el-col :span="11">
-                        <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6"></el-input>
+            <el-form-item label="图片验证码" style="height: 40px" v-if="editemail === true && cptch.cptch_image">
+                <el-row style="height: 40px" :gutter="36">
+                    <el-col :span="10">
+                        <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6" clearable/>
                     </el-col>
                     <el-col :span="8">
                         <el-image
-                                style="margin:0px 4px;border-radius:4px;cursor:pointer;height: 40px"
+                                style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px"
                                 :src="cptch.cptch_image"
                                 fit="contain" @click="get_auth_code">
                         </el-image>
@@ -111,15 +111,15 @@
                 </el-row>
             </el-form-item>
 
-            <el-form-item v-if="editemail === true">
-                <el-row :gutter="10">
-                    <el-col :span="12">
+            <el-form-item label="邮箱验证码" v-if="editemail === true">
+                <el-row :gutter="36">
+                    <el-col :span="10">
                         <el-input v-model="userinfo.auth_key" prefix-icon="el-icon-mobile" placeholder="验证码"
-                                  maxlength="6"></el-input>
+                                  maxlength="6" clearable/>
                     </el-col>
-                    <el-col :span="6">
+                    <el-col :span="8">
                         <el-button type="info" @click="getsmsemailcode('email',userinfo.email)" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px;background-color: #ecf5ff;color: #dd6161">
+                                   class="save-button">
                             获取验证码
                         </el-button>
                     </el-col>
@@ -128,39 +128,39 @@
             </el-form-item>
 
 
-            <el-form-item>
-                <el-row>
-                    <el-col :span="18">
+            <el-form-item label="下载域名">
+                <el-row :gutter="36">
+                    <el-col :span="13">
                         <el-input v-model="userinfo.domain_name" :readonly="editdomain_name !== true" ref="domain_name"
                                   prefix-icon="el-icon-download"
-                                  placeholder="下载页域名"></el-input>
+                                  placeholder="下载页域名" clearable/>
                     </el-col>
-                    <el-col :span="2">
+                    <el-col :span="1">
                         <el-button icon="el-icon-edit" @click="changeDomainValue">
                         </el-button>
                     </el-col>
                     <el-col :span="4" v-if="editdomain_name === true">
                         <el-button type="success" @click="saveDomain" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
+                                   class="save-button">
                             保存
                         </el-button>
                     </el-col>
                 </el-row>
             </el-form-item>
 
-            <el-form-item>
-                <el-row>
-                    <el-col :span="18">
+            <el-form-item label="职位">
+                <el-row :gutter="36">
+                    <el-col :span="13">
                         <el-input v-model="userinfo.job" ref="position" :readonly="editposition !== true"
-                                  prefix-icon="el-icon-postcard" placeholder="职位"></el-input>
+                                  prefix-icon="el-icon-postcard" placeholder="职位" clearable/>
                     </el-col>
-                    <el-col :span="2">
+                    <el-col :span="1">
                         <el-button icon="el-icon-edit" @click="changePositionValue">
                         </el-button>
                     </el-col>
                     <el-col :span="4" v-if="editposition === true">
                         <el-button type="success" @click="savePositionValue" plain
-                                   style="margin:0 4px;border-radius:4px;cursor:pointer;height: 36px;background-color: #f56c6c;color: wheat">
+                                   class="save-button">
                             保存
 
                         </el-button>
@@ -361,31 +361,34 @@
 
 <style scoped>
     .el-form {
-        max-width: 360px;
+        max-width: 500px;
         margin: 0 auto;
     }
 
-    .el-form-item .el-button {
-        max-width: 360px;
-        width: 100%;
-        position: relative;
-        height: 50px;
-
+    /deep/ .el-form-item__label {
+        width: 90px;
     }
 
     .el-button {
         padding: 0;
         border: none;
         background-color: transparent;
-        color: #e2644c;
-
+        color: #7e5ef8;
     }
 
-    .el-button:hover {
-        background-color: #bfe7f9;
+    .save-button {
+        margin: 0 4px;
+        border-radius: 4px;
+        cursor: pointer;
+        height: 36px;
+        background-color: #409eff;
+        color: #f9f9f9;
+        max-width: 360px;
+        width: 100%;
+        position: relative;
     }
 
-    .el-button:focus {
+    .save-button:focus {
         background-color: #bfe7f9;
     }
 

@@ -200,8 +200,8 @@
     }
 
     .user_pro_tabs a.active {
-        color: #e2644c;
-        border-bottom-color: #e2644c
+        color: #7e5ef8;
+        border-bottom-color: #7e5ef8
     }
 
 

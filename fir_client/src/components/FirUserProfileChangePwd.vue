@@ -2,36 +2,36 @@
     <div>
 
         <el-form ref="form" :model="form">
-            <el-form-item>
-                <el-row>
-                    <el-col :span="22">
-                        <el-input v-model="form.oldpassword" show-password autofocus="true" prefix-icon="el-icon-unlock"
-                                  placeholder="当前密码"></el-input>
+            <el-form-item label="当前密码">
+                <el-row :gutter="36">
+                    <el-col :span="18">
+                        <el-input v-model="form.oldpassword" show-password autofocus prefix-icon="el-icon-unlock"
+                                  placeholder="当前密码" clearable/>
                     </el-col>
                 </el-row>
             </el-form-item>
-            <el-form-item>
-                <el-row>
-                    <el-col :span="22">
+            <el-form-item label="新密码">
+                <el-row :gutter="36">
+                    <el-col :span="18">
                         <el-input v-model="form.newpassword" show-password prefix-icon="el-icon-lock"
-                                  placeholder="新密码"></el-input>
+                                  placeholder="新密码" clearable/>
                     </el-col>
                 </el-row>
             </el-form-item>
 
-            <el-form-item>
-                <el-row>
-                    <el-col :span="22">
+            <el-form-item label="确认密码">
+                <el-row :gutter="36">
+                    <el-col :span="18">
                         <el-input v-model="form.surepassword" show-password prefix-icon="el-icon-lock"
-                                  placeholder="确认密码"></el-input>
+                                  placeholder="确认密码" clearable/>
                     </el-col>
                 </el-row>
             </el-form-item>
 
             <el-form-item>
-                <el-row>
-                    <el-col :span="22">
-                        <el-button type="danger" @click="updatepasswd">更新密码</el-button>
+                <el-row :gutter="36">
+                    <el-col :span="24">
+                        <el-button type="primary" @click="updatepasswd">更新密码</el-button>
                     </el-col>
                 </el-row>
             </el-form-item>
@@ -84,14 +84,20 @@
 
 <style scoped>
     .el-form {
-        max-width: 360px;
+        max-width: 500px;
         margin: 0 auto;
     }
 
     .el-form-item .el-button {
-        max-width: 360px;
+        margin-top: 20px;
+        max-width: 260px;
         width: 100%;
         height: 50px;
+        /*margin-left: 40px;*/
+    }
+
+    /deep/ .el-form-item__label {
+        width: 90px;
     }
 
 

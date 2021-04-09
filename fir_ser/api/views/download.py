@@ -155,7 +155,7 @@ class ShortDownloadView(APIView):
             res.msg = "该应用不存在"
             return Response(res.dict)
 
-        if not check_user_has_all_download_times(app_obj.user_id_id):
+        if not check_user_has_all_download_times(app_obj):
             res.code = 1009
             res.msg = "可用下载额度不足，请联系开发者"
             return Response(res.dict)
@@ -244,8 +244,11 @@ class InstallView(APIView):
                     # 超级签需要消耗2个下载次数
                     if app_obj.get("issupersign"):
                         amount += 1
-
-                    if not consume_user_download_times(app_obj.get("user_id"), app_id, amount):
+                    auth_status = False
+                    status = app_obj.get('user_id__certification__status', None)
+                    if status and status == 1:
+                        auth_status = True
+                    if not consume_user_download_times(app_obj.get("user_id"), app_id, amount, auth_status):
                         res.code = 1009
                         res.msg = "可用下载额度不足"
                         del res.data

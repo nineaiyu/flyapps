@@ -2,8 +2,8 @@
     <div v-if="certification && certification.code === 0">
         <el-form style="max-width: 400px">
             <el-form-item>
-                <el-row :gutter="36">
-                    <el-col :span="18">
+                <el-row>
+                    <el-col :span="24">
                         <el-link :underline="false" type="success" style="font-size: x-large"
                                  v-if="certification.status === 1">已经认证
                         </el-link>
@@ -57,9 +57,9 @@
             </el-form-item>
 
             <el-form-item v-if="certification.status === 2">
-                <el-row :gutter="36">
-                    <el-col :span="18">
-                        <el-button type="danger" @click="recommit">重新提交审核</el-button>
+                <el-row>
+                    <el-col :span="24">
+                        <el-button type="primary" @click="recommit">重新提交审核</el-button>
                     </el-col>
                 </el-row>
             </el-form-item>
@@ -72,7 +72,7 @@
                 <el-row :gutter="36">
                     <el-col :span="18">
                         <el-input v-model="form.name" autofocus="true" prefix-icon="el-icon-user"
-                                  placeholder="请输入真实姓名" clearable></el-input>
+                                  placeholder="请输入真实姓名" clearable/>
                     </el-col>
                 </el-row>
             </el-form-item>
@@ -80,7 +80,7 @@
                 <el-row :gutter="36">
                     <el-col :span="18">
                         <el-input v-model="form.card" clearable prefix-icon="el-icon-s-order"
-                                  placeholder="请输入身份证号"></el-input>
+                                  placeholder="请输入身份证号"/>
                     </el-col>
                 </el-row>
             </el-form-item>
@@ -89,7 +89,7 @@
                 <el-row :gutter="36">
                     <el-col :span="18">
                         <el-input v-model="form.addr" clearable prefix-icon="el-icon-house"
-                                  placeholder="请输入现居住地址"></el-input>
+                                  placeholder="请输入现居住地址"/>
                     </el-col>
                 </el-row>
             </el-form-item>
@@ -99,7 +99,7 @@
                 <el-row :gutter="36">
                     <el-col :span="18">
                         <el-input v-model="form.mobile" ref="phone" clearable
-                                  prefix-icon="el-icon-mobile" placeholder="请输入手机号码" maxlength="11"></el-input>
+                                  prefix-icon="el-icon-mobile" placeholder="请输入手机号码" maxlength="11"/>
                     </el-col>
                 </el-row>
             </el-form-item>
@@ -109,7 +109,7 @@
                 <el-row :gutter="11">
                     <el-col :span="12">
                         <el-input v-model="form.auth_key" prefix-icon="el-icon-mobile" placeholder="请输入您收到的验证码"
-                                  maxlength="6"></el-input>
+                                  maxlength="6" clearable/>
                     </el-col>
                     <el-col :span="6">
                         <el-button type="info" @click="getsmsemailcode('sms',form.mobile)" plain
@@ -124,7 +124,7 @@
             <el-form-item label="图片验证码" v-if="cptch.cptch_image">
                 <el-row :gutter="11">
                     <el-col :span="12">
-                        <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6"></el-input>
+                        <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6" clearable/>
                     </el-col>
                     <el-col :span="6">
                         <el-image
@@ -155,7 +155,7 @@
                                 <el-tooltip v-if="user_certification.one" placement="top">
                                     <div slot="content">上传身份证<i style="color: #2abb9d!important;">国徽面</i>照片</div>
                                     <img :src="user_certification.one"
-                                         class="avatar">
+                                         class="avatar" alt="国徽面照片">
                                 </el-tooltip>
                                 <i v-else class="avatar-uploader-icon" style="text-align: center">
                                     上传身份证<i style="color: #2abb9d!important;">国徽面</i>照片
@@ -173,7 +173,7 @@
                                 <el-tooltip v-if="user_certification.two" placement="top">
                                     <div slot="content">上传身份证<i style="color: #2abb9d!important;">人像面</i>照片</div>
                                     <img :src="user_certification.two"
-                                         class="avatar">
+                                         class="avatar" alt="人像面照片">
                                 </el-tooltip>
                                 <i v-else class="avatar-uploader-icon" style="text-align: center">
                                     上传身份证<i style="color: #2abb9d!important;">人像面</i>照片
@@ -191,7 +191,7 @@
                                 <el-tooltip v-if="user_certification.three" placement="top">
                                     <div slot="content">上传<i style="color: #2abb9d!important;">手持身份证</i>照片</div>
                                     <img :src="user_certification.three"
-                                         class="avatar">
+                                         class="avatar" alt="手持身份证照片">
                                 </el-tooltip>
                                 <i v-else class="avatar-uploader-icon" style="text-align: center">
                                     上传<i style="color: #2abb9d!important;">手持身份证</i>照片
@@ -205,8 +205,8 @@
 
             <el-form-item>
                 <el-row>
-                    <el-col :span="22">
-                        <el-button type="danger" @click="commit">提交</el-button>
+                    <el-col :span="24" style="margin-top: 20px">
+                        <el-button type="primary" @click="commit">提交</el-button>
                     </el-col>
                 </el-row>
             </el-form-item>
@@ -262,10 +262,10 @@
 
                 this.get_user_certification({methods: 'POST', data: this.form})
             },
-            get_user_certification(parmas) {
+            get_user_certification(params) {
                 user_certification(res => {
                     if (res.code === 1000) {
-                        if (parmas.methods === 'POST') {
+                        if (params.methods === 'POST') {
                             this.$message.success("信息提交成功，正在审核中")
                         }
                         const ft = ['one', 'two', 'three'];
@@ -280,7 +280,7 @@
                     } else {
                         this.$message.error(res.msg)
                     }
-                }, parmas)
+                }, params)
             },
 
             getsmsemailcode(act, target) {
@@ -288,7 +288,10 @@
                     "authcode": this.form.authcode,
                     "cptch_key": this.cptch.cptch_key,
                 };
-
+                if (!this.form.authcode) {
+                    this.$message.error("图片验证码输入有误");
+                    return;
+                }
                 let cptch_flag = this.form.authcode.length === this.cptch.length;
                 if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
                     cptch_flag = true
@@ -296,18 +299,12 @@
                 if (cptch_flag) {
                     let checkp = checkphone(this.form.mobile);
                     if (!checkp) {
-                        this.$message({
-                            message: '手机号输入有误',
-                            type: 'error'
-                        });
+                        this.$message.error("手机号输入有误");
                         return
                     }
 
                 } else {
-                    this.$message({
-                        message: '图片验证码有误',
-                        type: 'error'
-                    });
+                    this.$message.error("图片验证码输入有误");
                     return
                 }
                 let params = {'act': act, 'target': target, 'ext': picode, 'user_id': target, 'ftype': 'certification'};
@@ -372,7 +369,7 @@
                     'ext': {'ptype': ptype}
                     // eslint-disable-next-line no-unused-vars
                 }, res => {
-                    this.get_user_certification({methods: 'GET'});
+                    this.get_user_certification({methods: 'GET', data: {act: 'certpic'}});
                 });
 
             },
@@ -403,7 +400,7 @@
     }
 
     .el-form-item .el-button {
-        max-width: 360px;
+        max-width: 260px;
         width: 100%;
         height: 50px;
     }

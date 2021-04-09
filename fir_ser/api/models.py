@@ -397,7 +397,8 @@ class Price(models.Model):
 
 
 class UserCertificationInfo(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    user_id = models.OneToOneField(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE,
+                                   related_name='certification')
     name = models.CharField(max_length=128, null=False, verbose_name="真实姓名")
     card = models.CharField(max_length=128, null=False, verbose_name="身份证号码")
     addr = models.CharField(max_length=128, null=False, verbose_name="居住地")

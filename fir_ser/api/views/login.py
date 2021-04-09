@@ -257,7 +257,7 @@ class LoginView(APIView):
         response = BaseResponse()
         user_id = request.data.get('user_id', None)
         if user_id:
-            sha = hashlib.sha1(user_id.encode("utf-8"))
+            sha = hashlib.sha1(str(user_id).encode("utf-8"))
             response.data = first_register(sha.hexdigest(), request.META.get('REMOTE_ADDR'))
         else:
             response.code = 1002

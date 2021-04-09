@@ -329,11 +329,12 @@ CACHE_KEY_TEMPLATE = {
 
 DATA_DOWNLOAD_KEY = "d_token"
 FILE_UPLOAD_TMP_KEY = ".tmp"
-USER_FREE_DOWNLOAD_TIMES = 10
+USER_FREE_DOWNLOAD_TIMES = 20
+AUTH_USER_FREE_DOWNLOAD_TIMES = 60
 
 SYNC_CACHE_TO_DATABASE = {
     'download_times': 10,  # 下载次数同步时间
-    'try_login_times': (5, 24 * 60 * 60),  # 当天登录失败次数，超过该失败次数，锁定24小时
+    'try_login_times': (10, 12 * 60 * 60),  # 当天登录失败次数，超过该失败次数，锁定24小时
     'auto_clean_tmp_file_times': 60 * 30,  # 定时清理上传失误生成的临时文件
     'auto_clean_local_tmp_file_times': 60 * 30,  # 定时清理临时文件,现在包含超级签名描述临时文件
     'auto_clean_apscheduler_log': 100000,  # 定时清理定时任务执行的日志,该日志存在数据库中，该参数为日志保留的数量
