@@ -89,8 +89,8 @@
 </template>
 
 <script>
-    import {apputils, getapppicurl, releaseapputils} from "../restful"
-    import {AvatarUploadUtils} from "../utils";
+    import {apputils, getapppicurl, releaseapputils} from "../../restful"
+    import {AvatarUploadUtils} from "../../utils";
 
     export default {
         name: "FirAppInfosbaseinfo",

@@ -305,8 +305,8 @@
 </template>
 
 <script>
-    import {getStorageinfo, userinfos} from "../restful";
-    import {deepCopy} from "../utils";
+    import {getStorageinfo, userinfos} from "../../restful";
+    import {deepCopy} from "../../utils";
 
     export default {
         name: "FirUserStorage",

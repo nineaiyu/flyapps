@@ -116,7 +116,7 @@
 </template>
 
 <script>
-    import {releaseapputils, getdownloadurl} from "../restful"
+    import {releaseapputils, getdownloadurl} from "../../restful"
 
     export default {
         name: "FirAppInfostimeline",

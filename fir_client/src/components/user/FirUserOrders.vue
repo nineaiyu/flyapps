@@ -11,7 +11,7 @@
         >
             <el-row :gutter="8">
                 <el-col :span="12" style="text-align: center">
-                    <el-image :src="require('../assets/wx_pay.jpg')" style="width: 320px;height: 320px"
+                    <el-image :src="require('../../assets/wx_pay.jpg')" style="width: 320px;height: 320px"
                               fit="fit"></el-image>
                     <el-link>用微信扫描二维码</el-link>
                 </el-col>
@@ -223,7 +223,7 @@
 
 <script>
 
-    import {my_order, userinfos} from "../restful";
+    import {my_order, userinfos} from "../../restful";
 
     export default {
         name: "FirUserOrders",

@@ -27,26 +27,26 @@ const router = new VueRouter({
         {
             path: '/apps',
             // component: FirAppBase,
-            component: () => import("@/components/FirAppBase"),
+            component: () => import("@/components/FirBase"),
 
             children: [
                 {
                     path: '',
                     name: 'FirApps',
-                    component: () => import("@/components/FirApps"),
+                    component: () => import("@/components/apps/FirApps"),
                 }
                 ,
                 {
                     path: ':id',
                     // component: FirAppInfosBase,
-                    component: () => import("@/components/FirAppInfosBase"),
+                    component: () => import("@/components/apps/FirAppInfosBase"),
 
                     children: [
                         {
                             path: '',
                             name: 'FirAppInfostimeline',
                             // component: FirAppInfostimeline,
-                            component: () => import("@/components/FirAppInfostimeline"),
+                            component: () => import("@/components/apps/FirAppInfostimeline"),
 
                         }
                         ,
@@ -54,35 +54,35 @@ const router = new VueRouter({
                             path: 'info',
                             name: 'FirAppInfosbaseinfo',
                             // component: FirAppInfosbaseinfo,
-                            component: () => import("@/components/FirAppInfosbaseinfo"),
+                            component: () => import("@/components/apps/FirAppInfosbaseinfo"),
 
                         },
                         {
                             path: 'security',
                             name: 'FirAppInfossecurity',
                             // component: FirAppInfossecurity
-                            component: () => import("@/components/FirAppInfossecurity"),
+                            component: () => import("@/components/apps/FirAppInfossecurity"),
 
                         },
                         {
                             path: 'devices',
                             name: 'FirAppInfosdevices',
                             // component: FirAppInfosdevices
-                            component: () => import("@/components/FirAppInfosdevices"),
+                            component: () => import("@/components/apps/FirAppInfosdevices"),
 
                         },
                         {
                             path: 'combo',
                             name: 'FirAppInfoscombo',
                             // component: FirAppInfoscombo,
-                            component: () => import("@/components/FirAppInfoscombo"),
+                            component: () => import("@/components/apps/FirAppInfoscombo"),
 
                         },
                         {
                             path: 'supersign',
                             name: 'FirAppInfossupersign',
                             // component: FirAppInfossupersign,
-                            component: () => import("@/components/FirAppInfossupersign"),
+                            component: () => import("@/components/apps/FirAppInfossupersign"),
 
                         }
                     ]
@@ -92,33 +92,33 @@ const router = new VueRouter({
         {
             path: '/user',
             // component: FirAppBase,
-            component: () => import("@/components/FirAppBase"),
+            component: () => import("@/components/FirBase"),
 
             children: [
                 {
                     path: '',
                     // component: FirUserProfileBase,
-                    component: () => import("@/components/FirUserProfileBase"),
+                    component: () => import("@/components/user/FirUserProfileBase"),
 
                     children: [
                         {
                             path: 'info',
                             name: 'FirUserProfileInfo',
                             meta: {label: '个人资料'},
-                            component: () => import("@/components/FirUserProfileInfo"),
+                            component: () => import("@/components/user/FirUserProfileInfo"),
 
                         }, {
                             path: 'setpasswd',
                             name: 'FirUserProfileChangePwd',
                             meta: {label: '修改密码'},
                             // component: FirUserProfileChangePwd
-                            component: () => import("@/components/FirUserProfileChangePwd"),
+                            component: () => import("@/components/user/FirUserProfileChangePwd"),
 
                         }, {
                             path: 'certification',
                             name: 'FirUserProfileCertification',
                             meta: {label: '实名认证'},
-                            component: () => import("@/components/FirUserProfileCertification"),
+                            component: () => import("@/components/user/FirUserProfileCertification"),
 
                         },
                     ]
@@ -136,14 +136,14 @@ const router = new VueRouter({
         {
             path: '/supersign',
             // component: FirAppBase,
-            component: () => import("@/components/FirAppBase"),
+            component: () => import("@/components/FirBase"),
 
             children: [
                 {
                     path: ':act',
                     name: 'FirSuperSignBase',
                     meta: {label: '超级签名'},
-                    component: () => import("@/components/FirSuperSignBase"),
+                    component: () => import("@/components/user/FirSuperSignBase"),
 
                 }
             ]
@@ -151,26 +151,26 @@ const router = new VueRouter({
         {
             path: '/storage',
             // component: FirAppBase,
-            component: () => import("@/components/FirAppBase"),
+            component: () => import("@/components/FirBase"),
             children: [
                 {
                     path: ':act',
                     name: 'FirUserStorage',
                     meta: {label: '存储管理'},
-                    component: () => import("@/components/FirUserStorage"),
+                    component: () => import("@/components/user/FirUserStorage"),
 
                 }
             ]
         },
         {
             path: '/orders',
-            component: () => import("@/components/FirAppBase"),
+            component: () => import("@/components/FirBase"),
             children: [
                 {
                     path: '',
                     name: 'FirUserOrders',
                     meta: {label: '订单详情'},
-                    component: () => import("@/components/FirUserOrders"),
+                    component: () => import("@/components/user/FirUserOrders"),
 
                 }
             ]

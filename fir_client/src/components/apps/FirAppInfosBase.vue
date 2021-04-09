@@ -98,7 +98,7 @@
 </template>
 
 <script>
-    import {apputils} from "../restful";
+    import {apputils} from "../../restful";
     import VueQr from 'vue-qr';
 
     export default {

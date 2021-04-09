@@ -89,8 +89,8 @@
 </template>
 
 <script>
-    import {apputils,} from "../restful"
-    import {deepCopy} from "../utils";
+    import {apputils,} from "../../restful"
+    import {deepCopy} from "../../utils";
 
     export default {
         name: "FirAppInfossecurity",

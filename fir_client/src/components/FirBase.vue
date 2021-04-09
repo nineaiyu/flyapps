@@ -24,7 +24,7 @@
     import {show_beautpic,} from "../utils";
 
     export default {
-        name: "FirAppBase",
+        name: "FirBase",
         components: {FirFooter, FirHeader},
         data() {
             return {
@@ -33,7 +33,7 @@
         },
         mounted() {
             let canvas = this.$refs.canvas;
-            show_beautpic(this, canvas);
+            show_beautpic(this, canvas, 200);
         }, watch: {}
         , methods: {
             canvas_move(e) {

@@ -153,27 +153,27 @@
                             <div class="cube">
                                 <!--前面图片 -->
                                 <div class="out_front">
-                                    <img src="../assets/imgs/1.png" class="pic">
+                                    <img src="../../assets/imgs/1.png" class="pic">
                                 </div>
                                 <!--后面图片 -->
                                 <div class="out_back">
-                                    <img src="../assets/imgs/5.png" class="pic">
+                                    <img src="../../assets/imgs/5.png" class="pic">
                                 </div>
                                 <!--左面图片 -->
                                 <div class="out_left">
-                                    <img src="../assets/imgs/6.png" class="pic">
+                                    <img src="../../assets/imgs/6.png" class="pic">
                                 </div>
                                 <!--右面图片 -->
                                 <div class="out_right">
-                                    <img src="../assets/imgs/7.png" class="pic">
+                                    <img src="../../assets/imgs/7.png" class="pic">
                                 </div>
                                 <!--上面图片 -->
                                 <div class="out_top">
-                                    <img src="../assets/imgs/8.png" class="pic">
+                                    <img src="../../assets/imgs/8.png" class="pic">
                                 </div>
                                 <!--下面图片 -->
                                 <div class="out_bottom">
-                                    <img src="../assets/imgs/9.png" class="pic">
+                                    <img src="../../assets/imgs/9.png" class="pic">
                                 </div>
 
                                 <!--小正方体 -->
@@ -473,7 +473,7 @@
 </template>
 
 <script>
-    import {getapps, apputils, analyseApps, getuploadurl, get_package_prices, my_order} from "../restful";
+    import {getapps, apputils, analyseApps, getuploadurl, get_package_prices, my_order} from "../../restful";
     import {
         getScrollHeight,
         getScrollTop,
@@ -484,7 +484,7 @@
         uploadaliyunoss,
         uploadlocalstorage,
         format_money, show_beautpic
-    } from "../utils";
+    } from "../../utils";
 
     export default {
         name: "FirApps",
@@ -629,6 +629,13 @@
                         this.analyseappinfo.is_new = data.data.is_new;
                         this.analyseappinfo.binary_url = data.data.binary_url;
                         this.willuploadApp = true;
+
+                        // eslint-disable-next-line no-unused-vars
+                        this.timmer = setTimeout(data => {
+                            let canvas = this.$refs.canvas;
+                            show_beautpic(this, canvas, 666, 0.8);
+                        }, 100);
+
                     } else {
                         this.$message.error("上传token获取失败，请刷新重试")
                     }
@@ -669,7 +676,7 @@
                 // eslint-disable-next-line no-unused-vars
                 this.timmer = setTimeout(data => {
                     let canvas = this.$refs.canvas;
-                    show_beautpic(this, canvas, 999);
+                    show_beautpic(this, canvas, 888, 0.8);
                 }, 100);
 
                 let file = dataURLtoFile(this.analyseappinfo.icon, this.analyseappinfo.png_key);
@@ -1470,10 +1477,7 @@
 
     .canvas {
         position: absolute;
-        left: -0px;
-        margin-top: -60px;
-        height: 100%;
+        margin-top: -58px;
         z-index: 999;
-        width: 100%;
     }
 </style>

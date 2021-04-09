@@ -344,7 +344,7 @@ export function format_money(s, n = 2) {
     return new_format_money
 }
 
-export function show_beautpic(father, canvas, nb = 666) {
+export function show_beautpic(father, canvas, nb = 666, sp = 0.3) {
     let ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -359,7 +359,7 @@ export function show_beautpic(father, canvas, nb = 666) {
     let dots = {
         nb: nb,
         distance: 100,
-        d_radius: 150,
+        d_radius: 180,
         array: []
     };
 
@@ -438,8 +438,8 @@ export function show_beautpic(father, canvas, nb = 666) {
     }
 
     function connectDots() {
-        for (let i = 0; i < dots.nb * 0.3; i++) {
-            for (let j = 0; j < dots.nb * 0.3; j++) {
+        for (let i = 0; i < dots.nb * sp; i++) {
+            for (let j = 0; j < dots.nb * sp; j++) {
                 let i_dot = dots.array[i];
                 let j_dot = dots.array[j];
 

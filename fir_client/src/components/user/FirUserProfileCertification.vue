@@ -216,8 +216,8 @@
 </template>
 
 <script>
-    import {getAuthcTokenFun, registerFun, user_certification} from "../restful";
-    import {AvatarUploadUtils, checkphone, geetest} from "../utils";
+    import {getAuthcTokenFun, registerFun, user_certification} from "../../restful";
+    import {AvatarUploadUtils, checkphone, geetest} from "../../utils";
 
     export default {
         name: "FirUserProfileCertification",
