@@ -248,6 +248,8 @@
             '$store.state.currentapp': function () {
                 this.appinfos = this.$store.state.currentapp;
             },
+        }, destroyed() {
+            this.$store.dispatch('doucurrentapp', {});
         }
 
     }

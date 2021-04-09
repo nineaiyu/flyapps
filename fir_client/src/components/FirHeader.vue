@@ -21,15 +21,19 @@
             <el-row :gutter="20">
                 <el-col :span="14" style="padding-top: 16px;margin-left: 60px">
 
-                    <el-breadcrumb separator=">" style="height: 80px;font-size: 20px">
-                        <el-breadcrumb-item :to="{ name:'FirIndex' }"><i class="el-icon-s-home elbi"></i>
+                    <el-breadcrumb separator-class="el-icon-arrow-right" style="height: 80px;font-size: 20px">
+                        <el-breadcrumb-item :to="{ name:'FirIndex' }">首页</el-breadcrumb-item>
+                        <el-breadcrumb-item :to="{ name:'FirApps'}">我的应用</el-breadcrumb-item>
+
+                        <el-breadcrumb-item v-if="this.route_info.label" :to="{ name:route_info.name}">{{
+                            this.route_info.label }}
                         </el-breadcrumb-item>
-                        <el-breadcrumb-item :to="{ name:'FirApps'}"><i class="el-icon-apple elbi"></i>
-                        </el-breadcrumb-item>
+
                         <el-breadcrumb-item v-if="$store.state.currentapp.name"
                                             :to="{name: 'FirAppInfostimeline', params: {id: $store.state.currentapp.app_id}}">
                             {{ $store.state.currentapp.name}}
                         </el-breadcrumb-item>
+
                     </el-breadcrumb>
 
                 </el-col>
@@ -78,7 +82,8 @@
                 current_user: {},
                 appName: '',
                 token: '',
-                dialogVisible: false
+                dialogVisible: false,
+                route_info: {'name': '', 'label': ''},
             }
         }, methods: {
             maketoken() {
@@ -139,7 +144,11 @@
             this.appName = this.$route.params.id
         }, watch: {
             $route: function () {
-                this.appName = this.$route.params.id
+                this.appName = this.$route.params.id;
+                if (this.$route.meta) {
+                    this.route_info.label = this.$route.meta.label;
+                    this.route_info.name = this.$route.name;
+                }
             }
         }
     }
@@ -178,5 +187,6 @@
     .elbi {
         color: #67c23a;
     }
+
 
 </style>

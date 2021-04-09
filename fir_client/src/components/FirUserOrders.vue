@@ -2,6 +2,34 @@
     <el-main>
 
 
+        <el-dialog title="微信支付，请扫描进行支付，支付完成之后，将订单进行关联"
+                   :visible.sync="wx_pay"
+                   width="880px"
+                   :close-on-click-modal="false"
+                   :close-on-press-escape="false"
+                   center
+        >
+            <el-row :gutter="8">
+                <el-col :span="12" style="text-align: center">
+                    <el-image :src="require('../assets/wx_pay.jpg')" style="width: 320px;height: 320px"
+                              fit="fit"></el-image>
+                    <el-link>用微信扫描二维码</el-link>
+                </el-col>
+                <el-col :span="12">
+                    <el-link type="warning"> 支付完成之后，打开订单详情，将订单编号复制出来，进行绑定</el-link>
+                    <div style="margin-top: 20px">
+                        <el-input style="width: 55%"
+                                  placeholder="订单编号"
+                                  v-model="sure_order_info.wx_order_id">
+                        </el-input>
+                        <el-button style="margin-left: 20px" @click="sure_order">查询</el-button>
+                        <el-button style="margin-left: 10px" @click="sure_order">关联</el-button>
+                    </div>
+                </el-col>
+            </el-row>
+
+        </el-dialog>
+
         <el-dialog
                 :visible.sync="show_order_info"
                 width="780px"
@@ -10,7 +38,6 @@
                 title="订单详情"
                 top="6vh"
                 center>
-
             <div>
 
                 <el-form :model="current_order_info"
@@ -41,12 +68,12 @@
 
                     <el-form-item label-width="110px" label="购买数量">
                         <el-input
-                                v-model="current_order_info.actual_download_times"/>
+                                :value="current_order_info.actual_download_times"/>
                     </el-form-item>
 
                     <el-form-item label-width="110px" label="赠送数量">
                         <el-input
-                                v-model="current_order_info.actual_download_gift_times"/>
+                                :value="current_order_info.actual_download_gift_times"/>
                     </el-form-item>
 
                     <el-form-item label-width="110px" label="订单创建时间">
@@ -90,6 +117,7 @@
 
             <el-table
                     :data="order_info_list"
+                    v-loading="loading"
                     border
                     stripe
                     style="width: 100%">
@@ -209,10 +237,13 @@
                 payment_type_choices: [],
                 show_order_info: false,
                 current_order_info: {},
+                wx_pay: false,
+                sure_order_info: {wx_order_id: ''},
+                loading: false
             }
         },
         methods: {
-            goto_pay(order) {
+            sure_order() {
                 my_order(res => {
                     // 应该跳转到第三方平台进行支付，然后第三方回调
                     if (res.code === 1000) {
@@ -225,8 +256,26 @@
                         this.$message.error("失败了 " + res.msg)
                     }
                 }, {
-                    methods: 'PUT', data: {order_number: order.order_number},
+                    methods: 'PUT', data: {sure_order_info: this.sure_order_info},
                 })
+            },
+            goto_pay(order) {
+                this.wx_pay = true;
+                this.sure_order_info.order_number = order.order_number;
+                // my_order(res => {
+                //     // 应该跳转到第三方平台进行支付，然后第三方回调
+                //     if (res.code === 1000) {
+                //         this.$message.success("支付成功");
+                //         this.get_data_from_tabname({
+                //             "size": this.pagination.pagesize,
+                //             "page": this.pagination.currentPage
+                //         });
+                //     } else {
+                //         this.$message.error("失败了 " + res.msg)
+                //     }
+                // }, {
+                //     methods: 'PUT', data: {order_number: order.order_number},
+                // })
             },
             click_order_info(order) {
                 this.show_order_info = true;
@@ -237,7 +286,7 @@
                 this.pagination.pagesize = val;
                 this.get_data_from_tabname({
                     "size": this.pagination.pagesize,
-                    "page": this.pagination.currentPage
+                    "page": 1
                 })
             },
             handleCurrentChange(val) {
@@ -298,12 +347,7 @@
                     return '';
             },
             MyOrderFun(params) {
-                const loading = this.$loading({
-                    lock: true,
-                    text: '执行中,请耐心等待...',
-                    spinner: 'el-icon-loading',
-                    background: 'rgba(0, 0, 0, 0.7)'
-                });
+                this.loading = true;
                 my_order(data => {
                     if (data.code === 1000) {
                         this.order_info_list = data.data;
@@ -317,8 +361,7 @@
                     } else {
                         this.$message.error("操作失败")
                     }
-
-                    loading.close();
+                    this.loading = false;
                 }, {methods: 'GET', data: params})
             },
             getUserInfoFun() {

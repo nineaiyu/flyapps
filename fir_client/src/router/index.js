@@ -104,18 +104,20 @@ const router = new VueRouter({
                         {
                             path: 'info',
                             name: 'FirUserProfileInfo',
-                            // component: FirUserProfileInfo,
+                            meta: {label: '个人资料'},
                             component: () => import("@/components/FirUserProfileInfo"),
 
                         }, {
                             path: 'setpasswd',
                             name: 'FirUserProfileChangePwd',
+                            meta: {label: '修改密码'},
                             // component: FirUserProfileChangePwd
                             component: () => import("@/components/FirUserProfileChangePwd"),
 
                         }, {
                             path: 'certification',
                             name: 'FirUserProfileCertification',
+                            meta: {label: '实名认证'},
                             component: () => import("@/components/FirUserProfileCertification"),
 
                         },
@@ -140,7 +142,7 @@ const router = new VueRouter({
                 {
                     path: ':act',
                     name: 'FirSuperSignBase',
-                    // component: FirSuperSignBase,
+                    meta: {label: '超级签名'},
                     component: () => import("@/components/FirSuperSignBase"),
 
                 }
@@ -150,12 +152,11 @@ const router = new VueRouter({
             path: '/storage',
             // component: FirAppBase,
             component: () => import("@/components/FirAppBase"),
-
             children: [
                 {
                     path: ':act',
                     name: 'FirUserStorage',
-                    // component: FirUserProfileStorage
+                    meta: {label: '存储管理'},
                     component: () => import("@/components/FirUserStorage"),
 
                 }
@@ -168,6 +169,7 @@ const router = new VueRouter({
                 {
                     path: '',
                     name: 'FirUserOrders',
+                    meta: {label: '订单详情'},
                     component: () => import("@/components/FirUserOrders"),
 
                 }
