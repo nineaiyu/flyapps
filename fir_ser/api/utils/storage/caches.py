@@ -5,7 +5,8 @@
 # date: 2020/4/7
 
 from django.core.cache import cache
-from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, APPSuperSignUsedInfo
+from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, APPSuperSignUsedInfo, \
+    UserCertificationInfo
 import time, os
 from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
@@ -374,7 +375,10 @@ def add_user_download_times(user_id, download_times=0):
 
 def check_user_has_all_download_times(app_obj):
     user_id = app_obj.user_id_id
-    auth_status = app_obj.user_id__certification__status
+    user_cert_obj = UserCertificationInfo.objects.filter(user_id=user_id).first()
+    auth_status = False
+    if user_cert_obj and user_cert_obj.status == 2:
+        auth_status = True
     return get_user_free_download_times(user_id, auth_status=auth_status) > 0 or check_user_can_download(user_id)
 
 

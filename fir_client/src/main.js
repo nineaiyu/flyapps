@@ -17,12 +17,12 @@ import VueCookies from 'vue-cookies'
 
 Vue.use(VueCookies);
 
-//导入全局的geetest.js
-import './assets/gt'
+//导入全局的 geetest.js
+import '@/assets/gt.js'
 
 
 //导入store实例
-import store from "./store";
+import store from "@/store";
 
 //全局导航守卫
 router.beforeEach((to, from, next) => {
@@ -157,7 +157,7 @@ Vue.use(Vuex);
 import VueLazyload from 'vue-lazyload'
 
 Vue.use(VueLazyload, {
-    loading: require('./assets/loading.gif'),
+    loading: require('@/assets/loading.gif'),
     preLoad: 1
 });
 
