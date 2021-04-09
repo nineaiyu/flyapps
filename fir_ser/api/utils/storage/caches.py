@@ -384,5 +384,6 @@ def user_auth_success(user_id):
     :param user_id:
     :return:
     '''
+    get_user_free_download_times(user_id, 'get')
     get_user_free_download_times(user_id, 'set', USER_FREE_DOWNLOAD_TIMES - AUTH_USER_FREE_DOWNLOAD_TIMES)
     return enable_user_download(user_id)
