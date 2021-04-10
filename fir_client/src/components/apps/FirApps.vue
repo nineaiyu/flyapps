@@ -153,27 +153,27 @@
                             <div class="cube">
                                 <!--前面图片 -->
                                 <div class="out_front">
-                                    <img src="../../assets/imgs/1.png" class="pic">
+                                    <img src="@/assets/imgs/1.png" class="pic">
                                 </div>
                                 <!--后面图片 -->
                                 <div class="out_back">
-                                    <img src="../../assets/imgs/5.png" class="pic">
+                                    <img src="@/assets/imgs/5.png" class="pic">
                                 </div>
                                 <!--左面图片 -->
                                 <div class="out_left">
-                                    <img src="../../assets/imgs/6.png" class="pic">
+                                    <img src="@/assets/imgs/6.png" class="pic">
                                 </div>
                                 <!--右面图片 -->
                                 <div class="out_right">
-                                    <img src="../../assets/imgs/7.png" class="pic">
+                                    <img src="@/assets/imgs/7.png" class="pic">
                                 </div>
                                 <!--上面图片 -->
                                 <div class="out_top">
-                                    <img src="../../assets/imgs/8.png" class="pic">
+                                    <img src="@/assets/imgs/8.png" class="pic">
                                 </div>
                                 <!--下面图片 -->
                                 <div class="out_bottom">
-                                    <img src="../../assets/imgs/9.png" class="pic">
+                                    <img src="@/assets/imgs/9.png" class="pic">
                                 </div>
 
                                 <!--小正方体 -->
@@ -473,18 +473,19 @@
 </template>
 
 <script>
-    import {getapps, apputils, analyseApps, getuploadurl, get_package_prices, my_order} from "../../restful";
+    import {analyseApps, apputils, get_package_prices, getapps, getuploadurl, my_order} from "@/restful";
     import {
+        dataURLtoFile,
+        format_money,
+        getappinfo,
         getScrollHeight,
         getScrollTop,
         getWindowHeight,
-        getappinfo,
-        uploadqiniuoss,
-        dataURLtoFile,
+        show_beautpic,
         uploadaliyunoss,
         uploadlocalstorage,
-        format_money, show_beautpic
-    } from "../../utils";
+        uploadqiniuoss
+    } from "@/utils";
 
     export default {
         name: "FirApps",
@@ -1037,7 +1038,7 @@
 
 
     /*/deep/ .el-dialog__body {*/
-    /*    background-image: url("../assets/b6.png");*/
+    /*    background-image: url("@/assets/b6.png");*/
     /*    border: 0;*/
     /*}*/
 

@@ -437,8 +437,8 @@
 
 <script>
 
-    import {iosdeveloper, iosdevices, iosdevicesudid, userinfos} from "../../restful";
-    import {removeAaary, IsNum} from "../../utils";
+    import {iosdeveloper, iosdevices, iosdevicesudid, userinfos} from "@/restful";
+    import {IsNum, removeAaary} from "@/utils";
 
     export default {
         name: "FirSuperSignBase",

@@ -80,7 +80,7 @@
 </template>
 
 <script>
-    import {getapps, apputils} from "../../restful";
+    import {apputils, getapps} from "@/restful";
 
     export default {
         name: "FirAppInfoscombo"

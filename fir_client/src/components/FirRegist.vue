@@ -87,8 +87,8 @@
 </template>
 
 <script>
-    import {getAuthTokenFun, registerFun} from "../restful";
-    import {checkEmail, checkphone, geetest} from "../utils";
+    import {getAuthTokenFun, registerFun} from "@/restful";
+    import {checkEmail, checkphone, geetest} from "@/utils";
 
     export default {
         name: "FirRegist",

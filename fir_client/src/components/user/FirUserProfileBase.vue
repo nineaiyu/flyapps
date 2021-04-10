@@ -62,8 +62,8 @@
 </template>
 
 <script>
-    import {userinfos, getuserpicurl} from '../../restful';
-    import {AvatarUploadUtils} from "../../utils";
+    import {getuserpicurl, userinfos} from '@/restful';
+    import {AvatarUploadUtils} from "@/utils";
 
     export default {
         name: "FirUserProfileBase",

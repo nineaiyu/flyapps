@@ -171,7 +171,7 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
 }
 
 
-import {getuploadurl, loginFun, uploadimgs, uploadstorage} from '../restful'
+import {getuploadurl, loginFun, uploadimgs, uploadstorage} from '@/restful'
 
 export function uploadlocalstorage(file, certinfo, app, successcallback, processcallback) {
     uploadstorage(certinfo, file, successcallback, processcallback)

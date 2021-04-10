@@ -79,8 +79,8 @@
 </template>
 
 <script>
-    import {loginFun, set_auth_token} from "../restful";
-    import {checkEmail, checkphone, geetest} from "../utils";
+    import {loginFun, set_auth_token} from "@/restful";
+    import {checkEmail, checkphone, geetest} from "@/utils";
 
     export default {
         name: "FirLogin",

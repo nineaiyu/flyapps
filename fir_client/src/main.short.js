@@ -3,16 +3,8 @@ import Download from "@/Download";
 import router from "@/router/download";
 
 import 'element-ui/lib/theme-chalk/index.css'
-import {
-    Button,
-    Input,
-    Container,
-    Main,
-    Message,
-    Link,
-    Divider
-
-} from "element-ui";
+import {Button, Container, Divider, Input, Link, Main, Message} from "element-ui";
+import VueLazyload from 'vue-lazyload'
 
 Vue.use(Link);
 Vue.use(Input);
@@ -24,7 +16,6 @@ Vue.prototype.$message = Message;
 
 
 Vue.config.productionTip = false;
-import VueLazyload from 'vue-lazyload'
 
 Vue.use(VueLazyload, {
     loading: require('./assets/loading.gif'),

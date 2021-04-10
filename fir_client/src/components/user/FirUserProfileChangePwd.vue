@@ -43,7 +43,7 @@
 </template>
 
 <script>
-    import {userinfos} from "../../restful";
+    import {userinfos} from "@/restful";
 
     export default {
         name: "FirUserProfileChangePwd",

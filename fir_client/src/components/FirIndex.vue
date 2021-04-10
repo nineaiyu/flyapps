@@ -11,7 +11,7 @@
                             <el-link>工具</el-link>
                         </el-col>
                         <el-col :span="8">
-                            <el-link @click="$router.push({name:'FirApps'})">登陆</el-link>
+                            <el-link @click="$router.push({name:'FirApps'})">登录</el-link>
                         </el-col>
                         <el-col :span="8">
                             <el-link @click="$router.push({name:'FirRegist'})">注册</el-link>

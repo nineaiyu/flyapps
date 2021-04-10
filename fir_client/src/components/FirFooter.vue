@@ -12,7 +12,7 @@
                     <a style="display: inline-block; text-decoration: none; height: 20px; line-height: 20px;"
                        :href="footer.gongAnBeiAn.url"
                        target="_blank" rel="noopener">
-                        <img style="float: left;" src="../assets/beianlogo.png"/>
+                        <img style="float: left;" src="@/assets/beianlogo.png"/>
                         <el-link :underline="false"
                                  style="float: left; height: 20px; line-height: 20px; margin: 0px 0px 0px 5px; color: #939393;">
                             {{ footer.gongAnBeiAn.text }}

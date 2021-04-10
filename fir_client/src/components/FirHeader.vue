@@ -72,8 +72,7 @@
 </template>
 
 <script>
-    // eslint-disable-next-line no-unused-vars
-    import {logout, apitoken} from '../restful'
+    import {apitoken, logout} from '@/restful'
 
     export default {
         name: "FirHeader",

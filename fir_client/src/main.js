@@ -6,23 +6,73 @@ import 'element-ui/lib/theme-chalk/index.css'
 import Vuex from 'vuex'
 import qiniu from 'qiniu-js'
 import oss from 'ali-oss'
+//使用vue-cookies
+import VueCookies from 'vue-cookies'
+//导入store实例
+import store from "@/store";
+import {
+    Aside,
+    Avatar,
+    Breadcrumb,
+    BreadcrumbItem,
+    Button,
+    ButtonGroup,
+    Card,
+    Checkbox,
+    CheckboxGroup,
+    Col,
+    Container,
+    DatePicker,
+    Dialog,
+    Divider,
+    Dropdown,
+    DropdownItem,
+    DropdownMenu,
+    Footer,
+    Form,
+    FormItem,
+    Header,
+    Image,
+    Input,
+    InputNumber,
+    Link,
+    Loading,
+    Main,
+    Message,
+    MessageBox,
+    Notification,
+    Option,
+    OptionGroup,
+    Pagination,
+    Popover,
+    Progress,
+    RadioButton,
+    RadioGroup,
+    Row,
+    Select,
+    Slider,
+    Switch,
+    Table,
+    TableColumn,
+    TabPane,
+    Tabs,
+    Tag,
+    Timeline,
+    TimelineItem,
+    Tooltip,
+    Upload
+} from "element-ui";
+import VueLazyload from 'vue-lazyload'
+// 引入点击复制组件
+import VueClipboard from 'vue-clipboard2'
 
 // const qiniu = require('qiniu-js');
 //
 Vue.prototype.qiniu = qiniu;
 Vue.prototype.oss = oss;
 
-//使用vue-cookies
-import VueCookies from 'vue-cookies'
-
 Vue.use(VueCookies);
 
-//导入全局的 geetest.js
-import '@/assets/gt.js'
-
-
-//导入store实例
-import store from "@/store";
 
 //全局导航守卫
 router.beforeEach((to, from, next) => {
@@ -44,59 +94,6 @@ router.beforeEach((to, from, next) => {
 
 
 Vue.config.productionTip = false;
-
-import {
-    Button,
-    Select,
-    Table,
-    TableColumn,
-    Input,
-    DatePicker,
-    Container,
-    Aside,
-    Col,
-    Header,
-    Popover,
-    Main,
-    Dialog,
-    Checkbox,
-    CheckboxGroup,
-    Pagination,
-    Option,
-    Upload,
-    Tabs,
-    TabPane,
-    Form,
-    FormItem,
-    Divider,
-    Message,
-    Row,
-    ButtonGroup,
-    MessageBox,
-    Image,
-    Loading,
-    Tag,
-    Tooltip,
-    Switch,
-    Link,
-    BreadcrumbItem,
-    Slider,
-    DropdownMenu,
-    Dropdown,
-    Breadcrumb,
-    Avatar,
-    DropdownItem,
-    RadioButton,
-    RadioGroup,
-    OptionGroup,
-    Progress,
-    Timeline,
-    TimelineItem,
-    Card,
-    Notification,
-    Footer,
-    InputNumber
-} from "element-ui";
 
 Vue.use(Progress);
 Vue.use(OptionGroup);
@@ -154,15 +151,11 @@ Vue.prototype.$alert = MessageBox.alert;
 
 // Vue.use(ElementUI);
 Vue.use(Vuex);
-import VueLazyload from 'vue-lazyload'
 
 Vue.use(VueLazyload, {
     loading: require('@/assets/loading.gif'),
     preLoad: 1
 });
-
-// 引入点击复制组件
-import VueClipboard from 'vue-clipboard2'
 
 VueClipboard.config.autoSetContainer = true;
 Vue.use(VueClipboard);

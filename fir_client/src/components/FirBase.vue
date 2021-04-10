@@ -21,7 +21,7 @@
 <script>
     import FirHeader from "@/components/FirHeader";
     import FirFooter from "@/components/FirFooter";
-    import {show_beautpic,} from "../utils";
+    import {show_beautpic,} from "@/utils";
 
     export default {
         name: "FirBase",

@@ -26,7 +26,6 @@ const router = new VueRouter({
         },
         {
             path: '/apps',
-            // component: FirAppBase,
             component: () => import("@/components/FirBase"),
 
             children: [
@@ -38,52 +37,38 @@ const router = new VueRouter({
                 ,
                 {
                     path: ':id',
-                    // component: FirAppInfosBase,
                     component: () => import("@/components/apps/FirAppInfosBase"),
-
                     children: [
                         {
                             path: '',
                             name: 'FirAppInfostimeline',
-                            // component: FirAppInfostimeline,
                             component: () => import("@/components/apps/FirAppInfostimeline"),
-
                         }
                         ,
                         {
                             path: 'info',
                             name: 'FirAppInfosbaseinfo',
-                            // component: FirAppInfosbaseinfo,
                             component: () => import("@/components/apps/FirAppInfosbaseinfo"),
-
                         },
                         {
                             path: 'security',
                             name: 'FirAppInfossecurity',
-                            // component: FirAppInfossecurity
                             component: () => import("@/components/apps/FirAppInfossecurity"),
-
                         },
                         {
                             path: 'devices',
                             name: 'FirAppInfosdevices',
-                            // component: FirAppInfosdevices
                             component: () => import("@/components/apps/FirAppInfosdevices"),
-
                         },
                         {
                             path: 'combo',
                             name: 'FirAppInfoscombo',
-                            // component: FirAppInfoscombo,
                             component: () => import("@/components/apps/FirAppInfoscombo"),
-
                         },
                         {
                             path: 'supersign',
                             name: 'FirAppInfossupersign',
-                            // component: FirAppInfossupersign,
                             component: () => import("@/components/apps/FirAppInfossupersign"),
-
                         }
                     ]
                 }
@@ -91,15 +76,11 @@ const router = new VueRouter({
         },
         {
             path: '/user',
-            // component: FirAppBase,
             component: () => import("@/components/FirBase"),
-
             children: [
                 {
                     path: '',
-                    // component: FirUserProfileBase,
                     component: () => import("@/components/user/FirUserProfileBase"),
-
                     children: [
                         {
                             path: 'info',
@@ -111,7 +92,6 @@ const router = new VueRouter({
                             path: 'setpasswd',
                             name: 'FirUserProfileChangePwd',
                             meta: {label: '修改密码'},
-                            // component: FirUserProfileChangePwd
                             component: () => import("@/components/user/FirUserProfileChangePwd"),
 
                         }, {
@@ -129,15 +109,12 @@ const router = new VueRouter({
         {
             path: '/login',
             name: 'FirLogin',
-            // component: FirLogin
             component: () => import("@/components/FirLogin"),
 
         },
         {
-            path: '/supersign',
-            // component: FirAppBase,
+            path: '/user/supersign',
             component: () => import("@/components/FirBase"),
-
             children: [
                 {
                     path: ':act',
@@ -149,8 +126,7 @@ const router = new VueRouter({
             ]
         },
         {
-            path: '/storage',
-            // component: FirAppBase,
+            path: '/user/storage',
             component: () => import("@/components/FirBase"),
             children: [
                 {
@@ -163,7 +139,7 @@ const router = new VueRouter({
             ]
         },
         {
-            path: '/orders',
+            path: '/user/orders',
             component: () => import("@/components/FirBase"),
             children: [
                 {
@@ -178,14 +154,12 @@ const router = new VueRouter({
         {
             path: '/register',
             name: 'FirRegist',
-            // component: FirRegist
             component: () => import("@/components/FirRegist"),
 
         },
         {
             path: '/:short',
             name: 'FirDownload',
-            // component: FirDownload
             component: () => import("@/components/FirDownload"),
 
         },

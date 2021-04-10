@@ -1,4 +1,9 @@
-const IS_PROD = ['production', 'prod'].includes(process.env.NODE_ENV)
+const IS_PROD = ['production', 'prod'].includes(process.env.NODE_ENV);
+const path = require('path');
+
+function resolve(dir) {
+    return path.join(__dirname, dir);
+}
 module.exports = {
 
     pages: {
@@ -66,6 +71,7 @@ module.exports = {
                 })
 
         }
+        config.resolve.alias.set('@',resolve("src"));
 
         config.optimization.splitChunks({
             cacheGroups: {

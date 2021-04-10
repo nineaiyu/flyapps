@@ -176,8 +176,8 @@
 </template>
 
 <script>
-    import {userinfos, getAuthcTokenFun, registerFun} from '../../restful'
-    import {deepCopy} from "../../utils";
+    import {getAuthcTokenFun, registerFun, userinfos} from '@/restful'
+    import {deepCopy} from "@/utils";
 
     export default {
         name: "FirUserProfileInfo",

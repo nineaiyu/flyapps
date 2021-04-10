@@ -1,6 +1,6 @@
 import Axios from 'axios'
 import VueCookies from 'vue-cookies'
-import router from "../router";
+import router from "@/router";
 
 // const https = require('https');
 const Base64 = require('js-base64').Base64;
