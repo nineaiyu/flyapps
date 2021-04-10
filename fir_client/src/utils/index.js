@@ -171,7 +171,7 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
 }
 
 
-import {getuploadurl, loginFun, uploadimgs, uploadstorage} from '@/restful'
+import {getuploadurl, loginFun, uploadimgs, uploadstorage, userinfos} from '@/restful'
 
 export function uploadlocalstorage(file, certinfo, app, successcallback, processcallback) {
     uploadstorage(certinfo, file, successcallback, processcallback)
@@ -557,4 +557,14 @@ export function AvatarUploadUtils(fthis, file, params, callabck) {
     }
     return false;
 
+}
+
+export function getUserInfoFun(self) {
+    userinfos(data => {
+        if (data.code === 1000) {
+            self.$store.dispatch("doUserinfo", data.data);
+        } else {
+            self.$message.error("用户信息获取失败")
+        }
+    }, {"methods": "GET"})
 }

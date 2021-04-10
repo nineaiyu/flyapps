@@ -86,8 +86,6 @@
                             :max="100">
                     </el-slider>
                 </div>
-
-
                 <el-container style="padding-top: 20px;max-width: 96%">
                     <router-view></router-view>
                 </el-container>
@@ -100,6 +98,7 @@
 <script>
     import {apputils} from "@/restful";
     import VueQr from 'vue-qr';
+    import {getUserInfoFun} from "@/utils";
 
     export default {
         name: "FirAppInfosBase",
@@ -188,15 +187,7 @@
             },
             devices() {
                 this.setfunactive('devices', 70);
-                // if (this.appinfos.issupersign) {
-                //     this.$router.push({
-                //         "name": 'FirSuperSignBase',
-                //         params: {act: "useddevices"},
-                //         query: {bundleid: this.appinfos.bundle_id}
-                //     })
-                // } else {
                 this.$router.push({name: 'FirAppInfosdevices'});
-                // }
             },
             supersign() {
                 this.setfunactive('supersign', 57);
@@ -219,12 +210,11 @@
             },
         },
         computed: {}, mounted() {
+            getUserInfoFun(this);
             apputils(data => {
-
                 if (data.code === 1000) {
                     this.appinfos = data.data;
                     this.master_release = data.data.master_release;
-                    this.$store.dispatch("doUserinfo", data.userinfo);
                     this.appinfos["icon_url"] = this.master_release.icon_url;
                     this.$store.dispatch('doucurrentapp', this.appinfos);
                     this.short_full_url = this.appinfos.preview_url + "/" + this.appinfos.short;

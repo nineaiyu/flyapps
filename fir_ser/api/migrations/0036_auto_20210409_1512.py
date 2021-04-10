@@ -6,7 +6,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('api', '0035_usercertificationinfo_reviewed_time'),
     ]
@@ -15,6 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='usercertificationinfo',
             name='user_id',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='certification', to=settings.AUTH_USER_MODEL, verbose_name='用户ID'),
+            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='certification',
+                                       to=settings.AUTH_USER_MODEL, verbose_name='用户ID'),
         ),
     ]

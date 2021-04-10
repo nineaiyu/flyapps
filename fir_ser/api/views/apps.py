@@ -13,7 +13,7 @@ from api.utils.app.supersignutils import IosUtils, resign_by_app_obj
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo, AppScreenShot
-from api.utils.serializer import AppsSerializer, AppReleaseSerializer, UserInfoSerializer
+from api.utils.serializer import AppsSerializer, AppReleaseSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
 from fir_ser.settings import SERVER_DOMAIN
@@ -91,10 +91,8 @@ class AppsView(APIView):
 
         app_serializer = AppsSerializer(app_page_serializer, many=True, context={"storage": Storage(request.user)})
 
-        userserializer = UserInfoSerializer(request.user)
         res.userinfo = {}
         res.has_next = {}
-        res.userinfo = userserializer.data
         res.data = app_serializer.data
         res.has_next = page_obj.page.has_next()
         return Response(res.dict)
@@ -116,10 +114,6 @@ class AppInfoView(APIView):
                 logger.error("app_id:%s is not found in user:%s " % (app_id, request.user))
                 res.msg = "未找到该应用"
                 res.code = 1003
-
-            userserializer = UserInfoSerializer(request.user)
-            res.userinfo = {}
-            res.userinfo = userserializer.data
 
         return Response(res.dict)
 
@@ -206,8 +200,6 @@ class AppInfoView(APIView):
                             if user_admin_obj:
                                 apps_obj.domain_name = domain_name
                             else:
-                                serializer = UserInfoSerializer(request.user)
-                                res.data = serializer.data
                                 res.code = 1004
                                 res.msg = "域名设置失败，请更换其他域名"
                                 return Response(res.dict)

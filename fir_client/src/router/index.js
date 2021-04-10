@@ -102,7 +102,35 @@ const router = new VueRouter({
 
                         },
                     ]
-                }
+                },
+                {
+                    path: 'supersign',
+                    component: () => import("@/components/user/FirSuperSignBase"),
+                    children: [
+                        {
+                            path: ':act',
+                            name: 'FirSuperSignBase',
+                            meta: {label: '超级签名'},
+                        }
+                    ]
+                },
+                {
+                    path: 'storage',
+                    component: () => import("@/components/user/FirUserStorage"),
+                    children: [
+                        {
+                            path: ':act',
+                            name: 'FirUserStorage',
+                            meta: {label: '存储管理'},
+                        }
+                    ]
+                },
+                {
+                    path: 'orders',
+                    name: 'FirUserOrders',
+                    meta: {label: '订单详情'},
+                    component: () => import("@/components/user/FirUserOrders"),
+                },
 
             ]
         },
@@ -111,45 +139,6 @@ const router = new VueRouter({
             name: 'FirLogin',
             component: () => import("@/components/FirLogin"),
 
-        },
-        {
-            path: '/user/supersign',
-            component: () => import("@/components/FirBase"),
-            children: [
-                {
-                    path: ':act',
-                    name: 'FirSuperSignBase',
-                    meta: {label: '超级签名'},
-                    component: () => import("@/components/user/FirSuperSignBase"),
-
-                }
-            ]
-        },
-        {
-            path: '/user/storage',
-            component: () => import("@/components/FirBase"),
-            children: [
-                {
-                    path: ':act',
-                    name: 'FirUserStorage',
-                    meta: {label: '存储管理'},
-                    component: () => import("@/components/user/FirUserStorage"),
-
-                }
-            ]
-        },
-        {
-            path: '/user/orders',
-            component: () => import("@/components/FirBase"),
-            children: [
-                {
-                    path: '',
-                    name: 'FirUserOrders',
-                    meta: {label: '订单详情'},
-                    component: () => import("@/components/user/FirUserOrders"),
-
-                }
-            ]
         },
         {
             path: '/register',
@@ -163,7 +152,6 @@ const router = new VueRouter({
             component: () => import("@/components/FirDownload"),
 
         },
-
     ]
 });
 

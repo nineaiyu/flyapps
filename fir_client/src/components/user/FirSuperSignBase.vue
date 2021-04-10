@@ -437,8 +437,8 @@
 
 <script>
 
-    import {iosdeveloper, iosdevices, iosdevicesudid, userinfos} from "@/restful";
-    import {IsNum, removeAaary} from "@/utils";
+    import {iosdeveloper, iosdevices, iosdevicesudid} from "@/restful";
+    import {getUserInfoFun, IsNum, removeAaary} from "@/utils";
 
     export default {
         name: "FirSuperSignBase",
@@ -729,18 +729,8 @@
                     "methods": action, "data": data
                 })
             },
-            getUserInfoFun() {
-                userinfos(data => {
-                    if (data.code === 1000) {
-                        this.$store.dispatch("doUserinfo", data.data);
-                    } else {
-                        this.$message.error("用户信息获取失败")
-                    }
-                }, {"methods": "GET"})
-            },
-
         }, mounted() {
-            this.getUserInfoFun();
+            getUserInfoFun(this);
             if (this.$route.params.act) {
                 let activeName = this.$route.params.act;
                 let activeName_list = ["useddevices", "devicesudid", "adddeveloper", "iosdeveloper"];

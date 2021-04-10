@@ -486,6 +486,7 @@
         uploadlocalstorage,
         uploadqiniuoss
     } from "@/utils";
+    import {getUserInfoFun} from "../../utils";
 
     export default {
         name: "FirApps",
@@ -796,10 +797,7 @@
                         this.has_next = data.has_next;
                         this.orgapplists = this.applists.slice(); //深拷贝
                         this.hdata = data.hdata;
-                        this.$store.dispatch("doUserinfo", data.userinfo);
-
                         this.searchapps();
-                        // this.$store.dispatch('doucurrentapp', {'firapps':1});
 
                     } else {
                         this.loadingobj.close();
@@ -933,6 +931,7 @@
             }
 
         }, mounted() {
+            getUserInfoFun(this);
             this.$store.dispatch('doucurrentapp', {});
             this.getappsFun({});
         },

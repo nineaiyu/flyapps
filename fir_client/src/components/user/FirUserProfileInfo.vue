@@ -250,8 +250,6 @@
             },
 
             updateUserInfo(datainfo) {
-
-
                 userinfos(data => {
                     if (data.code === 1000) {
                         this.userinfo = data.data;

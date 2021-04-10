@@ -11,18 +11,19 @@
                     </tr>
                     <tr>
                         <td>
-                            <div class="icon"><img :src="cmaster_release.icon_url" class="ng-isolate-scope">
+                            <div class="icon"><img v-if="cmaster_release" :src="cmaster_release.icon_url"
+                                                   class="ng-isolate-scope">
                             </div>
                         </td>
                         <td><i class="icon-combo"></i></td>
                         <td>
-                            <div class="icon"><img :src="hmaster_release.icon_url" class="ng-isolate-scope">
+                            <div class="icon"><img v-if="hmaster_release" :src="hmaster_release.icon_url"
+                                                   class="ng-isolate-scope">
                             </div>
                         </td>
                     </tr>
                     <tr>
                         <td class="actions" colspan="3">
-                            <!--                            <a class="btn btn-link " @click="each_confirm"><b>解除合并</b></a>-->
                             <el-button @click="each_confirm" round>解除合并</el-button>
                         </td>
                     </tr>
@@ -30,7 +31,7 @@
             </div>
             <div v-else>
                 <div class="icon-container text-center">
-                    <img :src="cmaster_release.icon_url" height="128" width="128">
+                    <img v-if="cmaster_release" :src="cmaster_release.icon_url" height="128" width="128">
                 </div>
                 <div class="apps-list">
                     <div class="known-apps">
@@ -114,12 +115,9 @@
                 apputils(data => {
                     if (data.code === 1000) {
                         this.$message.success('操作成功');
-
                         this.comboapplists = [];
-
                         apputils(data => {
-                            let appinfos = {};
-                            appinfos = data.data;
+                            let appinfos = data.data;
                             appinfos["icon_url"] = appinfos.master_release.icon_url;
                             this.$store.dispatch('doucurrentapp', appinfos);
 
@@ -128,19 +126,14 @@
                             } else if (data.code === 1003) {
                                 this.$router.push({name: 'FirApps'});
                             } else {
-
                                 // eslint-disable-next-line no-console
                                 console.log("Error");
-
                             }
                         }, {
                             "methods": "GET",
                             "app_id": this.currentapp.app_id
                         });
-
                         this.setData();
-
-
                     }
                 }, {
                     "methods": "PUT",
@@ -179,10 +172,8 @@
                 });
             },
             setData() {
-
                 this.currentapp = this.$store.state.currentapp;
                 this.cmaster_release = this.$store.state.currentapp.master_release;
-
                 if (this.$store.state.currentapp.has_combo) {
                     this.has_combo = this.$store.state.currentapp.has_combo;
                     this.hmaster_release = this.$store.state.currentapp.has_combo.master_release;
@@ -209,7 +200,10 @@
             }
         }, filters: {
             geticon_url(app) {
-                return app.icon_url
+                if (app) {
+                    return app.icon_url
+                }
+                return ""
             },
             getapptype: function (type) {
                 let ftype = '';
@@ -223,8 +217,6 @@
         },
         mounted() {
             this.$store.dispatch('doappInfoIndex', [[44, 44], [44, 44]]);
-
-            // this.getappiconFun();
             this.setData();
         },
         watch: {

@@ -111,7 +111,7 @@
                     v-model="order_id_seach"
                     clearable
                     placeholder="输入订单ID"/>
-            <el-button type="primary" icon="el-icon-search" @click="handleCurrentChange(pagination.currentPage)">
+            <el-button type="primary" icon="el-icon-search" @click="handleCurrentChange(1)">
                 搜索
             </el-button>
 
@@ -223,7 +223,7 @@
 
 <script>
 
-    import {my_order, userinfos} from "@/restful";
+    import {my_order} from "@/restful";
 
     export default {
         name: "FirUserOrders",
@@ -364,18 +364,7 @@
                     this.loading = false;
                 }, {methods: 'GET', data: params})
             },
-            getUserInfoFun() {
-                userinfos(data => {
-                    if (data.code === 1000) {
-                        this.$store.dispatch("doUserinfo", data.data);
-                    } else {
-                        this.$message.error("用户信息获取失败")
-                    }
-                }, {"methods": "GET"})
-            },
-
         }, mounted() {
-            this.getUserInfoFun();
             this.get_data_from_tabname()
         }, filters: {}
     }

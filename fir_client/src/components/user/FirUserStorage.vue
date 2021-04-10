@@ -305,7 +305,7 @@
 </template>
 
 <script>
-    import {getStorageinfo, userinfos} from "@/restful";
+    import {getStorageinfo} from "@/restful";
     import {deepCopy} from "@/utils";
 
     export default {
@@ -334,15 +334,6 @@
                 loading: false,
             }
         }, methods: {
-            getUserInfoFun() {
-                userinfos(data => {
-                    if (data.code === 1000) {
-                        this.$store.dispatch("doUserinfo", data.data);
-                    } else {
-                        this.$message.error("用户信息获取失败")
-                    }
-                }, {"methods": "GET"})
-            },
             showstorage(editstorageinfo) {
                 this.title = '查看存储信息';
                 this.disabled = true;
@@ -536,7 +527,6 @@
                 }
             },
         }, mounted() {
-            this.getUserInfoFun();
             if (this.$route.params.act) {
                 let activeName = this.$route.params.act;
                 let activeName_list = ["change", "edit", "add"];

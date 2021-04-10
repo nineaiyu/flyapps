@@ -49,7 +49,6 @@
                         </el-button>
                         <el-dropdown-menu slot="dropdown">
                             <el-dropdown-item command="userinfo">个人资料</el-dropdown-item>
-                            <el-dropdown-item command="chpasswd">修改密码</el-dropdown-item>
                             <el-dropdown-item command="apitoken">API token</el-dropdown-item>
                             <el-dropdown-item command="storage" v-if="$store.state.userinfo.storage_active">存储管理
                             </el-dropdown-item>
@@ -101,8 +100,6 @@
             handleCommand(command) {
                 if (command === 'userinfo') {
                     this.$router.push({name: 'FirUserProfileInfo'})
-                } else if (command === 'chpasswd') {
-                    this.$router.push({name: 'FirUserProfileChangePwd'})
                 } else if (command === 'storage') {
                     this.$router.push({name: 'FirUserStorage', params: {act: "change"}})
                 } else if (command === 'supersign') {
@@ -137,18 +134,23 @@
                         }
                     }, {})
                 }
-            }
+            },
+            init_route_name() {
+                if (this.$route.meta) {
+                    this.route_info.label = this.$route.meta.label;
+                    this.route_info.name = this.$route.name;
+                }
+            },
 
         }, created() {
             this.appName = this.$route.params.id
         }, watch: {
             $route: function () {
                 this.appName = this.$route.params.id;
-                if (this.$route.meta) {
-                    this.route_info.label = this.$route.meta.label;
-                    this.route_info.name = this.$route.name;
-                }
+                this.init_route_name();
             }
+        }, mounted() {
+            this.init_route_name();
         }
     }
 </script>
