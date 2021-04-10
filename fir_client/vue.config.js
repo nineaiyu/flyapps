@@ -54,7 +54,16 @@ module.exports = {
 
     },
     productionSourceMap: false,
-
+    configureWebpack: {
+        // provide the app's title in webpack's name field, so that
+        // it can be accessed in index.html to inject the correct title.
+        name: '应用分发',
+        resolve: {
+            alias: {
+                '@': resolve('src')
+            }
+        }
+    },
     chainWebpack: config => {
 
         if (!IS_PROD) {
@@ -71,7 +80,6 @@ module.exports = {
                 })
 
         }
-        config.resolve.alias.set('@',resolve("src"));
 
         config.optimization.splitChunks({
             cacheGroups: {
