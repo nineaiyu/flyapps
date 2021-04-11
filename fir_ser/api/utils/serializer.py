@@ -46,7 +46,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
         # fields="__all__"
         fields = ["username", "uid", "mobile", "job", "email", "domain_name", "role", "first_name",
                   'head_img', 'storage_active', 'supersign_active', 'free_download_times', 'download_times',
-                  'certification']
+                  'certification', 'is_active', "date_joined"]
 
     head_img = serializers.SerializerMethodField()
 
@@ -62,21 +62,11 @@ class UserInfoSerializer(serializers.ModelSerializer):
     certification = serializers.SerializerMethodField()
 
     def get_certification(self, obj):
-        result = {'code': -1}
+        auth_status = -1
         certification_obj = models.UserCertificationInfo.objects.filter(user_id=obj).first()
         if certification_obj:
-            result['code'] = 0
-            card = certification_obj.card
-            data = {
-                'name': certification_obj.name,
-                'addr': certification_obj.addr,
-                'card': "%s%s%s" % (card[:4], '*' * (len(card) - 8), card[-4:]),
-                'mobile': certification_obj.mobile,
-                'status': certification_obj.status,
-                'msg': certification_obj.msg,
-            }
-            result.update(data)
-        return result
+            auth_status = certification_obj.status
+        return auth_status
 
 
 class AppsSerializer(serializers.ModelSerializer):

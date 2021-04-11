@@ -24,7 +24,7 @@ SECRET_KEY = 'j!g@^bc(z(a3*i&kp$_@bgb)bug&^#3=amch!3lz&1x&s6ss6t'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'synchrotron']
+ALLOWED_HOSTS = ['127.0.0.1', 'synchrotron', '172.16.133.34']
 
 # Application definition
 
@@ -190,7 +190,7 @@ GEETEST_BYPASS_URL = "http://bypass.geetest.com/v1/bypass_status.php"
 
 # 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG.sender 信息
 REGISTER = {
-    "enable": True,
+    "enable": False,
     "captcha": False,  # 是否开启注册字母验证码
     "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
     "register_type": {
@@ -203,7 +203,7 @@ REGISTER = {
 # 信息修改也会使用该配置
 LOGIN = {
     "captcha": False,  # 是否开启登录字母验证码
-    "geetest": True,  # 是否开启geetest验证
+    "geetest": False,  # 是否开启geetest验证
     "login_type": {
         'sms': True,  # 短信登录
         'email': True,  # 邮件登录

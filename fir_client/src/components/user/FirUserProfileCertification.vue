@@ -1,5 +1,5 @@
 <template>
-    <div v-if="certification && certification.code === 0">
+    <div v-if="certification && !cert_edit_flag">
         <el-form style="max-width: 400px">
             <el-form-item>
                 <el-row>
@@ -55,7 +55,6 @@
                     </el-col>
                 </el-row>
             </el-form-item>
-
             <el-form-item v-if="certification.status === 2">
                 <el-row>
                     <el-col :span="24">
@@ -63,7 +62,13 @@
                     </el-col>
                 </el-row>
             </el-form-item>
-
+            <el-form-item v-if="certification_status === -1">
+                <el-row>
+                    <el-col :span="24">
+                        <el-button type="primary" @click="goauth">开始认证</el-button>
+                    </el-col>
+                </el-row>
+            </el-form-item>
         </el-form>
     </div>
     <div v-else>
@@ -227,24 +232,31 @@
                     name: '',
                     card: '',
                     addr: '',
-                    mobile: '15738962953',
+                    mobile: '',
                     authcode: '',
                     cptch_key: '',
                     auth_token: '',
                 },
                 cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
                 user_certification: {'one': '', 'two': '', 'three': ''},
-                certification: {'code': 0},
+                certification: {},
+                certification_status: 0,
+                cert_edit_flag: false
             }
         }, methods: {
+            goauth() {
+                this.cert_edit_flag = true;
+                this.get_user_certification({methods: 'GET', data: {act: 'certpiccertinfo'}});
+                this.get_auth_code();
+            },
             recommit() {
-                this.certification.code = -1;
+                this.cert_edit_flag = true;
                 this.get_user_certification({methods: 'GET', data: {act: 'certpiccertinfo'}});
                 this.get_auth_code();
             },
             commit() {
                 for (let v of Object.keys(this.form)) {
-                    if (this.form[v].length < 4) {
+                    if (this.form[v].length < 2) {
                         this.$message.error("填写错误，请检查");
                         return false
                     }
@@ -268,15 +280,20 @@
                         if (params.methods === 'POST') {
                             this.$message.success("信息提交成功，正在审核中")
                         }
-                        const ft = ['one', 'two', 'three'];
-                        if (res.data.certification && res.data.certification.length > 0) {
-                            for (let v of res.data.certification) {
-                                this.user_certification[ft[v.type - 1]] = v.certification_url;
+                        if (res.data.usercert) {
+                            this.certification = res.data.usercert;
+                        } else {
+                            const ft = ['one', 'two', 'three'];
+                            if (res.data.certification && res.data.certification.length > 0) {
+                                for (let v of res.data.certification) {
+                                    this.user_certification[ft[v.type - 1]] = v.certification_url;
+                                }
+                            }
+                            if (res.data.user_certification) {
+                                this.form = res.data.user_certification;
                             }
                         }
-                        if (res.data.user_certification) {
-                            this.form = res.data.user_certification;
-                        }
+
                     } else {
                         this.$message.error(res.msg)
                     }
@@ -375,12 +392,12 @@
             },
             init() {
                 if (this.$store.state.userinfo.certification) {
-                    this.certification = this.$store.state.userinfo.certification;
+                    this.certification_status = this.$store.state.userinfo.certification;
+                    if (this.certification_status !== -1) {
+                        this.get_user_certification({methods: 'GET', data: {act: 'usercert'}});
+                    }
                 }
-                if (this.certification.code === -1) {
-                    this.get_user_certification({methods: 'GET', data: {act: 'certpiccertinfo'}});
-                    this.get_auth_code();
-                }
+
             },
         }, mounted() {
             this.$store.dispatch('douserInfoIndex', 2);

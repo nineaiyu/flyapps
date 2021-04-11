@@ -581,6 +581,9 @@ class UserApiTokenView(APIView):
             request.user.save()
         except Exception as e:
             logger.error("User %s api_token save failed. Excepiton:%s" % (request.user, e))
+            res.code = 1002
+            res.msg = "token 生成失败"
+            return Response(res.dict)
         return self.get(request)
 
 
@@ -592,7 +595,16 @@ class CertificationView(APIView):
         res.data = {}
         act = request.query_params.get("act", "")
         user_certification_obj = UserCertificationInfo.objects.filter(user_id=request.user).first()
-        if user_certification_obj and user_certification_obj.status == 1:
+        if user_certification_obj and user_certification_obj.status == 1 or act == "usercert":
+            card = user_certification_obj.card
+            res.data["usercert"] = {
+                'name': user_certification_obj.name,
+                'addr': user_certification_obj.addr,
+                'card': "%s%s%s" % (card[:4], '*' * (len(card) - 8), card[-4:]),
+                'mobile': user_certification_obj.mobile,
+                'status': user_certification_obj.status,
+                'msg': user_certification_obj.msg,
+            }
             return Response(res.dict)
 
         if 'certinfo' in act:
