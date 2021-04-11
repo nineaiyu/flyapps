@@ -9,7 +9,7 @@ class CorsMiddleWare(MiddlewareMixin):
     def process_response(self, request, response):
         if request.method == "OPTIONS":
             response["Access-Control-Allow-Methods"] = "GET,POST,DELETE,PUT"
-            response["Access-Control-Allow-Headers"] = "Content-Type,AUTHORIZATION"
+            response["Access-Control-Allow-Headers"] = "Content-Type,AUTHORIZATION,x-token"
 
         try:
             response["Access-Control-Allow-Origin"] = request.META.get("HTTP_ORIGIN")

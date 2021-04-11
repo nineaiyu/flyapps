@@ -4,7 +4,7 @@ from api.utils.app.apputils import bytes2human
 from api.utils.TokenManager import DownloadToken
 from api.utils.app.supersignutils import get_redirect_server_domain
 from api.utils.storage.storage import Storage
-from api.utils.utils import get_developer_udided
+from api.utils.utils import get_developer_udided, get_choices_dict
 from api.utils.storage.caches import get_user_free_download_times
 import os, json, logging
 
@@ -43,10 +43,9 @@ def get_screenshots_from_self(self, obj, force_new=False):
 class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserInfo
-        # fields="__all__"
         fields = ["username", "uid", "mobile", "job", "email", "domain_name", "role", "first_name",
                   'head_img', 'storage_active', 'supersign_active', 'free_download_times', 'download_times',
-                  'certification', 'is_active', "date_joined"]
+                  'certification']
 
     head_img = serializers.SerializerMethodField()
 
@@ -67,6 +66,12 @@ class UserInfoSerializer(serializers.ModelSerializer):
         if certification_obj:
             auth_status = certification_obj.status
         return auth_status
+
+
+class AdminUserInfoSerializer(UserInfoSerializer):
+    class Meta:
+        model = models.UserInfo
+        exclude = ["password"]
 
 
 class AppsSerializer(serializers.ModelSerializer):
@@ -90,10 +95,7 @@ class AppsSerializer(serializers.ModelSerializer):
     sign_type_choice = serializers.SerializerMethodField()
 
     def get_sign_type_choice(self, obj):
-        sign_type_choice = []
-        for auth_t in list(obj.supersign_type_choices):
-            sign_type_choice.append({'id': auth_t[0], 'name': auth_t[1]})
-        return sign_type_choice
+        return get_choices_dict(obj.supersign_type_choices)
 
     supersign_used_number = serializers.SerializerMethodField()
 

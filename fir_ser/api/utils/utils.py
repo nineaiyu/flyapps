@@ -343,3 +343,11 @@ def get_order_num(order_type=1):
                                               now.second)
     return date_str + str(random.randint(1000, 9999)) + str(random.randint(1000, 9999)) + str(
         random.randint(1000, 9999))
+
+
+def get_choices_dict(choices):
+    result = []
+    choices_org_list = list(choices)
+    for choice in choices_org_list:
+        result.append({'id': choice[0], 'name': choice[1]})
+    return result

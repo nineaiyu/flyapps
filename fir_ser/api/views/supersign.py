@@ -12,7 +12,7 @@ from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID
 from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer
 from rest_framework.pagination import PageNumberPagination
 from api.utils.app.supersignutils import IosUtils
-from api.utils.utils import get_developer_devices
+from api.utils.utils import get_developer_devices, get_choices_dict
 from api.utils.storage.caches import developer_auth_code
 import logging
 
@@ -51,11 +51,7 @@ class DeveloperView(APIView):
         res.data = developer_serializer.data
         res.count = developer_obj.count()
 
-        res.apple_auth_list = []
-        apple_auth_org_list = list(AppIOSDeveloperInfo.auth_type_choices)
-        for auth_t in apple_auth_org_list:
-            res.apple_auth_list.append({'id': auth_t[0], 'name': auth_t[1]})
-
+        res.apple_auth_list = get_choices_dict(AppIOSDeveloperInfo.auth_type_choices)
         return Response(res.dict)
 
     def put(self, request):

@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from api.models import UserInfo, Price, Order
 from api.utils.serializer import PriceSerializer, OrdersSerializer
 from rest_framework.pagination import PageNumberPagination
-from api.utils.utils import get_order_num
+from api.utils.utils import get_order_num, get_choices_dict
 from api.utils.storage.caches import add_user_download_times
 import logging
 from django.utils import timezone
@@ -43,20 +43,9 @@ class OrderView(APIView):
         res.data = order_info.data
         res.count = order_obj_lists.count()
 
-        res.payment_type_choices = []
-        choices_list = list(Order.payment_type_choices)
-        for auth_t in choices_list:
-            res.payment_type_choices.append({'id': auth_t[0], 'name': auth_t[1]})
-
-        res.status_choices = []
-        choices_list = list(Order.status_choices)
-        for auth_t in choices_list:
-            res.status_choices.append({'id': auth_t[0], 'name': auth_t[1]})
-
-        res.order_type_choices = []
-        choices_list = list(Order.order_type_choices)
-        for auth_t in choices_list:
-            res.order_type_choices.append({'id': auth_t[0], 'name': auth_t[1]})
+        res.payment_type_choices = get_choices_dict(Order.payment_type_choices)
+        res.status_choices = get_choices_dict(Order.status_choices)
+        res.order_type_choices = get_choices_dict(Order.order_type_choices)
 
         return Response(res.dict)
 

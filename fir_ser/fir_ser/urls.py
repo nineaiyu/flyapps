@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, re_path, include
+from django.urls import re_path, include
 from django.views.static import serve
 from fir_ser import settings
 from api.views.download import DownloadView, InstallView
@@ -24,6 +24,7 @@ urlpatterns = [
     re_path('fly.admin/', admin.site.urls),
     re_path("api/v1/fir/server/", include('api.urls')),
     re_path("api/v2/fir/server/", include('cli.urls')),
+    re_path("api/v3/fir/server/", include('admin.urls')),
     re_path('^captcha/', include('captcha.urls')),
     # media路径配置
     re_path('files/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),

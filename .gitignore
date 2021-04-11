@@ -3,3 +3,5 @@ fir_ser/db.sqlite3
 *.pyc
 fir_ser/venv/
 fir_client/.idea
+fir_admin/.idea/.gitignore
+fir_admin/.idea/

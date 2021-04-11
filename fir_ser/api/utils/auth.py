@@ -28,7 +28,8 @@ def get_user_from_api_token(request):
 def get_user_from_request_auth(request):
     if request.method == "OPTIONS":
         return None
-    request_token = request.META.get("HTTP_AUTHORIZATION", request.query_params.get("token", None))
+    request_token = request.META.get("HTTP_AUTHORIZATION",
+                                     request.META.get("HTTP_X_TOKEN", request.query_params.get("token", None)))
     if request_token:
         try:
             format_token = base64.b64decode(request_token).decode()
@@ -50,12 +51,10 @@ def get_user_from_request_auth(request):
 
         user_obj = UserInfo.objects.filter(uid=cacheuserinfo.get('uid', None),
                                            username=cacheuserinfo.get("username")).first()
-        # token_obj = Token.objects.filter(access_token=auth_token).first()
         if not user_obj:
             raise AuthenticationFailed({"code": 1001, "error": "无效的token"})
         if user_obj.is_active:
             cache.set(auth_key, cacheuserinfo, 3600 * 24 * 7)
-            # cache.expire(auth_key, timeout=3600 * 24 * 7)
             return user_obj, auth_token
         else:
             raise AuthenticationFailed({"code": 1001, "error": "用户被禁用"})
@@ -67,6 +66,19 @@ class ExpiringTokenAuthentication(BaseAuthentication):
 
     def authenticate(self, request):
         return get_user_from_request_auth(request)
+
+
+class AdminTokenAuthentication(BaseAuthentication):
+
+    def authenticate(self, request):
+        result = get_user_from_request_auth(request)
+        if result:
+            user_obj, token = result
+            if user_obj and user_obj.role == 3:
+                return result
+            else:
+                raise AuthenticationFailed({"code": 1001, "error": "无效的认证"})
+        return result
 
 
 class ApiTokenAuthentication(BaseAuthentication):
