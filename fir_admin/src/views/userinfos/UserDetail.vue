@@ -1,19 +1,22 @@
 <template>
   <div class="app-container">
-    <el-form ref="postForm" :model="postForm" :rules="rules">
-
+    <el-form ref="postForm" :model="postForm" :rules="rules" label-width="80px" :disabled="!is_edit">
       <el-row>
-        <el-form-item label="UID">
-          <el-row :gutter="20">
-            <el-col :span="9">
-              <el-input :value="postForm.uid" disabled />
-            </el-col>
-            <el-col :span="9">
-              <el-button type="primary">保存本次修改</el-button>
-            </el-col>
-          </el-row>
-        </el-form-item>
         <el-col :span="12">
+          <el-form-item label="UID">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input :value="postForm.uid" disabled />
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item label="账号" prop="username">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input v-model="postForm.username" />
+              </el-col>
+            </el-row>
+          </el-form-item>
           <el-form-item label="昵称">
             <el-row :gutter="12">
               <el-col :span="16">
@@ -25,7 +28,7 @@
             <el-row :gutter="12">
               <el-col :span="16">
                 <el-select v-model="postForm.gender" class="filter-item" placeholder="Please select">
-                  <el-option v-for="item in gender_choices" :key="item.id" :label="item.name" :value="item.id" />
+                  <el-option v-for="item in postForm.gender_choices" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </el-col>
             </el-row>
@@ -34,7 +37,7 @@
             <el-row :gutter="12">
               <el-col :span="16">
                 <el-select v-model="postForm.role" class="filter-item" placeholder="Please select">
-                  <el-option v-for="item in role_choices" :key="item.id" :label="item.name" :value="item.id" />
+                  <el-option v-for="item in postForm.role_choices" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </el-col>
             </el-row>
@@ -54,6 +57,13 @@
               </el-col>
             </el-row>
           </el-form-item>
+          <el-form-item label="Q Q" prop="number">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input v-model="postForm.qq" />
+              </el-col>
+            </el-row>
+          </el-form-item>
           <el-form-item label="职位">
             <el-row :gutter="12">
               <el-col :span="16">
@@ -68,21 +78,95 @@
               </el-col>
             </el-row>
           </el-form-item>
-
+          <el-form-item label="备注">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input v-model="postForm.memo" :autosize="{ minRows: 4, maxRows: 6}" type="textarea" placeholder="Please input" />
+              </el-col>
+            </el-row>
+          </el-form-item>
         </el-col>
-
         <el-col :span="12">
-          <el-form-item label="头像">
+          <el-form-item label="用户头像">
             <el-row :gutter="12">
               <el-col :span="16">
                 <el-image :src="postForm.head_img" :preview-src-list="[postForm.head_img]" fit="contain" style="width: 100px; height: 100px" />
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="用户名称" prop="username">
+          <el-form-item label="账户状态">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.username" />
+                <el-tooltip :content="postForm.is_active|userStatusFilter" placement="top">
+                  <el-switch
+                    v-model="postForm.is_active"
+                    active-color="#13ce66"
+                    inactive-color="#ff4949"
+                    :active-value="true"
+                    :inactive-value="false"
+                  />
+                </el-tooltip>
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item label="私有存储">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-tooltip :content="postForm.storage_active|statusFilter" placement="top">
+                  <el-switch
+                    v-model="postForm.storage_active"
+                    active-color="#13ce66"
+                    inactive-color="#ff4949"
+                    :active-value="true"
+                    :inactive-value="false"
+                  />
+                </el-tooltip>
+              </el-col>
+            </el-row>
+          </el-form-item>
+<!--          <el-form-item v-if="postForm.storage_active===true" label="私有存储">-->
+<!--            <el-row :gutter="12">-->
+<!--              <el-col :span="16">-->
+<!--                <el-select v-model="postForm.use_storage_id" filterable :placeholder="selectlabel" @change="select_storage">-->
+<!--                  <el-option-group-->
+<!--                    v-for="storage_group in fstorage_lists"-->
+<!--                    :key="storage_group.group_name"-->
+<!--                    :label="storage_group.group_name">-->
+<!--                    <el-option-->
+<!--                      v-for="storage in storage_group.storages"-->
+<!--                      :key="storage.id"-->
+<!--                      :label="storage.name"-->
+<!--                      :value="storage.id">-->
+<!--                    </el-option>-->
+<!--                  </el-option-group>-->
+<!--                </el-select>-->
+<!--                <el-button v-if="use_storage_id!==org_storage_id" style="margin-left: 10px" round type="info"-->
+<!--                           icon="el-icon-thumb"-->
+<!--                           @click="change_storage_info">-->
+<!--                  迁移数据并保存-->
+<!--                </el-button>-->
+
+
+
+<!--                <el-select v-model="postForm.storage" class="filter-item" placeholder="Please select">-->
+<!--                  <el-option v-for="item in postForm.storage_choices" :key="item.id" :label="item.name" :value="item.id" />-->
+<!--                </el-select>-->
+<!--              </el-col>-->
+<!--            </el-row>-->
+<!--          </el-form-item>-->
+
+          <el-form-item label="超级签名">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-tooltip :content="postForm.supersign_active|statusFilter" placement="top">
+                  <el-switch
+                    v-model="postForm.supersign_active"
+                    active-color="#13ce66"
+                    inactive-color="#ff4949"
+                    :active-value="true"
+                    :inactive-value="false"
+                  />
+                </el-tooltip>
               </el-col>
             </el-row>
           </el-form-item>
@@ -110,7 +194,6 @@
               </el-col>
             </el-row>
           </el-form-item>
-
           <el-form-item label="应用版本历史记录">
             <el-row :gutter="20">
               <el-col :span="8">
@@ -120,44 +203,64 @@
           </el-form-item>
         </el-col>
       </el-row>
-
-      <!--        <el-form-item label="Status">-->
-      <!--          <el-select v-model="postForm.status" class="filter-item" placeholder="Please select">-->
-      <!--            <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />-->
-      <!--          </el-select>-->
-      <!--        </el-form-item>-->
-
-      <el-form-item label="备注">
-        <el-input v-model="postForm.memo" :autosize="{ minRows: 2, maxRows: 6}" type="textarea" placeholder="Please input" />
-      </el-form-item>
     </el-form>
-    <!--      <div slot="footer" class="dialog-footer">-->
-    <!--        <el-button @click="dialogFormVisible = false">-->
-    <!--          Cancel-->
-    <!--        </el-button>-->
-    <!--        <el-button type="primary" @click="dialogStatus==='create'?createData():updateData()">-->
-    <!--          Confirm-->
-    <!--        </el-button>-->
-    <!--      </div>-->
-    <!--    </el-form>-->
+    <el-col :span="9" style="float: right">
+      <el-button v-if="!is_edit" type="primary" @click="is_edit=true">修改</el-button>
+      <div v-else>
+        <el-button type="primary" @click="is_edit=false">取消</el-button>
+        <el-button type="primary" @click="updateData">保存修改</el-button>
+      </div>
+    </el-col>
   </div>
 </template>
 
 <script>
 import { validURL } from '@/utils/validate'
-import { getUserInfos } from '@/api/user'
+import { getUserInfos, updateUserInfo } from '@/api/user'
 import { CommentDropdown, PlatformDropdown, SourceUrlDropdown } from './Dropdown'
 
 const defaultForm = {
+  email: undefined,
+  job: undefined,
+  qq: undefined,
   id: undefined,
+  company: undefined,
+  gender: undefined,
+  username: undefined,
+  first_name: undefined,
+  role: undefined,
+  history_release_limit: undefined,
+  domain_name: undefined,
+  download_times: undefined,
+  is_active: undefined,
+  head_img: '',
+  memo: undefined,
+  date_joined: undefined,
+  storage_active: undefined,
+  supersign_active: undefined,
   role_choices: [],
-  gender_choices: []
-
+  gender_choices: [],
+  storage_choices: [],
 }
 
 export default {
   name: 'UserDetail',
-  components: { CommentDropdown, PlatformDropdown, SourceUrlDropdown },
+  components: { CommentDropdown, PlatformDropdown, SourceUrlDropdown }, filters: {
+    userStatusFilter(status) {
+      const statusMap = {
+        true: '激活，允许登录',
+        false: '禁用，禁止登录'
+      }
+      return statusMap[status]
+    },
+    statusFilter(status) {
+      const statusMap = {
+        true: '启用，允许配置',
+        false: '禁用，禁止配置'
+      }
+      return statusMap[status]
+    }
+  },
   props: {
     isEdit: {
       type: Boolean,
@@ -201,105 +304,33 @@ export default {
         content: [{ validator: validateRequire }],
         source_uri: [{ validator: validateSourceUri, trigger: 'blur' }]
       },
-      postFormRoute: {}
+      is_edit: false,
     }
   },
   computed: {
-
-    displayTime: {
-      // set and get is useful when the data
-      // returned by the back end api is different from the front end
-      // back end return => "2013-06-25 06:59:25"
-      // front end need timestamp => 1372114765000
-      get() {
-        return (+new Date(this.postForm.display_time))
-      },
-      set(val) {
-        this.postForm.display_time = new Date(val)
-      }
-    }
   },
   created() {
     if (this.isEdit) {
       const id = this.$route.params && this.$route.params.id
       this.fetchData(id)
     }
-
-    // Why need to make a copy of this.$route here?
-    // Because if you enter this page and quickly switch tag, may be in the execution of the setTagsViewTitle function, this.$route is no longer pointing to the current page
-    // https://github.com/PanJiaChen/vue-element-admin/issues/1221
-    this.postFormRoute = Object.assign({}, this.$route)
   },
   methods: {
     fetchData(id) {
       getUserInfos({ id: id }).then(response => {
         if (response.data.length === 1) {
           this.postForm = response.data[0]
-          this.gender_choices = response.gender_choices
-          this.role_choices = response.role_choices
         }
-
-        // just for test
-        this.postForm.title += `   Article Id:${this.postForm.id}`
-        this.postForm.content_short += `   Article Id:${this.postForm.id}`
-
-        // set tagsview title
-        // this.setTagsViewTitle()
-
-        // set page title
-        // this.setPageTitle()
       }).catch(err => {
         console.log(err)
       })
     },
-    setTagsViewTitle() {
-      const title = 'Edit Article'
-      const route = Object.assign({}, this.postFormRoute, { title: `${title}-${this.postForm.id}` })
-      this.$store.dispatch('tagsView/updateVisitedView', route)
-    },
-    setPageTitle() {
-      const title = 'Edit Article'
-      document.title = `${title} - ${this.postForm.id}`
-    },
-    submitForm() {
-      console.log(this.postForm)
-      this.$refs.postForm.validate(valid => {
-        if (valid) {
-          this.loading = true
-          this.$notify({
-            title: '成功',
-            message: '发布文章成功',
-            type: 'success',
-            duration: 2000
-          })
-          this.postForm.status = 'published'
-          this.loading = false
-        } else {
-          console.log('error submit!!')
-          return false
-        }
-      })
-    },
-    draftForm() {
-      if (this.postForm.content.length === 0 || this.postForm.title.length === 0) {
-        this.$message({
-          message: '请填写必要的标题和内容',
-          type: 'warning'
-        })
-        return
-      }
-      this.$message({
-        message: '保存成功',
-        type: 'success',
-        showClose: true,
-        duration: 1000
-      })
-      this.postForm.status = 'draft'
-    },
-    getRemoteUserList(query) {
-      searchUser(query).then(response => {
-        if (!response.data.items) return
-        this.userListOptions = response.data.items.map(v => v.name)
+    updateData() {
+      updateUserInfo(this.postForm).then(response => {
+        this.$message.success('更新成功')
+        this.postForm = response.data
+      }).catch(err => {
+        console.log(err)
       })
     }
   }

@@ -13,12 +13,15 @@ logger = logging.getLogger(__file__)
 token_obj = DownloadToken()
 
 
-def get_download_url_from_context(self, key, url, force_new=False):
+def get_download_url_from_context(self, obj, key, url, force_new=False):
     icon_url = ""
     if self.context.get("key", None) and self.context.get("key") != "undefined":
         key = self.context.get("key", '')
     if self.context.get("storage", None) and self.context.get("storage") != "undefined":
         storage = self.context.get("storage", None)
+    else:
+        storage = Storage(obj.user_id)
+    if storage:
         icon_url = storage.get_download_url(os.path.basename(url), 600, key, force_new)
     return icon_url
 
@@ -35,7 +38,7 @@ def get_screenshots_from_self(self, obj, force_new=False):
     screenshots_list = []
     for screenshot_obj in models.AppScreenShot.objects.filter(app_id=obj).all():
         key = ''
-        icon_url = get_download_url_from_context(self, key, screenshot_obj.screenshot_url, force_new)
+        icon_url = get_download_url_from_context(self, obj, key, screenshot_obj.screenshot_url, force_new)
         screenshots_list.append({'id': screenshot_obj.pk, 'url': icon_url})
     return screenshots_list
 
@@ -71,13 +74,34 @@ class UserInfoSerializer(serializers.ModelSerializer):
 class AdminUserInfoSerializer(UserInfoSerializer):
     class Meta:
         model = models.UserInfo
-        exclude = ["password"]
+        exclude = ["password", "api_token"]
+        read_only_fields = ["id", "head_img", "free_download_times", "certification", "last_login",
+                            "is_superuser", "last_name", "is_staff", "uid", "storage_active", "supersign_active",
+                            "date_joined", "download_times", "all_download_times", "storage", "groups",
+                            "user_permissions"]
+
+    gender_choices = serializers.SerializerMethodField()
+
+    def get_gender_choices(self, obj):
+        return get_choices_dict(obj.gender_choices)
+
+    role_choices = serializers.SerializerMethodField()
+
+    def get_role_choices(self, obj):
+        return get_choices_dict(obj.role_choices)
+
+    storage_choices = serializers.SerializerMethodField()
+
+    def get_storage_choices(self, obj):
+        return get_choices_dict(models.AppStorage.storage_choices[1:])
+
+    def update(self, instance, validated_data):
+        return super(AdminUserInfoSerializer, self).update(instance, validated_data)
 
 
 class AppsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Apps
-        # depth = 1
         exclude = ["user_id", "id"]
 
     has_combo = serializers.SerializerMethodField()
@@ -113,7 +137,7 @@ class AppsSerializer(serializers.ModelSerializer):
         master_release_obj = get_app_master_obj_from_context(self, obj)
         if master_release_obj:
             key = ''
-            icon_url = get_download_url_from_context(self, key, master_release_obj.icon_url)
+            icon_url = get_download_url_from_context(self, obj, key, master_release_obj.icon_url)
             datainfo = {
                 "app_version": master_release_obj.app_version,
                 "icon_url": icon_url,
@@ -142,6 +166,31 @@ class AppsSerializer(serializers.ModelSerializer):
         else:
             return {}
 
+
+class AdminAppsSerializer(AppsSerializer):
+    class Meta:
+        model = models.Apps
+        fields = "__all__"
+        read_only_fields = ["id", "app_id", "user_id", "bundle_id", "count_hits","updated_time","created_time"]
+
+    status_choices = serializers.SerializerMethodField()
+
+    def get_status_choices(self, obj):
+        return get_choices_dict(obj.status_choices)
+
+    type_choices = serializers.SerializerMethodField()
+
+    def get_type_choices(self, obj):
+        return get_choices_dict(obj.type_choices)
+
+    supersign_type_choices = serializers.SerializerMethodField()
+
+    def get_supersign_type_choices(self, obj):
+        return get_choices_dict(obj.supersign_type_choices)
+
+    def update(self, instance, validated_data):
+        print(validated_data)
+        return super(AdminAppsSerializer, self).update(instance, validated_data)
 
 class AppsShortSerializer(serializers.ModelSerializer):
     class Meta:
@@ -175,7 +224,7 @@ class AppsShortSerializer(serializers.ModelSerializer):
         master_release_obj = get_app_master_obj_from_context(self, obj)
         if master_release_obj:
             key = ''
-            icon_url = get_download_url_from_context(self, key, os.path.basename(master_release_obj.icon_url), True)
+            icon_url = get_download_url_from_context(self, obj, key, os.path.basename(master_release_obj.icon_url), True)
             datainfo = {
                 "app_version": master_release_obj.app_version,
                 "icon_url": icon_url,
@@ -229,7 +278,7 @@ class AppReleaseSerializer(serializers.ModelSerializer):
         return token_obj.make_token(obj.release_id, 600)
 
     def get_icon_url(self, obj):
-        return get_download_url_from_context(self, '', os.path.basename(obj.icon_url), force_new=False)
+        return get_download_url_from_context(self, obj, '', os.path.basename(obj.icon_url), force_new=False)
 
     def get_master_color(self, obj):
         if obj.is_master:
@@ -244,6 +293,20 @@ class AppReleaseSerializer(serializers.ModelSerializer):
     def get_editing(self, obj):
         return {"changelog": False, "binary_url": False}
 
+
+class AdminAppReleaseSerializer(AppReleaseSerializer):
+    class Meta:
+        model = models.Apps
+        fields = "__all__"
+        read_only_fields = ["id", "app_id", "release_id", "is_master"]
+
+    release_choices = serializers.SerializerMethodField()
+
+    def get_release_choices(self, obj):
+        return get_choices_dict(obj.release_choices)
+
+    def update(self, instance, validated_data):
+        return super(AdminAppReleaseSerializer, self).update(instance, validated_data)
 
 class StorageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -354,7 +417,7 @@ class CertificationSerializer(serializers.ModelSerializer):
     certification_url = serializers.SerializerMethodField()
 
     def get_certification_url(self, obj):
-        return get_download_url_from_context(self, '', obj.certification_url)
+        return get_download_url_from_context(self, obj, '', obj.certification_url)
 
 
 class UserCertificationSerializer(serializers.ModelSerializer):

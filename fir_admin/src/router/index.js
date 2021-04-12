@@ -83,12 +83,25 @@ export const constantRoutes = [
   {
     path: '/apps',
     component: Layout,
+    redirect: '/apps/list',
+    name: 'apps',
+    meta: {
+      title: '应用管理',
+      icon: 'el-icon-s-help'
+    },
     children: [
       {
-        path: 'index',
-        name: 'index',
-        component: () => import('@/views/form/index'),
-        meta: { title: '应用管理', icon: 'form' }
+        path: 'list',
+        name: 'app_info_list',
+        component: () => import('@/views/appinfos/list'),
+        meta: { title: '应用列表', icon: 'form' }
+      },
+      {
+        path: 'edit/:id(\\d+)',
+        component: () => import('@/views/appinfos/edit'),
+        name: 'app_info_edit',
+        meta: { title: '编辑信息', noCache: true, activeMenu: '/apps/list' },
+        hidden: true
       }
     ]
   },

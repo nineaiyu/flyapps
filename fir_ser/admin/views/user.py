@@ -35,28 +35,15 @@ class UserInfoView(APIView):
     authentication_classes = [AdminTokenAuthentication, ]
 
     def get(self, request):
-
-        mobile = request.query_params.get("mobile", None)
-        username = request.query_params.get("username", None)
-        email = request.query_params.get("email", None)
-        first_name = request.query_params.get("first_name", None)
-        certification = request.query_params.get("certification", None)
-        id = request.query_params.get("id", None)
-        sort = request.query_params.get("sort", "-date_joined")
-
-        act_type = request.query_params.get("act", None)
         res = BaseResponse()
         filter_data = {}
-        if mobile:
-            filter_data["mobile"] = mobile
-        if username:
-            filter_data["username"] = username
-        if email:
-            filter_data["email"] = email
-        if first_name:
-            filter_data["email"] = first_name
-        if id:
-            filter_data["id"] = id
+        filter_fileds = ["id", "mobile", "username", "email", "first_name", "certification", ]
+        for filed in filter_fileds:
+            f_value = request.query_params.get(filed, None)
+            if f_value:
+                filter_data[filed] = f_value
+        sort = request.query_params.get("sort", "-date_joined")
+        certification = request.query_params.get("certification", None)
         if certification:
             if certification == "-1":
                 filter_data["certification__status__isnull"] = True
@@ -69,6 +56,24 @@ class UserInfoView(APIView):
         users_serializer = AdminUserInfoSerializer(users_page_serializer, many=True)
         res.data = users_serializer.data
         res.total = users_obj_list.count()
-        res.gender_choices = get_choices_dict(UserInfo.gender_choices)
-        res.role_choices = get_choices_dict(UserInfo.role_choices)
+        return Response(res.dict)
+
+    def put(self, request):
+        res = BaseResponse()
+        data = request.data
+        id = data.get("id", None)
+        if not id:
+            res.code = 1003
+            res.msg = "参数错误"
+            return Response(res.dict)
+        user_obj = UserInfo.objects.filter(id=id).first()
+        if user_obj:
+            data['pk'] = id
+            users_serializer = AdminUserInfoSerializer(user_obj, data=data, partial=True)
+            if users_serializer.is_valid():
+                users_serializer.save()
+                res.data = users_serializer.data
+                return Response(res.dict)
+        res.code = 1004
+        res.msg = "数据校验失败"
         return Response(res.dict)

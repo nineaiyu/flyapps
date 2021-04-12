@@ -225,7 +225,7 @@ class LoginView(APIView):
                     #
                     # try:
                     #     UserInfo.objects.get(username=username)
-                    response.msg = "密码或者账户有误"
+                    response.msg = "密码账户有误或用户被禁用"
                     response.code = 1002
                     # except UserInfo.DoesNotExist:
                     #     response.msg = "用户不存在!"

@@ -30,3 +30,11 @@ export function getUserInfos(query) {
     params: query
   })
 }
+
+export function updateUserInfo(data) {
+  return request({
+    url: '/userinfo',
+    method: 'put',
+    data
+  })
+}

@@ -147,7 +147,7 @@
                 this.passwordflag = true;
             },
             setbuttondefaltshow(currentapp) {
-                if (currentapp.isshow === 1) {
+                if (currentapp.isshow === true) {
                     this.showdownloadevent("on");
                     this.downtip.val = 'on';
                 } else {
@@ -157,7 +157,7 @@
                 this.showdownloadflag = true;
             },
             setxeasytypeshow(currentapp) {
-                if (currentapp.wxeasytype === 1) {
+                if (currentapp.wxeasytype === true) {
                     this.wxeasytypeevent("on");
                     this.wxeasytypetip.val = 'on';
                 } else {
@@ -169,7 +169,7 @@
                 this.wxeasy_disable = !this.$store.state.userinfo.domain_name && !this.currentapp.domain_name;
             },
             setwxredirectshow(currentapp) {
-                if (currentapp.wxredirect === 1) {
+                if (currentapp.wxredirect === true) {
                     this.wxredirectevent("on");
                     this.wxredirecttip.val = 'on';
                 } else {

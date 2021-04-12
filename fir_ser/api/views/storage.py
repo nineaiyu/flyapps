@@ -27,8 +27,8 @@ class StorageView(APIView):
         res.storage_list = []
         storage_org_list = list(AppStorage.storage_choices)
         for storage_t in storage_org_list:
-            if storage_t[0] in [0, 3]: continue
-            res.storage_list.append({'id': storage_t[0], 'name': storage_t[1]})
+            if storage_t[0] not in [0, 3]:
+                res.storage_list.append({'id': storage_t[0], 'name': storage_t[1]})
 
         act = request.query_params.get("act", None)
         if act == 'storage_type':

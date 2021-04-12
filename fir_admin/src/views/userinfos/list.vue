@@ -29,7 +29,7 @@
           {{ scope.row.id }}
         </template>
       </el-table-column>
-      <el-table-column label="头像">
+      <el-table-column label="头像" align="center">
         <template slot-scope="scope">
           <el-image :src="scope.row.head_img" :preview-src-list="[scope.row.head_img]" fit="contain" style="width: 80px; height: 80px" />
         </template>
@@ -91,16 +91,13 @@
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="180" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <router-link :to="{name: 'user_info_edit',params:{id:scope.row.id}}">
-            <el-button type="info" size="mini" icon="el-icon-edit">
-              详情
+            <el-button type="primary" size="mini" icon="el-icon-edit">
+              编辑
             </el-button>
           </router-link>
-          <el-button type="primary" size="mini" @click="handleUpdate(row)">
-            编辑
-          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -167,7 +164,7 @@ export default {
       total: 0,
       listQuery: {
         page: 1,
-        limit: 3,
+        limit: 10,
         first_name: undefined,
         certification: undefined,
         sort: '-date_joined',
@@ -176,7 +173,6 @@ export default {
       },
       sortOptions,
       searchCertficationOptions
-
     }
   },
   created() {

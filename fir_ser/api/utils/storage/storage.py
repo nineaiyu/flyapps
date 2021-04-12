@@ -176,7 +176,7 @@ def get_local_storage(clean_cache=False):
             else:
                 new_storage_obj = LocalStorage(**auth)
                 new_storage_obj.storage_type = 3
-                # cache.set(storage_key, new_storage_obj, 600)
+                cache.set(storage_key, new_storage_obj, 600)
                 logger.info("system get local storage obj, from settings "
                             "storage %s" % new_storage_obj)
                 return new_storage_obj
