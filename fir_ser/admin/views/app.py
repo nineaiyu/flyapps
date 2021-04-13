@@ -55,14 +55,14 @@ class AppInfoView(APIView):
     def put(self, request):
         res = BaseResponse()
         data = request.data
-        id = data.get("id", None)
-        if not id:
+        pk = data.get("id", None)
+        if not pk:
             res.code = 1003
             res.msg = "参数错误"
             return Response(res.dict)
-        app_obj = Apps.objects.filter(id=id).first()
+        app_obj = Apps.objects.filter(pk=pk).first()
         if app_obj:
-            data['pk'] = id
+            data['pk'] = pk
             serializer_obj = AdminAppsSerializer(app_obj, data=data, partial=True)
             if serializer_obj.is_valid():
                 serializer_obj.save()
@@ -73,6 +73,16 @@ class AppInfoView(APIView):
         res.msg = "数据校验失败"
         return Response(res.dict)
 
+    def delete(self, request):
+        res = BaseResponse()
+        data = request.data
+        pk = data.get("id", None)
+        if not pk:
+            res.code = 1003
+            res.msg = "参数错误"
+        Apps.delete()
+        return Response(res.dict)
+
 
 class AppReleaseInfoView(APIView):
     authentication_classes = [AdminTokenAuthentication, ]
@@ -80,12 +90,16 @@ class AppReleaseInfoView(APIView):
     def get(self, request):
         res = BaseResponse()
         filter_data = {}
-        filter_fields = ["id", "release_id"]
+        filter_fields = ["id", "release_id", "app_id"]
         for filed in filter_fields:
             f_value = request.query_params.get(filed, None)
             if f_value:
                 filter_data[filed] = f_value
         sort = request.query_params.get("sort", "-created_time")
+        if not filter_data.get('app_id', None):
+            res.code = 1003
+            res.msg = "参数错误"
+            return Response(res.dict)
         page_obj = AppsPageNumber()
         obj_list = AppReleaseInfo.objects.filter(**filter_data).order_by(sort)
         page_serializer = page_obj.paginate_queryset(queryset=obj_list, request=request,
@@ -98,19 +112,20 @@ class AppReleaseInfoView(APIView):
     def put(self, request):
         res = BaseResponse()
         data = request.data
-        id = data.get("id", None)
-        if not id:
+        pk = data.get("id", None)
+        app_id = data.get("app_id", None)
+        if not pk or not app_id:
             res.code = 1003
             res.msg = "参数错误"
             return Response(res.dict)
-        app_obj = Apps.objects.filter(id=id).first()
+        app_obj = AppReleaseInfo.objects.filter(pk=pk, app_id=app_id).first()
         if app_obj:
-            data['pk'] = id
+            data['pk'] = pk
             serializer_obj = AdminAppReleaseSerializer(app_obj, data=data, partial=True)
             if serializer_obj.is_valid():
                 serializer_obj.save()
                 res.data = serializer_obj.data
-                del_cache_response_by_short(app_obj.app_id)
+                del_cache_response_by_short(app_obj.app_id.app_id)
                 return Response(res.dict)
         res.code = 1004
         res.msg = "数据校验失败"

@@ -297,9 +297,3 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
-   .el-form-item__label {
-    width: 200px;
-  }
-</style>
-

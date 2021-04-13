@@ -33,7 +33,7 @@
           {{ scope.row.id }}
         </template>
       </el-table-column>
-      <el-table-column label="图标" align="center" width="130">
+      <el-table-column label="应用图标" align="center" width="130">
         <template slot-scope="scope">
           <el-image :src="scope.row.master_release.icon_url" :preview-src-list="[scope.row.master_release.icon_url]" fit="contain" style="width: 80px; height: 80px" />
         </template>
@@ -76,6 +76,18 @@
           {{ scope.row.count_hits }}
         </template>
       </el-table-column>
+      <el-table-column label="应用大小" width="80" align="center">
+        <template slot-scope="scope">
+          {{ scope.row.master_release.binary_size }}
+        </template>
+      </el-table-column>
+      <el-table-column label="历史版本数" width="100" align="center">
+        <template slot-scope="scope">
+          <router-link :to="{name: 'app_release_info_list',params:{app_id:scope.row.id}}">
+            <el-link type="primary"> {{ scope.row.release_count }}</el-link>
+          </router-link>
+        </template>
+      </el-table-column>
       <el-table-column class-name="status-col" label="应用状态" width="80" align="center">
         <template slot-scope="scope">
           <el-tag :type="scope.row.status | appStatusFilter">{{ scope.row |appStatusNameFilter }}</el-tag>
@@ -96,13 +108,16 @@
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <router-link :to="{name: 'app_info_edit',params:{id:scope.row.id}}">
-            <el-button type="primary" size="mini" icon="el-icon-edit">
-              编辑
+            <el-button type="primary" size="mini">
+              查看编辑
             </el-button>
           </router-link>
+          <el-button type="danger" size="mini">
+            删除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>

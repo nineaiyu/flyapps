@@ -5,7 +5,7 @@
 # date: 2021/4/11
 
 from django.contrib import auth
-from api.models import Token, UserInfo
+from api.models import Token, UserInfo, UserCertificationInfo
 from rest_framework.response import Response
 from api.utils.auth import AdminTokenAuthentication
 from api.utils.serializer import AdminUserInfoSerializer
@@ -37,7 +37,7 @@ class UserInfoView(APIView):
     def get(self, request):
         res = BaseResponse()
         filter_data = {}
-        filter_fileds = ["id", "mobile", "username", "email", "first_name", "certification", ]
+        filter_fileds = ["id", "mobile", "username", "email", "first_name"]
         for filed in filter_fileds:
             f_value = request.query_params.get(filed, None)
             if f_value:
@@ -72,6 +72,9 @@ class UserInfoView(APIView):
             users_serializer = AdminUserInfoSerializer(user_obj, data=data, partial=True)
             if users_serializer.is_valid():
                 users_serializer.save()
+                certification = data.get("certification", None)
+                if certification and certification != -1:
+                    UserCertificationInfo.objects.filter(user_id=user_obj).update(status=data["certification"])
                 res.data = users_serializer.data
                 return Response(res.dict)
         res.code = 1004

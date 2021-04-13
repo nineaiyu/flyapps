@@ -76,7 +76,7 @@
             <el-form-item label="真实姓名">
                 <el-row :gutter="36">
                     <el-col :span="18">
-                        <el-input v-model="form.name" autofocus="true" prefix-icon="el-icon-user"
+                        <el-input v-model="form.name" :autofocus="true" prefix-icon="el-icon-user"
                                   placeholder="请输入真实姓名" clearable/>
                     </el-col>
                 </el-row>

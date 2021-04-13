@@ -20,7 +20,12 @@ def get_download_url_from_context(self, obj, key, url, force_new=False):
     if self.context.get("storage", None) and self.context.get("storage") != "undefined":
         storage = self.context.get("storage", None)
     else:
-        storage = Storage(obj.user_id)
+        if isinstance(obj, models.Apps):
+            storage = Storage(obj.user_id)
+        elif isinstance(obj, models.AppReleaseInfo):
+            storage = Storage(obj.app_id.user_id)
+        else:
+            storage = None
     if storage:
         icon_url = storage.get_download_url(os.path.basename(url), 600, key, force_new)
     return icon_url
@@ -75,7 +80,7 @@ class AdminUserInfoSerializer(UserInfoSerializer):
     class Meta:
         model = models.UserInfo
         exclude = ["password", "api_token"]
-        read_only_fields = ["id", "head_img", "free_download_times", "certification", "last_login",
+        read_only_fields = ["id", "head_img", "free_download_times", "last_login",
                             "is_superuser", "last_name", "is_staff", "uid", "storage_active", "supersign_active",
                             "date_joined", "download_times", "all_download_times", "storage", "groups",
                             "user_permissions"]
@@ -94,6 +99,11 @@ class AdminUserInfoSerializer(UserInfoSerializer):
 
     def get_storage_choices(self, obj):
         return get_choices_dict(models.AppStorage.storage_choices[1:])
+
+    certification_status_choices = serializers.SerializerMethodField()
+
+    def get_certification_status_choices(self, obj):
+        return get_choices_dict(models.UserCertificationInfo.status_choices)
 
     def update(self, instance, validated_data):
         return super(AdminUserInfoSerializer, self).update(instance, validated_data)
@@ -171,7 +181,7 @@ class AdminAppsSerializer(AppsSerializer):
     class Meta:
         model = models.Apps
         fields = "__all__"
-        read_only_fields = ["id", "app_id", "user_id", "bundle_id", "count_hits","updated_time","created_time"]
+        read_only_fields = ["id", "app_id", "user_id", "bundle_id", "count_hits", "updated_time", "created_time"]
 
     status_choices = serializers.SerializerMethodField()
 
@@ -188,9 +198,14 @@ class AdminAppsSerializer(AppsSerializer):
     def get_supersign_type_choices(self, obj):
         return get_choices_dict(obj.supersign_type_choices)
 
+    release_count = serializers.SerializerMethodField()
+
+    def get_release_count(self, obj):
+        return models.AppReleaseInfo.objects.filter(app_id=obj).count()
+
     def update(self, instance, validated_data):
-        print(validated_data)
         return super(AdminAppsSerializer, self).update(instance, validated_data)
+
 
 class AppsShortSerializer(serializers.ModelSerializer):
     class Meta:
@@ -224,7 +239,8 @@ class AppsShortSerializer(serializers.ModelSerializer):
         master_release_obj = get_app_master_obj_from_context(self, obj)
         if master_release_obj:
             key = ''
-            icon_url = get_download_url_from_context(self, obj, key, os.path.basename(master_release_obj.icon_url), True)
+            icon_url = get_download_url_from_context(self, obj, key, os.path.basename(master_release_obj.icon_url),
+                                                     True)
             datainfo = {
                 "app_version": master_release_obj.app_version,
                 "icon_url": icon_url,
@@ -296,9 +312,9 @@ class AppReleaseSerializer(serializers.ModelSerializer):
 
 class AdminAppReleaseSerializer(AppReleaseSerializer):
     class Meta:
-        model = models.Apps
+        model = models.AppReleaseInfo
         fields = "__all__"
-        read_only_fields = ["id", "app_id", "release_id", "is_master"]
+        read_only_fields = ["id", "app_id", "release_id", "binary_size"]
 
     release_choices = serializers.SerializerMethodField()
 
@@ -306,7 +322,14 @@ class AdminAppReleaseSerializer(AppReleaseSerializer):
         return get_choices_dict(obj.release_choices)
 
     def update(self, instance, validated_data):
+        print(validated_data)
+        if validated_data.get("is_master", False):
+            models.AppReleaseInfo.objects.filter(app_id=instance.app_id).update(**{"is_master": False})
+        else:
+            if "is_master" in validated_data and validated_data.get("is_master") != True:
+                del validated_data["is_master"]
         return super(AdminAppReleaseSerializer, self).update(instance, validated_data)
+
 
 class StorageSerializer(serializers.ModelSerializer):
     class Meta:

@@ -6,7 +6,7 @@
       <el-input v-model="listQuery.mobile" placeholder="手机" style="width: 150px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.email" placeholder="邮箱" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
       <el-select v-model="listQuery.certification" placeholder="实名认证状态" clearable class="filter-item" style="width: 140px" @change="handleFilter">
-        <el-option v-for="item in searchCertficationOptions" :key="item.key" :label="item.display_name" :value="item.key" />
+        <el-option v-for="item in certification_status_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
@@ -79,7 +79,7 @@
       </el-table-column>
       <el-table-column class-name="status-col" label="实名认证" width="95" align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.certification | certStatusFilter">{{ scope.row.certification| certLableFilter }}</el-tag>
+          <el-tag :type="scope.row.certification | certStatusFilter">{{ scope.row| certLableFilter }}</el-tag>
         </template>
       </el-table-column>
 
@@ -94,8 +94,8 @@
       <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <router-link :to="{name: 'user_info_edit',params:{id:scope.row.id}}">
-            <el-button type="primary" size="mini" icon="el-icon-edit">
-              编辑
+            <el-button type="primary" size="mini">
+              查看编辑
             </el-button>
           </router-link>
         </template>
@@ -110,13 +110,6 @@
 import { getUserInfos } from '@/api/user'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
-
-const searchCertficationOptions = [
-  { key: '-1', display_name: '未认证' },
-  { key: '0', display_name: '认证中' },
-  { key: '1', display_name: '认证成功' },
-  { key: '2', display_name: '认证失败' }
-]
 
 const sortOptions = [
   { label: '注册时间 Ascending', key: 'date_joined' },
@@ -149,10 +142,10 @@ export default {
       }
       return statusMap[status]
     },
-    certLableFilter(status) {
-      for (const v of searchCertficationOptions) {
-        if (v.key === status.toString()) {
-          return v.display_name
+    certLableFilter(row) {
+      for (const v of row.certification_status_choices) {
+        if (v.id === row.certification) {
+          return v.name
         }
       }
     }
@@ -172,7 +165,7 @@ export default {
         mobile: undefined
       },
       sortOptions,
-      searchCertficationOptions
+      certification_status_choices: []
     }
   },
   created() {
@@ -188,6 +181,9 @@ export default {
       getUserInfos(this.listQuery).then(response => {
         this.list = response.data
         this.total = response.total
+        if (this.list && this.list.length > 0) {
+          this.certification_status_choices = this.list[0].certification_status_choices
+        }
         this.listLoading = false
       })
     }

@@ -50,6 +50,18 @@
               </el-col>
             </el-row>
           </el-form-item>
+          <el-form-item label="实名认证">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-select v-model="postForm.certification" class="filter-item" placeholder="Please select" :disabled="postForm.certification === -1">
+                  <el-option v-for="item in postForm.certification_status_choices" :key="item.id" :label="item.name" :value="item.id" />
+                </el-select>
+              </el-col>
+              <el-col v-if="postForm.certification === -1" span="16">
+                <el-link :underline="false"> 用户需要先提交认证信息，才可以进行认证修改</el-link>
+              </el-col>
+            </el-row>
+          </el-form-item>
           <el-form-item label="手机" prop="mobile">
             <el-row :gutter="12">
               <el-col :span="16">
@@ -305,6 +317,7 @@ export default {
         source_uri: [{ validator: validateSourceUri, trigger: 'blur' }]
       },
       is_edit: false,
+      certification_status_choices: []
     }
   },
   computed: {
@@ -320,6 +333,7 @@ export default {
       getUserInfos({ id: id }).then(response => {
         if (response.data.length === 1) {
           this.postForm = response.data[0]
+          this.certification_status_choices = this.postForm.certification_status_choices
         }
       }).catch(err => {
         console.log(err)

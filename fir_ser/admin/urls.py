@@ -16,7 +16,7 @@ Including another URLconf
 from django.urls import re_path
 from admin.views.login import LoginView, LoginUserView
 from admin.views.user import UserInfoView
-from admin.views.app import AppInfoView
+from admin.views.app import AppInfoView, AppReleaseInfoView
 
 urlpatterns = [
     # path("",include(router.urls)),
@@ -25,6 +25,7 @@ urlpatterns = [
     re_path("^login", LoginView.as_view()),
     re_path("^user/info", LoginUserView.as_view()),
     re_path("^userinfo", UserInfoView.as_view()),
-    re_path("^appinfo", AppInfoView.as_view()),
+    re_path("^app/info", AppInfoView.as_view()),
+    re_path("^app/release/info", AppReleaseInfoView.as_view()),
 
 ]

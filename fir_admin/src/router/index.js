@@ -102,6 +102,20 @@ export const constantRoutes = [
         name: 'app_info_edit',
         meta: { title: '编辑信息', noCache: true, activeMenu: '/apps/list' },
         hidden: true
+      },
+      {
+        path: 'release/:app_id(\\d+)/list',
+        name: 'app_release_info_list',
+        component: () => import('@/views/appinfos/AppReleaseList'),
+        meta: { title: '版本记录', noCache: true, activeMenu: '/apps/list' },
+        hidden: true
+      },
+      {
+        path: 'release/:app_id(\\d+)/edit/:id(\\d+)',
+        name: 'app_release_info_edit',
+        component: () => import('@/views/appinfos/AppReleaseDetail'),
+        meta: { title: '版本记录', noCache: true, activeMenu: '/apps/list' },
+        hidden: true
       }
     ]
   },

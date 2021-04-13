@@ -405,7 +405,7 @@ class UserCertificationInfo(models.Model):
     card = models.CharField(max_length=128, null=False, verbose_name="身份证号码")
     addr = models.CharField(max_length=128, null=False, verbose_name="居住地")
     mobile = models.BigIntegerField(verbose_name="手机号码", unique=True, null=False)
-    status_choices = ((0, '审核中'), (1, '审核成功'), (2, '审核失败'))
+    status_choices = ((-1, '待认证'),(0, '认证中'), (1, '认证成功'), (2, '认证失败'))
     status = models.SmallIntegerField(choices=status_choices, default=0, verbose_name="审核状态")
     msg = models.CharField(max_length=512, null=True, blank=True, verbose_name="备注")
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
