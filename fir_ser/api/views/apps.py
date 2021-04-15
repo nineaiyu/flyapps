@@ -18,6 +18,7 @@ from rest_framework.pagination import PageNumberPagination
 import logging
 from fir_ser.settings import SERVER_DOMAIN
 from api.utils.utils import is_valid_domain, delete_local_files, delete_app_screenshots_files
+from api.base_views import app_delete
 
 logger = logging.getLogger(__name__)
 
@@ -121,31 +122,7 @@ class AppInfoView(APIView):
         res = BaseResponse()
         if app_id:
             apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
-            if apps_obj:
-                count = APPToDeveloper.objects.filter(app_id=apps_obj).count()
-                if apps_obj.issupersign or count > 0:
-                    logger.info("app_id:%s is supersign ,delete this app need clean IOS developer" % (app_id))
-                    IosUtils.clean_app_by_user_obj(apps_obj, request.user)
-
-                storage = Storage(request.user)
-                has_combo = apps_obj.has_combo
-                if has_combo:
-                    logger.info(
-                        "app_id:%s has_combo ,delete this app need uncombo and clean del_cache_response_by_short" % (
-                            app_id))
-                    apps_obj.has_combo.has_combo = None
-                del_cache_response_by_short(apps_obj.app_id)
-                del_cache_by_delete_app(apps_obj.app_id)
-                for appreleaseobj in AppReleaseInfo.objects.filter(app_id=apps_obj).all():
-                    logger.info("delete app_id:%s  need clean all release,release_id:%s" % (
-                        app_id, appreleaseobj.release_id))
-                    storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
-                    delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
-                    storage.delete_file(appreleaseobj.icon_url)
-                    appreleaseobj.delete()
-                delete_app_screenshots_files(storage, apps_obj)
-                apps_obj.delete()
-
+            res = app_delete(apps_obj)
         return Response(res.dict)
 
     def put(self, request, app_id):

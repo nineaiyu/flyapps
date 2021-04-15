@@ -224,6 +224,7 @@
 <script>
 
     import {my_order} from "@/restful";
+    import {getUserInfoFun} from '@/utils'
 
     export default {
         name: "FirUserOrders",
@@ -365,6 +366,7 @@
                 }, {methods: 'GET', data: params})
             },
         }, mounted() {
+            getUserInfoFun(this);
             this.get_data_from_tabname()
         }, filters: {}
     }

@@ -20,6 +20,7 @@ from api.utils.storage.caches import login_auth_failed, del_cache_response_by_sh
 import logging
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle
 from rest_framework.pagination import PageNumberPagination
+from api.base_views import app_delete
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,8 @@ class AppInfoView(APIView):
         if not pk:
             res.code = 1003
             res.msg = "参数错误"
-        Apps.delete()
+        else:
+            res = app_delete(Apps.objects.filter(pk=pk).first())
         return Response(res.dict)
 
 

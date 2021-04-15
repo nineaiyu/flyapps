@@ -6,7 +6,7 @@
 
 from django.core.cache import cache
 from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, APPSuperSignUsedInfo, \
-    UserCertificationInfo
+    UserCertificationInfo, Order
 import time, os
 from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
@@ -391,3 +391,40 @@ def user_auth_success(user_id):
     get_user_free_download_times(user_id, 'get')
     get_user_free_download_times(user_id, 'set', USER_FREE_DOWNLOAD_TIMES - AUTH_USER_FREE_DOWNLOAD_TIMES)
     return enable_user_download(user_id)
+
+
+def update_order_info(user_id, out_trade_no, payment_number, payment_type):
+    with cache.lock("%s_%s" % ('user_order_', out_trade_no)):
+        try:
+            user_obj = UserInfo.objects.filter(pk=user_id).first()
+            order_obj = Order.objects.filter(account=user_obj, order_number=out_trade_no).first()
+            if order_obj:
+                if order_obj.status == 1:
+                    download_times = order_obj.actual_download_times + order_obj.actual_download_gift_times
+                    try:
+                        order_obj.status = 0
+                        order_obj.payment_type = payment_type
+                        order_obj.order_type = 0
+                        order_obj.payment_number = payment_number
+                        now = timezone.now()
+                        if not timezone.is_naive(now):
+                            now = timezone.make_naive(now, timezone.utc)
+                        order_obj.pay_time = now
+                        order_obj.description = "充值成功，充值下载次数 %s ，现总共可用次数 %s" % (
+                            download_times, user_obj.download_times)
+                        order_obj.save()
+                        add_user_download_times(user_id, download_times)
+                        logger.info("%s 订单 %s msg：%s" % (user_obj, out_trade_no, order_obj.description))
+                        return True
+                    except Exception as e:
+                        logger.error("%s 订单 %s 更新失败 Exception：%s" % (user_obj, out_trade_no, e))
+                elif order_obj.status == 0:
+                    return True
+                else:
+                    return False
+            else:
+                logger.error("%s 订单 %s 订单获取失败，或订单已经支付" % (user_obj, out_trade_no))
+
+        except Exception as e:
+            logger.error("%s download_times less then 0. Exception:%s" % (user_obj, e))
+        return False

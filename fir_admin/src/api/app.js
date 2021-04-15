@@ -16,6 +16,14 @@ export function updateAppInfo(data) {
   })
 }
 
+export function deleteApp(data) {
+  return request({
+    url: '/app/info',
+    method: 'delete',
+    data
+  })
+}
+
 export function getAppReleaseInfos(query) {
   return request({
     url: '/app/release/info',

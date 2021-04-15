@@ -15,6 +15,9 @@ from api.utils.utils import get_order_num, get_choices_dict
 from api.utils.storage.caches import add_user_download_times
 import logging
 from django.utils import timezone
+from api.utils.pay.ali import Alipay
+from fir_ser.settings import PAY_SUCCESS_URL
+from django.http import HttpResponseRedirect
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +59,15 @@ class OrderView(APIView):
             price_obj = Price.objects.filter(name=price_id).first()
             if price_obj:
                 try:
-                    Order.objects.create(payment_type=0, order_number=get_order_num(),
-                                         account=request.user, status=1, order_type=0, actual_amount=price_obj.price,
+                    order_number = get_order_num()
+                    actual_amount = price_obj.price
+                    Order.objects.create(payment_type=0, order_number=order_number,
+                                         account=request.user, status=1, order_type=0, actual_amount=actual_amount,
                                          actual_download_times=price_obj.package_size,
                                          actual_download_gift_times=price_obj.download_count_gift)
+                    alipay = Alipay()
+                    pay_url = alipay.get_pay_pc_url(order_number, actual_amount / 100, {'user_id': request.user.id})
+                    res.data = pay_url
                     return Response(res.dict)
                 except Exception as e:
                     logger.error("%s 订单 %s 保存失败 Exception：%s" % (request.user, price_id, e))
@@ -122,3 +130,19 @@ class PriceView(APIView):
     def put(self, request, price_id):
         res = BaseResponse()
         return Response(res.dict)
+
+
+class PaySuccess(APIView):
+    # authentication_classes = [ExpiringTokenAuthentication]
+
+    def get(self, request):
+        return HttpResponseRedirect(PAY_SUCCESS_URL)
+
+    def post(self, request):
+        alipay = Alipay()
+        msg = 'failure'
+        data = request.data.copy().dict()
+        logger.info("支付回调参数：%s" % data)
+        if alipay.valid_order(request.data.copy().dict()):
+            msg = 'success'
+        return Response(msg)

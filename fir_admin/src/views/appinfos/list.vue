@@ -50,7 +50,7 @@
       </el-table-column>
       <el-table-column label="关联应用" align="center" width="130">
         <template slot-scope="scope">
-          <el-image  v-if="scope.row.has_combo" :src="scope.row.has_combo.master_release.icon_url" :preview-src-list="[scope.row.has_combo.master_release.icon_url]" fit="contain" style="width: 80px; height: 80px" />
+          <el-image v-if="scope.row.has_combo" :src="scope.row.has_combo.master_release.icon_url" :preview-src-list="[scope.row.has_combo.master_release.icon_url]" fit="contain" style="width: 80px; height: 80px" />
           <el-link v-else>无关联应用</el-link>
         </template>
       </el-table-column>
@@ -115,7 +115,7 @@
               查看编辑
             </el-button>
           </router-link>
-          <el-button type="danger" size="mini">
+          <el-button type="danger" size="mini" @click="deleteApp(scope.row.id)">
             删除
           </el-button>
         </template>
@@ -127,7 +127,7 @@
 </template>
 
 <script>
-import { getAppInfos } from '@/api/app'
+import { getAppInfos, deleteApp } from '@/api/app'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
 
@@ -169,7 +169,7 @@ export default {
         '2': 'gray'
       }
       return statusMap[status]
-    },
+    }
   },
   data() {
     return {
@@ -195,6 +195,26 @@ export default {
     this.fetchData()
   },
   methods: {
+    deleteApp(app_id) {
+
+      this.$confirm('此操作将永久删除该应用, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.listLoading = true
+        deleteApp({ id: app_id }).then(response => {
+          this.$message.success('删除成功')
+          this.fetchData()
+          this.listLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        });
+      });
+    },
     handleFilter() {
       this.listQuery.page = 1
       this.fetchData()

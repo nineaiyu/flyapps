@@ -534,12 +534,11 @@
                 this.buy_button_disable = true;
                 my_order(res => {
                     if (res.code === 1000) {
-                        this.$message.success("下订单成功，正在跳转，请去我的订单进行支付");
-                        // eslint-disable-next-line no-unused-vars
-                        this.timmer = setTimeout(data => {
-                            this.$router.push({"name": 'FirUserOrders'});
-                            this.buy_button_disable = false;
-                        }, 1000);
+                        this.$message.success("下订单成功，正在跳转支付平台");
+                        let pay_url = res.data;
+                        if(pay_url && pay_url.length > 10){
+                            window.location.href = pay_url
+                        }
                     } else {
                         this.$message.error("异常" + res.msg);
                         this.buy_button_disable = false;
