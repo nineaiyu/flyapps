@@ -360,7 +360,7 @@ class Order(models.Model):
     actual_amount = models.BigIntegerField(verbose_name="实付金额,单位分")
     actual_download_times = models.BigIntegerField(verbose_name="实际购买的数量", default=0)
     actual_download_gift_times = models.BigIntegerField(verbose_name="实际赠送的数量", default=0)
-    status_choices = ((0, '交易成功'), (1, '待支付'), (2, '退费申请中'), (3, '已退费'), (4, '主动取消'), (5, '超时取消'))
+    status_choices = ((0, '交易成功'), (1, '待支付'), (2, '订单已创建'),  (3, '退费申请中'), (4, '已退费'), (5, '主动取消'), (6, '超时取消'))
     status = models.SmallIntegerField(choices=status_choices, verbose_name="状态")
     order_type_choices = ((0, '用户下单'), (1, '后台充值'),)
     order_type = models.SmallIntegerField(choices=order_type_choices, default=0, verbose_name="订单类型")

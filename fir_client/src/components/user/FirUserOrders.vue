@@ -1,35 +1,5 @@
 <template>
     <el-main>
-
-
-        <el-dialog title="微信支付，请扫描进行支付，支付完成之后，将订单进行关联"
-                   :visible.sync="wx_pay"
-                   width="880px"
-                   :close-on-click-modal="false"
-                   :close-on-press-escape="false"
-                   center
-        >
-            <el-row :gutter="8">
-                <el-col :span="12" style="text-align: center">
-                    <el-image :src="require('@/assets/wx_pay.jpg')" style="width: 320px;height: 320px"
-                              fit="fit"></el-image>
-                    <el-link>用微信扫描二维码</el-link>
-                </el-col>
-                <el-col :span="12">
-                    <el-link type="warning"> 支付完成之后，打开订单详情，将订单编号复制出来，进行绑定</el-link>
-                    <div style="margin-top: 20px">
-                        <el-input style="width: 55%"
-                                  placeholder="订单编号"
-                                  v-model="sure_order_info.wx_order_id">
-                        </el-input>
-                        <el-button style="margin-left: 20px" @click="sure_order">查询</el-button>
-                        <el-button style="margin-left: 10px" @click="sure_order">关联</el-button>
-                    </div>
-                </el-col>
-            </el-row>
-
-        </el-dialog>
-
         <el-dialog
                 :visible.sync="show_order_info"
                 width="780px"
@@ -136,9 +106,9 @@
                         width="130">
 
                     <template slot-scope="scope">
-                        <div v-if="scope.row.status === 1">
+                        <div v-if="scope.row.status === 1 || scope.row.status === 2">
                             <el-button @click="goto_pay(scope.row)"
-                                       type="primary" size="small"> 去支付
+                                       type="primary" size="small">  {{ format_status_type(scope.row)}}
                             </el-button>
                         </div>
                         <div v-else-if="scope.row.status === 0">
@@ -146,7 +116,7 @@
                                        type="success" size="small"> {{ format_status_type(scope.row)}}
                             </el-button>
                         </div>
-                        <div v-else-if="scope.row.status === 4 || scope.row.status ===5">
+                        <div v-else-if="scope.row.status === 4 || scope.row.status ===5|| scope.row.status ===6">
                             <el-button @click="click_order_info(scope.row)"
                                        type="danger" size="small"> {{ format_status_type(scope.row)}}
                             </el-button>
@@ -157,9 +127,7 @@
                             </el-button>
                         </div>
 
-
                     </template>
-
 
                 </el-table-column>
 
@@ -193,14 +161,17 @@
                 <el-table-column
                         fixed="right"
                         label="查看详细"
-                        width="100">
+                        width="145">
                     <template slot-scope="scope">
 
                         <el-button
                                 size="mini"
                                 @click="click_order_info(scope.row)">详情
                         </el-button>
-
+                        <el-button v-if="scope.row.status === 1 || scope.row.status === 2"
+                                size="mini" type="danger"
+                                @click="cancel_order(scope.row)">取消
+                        </el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -238,47 +209,47 @@
                 payment_type_choices: [],
                 show_order_info: false,
                 current_order_info: {},
-                wx_pay: false,
-                sure_order_info: {wx_order_id: ''},
                 loading: false
             }
         },
         methods: {
-            sure_order() {
+            cancel_order(order){
                 my_order(res => {
-                    // 应该跳转到第三方平台进行支付，然后第三方回调
                     if (res.code === 1000) {
-                        this.$message.success("支付成功");
-                        this.get_data_from_tabname({
-                            "size": this.pagination.pagesize,
-                            "page": this.pagination.currentPage
-                        });
+                        this.$message.success("操作成功");
+                        this.get_data_from_tabname()
                     } else {
                         this.$message.error("失败了 " + res.msg)
                     }
                 }, {
-                    methods: 'PUT', data: {sure_order_info: this.sure_order_info},
+                    methods: 'PUT', data: {order_number: order.order_number,act:'cancel'},
                 })
             },
             goto_pay(order) {
-                this.wx_pay = true;
-                this.sure_order_info.order_number = order.order_number;
-                // my_order(res => {
-                //     // 应该跳转到第三方平台进行支付，然后第三方回调
-                //     if (res.code === 1000) {
-                //         this.$message.success("支付成功");
-                //         this.get_data_from_tabname({
-                //             "size": this.pagination.pagesize,
-                //             "page": this.pagination.currentPage
-                //         });
-                //     } else {
-                //         this.$message.error("失败了 " + res.msg)
-                //     }
-                // }, {
-                //     methods: 'PUT', data: {order_number: order.order_number},
-                // })
+                my_order(res => {
+                    if (res.code === 1000) {
+                        this.$message.success("正在跳转支付平台");
+                        let pay_url = res.data;
+                        if(pay_url && pay_url.length > 10){
+                            window.location.href = pay_url
+                        }
+                    } else {
+                        this.$message.error("失败了 " + res.msg)
+                    }
+                }, {
+                    methods: 'POST', data: {order_number: order.order_number},
+                })
             },
             click_order_info(order) {
+                my_order(res => {
+                    if (res.code === 1000) {
+                        this.get_data_from_tabname()
+                    } else {
+                        this.$message.error("失败了 " + res.msg)
+                    }
+                }, {
+                    methods: 'PUT', data: {order_number: order.order_number,act:'status'},
+                });
                 this.show_order_info = true;
                 this.current_order_info = order;
 

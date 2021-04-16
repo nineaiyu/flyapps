@@ -13,7 +13,7 @@ from api.utils.alipay import AliPay
 from api.utils.alipay.utils import AliPayConfig
 from fir_ser.settings import PAY_CONFIG
 from datetime import datetime, timedelta
-from api.utils.storage.caches import update_order_info
+from api.utils.storage.caches import update_order_info, update_order_status
 import json
 import logging
 
@@ -71,3 +71,17 @@ class Alipay(object):
             else:
                 logger.error("APP_ID 校验失败 response: %s  server: %s" % (app_id, self.ali_config.get("APP_ID")))
         return False
+
+    def update_order_status(self, out_trade_no):
+        data = self.alipay.api_alipay_trade_query(out_trade_no=out_trade_no)
+        # (0, '交易成功'), (1, '待支付'), (2, '订单已创建'),  (3, '退费申请中'), (4, '已退费'), (5, '主动取消'), (6, '超时取消')
+        code = data.get("code", '')
+        logger.info("out_trade_no: %s info:%s"%(out_trade_no, data))
+        if code == '10000':
+            trade_status = data.get("trade_status", '')
+            if trade_status in ['TRADE_SUCCESS']:
+                update_order_status(out_trade_no, 0)
+            elif trade_status in ['WAIT_BUYER_PAY']:
+                update_order_status(out_trade_no, 2)
+        elif code == '40004':
+            update_order_status(out_trade_no, 1)

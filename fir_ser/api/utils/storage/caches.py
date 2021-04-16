@@ -393,6 +393,14 @@ def user_auth_success(user_id):
     return enable_user_download(user_id)
 
 
+def update_order_status(out_trade_no, status):
+    with cache.lock("%s_%s" % ('user_order_', out_trade_no)):
+        order_obj = Order.objects.filter(order_number=out_trade_no).first()
+        if order_obj:
+            order_obj.status = status
+            order_obj.save()
+
+
 def update_order_info(user_id, out_trade_no, payment_number, payment_type):
     with cache.lock("%s_%s" % ('user_order_', out_trade_no)):
         try:

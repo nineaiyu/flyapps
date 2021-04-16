@@ -12,7 +12,7 @@ from api.models import UserInfo, Price, Order
 from api.utils.serializer import PriceSerializer, OrdersSerializer
 from rest_framework.pagination import PageNumberPagination
 from api.utils.utils import get_order_num, get_choices_dict
-from api.utils.storage.caches import add_user_download_times
+from api.utils.storage.caches import update_order_status
 import logging
 from django.utils import timezone
 from api.utils.pay.ali import Alipay
@@ -55,8 +55,16 @@ class OrderView(APIView):
     def post(self, request):
         res = BaseResponse()
         price_id = request.data.get("price_id", None)
-        if price_id:
+        order_number = request.data.get("order_number", None)
+        if price_id or order_number:
             price_obj = Price.objects.filter(name=price_id).first()
+            order_obj = Order.objects.filter(account=request.user, order_number=order_number).first()
+            if order_obj and order_obj.status in [1, 2]:
+                alipay = Alipay()
+                pay_url = alipay.get_pay_pc_url(order_obj.order_number, order_obj.actual_amount / 100,
+                                                {'user_id': request.user.id})
+                res.data = pay_url
+                return Response(res.dict)
             if price_obj:
                 try:
                     order_number = get_order_num()
@@ -85,21 +93,16 @@ class OrderView(APIView):
     def put(self, request):
         res = BaseResponse()
         order_number = request.data.get("order_number", None)
+        act = request.data.get("act", None)
         if order_number:
             order_obj = Order.objects.filter(account=request.user, order_number=order_number, status=1).first()
             if order_obj:
-                download_times = order_obj.actual_download_times + order_obj.actual_download_gift_times
                 try:
-                    order_obj.status = 0
-                    now = timezone.now()
-                    if not timezone.is_naive(now):
-                        now = timezone.make_naive(now, timezone.utc)
-                    order_obj.pay_time = now
-                    n_download_times = UserInfo.objects.filter(pk=request.user.id).values('download_times').first()
-                    order_obj.description = "充值成功，充值下载次数 %s ，现总共可用次数 %s" % (
-                        download_times, n_download_times.get("download_times", 0))
-                    order_obj.save()
-                    add_user_download_times(request.user.id, download_times)
+                    if act == 'cancel' and order_obj.status != 0:
+                        update_order_status(order_number, 5)
+                    elif act == 'status' and order_obj.status == 1:
+                        alipay = Alipay()
+                        alipay.update_order_status(order_obj.order_number)
                 except Exception as e:
                     logger.error("%s 订单 %s 更新失败 Exception：%s" % (request.user, order_number, e))
                     res.code = 1003
@@ -136,7 +139,11 @@ class PaySuccess(APIView):
     # authentication_classes = [ExpiringTokenAuthentication]
 
     def get(self, request):
-        return HttpResponseRedirect(PAY_SUCCESS_URL)
+        alipay = Alipay()
+        alipay.update_order_status('1202141610723105226256209')
+        return Response(111)
+
+        # return HttpResponseRedirect(PAY_SUCCESS_URL)
 
     def post(self, request):
         alipay = Alipay()
