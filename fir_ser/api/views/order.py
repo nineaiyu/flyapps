@@ -135,7 +135,29 @@ class PriceView(APIView):
         return Response(res.dict)
 
 
-class PaySuccess(APIView):
+class AliPaySuccess(APIView):
+    # authentication_classes = [ExpiringTokenAuthentication]
+
+    def get(self, request):
+        alipay = Alipay()
+        # alipay.update_order_status('1202141610723105226256209')
+        print(request.META)
+        return Response(111)
+
+        # return HttpResponseRedirect(PAY_SUCCESS_URL)
+
+    def post(self, request):
+        alipay = Alipay()
+        msg = 'failure'
+        logger.info("支付回调参数：%s" % request.data)
+        logger.info("----- %s" % request.META)
+        data = request.data.copy().dict()
+        if alipay.valid_order(data):
+            msg = 'success'
+        return Response(msg)
+
+
+class WxPaySuccess(APIView):
     # authentication_classes = [ExpiringTokenAuthentication]
 
     def get(self, request):
@@ -148,8 +170,9 @@ class PaySuccess(APIView):
     def post(self, request):
         alipay = Alipay()
         msg = 'failure'
+        logger.info("支付回调参数：%s" % request.data)
+        logger.info("----- %s" % request.META)
         data = request.data.copy().dict()
-        logger.info("支付回调参数：%s" % data)
-        if alipay.valid_order(request.data.copy().dict()):
+        if alipay.valid_order(data):
             msg = 'success'
         return Response(msg)

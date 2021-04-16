@@ -23,7 +23,7 @@ from api.views.download import ShortDownloadView
 from api.views.uploads import AppAnalyseView, UploadView
 from api.views.storage import StorageView
 from api.views.receiveudids import IosUDIDView
-from api.views.order import PriceView, OrderView, PaySuccess
+from api.views.order import PriceView, OrderView, AliPaySuccess, WxPaySuccess
 from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView
 
 # router=DefaultRouter()
@@ -52,6 +52,8 @@ urlpatterns = [
     re_path("^package_prices$", PriceView.as_view()),
     re_path("^orders$", OrderView.as_view()),
     re_path("^certification$", CertificationView.as_view()),
-    re_path("^pay_success$", PaySuccess.as_view()),
+    re_path("^ali_pay_success$", AliPaySuccess.as_view()),
+    re_path("^wx_pay_success$", WxPaySuccess.as_view()),
+    re_path("^pay_success$", WxPaySuccess.as_view()),
 
 ]
