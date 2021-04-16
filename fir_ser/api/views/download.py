@@ -20,7 +20,7 @@ from api.utils.serializer import AppsShortSerializer
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInfo
 from django.http import FileResponse
 import logging
-from api.utils.utils import get_profile_full_path
+from api.utils.baseutils import get_profile_full_path
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle
 
 logger = logging.getLogger(__file__)
@@ -240,10 +240,10 @@ class InstallView(APIView):
                         ip = request.META['REMOTE_ADDR']
                     logger.info("remote ip %s short %s download_url %s app_obj %s" % (ip, short, download_url, app_obj))
                     set_app_download_by_cache(app_id)
-                    amount = 1
-                    # 超级签需要消耗2个下载次数
+                    amount = app_obj.get("d_count")
+                    # 超级签需要多消耗2倍下载次数
                     if app_obj.get("issupersign"):
-                        amount += 1
+                        amount *= 2
                     auth_status = False
                     status = app_obj.get('user_id__certification__status', None)
                     if status and status == 1:

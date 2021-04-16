@@ -6,9 +6,10 @@ from django.core.cache import cache
 from rest_framework.views import APIView
 import binascii
 import os, datetime
-from api.utils.utils import get_captcha, valid_captcha, is_valid_domain, is_valid_phone, \
-    get_sender_sms_token, is_valid_email, is_valid_sender_code, get_sender_email_token, get_random_username, \
+from api.utils.utils import get_captcha, valid_captcha, \
+    get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
     check_username_exists
+from api.utils.baseutils import is_valid_domain, is_valid_phone, is_valid_email
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, REGISTER, LOGIN

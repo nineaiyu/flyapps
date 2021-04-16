@@ -12,7 +12,7 @@ from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
     USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
 from api.utils.storage.storage import Storage, LocalStorage
-from api.utils.utils import file_format_path
+from api.utils.baseutils import get_app_d_count_by_app_id, file_format_path
 import logging
 from django.db.models import F
 
@@ -96,15 +96,20 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
 
 def get_app_instance_by_cache(app_id, password, limit, udid):
     if udid:
-        return Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type', 'password', 'issupersign',
-                                                         'user_id__certification__status').first()
+        app_info = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type', 'password', 'issupersign',
+                                                             'user_id__certification__status').first()
+        if app_info:
+            app_info['d_count'] = get_app_d_count_by_app_id(app_id)
+        return app_info
     app_key = "_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"), app_id])
     app_obj_cache = cache.get(app_key)
     if not app_obj_cache:
         app_obj_cache = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type', 'password',
                                                                   'issupersign',
                                                                   'user_id__certification__status').first()
-        cache.set(app_key, app_obj_cache, limit)
+        if app_obj_cache:
+            app_obj_cache['d_count'] = get_app_d_count_by_app_id(app_id)
+            cache.set(app_key, app_obj_cache, limit)
 
     app_password = app_obj_cache.get("password")
 

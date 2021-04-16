@@ -69,7 +69,7 @@ class OrderView(APIView):
                 try:
                     order_number = get_order_num()
                     actual_amount = price_obj.price
-                    Order.objects.create(payment_type=0, order_number=order_number,
+                    Order.objects.create(payment_type=1, order_number=order_number,
                                          account=request.user, status=1, order_type=0, actual_amount=actual_amount,
                                          actual_download_times=price_obj.package_size,
                                          actual_download_gift_times=price_obj.download_count_gift)
@@ -95,12 +95,12 @@ class OrderView(APIView):
         order_number = request.data.get("order_number", None)
         act = request.data.get("act", None)
         if order_number:
-            order_obj = Order.objects.filter(account=request.user, order_number=order_number, status=1).first()
+            order_obj = Order.objects.filter(account=request.user, order_number=order_number).first()
             if order_obj:
                 try:
                     if act == 'cancel' and order_obj.status != 0:
                         update_order_status(order_number, 5)
-                    elif act == 'status' and order_obj.status == 1:
+                    elif act == 'status' and order_obj.status in [1, 2]:
                         alipay = Alipay()
                         alipay.update_order_status(order_obj.order_number)
                 except Exception as e:

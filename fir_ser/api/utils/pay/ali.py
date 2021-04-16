@@ -76,7 +76,7 @@ class Alipay(object):
         data = self.alipay.api_alipay_trade_query(out_trade_no=out_trade_no)
         # (0, '交易成功'), (1, '待支付'), (2, '订单已创建'),  (3, '退费申请中'), (4, '已退费'), (5, '主动取消'), (6, '超时取消')
         code = data.get("code", '')
-        logger.info("out_trade_no: %s info:%s"%(out_trade_no, data))
+        logger.info("out_trade_no: %s info:%s" % (out_trade_no, data))
         if code == '10000':
             trade_status = data.get("trade_status", '')
             if trade_status in ['TRADE_SUCCESS']:

@@ -3,11 +3,11 @@
 # project: 5月
 # author: liuyu
 # date: 2020/5/7
-import os, re, json, requests, datetime, random
-from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
+import os, json, requests, datetime, random
+from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
     UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot
-from api.utils.app.randomstrings import make_app_uuid
+from api.utils.storage.caches import get_app_d_count_by_app_id
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
 from api.utils.tempcaches import tmpCache
@@ -16,37 +16,11 @@ from api.utils.sendmsg.sendmsg import SendMessage
 from django.db.models import Sum
 from captcha.models import CaptchaStore
 from captcha.helpers import captcha_image_url
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
+from api.utils.storage.caches import consume_user_download_times
 from django.core.cache import cache
 import logging
 
 logger = logging.getLogger(__name__)
-
-
-def file_format_path(user_obj, auth=None, email=None):
-    if email:
-        cert_dir_name = make_app_uuid(user_obj, email)
-    else:
-        pkey = auth.get("username")
-        if auth.get("issuer_id"):
-            pkey = auth.get("issuer_id")
-        cert_dir_name = make_app_uuid(user_obj, pkey)
-    cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name)
-    if not os.path.isdir(cert_dir_path):
-        os.makedirs(cert_dir_path)
-    file_format_path_name = os.path.join(cert_dir_path, cert_dir_name)
-    return file_format_path_name
-
-
-def get_profile_full_path(developer_obj, app_obj):
-    pkey = developer_obj.email
-    if developer_obj.issuer_id:
-        pkey = developer_obj.issuer_id
-    cert_dir_name = make_app_uuid(developer_obj.user_id, pkey)
-    cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name, "profile")
-    provision_name = os.path.join(cert_dir_path, app_obj.app_id)
-    return provision_name + '.mobileprovision'
 
 
 def delete_app_to_dev_and_file(developer_obj, app_id):
@@ -57,16 +31,6 @@ def delete_app_to_dev_and_file(developer_obj, app_id):
         storage = Storage(developer_obj.user_id)
         storage.delete_file(binary_file)
         APPToDeveloper_obj.delete()
-
-
-def delete_app_profile_file(developer_obj, app_obj):
-    file = get_profile_full_path(developer_obj, app_obj)
-    try:
-        if os.path.isfile(file):
-            os.remove(file)
-    except Exception as e:
-        logger.error("delete_app_profile_file developer_obj:%s  app_obj:%s file:%s Exception:%s" % (
-            developer_obj, app_obj, file, e))
 
 
 def get_developer_udided(developer_obj):
@@ -125,29 +89,6 @@ def upload_oss_default_head_img(user_obj, storage_obj):
     if storage_obj:
         storage_obj = Storage(user_obj, storage_obj)
         return storage_obj.upload_file(head_img_full_path)
-
-
-def is_valid_domain(value):
-    pattern = re.compile(
-        r'^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|'
-        r'([a-zA-Z]{1}[0-9]{1})|([0-9]{1}[a-zA-Z]{1})|'
-        r'([a-zA-Z0-9][-_.a-zA-Z0-9]{0,61}[a-zA-Z0-9]))\.'
-        r'([a-zA-Z]{2,13}|[a-zA-Z0-9-]{2,30}.[a-zA-Z]{2,3})$'
-    )
-    return True if pattern.match(value) else False
-
-
-def is_valid_phone(value):
-    phone_pat = re.compile('^(13\d|14[5|7]|15\d|166|17[3|6|7]|18\d)\d{8}$')
-    return True if str(value) and re.search(phone_pat, str(value)) else False
-
-
-def is_valid_email(email):
-    try:
-        validate_email(email)
-        return True
-    except ValidationError:
-        return False
 
 
 def get_sender_token(sender, user_id, target, action, msg=None):
@@ -316,6 +257,11 @@ def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_d
 
 def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
     with cache.lock("%s_%s" % ('migrating_storage_data', user_obj.uid)):
+
+        status = user_obj.certification.status
+        auth_status = False
+        if status and status == 1:
+            auth_status = True
         for app_release_obj in AppReleaseInfo.objects.filter(app_id__user_id=user_obj).all():
             # 迁移APP数据
             filename = get_filename_from_apptype(app_release_obj.release_id, app_release_obj.release_type)
@@ -328,6 +274,9 @@ def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
             for apptodev_obj in APPToDeveloper.objects.filter(app_id=app_release_obj.app_id).all():
                 filename = get_filename_from_apptype(apptodev_obj.binary_file, app_release_obj.release_type)
                 migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data)
+            # 消费下载次数
+            amount = get_app_d_count_by_app_id(app_release_obj.app_id.app_id)
+            consume_user_download_times(user_obj.pk, app_release_obj.app_id, amount, auth_status)
         return True
 
 

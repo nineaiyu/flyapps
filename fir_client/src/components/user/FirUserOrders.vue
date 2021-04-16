@@ -103,12 +103,12 @@
                         prop="status"
                         label="状态"
                         align="center"
-                        width="130">
+                        width="110">
 
                     <template slot-scope="scope">
                         <div v-if="scope.row.status === 1 || scope.row.status === 2">
                             <el-button @click="goto_pay(scope.row)"
-                                       type="primary" size="small">  {{ format_status_type(scope.row)}}
+                                       type="primary" size="small"> {{ format_status_type(scope.row)}}
                             </el-button>
                         </div>
                         <div v-else-if="scope.row.status === 0">
@@ -148,12 +148,21 @@
                 <el-table-column
                         prop="actual_download_gift_times"
                         label="赠送数量"
-                        width="100">
+                        width="90">
+                </el-table-column>
+                <el-table-column
+                        :formatter="format_payment_type"
+                        prop="payment_type"
+                        align="center"
+                        label="支付方式"
+                        width="80">
                 </el-table-column>
 
                 <el-table-column
                         :formatter="format_create_time"
                         prop="created_time"
+                        width="170"
+                        align="center"
                         label="订单创建时间"
                 >
                 </el-table-column>
@@ -169,8 +178,8 @@
                                 @click="click_order_info(scope.row)">详情
                         </el-button>
                         <el-button v-if="scope.row.status === 1 || scope.row.status === 2"
-                                size="mini" type="danger"
-                                @click="cancel_order(scope.row)">取消
+                                   size="mini" type="danger"
+                                   @click="cancel_order(scope.row)">取消
                         </el-button>
                     </template>
                 </el-table-column>
@@ -213,16 +222,19 @@
             }
         },
         methods: {
-            cancel_order(order){
+            cancel_order(order) {
                 my_order(res => {
                     if (res.code === 1000) {
                         this.$message.success("操作成功");
-                        this.get_data_from_tabname()
+                        this.get_data_from_tabname({
+                            "size": this.pagination.pagesize,
+                            "page": this.pagination.currentPage
+                        })
                     } else {
                         this.$message.error("失败了 " + res.msg)
                     }
                 }, {
-                    methods: 'PUT', data: {order_number: order.order_number,act:'cancel'},
+                    methods: 'PUT', data: {order_number: order.order_number, act: 'cancel'},
                 })
             },
             goto_pay(order) {
@@ -230,7 +242,7 @@
                     if (res.code === 1000) {
                         this.$message.success("正在跳转支付平台");
                         let pay_url = res.data;
-                        if(pay_url && pay_url.length > 10){
+                        if (pay_url && pay_url.length > 10) {
                             window.location.href = pay_url
                         }
                     } else {
@@ -241,15 +253,17 @@
                 })
             },
             click_order_info(order) {
-                my_order(res => {
-                    if (res.code === 1000) {
-                        this.get_data_from_tabname()
-                    } else {
-                        this.$message.error("失败了 " + res.msg)
-                    }
-                }, {
-                    methods: 'PUT', data: {order_number: order.order_number,act:'status'},
-                });
+                if (order.status === 1 || order.status === 2) {
+                    my_order(res => {
+                        if (res.code === 1000) {
+                            this.get_data_from_tabname()
+                        } else {
+                            this.$message.error("失败了 " + res.msg)
+                        }
+                    }, {
+                        methods: 'PUT', data: {order_number: order.order_number, act: 'status'},
+                    });
+                }
                 this.show_order_info = true;
                 this.current_order_info = order;
 

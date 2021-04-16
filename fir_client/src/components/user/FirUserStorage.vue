@@ -90,17 +90,19 @@
                         </el-option>
                     </el-option-group>
                 </el-select>
-                <el-button v-if="use_storage_id!==org_storage_id" style="margin-left: 10px" round type="info"
-                           icon="el-icon-thumb"
-                           @click="change_storage_info">
-                    迁移数据并保存
-                </el-button>
+                <div v-if="use_storage_id!==org_storage_id" style="margin-top: 20px">
+                    <el-button style="margin-left: 10px" round type="info"
+                               icon="el-icon-thumb"
+                               @click="change_storage_info(0)">
+                        迁移数据并保存
+                    </el-button>
+                    <el-button style="margin-left: 10px" round type="danger"
+                               icon="el-icon-thumb"
+                               @click="change_storage_info(1)">
+                        强制迁移，忽略数据迁移失败错误，可能会导致数据丢失
+                    </el-button>
+                </div>
 
-                <!--                <el-button-group style="margin-left: 10px">-->
-                <!--                    <el-button round type="info" icon="el-icon-edit" @click="change_storage_info"></el-button>-->
-                <!--                    <el-button round type="info" icon="el-icon-plus" @click="add_storage_info"></el-button>-->
-                <!--                    <el-button round type="info" icon="el-icon-delete" @click="del_storage_info"></el-button>-->
-                <!--                </el-button-group>-->
                 <el-divider></el-divider>
                 <el-form v-if="storageinfo.id && storageinfo.id !==-1" ref="storageinfoform" :model="storageinfo"
                          label-width="80px" style="width: 39%;margin:0 auto;">
@@ -401,7 +403,7 @@
                 });
 
             },
-            change_storage_info() {
+            change_storage_info(force) {
                 this.$confirm('此操作将导致应用，图片，显示下载异常, 是否继续?', '警告', {
                     confirmButtonText: '确定',
                     cancelButtonText: '取消',
@@ -418,8 +420,10 @@
                         if (data.code === 1000) {
                             this.$message.success('修改成功');
                             this.getstorageinfoFun();
+                        } else {
+                            this.$message.error(data.msg)
                         }
-                    }, {"methods": 'PUT', 'data': {'use_storage_id': this.use_storage_id}});
+                    }, {"methods": 'PUT', 'data': {'use_storage_id': this.use_storage_id, 'force': force}});
                     this.getstorageinfoFun();
                 }).catch(() => {
                     this.$message({

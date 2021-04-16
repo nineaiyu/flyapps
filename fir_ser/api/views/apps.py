@@ -17,7 +17,8 @@ from api.utils.serializer import AppsSerializer, AppReleaseSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
 from fir_ser.settings import SERVER_DOMAIN
-from api.utils.utils import is_valid_domain, delete_local_files, delete_app_screenshots_files
+from api.utils.utils import delete_local_files, delete_app_screenshots_files
+from api.utils.baseutils import is_valid_domain
 from api.base_views import app_delete
 
 logger = logging.getLogger(__name__)

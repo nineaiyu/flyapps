@@ -94,6 +94,7 @@ class StorageView(APIView):
         logger.info("user %s update storage data:%s" % (request.user, data))
 
         use_storage_id = data.get("use_storage_id", None)
+        force = data.get("force", None)
         if use_storage_id:
             if request.user.storage and use_storage_id == request.user.storage.id:
                 return Response(res.dict)
@@ -115,8 +116,17 @@ class StorageView(APIView):
 
             except Exception as e:
                 logger.error("update user %s storage failed Exception:%s" % (request.user, e))
-                res.code = 1006
-                res.msg = '修改失败'
+                if force:
+                    if use_storage_id == -1:
+                        UserInfo.objects.filter(pk=request.user.pk).update(storage=None)
+                    else:
+                        UserInfo.objects.filter(pk=request.user.pk).update(storage_id=use_storage_id)
+                    clean_storage_data(request.user)
+                else:
+                    res.code = 1006
+                    res.msg = '修改失败'
+            del_cache_storage(request.user)
+
             return Response(res.dict)
 
         storage_id = data.get("id", None)

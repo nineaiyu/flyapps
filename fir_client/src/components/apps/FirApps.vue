@@ -284,17 +284,6 @@
                                     <el-divider direction="vertical"></el-divider>
                                 </div>
                             </el-col>
-
-                            <!--                            <el-col :span="8">-->
-                            <!--                                <div>-->
-                            <!--                                    <span class="name">总共下载次数</span>-->
-                            <!--                                    <el-divider direction="vertical"></el-divider>-->
-                            <!--                                </div>-->
-                            <!--                                <div>-->
-                            <!--                                    <span class="value">{{ hdata.all_hits_count}}</span>-->
-                            <!--                                    <el-divider direction="vertical"></el-divider>-->
-                            <!--                                </div>-->
-                            <!--                            </el-col>-->
                         </el-row>
                     </el-col>
 
@@ -304,7 +293,10 @@
                             <el-col :span="9">
                                 <div>
                                     <el-tooltip placement="top">
-                                        <div slot="content">1.账号下所有应用共用此剩余下载次数<br/>2.每日凌晨 0 点自动重置下载次数</div>
+                                        <div slot="content">
+                                            1.账号下所有应用共用此剩余下载次数<br/>
+                                            2.每日凌晨 0 点自动重置下载次数<br/>
+                                        </div>
                                         <span class="name">今日剩余免费次数</span>
                                     </el-tooltip>
                                     <el-divider direction="vertical"></el-divider>
@@ -331,7 +323,13 @@
 
                             <el-col :span="6">
                                 <div>
-                                    <span class="name">购买次数</span>
+                                    <el-tooltip placement="top">
+                                        <div slot="content">
+                                            1.下载应用，每100M消耗一次下载次数<br>
+                                            2.超级签下载，下载消耗次数翻倍<br>
+                                        </div>
+                                        <span class="name">购买次数</span>
+                                    </el-tooltip>
                                 </div>
                                 <div>
                                     <el-button class="action" size="small" icon="el-icon-shopping-cart-1"
@@ -536,7 +534,7 @@
                     if (res.code === 1000) {
                         this.$message.success("下订单成功，正在跳转支付平台");
                         let pay_url = res.data;
-                        if(pay_url && pay_url.length > 10){
+                        if (pay_url && pay_url.length > 10) {
                             window.location.href = pay_url
                         }
                     } else {
@@ -630,13 +628,6 @@
                         this.analyseappinfo.is_new = data.data.is_new;
                         this.analyseappinfo.binary_url = data.data.binary_url;
                         this.willuploadApp = true;
-
-                        // eslint-disable-next-line no-unused-vars
-                        this.timmer = setTimeout(data => {
-                            let canvas = this.$refs.canvas;
-                            show_beautpic(this, canvas, 666, 0.8);
-                        }, 100);
-
                     } else {
                         this.$message.error("上传token获取失败，请刷新重试")
                     }
@@ -677,7 +668,7 @@
                 // eslint-disable-next-line no-unused-vars
                 this.timmer = setTimeout(data => {
                     let canvas = this.$refs.canvas;
-                    show_beautpic(this, canvas, 888, 0.8);
+                    show_beautpic(this, canvas, 888, 0.6);
                 }, 100);
 
                 let file = dataURLtoFile(this.analyseappinfo.icon, this.analyseappinfo.png_key);
