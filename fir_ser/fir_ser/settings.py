@@ -481,11 +481,8 @@ aaInnu9bitb9rVENCNGXQHdWmIYBMM5zrg8nX8xNJ+yeGQhgxE+YeSq4FOpe0JkA
 daWIhg++OHN2MBRutj7oL/AFAxyu467YA5+itEJLHNATbOr/s13S66nePNXox/hr
 bIX1aWjPxirQX9mzaL3oEQI=
 -----END PRIVATE KEY-----''',
-        'ALI_PUBLIC_KEY': '''-----BEGIN CERTIFICATE-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkru1ulQV1v4q+q38nyzgkdd3evf7C1/Ipu6K+ZFb5FiuxJ7mildkBSuKz/8+TRd+tjgk2lfc2ehK5pja3cxDO/nb25sBoWiU09rtxgXLehLsgRRhatbICrlOnYxg5aiB5odAp3NMRqore4lnVYwfIyL9M49I0G/NbQzYjUQvAQJsnHwc6a6Kuqi1CwR1WXI0sDF9w7KXC4vRFFIUTwI4bVq4HQWI7NhbgEajHM/j6D6Bh/OMcTYnJJzCja0WmZRe5flfCsELlPESOCWUMbYoaNfBzpNvvyOpmRgs9jgy2WY9SeaB9hxwkpr8tOd2Sc7j3221JKCyDaFAX+4zPy7/fQIDAQAB
------END CERTIFICATE-----''',
-        'APP_NOTIFY_URL': 'https://app.hehelucky.cn/api/v1/fir/server/ali_pay_success',  # 支付支付回调URL
-        # 'RETURN_URL': 'https://app.hehelucky.cn/api/v1/fir/server/ali_pay_success',  # 支付前端页面回调URL
+        'API_V3_KEY': '60DbP621a9C3162dDd4AB9c2O15a005L',
+        'APP_NOTIFY_URL': 'https://app.hehelucky.cn/api/v1/fir/server/wx_pay_success',  # 支付支付回调URL
         'RETURN_URL': PAY_SUCCESS_URL,  # 支付前端页面回调URL
         'SUBJECT': '向 FLY分发平台 充值',
     }

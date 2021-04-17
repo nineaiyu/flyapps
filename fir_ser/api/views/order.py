@@ -8,16 +8,14 @@ from rest_framework.views import APIView
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
-from api.models import UserInfo, Price, Order
+from api.models import Price, Order
 from api.utils.serializer import PriceSerializer, OrdersSerializer
 from rest_framework.pagination import PageNumberPagination
 from api.utils.utils import get_order_num, get_choices_dict
 from api.utils.storage.caches import update_order_status
 import logging
-from django.utils import timezone
 from api.utils.pay.ali import Alipay
-from fir_ser.settings import PAY_SUCCESS_URL
-from django.http import HttpResponseRedirect
+from api.utils.pay.wx import Weixinpay
 
 logger = logging.getLogger(__name__)
 
@@ -60,9 +58,11 @@ class OrderView(APIView):
             price_obj = Price.objects.filter(name=price_id).first()
             order_obj = Order.objects.filter(account=request.user, order_number=order_number).first()
             if order_obj and order_obj.status in [1, 2]:
-                alipay = Alipay()
-                pay_url = alipay.get_pay_pc_url(order_obj.order_number, order_obj.actual_amount / 100,
-                                                {'user_id': request.user.id})
+                # alipay = Alipay()
+                # pay_url = alipay.get_pay_pc_url(order_obj.order_number, order_obj.actual_amount / 100,
+                #                                 {'user_id': request.user.id})
+                wxpay = Weixinpay()
+                pay_url = wxpay.get_pay_pc_url(order_number, order_obj.actual_amount, {'user_id': request.user.id})
                 res.data = pay_url
                 return Response(res.dict)
             if price_obj:
@@ -73,8 +73,10 @@ class OrderView(APIView):
                                          account=request.user, status=1, order_type=0, actual_amount=actual_amount,
                                          actual_download_times=price_obj.package_size,
                                          actual_download_gift_times=price_obj.download_count_gift)
-                    alipay = Alipay()
-                    pay_url = alipay.get_pay_pc_url(order_number, actual_amount / 100, {'user_id': request.user.id})
+                    # alipay = Alipay()
+                    # pay_url = alipay.get_pay_pc_url(order_number, actual_amount / 100, {'user_id': request.user.id})
+                    wxpay = Weixinpay()
+                    pay_url = wxpay.get_pay_pc_url(order_number, actual_amount, {'user_id': request.user.id})
                     res.data = pay_url
                     return Response(res.dict)
                 except Exception as e:
@@ -101,8 +103,11 @@ class OrderView(APIView):
                     if act == 'cancel' and order_obj.status != 0:
                         update_order_status(order_number, 5)
                     elif act == 'status' and order_obj.status in [1, 2]:
-                        alipay = Alipay()
-                        alipay.update_order_status(order_obj.order_number)
+                        pass
+                        # alipay = Alipay()
+                        # alipay.update_order_status(order_obj.order_number)
+                        # wxpay = Weixinpay()
+                        # wxpay.update_order_status(order_obj.order_number)
                 except Exception as e:
                     logger.error("%s 订单 %s 更新失败 Exception：%s" % (request.user, order_number, e))
                     res.code = 1003
@@ -168,11 +173,11 @@ class WxPaySuccess(APIView):
         # return HttpResponseRedirect(PAY_SUCCESS_URL)
 
     def post(self, request):
-        alipay = Alipay()
         msg = 'failure'
-        logger.info("支付回调参数：%s" % request.data)
+        logger.info("支付回调参数：%s" % request.body)
         logger.info("----- %s" % request.META)
-        data = request.data.copy().dict()
-        if alipay.valid_order(data):
-            msg = 'success'
-        return Response(msg)
+        wxpay = Weixinpay()
+        if wxpay.valid_order(request):
+            return Response(msg)
+        else:
+            return Response(status=201)

@@ -54,6 +54,4 @@ urlpatterns = [
     re_path("^certification$", CertificationView.as_view()),
     re_path("^ali_pay_success$", AliPaySuccess.as_view()),
     re_path("^wx_pay_success$", WxPaySuccess.as_view()),
-    re_path("^pay_success$", WxPaySuccess.as_view()),
-
 ]
