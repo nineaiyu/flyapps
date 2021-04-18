@@ -355,6 +355,7 @@ class Order(models.Model):
     payment_type_choices = ((0, '微信'), (1, '支付宝'), (2, '优惠码'), (4, '银联'))
     payment_type = models.SmallIntegerField(choices=payment_type_choices)
     payment_number = models.CharField(max_length=128, verbose_name="支付第3方订单号", null=True, blank=True)
+    payment_name = models.CharField(max_length=128, verbose_name="支付商家名称", null=True, blank=True)
     order_number = models.CharField(max_length=128, verbose_name="订单号", unique=True)  # 考虑到订单合并支付的问题
     account = models.ForeignKey("UserInfo", on_delete=models.CASCADE)
     actual_amount = models.BigIntegerField(verbose_name="实付金额,单位分")

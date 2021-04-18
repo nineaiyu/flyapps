@@ -60,7 +60,8 @@ import {
     Timeline,
     TimelineItem,
     Tooltip,
-    Upload
+    Upload,
+    Radio,
 } from "element-ui";
 import VueLazyload from 'vue-lazyload'
 // 引入点击复制组件
@@ -142,6 +143,7 @@ Vue.use(Tooltip);
 Vue.use(Switch);
 Vue.use(Footer);
 Vue.use(InputNumber);
+Vue.use(Radio);
 Vue.prototype.$message = Message;
 Vue.prototype.$notify = Notification;
 Vue.prototype.$loading = Loading.service;

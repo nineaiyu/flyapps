@@ -5,9 +5,6 @@
 # date: 2021/3/18
 # pip install alipay-sdk-python==3.3.398
 
-# !/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 
 from api.utils.alipay import AliPay
 from api.utils.alipay.utils import AliPayConfig
@@ -21,14 +18,16 @@ logger = logging.getLogger(__file__)
 
 
 class Alipay(object):
-    def __init__(self):
-        self.ali_config = PAY_CONFIG.get("ALI")
+    def __init__(self, name, p_type, auth):
+        self.p_type = p_type
+        self.name = name
+        self.ali_config = auth
         self.alipay = self.__get_ali_pay()
 
     def __get_ali_pay(self):
         return AliPay(
             appid=self.ali_config.get("APP_ID"),
-            app_notify_url=self.ali_config.get("APP_NOTIFY_URL"),
+            app_notify_url="%s/%s" % (self.ali_config.get("APP_NOTIFY_URL"), self.name),
             app_private_key_string=self.ali_config.get("APP_PRIVATE_KEY"),
             alipay_public_key_string=self.ali_config.get("ALI_PUBLIC_KEY"),
             sign_type="RSA2",  # RSA 或者 RSA2
@@ -38,21 +37,23 @@ class Alipay(object):
         )
 
     def get_pay_pc_url(self, out_trade_no, total_amount, passback_params):
+        passback_params.update({'name': self.name})
         time_expire = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
         order_string = self.alipay.api_alipay_trade_page_pay(
             out_trade_no=out_trade_no,
-            total_amount=total_amount,
+            total_amount=total_amount / 100,
             subject=self.ali_config.get("SUBJECT"),
-            body="充值 %s 元" % total_amount,
+            body="充值 %s 元" % str(total_amount / 100),
             time_expire=time_expire,
             return_url=self.ali_config.get("RETURN_URL"),
-            notify_url=self.ali_config.get("APP_NOTIFY_URL"),
             passback_params=json.dumps(passback_params)
         )
 
-        return "https://openapi.alipay.com/gateway.do?%s" % order_string
+        return {'type': self.p_type, 'url': "https://openapi.alipay.com/gateway.do?%s" % order_string,
+                'out_trade_no': out_trade_no}
 
-    def valid_order(self, data):
+    def valid_order(self, request):
+        data = request.data.copy().dict()
         signature = data.pop("sign")
         success = self.alipay.verify(data, signature)
         if success and data["trade_status"] in ("TRADE_SUCCESS", "TRADE_FINISHED"):

@@ -26,13 +26,39 @@
                                 </div>
                             </div>
                             <div class="package-actions">
-                                <button type="button" class="btn" @click="buy(packages)" :disabled="buy_button_disable">
-                                    购买
-                                </button>
+                                <el-radio v-model="default_price_radio" :label="packages.name" border>
+                                    <span>此套餐</span>
+                                    <span class="pay-current" v-if="default_price_radio === packages.name"/>
+
+                                </el-radio>
+                                <!--           <button type="button" class="btn" @click="buy(packages)" :disabled="buy_button_disable">
+                                               购买
+                                           </button>-->
                             </div>
                         </div>
 
                     </div>
+                    <div>
+                        <div style="margin-top: 30px;text-align: center">
+                            <el-radio v-model="default_pay_radio" :label="pay.name" border v-for="pay in pay_choices"
+                                      :key="pay.name">
+                                <span style="color: white">xxxxxxxxxxxxxx</span>
+                                <span style="width: 160px; height: 45px">
+                                    <span class="pay-icon alipay" v-if="pay.type === 'ALI'"/>
+                                    <span class="pay-icon weixin" v-if="pay.type === 'WX'"/>
+                                    <span class="pay-current" v-if="default_pay_radio === pay.name"/>
+                                </span>
+                            </el-radio>
+                        </div>
+
+                        <div style="text-align: center">
+                            <el-button type="primary" :disabled="buy_button_disable" @click="buy"
+                                       style="margin-top:30px;width: 166px"> 立即支付
+                            </el-button>
+                        </div>
+
+                    </div>
+
                     <span slot="footer">
                         如对充值订单有疑问，请联系 nineven@qq.com
                     </span>
@@ -490,6 +516,9 @@
         name: "FirApps",
         data() {
             return {
+                default_pay_radio: '',
+                default_price_radio: '',
+                pay_choices: [],
                 analyseappinfo: {},
                 short: '',
                 keysearch: '',
@@ -513,7 +542,7 @@
                 loadingobj: null,
                 show_buy_download_times: false,
                 data_package_prices: [],
-                buy_button_disable: false,
+                buy_button_disable: true,
             }
         }, methods: {
             show_package_prices() {
@@ -521,6 +550,10 @@
                     if (res.code === 1000) {
                         this.show_buy_download_times = true;
                         this.data_package_prices = res.data;
+                        this.pay_choices = res.pay_choices;
+                        if (this.pay_choices) {
+                            this.default_pay_radio = this.pay_choices[0].name
+                        }
                     } else {
                         this.$message.error("获取价格异常");
                         this.show_buy_download_times = false;
@@ -528,15 +561,12 @@
                 }, {})
 
             },
-            buy(packages) {
+            buy() {
                 this.buy_button_disable = true;
                 my_order(res => {
                     if (res.code === 1000) {
-                        this.$message.success("下订单成功，正在跳转支付平台");
-                        let pay_url = res.data;
-                        if (pay_url && pay_url.length > 10) {
-                            window.location.href = pay_url
-                        }
+                        this.$message.success("下订单成功，正在跳转支付页");
+                        this.$router.push({name: 'FirUserOrders', params: {out_trade_no: res.data.out_trade_no}})
                     } else {
                         this.$message.error("异常" + res.msg);
                         this.buy_button_disable = false;
@@ -544,7 +574,8 @@
                     }
                 }, {
                     methods: 'POST', data: {
-                        price_id: packages.name
+                        price_id: this.default_price_radio,
+                        pay_id: this.default_pay_radio,
                     }
                 })
             },
@@ -930,7 +961,14 @@
             this.loadingobj.close();
         },
         watch: {
-
+            // eslint-disable-next-line no-unused-vars
+            default_pay_radio: function (val, oldVal) {
+                this.buy_button_disable = !(this.default_pay_radio.length > 2 && this.default_price_radio.length > 2);
+            },
+            // eslint-disable-next-line no-unused-vars
+            default_price_radio: function (val, oldVal) {
+                this.buy_button_disable = !(this.default_pay_radio.length > 2 && this.default_price_radio.length > 2);
+            },
             // eslint-disable-next-line no-unused-vars
             keysearch: function (val, oldVal) {
                 // this.searchapps()
@@ -1470,4 +1508,31 @@
         margin-top: -58px;
         z-index: 999;
     }
+
+    .weixin {
+        background-image: url(https://img.jiguang.cn/app-portal/assets/img/account/pay_weixin.png);
+    }
+
+    .pay-current {
+        background: url(https://img.jiguang.cn/app-portal/assets/img/account/pay_selected.png) right bottom/100% no-repeat;
+        width: 18px;
+        height: 19px;
+        position: absolute;
+        bottom: -1px;
+        right: -1px;
+    }
+
+    .pay-icon {
+        width: 120px;
+        height: 30px;
+        background-size: 100%;
+        position: absolute;
+        top: 6px;
+        left: 15px;
+    }
+
+    .alipay {
+        background-image: url(https://img.jiguang.cn/app-portal/assets/img/account/pay_alipay.png);
+    }
+
 </style>

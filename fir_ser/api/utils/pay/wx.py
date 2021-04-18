@@ -5,7 +5,6 @@
 # date: 2021/3/18
 
 from api.utils.wxpay import WeChatPay, WeChatPayType
-from fir_ser.settings import PAY_CONFIG
 from datetime import datetime, timedelta
 from api.utils.storage.caches import update_order_info, update_order_status
 import json
@@ -15,8 +14,10 @@ logger = logging.getLogger(__file__)
 
 
 class Weixinpay(object):
-    def __init__(self):
-        self.wx_config = PAY_CONFIG.get("WX")
+    def __init__(self, name, p_type, auth):
+        self.p_type = p_type
+        self.wx_config = auth
+        self.name = name
         self.wxpay = self.__get_wx_pay()
 
     def __get_wx_pay(self):
@@ -25,11 +26,12 @@ class Weixinpay(object):
                          parivate_key=self.wx_config.get('APP_PRIVATE_KEY'),
                          cert_serial_no=self.wx_config.get('SERIAL_NO'),
                          appid=self.wx_config.get('APP_ID'),
-                         notify_url=self.wx_config.get('APP_NOTIFY_URL'),
+                         notify_url="%s/%s" % (self.wx_config.get('APP_NOTIFY_URL'), self.name),
                          apiv3_key=self.wx_config.get('API_V3_KEY')
                          )
 
     def get_pay_pc_url(self, out_trade_no, total_amount, passback_params):
+        passback_params.update({'name': self.name})
         time_expire = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S+08:00")
         code, data = self.wxpay.pay(
             description=self.wx_config.get('SUBJECT'),
@@ -41,7 +43,7 @@ class Weixinpay(object):
             time_expire=time_expire,
             attach=json.dumps(passback_params),
         )
-        print(code, data)
+        return {'type': self.p_type, 'url': json.loads(data).get('code_url', ''), 'out_trade_no': out_trade_no}
 
     def valid_order(self, request):
         headers = {
@@ -60,7 +62,7 @@ class Weixinpay(object):
                 ext_parms = json.loads(passback_params)
                 user_id = ext_parms.get("user_id")
                 transaction_id = data.get("transaction_id", "")
-                return update_order_info(user_id, out_trade_no, transaction_id, 1)
+                return update_order_info(user_id, out_trade_no, transaction_id, 0)
             else:
                 logger.error("passback_params %s  user_id not exists" % passback_params)
         else:

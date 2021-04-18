@@ -1,5 +1,44 @@
 <template>
     <el-main>
+
+        <el-dialog
+                :visible.sync="wx_pay"
+                width="49%"
+                :close-on-click-modal="false"
+                :close-on-press-escape="false"
+                center>
+            <div slot="title" style="margin-bottom: 10px">
+                <el-row>
+                    <el-col :span="12">
+                        <p class="detail">请在<span style="color: #f89303">24小时</span>内完成支付，超时订单将自动取消。</p>
+                        <p class="detail">支付订单号： <span>{{ current_order_info.order_number }}</span></p>
+                    </el-col>
+                    <el-col :span="12">
+                        <p style="margin-top: 26px"><span class="order_text">订单金额（元）：</span><span class="amount">{{format_actual_amount(current_order_info) }}</span>
+                        </p>
+                    </el-col>
+
+                </el-row>
+
+            </div>
+            <div class="pay_wx">
+                <div>
+                    <div class="icon-weixin"></div>
+                    <vue-qr :margin="qrinfo.margin"
+                            class="code-wrap"
+                            :logoScale="qrinfo.logoScale"
+                            :logoCornerRadius="qrinfo.logoCornerRadius"
+                            :correctLevel="qrinfo.correctLevel"
+                            :text="pay_code_url" :size="266"
+                            ref="qr">
+                    </vue-qr>
+                    <div class="tip-btn pay_wx"><span class="icon"/><span class="text">请使用微信扫码支付</span></div>
+                    <p style="margin-top: 30px">支付完成之后，请刷新该页面，确认支付状态</p>
+                </div>
+            </div>
+
+        </el-dialog>
+
         <el-dialog
                 :visible.sync="show_order_info"
                 width="780px"
@@ -205,11 +244,23 @@
 
     import {my_order} from "@/restful";
     import {getUserInfoFun} from '@/utils'
+    import VueQr from 'vue-qr';
 
     export default {
         name: "FirUserOrders",
+        components: {
+            VueQr
+        },
         data() {
             return {
+                wx_pay: false,
+                pay_code_url: '',
+                qrinfo: {
+                    logoScale: 0.3,
+                    logoCornerRadius: 12,
+                    correctLevel: 3,
+                    margin: 20
+                },
                 order_info_list: [],
                 order_id_seach: "",
                 pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
@@ -238,12 +289,23 @@
                 })
             },
             goto_pay(order) {
+                this.current_order_info = order;
                 my_order(res => {
                     if (res.code === 1000) {
-                        this.$message.success("正在跳转支付平台");
-                        let pay_url = res.data;
-                        if (pay_url && pay_url.length > 10) {
-                            window.location.href = pay_url
+                        let data = res.data;
+                        if (data && data.type === 'WX') {
+                            this.pay_code_url = data.url;
+                            this.wx_pay = true;
+                            this.$message.success("请用微信扫描支付");
+                        } else if (data && data.type === 'ALI') {
+                            let pay_url = data.url;
+                            if (pay_url && pay_url.length > 10) {
+                                this.$message.success("正在跳转支付宝支付平台");
+                                window.location.href = pay_url
+                                // window.open(pay_url, '_blank', '');
+                            }
+                        } else {
+                            this.$message.error("支付获取失败 " + res.msg)
                         }
                     } else {
                         this.$message.error("失败了 " + res.msg)
@@ -341,7 +403,13 @@
                         this.payment_type_choices = data.payment_type_choices;
                         this.status_choices = data.status_choices;
                         this.order_type_choices = data.order_type_choices;
-
+                        if (this.order_info_list.length === 1) {
+                            this.current_order_info = this.order_info_list[0];
+                            let out_trade_no = this.$route.params.out_trade_no;
+                            if (out_trade_no) {
+                                this.goto_pay(this.current_order_info);
+                            }
+                        }
                     } else if (data.code === 1008) {
                         this.$message.error(data.msg);
                     } else {
@@ -352,7 +420,11 @@
             },
         }, mounted() {
             getUserInfoFun(this);
-            this.get_data_from_tabname()
+            let out_trade_no = this.$route.params.out_trade_no;
+            if (out_trade_no) {
+                this.order_id_seach = out_trade_no;
+            }
+            this.get_data_from_tabname();
         }, filters: {}
     }
 </script>
@@ -369,4 +441,61 @@
         border-radius: 1%;
     }
 
+    .icon-weixin {
+        width: 137px;
+        height: 35px;
+        background: url(https://img.jiguang.cn/app-portal/assets/img/account/order-weixin.png) 0 0/100%;
+        margin-left: 50px;
+    }
+
+    .code-wrap {
+        width: 240px;
+        height: 240px;
+        border: 1px solid #c3c3c3;
+        margin-top: 23px;
+        margin-bottom: 20px;
+    }
+
+    .tip-btn {
+        background: #2bbc4d;
+        width: 240px;
+        height: 60px;
+    }
+
+    .icon {
+        width: 26px;
+        height: 26px;
+        background-image: url(https://img.jiguang.cn/app-portal/assets/img/account/pay-scan.png);
+        background-size: 100%;
+        display: inline-block;
+        margin-right: 11px;
+    }
+
+    .text {
+        font-family: PingFang-SC-Bold;
+        font-size: 16px;
+        color: #fff;
+        letter-spacing: -.1px;
+    }
+
+    .pay_wx {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .order_text {
+        font-family: PingFang-SC-Medium;
+        font-size: 14px;
+        color: #787e85;
+        letter-spacing: 0;
+        vertical-align: text-top;
+    }
+
+    .amount {
+        font-family: Avenir-Heavy;
+        font-size: 24px;
+        color: #ff8000;
+        letter-spacing: 0;
+    }
 </style>
