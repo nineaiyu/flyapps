@@ -378,12 +378,17 @@ def add_user_download_times(user_id, download_times=0):
             return False
 
 
-def check_user_has_all_download_times(app_obj):
-    user_id = app_obj.user_id_id
+def get_user_cert_auth_status(user_id):
     user_cert_obj = UserCertificationInfo.objects.filter(user_id=user_id).first()
     auth_status = False
     if user_cert_obj and user_cert_obj.status == 1:
         auth_status = True
+    return auth_status
+
+
+def check_user_has_all_download_times(app_obj):
+    user_id = app_obj.user_id_id
+    auth_status = get_user_cert_auth_status(user_id)
     return get_user_free_download_times(user_id, auth_status=auth_status) > 0 or check_user_can_download(user_id)
 
 

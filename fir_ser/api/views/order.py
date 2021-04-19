@@ -140,15 +140,10 @@ class PriceView(APIView):
 
 
 class PaySuccess(APIView):
-    # authentication_classes = [ExpiringTokenAuthentication]
 
     def get(self, request):
-        alipay = Alipay()
-        # alipay.update_order_status('1202141610723105226256209')
         print(request.META)
         return Response(111)
-
-        # return HttpResponseRedirect(PAY_SUCCESS_URL)
 
     def post(self, request, name):
         pay_obj = get_pay_obj_form_name(name)

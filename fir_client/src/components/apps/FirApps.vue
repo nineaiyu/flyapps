@@ -28,12 +28,10 @@
                             <div class="package-actions">
                                 <el-radio v-model="default_price_radio" :label="packages.name" border>
                                     <span>此套餐</span>
-                                    <span class="pay-current" v-if="default_price_radio === packages.name"/>
+                                    <span class="pay-current" v-if="default_price_radio === packages.name"
+                                          :style="{background:`url(${pay_image.selected}) right bottom/100% no-repeat`}"/>
 
                                 </el-radio>
-                                <!--           <button type="button" class="btn" @click="buy(packages)" :disabled="buy_button_disable">
-                                               购买
-                                           </button>-->
                             </div>
                         </div>
 
@@ -44,9 +42,12 @@
                                       :key="pay.name">
                                 <span style="color: white">xxxxxxxxxxxxxx</span>
                                 <span style="width: 160px; height: 45px">
-                                    <span class="pay-icon alipay" v-if="pay.type === 'ALI'"/>
-                                    <span class="pay-icon weixin" v-if="pay.type === 'WX'"/>
-                                    <span class="pay-current" v-if="default_pay_radio === pay.name"/>
+                                    <span class="pay-icon alipay" :style="{backgroundImage:`url(${pay_image.ali})`}"
+                                          v-if="pay.type === 'ALI'"/>
+                                    <span class="pay-icon" :style="{backgroundImage:`url(${pay_image.wx})`}"
+                                          v-if="pay.type === 'WX'"/>
+                                    <span class="pay-current" v-if="default_pay_radio === pay.name"
+                                          :style="{background:`url(${pay_image.selected}) right bottom/100% no-repeat` }"/>
                                 </span>
                             </el-radio>
                         </div>
@@ -543,6 +544,11 @@
                 show_buy_download_times: false,
                 data_package_prices: [],
                 buy_button_disable: true,
+                pay_image: {
+                    'wx': require('@/assets/pay/pay_weixin.png'),
+                    'ali': require('@/assets/pay/pay_alipay.png'),
+                    'selected': require('@/assets/pay/pay_selected.png'),
+                }
             }
         }, methods: {
             show_package_prices() {
@@ -565,8 +571,12 @@
                 this.buy_button_disable = true;
                 my_order(res => {
                     if (res.code === 1000) {
-                        this.$message.success("下订单成功，正在跳转支付页");
-                        this.$router.push({name: 'FirUserOrders', params: {out_trade_no: res.data.out_trade_no}})
+                        if (res.data && res.data.url) {
+                            this.$message.success("下订单成功，正在跳转支付页");
+                            this.$router.push({name: 'FirUserOrders', params: {out_trade_no: res.data.out_trade_no}})
+                        } else {
+                            this.$message.error("下订单异常，请联系管理员");
+                        }
                     } else {
                         this.$message.error("异常" + res.msg);
                         this.buy_button_disable = false;
@@ -1064,12 +1074,6 @@
     }
 
 
-    /*/deep/ .el-dialog__body {*/
-    /*    background-image: url("@/assets/b6.png");*/
-    /*    border: 0;*/
-    /*}*/
-
-
     .page-apps .card.app .action a, .page-apps .card.app .appname, .page-apps .card.app table tr td, .upload-modal .state-form .release-body .input-addon {
         font-family: 'Open Sans', sans-serif
     }
@@ -1509,12 +1513,7 @@
         z-index: 999;
     }
 
-    .weixin {
-        background-image: url(https://img.jiguang.cn/app-portal/assets/img/account/pay_weixin.png);
-    }
-
     .pay-current {
-        background: url(https://img.jiguang.cn/app-portal/assets/img/account/pay_selected.png) right bottom/100% no-repeat;
         width: 18px;
         height: 19px;
         position: absolute;
@@ -1529,10 +1528,6 @@
         position: absolute;
         top: 6px;
         left: 15px;
-    }
-
-    .alipay {
-        background-image: url(https://img.jiguang.cn/app-portal/assets/img/account/pay_alipay.png);
     }
 
 </style>

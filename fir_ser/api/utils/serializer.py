@@ -5,7 +5,7 @@ from api.utils.TokenManager import DownloadToken
 from api.utils.app.supersignutils import get_redirect_server_domain
 from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided, get_choices_dict
-from api.utils.storage.caches import get_user_free_download_times
+from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
 import os, json, logging
 
 logger = logging.getLogger(__file__)
@@ -64,7 +64,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
     free_download_times = serializers.SerializerMethodField()
 
     def get_free_download_times(self, obj):
-        return get_user_free_download_times(obj.id)
+        return get_user_free_download_times(obj.id, auth_status=get_user_cert_auth_status(obj.id))
 
     certification = serializers.SerializerMethodField()
 

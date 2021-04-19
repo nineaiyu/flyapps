@@ -23,7 +23,7 @@
             </div>
             <div class="pay_wx">
                 <div>
-                    <div class="icon-weixin"></div>
+                    <div class="icon-weixin" :style="{background:`url(${pay_image.order_wx})  0 0/100%`}"></div>
                     <vue-qr :margin="qrinfo.margin"
                             class="code-wrap"
                             :logoScale="qrinfo.logoScale"
@@ -32,7 +32,8 @@
                             :text="pay_code_url" :size="266"
                             ref="qr">
                     </vue-qr>
-                    <div class="tip-btn pay_wx"><span class="icon"/><span class="text">请使用微信扫码支付</span></div>
+                    <div class="tip-btn pay_wx"><span class="icon" :style="{backgroundImage:`url(${pay_image.scan})`}"/><span
+                            class="text">请使用微信扫码支付</span></div>
                     <p style="margin-top: 30px">支付完成之后，请刷新该页面，确认支付状态</p>
                 </div>
             </div>
@@ -255,6 +256,10 @@
             return {
                 wx_pay: false,
                 pay_code_url: '',
+                pay_image: {
+                    'scan': require('@/assets/pay/pay-scan.png'),
+                    'order_wx': require('@/assets/pay/order-weixin.png'),
+                },
                 qrinfo: {
                     logoScale: 0.3,
                     logoCornerRadius: 12,
@@ -293,19 +298,24 @@
                 my_order(res => {
                     if (res.code === 1000) {
                         let data = res.data;
-                        if (data && data.type === 'WX') {
-                            this.pay_code_url = data.url;
-                            this.wx_pay = true;
-                            this.$message.success("请用微信扫描支付");
-                        } else if (data && data.type === 'ALI') {
-                            let pay_url = data.url;
-                            if (pay_url && pay_url.length > 10) {
-                                this.$message.success("正在跳转支付宝支付平台");
-                                window.location.href = pay_url
-                                // window.open(pay_url, '_blank', '');
+                        if (data && data.url) {
+
+                            if (data && data.type === 'WX') {
+                                this.pay_code_url = data.url;
+                                this.wx_pay = true;
+                                this.$message.success("请用微信扫描支付");
+                            } else if (data && data.type === 'ALI') {
+                                let pay_url = data.url;
+                                if (pay_url && pay_url.length > 10) {
+                                    this.$message.success("正在跳转支付宝支付平台");
+                                    window.location.href = pay_url
+                                    // window.open(pay_url, '_blank', '');
+                                }
+                            } else {
+                                this.$message.error("支付获取失败 " + res.msg)
                             }
                         } else {
-                            this.$message.error("支付获取失败 " + res.msg)
+                            this.$message.error("下订单异常，请联系管理员");
                         }
                     } else {
                         this.$message.error("失败了 " + res.msg)
@@ -444,7 +454,6 @@
     .icon-weixin {
         width: 137px;
         height: 35px;
-        background: url(https://img.jiguang.cn/app-portal/assets/img/account/order-weixin.png) 0 0/100%;
         margin-left: 50px;
     }
 
@@ -465,7 +474,6 @@
     .icon {
         width: 26px;
         height: 26px;
-        background-image: url(https://img.jiguang.cn/app-portal/assets/img/account/pay-scan.png);
         background-size: 100%;
         display: inline-block;
         margin-right: 11px;
