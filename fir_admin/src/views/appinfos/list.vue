@@ -196,7 +196,6 @@ export default {
   },
   methods: {
     deleteApp(app_id) {
-
       this.$confirm('此操作将永久删除该应用, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -212,8 +211,8 @@ export default {
         this.$message({
           type: 'info',
           message: '已取消删除'
-        });
-      });
+        })
+      })
     },
     handleFilter() {
       this.listQuery.page = 1

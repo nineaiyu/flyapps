@@ -304,3 +304,11 @@ def get_choices_dict(choices):
     for choice in choices_org_list:
         result.append({'id': choice[0], 'name': choice[1]})
     return result
+
+
+def get_choices_name_from_key(choices, key):
+    choices_org_list = list(choices)
+    for choice in choices_org_list:
+        if choice[0] == key:
+            return choice[1]
+    return ''

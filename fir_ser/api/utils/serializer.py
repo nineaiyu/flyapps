@@ -4,7 +4,7 @@ from api.utils.app.apputils import bytes2human
 from api.utils.TokenManager import DownloadToken
 from api.utils.app.supersignutils import get_redirect_server_domain
 from api.utils.storage.storage import Storage
-from api.utils.utils import get_developer_udided, get_choices_dict
+from api.utils.utils import get_developer_udided, get_choices_dict, get_choices_name_from_key
 from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
 import os, json, logging
 
@@ -20,7 +20,7 @@ def get_download_url_from_context(self, obj, key, url, force_new=False):
     if self.context.get("storage", None) and self.context.get("storage") != "undefined":
         storage = self.context.get("storage", None)
     else:
-        if isinstance(obj, models.Apps):
+        if isinstance(obj, models.Apps) or isinstance(obj, models.UserCertificationInfo):
             storage = Storage(obj.user_id)
         elif isinstance(obj, models.AppReleaseInfo):
             storage = Storage(obj.app_id.user_id)
@@ -83,7 +83,7 @@ class AdminUserInfoSerializer(UserInfoSerializer):
         read_only_fields = ["id", "head_img", "free_download_times", "last_login",
                             "is_superuser", "last_name", "is_staff", "uid", "storage_active", "supersign_active",
                             "date_joined", "download_times", "all_download_times", "storage", "groups",
-                            "user_permissions"]
+                            "user_permissions", "certification_id"]
 
     gender_choices = serializers.SerializerMethodField()
 
@@ -104,6 +104,11 @@ class AdminUserInfoSerializer(UserInfoSerializer):
 
     def get_certification_status_choices(self, obj):
         return get_choices_dict(models.UserCertificationInfo.status_choices)
+
+    certification_id = serializers.SerializerMethodField()
+
+    def get_certification_id(self, obj):
+        return models.UserCertificationInfo.objects.filter(user_id=obj).values('id').first()
 
     def update(self, instance, validated_data):
         return super(AdminUserInfoSerializer, self).update(instance, validated_data)
@@ -322,7 +327,6 @@ class AdminAppReleaseSerializer(AppReleaseSerializer):
         return get_choices_dict(obj.release_choices)
 
     def update(self, instance, validated_data):
-        print(validated_data)
         if validated_data.get("is_master", False):
             models.AppReleaseInfo.objects.filter(app_id=instance.app_id).update(**{"is_master": False})
         else:
@@ -355,6 +359,13 @@ class StorageSerializer(serializers.ModelSerializer):
                 storage_obj = models.AppStorage.objects.create(**validated_data, user_id=user_obj)
                 return storage_obj
         return None
+
+
+class AdminStorageSerializer(StorageSerializer):
+    class Meta:
+        model = models.AppStorage
+        fields = "__all__"
+        read_only_fields = ["id", "user_id", "updated_time", "created_time"]
 
 
 class DeveloperSerializer(serializers.ModelSerializer):
@@ -447,3 +458,29 @@ class UserCertificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserCertificationInfo
         exclude = ["id", "user_id", "created_time"]
+
+
+class AdminUserCertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserCertificationInfo
+        fields = "__all__"
+        read_only_fields = ["id", "user_id", "reviewed_time", "created_time"]
+
+    certification_status_choices = serializers.SerializerMethodField()
+
+    def get_certification_status_choices(self, obj):
+        return get_choices_dict(obj.status_choices)
+
+    certification_infos = serializers.SerializerMethodField()
+
+    def get_certification_infos(self, obj):
+        result = []
+        for c_info in models.CertificationInfo.objects.filter(user_id=obj.user_id).all():
+            result.append({
+                'name': get_choices_name_from_key(models.CertificationInfo.type_choices, c_info.type),
+                'certification_url': get_download_url_from_context(self, obj, '', c_info.certification_url)
+            })
+        return result
+
+    def update(self, instance, validated_data):
+        return super(AdminUserCertificationSerializer, self).update(instance, validated_data)

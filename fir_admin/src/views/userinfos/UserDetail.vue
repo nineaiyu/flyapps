@@ -56,6 +56,11 @@
                 <el-select v-model="postForm.certification" class="filter-item" placeholder="Please select" :disabled="postForm.certification === -1">
                   <el-option v-for="item in postForm.certification_status_choices" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
+                <router-link v-if="postForm.certification_id" :to="{name: 'user_authentication_info_edit',params:{id:postForm.certification_id.id}}">
+                  <el-button type="primary">
+                    审核认证信息
+                  </el-button>
+                </router-link>
               </el-col>
               <el-col v-if="postForm.certification === -1" span="16">
                 <el-link :underline="false"> 用户需要先提交认证信息，才可以进行认证修改</el-link>

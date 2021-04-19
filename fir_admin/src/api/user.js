@@ -38,3 +38,18 @@ export function updateUserInfo(data) {
     data
   })
 }
+
+export function getCertificationInfo(query) {
+  return request({
+    url: '/certification/info',
+    method: 'get',
+    params: query
+  })
+}
+export function updateCertificationInfo(data) {
+  return request({
+    url: '/certification/info',
+    method: 'put',
+    data
+  })
+}

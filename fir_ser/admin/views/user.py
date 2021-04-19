@@ -8,7 +8,7 @@ from django.contrib import auth
 from api.models import Token, UserInfo, UserCertificationInfo
 from rest_framework.response import Response
 from api.utils.auth import AdminTokenAuthentication
-from api.utils.serializer import AdminUserInfoSerializer
+from api.utils.serializer import AdminUserInfoSerializer, AdminUserCertificationSerializer
 from django.core.cache import cache
 from rest_framework.views import APIView
 import binascii
@@ -77,6 +77,49 @@ class UserInfoView(APIView):
                     UserCertificationInfo.objects.filter(user_id=user_obj).update(status=data["certification"])
                 res.data = users_serializer.data
                 return Response(res.dict)
+        res.code = 1004
+        res.msg = "数据校验失败"
+        return Response(res.dict)
+
+
+class UserCertificationInfoView(APIView):
+    authentication_classes = [AdminTokenAuthentication, ]
+
+    def get(self, request):
+        res = BaseResponse()
+        filter_data = {}
+        filter_fileds = ["id", "card", "name", "status"]
+        for filed in filter_fileds:
+            f_value = request.query_params.get(filed, None)
+            if f_value:
+                filter_data[filed] = f_value
+        sort = request.query_params.get("sort", "-created_time")
+        page_obj = AppsPageNumber()
+        obj_list = UserCertificationInfo.objects.filter(**filter_data).order_by(sort)
+        page_serializer = page_obj.paginate_queryset(queryset=obj_list, request=request,
+                                                     view=self)
+        users_serializer = AdminUserCertificationSerializer(page_serializer, many=True)
+        res.data = users_serializer.data
+        res.total = obj_list.count()
+        return Response(res.dict)
+
+    def put(self, request):
+        res = BaseResponse()
+        data = request.data
+        pk = data.get("id", None)
+        if not pk:
+            res.code = 1003
+            res.msg = "参数错误"
+            return Response(res.dict)
+        obj = UserCertificationInfo.objects.filter(id=pk).first()
+        if obj:
+            data['pk'] = pk
+            users_serializer = AdminUserCertificationSerializer(obj, data=data, partial=True)
+            if users_serializer.is_valid():
+                users_serializer.save()
+                res.data = users_serializer.data
+                return Response(res.dict)
+            print(users_serializer.errors)
         res.code = 1004
         res.msg = "数据校验失败"
         return Response(res.dict)

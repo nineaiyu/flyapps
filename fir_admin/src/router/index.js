@@ -124,10 +124,17 @@ export const constantRoutes = [
     component: Layout,
     children: [
       {
-        path: 'index',
-        name: 'index',
-        component: () => import('@/views/form/index'),
+        path: 'list',
+        name: 'storage_info_list',
+        component: () => import('@/views/storage/list'),
         meta: { title: '存储管理', icon: 'form' }
+      },
+      {
+        path: 'edit/:id(\\d+)',
+        component: () => import('@/views/storage/Detail'),
+        name: 'storage_info_edit',
+        meta: { title: '编辑信息', noCache: true, activeMenu: '/storage/list' },
+        hidden: true
       }
     ]
   },
@@ -143,14 +150,21 @@ export const constantRoutes = [
       }
     ]
   }, {
-    path: '/certification',
+    path: '/authentication',
     component: Layout,
     children: [
       {
-        path: 'index',
-        name: 'index',
-        component: () => import('@/views/form/index'),
+        path: 'list',
+        name: 'user_authentication_info_list',
+        component: () => import('@/views/authentication/list'),
         meta: { title: '用户实名认证', icon: 'form' }
+      },
+      {
+        path: 'edit/:id(\\d+)',
+        component: () => import('@/views/authentication/Detail'),
+        name: 'user_authentication_info_edit',
+        meta: { title: '编辑信息', noCache: true, activeMenu: '/authentication/list' },
+        hidden: true
       }
     ]
   }, {

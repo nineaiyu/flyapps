@@ -89,7 +89,7 @@ import waves from '@/directive/waves' // waves directive
 
 const sortOptions = [
   { label: '上传时间 Ascending', key: 'created_time' },
-  { label: '上传时间 Descending', key: '-created_time' },
+  { label: '上传时间 Descending', key: '-created_time' }
 ]
 
 export default {
@@ -119,7 +119,7 @@ export default {
         '0': 'info',
         '1': 'success',
         '2': 'gray',
-        '3': 'danger',
+        '3': 'danger'
       }
       return statusMap[status]
     }
@@ -134,7 +134,7 @@ export default {
         limit: 10,
         app_id: undefined,
         release_id: undefined,
-        sort: '-created_time',
+        sort: '-created_time'
       },
       sortOptions,
       type_choices: [],
