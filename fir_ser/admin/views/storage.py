@@ -8,6 +8,7 @@ from django.contrib import auth
 from api.models import Token, UserInfo, AppStorage
 from rest_framework.response import Response
 from api.utils.auth import AdminTokenAuthentication
+from api.utils.baseutils import get_dict_from_filter_fields
 from api.utils.serializer import AdminStorageSerializer, AdminUserCertificationSerializer
 from django.core.cache import cache
 from rest_framework.views import APIView
@@ -36,12 +37,8 @@ class StorageInfoView(APIView):
 
     def get(self, request):
         res = BaseResponse()
-        filter_data = {}
-        filter_fileds = ["id", "user_id", "name", "storage_type", "access_key", "bucket_name"]
-        for filed in filter_fileds:
-            f_value = request.query_params.get(filed, None)
-            if f_value:
-                filter_data[filed] = f_value
+        filter_fields = ["id", "user_id", "name", "storage_type", "access_key", "bucket_name"]
+        filter_data = get_dict_from_filter_fields(filter_fields, request.query_params)
         sort = request.query_params.get("sort", "-created_time")
         page_obj = AppsPageNumber()
         obj_list = AppStorage.objects.filter(**filter_data).order_by(sort)
@@ -60,14 +57,15 @@ class StorageInfoView(APIView):
             res.code = 1003
             res.msg = "参数错误"
             return Response(res.dict)
-        user_obj = UserInfo.objects.filter(pk=pk).first()
-        if user_obj:
+        obj = AppStorage.objects.filter(pk=pk).first()
+        if obj:
             data['pk'] = pk
-            users_serializer = AdminStorageSerializer(user_obj, data=data, partial=True)
-            if users_serializer.is_valid():
-                users_serializer.save()
-                res.data = users_serializer.data
+            serializer = AdminStorageSerializer(obj, data=data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                res.data = serializer.data
                 return Response(res.dict)
+            print(serializer.errors)
         res.code = 1004
         res.msg = "数据校验失败"
         return Response(res.dict)

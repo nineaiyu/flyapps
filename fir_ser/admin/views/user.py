@@ -8,6 +8,7 @@ from django.contrib import auth
 from api.models import Token, UserInfo, UserCertificationInfo
 from rest_framework.response import Response
 from api.utils.auth import AdminTokenAuthentication
+from api.utils.baseutils import get_dict_from_filter_fields
 from api.utils.serializer import AdminUserInfoSerializer, AdminUserCertificationSerializer
 from django.core.cache import cache
 from rest_framework.views import APIView
@@ -36,12 +37,8 @@ class UserInfoView(APIView):
 
     def get(self, request):
         res = BaseResponse()
-        filter_data = {}
-        filter_fileds = ["id", "mobile", "username", "email", "first_name"]
-        for filed in filter_fileds:
-            f_value = request.query_params.get(filed, None)
-            if f_value:
-                filter_data[filed] = f_value
+        filter_fields = ["id", "mobile", "username", "email", "first_name"]
+        filter_data = get_dict_from_filter_fields(filter_fields, request.query_params)
         sort = request.query_params.get("sort", "-date_joined")
         certification = request.query_params.get("certification", None)
         if certification:
@@ -87,12 +84,8 @@ class UserCertificationInfoView(APIView):
 
     def get(self, request):
         res = BaseResponse()
-        filter_data = {}
-        filter_fileds = ["id", "card", "name", "status"]
-        for filed in filter_fileds:
-            f_value = request.query_params.get(filed, None)
-            if f_value:
-                filter_data[filed] = f_value
+        filter_fields = ["id", "card", "name", "status"]
+        filter_data = get_dict_from_filter_fields(filter_fields, request.query_params)
         sort = request.query_params.get("sort", "-created_time")
         page_obj = AppsPageNumber()
         obj_list = UserCertificationInfo.objects.filter(**filter_data).order_by(sort)

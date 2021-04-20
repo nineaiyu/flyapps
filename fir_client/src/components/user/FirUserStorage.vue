@@ -35,27 +35,28 @@
                     <div v-if="editstorageinfo.storage_type === 2">
                         <el-form-item label-width="110px" label="sts_role_arn">
                             <el-input :disabled='disabled'
-                                      v-model="editstorageinfo.additionalparameter.sts_role_arn"></el-input>
+                                      v-model="editstorageinfo.sts_role_arn"></el-input>
                         </el-form-item>
 
                         <el-form-item label-width="110px" label="endpoint">
                             <el-input :disabled='disabled'
-                                      v-model="editstorageinfo.additionalparameter.endpoint"></el-input>
+                                      v-model="editstorageinfo.endpoint"></el-input>
                         </el-form-item>
 
                         <el-form-item label-width="110px" label="下载授权方式">
-                            <el-select v-model="editstorageinfo.additionalparameter.download_auth_type"
+                            <el-select v-model="editstorageinfo.download_auth_type"
                                        placeholder="下载授权方式"
                                        style="width: 80%" :disabled="disabled">
-                                <el-option v-for="st in download_auth_type_list" :key="st.id" :label="st.name"
+                                <el-option v-for="st in editstorageinfo.download_auth_type_choices" :key="st.id"
+                                           :label="st.name"
                                            :value="st.id"></el-option>
                             </el-select>
 
                             <el-form-item label-width="120px" style="margin-top: 10px;margin-left: 70px;width: 60%"
                                           label="CDN鉴权主KEY"
-                                          v-if="editstorageinfo.additionalparameter.download_auth_type === 2">
+                                          v-if="editstorageinfo.download_auth_type === 2">
                                 <el-input :disabled='disabled' placeholder="CDN鉴权主KEY"
-                                          v-model="editstorageinfo.additionalparameter.cnd_auth_key"/>
+                                          v-model="editstorageinfo.cnd_auth_key"/>
                             </el-form-item>
 
                         </el-form-item>
@@ -137,26 +138,27 @@
                         <div v-if="storageinfo.storage_type === 2">
                             <el-form-item label-width="110px" label="sts_role_arn">
                                 <el-input :disabled='Sdisabled'
-                                          v-model="storageinfo.additionalparameter.sts_role_arn"></el-input>
+                                          v-model="storageinfo.sts_role_arn"></el-input>
                             </el-form-item>
 
                             <el-form-item label-width="110px" label="endpoint">
                                 <el-input :disabled='Sdisabled'
-                                          v-model="storageinfo.additionalparameter.endpoint"></el-input>
+                                          v-model="storageinfo.endpoint"></el-input>
                             </el-form-item>
 
                             <el-form-item label-width="110px" label="下载授权方式">
-                                <el-select v-model="storageinfo.additionalparameter.download_auth_type"
+                                <el-select v-model="storageinfo.download_auth_type"
                                            placeholder="下载授权方式"
                                            style="width: 100%" :disabled="disabled">
-                                    <el-option v-for="st in download_auth_type_list" :key="st.id" :label="st.name"
+                                    <el-option v-for="st in storageinfo.download_auth_type_choices" :key="st.id"
+                                               :label="st.name"
                                                :value="st.id"></el-option>
                                 </el-select>
 
                                 <el-form-item label-width="120px" style="margin-top: 10px;width: 100%" label="CDN鉴权主KEY"
-                                              v-if="storageinfo.additionalparameter.download_auth_type === 2">
+                                              v-if="storageinfo.download_auth_type === 2">
                                     <el-input :disabled='disabled' placeholder="CDN鉴权主KEY"
-                                              v-model="storageinfo.additionalparameter.cnd_auth_key"/>
+                                              v-model="storageinfo.cnd_auth_key"/>
                                 </el-form-item>
 
                             </el-form-item>
@@ -265,27 +267,28 @@
                         <div v-if="editstorageinfo.storage_type === 2">
                             <el-form-item label-width="110px" label="sts_role_arn">
                                 <el-input
-                                        v-model="editstorageinfo.additionalparameter.sts_role_arn"></el-input>
+                                        v-model="editstorageinfo.sts_role_arn"></el-input>
                             </el-form-item>
 
                             <el-form-item label-width="110px" label="endpoint">
                                 <el-input
-                                        v-model="editstorageinfo.additionalparameter.endpoint"></el-input>
+                                        v-model="editstorageinfo.endpoint"></el-input>
                             </el-form-item>
 
                             <el-form-item label-width="110px" label="下载授权方式">
-                                <el-select v-model="editstorageinfo.additionalparameter.download_auth_type"
+                                <el-select v-model="editstorageinfo.download_auth_type"
                                            placeholder="下载授权方式"
                                            style="width: 80%">
-                                    <el-option v-for="st in download_auth_type_list" :key="st.id" :label="st.name"
+                                    <el-option v-for="st in editstorageinfo.download_auth_type_choices" :key="st.id"
+                                               :label="st.name"
                                                :value="st.id"></el-option>
                                 </el-select>
 
                                 <el-form-item label-width="120px" style="margin-top: 10px;margin-left: 70px;width: 60%"
                                               label="CDN鉴权主KEY"
-                                              v-if="editstorageinfo.additionalparameter.download_auth_type === 2">
+                                              v-if="editstorageinfo.download_auth_type === 2">
                                     <el-input placeholder="CDN鉴权主KEY"
-                                              v-model="editstorageinfo.additionalparameter.cnd_auth_key"/>
+                                              v-model="editstorageinfo.cnd_auth_key"/>
                                 </el-form-item>
 
                             </el-form-item>
@@ -308,7 +311,7 @@
 
 <script>
     import {getStorageinfo} from "@/restful";
-    import {deepCopy} from "@/utils";
+    import {deepCopy, getUserInfoFun} from "@/utils";
 
     export default {
         name: "FirUserStorage",
@@ -320,19 +323,15 @@
                 org_storage_id: 0,
                 title: '',
                 dialogstorageVisible: false,
-                editstorageinfo: {'additionalparameter': {}},
+                editstorageinfo: {},
                 selectlabel: "",
-                storageinfo: {'additionalparameter': {}},
+                storageinfo: {},
                 storage_list: [],
                 disabled: true,
                 isaddflag: false,
                 activeName: 'change',
                 storage_info_lists: [],
                 is_admin_storage: false,
-                download_auth_type_list: [{id: 1, name: 'OSS模式： 需要把OSS权限开启私有模式'}, {
-                    id: 2,
-                    name: 'CDN模式： 请先配置好阿里云CDN，开启阿里云OSS私有Bucket回源，将使用鉴权A方式'
-                },],
                 loading: false,
             }
         }, methods: {
@@ -348,12 +347,6 @@
                 this.dialogstorageVisible = true;
                 this.editstorageinfo = deepCopy(editstorageinfo);
                 this.isaddflag = false;
-            }, add_storage_click() {
-                this.title = '新增存储';
-                this.disabled = false;
-                this.dialogstorageVisible = true;
-                this.editstorageinfo = {'additionalparameter': {download_auth_type: 1}};
-                this.isaddflag = true;
             },
             // eslint-disable-next-line no-unused-vars
             handleClick(tab, event) {
@@ -520,8 +513,9 @@
                         if (data.code === 1000) {
                             this.storage_list = data.storage_list;
                             this.editstorageinfo = {
-                                'additionalparameter': {download_auth_type: 1},
-                                storage_type: this.storage_list[0].id
+                                download_auth_type: 1,
+                                storage_type: this.storage_list[0].id,
+                                download_auth_type_choices: data.download_auth_type_choices
                             };
                             this.isaddflag = true;
                         } else {
@@ -531,6 +525,7 @@
                 }
             },
         }, mounted() {
+            getUserInfoFun(this);
             if (this.$route.params.act) {
                 let activeName = this.$route.params.act;
                 let activeName_list = ["change", "edit", "add"];

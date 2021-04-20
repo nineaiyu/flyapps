@@ -10,8 +10,8 @@ from api.utils.auth import ExpiringTokenAuthentication, StoragePermission
 from rest_framework.response import Response
 from api.utils.storage.caches import del_cache_storage
 from api.models import AppStorage, UserInfo
-from api.utils.utils import upload_oss_default_head_img, check_storage_additionalparameter, \
-    change_storage_and_change_head_img, migrating_storage_data, clean_storage_data
+from api.utils.utils import upload_oss_default_head_img, \
+    change_storage_and_change_head_img, migrating_storage_data, clean_storage_data, get_choices_dict
 from api.utils.serializer import StorageSerializer
 import logging
 
@@ -32,6 +32,7 @@ class StorageView(APIView):
 
         act = request.query_params.get("act", None)
         if act == 'storage_type':
+            res.download_auth_type_choices = get_choices_dict(AppStorage.download_auth_type_choices)
             return Response(res.dict)
 
         # [1,2] 表示七牛存储和阿里云存储
@@ -63,9 +64,6 @@ class StorageView(APIView):
         res = BaseResponse()
         data = request.data
         logger.info("user %s add new storage data:%s" % (request.user, data))
-        status, data = check_storage_additionalparameter(request, res)
-        if not status:
-            return Response(data.dict)
         serializer = StorageSerializer(data=data, context={'user_obj': request.user})
         if serializer.is_valid():
             storage_obj = serializer.save()
@@ -92,7 +90,6 @@ class StorageView(APIView):
         res = BaseResponse()
         data = request.data
         logger.info("user %s update storage data:%s" % (request.user, data))
-
         use_storage_id = data.get("use_storage_id", None)
         force = data.get("force", None)
         if use_storage_id:
@@ -135,9 +132,6 @@ class StorageView(APIView):
                 res.msg = '存储正在使用中，无法修改'
                 res.code = 1007
                 return Response(res.dict)
-            status, data = check_storage_additionalparameter(request, res)
-            if not status:
-                return Response(data.dict)
             storage_obj = AppStorage.objects.filter(id=storage_id, user_id=request.user).first()
             storage_obj_bak = AppStorage.objects.filter(id=storage_id, user_id=request.user).first()
             serializer = StorageSerializer(instance=storage_obj, data=data, context={'user_obj': request.user},

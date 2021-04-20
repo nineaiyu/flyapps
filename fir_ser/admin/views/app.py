@@ -20,6 +20,7 @@ from api.utils.storage.caches import login_auth_failed, del_cache_response_by_sh
 import logging
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle
 from rest_framework.pagination import PageNumberPagination
+from api.utils.baseutils import get_dict_from_filter_fields
 from api.base_views import app_delete
 
 logger = logging.getLogger(__name__)
@@ -37,12 +38,8 @@ class AppInfoView(APIView):
 
     def get(self, request):
         res = BaseResponse()
-        filter_data = {}
         filter_fields = ["id", "type", "name", "short", "bundle_id", "domain_name", "user_id", "status"]
-        for filed in filter_fields:
-            f_value = request.query_params.get(filed, None)
-            if f_value:
-                filter_data[filed] = f_value
+        filter_data = get_dict_from_filter_fields(filter_fields, request.query_params)
         sort = request.query_params.get("sort", "-updated_time")
         page_obj = AppsPageNumber()
         obj_list = Apps.objects.filter(**filter_data).order_by(sort)
@@ -91,12 +88,8 @@ class AppReleaseInfoView(APIView):
 
     def get(self, request):
         res = BaseResponse()
-        filter_data = {}
         filter_fields = ["id", "release_id", "app_id"]
-        for filed in filter_fields:
-            f_value = request.query_params.get(filed, None)
-            if f_value:
-                filter_data[filed] = f_value
+        filter_data = get_dict_from_filter_fields(filter_fields, request.query_params)
         sort = request.query_params.get("sort", "-created_time")
         if not filter_data.get('app_id', None):
             res.code = 1003

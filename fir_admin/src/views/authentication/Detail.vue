@@ -100,7 +100,7 @@ const defaultForm = {
 }
 
 export default {
-  name: 'AppReleaseDetail',
+  name: 'CertificationDetail',
   components: { }, filters: {
   },
   data() {

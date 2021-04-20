@@ -341,16 +341,11 @@ class StorageSerializer(serializers.ModelSerializer):
         exclude = ["user_id"]
 
     storage_type_display = serializers.CharField(source="get_storage_type_display", read_only=True)
-    additionalparameters = serializers.CharField(write_only=True)
-    additionalparameter = serializers.SerializerMethodField(read_only=True)
 
-    def get_additionalparameter(self, obj):
-        infos = {}
-        try:
-            infos = json.loads(obj.additionalparameters)
-        except Exception as e:
-            logger.error("%s additionalparameter loads failed Exception:%s" % (obj.additionalparameters, e))
-        return infos
+    download_auth_type_choices = serializers.SerializerMethodField()
+
+    def get_download_auth_type_choices(self, obj):
+        return get_choices_dict(obj.download_auth_type_choices)
 
     def create(self, validated_data):
         if self.context.get("user_obj", None) and self.context.get("user_obj") != "undefined":
@@ -366,6 +361,16 @@ class AdminStorageSerializer(StorageSerializer):
         model = models.AppStorage
         fields = "__all__"
         read_only_fields = ["id", "user_id", "updated_time", "created_time"]
+
+    additionalparameters = serializers.CharField()
+    storage_choices = serializers.SerializerMethodField()
+
+    def validate_additionalparameters(self, additionalparameters):
+        print(additionalparameters)
+        return json.dumps(additionalparameters)
+
+    def get_storage_choices(self, obj):
+        return get_choices_dict(obj.storage_choices)
 
 
 class DeveloperSerializer(serializers.ModelSerializer):

@@ -185,8 +185,14 @@ class AppStorage(models.Model):
     domain_name = models.CharField(max_length=128, blank=True, null=True, verbose_name="下载域名",
                                    help_text='fly-storage.dvcloud.xin,可以自定义端口')
     is_https = models.BooleanField(default=True, verbose_name="是否支持https")
-    additionalparameters = models.TextField(blank=True, null=True, verbose_name="额外参数",
-                                            help_text='阿里云:{"sts_role_arn":"arn信息","endpoint":""} ', default=None)
+
+    sts_role_arn = models.CharField(max_length=128, blank=True, null=True, verbose_name="阿里云sts_role_arn")
+    endpoint = models.CharField(max_length=128, blank=True, null=True, verbose_name="阿里云endpoint")
+    download_auth_type_choices = ((1, 'OSS模式： 需要把OSS权限开启私有模式'), (2, 'CDN模式： 请先配置好阿里云CDN，开启阿里云OSS私有Bucket回源，将使用鉴权A方式'))
+    download_auth_type = models.SmallIntegerField(choices=download_auth_type_choices, default=1,
+                                                  verbose_name="阿里云下载授权方式")
+    cnd_auth_key = models.CharField(max_length=128, blank=True, null=True, verbose_name="阿里云cnd_auth_key")
+
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     description = models.TextField('备注', blank=True, null=True, default='')
@@ -198,6 +204,11 @@ class AppStorage(models.Model):
     def save(self, *args, **kwargs):
         if self.storage_type in (1, 2):
             if self.bucket_name and self.secret_key and self.access_key:
+                if self.storage_type == 2:
+                    if not self.sts_role_arn or not self.endpoint:
+                        return
+                    if self.download_auth_type == 2 and not self.cnd_auth_key:
+                        return
                 return super(AppStorage, self).save(*args, **kwargs)
             else:
                 return

@@ -9,6 +9,7 @@ from .aliyunApi import AliYunOss, AliYunCdn
 from .qiniuApi import QiNiuOss
 from .localApi import LocalStorage
 import json, time, base64
+from api.utils.baseutils import get_dict_from_filter_fields
 from fir_ser.settings import THIRD_PART_CONFIG, CACHE_KEY_TEMPLATE
 from django.core.cache import cache
 import logging
@@ -80,7 +81,7 @@ class Storage(object):
             self.storage_obj = None
 
         if self.storage_obj:
-            auth = self.get_storage_auth(self.storage_obj)
+            auth = self.get_storage_auth()
             storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'), user.uid,
                                     base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
             storage_type = self.storage_obj.storage_type
@@ -141,21 +142,10 @@ class Storage(object):
         if self.storage:
             return self.storage.storage_type
 
-    def get_storage_auth(self, storage_obj):
-        auth_dict = {
-            'access_key': storage_obj.access_key,
-            'secret_key': storage_obj.secret_key,
-            'bucket_name': storage_obj.bucket_name,
-            'domain_name': storage_obj.domain_name,
-            'is_https': storage_obj.is_https
-        }
-        try:
-            additionalparameters = json.loads(storage_obj.additionalparameters)
-        except Exception as e:
-            logger.error("%s get_storage_auth additionalparameters %s loads failed Exception:%s" % (
-                storage_obj.user_id, storage_obj.additionalparameters, e))
-            additionalparameters = {}
-        return {**auth_dict, **additionalparameters}
+    def get_storage_auth(self):
+        filter_fields = ['access_key', 'secret_key', 'bucket_name', 'domain_name', 'is_https', 'endpoint',
+                         'sts_role_arn', 'cnd_auth_key', 'download_auth_type']
+        return get_dict_from_filter_fields(filter_fields, self.storage_obj.__dict__)
 
 
 def get_local_storage(clean_cache=False):

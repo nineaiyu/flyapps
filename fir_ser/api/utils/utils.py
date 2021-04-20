@@ -172,26 +172,6 @@ def delete_app_screenshots_files(storage_obj, app_obj):
         screenshot_obj.delete()
 
 
-def check_storage_additionalparameter(request, res):
-    data = request.data
-    try:
-        extra_parameters = data.get('additionalparameter', '')
-        if extra_parameters:
-            if not extra_parameters.get("download_auth_type", None):
-                extra_parameters['download_auth_type'] = 1
-            if extra_parameters.get("download_auth_type", None) == 2:
-                if not extra_parameters.get("cnd_auth_key", None):
-                    logger.error("user %s add new storage failed" % (request.user))
-                    res.msg = "cdn 鉴权KEY 缺失"
-                    res.code = 1006
-                    return False, res
-        data['additionalparameters'] = json.dumps(extra_parameters)
-    except Exception as e:
-        logger.error("user:%s additionalparameters %s dumps failed Exception:%s" % (
-            request.user, data.get('additionalparameter', ''), e))
-    return True, data
-
-
 def change_storage_and_change_head_img(user_obj, new_storage_obj):
     migrating_storage_file_data(user_obj, user_obj.head_img, new_storage_obj)
 

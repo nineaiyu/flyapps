@@ -10,67 +10,76 @@
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="真实姓名">
+          <el-form-item label="存储名称">
             <el-row :gutter="12">
               <el-col :span="16">
                 <el-input v-model="postForm.name" />
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="身份证号码">
+          <el-form-item label="存储类型">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.card" />
-              </el-col>
-            </el-row>
-          </el-form-item>
-          <el-form-item label="居住地址">
-            <el-row :gutter="12">
-              <el-col :span="16">
-                <el-input v-model="postForm.addr" />
-              </el-col>
-            </el-row>
-          </el-form-item>
-
-          <el-form-item label="实名认证">
-            <el-row :gutter="12">
-              <el-col :span="16">
-                <el-select v-model="postForm.status" class="filter-item" placeholder="Please select">
-                  <el-option v-for="item in postForm.certification_status_choices" :key="item.id" :label="item.name" :value="item.id" />
+                <el-select v-model="postForm.storage_type" class="filter-item" placeholder="Please select">
+                  <el-option v-for="item in postForm.storage_choices" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="提交时间" prop="timestamp">
+          <el-form-item label="存储额外参数">
+            <el-row :gutter="12">
+              <el-col :span="21">
+
+                <div class="editor-container">
+                  <json-editor ref="jsonEditor" v-model="postForm.additionalparameters" />
+                </div>
+              </el-col>
+            </el-row>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="创建时间" prop="timestamp" label-width="160px">
             <el-row :gutter="20">
               <el-col :span="8">
                 <el-date-picker :value="postForm.created_time" type="datetime" disabled />
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="审核时间" prop="timestamp">
+          <el-form-item label="更新时间" prop="timestamp" label-width="160px">
             <el-row :gutter="20">
               <el-col :span="8">
-                <el-date-picker :value="postForm.reviewed_time" type="datetime" disabled />
+                <el-date-picker :value="postForm.updated_time" type="datetime" disabled />
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="审核备注">
+          <el-form-item label="存储访问access_key" label-width="160px">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.msg" :autosize="{ minRows: 4, maxRows: 6}" type="textarea" placeholder="Please input" />
+                <el-input v-model="postForm.access_key" />
               </el-col>
             </el-row>
           </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="实名认证照片">
-            <div v-for="info in postForm.certification_infos" :key="info.name" style="width: 320px; height: 340px;float: left;border: #409EFF 1px solid;text-align: center;margin-left: 20px;margin-bottom: 20px">
-              <el-image :src="info.certification_url" :preview-src-list="[info.certification_url]" fit="contain" style="width: 260px; height: 260px" />
-              <el-link :underline="false"> {{ info.name }}</el-link>
-            </div>
+          <el-form-item label="存储访问secret_key" label-width="160px">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input v-model="postForm.secret_key" />
+              </el-col>
+            </el-row>
           </el-form-item>
-
+          <el-form-item label="存储空间bucket_name" label-width="160px">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input v-model="postForm.bucket_name" />
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item label="存储描述信息" label-width="160px">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input v-model="postForm.description" :autosize="{ minRows: 4, maxRows: 6}" type="textarea" placeholder="Please input" />
+              </el-col>
+            </el-row>
+          </el-form-item>
         </el-col>
       </el-row>
     </el-form>
@@ -85,29 +94,31 @@
 </template>
 
 <script>
-import { getCertificationInfo, updateCertificationInfo } from '@/api/user'
+import { getStorageInfo, updateStorageInfo } from '@/api/storage'
+import JsonEditor from '@/components/JsonEditor'
 
 const defaultForm = {
   user_id: undefined,
   name: undefined,
-  card: undefined,
-  addr: undefined,
-  mobile: undefined,
-  status: undefined,
-  msg: undefined,
+  storage_type: undefined,
+  access_key: undefined,
+  secret_key: undefined,
+  bucket_name: undefined,
+  domain_name: undefined,
   created_time: undefined,
-  reviewed_time: undefined
+  description: undefined,
+  updated_time: undefined
 }
 
 export default {
-  name: 'AppReleaseDetail',
-  components: { }, filters: {
+  name: 'StorageDetail',
+  components: { JsonEditor }, filters: {
   },
   data() {
     return {
       postForm: Object.assign({}, defaultForm),
       loading: false,
-      is_edit: false
+      is_edit: false,
     }
   },
   computed: {
@@ -118,18 +129,20 @@ export default {
   },
   methods: {
     fetchData(id) {
-      getCertificationInfo({ id: id }).then(response => {
+      getStorageInfo({ id: id }).then(response => {
         if (response.data.length === 1) {
           this.postForm = response.data[0]
+          this.postForm.additionalparameters = this.postForm.additionalparameter
         }
       }).catch(err => {
         console.log(err)
       })
     },
     updateData() {
-      updateCertificationInfo(this.postForm).then(response => {
+      updateStorageInfo(this.postForm).then(response => {
         this.$message.success('更新成功')
         this.postForm = response.data
+        this.postForm.additionalparameters = this.postForm.additionalparameter
       }).catch(err => {
         console.log(err)
       })
@@ -138,3 +151,9 @@ export default {
 }
 </script>
 
+<style scoped>
+  .editor-container{
+    position: relative;
+    height: 100%;
+  }
+</style>

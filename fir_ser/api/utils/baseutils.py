@@ -79,3 +79,12 @@ def is_valid_email(email):
         return True
     except ValidationError:
         return False
+
+
+def get_dict_from_filter_fields(filter_fields, data):
+    filter_data = {}
+    for filed in filter_fields:
+        f_value = data.get(filed, None)
+        if f_value:
+            filter_data[filed] = f_value
+    return filter_data

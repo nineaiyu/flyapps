@@ -110,7 +110,7 @@ const sortOptions = [
 ]
 
 export default {
-  name: 'AppInfo',
+  name: 'CertificationInfo',
   components: { Pagination },
   directives: { waves },
   filters: {
