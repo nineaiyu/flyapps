@@ -367,9 +367,9 @@
                         this.$message.success('操作成功');
                         this.dialogstorageVisible = false;
                         if (this.isaddflag) {
-                            this.activeName = 'setstorage';
+                            this.activeName = 'edit';
                         }
-                        this.getstorageinfoFun();
+                        this.get_data_from_tabname(this.activeName);
 
                     } else {
                         this.$message.error('操作失败，' + data.msg);

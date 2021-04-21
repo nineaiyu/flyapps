@@ -45,8 +45,8 @@ class AppInfoView(APIView):
         obj_list = Apps.objects.filter(**filter_data).order_by(sort)
         page_serializer = page_obj.paginate_queryset(queryset=obj_list, request=request,
                                                      view=self)
-        serializer_obj = AdminAppsSerializer(page_serializer, many=True)
-        res.data = serializer_obj.data
+        serializer = AdminAppsSerializer(page_serializer, many=True)
+        res.data = serializer.data
         res.total = obj_list.count()
         return Response(res.dict)
 
@@ -99,8 +99,8 @@ class AppReleaseInfoView(APIView):
         obj_list = AppReleaseInfo.objects.filter(**filter_data).order_by(sort)
         page_serializer = page_obj.paginate_queryset(queryset=obj_list, request=request,
                                                      view=self)
-        serializer_obj = AdminAppReleaseSerializer(page_serializer, many=True)
-        res.data = serializer_obj.data
+        serializer = AdminAppReleaseSerializer(page_serializer, many=True)
+        res.data = serializer.data
         res.total = obj_list.count()
         return Response(res.dict)
 

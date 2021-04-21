@@ -47,12 +47,12 @@ class UserInfoView(APIView):
             else:
                 filter_data["certification__status"] = certification
         page_obj = AppsPageNumber()
-        users_obj_list = UserInfo.objects.filter(**filter_data).order_by(sort)
-        users_page_serializer = page_obj.paginate_queryset(queryset=users_obj_list, request=request,
+        obj_list = UserInfo.objects.filter(**filter_data).order_by(sort)
+        page_serializer = page_obj.paginate_queryset(queryset=obj_list, request=request,
                                                            view=self)
-        users_serializer = AdminUserInfoSerializer(users_page_serializer, many=True)
-        res.data = users_serializer.data
-        res.total = users_obj_list.count()
+        serializer = AdminUserInfoSerializer(page_serializer, many=True)
+        res.data = serializer.data
+        res.total = obj_list.count()
         return Response(res.dict)
 
     def put(self, request):
@@ -91,8 +91,8 @@ class UserCertificationInfoView(APIView):
         obj_list = UserCertificationInfo.objects.filter(**filter_data).order_by(sort)
         page_serializer = page_obj.paginate_queryset(queryset=obj_list, request=request,
                                                      view=self)
-        users_serializer = AdminUserCertificationSerializer(page_serializer, many=True)
-        res.data = users_serializer.data
+        serializer = AdminUserCertificationSerializer(page_serializer, many=True)
+        res.data = serializer.data
         res.total = obj_list.count()
         return Response(res.dict)
 
@@ -112,7 +112,6 @@ class UserCertificationInfoView(APIView):
                 users_serializer.save()
                 res.data = users_serializer.data
                 return Response(res.dict)
-            print(users_serializer.errors)
         res.code = 1004
         res.msg = "数据校验失败"
         return Response(res.dict)

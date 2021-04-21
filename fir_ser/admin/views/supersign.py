@@ -5,7 +5,7 @@
 # date: 2021/4/11
 
 from django.contrib import auth
-from api.models import Token, UserInfo, AppStorage
+from api.models import Token, UserInfo, APPSuperSignUsedInfo
 from rest_framework.response import Response
 from api.utils.auth import AdminTokenAuthentication
 from api.utils.baseutils import get_dict_from_filter_fields

@@ -360,14 +360,9 @@ class AdminStorageSerializer(StorageSerializer):
     class Meta:
         model = models.AppStorage
         fields = "__all__"
-        read_only_fields = ["id", "user_id", "updated_time", "created_time"]
+        read_only_fields = ["id", "user_id", "updated_time", "created_time", "storage_type"]
 
-    additionalparameters = serializers.CharField()
     storage_choices = serializers.SerializerMethodField()
-
-    def validate_additionalparameters(self, additionalparameters):
-        print(additionalparameters)
-        return json.dumps(additionalparameters)
 
     def get_storage_choices(self, obj):
         return get_choices_dict(obj.storage_choices)

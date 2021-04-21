@@ -238,9 +238,9 @@ def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_d
 def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
     with cache.lock("%s_%s" % ('migrating_storage_data', user_obj.uid)):
 
-        status = user_obj.certification.status
         auth_status = False
-        if status and status == 1:
+        certification = getattr(user_obj, 'certification', None)
+        if certification and certification.status == 1:
             auth_status = True
         for app_release_obj in AppReleaseInfo.objects.filter(app_id__user_id=user_obj).all():
             # 迁移APP数据
