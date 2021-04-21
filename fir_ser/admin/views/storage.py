@@ -21,6 +21,7 @@ from api.utils.storage.caches import login_auth_failed
 import logging
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle
 from rest_framework.pagination import PageNumberPagination
+from api.utils.baseutils import format_storage_selection
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class StorageInfoView(APIView):
                                                      view=self)
         serializer = AdminStorageSerializer(page_serializer, many=True)
         res.data = serializer.data
+        res.storage_selection = format_storage_selection(serializer.data,serializer.data[0].get('storage_choices'))
         res.total = obj_list.count()
         return Response(res.dict)
 

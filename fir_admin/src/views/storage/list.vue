@@ -62,12 +62,10 @@
           <el-tag :type="scope.row.storage_type | certStatusFilter">{{ scope.row| certLableFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="created_time" label="创建时间" width="120">
+      <el-table-column class-name="status-col" label="存储状态" width="95" align="center">
         <template slot-scope="scope">
-          <i class="el-icon-time" />
-          <el-tooltip :content="scope.row.created_time">
-            <span>{{ scope.row.created_time|formatTime }}</span>
-          </el-tooltip>
+          <el-tag v-if="scope.row.id === scope.row.used_id" type="success">已启用</el-tag>
+          <el-tag v-else type="info">未启用</el-tag>
         </template>
       </el-table-column>
       <el-table-column align="center" prop="created_time" label="更新时间" width="120">
@@ -169,7 +167,8 @@ export default {
         access_key: undefined,
         storage_type: undefined,
         domain_name: undefined,
-        user_id: undefined
+        user_id: undefined,
+        used_id: undefined
       },
       sortOptions,
       storage_choices: []
@@ -177,6 +176,10 @@ export default {
   },
   created() {
     this.fetchData()
+  },mounted() {
+    if (this.$route.query.user_id) {
+      this.listQuery.user_id = this.$route.query.user_id
+    }
   },
   methods: {
     handleFilter() {

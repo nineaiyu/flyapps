@@ -7,7 +7,6 @@ from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided, get_choices_dict, get_choices_name_from_key
 from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
 import os, json, logging
-
 logger = logging.getLogger(__file__)
 
 token_obj = DownloadToken()
@@ -365,7 +364,12 @@ class AdminStorageSerializer(StorageSerializer):
     storage_choices = serializers.SerializerMethodField()
 
     def get_storage_choices(self, obj):
-        return get_choices_dict(obj.storage_choices)
+        return get_choices_dict(obj.storage_choices[1:])
+
+    used_id = serializers.SerializerMethodField()
+
+    def get_used_id(self, obj):
+        return obj.user_id_id
 
 
 class DeveloperSerializer(serializers.ModelSerializer):

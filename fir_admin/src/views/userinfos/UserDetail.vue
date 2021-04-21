@@ -50,23 +50,7 @@
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="实名认证">
-            <el-row :gutter="12">
-              <el-col :span="16">
-                <el-select v-model="postForm.certification" class="filter-item" placeholder="Please select" :disabled="postForm.certification === -1">
-                  <el-option v-for="item in postForm.certification_status_choices" :key="item.id" :label="item.name" :value="item.id" />
-                </el-select>
-                <router-link v-if="postForm.certification_id" :to="{name: 'user_authentication_info_edit',params:{id:postForm.certification_id.id}}">
-                  <el-button type="primary">
-                    审核认证信息
-                  </el-button>
-                </router-link>
-              </el-col>
-              <el-col v-if="postForm.certification === -1" span="16">
-                <el-link :underline="false"> 用户需要先提交认证信息，才可以进行认证修改</el-link>
-              </el-col>
-            </el-row>
-          </el-form-item>
+
           <el-form-item label="手机" prop="mobile">
             <el-row :gutter="12">
               <el-col :span="16">
@@ -126,52 +110,6 @@
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="私有存储">
-            <el-row :gutter="12">
-              <el-col :span="16">
-                <el-tooltip :content="postForm.storage_active|statusFilter" placement="top">
-                  <el-switch
-                    v-model="postForm.storage_active"
-                    active-color="#13ce66"
-                    inactive-color="#ff4949"
-                    :active-value="true"
-                    :inactive-value="false"
-                  />
-                </el-tooltip>
-              </el-col>
-            </el-row>
-          </el-form-item>
-<!--          <el-form-item v-if="postForm.storage_active===true" label="私有存储">-->
-<!--            <el-row :gutter="12">-->
-<!--              <el-col :span="16">-->
-<!--                <el-select v-model="postForm.use_storage_id" filterable :placeholder="selectlabel" @change="select_storage">-->
-<!--                  <el-option-group-->
-<!--                    v-for="storage_group in fstorage_lists"-->
-<!--                    :key="storage_group.group_name"-->
-<!--                    :label="storage_group.group_name">-->
-<!--                    <el-option-->
-<!--                      v-for="storage in storage_group.storages"-->
-<!--                      :key="storage.id"-->
-<!--                      :label="storage.name"-->
-<!--                      :value="storage.id">-->
-<!--                    </el-option>-->
-<!--                  </el-option-group>-->
-<!--                </el-select>-->
-<!--                <el-button v-if="use_storage_id!==org_storage_id" style="margin-left: 10px" round type="info"-->
-<!--                           icon="el-icon-thumb"-->
-<!--                           @click="change_storage_info">-->
-<!--                  迁移数据并保存-->
-<!--                </el-button>-->
-
-
-
-<!--                <el-select v-model="postForm.storage" class="filter-item" placeholder="Please select">-->
-<!--                  <el-option v-for="item in postForm.storage_choices" :key="item.id" :label="item.name" :value="item.id" />-->
-<!--                </el-select>-->
-<!--              </el-col>-->
-<!--            </el-row>-->
-<!--          </el-form-item>-->
-
           <el-form-item label="超级签名">
             <el-row :gutter="12">
               <el-col :span="16">
@@ -184,6 +122,63 @@
                     :inactive-value="false"
                   />
                 </el-tooltip>
+              </el-col>
+            </el-row>
+          </el-form-item>
+
+          <el-form-item label="存储权限">
+            <el-row :gutter="12">
+              <el-col :span="3">
+                <el-tooltip :content="postForm.storage_active|statusFilter" placement="top">
+                  <el-switch
+                    v-model="postForm.storage_active"
+                    active-color="#13ce66"
+                    inactive-color="#ff4949"
+                    :active-value="true"
+                    :inactive-value="false"
+                  />
+                </el-tooltip>
+
+              </el-col>
+              <el-col :span="6">
+                <el-select v-model="postForm.storage" filterable>
+                  <el-option-group
+                    v-for="storage_group in storage_selection"
+                    :key="storage_group.id"
+                    :label="storage_group.name"
+                  >
+                    <el-option
+                      v-for="storage in storage_group.storage_info"
+                      :key="storage.id"
+                      :label="storage.name"
+                      :value="storage.id"
+                    />
+                  </el-option-group>
+                </el-select>
+              </el-col>
+              <el-col :span="6">
+                <router-link :to="{name: 'storage_info_list',query:{user_id:postForm.id}}">
+                  <el-button type="primary" style="margin-left: 20px">
+                    查看私有存储信息
+                  </el-button>
+                </router-link>
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item label="实名认证">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-select v-model="postForm.certification" class="filter-item" placeholder="Please select" :disabled="postForm.certification === -1">
+                  <el-option v-for="item in postForm.certification_status_choices" :key="item.id" :label="item.name" :value="item.id" />
+                </el-select>
+                <router-link v-if="postForm.certification_id" :to="{name: 'user_authentication_info_edit',params:{id:postForm.certification_id.id}}">
+                  <el-button type="primary">
+                    审核认证信息
+                  </el-button>
+                </router-link>
+              </el-col>
+              <el-col v-if="postForm.certification === -1" :span="16">
+                <el-link :underline="false" type="danger"> 用户需要先提交认证信息，才可以进行认证修改</el-link>
               </el-col>
             </el-row>
           </el-form-item>
@@ -234,6 +229,7 @@
 <script>
 import { validURL } from '@/utils/validate'
 import { getUserInfos, updateUserInfo } from '@/api/user'
+import { getStorageInfo } from '@/api/storage'
 import { CommentDropdown, PlatformDropdown, SourceUrlDropdown } from './Dropdown'
 
 const defaultForm = {
@@ -250,14 +246,15 @@ const defaultForm = {
   domain_name: undefined,
   download_times: undefined,
   is_active: undefined,
-  head_img: '',
+  head_img: undefined,
   memo: undefined,
   date_joined: undefined,
   storage_active: undefined,
+  storage: undefined,
   supersign_active: undefined,
   role_choices: [],
   gender_choices: [],
-  storage_choices: [],
+  storage_choices: []
 }
 
 export default {
@@ -322,7 +319,8 @@ export default {
         source_uri: [{ validator: validateSourceUri, trigger: 'blur' }]
       },
       is_edit: false,
-      certification_status_choices: []
+      certification_status_choices: [],
+      storage_selection: []
     }
   },
   computed: {
@@ -334,11 +332,24 @@ export default {
     }
   },
   methods: {
+    fetchStorageData(user_id) {
+      getStorageInfo({ user_id: user_id }).then(response => {
+        if (response.storage_selection) {
+          this.storage_selection = response.storage_selection
+        }
+      }).catch(err => {
+        console.log(err)
+      })
+    },
     fetchData(id) {
       getUserInfos({ id: id }).then(response => {
         if (response.data.length === 1) {
           this.postForm = response.data[0]
+          if (!this.postForm.storage) {
+            this.postForm.storage = -1
+          }
           this.certification_status_choices = this.postForm.certification_status_choices
+          this.fetchStorageData(this.postForm.id)
         }
       }).catch(err => {
         console.log(err)

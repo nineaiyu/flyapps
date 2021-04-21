@@ -107,8 +107,9 @@
         </el-col>
       </el-row>
     </el-form>
+    <el-link v-if="postForm.id === postForm.used_id" type="danger" :underline="false">存储使用中，无法修改存储相关配置，请悉知</el-link>
     <el-col :span="9" style="float: right">
-      <el-button v-if="!is_edit" type="primary" @click="is_edit=true">修改</el-button>
+      <el-button v-if="!is_edit" type="primary" :disabled="postForm.id === postForm.used_id" @click="is_edit=true">修改</el-button>
       <div v-else>
         <el-button type="primary" @click="is_edit=false">取消</el-button>
         <el-button type="primary" @click="updateData">保存修改</el-button>
@@ -135,6 +136,7 @@ const defaultForm = {
   download_auth_type: undefined,
   cnd_auth_key: undefined,
   updated_time: undefined,
+  used_id: undefined,
   download_auth_type_choices: []
 }
 

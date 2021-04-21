@@ -88,3 +88,16 @@ def get_dict_from_filter_fields(filter_fields, data):
         if f_value:
             filter_data[filed] = f_value
     return filter_data
+
+
+def format_storage_selection(storage_info_list, storage_choice_list):
+    storage_info_list.append({'id': -1, 'storage_type': 3, 'name': '默认存储'})
+    for storage_choice in storage_choice_list:
+        storage_choice['storage_info'] = []
+        for storage_info in storage_info_list:
+            if storage_info.get('storage_type') == storage_choice.get('id',):
+                storage_choice['storage_info'].append({'name': storage_info.get('name', ''), 'id': storage_info.get('id', '')})
+    for storage_choice in storage_choice_list:
+        if not storage_choice['storage_info']:
+            storage_choice_list.remove(storage_choice)
+    return storage_choice_list
