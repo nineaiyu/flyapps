@@ -5,6 +5,8 @@
 # date: 2020/3/4
 
 from rest_framework.views import APIView
+
+from api.base_views import storage_change
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication, StoragePermission
 from rest_framework.response import Response
@@ -93,37 +95,9 @@ class StorageView(APIView):
         use_storage_id = data.get("use_storage_id", None)
         force = data.get("force", None)
         if use_storage_id:
-            if request.user.storage and use_storage_id == request.user.storage.id:
-                return Response(res.dict)
-            try:
-                if use_storage_id == -1:
-                    change_storage_and_change_head_img(request.user, None)
-                    if migrating_storage_data(request.user, None, False):
-                        clean_storage_data(request.user)
-                        UserInfo.objects.filter(pk=request.user.pk).update(storage=None)
-                else:
-                    new_storage_obj = AppStorage.objects.filter(pk=use_storage_id).first()
-                    change_storage_and_change_head_img(request.user, new_storage_obj)
-
-                    if migrating_storage_data(request.user, new_storage_obj, False):
-                        clean_storage_data(request.user)
-                        UserInfo.objects.filter(pk=request.user.pk).update(storage_id=use_storage_id)
-
-                del_cache_storage(request.user)
-
-            except Exception as e:
-                logger.error("update user %s storage failed Exception:%s" % (request.user, e))
-                if force:
-                    if use_storage_id == -1:
-                        UserInfo.objects.filter(pk=request.user.pk).update(storage=None)
-                    else:
-                        UserInfo.objects.filter(pk=request.user.pk).update(storage_id=use_storage_id)
-                    clean_storage_data(request.user)
-                else:
-                    res.code = 1006
-                    res.msg = '修改失败'
-            del_cache_storage(request.user)
-
+            if not storage_change(use_storage_id, request.user, force):
+                res.code = 1006
+                res.msg = '修改失败'
             return Response(res.dict)
 
         storage_id = data.get("id", None)

@@ -17,7 +17,7 @@ from django.urls import re_path
 from admin.views.login import LoginView, LoginUserView
 from admin.views.user import UserInfoView, UserCertificationInfoView
 from admin.views.app import AppInfoView, AppReleaseInfoView
-from admin.views.storage import StorageInfoView
+from admin.views.storage import StorageInfoView, StorageChangeView
 
 urlpatterns = [
     # path("",include(router.urls)),
@@ -30,5 +30,6 @@ urlpatterns = [
     re_path("^app/release/info", AppReleaseInfoView.as_view()),
     re_path("^certification/info", UserCertificationInfoView.as_view()),
     re_path("^storage/info", StorageInfoView.as_view()),
+    re_path("^storage/change", StorageChangeView.as_view()),
 
 ]

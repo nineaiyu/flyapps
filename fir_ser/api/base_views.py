@@ -11,13 +11,15 @@ from rest_framework.response import Response
 from django.db.models import Sum
 from api.utils.app.supersignutils import IosUtils, resign_by_app_obj
 from api.utils.storage.storage import Storage
-from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
-from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo, AppScreenShot
+from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app, \
+    del_cache_storage
+from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo, AppScreenShot, AppStorage
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
 from fir_ser.settings import SERVER_DOMAIN
-from api.utils.utils import delete_local_files, delete_app_screenshots_files
+from api.utils.utils import delete_local_files, delete_app_screenshots_files, change_storage_and_change_head_img, \
+    migrating_storage_data, clean_storage_data, check_storage_is_new_storage
 from api.utils.baseutils import is_valid_domain
 
 logger = logging.getLogger(__name__)
@@ -101,3 +103,36 @@ def app_release_delete(app_obj, release_id, storage):
         del_cache_response_by_short(app_obj.app_id)
 
     return res
+
+
+def storage_change(use_storage_id, user_obj, force):
+    if use_storage_id:
+        if user_obj.storage and use_storage_id == user_obj.storage.id:
+            return True
+    try:
+        if use_storage_id == -1:
+            change_storage_and_change_head_img(user_obj, None)
+            if migrating_storage_data(user_obj, None, False):
+                if check_storage_is_new_storage(user_obj, None):
+                    clean_storage_data(user_obj)
+                UserInfo.objects.filter(pk=user_obj.pk).update(storage=None)
+        else:
+            new_storage_obj = AppStorage.objects.filter(pk=use_storage_id).first()
+            change_storage_and_change_head_img(user_obj, new_storage_obj)
+            if migrating_storage_data(user_obj, new_storage_obj, False):
+                if check_storage_is_new_storage(user_obj, new_storage_obj):
+                    clean_storage_data(user_obj)
+                UserInfo.objects.filter(pk=user_obj.pk).update(storage_id=use_storage_id)
+
+    except Exception as e:
+        logger.error("update user %s storage failed Exception:%s" % (user_obj, e))
+        if force:
+            if use_storage_id == -1:
+                UserInfo.objects.filter(pk=user_obj.pk).update(storage=None)
+            else:
+                UserInfo.objects.filter(pk=user_obj.pk).update(storage_id=use_storage_id)
+        else:
+            return False
+    del_cache_storage(user_obj)
+
+    return True

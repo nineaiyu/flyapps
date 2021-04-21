@@ -49,7 +49,7 @@ class UserInfoView(APIView):
         page_obj = AppsPageNumber()
         obj_list = UserInfo.objects.filter(**filter_data).order_by(sort)
         page_serializer = page_obj.paginate_queryset(queryset=obj_list, request=request,
-                                                           view=self)
+                                                     view=self)
         serializer = AdminUserInfoSerializer(page_serializer, many=True)
         res.data = serializer.data
         res.total = obj_list.count()

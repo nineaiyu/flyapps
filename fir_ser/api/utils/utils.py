@@ -199,6 +199,17 @@ def download_files_form_oss(storage_obj, org_file):
         return False
 
 
+def check_storage_is_new_storage(user_obj, new_storage_obj):
+    old_storage_obj = Storage(user_obj)
+    if not new_storage_obj:
+        new_storage_obj = Storage(user_obj, None, True)
+    else:
+        new_storage_obj = Storage(user_obj, new_storage_obj)
+    if old_storage_obj.get_storage_type() == new_storage_obj.get_storage_type():
+        return False
+    return True
+
+
 def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data=True):
     local_file_full_path = os.path.join(MEDIA_ROOT, filename)
     old_storage_obj = Storage(user_obj)
@@ -262,9 +273,12 @@ def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
 
 def clean_storage_data(user_obj, storage_obj=None):
     storage_obj = Storage(user_obj, storage_obj)
+    logger.info("%s clean_storage_data %s" % (user_obj, storage_obj))
     for app_release_obj in AppReleaseInfo.objects.filter(app_id__user_id=user_obj).all():
         storage_obj.delete_file(app_release_obj.release_id, app_release_obj.release_type)
         storage_obj.delete_file(app_release_obj.icon_url)
+        for screenshot_obj in AppScreenShot.objects.filter(app_id=app_release_obj.app_id).all():
+            storage_obj.delete_file(screenshot_obj.screenshot_url)
         for apptodev_obj in APPToDeveloper.objects.filter(app_id=app_release_obj.app_id).all():
             storage_obj.delete_file(apptodev_obj.binary_file, app_release_obj.release_type)
     return True

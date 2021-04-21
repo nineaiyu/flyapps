@@ -138,9 +138,8 @@
                     :inactive-value="false"
                   />
                 </el-tooltip>
-
               </el-col>
-              <el-col :span="6">
+              <el-col :span="5">
                 <el-select v-model="postForm.storage" filterable>
                   <el-option-group
                     v-for="storage_group in storage_selection"
@@ -156,10 +155,20 @@
                   </el-option-group>
                 </el-select>
               </el-col>
-              <el-col :span="6">
+              <el-col :span="4">
+                <el-button type="primary" style="margin-left: 20px" @click="changeStorageData(null)">
+                  迁移数据
+                </el-button>
+              </el-col>
+              <el-col :span="4">
+                <el-button type="primary" style="margin-left: 20px" @click="changeStorageData(force)">
+                  强制切换
+                </el-button>
+              </el-col>
+              <el-col :span="5">
                 <router-link :to="{name: 'storage_info_list',query:{user_id:postForm.id}}">
                   <el-button type="primary" style="margin-left: 20px">
-                    查看私有存储信息
+                    查看存储信息
                   </el-button>
                 </router-link>
               </el-col>
@@ -229,7 +238,7 @@
 <script>
 import { validURL } from '@/utils/validate'
 import { getUserInfos, updateUserInfo } from '@/api/user'
-import { getStorageInfo } from '@/api/storage'
+import { getStorageInfo,changeStorageInfo } from '@/api/storage'
 import { CommentDropdown, PlatformDropdown, SourceUrlDropdown } from './Dropdown'
 
 const defaultForm = {
@@ -332,6 +341,13 @@ export default {
     }
   },
   methods: {
+    changeStorageData(force) {
+      changeStorageInfo({id: this.postForm.id, use_storage_id: this.postForm.storage,force: force}).then(response => {
+        this.$message.success('存储数据迁移并设置刷新成功')
+      }).catch(err => {
+        console.log(err)
+      })
+    },
     fetchStorageData(user_id) {
       getStorageInfo({ user_id: user_id }).then(response => {
         if (response.storage_selection) {
@@ -341,15 +357,18 @@ export default {
         console.log(err)
       })
     },
+    setStorageInfo() {
+      if (!this.postForm.storage) {
+        this.postForm.storage = -1
+      }
+      this.fetchStorageData(this.postForm.id)
+    },
     fetchData(id) {
       getUserInfos({ id: id }).then(response => {
         if (response.data.length === 1) {
           this.postForm = response.data[0]
-          if (!this.postForm.storage) {
-            this.postForm.storage = -1
-          }
           this.certification_status_choices = this.postForm.certification_status_choices
-          this.fetchStorageData(this.postForm.id)
+          this.setStorageInfo()
         }
       }).catch(err => {
         console.log(err)
@@ -359,6 +378,7 @@ export default {
       updateUserInfo(this.postForm).then(response => {
         this.$message.success('更新成功')
         this.postForm = response.data
+        this.setStorageInfo()
       }).catch(err => {
         console.log(err)
       })

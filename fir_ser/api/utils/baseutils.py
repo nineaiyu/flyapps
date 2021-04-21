@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 def get_app_d_count_by_app_id(app_id):
     d_count = 1
-    binary_size = AppReleaseInfo.objects.filter(is_master=True, app_id__app_id=app_id).values('binary_size')
-    if binary_size and binary_size > 0:
-        d_count += binary_size // 1024 // 1024 // 100
+    binary_size = AppReleaseInfo.objects.filter(is_master=True, app_id__app_id=app_id).values('binary_size').first()
+    if binary_size and binary_size.get('binary_size', 0) > 0:
+        d_count += binary_size.get('binary_size') // 1024 // 1024 // 100
     return d_count
 
 
@@ -95,8 +95,9 @@ def format_storage_selection(storage_info_list, storage_choice_list):
     for storage_choice in storage_choice_list:
         storage_choice['storage_info'] = []
         for storage_info in storage_info_list:
-            if storage_info.get('storage_type') == storage_choice.get('id',):
-                storage_choice['storage_info'].append({'name': storage_info.get('name', ''), 'id': storage_info.get('id', '')})
+            if storage_info.get('storage_type') == storage_choice.get('id', ):
+                storage_choice['storage_info'].append(
+                    {'name': storage_info.get('name', ''), 'id': storage_info.get('id', '')})
     for storage_choice in storage_choice_list:
         if not storage_choice['storage_info']:
             storage_choice_list.remove(storage_choice)

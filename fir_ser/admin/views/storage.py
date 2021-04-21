@@ -5,6 +5,8 @@
 # date: 2021/4/11
 
 from django.contrib import auth
+
+from api.base_views import storage_change
 from api.models import Token, UserInfo, AppStorage
 from rest_framework.response import Response
 from api.utils.auth import AdminTokenAuthentication
@@ -47,7 +49,7 @@ class StorageInfoView(APIView):
                                                      view=self)
         serializer = AdminStorageSerializer(page_serializer, many=True)
         res.data = serializer.data
-        res.storage_selection = format_storage_selection(serializer.data,serializer.data[0].get('storage_choices'))
+        res.storage_selection = format_storage_selection(serializer.data, serializer.data[0].get('storage_choices'))
         res.total = obj_list.count()
         return Response(res.dict)
 
@@ -60,13 +62,40 @@ class StorageInfoView(APIView):
             res.msg = "参数错误"
             return Response(res.dict)
         obj = AppStorage.objects.filter(pk=pk).first()
-        if obj:
+        if obj and obj.user_id_id != obj.pk:
             data['pk'] = pk
             serializer = AdminStorageSerializer(obj, data=data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 res.data = serializer.data
                 return Response(res.dict)
+        res.code = 1004
+        res.msg = "数据校验失败"
+        return Response(res.dict)
+
+
+class StorageChangeView(APIView):
+    authentication_classes = [AdminTokenAuthentication, ]
+
+    def put(self, request):
+        res = BaseResponse()
+        data = request.data
+        pk = data.get("id", None)
+        if not pk:
+            res.code = 1003
+            res.msg = "参数错误"
+            return Response(res.dict)
+        obj = UserInfo.objects.filter(pk=pk).first()
+        if obj:
+            logger.info("user %s update storage data:%s" % (obj, data))
+            use_storage_id = data.get("use_storage_id", None)
+            force = data.get("force", None)
+            if use_storage_id:
+                if not storage_change(use_storage_id, obj, force):
+                    res.code = 1006
+                    res.msg = '修改失败'
+                return Response(res.dict)
+
         res.code = 1004
         res.msg = "数据校验失败"
         return Response(res.dict)

@@ -16,3 +16,10 @@ export function updateStorageInfo(data) {
   })
 }
 
+export function changeStorageInfo(data) {
+  return request({
+    url: '/storage/change',
+    method: 'put',
+    data
+  })
+}
