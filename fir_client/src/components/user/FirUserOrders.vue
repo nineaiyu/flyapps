@@ -441,11 +441,10 @@
 
 <style scoped>
     .el-main {
-        margin: 10px auto 100px;
-        width: 1166px;
+        margin: 20px auto 100px;
+        width: 1266px;
         position: relative;
         padding-bottom: 1px;
-        background-color: #bfe7f9;
         color: #9b9b9b;
         -webkit-font-smoothing: antialiased;
         border-radius: 1%;

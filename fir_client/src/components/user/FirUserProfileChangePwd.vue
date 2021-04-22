@@ -1,7 +1,7 @@
 <template>
     <div>
 
-        <el-form ref="form" :model="form">
+        <el-form ref="form" :model="form" label-width="90px">
             <el-form-item label="当前密码">
                 <el-row :gutter="36">
                     <el-col :span="18">
@@ -30,7 +30,7 @@
 
             <el-form-item>
                 <el-row :gutter="36">
-                    <el-col :span="24">
+                    <el-col :span="20">
                         <el-button type="primary" @click="updatepasswd">更新密码</el-button>
                     </el-col>
                 </el-row>
@@ -88,17 +88,11 @@
         margin: 0 auto;
     }
 
-    .el-form-item .el-button {
+    .el-button {
         margin-top: 20px;
         max-width: 260px;
         width: 100%;
         height: 50px;
-        /*margin-left: 40px;*/
     }
-
-    /deep/ .el-form-item__label {
-        width: 90px;
-    }
-
 
 </style>

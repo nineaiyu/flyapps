@@ -1,17 +1,16 @@
 <template>
     <div ref="appbase">
-        <canvas ref="canvas" class="canvas" @mousemove="canvas_move" @mouseleave="canvas_leave"></canvas>
+        <canvas ref="canvas" class="canvas" @mousemove="canvas_move" @mouseleave="canvas_leave"/>
         <el-container>
             <el-header>
-                <FirHeader></FirHeader>
-
+                <FirHeader/>
             </el-header>
             <div class="pbody">
-                <router-view></router-view>
+                <router-view/>
             </div>
             <el-footer>
                 <el-divider/>
-                <FirFooter></FirFooter>
+                <FirFooter/>
             </el-footer>
         </el-container>
     </div>
@@ -52,7 +51,7 @@
 
 <style scoped>
     .pbody {
-        padding-top: 20px;
+        padding-top: 30px;
     }
 
 </style>

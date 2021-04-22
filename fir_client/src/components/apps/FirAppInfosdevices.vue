@@ -1,6 +1,4 @@
 <template>
-
-
     <div style="margin-top: 20px;width: 90%;margin-left: 8%">
         <el-link type="primary" v-if="this.currentapp.issupersign" style="margin-bottom: 30px;font-size: x-large"
                  @click="$router.push({name:'FirSuperSignBase',params:{act:'useddevices'},query:{bundleid: currentapp.bundle_id}})">
@@ -60,33 +58,4 @@
 
 <style scoped>
 
-
-    .avatar-uploader .el-upload {
-        border: 1px dashed #d9d9d9;
-        border-radius: 6px;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-
-    }
-
-    .avatar-uploader .el-upload:hover {
-        border-color: #409EFF;
-    }
-
-    .avatar-uploader-icon {
-        font-size: 28px;
-        color: #8c939d;
-        width: 178px;
-        height: 178px;
-        line-height: 178px;
-        text-align: center;
-    }
-
-    .avatar {
-        height: 100px;
-        width: 100px;
-        border-radius: 10px;
-        display: block;
-    }
 </style>

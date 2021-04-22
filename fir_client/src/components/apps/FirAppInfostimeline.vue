@@ -9,21 +9,21 @@
             <el-card>
                 <div class="directive-view-release">
 
-                    <i class="el-icon-cloudy" v-if="! app.is_master"></i>
-                    <i class="el-icon-cloudy" style="background-color: rgb(96, 200, 279)" v-else></i>
+                    <i class="el-icon-cloudy" v-if="! app.is_master"/>
+                    <i class="el-icon-cloudy" style="background-color: rgb(139,195,248)" v-else/>
 
                     <b class="ng-binding">{{app.app_version}} (Build {{app.build_version}})</b>
                     <div class="release-metainfo ng-hide"
                          v-if="app.release_type === 0">
                         <small>
-                            <i class="icon-calendar"></i>
+                            <i class="icon-calendar"/>
                             <span class="el-icon-date">&nbsp;{{app.created_time|formattimeline}}</span>
                         </small>
                     </div>
 
                     <div class="release-metainfo" v-else>
                         <small>
-                            <i class="icon-calendar"></i>
+                            <i class="icon-calendar"/>
                             <span class="el-icon-date">&nbsp;{{app.created_time|formattimeline}}</span>
                         </small> &nbsp;&nbsp;·&nbsp;&nbsp;
 
@@ -32,19 +32,18 @@
                     </div>
 
                     <p>{{app.changelog}}</p>
-                    <textarea v-if="app.editing.changelog"
-                              v-model="app.changelog"
-                              placeholder="更新日志">
-                    </textarea>
+                    <label>
+                        <textarea v-if="app.editing.changelog"
+                                  v-model="app.changelog"
+                                  placeholder="更新日志">
+                        </textarea>
+                    </label>
                     <div class="release-actions editing " v-if="app.editing.changelog">
-
                         <button class="btn-cancel" @click="endEdit(app,'changelog')"><span
                         >取消</span></button>
                         <button class="btn-save" @click="updateChangelog(app,'changelog')"><span
                         >保存</span></button>
                     </div>
-
-
                     <el-input v-if="app.editing.binary_url"
                               v-model="app.binary_url"
                               placeholder="下载地址,默认本服务器，填写第三方可以 自动跳转到第三方平台" clearable>
@@ -56,52 +55,42 @@
                         <button class="btn-save" @click="updateChangelog(app,'binary_url')"><span
                         >保存</span></button>
                     </div>
-
-
                     <div class="release-actions" v-show="!app.editing.changelog && !app.editing.binary_url ">
-
                         <el-tooltip class="tooltip-top" content="编辑更新日志" placement="top">
-
                             <el-button @click="startEdit(app,'changelog')"
                                        tooltip="编辑更新日志"
                                        class="tooltip-top ">
-                                <i class="el-icon-edit"></i>
+                                <i class="el-icon-edit"/>
                             </el-button>
-
                         </el-tooltip>
-
-
                         <el-tooltip class="tooltip-top" content="下载原文件" placement="top">
-
                             <el-button class="tooltip-top" tooltip="下载原文件"
                                        @click="downloadPackage(app)">
-                                <i class="el-icon-download"></i>
+                                <i class="el-icon-download"/>
                                 <span>{{app.binary_size}}</span>
                             </el-button>
-
                         </el-tooltip>
 
                         <el-tooltip class="tooltip-top" :content="app.binary_url|downcontent" placement="top">
 
                             <el-button class="tooltip-top" tooltip="修改下载地址"
-                                       @click="startEdit(app,'binary_url')"><i
-                                    class="el-icon-link"></i> <span>下载地址</span>
+                                       @click="startEdit(app,'binary_url')"><i class="el-icon-link"/> <span>下载地址</span>
                             </el-button>
 
                         </el-tooltip>
 
-                        <el-button class="tooltip-top" @click="previewRelase(app)"><i
-                                class="el-icon-view"></i> <span class="ng-binding">预览</span>
+                        <el-button class="tooltip-top" @click="previewRelase(app)"><i class="el-icon-view"/> <span
+                                class="ng-binding">预览</span>
                         </el-button>
 
                         <el-button v-if="! app.is_master" class="tooltip-top" @click="make_master_release(app)">
-                            <i class="el-icon-view"></i>
+                            <i class="el-icon-view"/>
                             <span class="ng-binding ng-scope">标记上线</span>
                         </el-button>
 
                         <el-button v-if="(! app.is_master )|| (app.is_master && release_apps.length === 1)"
                                    class="tooltip-top" @click="del_release_app(app)">
-                            <i class="el-icon-delete"></i>
+                            <i class="el-icon-delete"/>
                             <span class="ng-binding ng-scope">删除</span>
                         </el-button>
 
@@ -128,7 +117,6 @@
                     editing: {'changelog': false, 'binary_url': false}
                 },
                 updatas: {},
-
             }
         },
         methods: {
@@ -412,48 +400,10 @@
         color: #9b9b9b;
     }
 
-    .directive-view-release .edit-pen {
-        cursor: pointer
-    }
-
-    .directive-view-release .release-type {
-        position: relative;
-        display: inline-block;
-        margin-left: 8px;
-        padding: 2px 6px;
-        border: 1px solid;
-        border-radius: 5px
-    }
-
-    .directive-view-release .release-info {
-        margin-top: 6px
-    }
-
-    .directive-view-release .release-info i, .directive-view-release .release-info span {
-        display: inline-block;
-        vertical-align: middle
-    }
-
-    .directive-view-release .release-info span {
-        margin-right: 12px;
-        margin-left: 4px
-    }
 
     .directive-view-release .release-actions {
         margin-top: 10px;
         position: relative
-    }
-
-    .directive-view-release .release-actions .is-history {
-        display: inline-block
-    }
-
-    .directive-view-release .release-actions toggle {
-        margin-right: 8px
-    }
-
-    .directive-view-release .release-actions .comp-toggle.toggle-off {
-        background-color: #9b9b9b
     }
 
     .directive-view-release .release-actions a, .directive-view-release .release-actions button {
@@ -467,7 +417,7 @@
         padding: 4px 10px
     }
 
-    .directive-view-release .release-actions .release-actions-group .mqc-wait-btn, .directive-view-release .release-actions .tooltip-top {
+    .directive-view-release .release-actions .tooltip-top {
         overflow: visible;
         position: relative
     }
@@ -480,13 +430,11 @@
     .directive-view-release .release-actions a.btn-save, .directive-view-release .release-actions button.btn-save {
         border-color: #3d6df8;
         background-color: #92c1f8;
-
         color: #fff
     }
 
     .directive-view-release .release-actions a.btn-cancel, .directive-view-release .release-actions button.btn-cancel {
         border: 0;
-
     }
 
     .directive-view-release .release-actions a.btn-cancel:hover, .directive-view-release .release-actions button.btn-cancel:hover {
@@ -510,82 +458,6 @@
         margin-top: 0;
         text-align: right;
         width: 500px
-    }
-
-
-    .time-line {
-        position: relative
-    }
-
-    .time-line:before {
-        position: absolute;
-        left: 25px;
-        z-index: 1;
-        height: 100%;
-        border-left: 1px solid rgba(151, 151, 151, .2);
-        content: ' '
-    }
-
-    .time-line li {
-        margin-top: 80px
-    }
-
-    .time-line li:first-child {
-        padding-left: 80px;
-        margin-top: 0
-    }
-
-    .time-line li:first-child .dot {
-        position: absolute;
-        left: 20px;
-        z-index: 2;
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        border: 1px solid rgba(151, 151, 151, .2);
-        border-radius: 50%;
-        background-color: #9b9b9b;
-        text-align: center
-    }
-
-    .time-line li:nth-child(2) {
-        margin-top: 20px
-    }
-
-    .time-line li:nth-child(3) {
-        margin-top: 40px
-    }
-
-    .time-line .filter {
-        position: relative;
-        top: -6px;
-        display: inline-block;
-        margin-right: 32px;
-        font-weight: 700;
-        cursor: pointer
-    }
-
-    .time-line .filter.active {
-        color: #4a4a4a
-    }
-
-    .time-line .filter.version-rollback .button {
-        display: inline-block;
-        vertical-align: middle;
-        background-color: transparent;
-        border: 1px solid;
-        padding: 4px 20px;
-        border-radius: 17px
-    }
-
-    .time-line .more button {
-        background: #f6f6f6;
-        border: 1px solid;
-        position: relative;
-        z-index: 99;
-        width: 160px;
-        padding: 10px 0;
-        border-radius: 40px
     }
 
 </style>

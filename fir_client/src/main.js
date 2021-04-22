@@ -13,6 +13,7 @@ import store from "@/store";
 import {
     Aside,
     Avatar,
+    Backtop,
     Breadcrumb,
     BreadcrumbItem,
     Button,
@@ -46,6 +47,7 @@ import {
     Pagination,
     Popover,
     Progress,
+    Radio,
     RadioButton,
     RadioGroup,
     Row,
@@ -60,8 +62,7 @@ import {
     Timeline,
     TimelineItem,
     Tooltip,
-    Upload,
-    Radio,
+    Upload
 } from "element-ui";
 import VueLazyload from 'vue-lazyload'
 // 引入点击复制组件
@@ -144,6 +145,7 @@ Vue.use(Switch);
 Vue.use(Footer);
 Vue.use(InputNumber);
 Vue.use(Radio);
+Vue.use(Backtop);
 Vue.prototype.$message = Message;
 Vue.prototype.$notify = Notification;
 Vue.prototype.$loading = Loading.service;

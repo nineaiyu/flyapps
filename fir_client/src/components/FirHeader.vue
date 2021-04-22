@@ -1,7 +1,6 @@
 <template>
-    <div>
+    <div style="background-color: rgba(162,193,230,0.18);">
         <el-container class="navbar-wrapper">
-
             <el-dialog
                     title="API  Token"
                     :visible.sync="dialogVisible"
@@ -16,12 +15,9 @@
                 <el-button type="primary" @click="maketoken">重新生成</el-button>
              </span>
             </el-dialog>
-
-
             <el-row :gutter="20">
-                <el-col :span="14" style="padding-top: 16px;margin-left: 60px">
-
-                    <el-breadcrumb separator-class="el-icon-arrow-right" style="height: 80px;font-size: 20px">
+                <el-col :span="14" style="padding-top: 36px;margin-left: 60px">
+                    <el-breadcrumb separator-class="el-icon-arrow-right" style="height: 60px;font-size: 20px">
                         <el-breadcrumb-item :to="{ name:'FirIndex' }">首页</el-breadcrumb-item>
                         <el-breadcrumb-item :to="{ name:'FirApps'}">我的应用</el-breadcrumb-item>
 
@@ -35,14 +31,13 @@
                         </el-breadcrumb-item>
 
                     </el-breadcrumb>
-
                 </el-col>
-                <el-col :span="2" :push="3">
+                <el-col :span="2" :push="3" style="padding-top: 16px;">
                     <div class="block">
                         <el-avatar :size="66" :src="$store.state.userinfo.head_img"></el-avatar>
                     </div>
                 </el-col>
-                <el-col :span="4" :push="3">
+                <el-col :span="4" :push="3" style="padding-top: 16px;">
                     <el-dropdown style="padding-top: 12px;" @command="handleCommand">
                         <el-button type="success" plain round>
                             {{$store.state.userinfo.first_name }}<i class="el-icon-arrow-down el-icon--right"></i>
@@ -66,7 +61,6 @@
 
 
         </el-container>
-
     </div>
 </template>
 
@@ -159,16 +153,10 @@
 
     .el-container, .el-row {
         margin: 10px auto;
-        width: 1166px;
-    }
-
-    .el-container {
-        margin: 10px auto 100px;
-        width: 1166px;
+        width: 1266px;
     }
 
     .navbar-wrapper {
-        background-color: #dbffeb;
         font-size: 0;
         border-radius: 10px;
     }
@@ -183,10 +171,6 @@
 
     .el-icon-arrow-down {
         font-size: 12px;
-    }
-
-    .elbi {
-        color: #67c23a;
     }
 
 

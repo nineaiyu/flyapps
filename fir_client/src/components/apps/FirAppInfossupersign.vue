@@ -32,7 +32,7 @@
                 <el-tooltip content="本应用签名使用额度，超过该额度，新设备将无法安装本应用。0代表不限额" placement="top">
                     <el-input-number v-model="currentapp.supersign_limit_number" :disabled="supersign_disable"
                                      :placeholder="defualt_dtitle" :min="0"
-                                     style="width: 40%;margin-right: 10px" label="签名限额"></el-input-number>
+                                     style="width: 40%;margin-right: 10px" label="签名限额"/>
                 </el-tooltip>
 
                 <el-button @click="saveappinfo({supersign_limit_number:currentapp.supersign_limit_number})"
@@ -54,7 +54,7 @@
                 <el-select v-model="currentapp.supersign_type" placeholder="特殊签名权限"
                            style="width: 60%;margin-right: 10px" :disabled="supersign_disable">
                     <el-option v-for="st in sign_type_list" :key="st.id" :label="st.name"
-                               :value="st.id"></el-option>
+                               :value="st.id"/>
                 </el-select>
                 <el-button @click="saveappinfo({supersign_type:currentapp.supersign_type})"
                            :disabled="supersign_disable"
@@ -203,33 +203,4 @@
 
 <style scoped>
 
-
-    .avatar-uploader .el-upload {
-        border: 1px dashed #d9d9d9;
-        border-radius: 6px;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-
-    }
-
-    .avatar-uploader .el-upload:hover {
-        border-color: #409EFF;
-    }
-
-    .avatar-uploader-icon {
-        font-size: 28px;
-        color: #8c939d;
-        width: 178px;
-        height: 178px;
-        line-height: 178px;
-        text-align: center;
-    }
-
-    .avatar {
-        height: 100px;
-        width: 100px;
-        border-radius: 10px;
-        display: block;
-    }
 </style>

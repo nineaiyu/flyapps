@@ -140,11 +140,8 @@
 
 <style scoped>
     .el-main {
-        margin: 10px auto 100px;
-        width: 1166px;
         position: relative;
         padding-bottom: 1px;
-        background-color: #bfe7f9;
         color: #9b9b9b;
         -webkit-font-smoothing: antialiased;
         border-radius: 1%;
@@ -153,8 +150,8 @@
     .user-info {
         position: relative;
         text-align: center;
-        margin-bottom: 60px;
-        margin-top: 46px;
+        margin: 46px auto 100px;
+        width: 1266px;
     }
 
     .avatar {

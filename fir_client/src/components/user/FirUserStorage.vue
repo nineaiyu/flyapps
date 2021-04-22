@@ -1,5 +1,5 @@
 <template>
-    <el-main style="text-align:center">
+    <el-main>
         <h2 v-if="is_admin_storage">管理员存储，您配置的存储将决定其他用户配置的默认存储，请谨慎修改</h2>
         <el-dialog :title="title" :visible.sync="dialogstorageVisible" :destroy-on-close="true"
                    :close-on-click-modal="false">
@@ -9,38 +9,38 @@
                 <el-form-item label-width="100px" label="存储类型">
                     <el-select :disabled='disabled' v-model="editstorageinfo.storage_type" placeholder="存储类型"
                                style="margin-left: -100px">
-                        <el-option v-for="st in storage_list" :key="st.id" :label="st.name" :value="st.id"></el-option>
+                        <el-option v-for="st in storage_list" :key="st.id" :label="st.name" :value="st.id"/>
                     </el-select>
                 </el-form-item>
 
                 <div v-if="editstorageinfo.storage_type">
                     <el-form-item label-width="110px" label="存储名称">
-                        <el-input :disabled='disabled' v-model="editstorageinfo.name"></el-input>
+                        <el-input :disabled='disabled' v-model="editstorageinfo.name"/>
                     </el-form-item>
 
                     <el-form-item label-width="110px" label="key">
-                        <el-input :disabled='disabled' v-model="editstorageinfo.access_key"></el-input>
+                        <el-input :disabled='disabled' v-model="editstorageinfo.access_key"/>
                     </el-form-item>
                     <el-form-item label-width="110px" label="secret">
-                        <el-input :disabled='disabled' v-model="editstorageinfo.secret_key"></el-input>
+                        <el-input :disabled='disabled' v-model="editstorageinfo.secret_key"/>
                     </el-form-item>
 
                     <el-form-item label-width="110px" label="bucket_name">
-                        <el-input :disabled='disabled' v-model="editstorageinfo.bucket_name"></el-input>
+                        <el-input :disabled='disabled' v-model="editstorageinfo.bucket_name"/>
                     </el-form-item>
                     <el-form-item label-width="110px" label="下载域名">
-                        <el-input :disabled='disabled' v-model="editstorageinfo.domain_name"></el-input>
+                        <el-input :disabled='disabled' v-model="editstorageinfo.domain_name"/>
                     </el-form-item>
 
                     <div v-if="editstorageinfo.storage_type === 2">
                         <el-form-item label-width="110px" label="sts_role_arn">
                             <el-input :disabled='disabled'
-                                      v-model="editstorageinfo.sts_role_arn"></el-input>
+                                      v-model="editstorageinfo.sts_role_arn"/>
                         </el-form-item>
 
                         <el-form-item label-width="110px" label="endpoint">
                             <el-input :disabled='disabled'
-                                      v-model="editstorageinfo.endpoint"></el-input>
+                                      v-model="editstorageinfo.endpoint"/>
                         </el-form-item>
 
                         <el-form-item label-width="110px" label="下载授权方式">
@@ -49,7 +49,7 @@
                                        style="width: 80%" :disabled="disabled">
                                 <el-option v-for="st in editstorageinfo.download_auth_type_choices" :key="st.id"
                                            :label="st.name"
-                                           :value="st.id"></el-option>
+                                           :value="st.id"/>
                             </el-select>
 
                             <el-form-item label-width="120px" style="margin-top: 10px;margin-left: 70px;width: 60%"
@@ -64,7 +64,7 @@
                     </div>
 
                     <el-form-item label-width="110px" label="备注">
-                        <el-input :disabled='disabled' v-model="editstorageinfo.description"></el-input>
+                        <el-input :disabled='disabled' v-model="editstorageinfo.description"/>
                     </el-form-item>
 
                     <el-button v-if="!disabled" @click="updateorcreate">保存</el-button>
@@ -76,8 +76,6 @@
 
         <el-tabs v-model="activeName" @tab-click="handleClick" tab-position="top" type="border-card">
             <el-tab-pane label="存储选择" name="change">
-
-
                 <el-select v-model="use_storage_id" filterable :placeholder="selectlabel" @change="select_storage">
                     <el-option-group
                             v-for="storage_group in fstorage_lists"
@@ -103,47 +101,46 @@
                         强制迁移，忽略数据迁移失败错误，可能会导致数据丢失
                     </el-button>
                 </div>
-
-                <el-divider></el-divider>
+                <el-divider/>
                 <el-form v-if="storageinfo.id && storageinfo.id !==-1" ref="storageinfoform" :model="storageinfo"
                          label-width="80px" style="width: 39%;margin:0 auto;">
                     <el-form-item label-width="110px" label="存储类型">
                         <el-select :disabled='Sdisabled' v-model="storageinfo.storage_type" placeholder="存储类型"
                                    style="margin-left: -60px">
                             <el-option v-for="st in storage_list" :key="st.id" :label="st.name"
-                                       :value="st.id"></el-option>
+                                       :value="st.id"/>
                         </el-select>
                     </el-form-item>
 
                     <div v-if="storageinfo.storage_type">
 
                         <el-form-item label-width="110px" label="存储名称">
-                            <el-input :disabled='Sdisabled' v-model="storageinfo.name"></el-input>
+                            <el-input :disabled='Sdisabled' v-model="storageinfo.name"/>
                         </el-form-item>
 
                         <el-form-item label-width="110px" label="key">
-                            <el-input :disabled='Sdisabled' v-model="storageinfo.access_key"></el-input>
+                            <el-input :disabled='Sdisabled' v-model="storageinfo.access_key"/>
                         </el-form-item>
                         <el-form-item label-width="110px" label="secret">
-                            <el-input :disabled='Sdisabled' v-model="storageinfo.secret_key"></el-input>
+                            <el-input :disabled='Sdisabled' v-model="storageinfo.secret_key"/>
                         </el-form-item>
 
                         <el-form-item label-width="110px" label="bucket_name">
-                            <el-input :disabled='Sdisabled' v-model="storageinfo.bucket_name"></el-input>
+                            <el-input :disabled='Sdisabled' v-model="storageinfo.bucket_name"/>
                         </el-form-item>
                         <el-form-item label-width="110px" label="下载域名">
-                            <el-input :disabled='Sdisabled' v-model="storageinfo.domain_name"></el-input>
+                            <el-input :disabled='Sdisabled' v-model="storageinfo.domain_name"/>
                         </el-form-item>
 
                         <div v-if="storageinfo.storage_type === 2">
                             <el-form-item label-width="110px" label="sts_role_arn">
                                 <el-input :disabled='Sdisabled'
-                                          v-model="storageinfo.sts_role_arn"></el-input>
+                                          v-model="storageinfo.sts_role_arn"/>
                             </el-form-item>
 
                             <el-form-item label-width="110px" label="endpoint">
                                 <el-input :disabled='Sdisabled'
-                                          v-model="storageinfo.endpoint"></el-input>
+                                          v-model="storageinfo.endpoint"/>
                             </el-form-item>
 
                             <el-form-item label-width="110px" label="下载授权方式">
@@ -152,7 +149,7 @@
                                            style="width: 100%" :disabled="disabled">
                                     <el-option v-for="st in storageinfo.download_auth_type_choices" :key="st.id"
                                                :label="st.name"
-                                               :value="st.id"></el-option>
+                                               :value="st.id"/>
                                 </el-select>
 
                                 <el-form-item label-width="120px" style="margin-top: 10px;width: 100%" label="CDN鉴权主KEY"
@@ -165,7 +162,7 @@
 
                         </div>
                         <el-form-item label-width="110px" label="备注">
-                            <el-input :disabled='Sdisabled' v-model="storageinfo.description"></el-input>
+                            <el-input :disabled='Sdisabled' v-model="storageinfo.description"/>
                         </el-form-item>
 
                     </div>
@@ -194,8 +191,7 @@
                     </el-table-column>
                     <el-table-column
                             prop="domain_name"
-                            label="下载域名"
-                            width="180">
+                            label="下载域名">
                     </el-table-column>
                     <el-table-column
                             prop="bucket_name"
@@ -211,13 +207,12 @@
                     </el-table-column>
                     <el-table-column
                             prop="description"
-                            label="备注"
-                            width="200">
+                            label="备注">
                     </el-table-column>
                     <el-table-column
                             fixed="right"
                             label="操作"
-                    >
+                            width="120">
                         <template slot-scope="scope">
                             <div v-if="scope.row.id === org_storage_id">
                                 <el-button v-if="scope.row.id === org_storage_id" @click="showstorage(scope.row)"
@@ -241,38 +236,38 @@
                         <el-select v-model="editstorageinfo.storage_type" placeholder="存储类型"
                                    style="margin-left: -100px">
                             <el-option v-for="st in storage_list" :key="st.id" :label="st.name"
-                                       :value="st.id"></el-option>
+                                       :value="st.id"/>
                         </el-select>
                     </el-form-item>
 
                     <div v-if="editstorageinfo.storage_type">
                         <el-form-item label-width="110px" label="存储名称">
-                            <el-input v-model="editstorageinfo.name"></el-input>
+                            <el-input v-model="editstorageinfo.name"/>
                         </el-form-item>
 
                         <el-form-item label-width="110px" label="key">
-                            <el-input v-model="editstorageinfo.access_key"></el-input>
+                            <el-input v-model="editstorageinfo.access_key"/>
                         </el-form-item>
                         <el-form-item label-width="110px" label="secret">
-                            <el-input v-model="editstorageinfo.secret_key"></el-input>
+                            <el-input v-model="editstorageinfo.secret_key"/>
                         </el-form-item>
 
                         <el-form-item label-width="110px" label="bucket_name">
-                            <el-input v-model="editstorageinfo.bucket_name"></el-input>
+                            <el-input v-model="editstorageinfo.bucket_name"/>
                         </el-form-item>
                         <el-form-item label-width="110px" label="下载域名">
-                            <el-input v-model="editstorageinfo.domain_name"></el-input>
+                            <el-input v-model="editstorageinfo.domain_name"/>
                         </el-form-item>
 
                         <div v-if="editstorageinfo.storage_type === 2">
                             <el-form-item label-width="110px" label="sts_role_arn">
                                 <el-input
-                                        v-model="editstorageinfo.sts_role_arn"></el-input>
+                                        v-model="editstorageinfo.sts_role_arn"/>
                             </el-form-item>
 
                             <el-form-item label-width="110px" label="endpoint">
                                 <el-input
-                                        v-model="editstorageinfo.endpoint"></el-input>
+                                        v-model="editstorageinfo.endpoint"/>
                             </el-form-item>
 
                             <el-form-item label-width="110px" label="下载授权方式">
@@ -281,7 +276,7 @@
                                            style="width: 80%">
                                     <el-option v-for="st in editstorageinfo.download_auth_type_choices" :key="st.id"
                                                :label="st.name"
-                                               :value="st.id"></el-option>
+                                               :value="st.id"/>
                                 </el-select>
 
                                 <el-form-item label-width="120px" style="margin-top: 10px;margin-left: 70px;width: 60%"
@@ -296,7 +291,7 @@
                         </div>
 
                         <el-form-item label-width="110px" label="备注">
-                            <el-input v-model="editstorageinfo.description"></el-input>
+                            <el-input v-model="editstorageinfo.description"/>
                         </el-form-item>
 
                         <el-button @click="updateorcreate">校验并保存</el-button>
@@ -544,11 +539,11 @@
 
 <style scoped>
     .el-main {
-        margin: 10px auto 100px;
-        width: 1166px;
+        text-align: center;
+        margin: 20px auto 100px;
+        width: 1266px;
         position: relative;
         padding-bottom: 1px;
-        background-color: #bfe7f9;
         color: #9b9b9b;
         -webkit-font-smoothing: antialiased;
         border-radius: 1%;

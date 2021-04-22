@@ -10,35 +10,35 @@
 
                 <div v-if="editdeveloperinfo.auth_type===0">
                     <el-form-item label-width="110px" label="issuer_id">
-                        <el-input :disabled='isedit' v-model="editdeveloperinfo.issuer_id"></el-input>
+                        <el-input :disabled='isedit' v-model="editdeveloperinfo.issuer_id"/>
                     </el-form-item>
 
                     <el-form-item label-width="110px" label="private_key_id">
-                        <el-input v-model="editdeveloperinfo.private_key_id"></el-input>
+                        <el-input v-model="editdeveloperinfo.private_key_id"/>
                     </el-form-item>
 
                     <el-form-item label-width="110px" label="p8key">
                         <el-input type="textarea"
-                                  :rows="6" v-model="editdeveloperinfo.p8key" :placeholder="placeholder"></el-input>
+                                  :rows="6" v-model="editdeveloperinfo.p8key" :placeholder="placeholder"/>
                     </el-form-item>
                 </div>
 
                 <div v-if="editdeveloperinfo.auth_type===1">
                     <el-form-item label-width="110px" label="APP_ID">
-                        <el-input :disabled='isedit' v-model="editdeveloperinfo.email"></el-input>
+                        <el-input :disabled='isedit' v-model="editdeveloperinfo.email"/>
                     </el-form-item>
 
                     <el-form-item label-width="110px" label="password">
-                        <el-input v-model="editdeveloperinfo.password" :placeholder="placeholder"></el-input>
+                        <el-input v-model="editdeveloperinfo.password" :placeholder="placeholder"/>
                     </el-form-item>
                 </div>
 
                 <el-form-item label-width="110px" label="设备数量">
-                    <el-input v-model="editdeveloperinfo.usable_number"></el-input>
+                    <el-input v-model="editdeveloperinfo.usable_number"/>
                 </el-form-item>
 
                 <el-form-item label-width="110px" label="备注">
-                    <el-input v-model="editdeveloperinfo.description"></el-input>
+                    <el-input v-model="editdeveloperinfo.description"/>
                 </el-form-item>
                 <div style="">
                     <el-button v-if="isedit && editdeveloperinfo.is_actived" size="small" @click="syncdevices">同步设备信息
@@ -96,7 +96,7 @@
                             type="line"
                             :color="developer_usedColor"
                             :text-inside="true" :stroke-width="18" :percentage="percentage"
-                            status="success"></el-progress>
+                            status="success"/>
                 </div>
 
                 <el-table
@@ -120,10 +120,10 @@
                                     ?scope.row.usable_number-scope.row.developer_used_number :0 }}</p>
 
                                 <div slot="reference" class="name-wrapper">
-                                    <el-tag size="medium" v-if="scope.row.email"><i class="el-icon-s-custom"></i> {{
+                                    <el-tag size="medium" v-if="scope.row.email"><i class="el-icon-s-custom"/> {{
                                         scope.row.email }}
                                     </el-tag>
-                                    <el-tag size="medium" v-if="scope.row.issuer_id"><i class="el-icon-key"></i> {{
+                                    <el-tag size="medium" v-if="scope.row.issuer_id"><i class="el-icon-key"/> {{
                                         scope.row.issuer_id }}
                                     </el-tag>
                                 </div>
@@ -233,41 +233,41 @@
                         <el-select v-model="editdeveloperinfo.auth_type" placeholder="认证类型"
                                    style="margin-left: -100px">
                             <el-option v-for="st in apple_auth_list" :key="st.id" :label="st.name"
-                                       :value="st.id"></el-option>
+                                       :value="st.id"/>
                         </el-select>
                     </el-form-item>
                     <div v-if="editdeveloperinfo.auth_type===0">
                         <el-form-item label-width="110px" label="issuer_id">
-                            <el-input :disabled='isedit' v-model="editdeveloperinfo.issuer_id"></el-input>
+                            <el-input :disabled='isedit' v-model="editdeveloperinfo.issuer_id"/>
                         </el-form-item>
 
                         <el-form-item label-width="110px" label="private_key_id">
-                            <el-input v-model="editdeveloperinfo.private_key_id" :placeholder="placeholder"></el-input>
+                            <el-input v-model="editdeveloperinfo.private_key_id" :placeholder="placeholder"/>
                         </el-form-item>
 
                         <el-form-item label-width="110px" label="p8key">
                             <el-input type="textarea"
-                                      :rows="6" v-model="editdeveloperinfo.p8key" :placeholder="placeholder"></el-input>
+                                      :rows="6" v-model="editdeveloperinfo.p8key" :placeholder="placeholder"/>
                         </el-form-item>
                     </div>
 
                     <div v-if="editdeveloperinfo.auth_type===1">
                         <el-form-item label-width="110px" label="APP_ID">
-                            <el-input :disabled='isedit' v-model="editdeveloperinfo.email"></el-input>
+                            <el-input :disabled='isedit' v-model="editdeveloperinfo.email"/>
                         </el-form-item>
 
                         <el-form-item label-width="110px" label="password">
-                            <el-input v-model="editdeveloperinfo.password" :placeholder="placeholder"></el-input>
+                            <el-input v-model="editdeveloperinfo.password" :placeholder="placeholder"/>
                         </el-form-item>
                     </div>
 
 
                     <el-form-item label-width="110px" label="设备数量">
-                        <el-input v-model="editdeveloperinfo.usable_number"></el-input>
+                        <el-input v-model="editdeveloperinfo.usable_number"/>
                     </el-form-item>
 
                     <el-form-item label-width="110px" label="备注">
-                        <el-input v-model="editdeveloperinfo.description"></el-input>
+                        <el-input v-model="editdeveloperinfo.description"/>
                     </el-form-item>
                     <div style="">
                         <el-button @click="updateorcreate">添加</el-button>
@@ -753,15 +753,13 @@
 
 <style scoped>
     .el-main {
-        margin: 10px auto 100px;
-        width: 1166px;
+        margin: 20px auto 100px;
+        width: 1266px;
         position: relative;
         padding-bottom: 1px;
-        background-color: #bfe7f9;
         color: #9b9b9b;
         -webkit-font-smoothing: antialiased;
         border-radius: 1%;
     }
-
 
 </style>

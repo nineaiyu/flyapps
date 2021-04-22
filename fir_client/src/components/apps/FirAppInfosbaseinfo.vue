@@ -1,14 +1,10 @@
 <template>
-
-
     <div style="margin-top: 20px;width: 100%;margin-left: 8%">
         <el-form ref="form" label-width="80px">
-            <el-form-item label="应用ID" style="width: 55%">
-
+            <el-form-item label="应用ID" style="width: 56%">
                 <el-row>
                     <el-col :span="19">
                         <el-input v-model="currentapp.app_id" :disabled="true"></el-input>
-
                     </el-col>
                     <el-col :span="4">
                         <el-button type="danger" plain @click="delApp"
@@ -40,30 +36,38 @@
                          class="avatar">
                     <i v-else class="el-icon-plus avatar-uploader-icon"></i>
                 </el-upload>
-
             </el-form-item>
-
             <el-form-item label="应用描述" style="width: 66%">
                 <el-input type="textarea" v-model="currentapp.description"
-                          :autosize="{ minRows: 6, maxRows: 18}"></el-input>
+                          :autosize="{ minRows: 8, maxRows: 18}"></el-input>
             </el-form-item>
-
+            <el-form-item>
+                <el-row>
+                    <el-col :span="15">
+                        <el-button type="primary" plain @click="saveappinfo('save')" size="medium"
+                                   style="width: 160px;height: 50px;font-size: large;float: right">保存信息
+                        </el-button>
+                    </el-col>
+                </el-row>
+            </el-form-item>
             <el-divider></el-divider>
-
             <el-form-item label="应用截图" style="width: 100%">
 
                 <div class="appdownload">
-                    <el-image
-                            style="width: 155px;height: 288px;margin-right: 20px;background-color: #d1eef9;float: left"
-                            fit="scale-down"
-                            @click="delscreen(screen.id)"
-                            v-for="(screen) in currentapp.screenshots" :key="screen.id" :src="screen.url" alt="">
-                        <div slot="error" class="image-slot" @click="delscreen(screen.id)"
-                             style="text-align: center;margin-top: 80%">
-                            <i class="el-icon-picture-outline"> 加载失败</i>
-                        </div>
-                    </el-image>
-                    <div style="width: 155px;height: 288px;background-color: #d1eef9;float: left"
+                    <el-tooltip content="点击删除该应用截图" v-for="(screen) in currentapp.screenshots" :key="screen.id"
+                                placement="top" effect="light">
+                        <el-image
+                                class="screen-img"
+                                fit="scale-down"
+                                @click="delscreen(screen.id)"
+                                :src="screen.url" alt="">
+                            <div slot="error" class="image-slot" @click="delscreen(screen.id)"
+                                 style="text-align: center;margin-top: 80%">
+                                <i class="el-icon-picture-outline"> 加载失败</i>
+                            </div>
+                        </el-image>
+                    </el-tooltip>
+                    <div class="screen-img"
                          v-if="currentapp.screenshots && currentapp.screenshots.length < 5">
                         <el-upload
                                 drag
@@ -76,10 +80,6 @@
 
                 </div>
 
-            </el-form-item>
-
-            <el-form-item>
-                <el-button type="primary" @click="saveappinfo('save')">保存</el-button>
             </el-form-item>
         </el-form>
 
@@ -140,7 +140,6 @@
                 this.$confirm('确认删除 ' + this.currentapp.name + ' ?')
                     // eslint-disable-next-line no-unused-vars
                     .then(res => {
-                        this.willDeleteApp = false;
                         apputils(data => {
                             if (data.code === 1000) {
                                 this.$message({
@@ -160,9 +159,8 @@
                         });
 
                     })
-                    // eslint-disable-next-line no-unused-vars
                     .catch(err => {
-                        this.willDeleteApp = false;
+                        this.$message.error(err)
                     });
             },
             getappinfo() {
@@ -240,7 +238,7 @@
 
 <style scoped>
     .appdownload /deep/ .el-upload-dragger {
-        background: #d1eef9;
+        background: #f1f1f1;
         width: 155px;
         height: 288px;
     }
@@ -258,8 +256,16 @@
 
     }
 
-    .avatar-uploader .el-image:hover {
-        border-color: #409EFF;
+    .screen-img {
+        width: 155px;
+        height: 288px;
+        margin-right: 20px;
+        background-color: #f1f1f1;
+        float: left
+    }
+
+    .screen-img:hover {
+        background-color: #c2dcf1;
     }
 
     .avatar-uploader-icon {

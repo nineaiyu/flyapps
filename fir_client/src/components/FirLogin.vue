@@ -1,8 +1,8 @@
 <template>
     <el-container>
         <div style="margin: 10px 0 10px 0 ;position:absolute;right:20px;top:auto;">
-            <el-button round icon="el-icon-arrow-left" @click="$router.go(-1)"></el-button>
-            <el-button round icon="el-icon-s-home" @click="$router.push({name:'FirIndex'})"></el-button>
+            <el-button round icon="el-icon-arrow-left" @click="$router.go(-1)"/>
+            <el-button round icon="el-icon-s-home" @click="$router.push({name:'FirIndex'})"/>
 
         </div>
         <el-header>
@@ -20,13 +20,13 @@
                     <el-tab-pane label="用户名登录" name="username" v-if="allow_ways.up">
                         <el-form-item>
                             <el-input v-model="form.email" prefix-icon="el-icon-user" placeholder="用户名" autofocus
-                                      clearable></el-input>
+                                      clearable/>
                         </el-form-item>
                     </el-tab-pane>
                     <el-tab-pane :label="rutitle+'登录'" name="smsemail" v-if="allow_ways.sms || allow_ways.email">
                         <el-form-item>
                             <el-input v-model="form.email" prefix-icon="el-icon-user" :placeholder="rutitle" autofocus
-                                      clearable></el-input>
+                                      clearable/>
                         </el-form-item>
                     </el-tab-pane>
 
@@ -35,21 +35,21 @@
                 <el-form-item v-if="is_cptch">
                     <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
                               @keyup.enter.native="onSubmit"
-                              show-password></el-input>
+                              show-password/>
                 </el-form-item>
                 <el-form-item v-else>
                     <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
-                              show-password></el-input>
+                              show-password/>
                 </el-form-item>
                 <el-form-item style="height: 40px" v-if="cptch.cptch_image">
                     <el-row style="height: 40px">
                         <el-col :span="16">
                             <el-input placeholder="请输入验证码" v-model="form.authcode" maxlength="6"
-                                      @keyup.enter.native="onSubmit"></el-input>
+                                      @keyup.enter.native="onSubmit"/>
                         </el-col>
                         <el-col :span="8">
                             <el-image
-                                    style="margin:0px 4px;border-radius:4px;cursor:pointer;height: 40px"
+                                    style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px"
                                     :src="cptch.cptch_image"
                                     fit="contain" @click="get_auth_code">
                             </el-image>
@@ -260,11 +260,11 @@
 
     .el-container {
         margin: 10px auto;
-        width: 1166px;
+        width: 1266px;
     }
 
     .el-header {
-        margin-top: 16%;
+        margin-top: 13%;
     }
 
     .el-form {

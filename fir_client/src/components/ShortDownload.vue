@@ -11,7 +11,7 @@
             <div class="list-wrapper" style="width: 300px;">
                 <ul>
                     <li v-for="sign in signhelplist" :key="sign.url">
-                        <img v-lazy="sign.url" :key="sign.url"/>
+                        <img v-lazy="sign.url" :key="sign.url" alt=""/>
                         <p>
                             安装引导<br>{{ sign.msg}}
                         </p>
@@ -26,10 +26,10 @@
 
         <div class="wechat_tip_content" v-if="agent === 'wxandroid' || agent === 'wxapple'">
             <div class="wechat_tip" v-show="agent === 'wxandroid'">
-                <i class="triangle-up"></i>请点击右上角<br>选择"在浏览器打开"
+                <i class="triangle-up"/>请点击右上角<br>选择"在浏览器打开"
             </div>
             <div class="wechat_tip" v-show="agent === 'wxapple'">
-                <i class="triangle-up"></i>请点击右上角<br>选择"在Safari中打开"
+                <i class="triangle-up"/>请点击右上角<br>选择"在Safari中打开"
             </div>
         </div>
 
@@ -46,7 +46,7 @@
                         <div class="cell-container">
                             <div class="app-brief">
                                 <div class="icon-container wrapper">
-                                    <i class="i bg-path"></i>
+                                    <i class="i bg-path"/>
                                     <span class="icon"><img
                                             :src="mcurrentappinfo.icon_url"></span>
                                     <span id="qrcode" class="qrcode">
@@ -56,7 +56,7 @@
                                 <p v-else class="scan-tips wrapper icon-warp">{{ mcurrentappinfo.release_type|getiOStype
                                     }}</p>
                                 <h1 class="name wrapper">
-                                    <span class="icon-warp" style="margin-left:0px">
+                                    <span class="icon-warp" style="margin-left:0">
                                         <i v-if="currentappinfo.type === 0 && agent !== ''"
                                            class="iconfont icon-android2"/>
                                         <i v-if="currentappinfo.type === 1 && agent !== ''"
@@ -86,7 +86,7 @@
                                 <div id="actions" class="actions" v-if="agent !==''"
                                      style="margin-top: 20%;margin-bottom: 20%">
 
-                                    <button type="info" round v-if="agent === 'wxandroid' || agent === 'wxapple'">
+                                    <button v-if="agent === 'wxandroid' || agent === 'wxapple'">
                                         不支持在微信内下载
                                     </button>
 
@@ -103,7 +103,7 @@
                                                     <div><p>正在安装，请按 Home 键在桌面查看</p>
                                                         <p v-if="!this.currentappinfo.issupersign && this.mcurrentappinfo.release_type!==1">
                                                             <button @click="gomobileaction">
-                                                                <a icon="el-icon-loadings" type="primary"
+                                                                <a type="primary"
                                                                    :underline="false">
                                                                     安装完成后,需立即信任
                                                                 </a>
@@ -121,7 +121,7 @@
                                             </div>
                                             <br/>
                                             <button @click="download">
-                                                <a icon="el-icon-loadings" type="primary" :underline="false"> 下载安装 </a>
+                                                <a :underline="false"> 下载安装 </a>
                                             </button>
                                             <a v-if="(currentappinfo.issupersign || mcurrentappinfo.release_type === 2) && !$route.query.udid"
                                                @click="jiaocheng('open')"
@@ -211,7 +211,7 @@
                     <div class="list-wrapper">
                         <ul>
                             <li v-for="screen in imagelist" :key="screen">
-                                <img v-lazy="screen"/>
+                                <img v-lazy="screen" alt=""/>
                             </li>
                         </ul>
                     </div>

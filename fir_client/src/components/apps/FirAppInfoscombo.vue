@@ -6,19 +6,19 @@
                 <table>
                     <tr>
                         <td><span class="type">{{ currentapp.type|getapptype}}</span></td>
-                        <td></td>
+                        <td/>
                         <td><span class="type">{{ has_combo.type|getapptype}}</span></td>
                     </tr>
                     <tr>
                         <td>
                             <div class="icon"><img v-if="cmaster_release" :src="cmaster_release.icon_url"
-                                                   class="ng-isolate-scope">
+                                                   class="ng-isolate-scope" alt="">
                             </div>
                         </td>
-                        <td><i class="icon-combo"></i></td>
+                        <td><i class="icon-combo"/></td>
                         <td>
                             <div class="icon"><img v-if="hmaster_release" :src="hmaster_release.icon_url"
-                                                   class="ng-isolate-scope">
+                                                   class="ng-isolate-scope" alt="">
                             </div>
                         </td>
                     </tr>
@@ -39,34 +39,30 @@
                             <b>选择已有的应用进行合并</b>
                         </p>
                         <div class="apps">
-                            <b v-if="comboapplists.length ===0 ">暂无可以合并的应用</b>
+                            <el-link v-if="comboapplists.length ===0 " :underline="false" type="danger">暂无可以合并的应用
+                            </el-link>
                             <div :key="comboapp.app_id" @click="each_add(comboapp.app_id)" class="app ng-scope"
                                  v-for="comboapp in comboapplists">
                                 <div class="icon">
-                                    <img :src="comboapp.master_release|geticon_url" class="ng-isolate-scope">
+                                    <img :src="comboapp.master_release|geticon_url" class="ng-isolate-scope" alt="">
                                 </div>
                                 <p class="ng-binding">{{ comboapp.name }}</p></div>
                         </div>
                     </div>
-
-
-                    <span class="hr-vertical"></span>
+                    <span class="hr-vertical"/>
                     <div class="find-apps">
                         <p class="lead ">
                             <b>输入需要合并的应用的短链接或者名字</b>
                         </p>
-
                         <div class="form-group">
                             <el-input
                                     @click="searchapps"
-                                    clearables
+                                    clearable
                                     placeholder="输入短链接或者名字"
                                     prefix-icon="el-icon-search"
                                     v-model="searchKey"
                             />
                         </div>
-
-
                     </div>
                 </div>
 
@@ -366,36 +362,8 @@
         padding-top: 40px
     }
 
-    .apps-app-combo .request-wrapper table .actions .btn {
-        margin-bottom: 20px;
-        min-width: 100px;
-        border-radius: 30px
-    }
-
-    .apps-app-combo .request-wrapper table .actions .btn-link {
-        color: #a9b1b3;
-        text-decoration: none;
-        border: 1px solid transparent;
-        -webkit-transition: border-color .25s;
-        transition: border-color .25s
-    }
-
-    .apps-app-combo .request-wrapper table .actions .btn-link:hover {
-        border-color: #a9b1b3
-    }
-
     .apps-app-combo .request-wrapper table i.icon-combo {
         font-size: 30px
-    }
-
-    .apps-app-combo .combo-loading-wrap {
-        margin-bottom: 8px
-    }
-
-    .apps-app-combo .combo-loading-wrap > .icon {
-        display: inline-block;
-        -webkit-animation: rotating 1s linear infinite;
-        animation: rotating 1s linear infinite
     }
 
 

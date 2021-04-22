@@ -87,7 +87,7 @@
                     </el-slider>
                 </div>
                 <el-container style="padding-top: 20px;max-width: 96%">
-                    <router-view></router-view>
+                    <router-view/>
                 </el-container>
             </div>
         </div>
@@ -248,10 +248,8 @@
 <style scoped>
     .el-main {
         margin: 10px auto 100px;
-        width: 1166px;
         position: relative;
         padding-bottom: 1px;
-        background-color: #bfe7f9;
         color: #9b9b9b;
         -webkit-font-smoothing: antialiased;
         border-radius: 1%;
@@ -264,14 +262,16 @@
     }
 
     .page-app {
-        padding-bottom: 0
+        padding-bottom: 0;
+        width: 1266px;
+        margin: 10px auto 100px;
     }
 
     .page-app .banner {
         padding-top: 60px;
         padding-bottom: 40px;
         border-bottom: 1px solid rgba(208, 208, 208, .5);
-        background-color: #d5f9f9;
+        background-color: #ffffff;
         border-radius: 10px;
     }
 
@@ -281,7 +281,7 @@
         top: 0;
     }
 
-    .page-app .banner .actions .download, .page-app .banner .actions .upload {
+    .page-app .banner .actions .download {
         display: block;
         min-width: 150px;
         padding: 10px 20px;
@@ -290,13 +290,6 @@
         margin: 0 12px 12px 12px
     }
 
-
-    .page-app .banner .actions .upload {
-        background-color: #3ab2a7;
-        border: 1px solid transparent;
-        color: #fff;
-        cursor: pointer
-    }
 
     .page-app .banner .actions .download {
         text-align: center;

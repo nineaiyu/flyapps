@@ -192,7 +192,6 @@
                                     action="#"
                                     accept=".png , .jpg , .jpeg"
                                     :before-upload="upload_three">
-
                                 <el-tooltip v-if="user_certification.three" placement="top">
                                     <div slot="content">上传<i style="color: #2abb9d!important;">手持身份证</i>照片</div>
                                     <img :src="user_certification.three"
@@ -436,8 +435,7 @@
         float: left;
         width: 200px;
         height: 166px;
-        background-color: #d1eef9;
-
+        background-color: #c2dcf1;
     }
 
     .avatar-uploader .el-upload {
@@ -453,7 +451,6 @@
     }
 
     .avatar-uploader-icon {
-        /*font-size: 28px;*/
         color: #8c939d;
         width: 158px;
         height: 158px;

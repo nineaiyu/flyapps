@@ -1,47 +1,45 @@
 <template>
-    <div>
-        <el-container>
-            <el-header style="height: 100px">
-
-                <el-dialog
-                        :visible.sync="show_buy_download_times"
-                        width="780px"
-                        :close-on-click-modal="false"
-                        :close-on-press-escape="false"
-                        center>
+    <el-container>
+        <el-header style="height: 100px">
+            <el-dialog
+                    :visible.sync="show_buy_download_times"
+                    width="780px"
+                    :close-on-click-modal="false"
+                    :close-on-press-escape="false"
+                    center>
 
                     <span slot="title" style="color: #313639;font-size: 28px; margin-bottom: 14px;">
                         购买下载次数包
                     </span>
 
-                    <div class="packages" style="max-width: 768px;">
-                        <div class="package-item" v-for="(packages,index) in data_package_prices" :key="packages.name">
-                            <div class="arraw-badge" v-if="index===1"><span>荐</span> <span class="arraw"></span></div>
-                            <div class="package-content">
-                                <div class="money ">￥{{ packages.price / 100 }}</div>
-                                <div class="times ">{{ packages.package_size |formatMoney }}</div>
-                                <div class="unit" style="font-size: 14px;color: #869096">累计下载次数</div>
-                                <div class="text-gift" v-if="packages.download_count_gift">{ 赠 <span>{{ packages.download_count_gift }}</span>
-                                    次 }
-                                </div>
-                            </div>
-                            <div class="package-actions">
-                                <el-radio v-model="default_price_radio" :label="packages.name" border>
-                                    <span>此套餐</span>
-                                    <span class="pay-current" v-if="default_price_radio === packages.name"
-                                          :style="{background:`url(${pay_image.selected}) right bottom/100% no-repeat`}"/>
-
-                                </el-radio>
+                <div class="packages" style="max-width: 768px;">
+                    <div class="package-item" v-for="(packages,index) in data_package_prices" :key="packages.name">
+                        <div class="arraw-badge" v-if="index===1"><span>荐</span> <span class="arraw"/></div>
+                        <div class="package-content">
+                            <div class="money ">￥{{ packages.price / 100 }}</div>
+                            <div class="times ">{{ packages.package_size |formatMoney }}</div>
+                            <div class="unit" style="font-size: 14px;color: #869096">累计下载次数</div>
+                            <div class="text-gift" v-if="packages.download_count_gift">{ 赠 <span>{{ packages.download_count_gift }}</span>
+                                次 }
                             </div>
                         </div>
+                        <div class="package-actions">
+                            <el-radio v-model="default_price_radio" :label="packages.name" border>
+                                <span>此套餐</span>
+                                <span class="pay-current" v-if="default_price_radio === packages.name"
+                                      :style="{background:`url(${pay_image.selected}) right bottom/100% no-repeat`}"/>
 
+                            </el-radio>
+                        </div>
                     </div>
-                    <div>
-                        <div style="margin-top: 30px;text-align: center">
-                            <el-radio v-model="default_pay_radio" :label="pay.name" border v-for="pay in pay_choices"
-                                      :key="pay.name">
-                                <span style="color: white">xxxxxxxxxxxxxx</span>
-                                <span style="width: 160px; height: 45px">
+
+                </div>
+                <div>
+                    <div style="margin-top: 30px;text-align: center">
+                        <el-radio v-model="default_pay_radio" :label="pay.name" border v-for="pay in pay_choices"
+                                  :key="pay.name">
+                            <span style="color: white">xxxxxxxxxxxxxx</span>
+                            <span style="width: 160px; height: 45px">
                                     <span class="pay-icon alipay" :style="{backgroundImage:`url(${pay_image.ali})`}"
                                           v-if="pay.type === 'ALI'"/>
                                     <span class="pay-icon" :style="{backgroundImage:`url(${pay_image.wx})`}"
@@ -49,454 +47,444 @@
                                     <span class="pay-current" v-if="default_pay_radio === pay.name"
                                           :style="{background:`url(${pay_image.selected}) right bottom/100% no-repeat` }"/>
                                 </span>
-                            </el-radio>
-                        </div>
-
-                        <div style="text-align: center">
-                            <el-button type="primary" :disabled="buy_button_disable" @click="buy"
-                                       style="margin-top:30px;width: 166px"> 立即支付
-                            </el-button>
-                        </div>
-
+                        </el-radio>
                     </div>
 
-                    <span slot="footer">
+                    <div style="text-align: center">
+                        <el-button type="primary" :disabled="buy_button_disable" @click="buy"
+                                   style="margin-top:30px;width: 166px"> 立即支付
+                        </el-button>
+                    </div>
+
+                </div>
+
+                <span slot="footer">
                         如对充值订单有疑问，请联系 nineven@qq.com
                     </span>
-                </el-dialog>
+            </el-dialog>
 
-                <el-dialog
-                        :title="getDelappTitle"
-                        :visible.sync="willDeleteApp"
-                        width="50%">
+            <el-dialog
+                    :title="getDelappTitle"
+                    :visible.sync="willDeleteApp"
+                    width="50%">
 
-                    <span v-if="delapp.issupersign">该应用开启了超级签名，执行删除操作，将会删除相关开发者账户下的证书等数据，可能会导致已经下载的APP闪退，并且删除后不可恢复，请谨慎操作</span>
-                    <span v-else>删除后不可恢复，请谨慎操作</span>
+                <span v-if="delapp.issupersign">该应用开启了超级签名，执行删除操作，将会删除相关开发者账户下的证书等数据，可能会导致已经下载的APP闪退，并且删除后不可恢复，请谨慎操作</span>
+                <span v-else>删除后不可恢复，请谨慎操作</span>
 
-                    <span slot="footer" class="dialog-footer">
+                <span slot="footer" class="dialog-footer">
                         <el-button @click="willDeleteApp = false">取 消</el-button>
-                        <!--                        <el-button v-if="delapp.issupersign" type="danger" @click="$router.push({name: 'FirAppInfossecurity', params: {id: delapp.app_id}})">确 定</el-button>-->
                         <el-button type="danger" @click="delApp">确 定</el-button>
                     </span>
-                </el-dialog>
+            </el-dialog>
 
 
-                <el-dialog class="upload-app"
-                           style="position: fixed"
-                           :visible.sync="willuploadApp"
-                           :destroy-on-close="true"
-                           :show-close="!uploading"
-                           width="40%"
-                           :close-on-click-modal="false"
-                           @closed="closeUpload">
-                    <div v-if="!uploading">
-                        <el-row :gutter="20">
-                            <el-col :span="6">
-                                <div class="grid-content bg-purple">
-                                    <div style="width: 100px;height: 100px">
-                                        <el-avatar shape="square" :size="100" :src="analyseappinfo.icon"></el-avatar>
-                                    </div>
+            <el-dialog class="upload-app"
+                       style="position: fixed"
+                       :visible.sync="willuploadApp"
+                       :destroy-on-close="true"
+                       :show-close="!uploading"
+                       width="40%"
+                       :close-on-click-modal="false"
+                       @closed="closeUpload">
+                <div v-if="!uploading">
+                    <el-row :gutter="20">
+                        <el-col :span="6">
+                            <div class="grid-content bg-purple">
+                                <div style="width: 100px;height: 100px">
+                                    <el-avatar shape="square" :size="100" :src="analyseappinfo.icon"/>
                                 </div>
-                            </el-col>
-                            <el-col :span="18">
-                                <div class="grid-content bg-purple">
-                                    <el-row :gutter="20" style="margin-top: 8px;">
-                                        <el-col :span="18">
-                                            {{ analyseappinfo.version}} (Build {{ analyseappinfo.buildversion}}) {{
-                                            analyseappinfo.release_type_id|getiOStype}}
-                                            <el-link :underline="false"
-                                                     v-if="analyseappinfo.udid && analyseappinfo.udid.length > 0"
-                                                     @click="showUDID(analyseappinfo)">- {{ analyseappinfo.udid.length
-                                                }} UDID
-                                            </el-link>
-                                        </el-col>
-                                    </el-row>
-                                    <el-row :gutter="20" style="margin-top: 18px;">
-                                        <el-col :span="18">
-                                            <el-input v-model="analyseappinfo.appname"></el-input>
-                                        </el-col>
+                            </div>
+                        </el-col>
+                        <el-col :span="18">
+                            <div class="grid-content bg-purple">
+                                <el-row :gutter="20" style="margin-top: 8px;">
+                                    <el-col :span="18">
+                                        {{ analyseappinfo.version}} (Build {{ analyseappinfo.buildversion}}) {{
+                                        analyseappinfo.release_type_id|getiOStype}}
+                                        <el-link :underline="false"
+                                                 v-if="analyseappinfo.udid && analyseappinfo.udid.length > 0"
+                                                 @click="showUDID(analyseappinfo)">- {{ analyseappinfo.udid.length
+                                            }} UDID
+                                        </el-link>
+                                    </el-col>
+                                </el-row>
+                                <el-row :gutter="20" style="margin-top: 18px;">
+                                    <el-col :span="18">
+                                        <el-input v-model="analyseappinfo.appname"/>
+                                    </el-col>
 
-                                    </el-row>
-                                </div>
-                            </el-col>
-                        </el-row>
-                        <el-divider></el-divider>
+                                </el-row>
+                            </div>
+                        </el-col>
+                    </el-row>
+                    <el-divider/>
 
-                        <el-row :gutter="20">
+                    <el-row :gutter="20">
 
-                            <el-col :span="6">
-                                <div class="grid-content bg-purple">
-                                    <el-row :gutter="20" style="margin-top: 18px;">
-                                        <el-col :span="18" :offset="8">
-                                            <span>短连接</span>
-                                        </el-col>
-                                    </el-row>
-                                </div>
-                            </el-col>
-                            <el-col :span="18">
-                                <div class="grid-content bg-purple">
-                                    <el-row :gutter="20" style="margin-top: 10px;">
-                                        <el-col :span="18">
-                                            <el-input v-model="short">
-                                                <template slot="prepend">{{analyseappinfo.domain_name}}/</template>
-                                            </el-input>
-                                        </el-col>
-                                    </el-row>
-                                </div>
-                            </el-col>
-                        </el-row>
+                        <el-col :span="6">
+                            <div class="grid-content bg-purple">
+                                <el-row :gutter="20" style="margin-top: 18px;">
+                                    <el-col :span="18" :offset="8">
+                                        <span>短连接</span>
+                                    </el-col>
+                                </el-row>
+                            </div>
+                        </el-col>
+                        <el-col :span="18">
+                            <div class="grid-content bg-purple">
+                                <el-row :gutter="20" style="margin-top: 10px;">
+                                    <el-col :span="18">
+                                        <el-input v-model="short">
+                                            <template slot="prepend">{{analyseappinfo.domain_name}}/</template>
+                                        </el-input>
+                                    </el-col>
+                                </el-row>
+                            </div>
+                        </el-col>
+                    </el-row>
 
-                        <el-row :gutter="20">
+                    <el-row :gutter="20">
 
-                            <el-col :span="6">
-                                <div class="grid-content bg-purple">
-                                    <el-row :gutter="20" style="margin-top: 18px;">
-                                        <el-col :span="18" :offset="8">
-                                            <span>更新日志</span>
-                                        </el-col>
-                                    </el-row>
-                                </div>
-                            </el-col>
-                            <el-col :span="18">
-                                <div class="grid-content bg-purple">
-                                    <el-row :gutter="20" style="margin-top: 10px;">
-                                        <el-col :span="18">
-                                            <el-input type="textarea"
-                                                      v-model="analyseappinfo.changelog"
-                                                      placeholder="请输入内容"
-                                                      rows="5"
-                                                      show-word-limit></el-input>
-                                        </el-col>
-                                    </el-row>
-                                </div>
-                            </el-col>
-                        </el-row>
+                        <el-col :span="6">
+                            <div class="grid-content bg-purple">
+                                <el-row :gutter="20" style="margin-top: 18px;">
+                                    <el-col :span="18" :offset="8">
+                                        <span>更新日志</span>
+                                    </el-col>
+                                </el-row>
+                            </div>
+                        </el-col>
+                        <el-col :span="18">
+                            <div class="grid-content bg-purple">
+                                <el-row :gutter="20" style="margin-top: 10px;">
+                                    <el-col :span="18">
+                                        <el-input type="textarea"
+                                                  v-model="analyseappinfo.changelog"
+                                                  placeholder="请输入内容"
+                                                  rows="5"
+                                                  show-word-limit/>
+                                    </el-col>
+                                </el-row>
+                            </div>
+                        </el-col>
+                    </el-row>
 
-                    </div>
-                    <div v-if="uploading">
-                        <canvas ref="canvas" class="canvas"/>
-                        <div class="wrap">
-                            <!--包裹所有元素的容器-->
-                            <div class="cube">
-                                <!--前面图片 -->
-                                <div class="out_front">
-                                    <img src="@/assets/imgs/1.png" class="pic">
-                                </div>
-                                <!--后面图片 -->
-                                <div class="out_back">
-                                    <img src="@/assets/imgs/5.png" class="pic">
-                                </div>
-                                <!--左面图片 -->
-                                <div class="out_left">
-                                    <img src="@/assets/imgs/6.png" class="pic">
-                                </div>
-                                <!--右面图片 -->
-                                <div class="out_right">
-                                    <img src="@/assets/imgs/7.png" class="pic">
-                                </div>
-                                <!--上面图片 -->
-                                <div class="out_top">
-                                    <img src="@/assets/imgs/8.png" class="pic">
-                                </div>
-                                <!--下面图片 -->
-                                <div class="out_bottom">
-                                    <img src="@/assets/imgs/9.png" class="pic">
-                                </div>
-
-                                <!--小正方体 -->
-                                <span class="in_front">
-                                    <img :src="this.analyseappinfo.icon" class="in_pic">
-                                </span>
-                                <span class="in_back">
-                                     <img :src="this.analyseappinfo.icon" class="in_pic">
-                                </span>
-                                <span class="in_left">
-                                    <img :src="this.analyseappinfo.icon" class="in_pic">
-                                </span>
-                                <span class="in_right">
-                                    <img :src="this.analyseappinfo.icon" class="in_pic">
-                                </span>
-                                <span class="in_top">
-                                    <img :src="this.analyseappinfo.icon" class="in_pic">
-                                </span>
-                                <span class="in_bottom">
-                                    <img :src="this.analyseappinfo.icon" class="in_pic">
-                                </span>
+                </div>
+                <div v-if="uploading">
+                    <!--                        <canvas ref="canvas" class="canvas"/>-->
+                    <div class="wrap">
+                        <!--包裹所有元素的容器-->
+                        <div class="cube">
+                            <!--前面图片 -->
+                            <div class="out_front">
+                                <img src="@/assets/imgs/1.png" class="pic" alt="">
+                            </div>
+                            <!--后面图片 -->
+                            <div class="out_back">
+                                <img src="@/assets/imgs/5.png" class="pic" alt="">
+                            </div>
+                            <!--左面图片 -->
+                            <div class="out_left">
+                                <img src="@/assets/imgs/6.png" class="pic" alt="">
+                            </div>
+                            <!--右面图片 -->
+                            <div class="out_right">
+                                <img src="@/assets/imgs/7.png" class="pic" alt="">
+                            </div>
+                            <!--上面图片 -->
+                            <div class="out_top">
+                                <img src="@/assets/imgs/8.png" class="pic" alt="">
+                            </div>
+                            <!--下面图片 -->
+                            <div class="out_bottom">
+                                <img src="@/assets/imgs/9.png" class="pic" alt="">
                             </div>
 
+                            <!--小正方体 -->
+                            <span class="in_front">
+                                    <img :src="this.analyseappinfo.icon" class="in_pic" alt="">
+                                </span>
+                            <span class="in_back">
+                                     <img :src="this.analyseappinfo.icon" class="in_pic" alt="">
+                                </span>
+                            <span class="in_left">
+                                    <img :src="this.analyseappinfo.icon" class="in_pic" alt="">
+                                </span>
+                            <span class="in_right">
+                                    <img :src="this.analyseappinfo.icon" class="in_pic" alt="">
+                                </span>
+                            <span class="in_top">
+                                    <img :src="this.analyseappinfo.icon" class="in_pic" alt="">
+                                </span>
+                            <span class="in_bottom">
+                                    <img :src="this.analyseappinfo.icon" class="in_pic" alt="">
+                                </span>
                         </div>
+
                     </div>
-                    <span slot="footer" class="dialog-footer">
+                </div>
+                <span slot="footer" class="dialog-footer">
                         <el-progress :text-inside="true" :stroke-width="26" :percentage="uploadprocess"
-                                     v-if="uploadflag === true"></el-progress>
+                                     v-if="uploadflag === true"/>
                         <el-button type="primary" plain @click="uploadcloud" v-else>{{ analyseappinfo.is_new|get_upload_text}}</el-button>
                   </span>
-                </el-dialog>
+            </el-dialog>
 
-                <el-row>
-                    <el-col :span="3">
-                        <el-radio-group v-model="searchfromtype">
-                            <el-radio-button label="android" icon="el-icon-mobile-phone"><i
-                                    class="iconfont icon-android2"/>
-                            </el-radio-button>
-                            <el-radio-button label="ios"><i class="iconfont icon-ios"/>
-                            </el-radio-button>
-                        </el-radio-group>
+            <el-row>
+                <el-col :span="3">
+                    <el-radio-group v-model="searchfromtype">
+                        <el-radio-button label="android" icon="el-icon-mobile-phone"><i
+                                class="iconfont icon-android2"/>
+                        </el-radio-button>
+                        <el-radio-button label="ios"><i class="iconfont icon-ios"/>
+                        </el-radio-button>
+                    </el-radio-group>
 
-                    </el-col>
-                    <el-col :span="5">
-                        <el-row>
-                            <el-col :span="20">
-                                <el-input
-                                        placeholder="请输入名称搜索"
-                                        v-model="keysearch"
-                                        @click="searchapps"
-                                        @keyup.enter.native="searchapps"
-                                        clearable>
-                                </el-input>
-                            </el-col>
-                            <el-col :span="2">
+                </el-col>
+                <el-col :span="5">
+                    <el-row>
+                        <el-col :span="20">
+                            <el-input
+                                    placeholder="请输入名称搜索"
+                                    v-model="keysearch"
+                                    @click="searchapps"
+                                    @keyup.enter.native="searchapps"
+                                    clearable>
+                            </el-input>
+                        </el-col>
+                        <el-col :span="2">
 
-                                <el-button icon="el-icon-search" @click="searchFun">
-                                </el-button>
-                            </el-col>
-                        </el-row>
-                    </el-col>
-                    <el-col :span="4" class="surplus-card">
-                        <el-row>
-                            <el-col :span="12">
-                                <div>
-                                    <span class="name">iOS应用</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                                <div>
-                                    <span class="value">{{ hdata.ios_count }}</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                            </el-col>
-
-                            <el-col :span="12">
-                                <div>
-                                    <span class="name">Android应用</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                                <div>
-                                    <span class="value">{{ hdata.android_count }}</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                            </el-col>
-                        </el-row>
-                    </el-col>
-
-                    <el-col :span="5" class="surplus-card">
-                        <el-row>
-                            <el-col :span="12">
-                                <div>
-                                    <span class="name">今日苹果下载次数</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                                <div>
-                                    <span class="value">{{ hdata.ios_today_hits_count }}</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                            </el-col>
-
-                            <el-col :span="12">
-                                <div>
-                                    <span class="name">今日安卓下载次数</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                                <div>
-                                    <span class="value">{{ hdata.android_today_hits_count }}</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                            </el-col>
-                        </el-row>
-                    </el-col>
-
-
-                    <el-col :span="7" class="surplus-card">
-                        <el-row>
-                            <el-col :span="9">
-                                <div>
-                                    <el-tooltip placement="top">
-                                        <div slot="content">
-                                            1.账号下所有应用共用此剩余下载次数<br/>
-                                            2.每日凌晨 0 点自动重置下载次数<br/>
-                                        </div>
-                                        <span class="name">今日剩余免费次数</span>
-                                    </el-tooltip>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                                <div>
-                                    <span class="value">{{$store.state.userinfo.free_download_times }}</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                            </el-col>
-
-                            <el-col :span="8">
-                                <div>
-                                    <el-tooltip placement="top">
-                                        <div slot="content">1.下载次数包没有时间限制，用完为止<br/>2.购买的下载次数包为总下载量，不会每日重置</div>
-                                        <span class="name">剩余付费次数</span>
-                                    </el-tooltip>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                                <div>
-                                    <span class="value">{{$store.state.userinfo.download_times }}</span>
-                                    <el-divider direction="vertical"></el-divider>
-                                </div>
-                            </el-col>
-
-                            <el-col :span="6">
-                                <div>
-                                    <el-tooltip placement="top">
-                                        <div slot="content">
-                                            1.下载应用，每100M消耗一次下载次数<br>
-                                            2.超级签下载，下载消耗次数翻倍<br>
-                                        </div>
-                                        <span class="name">购买次数</span>
-                                    </el-tooltip>
-                                </div>
-                                <div>
-                                    <el-button class="action" size="small" icon="el-icon-shopping-cart-1"
-                                               @click="show_package_prices"></el-button>
-                                </div>
-                            </el-col>
-
-                        </el-row>
-                    </el-col>
-                </el-row>
-
-            </el-header>
-
-
-            <div
-                    ref="appmain" style="margin: 40px 20px;height: 100%">
-
-                <el-row style="max-height: 460px; margin: 0 auto;" :gutter="10" class="page-apps">
-
-                    <el-col style="width: 33%;height: 460px ">
-                        <div class=" app-animator appdownload">
-                            <div class=" card app card-ios" style="padding: 0">
-
-                                <el-upload
-                                        drag
-                                        :show-file-list="false"
-                                        :before-upload="beforeAvatarUpload"
-                                        accept=".ipa , .apk"
-                                        action="#"
-                                        multiple>
-                                    <i class="el-icon-upload" style="color: #fff"></i>
-                                    <div class="el-upload__text" style="color: #fff;margin-top: 20px">拖拽到这里上传</div>
-                                </el-upload>
-
+                            <el-button icon="el-icon-search" @click="searchFun">
+                            </el-button>
+                        </el-col>
+                    </el-row>
+                </el-col>
+                <el-col :span="4" class="surplus-card">
+                    <el-row>
+                        <el-col :span="12">
+                            <div>
+                                <span class="name">iOS应用</span>
+                                <el-divider direction="vertical"/>
                             </div>
+                            <div>
+                                <span class="value">{{ hdata.ios_count }}</span>
+                                <el-divider direction="vertical"/>
+                            </div>
+                        </el-col>
+
+                        <el-col :span="12">
+                            <div>
+                                <span class="name">Android应用</span>
+                                <el-divider direction="vertical"/>
+                            </div>
+                            <div>
+                                <span class="value">{{ hdata.android_count }}</span>
+                                <el-divider direction="vertical"/>
+                            </div>
+                        </el-col>
+                    </el-row>
+                </el-col>
+
+                <el-col :span="5" class="surplus-card">
+                    <el-row>
+                        <el-col :span="12">
+                            <div>
+                                <span class="name">今日苹果下载次数</span>
+                                <el-divider direction="vertical"/>
+                            </div>
+                            <div>
+                                <span class="value">{{ hdata.ios_today_hits_count }}</span>
+                                <el-divider direction="vertical"/>
+                            </div>
+                        </el-col>
+
+                        <el-col :span="12">
+                            <div>
+                                <span class="name">今日安卓下载次数</span>
+                                <el-divider direction="vertical"/>
+                            </div>
+                            <div>
+                                <span class="value">{{ hdata.android_today_hits_count }}</span>
+                                <el-divider direction="vertical"/>
+                            </div>
+                        </el-col>
+                    </el-row>
+                </el-col>
+
+
+                <el-col :span="7" class="surplus-card">
+                    <el-row>
+                        <el-col :span="9">
+                            <div>
+                                <el-tooltip placement="top">
+                                    <div slot="content">
+                                        1.账号下所有应用共用此剩余下载次数<br/>
+                                        2.每日凌晨 0 点自动重置下载次数<br/>
+                                    </div>
+                                    <span class="name">今日剩余免费次数</span>
+                                </el-tooltip>
+                                <el-divider direction="vertical"/>
+                            </div>
+                            <div>
+                                <span class="value">{{$store.state.userinfo.free_download_times }}</span>
+                                <el-divider direction="vertical"/>
+                            </div>
+                        </el-col>
+
+                        <el-col :span="8">
+                            <div>
+                                <el-tooltip placement="top">
+                                    <div slot="content">1.下载次数包没有时间限制，用完为止<br/>2.购买的下载次数包为总下载量，不会每日重置</div>
+                                    <span class="name">剩余付费次数</span>
+                                </el-tooltip>
+                                <el-divider direction="vertical"/>
+                            </div>
+                            <div>
+                                <span class="value">{{$store.state.userinfo.download_times }}</span>
+                                <el-divider direction="vertical"/>
+                            </div>
+                        </el-col>
+
+                        <el-col :span="6">
+                            <div>
+                                <el-tooltip placement="top">
+                                    <div slot="content">
+                                        1.下载应用，每100M消耗一次下载次数<br>
+                                        2.超级签下载，下载消耗次数翻倍<br>
+                                    </div>
+                                    <span class="name">购买次数</span>
+                                </el-tooltip>
+                            </div>
+                            <div>
+                                <el-button class="action" size="small" icon="el-icon-shopping-cart-1"
+                                           @click="show_package_prices"/>
+                            </div>
+                        </el-col>
+
+                    </el-row>
+                </el-col>
+            </el-row>
+
+        </el-header>
+        <div ref="appmain" style="margin: 40px 20px;height: 100%;width:1166px">
+            <el-row style="max-height: 460px; margin: 0 auto;" :gutter="10" class="page-apps">
+                <el-col style="width: 30%;height: 460px ;margin-left: 3%">
+                    <div class=" app-animator appdownload">
+                        <div class=" card app card-ios" style="padding: 0">
+                            <el-upload
+                                    drag
+                                    :show-file-list="false"
+                                    :before-upload="beforeAvatarUpload"
+                                    accept=".ipa , .apk"
+                                    action="#"
+                                    multiple>
+                                <i class="el-icon-upload" style="color: #fff"/>
+                                <div class="el-upload__text" style="color: #fff;margin-top: 20px">拖拽到这里上传</div>
+                            </el-upload>
+
                         </div>
+                    </div>
 
-                    </el-col>
-                    <el-col style="width: 33%;height: 460px"
-                            v-for="(r,index) in applists" :key="r.id" @click="appInfos(index)">
+                </el-col>
+                <el-col style="width: 30%;height: 460px;margin-left: 3%"
+                        v-for="(r,index) in applists" :key="r.id" @click="appInfos(index)">
 
-                        <div class=" app-animator">
-                            <div class="card app card-ios">
+                    <div class=" app-animator">
+                        <div class="card app card-ios">
 
-                                <i class=" type-icon iconfont icon-ios" v-if="r.type === 1" src=""></i>
-                                <i class="type-icon iconfont icon-android2" v-if="r.type === 0"></i>
+                            <i class=" type-icon iconfont icon-ios" v-if="r.type === 1"/>
+                            <i class="type-icon iconfont icon-android2" v-if="r.type === 0"/>
 
-                                <div class="type-mark" v-if="r.type === 1"></div>
-                                <div class="type-mark" style="border-top: 48px solid #A4C639" v-if="r.type === 0"></div>
-                                <a class="appicon" @click="appInfos(r)">
-                                    <img class="icon ng-isolate-scope" width="100" height="100"
-                                         :src="r.master_release.icon_url|make_icon_url"></a>
+                            <div class="type-mark" v-if="r.type === 1"></div>
+                            <div class="type-mark" style="border-top: 48px solid #A4C639" v-if="r.type === 0"></div>
+                            <a class="appicon" @click="appInfos(r)">
+                                <img class="icon ng-isolate-scope" width="100" height="100"
+                                     :src="r.master_release.icon_url|make_icon_url" alt=""></a>
 
-                                <div class="combo-info ng-scope" v-if="r.has_combo !== null ">
-                                    <i class="el-icon-copy-document" style="transform:rotateX(180deg);"></i>
-                                    <a @click="appInfos(r.has_combo)">
-                                        <img class="icon ng-isolate-scope" width="45" height="45"
-                                             :src="r.has_combo.master_release.icon_url|make_icon_url">
-                                    </a>
-                                </div>
+                            <div class="combo-info ng-scope" v-if="r.has_combo !== null ">
+                                <i class="el-icon-copy-document" style="transform:rotateX(180deg);"/>
+                                <a @click="appInfos(r.has_combo)">
+                                    <img class="icon ng-isolate-scope" width="45" height="45"
+                                         :src="r.has_combo.master_release.icon_url|make_icon_url" alt="">
+                                </a>
+                            </div>
 
 
-                                <br>
-                                <p class="appname"><i class="el-icon-user-solid"></i><span class="ng-binding">{{ r.name }}</span>
-                                </p>
-                                <table>
-                                    <tbody>
-                                    <tr>
-                                        <td class="ng-binding">应用大小：</td>
-                                        <td><span
-                                                class="ng-binding">{{ r.master_release.binary_size  }}</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="ng-binding">应用平台：</td>
-                                        <td><span class="ng-binding">{{ r.type |getapptype }}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="ng-binding">应用标识：</td>
-                                        <td><span class="ng-binding">{{ r.bundle_id | autoformat }}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="ng-binding">最新版本：</td>
-                                        <td><span class="ng-binding">{{ r.master_release.app_version }}（Build {{ r.master_release.build_version }}）</span>
-                                        </td>
-                                    </tr>
-                                    <tr v-if="r.type === 1 && r.master_release.binary_url === ''">
-                                        <td class="ng-binding">打包类型：</td>
-                                        <td>
+                            <br>
+                            <p class="appname"><i class="el-icon-user-solid"/><span
+                                    class="ng-binding">{{ r.name }}</span>
+                            </p>
+                            <table>
+                                <tbody>
+                                <tr>
+                                    <td class="ng-binding">应用大小：</td>
+                                    <td><span
+                                            class="ng-binding">{{ r.master_release.binary_size  }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="ng-binding">应用平台：</td>
+                                    <td><span class="ng-binding">{{ r.type |getapptype }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ng-binding">应用标识：</td>
+                                    <td><span class="ng-binding">{{ r.bundle_id | autoformat }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="ng-binding">最新版本：</td>
+                                    <td><span class="ng-binding">{{ r.master_release.app_version }}（Build {{ r.master_release.build_version }}）</span>
+                                    </td>
+                                </tr>
+                                <tr v-if="r.type === 1 && r.master_release.binary_url === ''">
+                                    <td class="ng-binding">打包类型：</td>
+                                    <td>
                                             <span class="ng-binding">
                                                 {{ r.master_release.release_type|getiOStype }}
                                                 <span v-if="r.issupersign">超级签名</span>
                                             </span>
-                                        </td>
-                                    </tr>
-                                    <tr v-if=" r.master_release.binary_url !== ''">
-                                        <td>第三方平台下载：</td>
-                                        <td>
+                                    </td>
+                                </tr>
+                                <tr v-if=" r.master_release.binary_url !== ''">
+                                    <td>第三方平台下载：</td>
+                                    <td>
                                            <span>
                                             <el-tooltip :content="r.master_release.binary_url" placement="top">
                                                 <a target="_blank" :href="r.master_release.binary_url">{{ r.master_release.binary_url| autoformat}}</a>
                                             </el-tooltip>
                                             </span>
-                                        </td>
-                                    </tr>
+                                    </td>
+                                </tr>
 
-                                    </tbody>
-                                </table>
+                                </tbody>
+                            </table>
 
-                                <div class="action">
-                                    <el-button @click="appInfos(r)">
-                                        <i class="icon-pen el-icon-edit"></i> 管理
-                                    </el-button>
+                            <div class="action">
+                                <el-button @click="appInfos(r)">
+                                    <i class="icon-pen el-icon-edit"/> 管理
+                                </el-button>
 
-                                    <el-button @click="appDownload(r)" class="ng-binding">
-                                        <i class="icon-eye el-icon-view"></i> 预览
-                                    </el-button>
+                                <el-button @click="appDownload(r)" class="ng-binding">
+                                    <i class="icon-eye el-icon-view"/> 预览
+                                </el-button>
 
-                                    <el-button v-if="r.issupersign" @click="DeleteApp(r)" class="btn btn-remove"
-                                               icon="el-icon-loading"
-                                               circle></el-button>
+                                <el-button v-if="r.issupersign" @click="DeleteApp(r)" class="btn btn-remove"
+                                           icon="el-icon-loading"
+                                           circle/>
 
-                                    <el-button v-else @click="DeleteApp(r)" class="btn btn-remove" icon="el-icon-delete"
-                                               circle></el-button>
+                                <el-button v-else @click="DeleteApp(r)" class="btn btn-remove" icon="el-icon-delete"
+                                           circle/>
 
-                                </div>
                             </div>
                         </div>
+                    </div>
 
-                    </el-col>
+                </el-col>
 
-                </el-row>
+            </el-row>
 
-            </div>
-
-        </el-container>
-
-    </div>
+        </div>
+    </el-container>
 </template>
-
 <script>
     import {analyseApps, apputils, get_package_prices, getapps, getuploadurl, my_order} from "@/restful";
     import {
@@ -506,7 +494,6 @@
         getScrollHeight,
         getScrollTop,
         getWindowHeight,
-        show_beautpic,
         uploadaliyunoss,
         uploadlocalstorage,
         uploadqiniuoss
@@ -520,7 +507,7 @@
                 default_pay_radio: '',
                 default_price_radio: '',
                 pay_choices: [],
-                analyseappinfo: {},
+                analyseappinfo: {icon: ''},
                 short: '',
                 keysearch: '',
                 searchfromtype: '',
@@ -707,10 +694,10 @@
                 this.uploadflag = true;
                 this.uploading = true;
                 // eslint-disable-next-line no-unused-vars
-                this.timmer = setTimeout(data => {
-                    let canvas = this.$refs.canvas;
-                    show_beautpic(this, canvas, 888, 0.6);
-                }, 100);
+                // this.timmer = setTimeout(data => {
+                //     let canvas = this.$refs.canvas;
+                //     show_beautpic(this, canvas, 888, 0.6);
+                // }, 100);
 
                 let file = dataURLtoFile(this.analyseappinfo.icon, this.analyseappinfo.png_key);
 
@@ -888,7 +875,6 @@
                 });
             },
             DeleteApp(delapp) {
-                //页面删除按钮触发
                 this.willDeleteApp = true;
                 this.delapp = delapp;
             },
@@ -1000,13 +986,11 @@
 </script>
 
 <style scoped>
-
     .el-container {
         margin: 10px auto 100px;
-        width: 1166px;
+        width: 1266px;
         position: relative;
         padding-bottom: 1px;
-        background-color: #bfe7f9;
         color: #9b9b9b;
         -webkit-font-smoothing: antialiased;
         border-radius: 1%;
@@ -1016,7 +1000,6 @@
         margin-top: 20px;
         padding-top: 30px;
         border-bottom: 1px solid rgba(208, 208, 208, .5);
-        background-color: #d5f9f9;
         border-radius: 10px;
     }
 
@@ -1025,7 +1008,6 @@
         text-align: right;
         display: inline-block;
         vertical-align: middle;
-        /*border-right: 1px solid #9b9b9b;*/
     }
 
 
@@ -1053,15 +1035,14 @@
         width: 96%;
         height: 96%;
         margin: 2px auto; /*水平居中*/
-        /*background: #f8ba0b;*/
         border-radius: 5px;
 
     }
 
     .appdownload /deep/ .el-upload-dragger {
-        width: 349.22px;
+        width: 339.8px;
         height: 430px;
-        background: #9cb8f8;
+        background: #8bc3f8;
         border: 0;
     }
 

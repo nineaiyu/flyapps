@@ -1,8 +1,8 @@
 <template>
     <el-container>
         <div style="margin: 10px 0 10px 0 ;position:absolute;right:20px;top:auto;">
-            <el-button round icon="el-icon-arrow-left" @click="$router.go(-1)"></el-button>
-            <el-button round icon="el-icon-s-home" @click="$router.push({name:'FirIndex'})"></el-button>
+            <el-button round icon="el-icon-arrow-left" @click="$router.go(-1)"/>
+            <el-button round icon="el-icon-s-home" @click="$router.push({name:'FirIndex'})"/>
 
         </div>
         <el-header>
@@ -18,22 +18,22 @@
 
                 <el-form-item v-if="allow_ways.code">
                     <el-input v-model="form.icode" prefix-icon="el-icon-postcard" placeholder="邀请码必填" clearable
-                    ></el-input>
+                    />
                 </el-form-item>
 
                 <el-form-item>
                     <el-input v-model="form.email" prefix-icon="el-icon-user" :placeholder="rutitle" autofocus
-                              clearable></el-input>
+                              clearable/>
                 </el-form-item>
 
                 <el-form-item style="height: 40px" v-if="cptch.cptch_image">
                     <el-row style="height: 40px">
                         <el-col :span="16">
-                            <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6"></el-input>
+                            <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6"/>
                         </el-col>
                         <el-col :span="8">
                             <el-image
-                                    style="margin:0px 4px;border-radius:4px;cursor:pointer;height: 40px"
+                                    style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px"
                                     :src="cptch.cptch_image"
                                     fit="contain" @click="get_auth_code">
                             </el-image>
@@ -50,7 +50,7 @@
                         </el-col>
                         <el-col :span="8">
                             <el-button type="info" @click="getphonecode" plain
-                                       style="margin:0px 4px;border-radius:4px;cursor:pointer;height: 40px">获取验证码
+                                       style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px">获取验证码
                             </el-button>
                         </el-col>
                     </el-row>
@@ -59,11 +59,11 @@
 
                 <el-form-item>
                     <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
-                              show-password></el-input>
+                              show-password/>
                 </el-form-item>
                 <el-form-item>
                     <el-input v-model="form.password2" prefix-icon="el-icon-lock" placeholder="确认密码"
-                              show-password @keyup.enter.native="onRegist"></el-input>
+                              show-password @keyup.enter.native="onRegist"/>
                 </el-form-item>
 
                 <el-form-item>
@@ -337,12 +337,12 @@
 
     .el-container {
         margin: 10px auto;
-        width: 1166px;
+        width: 1266px;
 
     }
 
     .el-header {
-        margin-top: 16%;
+        margin-top: 13%;
     }
 
     .el-form {
