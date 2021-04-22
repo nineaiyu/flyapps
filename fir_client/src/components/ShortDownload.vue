@@ -714,7 +714,7 @@
         box-sizing: border-box
     }
 
-    .desc-section pre, .releases-section .release-view .version-info .changelog .wrapper, body, html {
+    .desc-section pre, body, html {
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif
     }
 
@@ -729,13 +729,6 @@
         -webkit-font-smoothing: antialiased
     }
 
-    .no-scroll {
-        overflow: hidden
-    }
-
-    .text-center {
-        text-align: center
-    }
 
     .text-black {
         color: #505556
@@ -825,26 +818,6 @@
         text-align: center
     }
 
-    .show-wechat-notice .out-container, .show-wechat-notice .pattern {
-        top: 180px
-    }
-
-    .show-wechat-notice .notice-wechat {
-        height: 180px
-    }
-
-    .notice-wechat {
-        position: absolute;
-        top: 0;
-        left: 0;
-        z-index: 1;
-        width: 100%;
-        height: 0;
-        background-color: #505556;
-        box-shadow: 0 -9px 29px -7px rgba(0, 0, 0, .1) inset;
-        -webkit-transition: all .5s;
-        transition: all .5s
-    }
 
     .constraint .main header, .expired .main header, .forbidden .main header, .legal_forbidden .main header, .not_found .main header {
         opacity: 1;
@@ -874,11 +847,6 @@
         line-height: 24px
     }
 
-    .constraint .main .fade-out, .expired .main .fade-out, .forbidden .main .fade-out, .legal_forbidden .main .fade-out, .not_found .main .fade-out {
-        opacity: 0;
-        -webkit-transform: translateY(-40px);
-        transform: translateY(-40px)
-    }
 
     .constraint .pattern img, .expired .pattern img, .forbidden .pattern img, .legal_forbidden .pattern img, .not_found .pattern img {
         -webkit-filter: grayscale(1)
@@ -888,63 +856,6 @@
         .constraint .cell-container, .forbidden .cell-container, .legal_forbidden .cell-container, .not_found .cell-container {
             vertical-align: top
         }
-    }
-
-
-    @media screen and (max-width: 425px) {
-        .error-container pre, .error-container small {
-            display: none
-        }
-
-        .error-container {
-            width: 100%;
-            margin-top: 100px;
-            margin-bottom: 50px;
-            text-align: center
-        }
-
-        .error-container h1 {
-            padding: 0 70px
-        }
-    }
-
-    .back-btn {
-        position: fixed;
-        top: 28px;
-        left: 28px;
-        z-index: 3;
-        width: 60px;
-        height: 60px;
-        border: 1px solid #bdc6c7;
-        border-radius: 60px;
-        background-color: #fff
-    }
-
-    .back-btn i {
-        display: block;
-        margin-top: 29px;
-        margin-left: 21px
-    }
-
-    .back-btn i:after, .back-btn i:before {
-        position: absolute;
-        display: inline-block;
-        width: 16px;
-        height: 1px;
-        background-color: #505556;
-        content: ' ';
-        -webkit-transform-origin: left;
-        transform-origin: left
-    }
-
-    .back-btn i:before {
-        -webkit-transform: rotateZ(-42deg);
-        transform: rotateZ(-42deg)
-    }
-
-    .back-btn i:after {
-        -webkit-transform: rotateZ(42deg);
-        transform: rotateZ(42deg)
     }
 
 
@@ -980,29 +891,10 @@
         text-transform: uppercase
     }
 
-    .data_error .reload, .error .reload, .forbidden .reload, .passwd .reload {
-        color: #a9b1b3;
-        font-size: 12px;
-        text-decoration: none;
-        border: 1px solid #a9b1b3;
-        background-color: transparent;
-        padding: 6px 12px;
-        border-radius: 40px
-    }
-
-    .data_error .no-release-tips, .error .no-release-tips, .forbidden .no-release-tips, .passwd .no-release-tips {
-        line-height: 20px;
-        max-width: 80%;
-        margin: 0 auto
-    }
 
     .data_error .no-release-tips a, .error .no-release-tips a, .forbidden .no-release-tips a, .passwd .no-release-tips a {
         text-decoration: underline;
         color: #9b9b9b
-    }
-
-    #passwd-wrong {
-        display: none
     }
 
 
@@ -1109,11 +1001,6 @@
         line-height: 1.6
     }
 
-    .main > header .release-type {
-        margin: 24px auto 0;
-        width: 290px;
-        text-align: left
-    }
 
     .main > header .scan-tips {
         margin: 0 auto;
@@ -1208,18 +1095,10 @@
         }
     }
 
-    .master-section {
-        overflow: hidden;
-        padding: 40px 0
-    }
 
     @media screen and (max-width: 768px) {
         .main > header {
             min-height: 400px
-        }
-
-        .main > header .release-type {
-            display: none
         }
 
         .main > header .release-info {
@@ -1249,36 +1128,10 @@
         .main > header .scan-tips {
             display: none
         }
-
-        .master-section {
-            text-align: center
-        }
-
-        .master-section .store-link {
-            display: inline-block;
-            float: none;
-            margin-bottom: 0
-        }
-
-        .master-section p {
-            display: none
-        }
     }
 
-    .master-section p {
-        margin: 0;
-        line-height: 21px
-    }
 
-    .master-section pre {
-        text-align: left;
-        white-space: pre-line;
-        word-wrap: break-word;
-        word-break: break-all;
-        line-height: 22px
-    }
-
-    .footer, .per-type-info .info, .releases-section .release-view .qrcode, .section-store-link, .store-section {
+    .footer, .per-type-info .info {
         text-align: center
     }
 
@@ -1302,17 +1155,6 @@
         font-weight: 400
     }
 
-    .store-section .store-link {
-        display: block;
-        margin: 0 auto;
-        padding: 14px 40px 10px;
-        width: 260px;
-        border: 1px solid #505556;
-        border-radius: 5px;
-        background-color: transparent;
-        color: #505556;
-        font-size: 28px
-    }
 
     .per-type-info {
         position: relative;
@@ -1324,23 +1166,6 @@
     .per-type-info .type {
         float: left;
         width: 50%
-    }
-
-    .per-type-info .type:first-child .releases-section {
-        padding: 70px 70px 0 0
-    }
-
-    .per-type-info .type .master-section {
-        padding: 70px 0 0;
-        border-top: 0
-    }
-
-    .per-type-info .type .master-section pre {
-        white-space: pre-line
-    }
-
-    .per-type-info .type:last-child .master-section, .per-type-info .type:last-child .releases-section {
-        padding: 70px 0 0 70px
     }
 
     .per-type-info .type-icon {
@@ -1427,107 +1252,6 @@
 
     .screenshots-section ul li img {
         max-height: 462px
-    }
-
-    .type:first-child .master-section {
-        padding-right: 5px
-    }
-
-    .type:last-child .master-section {
-        padding-left: 5px
-    }
-
-
-    .hide {
-        display: none
-    }
-
-    .wechat-tips img, .wechat-tips span {
-        display: inline-block;
-        margin-right: 10px;
-        vertical-align: middle
-    }
-
-    .wechat-tips {
-        position: fixed;
-        top: 10px;
-        z-index: 103;
-        padding-top: 14px;
-        width: 100%;
-        text-align: right
-    }
-
-    .wechat-tips span {
-        color: #fff;
-        text-align: left;
-        font-weight: 700;
-        font-size: 16px;
-        line-height: 30px
-    }
-
-    .wechat-tips span.en {
-        width: 240px
-    }
-
-    .wechat-tips img {
-        margin-bottom: 13px;
-        width: 50px
-    }
-
-    @media (min-width: 420px) {
-        .wechat-tips span {
-            margin-right: 15px
-        }
-
-        .wechat-tips span.en {
-            margin-bottom: -20px;
-            width: auto
-        }
-
-        .wechat-tips img {
-            margin-right: 20px
-        }
-    }
-
-    .list-unstyled {
-        margin: 0;
-        padding: 0;
-        list-style-type: none
-    }
-
-    .list-unstyled li:first-child {
-        padding-bottom: 10px
-    }
-
-    .tip {
-        margin-left: 15px;
-        vertical-align: middle;
-        font-size: 14px;
-        cursor: pointer
-    }
-
-    .tip.en {
-        margin-left: 5px
-    }
-
-    .tip img {
-        margin-right: 5px;
-        height: 16px;
-        position: relative;
-        top: 4px
-    }
-
-    .tip.RISK {
-        color: #d95656
-    }
-
-    .tip.SCANED {
-        color: #8fbf46
-    }
-
-    .tip.SCANED img {
-        height: 14px;
-        top: 2px
     }
 
 
@@ -1622,137 +1346,10 @@
         vertical-align: bottom
     }
 
-    .main header .app-brief .name > .tip {
-        vertical-align: bottom;
-        position: relative;
-        top: -3px
-    }
-
-
-    .main.forbidden .footer .one-key-report, .main.not_found .footer .one-key-report {
-        display: none
-    }
-
 
     .app_bottom_fixed img {
         width: 100%;
         max-height: 80px
-    }
-
-
-    @media only screen and (max-width: 991px) and (min-width: 768px) {
-        .after-install-games-fixed .popularize-games .popularize-list > li:nth-child(n+5) {
-            display: none
-        }
-
-        .after-install-games-fixed .popularize-games .popularize-list .popularize-app-game {
-            margin-bottom: 30px !important
-        }
-    }
-
-    @media only screen and (max-width: 1024px) and (min-width: 991px) {
-        .after-install-games-fixed .popularize-games .popularize-list > li:nth-child(n+6) {
-            display: none
-        }
-
-        .after-install-games-fixed .popularize-games .popularize-list .popularize-app-game {
-            margin-bottom: 30px !important
-        }
-    }
-
-    .after-install-games-fixed .popularize-games .popularize-list {
-        display: -webkit-box;
-        display: -ms-flexbox;
-        display: flex;
-        -ms-flex-wrap: wrap;
-        flex-wrap: wrap;
-        -ms-flex-pack: distribute;
-        justify-content: space-around
-    }
-
-    .after-install-games-fixed .popularize-games .popularize-list .popularize-app-game {
-        max-width: 180px;
-        width: 45%;
-        box-shadow: 0 6px 20px 0 rgba(0, 0, 0, .1);
-        margin-bottom: 10px;
-        border-radius: 20px;
-        background: #35a89b
-    }
-
-    .after-install-games-fixed .popularize-games .popularize-list .popularize-app-game .app-download {
-        font-size: 16px;
-        height: 30px;
-        display: -webkit-box;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-        -webkit-box-pack: center;
-        -ms-flex-pack: center;
-        justify-content: center;
-        color: #fff
-    }
-
-    .after-install-games-fixed .popularize-games .popularize-list .popularize-app-game .popularize-app-game-content {
-        height: 145px;
-        background: #fff;
-        display: -webkit-box;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-box-orient: vertical;
-        -webkit-box-direction: normal;
-        -ms-flex-direction: column;
-        flex-direction: column;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-        border-radius: 20px
-    }
-
-    .after-install-games-fixed .popularize-games .popularize-list .popularize-app-game .popularize-app-game-content .app-zhibo-icon-img {
-        margin-top: 10px
-    }
-
-    .after-install-games-fixed .popularize-games .popularize-list .popularize-app-game .popularize-app-game-content .app-zhibo-icon-img > img {
-        border-radius: 5px;
-        height: 50px;
-        width: 50px
-    }
-
-    .after-install-games-fixed .popularize-games .popularize-list .popularize-app-game .primary-text {
-        max-width: 80%;
-        color: #4a4a4a;
-        text-align: center;
-        font-size: 16px;
-        font-weight: 700
-    }
-
-    .after-install-games-fixed .popularize-games .popularize-list .popularize-app-game .secondary-text {
-        max-width: 80%;
-        height: 32px;
-        overflow: hidden;
-        text-align: center;
-        font-size: 12px;
-        color: rgba(93, 103, 109, .9);
-        padding-bottom: 5px
-    }
-
-
-    @media screen and (max-height: 500px) {
-        .bottom-popularize {
-            position: static
-        }
-    }
-
-    .visiable-moblie {
-        display: none
-    }
-
-    @media screen and (max-width: 720px) {
-        .main .ad-section {
-            width: 100%
-        }
     }
 
     @media screen and (max-width: 768px) {
@@ -1803,7 +1400,7 @@
         position: absolute;
         width: 90%;
         max-width: 300px;
-        max-height: 366px;
+        max-height: 400px;
         z-index: 9999;
         display: none;
         background-color: white;
@@ -1823,7 +1420,8 @@
         text-align: center;
         font-size: 14px;
         color: #0491f7;
-        margin: 10px 0;
+        margin: 10px 10px;
+        white-space: pre-line;
     }
 
 
@@ -1832,7 +1430,7 @@
         background-color: #000;
         width: 100%;
         height: 100%;
-        top: 0px;
+        top: 0;
         position: fixed;
         opacity: 0.3;
         -webkit-opacity: 0.3;
