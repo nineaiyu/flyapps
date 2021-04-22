@@ -415,7 +415,7 @@ def update_order_info(user_id, out_trade_no, payment_number, payment_type):
     with cache.lock("%s_%s" % ('user_order_', out_trade_no)):
         try:
             user_obj = UserInfo.objects.filter(pk=user_id).first()
-            order_obj = Order.objects.filter(account=user_obj, order_number=out_trade_no).first()
+            order_obj = Order.objects.filter(user_id=user_obj, order_number=out_trade_no).first()
             if order_obj:
                 if order_obj.status == 1:
                     download_times = order_obj.actual_download_times + order_obj.actual_download_gift_times

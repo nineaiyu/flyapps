@@ -84,6 +84,7 @@
 
 <script>
 import { getAppReleaseInfos } from '@/api/app'
+import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
 
@@ -108,11 +109,7 @@ export default {
       return statusMap[status]
     },
     appStatusNameFilter(row) {
-      for (const r of row.release_choices) {
-        if (r.id === row.release_type) {
-          return r.name
-        }
-      }
+      return baseFilter(row.release_type, row.release_choices)
     },
     appStatusFilter(status) {
       const statusMap = {

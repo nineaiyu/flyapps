@@ -115,3 +115,11 @@ export function param2Obj(url) {
   })
   return obj
 }
+
+export function baseFilter(id, choices) {
+  for (const v of choices) {
+    if (v.id === id) {
+      return v.name
+    }
+  }
+}

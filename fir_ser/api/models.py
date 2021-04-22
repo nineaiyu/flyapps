@@ -368,7 +368,7 @@ class Order(models.Model):
     payment_number = models.CharField(max_length=128, verbose_name="支付第3方订单号", null=True, blank=True)
     payment_name = models.CharField(max_length=128, verbose_name="支付商家名称", null=True, blank=True)
     order_number = models.CharField(max_length=128, verbose_name="订单号", unique=True)  # 考虑到订单合并支付的问题
-    account = models.ForeignKey("UserInfo", on_delete=models.CASCADE)
+    user_id = models.ForeignKey("UserInfo", on_delete=models.CASCADE)
     actual_amount = models.BigIntegerField(verbose_name="实付金额,单位分")
     actual_download_times = models.BigIntegerField(verbose_name="实际购买的数量", default=0)
     actual_download_gift_times = models.BigIntegerField(verbose_name="实际赠送的数量", default=0)
@@ -383,7 +383,7 @@ class Order(models.Model):
 
 
 def __str__(self):
-    return "%s-%s-%s元" % (self.account, self.order_number, self.actual_amount / 100)
+    return "%s-%s-%s元" % (self.user_id, self.order_number, self.actual_amount / 100)
 
 
 class Price(models.Model):

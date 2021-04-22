@@ -448,6 +448,29 @@ class OrdersSerializer(serializers.ModelSerializer):
         exclude = ["id"]
 
 
+class AdminOrdersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Order
+        fields = "__all__"
+        read_only_fields = ["id", "user_id", "updated_time", "created_time", "payment_number", "order_number",
+                            "payment_name", "actual_amount", "actual_download_times", "actual_download_gift_times"]
+
+    payment_type_choices = serializers.SerializerMethodField()
+
+    def get_payment_type_choices(self, obj):
+        return get_choices_dict(obj.payment_type_choices)
+
+    status_choices = serializers.SerializerMethodField()
+
+    def get_status_choices(self, obj):
+        return get_choices_dict(obj.status_choices)
+
+    order_type_choices = serializers.SerializerMethodField()
+
+    def get_order_type_choices(self, obj):
+        return get_choices_dict(obj.order_type_choices)
+
+
 class CertificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CertificationInfo

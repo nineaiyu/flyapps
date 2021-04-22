@@ -172,10 +172,17 @@ export const constantRoutes = [
     component: Layout,
     children: [
       {
-        path: 'index',
-        name: 'index',
-        component: () => import('@/views/form/index'),
+        path: 'list',
+        name: 'order_info_list',
+        component: () => import('@/views/order/list'),
         meta: { title: '订单管理', icon: 'form' }
+      },
+      {
+        path: 'edit/:id(\\d+)',
+        component: () => import('@/views/order/Detail'),
+        name: 'order_info_edit',
+        meta: { title: '编辑信息', noCache: true, activeMenu: '/order/list' },
+        hidden: true
       }
     ]
   },

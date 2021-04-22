@@ -108,6 +108,7 @@
 
 <script>
 import { getUserInfos } from '@/api/user'
+import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
 
@@ -143,11 +144,7 @@ export default {
       return statusMap[status]
     },
     certLableFilter(row) {
-      for (const v of row.certification_status_choices) {
-        if (v.id === row.certification) {
-          return v.name
-        }
-      }
+      return baseFilter(row.certification,row.certification_status_choices)
     }
   },
   data() {

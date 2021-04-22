@@ -99,6 +99,7 @@
 
 <script>
 import { getCertificationInfo } from '@/api/user'
+import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
 
@@ -127,33 +128,7 @@ export default {
       return statusMap[status]
     },
     certLableFilter(row) {
-      for (const v of row.certification_status_choices) {
-        if (v.id === row.status) {
-          return v.name
-        }
-      }
-    },
-    statusFilter(status) {
-      const statusMap = {
-        true: 'success',
-        false: 'danger'
-      }
-      return statusMap[status]
-    },
-    appStatusNameFilter(row) {
-      for (const r of row.status_choices) {
-        if (r.id === row.status) {
-          return r.name
-        }
-      }
-    },
-    appStatusFilter(status) {
-      const statusMap = {
-        '0': 'danger',
-        '1': 'success',
-        '2': 'gray'
-      }
-      return statusMap[status]
+      return baseFilter(row.status, row.certification_status_choices)
     }
   },
   data() {

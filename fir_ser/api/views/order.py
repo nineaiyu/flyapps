@@ -32,7 +32,7 @@ class OrderView(APIView):
     def get(self, request):
         res = BaseResponse()
         order_id = request.query_params.get("order_id", None)
-        order_obj_lists = Order.objects.filter(account=request.user)
+        order_obj_lists = Order.objects.filter(user_id=request.user)
         if order_id:
             order_obj_lists = order_obj_lists.filter(order_number=order_id)
         page_obj = PageNumber()
@@ -56,7 +56,7 @@ class OrderView(APIView):
         order_number = request.data.get("order_number", None)
         if (price_id and pay_id) or order_number:
             price_obj = Price.objects.filter(name=price_id).first()
-            order_obj = Order.objects.filter(account=request.user, order_number=order_number).first()
+            order_obj = Order.objects.filter(user_id=request.user, order_number=order_number).first()
             if order_obj and order_obj.status in [1, 2] and order_obj.payment_name:
                 pay_obj = get_pay_obj_form_name(order_obj.payment_name)
                 pay_url = pay_obj.get_pay_pc_url(order_number, int(order_obj.actual_amount),
@@ -71,7 +71,7 @@ class OrderView(APIView):
                     pay_obj = get_pay_obj_form_name(pay_id)
                     pay_url = pay_obj.get_pay_pc_url(order_number, int(actual_amount), {'user_id': request.user.id})
                     Order.objects.create(payment_type=get_payment_type(pay_obj.p_type), order_number=order_number,
-                                         account=request.user, status=1, order_type=0, actual_amount=actual_amount,
+                                         user_id=request.user, status=1, order_type=0, actual_amount=actual_amount,
                                          actual_download_times=price_obj.package_size, payment_name=pay_obj.name,
                                          actual_download_gift_times=price_obj.download_count_gift)
                     res.data = pay_url
@@ -95,7 +95,7 @@ class OrderView(APIView):
         order_number = request.data.get("order_number", None)
         act = request.data.get("act", None)
         if order_number:
-            order_obj = Order.objects.filter(account=request.user, order_number=order_number).first()
+            order_obj = Order.objects.filter(user_id=request.user, order_number=order_number).first()
             if order_obj:
                 try:
                     if act == 'cancel' and order_obj.status != 0:

@@ -18,6 +18,7 @@ from admin.views.login import LoginView, LoginUserView
 from admin.views.user import UserInfoView, UserCertificationInfoView
 from admin.views.app import AppInfoView, AppReleaseInfoView
 from admin.views.storage import StorageInfoView, StorageChangeView
+from admin.views.order import OrderPayView, OrderInfoView
 
 urlpatterns = [
     # path("",include(router.urls)),
@@ -31,5 +32,6 @@ urlpatterns = [
     re_path("^certification/info", UserCertificationInfoView.as_view()),
     re_path("^storage/info", StorageInfoView.as_view()),
     re_path("^storage/change", StorageChangeView.as_view()),
+    re_path("^order/info", OrderInfoView.as_view()),
 
 ]

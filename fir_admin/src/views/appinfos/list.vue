@@ -128,6 +128,7 @@
 
 <script>
 import { getAppInfos, deleteApp } from '@/api/app'
+import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
 
@@ -156,11 +157,7 @@ export default {
       return statusMap[status]
     },
     appStatusNameFilter(row) {
-      for (const r of row.status_choices) {
-        if (r.id === row.status) {
-          return r.name
-        }
-      }
+      return baseFilter(row.status,row.status_choices)
     },
     appStatusFilter(status) {
       const statusMap = {
