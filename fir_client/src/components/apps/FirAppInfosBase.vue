@@ -15,7 +15,7 @@
                         </el-tooltip>
                         <span>{{ master_release.release_type |getapptype }}</span>
                         <el-tooltip content="下载量" placement="top">
-                            <span><i class="el-icon-cloudy"></i><b class="short">{{ appinfos.count_hits }}</b></span>
+                            <span><i class="el-icon-cloudy"/><b class="short">{{ appinfos.count_hits }}</b></span>
                         </el-tooltip>
                         <span class="bundleid ng-binding">BundleID<b class="ng-binding">&nbsp;&nbsp;{{ appinfos.bundle_id }}</b></span>
                         <span class="version ng-scope">{{ master_release.minimum_os_version }}&nbsp; 或者高版本</span>
@@ -49,27 +49,27 @@
                     <div class="tabs-container">
                         <el-row :gutter="1">
                             <el-col :span="3">
-                                <a class="" ref="baseinfo" @click="baseinfo"><i class="el-icon-document"></i>基本信息</a>
+                                <a class="" ref="baseinfo" @click="baseinfo"><i class="el-icon-document"/>基本信息</a>
                             </el-col>
 
                             <el-col :span="3">
-                                <a class="" ref="security" @click="security"><i class="el-icon-set-up"></i>应用管理</a>
+                                <a class="" ref="security" @click="security"><i class="el-icon-set-up"/>应用管理</a>
                             </el-col>
 
                             <el-col :span="3">
                                 <a class="" ref="combo" @click="combo"><i class="el-icon-copy-document"
-                                                                          style="transform:rotateX(180deg);"></i>应用合并</a>
+                                                                          style="transform:rotateX(180deg);"/>应用合并</a>
                             </el-col>
 
                             <el-col :span="3"
                                     v-if="appinfos.type===1  || appinfos.issupersign ">
                                 <a class="" ref="supersign" @click="supersign"><i
-                                        class="el-icon-ship"></i>超级签名</a>
+                                        class="el-icon-ship"/>超级签名</a>
                             </el-col>
 
                             <el-col :span="3"
                                     v-if="(appinfos.type===1 && master_release.release_type ===1) || appinfos.issupersign ">
-                                <a class="" ref="devices" @click="devices"><i class="el-icon-mobile-phone"></i>设备列表</a>
+                                <a class="" ref="devices" @click="devices"><i class="el-icon-mobile-phone"/>设备列表</a>
                             </el-col>
 
                         </el-row>

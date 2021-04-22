@@ -110,7 +110,7 @@
 
 
             <span slot="footer">
-                        如对订单有疑问，请联系 nineven@qq.com
+                        {{ PaymentQuestionMsg }}
                     </span>
         </el-dialog>
 
@@ -274,7 +274,8 @@
                 payment_type_choices: [],
                 show_order_info: false,
                 current_order_info: {},
-                loading: false
+                loading: false,
+                PaymentQuestionMsg: '',
             }
         },
         methods: {
@@ -429,6 +430,7 @@
                 }, {methods: 'GET', data: params})
             },
         }, mounted() {
+            this.PaymentQuestionMsg = window.g.PaymentQuestionMsg;
             getUserInfoFun(this);
             let out_trade_no = this.$route.params.out_trade_no;
             if (out_trade_no) {

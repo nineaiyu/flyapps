@@ -217,7 +217,7 @@
                     </div>
 
                 </div>
-                <div class="footer" style="margin-top: 30%;background-color: #d1eef9">
+                <div class="footer" style="margin-top: 30%">
                     免责声明：<br>
                     本网站仅提供下载托管，应用为用户自行上传，请甄别应用风险后进行下载！
                 </div>

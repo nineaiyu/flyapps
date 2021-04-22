@@ -1,5 +1,6 @@
 window.g = {
     baseUrl: 'https://app.hehelucky.cn',
+    PaymentQuestionMsg:'如对充值订单有疑问，请联系 nineven@qq.com',
     footer: {
         copyright: 'Copyright © 2017-2020 第九系艾文 版权所有.',
         ipcBeiAn: {

@@ -4,7 +4,7 @@
             <el-form-item label="应用ID" style="width: 56%">
                 <el-row>
                     <el-col :span="19">
-                        <el-input v-model="currentapp.app_id" :disabled="true"></el-input>
+                        <el-input v-model="currentapp.app_id" :disabled="true"/>
                     </el-col>
                     <el-col :span="4">
                         <el-button type="danger" plain @click="delApp"
@@ -16,7 +16,7 @@
             </el-form-item>
 
             <el-form-item label="应用名称" style="width: 56%">
-                <el-input v-model="currentapp.name"></el-input>
+                <el-input v-model="currentapp.name"/>
             </el-form-item>
 
             <el-form-item label="短链接" style="width: 56%">
@@ -33,13 +33,13 @@
                         accept=".png , .jpg , .jpeg"
                         :before-upload="upload_app_icon">
                     <img v-if="currentapp.icon_url" :src="currentapp.icon_url"
-                         class="avatar">
-                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                         class="avatar" alt="">
+                    <i v-else class="el-icon-plus avatar-uploader-icon"/>
                 </el-upload>
             </el-form-item>
             <el-form-item label="应用描述" style="width: 66%">
                 <el-input type="textarea" v-model="currentapp.description"
-                          :autosize="{ minRows: 8, maxRows: 18}"></el-input>
+                          :autosize="{ minRows: 8, maxRows: 18}"/>
             </el-form-item>
             <el-form-item>
                 <el-row>
@@ -50,7 +50,7 @@
                     </el-col>
                 </el-row>
             </el-form-item>
-            <el-divider></el-divider>
+            <el-divider/>
             <el-form-item label="应用截图" style="width: 100%">
 
                 <div class="appdownload">
@@ -74,7 +74,7 @@
                                 action="#"
                                 accept=".png , .jpg , .jpeg"
                                 :before-upload="upload_app_screen">
-                            <i class="el-icon-upload"></i>
+                            <i class="el-icon-upload"/>
                         </el-upload>
                     </div>
 

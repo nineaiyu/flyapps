@@ -59,7 +59,7 @@
                 </div>
 
                 <span slot="footer">
-                        如对充值订单有疑问，请联系 nineven@qq.com
+                        {{ PaymentQuestionMsg }}
                     </span>
             </el-dialog>
 
@@ -535,7 +535,8 @@
                     'wx': require('@/assets/pay/pay_weixin.png'),
                     'ali': require('@/assets/pay/pay_alipay.png'),
                     'selected': require('@/assets/pay/pay_selected.png'),
-                }
+                },
+                PaymentQuestionMsg: '',
             }
         }, methods: {
             show_package_prices() {
@@ -948,6 +949,7 @@
             }
 
         }, mounted() {
+            this.PaymentQuestionMsg = window.g.PaymentQuestionMsg;
             getUserInfoFun(this);
             this.$store.dispatch('doucurrentapp', {});
             this.getappsFun({});
