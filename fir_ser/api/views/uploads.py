@@ -123,7 +123,6 @@ class AppAnalyseView(APIView):
                 if app_info:
                     if app_info.issupersign and app_info.user_id.supersign_active:
                         resign_by_app_obj(app_info, need_download_profile=False)
-
             else:
                 storage.delete_file(app_tmp_filename)
                 storage.delete_file(png_tmp_filename)

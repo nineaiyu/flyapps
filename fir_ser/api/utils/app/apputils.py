@@ -126,7 +126,8 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
             "name": appinfo["labelname"],
             "short": short,
             "bundle_id": bundle_id,
-            "count_hits": 0
+            "count_hits": 0,
+            "wxeasytype": False if user_obj.domain_name else True
         }
         try:
             appmobj = Apps.objects.create(**appdata)
@@ -136,11 +137,12 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
     else:
         try:
             newapp = False
-            del_cache_response_by_short(appmobj.app_id)
             appmobj.short = short
             appmobj.name = appinfo["labelname"]
+            appmobj.wxeasytype = False if user_obj.domain_name or appmobj.domain_name else True
             appmobj.bundle_id = bundle_id
             appmobj.save()
+            del_cache_response_by_short(appmobj.app_id)
         except Exception as e:
             logger.error("save app info failed,appmobj:%s  Exception:%s" % (appmobj, e))
             appmobj.bundle_id = bundle_id
