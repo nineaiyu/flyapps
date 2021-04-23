@@ -263,7 +263,7 @@
 
     .page-app {
         padding-bottom: 0;
-        width: 1266px;
+        width: 1166px;
         margin: 10px auto 100px;
     }
 

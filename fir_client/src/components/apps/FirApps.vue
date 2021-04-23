@@ -366,9 +366,10 @@
             </el-row>
 
         </el-header>
-        <div ref="appmain" style="margin: 40px 20px;height: 100%;width:1166px">
+        <div ref="appmain" style="margin: 40px 10px;height: 100%;width:1166px">
             <el-row style="max-height: 460px; margin: 0 auto;" :gutter="10" class="page-apps">
-                <el-col style="width: 30%;height: 460px ;margin-left: 3%">
+
+                <el-col style="width: 30%;height: 460px ;margin-left: 2%">
                     <div class=" app-animator appdownload">
                         <div class=" card app card-ios" style="padding: 0">
                             <el-upload
@@ -386,7 +387,7 @@
                     </div>
 
                 </el-col>
-                <el-col style="width: 30%;height: 460px;margin-left: 3%"
+                <el-col style="width: 30%;height: 460px;margin-left: 2%"
                         v-for="(r,index) in applists" :key="r.id" @click="appInfos(index)">
 
                     <div class=" app-animator">
@@ -751,10 +752,7 @@
                 }
             },
             auto_load() {
-                // eslint-disable-next-line no-console
-                // console.log(getScrollTop() , getWindowHeight(),getScrollTop() + getWindowHeight(), getScrollHeight());
                 if (getScrollTop() + getWindowHeight() >= getScrollHeight()) {
-
                     if (this.has_next) {      //先判断下一页是否有数据
                         if (this.autoloadflag) {
                             this.autoloadflag = false;
@@ -769,10 +767,6 @@
                             this.getappsFun(this.query);
                         }
 
-                    } else {
-                        if (!this.has_next) {
-                            this.$message.success("已经到底啦")
-                        }
                     }
                 }
             },
@@ -990,7 +984,7 @@
 <style scoped>
     .el-container {
         margin: 10px auto 100px;
-        width: 1266px;
+        width: 1166px;
         position: relative;
         padding-bottom: 1px;
         color: #9b9b9b;

@@ -151,7 +151,7 @@
         position: relative;
         text-align: center;
         margin: 46px auto 100px;
-        width: 1266px;
+        width: 1166px;
     }
 
     .avatar {

@@ -541,7 +541,7 @@
     .el-main {
         text-align: center;
         margin: 20px auto 100px;
-        width: 1266px;
+        width: 1166px;
         position: relative;
         padding-bottom: 1px;
         color: #9b9b9b;

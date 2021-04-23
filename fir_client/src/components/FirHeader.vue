@@ -153,7 +153,7 @@
 
     .el-container, .el-row {
         margin: 10px auto;
-        width: 1266px;
+        width: 1166px;
     }
 
     .navbar-wrapper {
