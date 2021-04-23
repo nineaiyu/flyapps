@@ -29,13 +29,13 @@
                 <el-row :gutter="36">
                     <el-col :span="16">
                         <el-input v-model="userinfo.mobile" ref="phone" :readonly="editphone !== true"
-                                  prefix-icon="el-icon-mobile" placeholder="手机" maxlength="11" clearable/>
+                                  prefix-icon="el-icon-mobile" placeholder="手机" maxlength="11" clearable :disabled="!cptch.change_type.sms"/>
                     </el-col>
                     <el-col :span="1">
                         <el-button icon="el-icon-edit" @click="changePhoneValue">
                         </el-button>
                     </el-col>
-                    <el-col :span="5" v-if="editphone === true">
+                    <el-col :span="5" v-if="editphone === true && cptch.change_type.sms">
                         <el-button type="success" @click="savePhone" plain
                                    class="save-button">
                             保存
@@ -44,7 +44,7 @@
                 </el-row>
             </el-form-item>
 
-            <el-form-item label="图片验证码" style="height: 40px" v-if="editphone === true && cptch.cptch_image">
+            <el-form-item label="图片验证码" style="height: 40px" v-if="editphone === true && cptch.cptch_image && cptch.change_type.sms">
                 <el-row style="height: 40px" :gutter="36">
                     <el-col :span="14">
                         <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6" clearable/>
@@ -59,7 +59,7 @@
                 </el-row>
             </el-form-item>
 
-            <el-form-item label="手机验证码" v-if="editphone === true">
+            <el-form-item label="手机验证码" v-if="editphone === true && cptch.change_type.sms">
                 <el-row :gutter="36">
                     <el-col :span="16">
                         <el-input v-model="userinfo.auth_key" prefix-icon="el-icon-mobile" placeholder="验证码"
@@ -80,13 +80,13 @@
                 <el-row :gutter="36">
                     <el-col :span="16">
                         <el-input v-model="userinfo.email" ref="email" :readonly="editemail !== true"
-                                  prefix-icon="el-icon-bank-card" placeholder="邮箱" maxlength="20" clearable/>
+                                  prefix-icon="el-icon-bank-card" placeholder="邮箱" maxlength="20" clearable :disabled="!cptch.change_type.email"/>
                     </el-col>
                     <el-col :span="1">
                         <el-button icon="el-icon-edit" @click="changeemailValue">
                         </el-button>
                     </el-col>
-                    <el-col :span="5" v-if="editemail === true">
+                    <el-col :span="5" v-if="editemail === true && cptch.change_type.email">
                         <el-button type="success" @click="saveemail" plain
                                    class="save-button">
                             保存
@@ -96,7 +96,7 @@
             </el-form-item>
 
 
-            <el-form-item label="图片验证码" style="height: 40px" v-if="editemail === true && cptch.cptch_image">
+            <el-form-item label="图片验证码" style="height: 40px" v-if="editemail === true && cptch.cptch_image && cptch.change_type.email">
                 <el-row style="height: 40px" :gutter="36">
                     <el-col :span="14">
                         <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6" clearable/>
@@ -111,7 +111,7 @@
                 </el-row>
             </el-form-item>
 
-            <el-form-item label="邮箱验证码" v-if="editemail === true">
+            <el-form-item label="邮箱验证码" v-if="editemail === true && cptch.change_type.email">
                 <el-row :gutter="36">
                     <el-col :span="16">
                         <el-input v-model="userinfo.auth_key" prefix-icon="el-icon-mobile" placeholder="验证码"
@@ -199,7 +199,7 @@
                 editdomain_name: false,
                 edituser_name: false,
                 editposition: false,
-                cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
+                cptch: {"cptch_image": '', "cptch_key": '', "length": 8, change_type:{email:false,sms:false}},
                 form: {},
             }
         }, methods: {

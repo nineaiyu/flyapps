@@ -1,5 +1,5 @@
 <template>
-    <div v-if="certification && !cert_edit_flag">
+    <div v-if="(certification || certification === 0) && !cert_edit_flag">
         <el-form style="max-width: 400px">
             <el-form-item>
                 <el-row>
@@ -33,7 +33,7 @@
                     </el-col>
                 </el-row>
             </el-form-item>
-            <el-form-item label="手机号码">
+            <el-form-item label="手机号码" v-if="certification.mobile">
                 <el-row :gutter="36">
                     <el-col :span="18">
                         <el-link :underline="false">{{ certification.mobile }}</el-link>
@@ -100,7 +100,7 @@
             </el-form-item>
 
 
-            <el-form-item label="手机号码">
+            <el-form-item label="手机号码" v-if="cptch.change_type.sms">
                 <el-row :gutter="36">
                     <el-col :span="18">
                         <el-input v-model="form.mobile" ref="phone" clearable
@@ -123,7 +123,7 @@
                 </el-row>
             </el-form-item>
 
-            <el-form-item label="手机验证码">
+            <el-form-item label="手机验证码" v-if="cptch.change_type.sms">
                 <el-row :gutter="11">
                     <el-col :span="12">
                         <el-input v-model="form.auth_key" prefix-icon="el-icon-mobile" placeholder="请输入您收到的验证码"
@@ -226,16 +226,8 @@
         name: "FirUserProfileCertification",
         data() {
             return {
-                form: {
-                    name: '',
-                    card: '',
-                    addr: '',
-                    mobile: '',
-                    authcode: '',
-                    cptch_key: '',
-                    auth_token: '',
-                },
-                cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
+                form: {},
+                cptch: {cptch_image: '', cptch_key: '',authcode:'', length: 8, change_type:{email:false,sms:false}},
                 user_certification: {'one': '', 'two': '', 'three': ''},
                 certification: {},
                 certification_status: 0,
@@ -264,12 +256,13 @@
                     this.$message.error("身份证输入不合法");
                     return false;
                 }
-                let checkp = checkphone(this.form.mobile);
-                if (!checkp) {
-                    this.$message.error("手机号输入不合法");
-                    return false;
+                if(this.cptch.change_type.sms){
+                    let checkp = checkphone(this.form.mobile);
+                    if (!checkp) {
+                        this.$message.error("手机号输入不合法");
+                        return false;
+                    }
                 }
-
                 this.get_user_certification({methods: 'POST', data: this.form})
             },
             get_user_certification(params) {
@@ -352,11 +345,15 @@
             },
 
             get_auth_code() {
-                this.form.authcode = '';
+                if(this.form.authcode){
+                    this.form.authcode = '';
+                }
                 changeInfoFun(data => {
                     if (data.code === 1000) {
                         this.cptch = data.data;
-                        this.form.cptch_key = this.cptch.cptch_key;
+                        if(this.cptch.cptch_key){
+                            this.form.cptch_key = this.cptch.cptch_key;
+                        }
                     } else {
                         this.$message({
                             message: data.msg,
@@ -390,7 +387,7 @@
 
             },
             init() {
-                if (this.$store.state.userinfo.certification) {
+                if (this.$store.state.userinfo.certification||this.$store.state.userinfo.certification===0) {
                     this.certification_status = this.$store.state.userinfo.certification;
                     if (this.certification_status !== -1) {
                         this.get_user_certification({methods: 'GET', data: {act: 'usercert'}});

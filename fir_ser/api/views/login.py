@@ -630,32 +630,32 @@ class CertificationView(APIView):
             return Response(res.dict)
 
         try:
-            if REGISTER.get("captcha"):
+            if CHANGER.get("captcha"):
                 if data and valid_captcha(data.get("cptch_key", None), data.get("authcode", None), data.get("mobile")):
-                    pass
+                    del data["cptch_key"]
+                    del data["authcode"]
                 else:
                     res.code = 1009
                     res.msg = "图片验证码有误"
                     return Response(res.dict)
-
-            is_valid, target = is_valid_sender_code('sms', data.get("auth_token", None), data.get("auth_key", None))
-            if is_valid and str(target) == str(data.get("mobile")):
-                if login_auth_failed("get", data.get("mobile")):
-                    del data["cptch_key"]
-                    del data["authcode"]
-                    del data["auth_key"]
-                    del data["auth_token"]
-                    UserCertificationInfo.objects.update_or_create(user_id=request.user, status=0, defaults=data)
-                    return self.get(request)
-
+            if CHANGER.get('change_type').get('sms'):
+                is_valid, target = is_valid_sender_code('sms', data.get("auth_token", None), data.get("auth_key", None))
+                if is_valid and str(target) == str(data.get("mobile")):
+                    if login_auth_failed("get", data.get("mobile")):
+                        del data["auth_key"]
+                        del data["auth_token"]
+                        UserCertificationInfo.objects.update_or_create(user_id=request.user, status=0, defaults=data)
+                        return self.get(request)
+                    else:
+                        res.code = 1006
+                        logger.error("username:%s failed too try , locked" % (request.user,))
+                        res.msg = "用户注册失败次数过多，已被锁定，请1小时之后再次尝试"
                 else:
-                    res.code = 1006
-                    logger.error("username:%s failed too try , locked" % (request.user,))
-                    res.msg = "用户注册失败次数过多，已被锁定，请1小时之后再次尝试"
+                    res.code = 1001
+                    res.msg = "短信验证码有误"
             else:
-                res.code = 1001
-                res.msg = "短信验证码有误"
-
+                UserCertificationInfo.objects.update_or_create(user_id=request.user, status=0, defaults=data)
+                return self.get(request)
         except Exception as e:
             logger.error("%s UserCertificationInfo save %s failed Exception: %s" % (request.user, data, e))
             res.msg = "数据异常，请检查"
@@ -664,8 +664,7 @@ class CertificationView(APIView):
 
 
 class ChangeInfoView(APIView):
-    throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
-
+    authentication_classes = [ExpiringTokenAuthentication, ]
     def get(self, request):
         response = BaseResponse()
         response.data = {}
