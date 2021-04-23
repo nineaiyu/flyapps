@@ -32,12 +32,12 @@
 
                     </el-breadcrumb>
                 </el-col>
-                <el-col :span="2" :push="3" style="padding-top: 16px;">
+                <el-col :span="2" :push="2" style="padding-top: 16px;">
                     <div class="block">
                         <el-avatar :size="66" :src="$store.state.userinfo.head_img"></el-avatar>
                     </div>
                 </el-col>
-                <el-col :span="4" :push="3" style="padding-top: 16px;">
+                <el-col :span="4" :push="2" style="padding-top: 16px">
                     <el-dropdown style="padding-top: 12px;" @command="handleCommand">
                         <el-button type="primary" plain round>
                             {{$store.state.userinfo.first_name }}<i class="el-icon-arrow-down el-icon--right"></i>
