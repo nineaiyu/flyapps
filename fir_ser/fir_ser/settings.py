@@ -189,10 +189,9 @@ GEETEST_BYPASS_STATUS_KEY = "gt_server_bypass_status"
 GEETEST_BYPASS_URL = "http://bypass.geetest.com/v1/bypass_status.php"
 
 # 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG.sender 信息
-# 个人资料修改修改也会使用该配置
 REGISTER = {
     "enable": True,
-    "captcha": False,  # 是否开启注册字母验证码
+    "captcha": True,  # 是否开启注册字母验证码
     "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
     "register_type": {
         'sms': False,  # 短信注册
@@ -200,10 +199,20 @@ REGISTER = {
         'code': False,  # 邀请码注册,邀请码必填写，需要和短信，邮件一起使用
     }
 }
-
+# 个人资料修改修改也会使用该配置
+CHANGER = {
+    "enable": True,
+    "captcha": True,  # 是否开启注册字母验证码
+    "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
+    "change_type": {
+        'sms': False,  # 短信注册
+        'email': True,  # 邮件注册
+        'code': False,  # 邀请码注册,邀请码必填写，需要和短信，邮件一起使用
+    }
+}
 LOGIN = {
-    "captcha": False,  # 是否开启登录字母验证码
-    "geetest": False,  # 是否开启geetest验证
+    "captcha": True,  # 是否开启登录字母验证码
+    "geetest": True,  # 是否开启geetest验证
     "login_type": {
         'sms': True,  # 短信登录
         'email': True,  # 邮件登录

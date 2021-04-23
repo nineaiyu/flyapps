@@ -70,7 +70,7 @@ def get_captcha():
     cptch_image = captcha_image_url(cptch_key)
     CaptchaStore.remove_expired()
     local_storage = LocalStorage(**SERVER_DOMAIN.get("IOS_PMFILE_DOWNLOAD_DOMAIN"))
-    return {"cptch_image": "/".join([local_storage.get_base_url(), cptch_image.strip("/")]), "cptch_key": cptch_key,
+    return {"cptch_image": "/".join([local_storage.get_base_url(), cptch_image.strip("/"), '']), "cptch_key": cptch_key,
             "length": CAPTCHA_LENGTH}
 
 

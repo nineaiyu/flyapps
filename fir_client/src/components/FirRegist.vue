@@ -29,7 +29,7 @@
                 <el-form-item style="height: 40px" v-if="cptch.cptch_image">
                     <el-row style="height: 40px">
                         <el-col :span="16">
-                            <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6"/>
+                            <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6" clearable/>
                         </el-col>
                         <el-col :span="8">
                             <el-image
@@ -46,7 +46,7 @@
                     <el-row>
                         <el-col :span="16">
                             <el-input v-model="form.seicode" prefix-icon="el-icon-mobile"
-                                      placeholder="验证码"/>
+                                      placeholder="验证码" clearable/>
                         </el-col>
                         <el-col :span="8">
                             <el-button type="info" @click="getphonecode" plain
@@ -59,11 +59,11 @@
 
                 <el-form-item>
                     <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
-                              show-password/>
+                              show-password clearable/>
                 </el-form-item>
                 <el-form-item>
                     <el-input v-model="form.password2" prefix-icon="el-icon-lock" placeholder="确认密码"
-                              show-password @keyup.enter.native="onRegist"/>
+                              show-password @keyup.enter.native="onRegist" clearable/>
                 </el-form-item>
 
                 <el-form-item>
@@ -132,6 +132,7 @@
                         if (jdata.enable) {
                             this.allow_r = true;
                             this.allow_ways = jdata.register_type;
+                            this.form.authcode = '';
                             this.set_rtitle();
                             this.cptch = data.data;
                         } else {
@@ -318,12 +319,6 @@
             onLogin() {
                 this.$router.push({name: 'FirLogin'})
             },
-            // isEmail(input) {
-            //     if (input.match(/^([a-zA-Z0-9_.-])+@(([a-zA-Z0-9-])+.)+([a-zA-Z0-9]{2,4})+$/)) {
-            //         return true;
-            //     }
-            //     return false;
-            // }
         }
         ,
         created() {

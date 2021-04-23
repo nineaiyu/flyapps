@@ -35,17 +35,17 @@
                 <el-form-item v-if="is_cptch">
                     <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
                               @keyup.enter.native="onSubmit"
-                              show-password/>
+                              show-password clearable/>
                 </el-form-item>
                 <el-form-item v-else>
                     <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
-                              show-password/>
+                              show-password clearable/>
                 </el-form-item>
                 <el-form-item style="height: 40px" v-if="cptch.cptch_image">
                     <el-row style="height: 40px">
                         <el-col :span="16">
                             <el-input placeholder="请输入验证码" v-model="form.authcode" maxlength="6"
-                                      @keyup.enter.native="onSubmit"/>
+                                      @keyup.enter.native="onSubmit" clearable/>
                         </el-col>
                         <el-col :span="8">
                             <el-image
@@ -150,8 +150,6 @@
                         });
                         return
                     }
-
-
                     if (password.length > 6) {
                         let params = {
                             "username": email,
@@ -235,6 +233,7 @@
                         this.cptch = data.data;
                         this.allow_ways = data.data.login_type;
                         this.register_enable = data.data.register_enable;
+                        this.form.authcode = '';
                         this.set_rtitle();
                         this.set_activename();
                     } else {

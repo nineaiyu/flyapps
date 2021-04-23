@@ -108,7 +108,20 @@
                     </el-col>
                 </el-row>
             </el-form-item>
-
+            <el-form-item label="图片验证码" v-if="cptch.cptch_image">
+                <el-row :gutter="11">
+                    <el-col :span="12">
+                        <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6" clearable/>
+                    </el-col>
+                    <el-col :span="6">
+                        <el-image
+                                style="border-radius:4px;cursor:pointer;height: 40px"
+                                :src="cptch.cptch_image"
+                                fit="contain" @click="get_auth_code">
+                        </el-image>
+                    </el-col>
+                </el-row>
+            </el-form-item>
 
             <el-form-item label="手机验证码">
                 <el-row :gutter="11">
@@ -126,23 +139,9 @@
                 </el-row>
             </el-form-item>
 
-            <el-form-item label="图片验证码" v-if="cptch.cptch_image">
-                <el-row :gutter="11">
-                    <el-col :span="12">
-                        <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6" clearable/>
-                    </el-col>
-                    <el-col :span="6">
-                        <el-image
-                                style="border-radius:4px;cursor:pointer;height: 40px"
-                                :src="cptch.cptch_image"
-                                fit="contain" @click="get_auth_code">
-                        </el-image>
-                    </el-col>
-                </el-row>
-            </el-form-item>
             <el-form-item>
                 <el-row style="margin-left: 88px">
-                    <el-col :span="8">
+                    <el-col :span="13">
                         <div id="captcha" ref="captcha"></div>
                     </el-col>
                 </el-row>
@@ -220,7 +219,7 @@
 </template>
 
 <script>
-    import {getAuthcTokenFun, registerFun, user_certification} from "@/restful";
+    import {changeInfoFun, getAuthcTokenFun, user_certification} from "@/restful";
     import {AvatarUploadUtils, checkphone, geetest} from "@/utils";
 
     export default {
@@ -353,7 +352,8 @@
             },
 
             get_auth_code() {
-                registerFun(data => {
+                this.form.authcode = '';
+                changeInfoFun(data => {
                     if (data.code === 1000) {
                         this.cptch = data.data;
                         this.form.cptch_key = this.cptch.cptch_key;

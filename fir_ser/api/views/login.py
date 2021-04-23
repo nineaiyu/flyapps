@@ -12,7 +12,7 @@ from api.utils.utils import get_captcha, valid_captcha, \
 from api.utils.baseutils import is_valid_domain, is_valid_phone, is_valid_email
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, REGISTER, LOGIN
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, REGISTER, LOGIN, CHANGER
 from api.utils.storage.caches import login_auth_failed, set_default_app_wx_easy
 import logging
 from api.utils.geetest.geetest_utils import first_register, second_validate
@@ -661,3 +661,20 @@ class CertificationView(APIView):
             res.msg = "数据异常，请检查"
             res.code = 1002
         return Response(res.dict)
+
+
+class ChangeInfoView(APIView):
+    throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
+
+    def get(self, request):
+        response = BaseResponse()
+        response.data = {}
+        allow_f = CHANGER.get("enable")
+        if allow_f:
+            if CHANGER.get("captcha"):
+                response.data = get_captcha()
+            if CHANGER.get("geetest"):
+                response.data['geetest'] = True
+            response.data['change_type'] = CHANGER.get("change_type")
+        response.data['enable'] = allow_f
+        return Response(response.dict)

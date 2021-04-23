@@ -126,7 +126,13 @@
 
                 </el-row>
             </el-form-item>
-
+            <el-form-item v-if="editphone === true || editemail === true">
+                <el-row :gutter="36">
+                    <el-col :span="18">
+                        <div id="captcha" ref="captcha"></div>
+                    </el-col>
+                </el-row>
+            </el-form-item>
 
             <el-form-item label="下载域名">
                 <el-row :gutter="36">
@@ -176,8 +182,8 @@
 </template>
 
 <script>
-    import {getAuthcTokenFun, registerFun, userinfos} from '@/restful'
-    import {deepCopy} from "@/utils";
+    import {changeInfoFun, getAuthcTokenFun, userinfos} from '@/restful'
+    import {deepCopy, geetest} from "@/utils";
 
     export default {
         name: "FirUserProfileInfo",
@@ -185,6 +191,7 @@
             return {
                 userinfo: {
                     srccode: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
+                    authcode: ''
                 },
                 orguserinfo: {},
                 editphone: false,
@@ -193,13 +200,17 @@
                 edituser_name: false,
                 editposition: false,
                 cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
+                form: {},
             }
         }, methods: {
             get_auth_code() {
-                registerFun(data => {
+                changeInfoFun(data => {
                     if (data.code === 1000) {
                         this.cptch = data.data;
                         this.userinfo.cptch_key = this.cptch.cptch_key;
+                        if (this.userinfo.authcode) {
+                            this.userinfo.authcode = '';
+                        }
                     } else {
                         this.$message({
                             message: data.msg,
@@ -316,17 +327,12 @@
                 } else {
                     this.$refs.domain_name.$el.children[0].style.backgroundColor = '#f6ffdc';
                 }
-            },
-            getsmsemailcode(act, target) {
-                let picode = {
-                    "authcode": this.userinfo.authcode,
-                    "cptch_key": this.cptch.cptch_key,
-                };
+            }, do_get_auth_token(params) {
                 getAuthcTokenFun(data => {
                     if (data.code === 1000) {
-                        this.userinfo.act = act;
+                        this.userinfo.act = params.act;
                         let msg = '您正在修改手机号码，验证码已经发送您手机';
-                        if (act === "email") {
+                        if (params.act === "email") {
                             msg = '您正在修改邮箱，验证码已经发送您邮箱';
                         }
                         this.$notify({
@@ -339,7 +345,24 @@
                         this.$message.error(data.msg)
                     }
 
-                }, {"methods": 'POST', 'data': {'act': act, 'target': target, 'ext': picode}})
+                }, {"methods": 'POST', 'data': params})
+            },
+            getsmsemailcode(act, target) {
+                let picode = {
+                    "authcode": this.userinfo.authcode,
+                    "cptch_key": this.cptch.cptch_key,
+                };
+                let params = {
+                    'act': act, 'target': target, 'ext': picode
+                };
+                if (this.cptch.geetest) {
+                    this.form.email = target;
+                    geetest(this, params, (n_params) => {
+                        this.do_get_auth_token(n_params);
+                    })
+                } else {
+                    this.do_get_auth_token(params);
+                }
             }
         }, mounted() {
             this.$store.dispatch('douserInfoIndex', 0);

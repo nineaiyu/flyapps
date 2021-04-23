@@ -528,3 +528,18 @@ export function user_certification(callBack, params, load = true) {
         true
     );
 }
+
+/**用户信息修改验证 */
+export function changeInfoFun(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/change',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
