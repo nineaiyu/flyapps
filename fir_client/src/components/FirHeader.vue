@@ -39,7 +39,7 @@
                 </el-col>
                 <el-col :span="4" :push="3" style="padding-top: 16px;">
                     <el-dropdown style="padding-top: 12px;" @command="handleCommand">
-                        <el-button type="success" plain round>
+                        <el-button type="primary" plain round>
                             {{$store.state.userinfo.first_name }}<i class="el-icon-arrow-down el-icon--right"></i>
                         </el-button>
                         <el-dropdown-menu slot="dropdown">

@@ -139,7 +139,7 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
             newapp = False
             appmobj.short = short
             appmobj.name = appinfo["labelname"]
-            appmobj.wxeasytype = False if user_obj.domain_name or appmobj.domain_name else True
+            # appmobj.wxeasytype = False if user_obj.domain_name or appmobj.domain_name else True
             appmobj.bundle_id = bundle_id
             appmobj.save()
             del_cache_response_by_short(appmobj.app_id)
