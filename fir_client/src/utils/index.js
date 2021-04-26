@@ -291,6 +291,11 @@ export function ImgToBase64(url, callback) {
 }
 
 export function geetest(self, params, callback) {
+    const loading = self.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+    });
     loginFun(res => {
         if (res.code === 1000) {
             let data = res.data;
@@ -306,7 +311,7 @@ export function geetest(self, params, callback) {
                 self.$refs.captcha.innerHTML = '';
                 captchaObj.appendTo("#captcha");
                 captchaObj.onReady(() => {
-                    //your code
+                    loading.close()
                 }).onSuccess(() => {
                     params.geetest = captchaObj.getValidate();
                     callback(params);
