@@ -9,7 +9,11 @@
             >
                 <span>可用于调用公开 API，可用于登录 fly-cli，请勿泄露您的 token</span>
                 <el-main>
-                    <el-link type="primary" v-if="token" :underline="false">{{ token }}</el-link>
+                    <el-tooltip content="点击复制到剪贴板">
+                        <el-link type="primary" v-if="token" :underline="false" v-clipboard:copy="token"
+                                 v-clipboard:success="copy_success">{{ token }}
+                        </el-link>
+                    </el-tooltip>
                 </el-main>
                 <span slot="footer" class="dialog-footer">
                 <el-button type="primary" @click="maketoken">重新生成</el-button>
@@ -78,6 +82,9 @@
                 route_info: {'name': '', 'label': ''},
             }
         }, methods: {
+            copy_success() {
+                this.$message.success('复制剪切板成功');
+            },
             maketoken() {
                 apitoken(data => {
                     if (data.code === 1000) {

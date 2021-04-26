@@ -227,7 +227,13 @@
         data() {
             return {
                 form: {},
-                cptch: {cptch_image: '', cptch_key: '',authcode:'', length: 8, change_type:{email:false,sms:false}},
+                cptch: {
+                    cptch_image: '',
+                    cptch_key: '',
+                    authcode: '',
+                    length: 8,
+                    change_type: {email: false, sms: false}
+                },
                 user_certification: {'one': '', 'two': '', 'three': ''},
                 certification: {},
                 certification_status: 0,
@@ -256,7 +262,7 @@
                     this.$message.error("身份证输入不合法");
                     return false;
                 }
-                if(this.cptch.change_type.sms){
+                if (this.cptch.change_type.sms) {
                     let checkp = checkphone(this.form.mobile);
                     if (!checkp) {
                         this.$message.error("手机号输入不合法");
@@ -345,13 +351,13 @@
             },
 
             get_auth_code() {
-                if(this.form.authcode){
+                if (this.form.authcode) {
                     this.form.authcode = '';
                 }
                 changeInfoFun(data => {
                     if (data.code === 1000) {
                         this.cptch = data.data;
-                        if(this.cptch.cptch_key){
+                        if (this.cptch.cptch_key) {
                             this.form.cptch_key = this.cptch.cptch_key;
                         }
                     } else {
@@ -387,7 +393,7 @@
 
             },
             init() {
-                if (this.$store.state.userinfo.certification||this.$store.state.userinfo.certification===0) {
+                if (this.$store.state.userinfo.certification || this.$store.state.userinfo.certification === 0) {
                     this.certification_status = this.$store.state.userinfo.certification;
                     if (this.certification_status !== -1) {
                         this.get_user_certification({methods: 'GET', data: {act: 'usercert'}});
