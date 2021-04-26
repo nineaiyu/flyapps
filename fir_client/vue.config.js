@@ -55,7 +55,9 @@ const page = argv[3];
 if(page){
     for(const key of Object.keys(pages)){
         if(key === page){
-            pages = {key:pages[key]}
+            const tmp = pages[key];
+            pages = {};
+            pages[key] = tmp;
         }
     }
 }
