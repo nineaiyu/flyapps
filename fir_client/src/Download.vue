@@ -16,7 +16,7 @@
 
 <style>
     body {
-        background-color: rgba(0, 166, 224, 0.18)
+        background-color: #F6F6F6;
     }
 
     @font-face {
