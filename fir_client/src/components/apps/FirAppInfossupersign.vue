@@ -131,7 +131,7 @@
                 });
             },
             setbuttonsignshow(currentapp) {
-                if (currentapp.issupersign === 1) {
+                if (currentapp.issupersign === true) {
                     this.supersignevent("on");
                     this.supersign.val = 'on';
                 } else {
