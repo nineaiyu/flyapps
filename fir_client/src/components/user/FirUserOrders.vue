@@ -419,6 +419,7 @@
                             let out_trade_no = this.$route.params.out_trade_no;
                             if (out_trade_no) {
                                 this.goto_pay(this.current_order_info);
+                                this.$route.params.out_trade_no=undefined;
                             }
                         }
                     } else if (data.code === 1008) {
