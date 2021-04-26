@@ -444,6 +444,8 @@ class CertificatesAPI(object):
 class BaseInfoObj(object):
     @staticmethod
     def filter(obj_lists, query_parameters=None):
+        if not isinstance(obj_lists, list):
+            obj_lists = [obj_lists]
         if query_parameters:
             new_obj_lists = []
             for obj in obj_lists:
