@@ -493,7 +493,7 @@ function uploadtostorage(fthis, file, certinfo, callabck) {
 
     if (certinfo.storage === 1) {
         // eslint-disable-next-line no-unused-vars,no-unreachable
-        uploadqiniuoss(file, certinfo, this, res => {
+        uploadqiniuoss(file, certinfo, fthis, res => {
             updateimgs(fthis, certinfo, callabck);
 
         }, process => {
@@ -501,7 +501,7 @@ function uploadtostorage(fthis, file, certinfo, callabck) {
         })
     } else if (certinfo.storage === 2) {
         // eslint-disable-next-line no-unused-vars
-        uploadaliyunoss(file, certinfo, this, res => {
+        uploadaliyunoss(file, certinfo, fthis, res => {
             updateimgs(fthis, certinfo, callabck);
         }, process => {
             fthis.uploadprocess = process;
@@ -515,7 +515,7 @@ function uploadtostorage(fthis, file, certinfo, callabck) {
             certinfo.upload_url = getuploadurl();
         }
         // eslint-disable-next-line no-unused-vars,no-unreachable
-        uploadlocalstorage(file, certinfo, this, res => {
+        uploadlocalstorage(file, certinfo, fthis, res => {
             updateimgs(fthis, certinfo, callabck);
         }, process => {
             fthis.uploadprocess = process;
