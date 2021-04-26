@@ -270,12 +270,13 @@ THIRD_PART_CONFIG = {
             'name': 'email',
             'type': 0,
             'auth': {
-                'email_host': 'smtp.hehegames.cn',
-                'email_port': '25',
+                'email_host': 'smtp.126.com',
+                'email_port': 465,
                 'use_tls': False,
-                'username': 'git@hehegames.cn',
-                'password': 'QE.54272cd.ecQ.wSj',
-                'form': 'FlyApp Validation <noreply@hehegames.cn>',
+                'use_ssl': True,
+                'username': 'flyapps@126.com',
+                'password': 'GGHFEUMZBRZIFZGQ',
+                'form': 'FlyApp Validation <flyapps@126.com>',
                 'subject': '%(code)s验证',
                 'template_code': {
                     'login': '验证码%(code)s，您正在登录，若非本人操作，请勿泄露。',
