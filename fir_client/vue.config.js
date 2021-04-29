@@ -1,5 +1,6 @@
 const IS_PROD = ['production', 'prod'].includes(process.env.NODE_ENV);
 const path = require('path');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 function resolve(dir) {
     return path.join(__dirname, dir);
@@ -7,6 +8,24 @@ function resolve(dir) {
 
 const argv = process.argv;
 
+const CompressionWebpackPlugin = require('compression-webpack-plugin');
+
+const compress = new CompressionWebpackPlugin(
+    {
+        filename: info => {
+            return `${info.path}.gz${info.query}`
+        },
+        algorithm: 'gzip',
+        threshold: 10240,
+        test: new RegExp(
+            '\\.(' +
+            ['js'].join('|') +
+            ')$'
+        ),
+        minRatio: 0.8,
+        deleteOriginalAssets: false
+    }
+);
 
 const index={
     // page 的入口
@@ -20,7 +39,7 @@ const index={
     title: 'Fly分发平台',
     // 在这个页面中包含的块，默认情况下会包含
     // 提取出来的通用 chunk 和 vendor chunk。
-    chunks: ['chunk-vendors', 'chunk-common', 'index']
+    chunks: ['chunk-vendors', 'chunk-common', 'index','chunk-libs','chunk-elementUI','chunk-commons','runtime','chunk-aliOss','chunk-qiniuJs','chunk-qrcodejs2']
 };
 const mshort={
         // page 的入口
@@ -34,7 +53,7 @@ const mshort={
         title: '应用下载',
         // 在这个页面中包含的块，默认情况下会包含
         // 提取出来的通用 chunk 和 vendor chunk。
-        chunks: ['chunk-vendors', 'chunk-common', 'mshort']
+        chunks: ['chunk-vendors', 'chunk-common', 'mshort','chunk-libs','chunk-elementUI','chunk-commons','runtime']
 };
 const short={
         // page 的入口
@@ -48,9 +67,9 @@ const short={
         title: '应用下载',
         // 在这个页面中包含的块，默认情况下会包含
         // 提取出来的通用 chunk 和 vendor chunk。
-        chunks: ['chunk-vendors', 'chunk-common', 'short']
+        chunks: ['chunk-vendors', 'chunk-common', 'short','chunk-libs','chunk-commons','runtime']
 };
-let pages = {index,short,mshort};
+let pages = {index,short};
 const page = argv[3];
 if(page){
     for(const key of Object.keys(pages)){
@@ -63,7 +82,11 @@ if(page){
 }
 module.exports = {
     pages: pages,
-    productionSourceMap: false,
+    productionSourceMap: false, //去除生产环境的productionSourceMap
+    assetsDir: "static", //静态文件存储位置
+    lintOnSave: true,
+    runtimeCompiler:true,
+    // publicPath: './',
     configureWebpack: {
         // provide the app's title in webpack's name field, so that
         // it can be accessed in index.html to inject the correct title.
@@ -72,9 +95,27 @@ module.exports = {
             alias: {
                 '@': resolve('src')
             }
-        }
+        },
+        plugins: [compress,new UglifyJsPlugin({
+            uglifyOptions: {
+                output: {
+                    comments: false, // 去掉注释
+                },
+                warnings: false,
+                compress: {
+                    drop_console: true,
+                    drop_debugger: true,
+                    pure_funcs: ['console.log']//移除console
+                }
+            }
+        })]
     },
     chainWebpack: config => {
+        if (page==='analyz') {
+            config
+                .plugin('webpack-bundle-analyzer')
+                .use(require('webpack-bundle-analyzer').BundleAnalyzerPlugin)
+        }
 
         if (!IS_PROD) {
             config.output
@@ -91,19 +132,28 @@ module.exports = {
 
         }
 
+        // config.plugins.delete('preload');
 
-        config.optimization.splitChunks({
-            cacheGroups: {
-                vendors: {
-                    name: 'chunk-vendors',
-                    minChunks: 4,
-                    test: /node_modules/,
-                    priority: -10,
-                    chunks: 'initial'
-                },
-                common: {}
-            }
-        });
+        // config.optimization.splitChunks({
+        //     cacheGroups: {
+        //         vendors: {
+        //             name: 'chunk-vendors',
+        //             minChunks: 4,
+        //             test: /node_modules/,
+        //             priority: -10,
+        //             chunks: 'initial'
+        //         },
+        //         common: {}
+        //     }
+        // });
+
+        // config.module
+        //     .rule('images')
+        //     .use('image-webpack-loader')
+        //     .loader('image-webpack-loader')
+        //     .options({
+        //         bypassOnDebug: true
+        //     }).end();
 
         // set preserveWhitespace
         config.module
@@ -115,48 +165,63 @@ module.exports = {
                 return options
             })
             .end();
-        //
-        // config.when(!IS_PROD,
-        //         config => {
-        //             config
-        //                 .plugin('ScriptExtHtmlWebpackPlugin')
-        //                 .after('html')
-        //                 .use('script-ext-html-webpack-plugin', [{
-        //                     // `runtime` must same as runtimeChunk name. default is `runtime`
-        //                     inline: /runtime\..*\.js$/
-        //                 }])
-        //                 .end();
-        //             config
-        //                 .optimization.splitChunks({
-        //                 chunks: 'all',
-        //                 cacheGroups: {
-        //                     libs: {
-        //                         name: 'chunk-libs',
-        //                         test: /[\\/]node_modules[\\/]/,
-        //                         priority: 10,
-        //                         chunks: 'initial' // only package third parties that are initially dependent
-        //                     },
-        //                     elementUI: {
-        //                         name: 'chunk-elementUI', // split elementUI into a single package
-        //                         priority: 20, // the weight needs to be larger than libs and app or it will be packaged into libs or app
-        //                         test: /[\\/]node_modules[\\/]_?element-ui(.*)/ // in order to adapt to cnpm
-        //                     },
-        //                     commons: {
-        //                         name: 'chunk-commons',
-        //                         test: resolve('src/components'), // can customize your rules
-        //                         minChunks: 3, //  minimum common number
-        //                         priority: 5,
-        //                         reuseExistingChunk: true
-        //                     }
-        //                 }
-        //             });
-        //             config.optimization.runtimeChunk('single');
-        //
-        //         }
-        //     );
 
-
+        if(IS_PROD) {
+                    config
+                        .plugin('ScriptExtHtmlWebpackPlugin')
+                        .after('html')
+                        .use('script-ext-html-webpack-plugin', [{
+                            // `runtime` must same as runtimeChunk name. default is `runtime`
+                            inline: /runtime\..*\.js$/
+                        }])
+                        .end();
+                    config
+                        .optimization.splitChunks({
+                        chunks: 'async',
+                        minSize: 30000,  //表示在压缩前的最小模块大小,默认值是30kb
+                        minChunks: 2,  // 表示被引用次数，默认为1；
+                        maxAsyncRequests: 8,  //所有异步请求不得超过5个
+                        maxInitialRequests: 3,  //初始话并行请求不得超过3个
+                        automaticNameDelimiter:'~',//名称分隔符，默认是~
+                        name: true,  //打包后的名称，默认是chunk的名字通过分隔符（默认是～）分隔
+                        cacheGroups: {
+                            libs: {
+                                name: 'chunk-libs',
+                                test: /[\\/]node_modules[\\/]/,
+                                priority: 10,
+                                chunks: 'initial' // only package third parties that are initially dependent
+                            },
+                            elementUI: {
+                                name: 'chunk-elementUI', // split elementUI into a single package
+                                priority: 20, // the weight needs to be larger than libs and app or it will be packaged into libs or app
+                                test: /[\\/]node_modules[\\/]_?element-ui(.*)/ // in order to adapt to cnpm
+                            },
+                            aliOss: {
+                                name: 'chunk-aliOss', // split elementUI into a single package
+                                priority: 21, // the weight needs to be larger than libs and app or it will be packaged into libs or app
+                                test: /[\\/]node_modules[\\/]_?ali-oss(.*)/ // in order to adapt to cnpm
+                            },
+                            qiniuJs: {
+                                name: 'chunk-qiniuJs', // split elementUI into a single package
+                                priority: 22, // the weight needs to be larger than libs and app or it will be packaged into libs or app
+                                test: /[\\/]node_modules[\\/]_?qiniu-js(.*)/ // in order to adapt to cnpm
+                            },
+                            qrcodejs2: {
+                                name: 'chunk-qrcodejs2', // split elementUI into a single package
+                                priority: 23, // the weight needs to be larger than libs and app or it will be packaged into libs or app
+                                test: /[\\/]node_modules[\\/]_?qrcodejs2(.*)/ // in order to adapt to cnpm
+                            },
+                            commons: {
+                                name: 'chunk-commons',
+                                test: resolve(resolve('src/components')), // can customize your rules
+                                minChunks: 2, //  minimum common number
+                                priority: 5,
+                                reuseExistingChunk: true
+                            }
+                        }
+                    });
+                    config.optimization.runtimeChunk('single');
+                }
     }
-
 };
 

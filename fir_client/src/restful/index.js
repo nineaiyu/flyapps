@@ -2,7 +2,6 @@ import Axios from 'axios'
 import VueCookies from 'vue-cookies'
 import router from "@/router";
 
-// const https = require('https');
 const Base64 = require('js-base64').Base64;
 Axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 Axios.defaults.withCredentials = true;
@@ -11,10 +10,7 @@ Axios.defaults.withCredentials = true;
 // });
 
 
-// const DOMAIN = 'https://fly.harmonygames.cn';
 const DOMAIN = window.g.baseUrl;
-// const DOMAIN = 'https://testapp.harmonygames.cn';
-// const DOMAIN = 'http://172.16.133.34:8000';
 const APIPATH = '/api/v1/fir/server';
 let USERSEVER = DOMAIN + APIPATH;
 
