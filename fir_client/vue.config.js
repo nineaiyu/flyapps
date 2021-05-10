@@ -96,8 +96,26 @@ module.exports = {
                 '@': resolve('src')
             }
         },
+        plugins:[compress],
     },
     chainWebpack: config => {
+        if(IS_PROD){
+           config.optimization.minimizer=[
+               new UglifyJsPlugin({
+                           uglifyOptions: {
+                               output: {
+                                   comments: false, // 去掉注释
+                               },
+                               warnings: false,
+                               compress: {
+                                   drop_console: true,
+                                   drop_debugger: true,
+                                   pure_funcs: ['console.log']//移除console
+                               }
+                           }
+                       })
+           ]
+        }
 
         if (page==='analyz') {
             config
@@ -119,21 +137,9 @@ module.exports = {
                 })
 
         }
-        if(IS_PROD){
-            config.plugins=[compress,new UglifyJsPlugin({
-                uglifyOptions: {
-                    output: {
-                        comments: false, // 去掉注释
-                    },
-                    warnings: false,
-                    compress: {
-                        drop_console: true,
-                        drop_debugger: true,
-                        pure_funcs: ['console.log']//移除console
-                    }
-                }
-            })]
-        }
+        // 移除prefetch插件，避免加载多余的资源
+        config.plugins.delete('prefetch');
+
 
         // config.plugins.delete('preload');
 

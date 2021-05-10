@@ -155,6 +155,11 @@ class ShortDownloadView(APIView):
             res.msg = "该应用不存在"
             return Response(res.dict)
 
+        if app_obj.status != 1:
+            res.code = 1004
+            res.msg = "该应用被封禁，无法下载安装"
+            return Response(res.dict)
+
         if not check_user_has_all_download_times(app_obj):
             res.code = 1009
             res.msg = "可用下载额度不足，请联系开发者"

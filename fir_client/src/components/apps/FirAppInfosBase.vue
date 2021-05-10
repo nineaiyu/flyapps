@@ -41,7 +41,8 @@
 
                     </div>
                     <div class="actions">
-                        <el-button @click="appDownload" class="download" icon="el-icon-view">
+                        <el-button v-if="appinfos.status!==1" type="danger">该应用被封禁,请联系管理员</el-button>
+                        <el-button v-else @click="appDownload" class="download" icon="el-icon-view">
                             预览
                         </el-button>
                     </div>

@@ -551,6 +551,7 @@
                         }
                         if (data.msg) {
                             document.title = data.msg;
+                            this.error_msg.body = data.msg;
                         }
                     }
                 }, params)
