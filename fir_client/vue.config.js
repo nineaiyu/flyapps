@@ -96,21 +96,9 @@ module.exports = {
                 '@': resolve('src')
             }
         },
-        plugins: [compress,new UglifyJsPlugin({
-            uglifyOptions: {
-                output: {
-                    comments: false, // 去掉注释
-                },
-                warnings: false,
-                compress: {
-                    drop_console: true,
-                    drop_debugger: true,
-                    pure_funcs: ['console.log']//移除console
-                }
-            }
-        })]
     },
     chainWebpack: config => {
+
         if (page==='analyz') {
             config
                 .plugin('webpack-bundle-analyzer')
@@ -130,6 +118,21 @@ module.exports = {
                     return bundle.chunk.name === 'index' ? 'js/[name].[contenthash:8].js' : '[name]/[name].[contenthash:8].js'
                 })
 
+        }
+        if(IS_PROD){
+            config.plugins=[compress,new UglifyJsPlugin({
+                uglifyOptions: {
+                    output: {
+                        comments: false, // 去掉注释
+                    },
+                    warnings: false,
+                    compress: {
+                        drop_console: true,
+                        drop_debugger: true,
+                        pure_funcs: ['console.log']//移除console
+                    }
+                }
+            })]
         }
 
         // config.plugins.delete('preload');

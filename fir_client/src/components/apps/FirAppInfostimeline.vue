@@ -1,7 +1,5 @@
 <template>
     <el-timeline>
-
-
         <el-timeline-item v-for="(app) in release_apps" :key="app.release_id"
                           :timestamp="app.created_time|formatdatatimeline"
                           :color="app.master_color"
@@ -96,11 +94,9 @@
 
                     </div>
                 </div>
-
-
             </el-card>
         </el-timeline-item>
-
+        <el-button v-if="has_next" class="time-line-more" @click="getapptimelineFun('more')">显示更多版本</el-button>
     </el-timeline>
 </template>
 
@@ -117,9 +113,16 @@
                     editing: {'changelog': false, 'binary_url': false}
                 },
                 updatas: {},
+                query: {'page': 1, size: 10},
+                has_next: false,
             }
         },
         methods: {
+            set_query_page() {
+                if (this.has_next) {
+                    this.query.page += 1;
+                }
+            },
             downloadPackage(app) {
                 getdownloadurl(res => {
                     if (res.code === 1000) {
@@ -151,17 +154,24 @@
                 window.open(p_url, 'target', '');
 
             },
-            getapptimelineFun() {
+            getapptimelineFun(act = '') {
                 const loading = this.$loading({
                     lock: true,
                     text: '加载中',
                     spinner: 'el-icon-loading',
                     // background: 'rgba(0, 0, 0, 0.7)'
                 });
+                if (act === 'more') {
+                    this.set_query_page();
+                } else {
+                    this.release_apps = [];
+                    this.query = {'page': 1, size: 10};
+                }
                 releaseapputils(data => {
                     if (data.code === 1000) {
-                        this.release_apps = data.data.release_apps;
                         this.currentapp = data.data.currentapp;
+                        this.has_next = data.data.has_next;
+                        this.release_apps = this.release_apps.concat(data.data.release_apps);
                     } else if (data.code === 1003) {
                         loading.close();
                         this.$router.push({name: 'FirApps'});
@@ -171,6 +181,10 @@
                     "methods": "GET",
                     "app_id": this.$route.params.id,
                     "release_id": "timeline",
+                    "data": {
+                        "page": this.query.page,
+                        "size": this.query.size
+                    }
                 })
             },
             del_release_app(app) {
@@ -313,7 +327,6 @@
         position: relative;
         padding-left: 80px;
         color: #9b9b9b;
-
     }
 
     .directive-view-release > i {
@@ -460,4 +473,14 @@
         width: 500px
     }
 
+    .time-line-more {
+        background: #F6F6F6;
+        border: 1px solid;
+        position: relative;
+        z-index: 99;
+        width: 160px;
+        padding: 10px 0;
+        border-radius: 40px;
+        margin-top: 10px;
+    }
 </style>

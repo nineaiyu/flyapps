@@ -665,6 +665,7 @@ class CertificationView(APIView):
 
 class ChangeInfoView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
+
     def get(self, request):
         response = BaseResponse()
         response.data = {}

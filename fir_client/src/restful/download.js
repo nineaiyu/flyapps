@@ -1,4 +1,5 @@
 import Axios from 'axios'
+
 Axios.defaults.withCredentials = true;
 
 const DOMAIN = window.g.baseUrl;

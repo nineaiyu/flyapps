@@ -306,9 +306,9 @@ THIRD_PART_CONFIG = {
             'name': 'jiguang',
             'type': 2,
             'auth': {
-                'app_key': 'd039807b5f13386e0b303b91',
-                'master_secret': '11dbb341abc02888ba277d3a',
-                'sign_id': '10823',
+                'app_key': '93e1a9f71db4f044de4db34a',
+                'master_secret': '5f996ee39c7eb52906510cc2',
+                'sign_id': '18138',
                 'template_code': {
                     'login': '1',
                     'change': '1',

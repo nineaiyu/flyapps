@@ -24,11 +24,14 @@ from api.base_views import app_delete
 logger = logging.getLogger(__name__)
 
 
-def get_release_apps(res, app_serializer, apps_obj, storage):
-    res.data["currentapp"] = app_serializer.data
+def get_release_apps(request, res, app_serializer, apps_obj, storage):
+    page_obj = AppsPageNumber()
     app_release_obj = AppReleaseInfo.objects.filter(app_id=apps_obj).all().order_by("-created_time")
-    app_release_serializer = AppReleaseSerializer(app_release_obj, many=True,
+    app_release_page_serializer = page_obj.paginate_queryset(queryset=app_release_obj, request=request)
+    app_release_serializer = AppReleaseSerializer(app_release_page_serializer, many=True,
                                                   context={"storage": storage})
+    res.data['has_next'] = page_obj.page.has_next()
+    res.data["currentapp"] = app_serializer.data
     res.data["release_apps"] = app_release_serializer.data
     return res
 
@@ -273,7 +276,7 @@ class AppReleaseinfoView(APIView):
             if apps_obj:
                 storage = Storage(request.user)
                 app_serializer = AppsSerializer(apps_obj, context={"storage": storage})
-                res = get_release_apps(res, app_serializer, apps_obj, storage)
+                res = get_release_apps(request, res, app_serializer, apps_obj, storage)
             else:
                 res.msg = "未找到该应用"
                 res.code = 1003
@@ -297,34 +300,35 @@ class AppReleaseinfoView(APIView):
 
                 apprelease_count = AppReleaseInfo.objects.filter(app_id=apps_obj).values("release_id").count()
                 appreleaseobj = AppReleaseInfo.objects.filter(app_id=apps_obj, release_id=act).first()
-                if not appreleaseobj.is_master:
-                    logger.info("delete app release %s" % (appreleaseobj))
-                    storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
-                    delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
-                    storage.delete_file(appreleaseobj.icon_url)
+                if appreleaseobj:
+                    if not appreleaseobj.is_master:
+                        logger.info("delete app release %s" % (appreleaseobj))
+                        storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
+                        delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
+                        storage.delete_file(appreleaseobj.icon_url)
 
-                    appreleaseobj.delete()
-                elif appreleaseobj.is_master and apprelease_count < 2:
-                    logger.info("delete app master release %s and clean app %s " % (appreleaseobj, apps_obj))
-                    count = APPToDeveloper.objects.filter(app_id=apps_obj).count()
-                    if apps_obj.issupersign or count > 0:
-                        logger.info("app_id:%s is supersign ,delete this app need clean IOS developer" % (app_id))
-                        IosUtils.clean_app_by_user_obj(apps_obj, request.user)
+                        appreleaseobj.delete()
+                    elif appreleaseobj.is_master and apprelease_count < 2:
+                        logger.info("delete app master release %s and clean app %s " % (appreleaseobj, apps_obj))
+                        count = APPToDeveloper.objects.filter(app_id=apps_obj).count()
+                        if apps_obj.issupersign or count > 0:
+                            logger.info("app_id:%s is supersign ,delete this app need clean IOS developer" % (app_id))
+                            IosUtils.clean_app_by_user_obj(apps_obj, request.user)
 
-                    storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
-                    delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
-                    storage.delete_file(appreleaseobj.icon_url)
-                    del_cache_by_delete_app(apps_obj.app_id)
+                        storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
+                        delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
+                        storage.delete_file(appreleaseobj.icon_url)
+                        del_cache_by_delete_app(apps_obj.app_id)
 
-                    appreleaseobj.delete()
-                    delete_app_screenshots_files(storage, apps_obj)
-                    has_combo = apps_obj.has_combo
-                    if has_combo:
-                        apps_obj.has_combo.has_combo = None
-                    apps_obj.delete()
-                else:
-                    pass
-                del_cache_response_by_short(apps_obj.app_id)
+                        appreleaseobj.delete()
+                        delete_app_screenshots_files(storage, apps_obj)
+                        has_combo = apps_obj.has_combo
+                        if has_combo:
+                            apps_obj.has_combo.has_combo = None
+                        apps_obj.delete()
+                    else:
+                        pass
+                    del_cache_response_by_short(apps_obj.app_id)
 
         return Response(res.dict)
 
@@ -362,6 +366,6 @@ class AppReleaseinfoView(APIView):
 
                 del_cache_response_by_short(apps_obj.app_id)
                 app_serializer = AppsSerializer(apps_obj)
-                res = get_release_apps(res, app_serializer, apps_obj, Storage(request.user))
+                res = get_release_apps(request, res, app_serializer, apps_obj, Storage(request.user))
 
         return Response(res.dict)
