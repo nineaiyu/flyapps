@@ -371,11 +371,12 @@ class UserInfoView(APIView):
         mobile = data.get("mobile", None)
         email = data.get("email", None)
         if mobile or email:
-            is_valid = valid_captcha(data.get("cptch_key", None), data.get("authcode", None), request)
-            if not is_valid:
-                res.code = 1008
-                res.msg = "图片验证码异常"
-                return Response(res.dict)
+            if CHANGER.get('captcha'):
+                is_valid = valid_captcha(data.get("cptch_key", None), data.get("authcode", None), request)
+                if not is_valid:
+                    res.code = 1008
+                    res.msg = "图片验证码异常"
+                    return Response(res.dict)
 
         if oldpassword and surepassword:
             user = auth.authenticate(username=request.user.username, password=oldpassword)

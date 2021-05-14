@@ -254,12 +254,14 @@
             saveemail() {
                 let data = this.authinfo();
                 data.email = this.userinfo.email;
+                data.act = 'email';
                 this.updateUserInfo({"methods": 'PUT', 'data': data});
                 this.changeemailValue()
             },
             savePhone() {
                 let data = this.authinfo();
                 data.mobile = this.userinfo.mobile;
+                data.act = 'sms';
                 this.updateUserInfo({"methods": 'PUT', 'data': data});
                 this.changePhoneValue()
             },

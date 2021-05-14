@@ -24,7 +24,7 @@ SECRET_KEY = 'j!g@^bc(z(a3*i&kp$_@bgb)bug&^#3=amch!3lz&1x&s6ss6t'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'synchrotron', '172.16.133.34']
+ALLOWED_HOSTS = ['127.0.0.1', 'synchrotron', '172.16.133.34','ali.cdn.flyapp.dvcloud.xin','api.src.flyapp.dvcloud.xin']
 
 # Application definition
 
@@ -121,13 +121,13 @@ REST_FRAMEWORK = {
         'api.utils.throttle.LoginUserThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'ShortAccessUser1': '80/m',
-        'ShortAccessUser2': '1000/h',
+        'ShortAccessUser1': '180/m',
+        'ShortAccessUser2': '2000/h',
         'LoginUser': '200/m',
-        'RegisterUser1': '30/m',
+        'RegisterUser1': '40/m',
         'RegisterUser2': '300/h',
-        'GetAuthC1': '8/m',
-        'GetAuthC2': '30/h',
+        'GetAuthC1': '60/m',
+        'GetAuthC2': '300/h',
     }
 }
 # Internationalization
@@ -194,7 +194,7 @@ REGISTER = {
     "captcha": False,  # 是否开启注册字母验证码
     "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
     "register_type": {
-        'sms': False,  # 短信注册
+        'sms': True,  # 短信注册
         'email': True,  # 邮件注册
         'code': False,  # 邀请码注册,邀请码必填写，需要和短信，邮件一起使用
     }
@@ -205,7 +205,7 @@ CHANGER = {
     "captcha": False,  # 是否开启注册字母验证码
     "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
     "change_type": {
-        'sms': False,  # 短信注册
+        'sms': True,  # 短信注册
         'email': True,  # 邮件注册
         'code': False,  # 邀请码注册,邀请码必填写，需要和短信，邮件一起使用
     }
@@ -214,7 +214,7 @@ LOGIN = {
     "captcha": False,  # 是否开启登录字母验证码
     "geetest": True,  # 是否开启geetest验证
     "login_type": {
-        'sms': False,  # 短信登录
+        'sms': True,  # 短信登录
         'email': True,  # 邮件登录
         'up': True,  # 密码登录
     }
@@ -279,9 +279,9 @@ THIRD_PART_CONFIG = {
                 'form': 'FlyApp Validation <flyapps@126.com>',
                 'subject': '%(code)s验证',
                 'template_code': {
-                    'login': '验证码%(code)s，您正在登录，若非本人操作，请勿泄露。',
-                    'change': '验证码%(code)s，您正在尝试变更重要信息，请妥善保管账户信息。',
-                    'register': '验证码%(code)s，您正在注册成为新用户，感谢您的支持！',
+                    'login': '欢迎使用FLY 应用分发平台。 您的验证码%(code)s，您正在登录，若非本人操作，请勿泄露。',
+                    'change': '欢迎使用FLY 应用分发平台。 您的验证码%(code)s，您正在尝试变更重要信息，请妥善保管账户信息。',
+                    'register': '欢迎使用FLY 应用分发平台。 您的验证码%(code)s，您正在注册成为新用户，感谢您的支持！',
                 }
             },
             'active': True
@@ -290,8 +290,8 @@ THIRD_PART_CONFIG = {
             'name': 'aliyun',
             'type': 1,
             'auth': {
-                'access_key': 'LTAI4FmYZgtCRZcs4j32GUAR',
-                'secret_key': '7i7J34blLcxTYbwjR9ToK7lEglvJw0',
+                'access_key': 'LTAI5tJH2EnjVzJGMmNCYo9U',
+                'secret_key': 'd0LETks5oxkdfbkLGtFihklWGbokab',
                 'region_id': 'cn-hangzhou',
                 'sing_name': '合合相亲',
                 'template_code': {

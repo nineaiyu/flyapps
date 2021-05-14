@@ -11,6 +11,7 @@ import VueCookies from 'vue-cookies'
 //导入store实例
 import store from "@/store";
 import {
+    Alert,
     Aside,
     Avatar,
     Backtop,
@@ -53,6 +54,8 @@ import {
     Row,
     Select,
     Slider,
+    Step,
+    Steps,
     Switch,
     Table,
     TableColumn,
@@ -112,6 +115,9 @@ Vue.use(Slider);
 Vue.use(DropdownMenu);
 Vue.use(Dropdown);
 Vue.use(Breadcrumb);
+Vue.use(Alert);
+Vue.use(Step);
+Vue.use(Steps);
 Vue.use(Input);
 Vue.use(CheckboxGroup);
 Vue.use(DatePicker);
