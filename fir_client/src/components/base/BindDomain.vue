@@ -1,136 +1,138 @@
 <template>
     <transition :name="transitionName">
-        <div >
-                <div style="margin: 5px 20px">
-                    <el-steps :active="active" finish-status="success">
-                        <el-step title="步骤 1">
+        <div>
+            <div style="margin: 5px 20px">
+                <el-steps :active="active" finish-status="success">
+                    <el-step title="步骤 1">
 
-                        </el-step>
-                        <el-step title="步骤 2">
-                        </el-step>
-                        <el-step title="步骤 3"/>
-                    </el-steps>
-                    <div style="margin-top: 20px">
-                        <div v-if="active===1">
-                            <h2>你的二级域名</h2>
-                            <el-input clearable autofocus v-model="domain_name"/>
-                        </div>
-                        <div v-else-if="active===2">
-                            <div style="text-align: center;margin: 20px 0">
-                                <h3>还差一步绑定成功</h3>
-                            </div>
-                            请联系域名管理员，前往 <strong>{{ domain_name }}</strong> 域名 DNS 管理后台添加如下 CNAME 记录。
-                            <el-table
-                                    :data="domain_tData"
-                                    border
-                                    stripe
-                                    style="width: 100%;margin-top: 20px">
-                                <el-table-column
-                                        prop="type"
-                                        label="记录类型"
-                                        align="center"
-                                        width="100">
-                                </el-table-column>
-                                <el-table-column
-                                        prop="host"
-                                        align="center"
-                                        label="主机记录"
-                                >
-                                </el-table-column>
-                                <el-table-column
-                                        prop="dns"
-                                        align="center"
-                                        label="记录值"
-                                        width="300">
-                                </el-table-column>
-                            </el-table>
-                            <el-alert title="请在域名DNS配置成功后，点击“下一步”按钮"
-                                      style="margin-top: 30px"
-                                      type="warning"
-                                      :closable="false"
-                                      show-icon/>
-                        </div>
-                        <div v-else-if="active===3">
-                            <div v-if="!bind_status">
-                                <div style="text-align: center;margin: 20px 0">
-                                    <el-link :underline="false" type="danger"
-                                             style="font-size: x-large">绑定失败
-                                    </el-link>
-                                </div>
-
-                                <p style="margin: 10px 0">您的账户正在绑定域名：<strong>{{ domain_name }}</strong></p>
-                                <el-row>
-                                    <el-col :span="16"><p>系统未检出到您的CNAME记录，请检查您的配置。</p></el-col>
-                                    <el-col :span="6">
-                                        <el-button type="danger" size="small" plain style="margin-top: 8px"
-                                                   @click="remove_domain">
-                                            解除绑定
-                                        </el-button>
-                                    </el-col>
-                                </el-row>
-                            </div>
-
-                            <div v-else>
-                                <div style="text-align: center;margin: 20px 0">
-                                    <el-link :underline="false" type="success"
-                                             style="font-size: x-large">绑定成功
-                                    </el-link>
-                                </div>
-
-                                <el-row>
-                                    <el-col :span="16"><p>您的账户已绑定域名：<strong>{{ domain_name }}</strong></p></el-col>
-                                    <el-col :span="6">
-                                        <el-button type="danger" size="small" plain style="margin-top: 8px"
-                                                   @click="remove_domain">
-                                            解除绑定
-                                        </el-button>
-                                    </el-col>
-                                </el-row>
-
-                            </div>
-                            <el-table
-                                    :data="domain_tData"
-                                    border
-                                    stripe
-                                    style="width: 100%;margin-top: 20px">
-                                <el-table-column
-                                        prop="type"
-                                        label="记录类型"
-                                        align="center"
-                                        width="100">
-                                </el-table-column>
-                                <el-table-column
-                                        prop="host"
-                                        align="center"
-                                        label="主机记录"
-                                >
-                                </el-table-column>
-                                <el-table-column
-                                        prop="dns"
-                                        align="center"
-                                        label="记录值"
-                                        width="300">
-                                </el-table-column>
-                            </el-table>
-                            <div v-if="!bind_status" style="text-align: center;margin: 30px 0">
-                                <el-button @click="check_cname" type="success" plain>已经修改配置，再次检查绑定</el-button>
-                            </div>
-                        </div>
-
+                    </el-step>
+                    <el-step title="步骤 2">
+                    </el-step>
+                    <el-step title="步骤 3"/>
+                </el-steps>
+                <div style="margin-top: 20px">
+                    <div v-if="active===1">
+                        <h2>你的二级域名</h2>
+                        <el-input clearable autofocus v-model="domain_name"/>
                     </div>
-                </div>
-                <div v-if="active!==3" style="margin:40px 20px 0;text-align: right">
-                            <el-button  @click="last"
-                                       :disabled="bind_status|| active===1 ">上一步</el-button>
-                    <el-button  @click="next">下一步</el-button>
-                </div>
+                    <div v-else-if="active===2">
+                        <div style="text-align: center;margin: 20px 0">
+                            <h3>还差一步绑定成功</h3>
+                        </div>
+                        请联系域名管理员，前往 <strong>{{ domain_name }}</strong> 域名 DNS 管理后台添加如下 CNAME 记录。
+                        <el-table
+                                :data="domain_tData"
+                                border
+                                stripe
+                                style="width: 100%;margin-top: 20px">
+                            <el-table-column
+                                    prop="type"
+                                    label="记录类型"
+                                    align="center"
+                                    width="100">
+                            </el-table-column>
+                            <el-table-column
+                                    prop="host"
+                                    align="center"
+                                    label="主机记录"
+                            >
+                            </el-table-column>
+                            <el-table-column
+                                    prop="dns"
+                                    align="center"
+                                    label="记录值"
+                                    width="300">
+                            </el-table-column>
+                        </el-table>
+                        <el-alert title="请在域名DNS配置成功后，点击“下一步”按钮"
+                                  style="margin-top: 30px"
+                                  type="warning"
+                                  :closable="false"
+                                  show-icon/>
+                    </div>
+                    <div v-else-if="active===3">
+                        <div v-if="!bind_status">
+                            <div style="text-align: center;margin: 20px 0">
+                                <el-link :underline="false" type="danger"
+                                         style="font-size: x-large">绑定失败
+                                </el-link>
+                            </div>
 
+                            <p style="margin: 10px 0">您的账户正在绑定域名：<strong>{{ domain_name }}</strong></p>
+                            <el-row>
+                                <el-col :span="16"><p>系统未检出到您的CNAME记录，请检查您的配置。</p></el-col>
+                                <el-col :span="6">
+                                    <el-button type="danger" size="small" plain style="margin-top: 8px"
+                                               @click="remove_domain">
+                                        解除绑定
+                                    </el-button>
+                                </el-col>
+                            </el-row>
+                        </div>
+
+                        <div v-else>
+                            <div style="text-align: center;margin: 20px 0">
+                                <el-link :underline="false" type="success"
+                                         style="font-size: x-large">绑定成功
+                                </el-link>
+                            </div>
+
+                            <el-row>
+                                <el-col :span="16"><p>您的账户已绑定域名：<strong>{{ domain_name }}</strong></p></el-col>
+                                <el-col :span="6">
+                                    <el-button type="danger" size="small" plain style="margin-top: 8px"
+                                               @click="remove_domain">
+                                        解除绑定
+                                    </el-button>
+                                </el-col>
+                            </el-row>
+
+                        </div>
+                        <el-table
+                                :data="domain_tData"
+                                border
+                                stripe
+                                style="width: 100%;margin-top: 20px">
+                            <el-table-column
+                                    prop="type"
+                                    label="记录类型"
+                                    align="center"
+                                    width="100">
+                            </el-table-column>
+                            <el-table-column
+                                    prop="host"
+                                    align="center"
+                                    label="主机记录"
+                            >
+                            </el-table-column>
+                            <el-table-column
+                                    prop="dns"
+                                    align="center"
+                                    label="记录值"
+                                    width="300">
+                            </el-table-column>
+                        </el-table>
+                        <div v-if="!bind_status" style="text-align: center;margin: 30px 0">
+                            <el-button @click="check_cname" type="success" plain>已经修改配置，再次检查绑定</el-button>
+                        </div>
+                    </div>
+
+                </div>
             </div>
+            <div v-if="active!==3" style="margin:40px 20px 0;text-align: right">
+                <el-button @click="last"
+                           :disabled="bind_status|| active===1 ">上一步
+                </el-button>
+                <el-button @click="next">下一步</el-button>
+            </div>
+
+        </div>
     </transition>
 </template>
 
 <script>
     import {domainFun} from "@/restful";
+
     export default {
         name: 'BindDomain',
         props: {
@@ -147,8 +149,8 @@
             return {
                 active: 1,
                 bind_status: false,
-                bind_domain_sure:true,
-                domain_name:'',
+                bind_domain_sure: true,
+                domain_name: '',
                 domain_tData: [{'type': 'CNAME', 'host': 'xxx', 'dns': 'demo.xxx.cn'}],
             }
         },
@@ -156,7 +158,7 @@
             this.bind_click()
         },
         beforeDestroy() {
-            this.bind_domain_sure=false;
+            this.bind_domain_sure = false;
         },
         methods: {
             check_cname() {
@@ -175,7 +177,7 @@
                         this.bind_status = false;
                         this.$message.error("绑定失败 " + data.msg)
                     }
-                }, {methods: 'PUT', data: {app_id:this.app_id}})
+                }, {methods: 'PUT', data: {app_id: this.app_id}})
             },
             remove_domain() {
                 domainFun(data => {
@@ -187,7 +189,7 @@
                     } else {
                         this.$message.error("解除绑定失败 " + data.msg)
                     }
-                }, {methods: 'DELETE', data: {app_id:this.app_id}});
+                }, {methods: 'DELETE', data: {app_id: this.app_id}});
             },
             bind_click() {
                 domainFun(data => {
@@ -209,7 +211,7 @@
                     } else {
                         this.$message.error("绑定失败 " + data.msg)
                     }
-                }, {methods: 'GET', data: {app_id:this.app_id}});
+                }, {methods: 'GET', data: {app_id: this.app_id}});
             },
             format_domain_tData(cname_domain) {
                 let domain_name_list = this.domain_name.split('.');
@@ -233,7 +235,7 @@
                         } else {
                             this.$message.error("绑定失败 " + data.msg)
                         }
-                    }, {methods: 'POST', data: {domain_name: this.domain_name,app_id:this.app_id}})
+                    }, {methods: 'POST', data: {domain_name: this.domain_name, app_id: this.app_id}})
                 } else if (this.active === 2) {
                     this.check_cname()
                 }
@@ -246,7 +248,7 @@
 </script>
 
 <style scoped>
-    .dialog-footer{
+    .dialog-footer {
 
     }
 </style>

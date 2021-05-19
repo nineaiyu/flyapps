@@ -49,7 +49,7 @@
             </el-form-item>
             <el-form-item label-width="200px" label="应用专属域名">
 
-                <el-input v-model="currentapp.domain_name" clearable
+                <el-input :value="currentapp.domain_name" clearable
                           style="width: 60%;margin-right: 10px" prefix-icon="el-icon-download"
                           :placeholder="defualt_dtitle"/>
                 <el-button @click="bind_domain_sure=true">保存</el-button>

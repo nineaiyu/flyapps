@@ -137,6 +137,11 @@ class AppsSerializer(serializers.ModelSerializer):
     def get_preview_url(self, obj):
         return get_redirect_server_domain(None, obj.user_id, get_app_domain_name(obj))
 
+    domain_name = serializers.SerializerMethodField()
+
+    def get_domain_name(self, obj):
+        return get_app_domain_name(obj)
+
     sign_type_choice = serializers.SerializerMethodField()
 
     def get_sign_type_choice(self, obj):

@@ -6,7 +6,7 @@
                 :close-on-press-escape="false"
                 :visible.sync="bind_domain_sure"
                 width="666px">
-            <bind-domain transitionName="bind-user-domain" />
+            <bind-domain transitionName="bind-user-domain"/>
         </el-dialog>
         <canvas ref="canvas" class="canvas" @mousemove="canvas_move" @mouseleave="canvas_leave"/>
         <el-container>
@@ -17,7 +17,8 @@
                         :closable="false"
                         effect="dark">
                     <div slot="title">
-                        <span :underline="false" class="domian-tip-bar">应用分发请绑定您自己的域名，平台分发域名可能因不可违因素更换，将导致您的应用无法访问</span>
+                        <span :underline="false"
+                              class="domian-tip-bar">应用分发请绑定您自己的域名，平台分发域名可能因不可违因素更换，将导致您的应用无法访问</span>
                         <el-button size="medium" @click="bind_domain_sure=true">立即绑定</el-button>
                     </div>
                 </el-alert>
@@ -84,7 +85,7 @@
             '$store.state.domain_action': function () {
                 if (this.$store.state.domain_action) {
                     this.$store.dispatch("dodomainaction", false);
-                    this.bind_domain_sure=true;
+                    this.bind_domain_sure = true;
                 }
             },
         }

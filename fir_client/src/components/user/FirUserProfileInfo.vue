@@ -160,7 +160,7 @@
             <el-form-item label="下载域名">
                 <el-row :gutter="36">
                     <el-col :span="16">
-                        <el-input v-model="userinfo.domain_name" :readonly="true" ref="domain_name"
+                        <el-input :value="userinfo.domain_name" :readonly="true" ref="domain_name"
                                   prefix-icon="el-icon-download"
                                   placeholder="下载页域名" clearable/>
                     </el-col>
