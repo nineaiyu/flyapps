@@ -13,7 +13,7 @@ from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit
 from api.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status, delete_local_files, \
     download_files_form_oss, \
-    get_developer_udided
+    get_developer_udided, get_user_domain_name
 from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path
 from api.utils.storage.storage import Storage
 from django.core.cache import cache
@@ -214,7 +214,7 @@ def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
         if app_domain_name and len(app_domain_name) > 3:
             domain_name = app_domain_name
         else:
-            domain_name = user_obj.domain_name
+            domain_name = get_user_domain_name(user_obj)
     elif app_domain_name and len(app_domain_name) > 3:
         domain_name = app_domain_name
     else:

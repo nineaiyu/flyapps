@@ -4,7 +4,7 @@ from api.utils.app.apputils import bytes2human
 from api.utils.TokenManager import DownloadToken
 from api.utils.app.supersignutils import get_redirect_server_domain
 from api.utils.storage.storage import Storage
-from api.utils.utils import get_developer_udided, get_choices_dict, get_choices_name_from_key
+from api.utils.utils import get_developer_udided, get_choices_dict, get_choices_name_from_key, get_user_domain_name
 from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
 import os, json, logging
 
@@ -74,6 +74,11 @@ class UserInfoSerializer(serializers.ModelSerializer):
         if certification_obj:
             auth_status = certification_obj.status
         return auth_status
+
+    domain_name = serializers.SerializerMethodField()
+
+    def get_domain_name(self, obj):
+        return get_user_domain_name(obj)
 
 
 class AdminUserInfoSerializer(UserInfoSerializer):

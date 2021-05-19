@@ -6,7 +6,7 @@
 import os, json, requests, datetime, random
 from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
-    UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot
+    UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, UserDomainInfo
 from api.utils.storage.caches import get_app_d_count_by_app_id
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
@@ -305,4 +305,11 @@ def get_choices_name_from_key(choices, key):
     for choice in choices_org_list:
         if choice[0] == key:
             return choice[1]
+    return ''
+
+
+def get_user_domain_name(obj):
+    domain_obj = UserDomainInfo.objects.filter(user_id=obj, is_enable=True).first()
+    if domain_obj:
+        return domain_obj.domain_name
     return ''

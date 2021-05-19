@@ -25,6 +25,7 @@ from api.views.storage import StorageView
 from api.views.receiveudids import IosUDIDView
 from api.views.order import PriceView, OrderView, PaySuccess
 from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView
+from api.views.domain import DomainCnameView
 
 # router=DefaultRouter()
 # router.register("apps", AppsView)
@@ -54,4 +55,6 @@ urlpatterns = [
     re_path("^orders$", OrderView.as_view()),
     re_path("^certification$", CertificationView.as_view()),
     re_path(r"^pay_success/(?P<name>\w+)$", PaySuccess.as_view()),
+    re_path("^cname_domain$", DomainCnameView.as_view()),
+
 ]

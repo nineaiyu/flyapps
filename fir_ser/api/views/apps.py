@@ -17,7 +17,7 @@ from api.utils.serializer import AppsSerializer, AppReleaseSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
 from fir_ser.settings import SERVER_DOMAIN
-from api.utils.utils import delete_local_files, delete_app_screenshots_files
+from api.utils.utils import delete_local_files, delete_app_screenshots_files, get_user_domain_name
 from api.utils.baseutils import is_valid_domain
 from api.base_views import app_delete
 
@@ -51,7 +51,7 @@ class AppsView(APIView):
         app_type = request.query_params.get("type", None)
         act_type = request.query_params.get("act", None)
         res = BaseResponse()
-        res.hdata = {"all_hits_count": 0, "upload_domain": request.user.domain_name,
+        res.hdata = {"all_hits_count": 0,
                      "ios_count": Apps.objects.filter(type=1, user_id=request.user).values('app_id').count(),
                      "android_count": Apps.objects.filter(type=0, user_id=request.user).values('app_id').count()}
 
@@ -193,7 +193,7 @@ class AppInfoView(APIView):
 
                 if domain_name == '':
                     apps_obj.domain_name = None
-                    if not request.user.domain_name:
+                    if not get_user_domain_name(request.user):
                         apps_obj.wxeasytype = True
                 apps_obj.save()
                 del_cache_response_by_short(apps_obj.app_id)
@@ -211,7 +211,7 @@ class AppInfoView(APIView):
                                                                apps_obj.supersign_limit_number)
                     apps_obj.isshow = data.get("isshow", apps_obj.isshow)
 
-                    if (request.user.domain_name and len(request.user.domain_name) > 3) or (
+                    if get_user_domain_name(request.user) or (
                             apps_obj.domain_name and len(apps_obj.domain_name) > 3):
                         apps_obj.wxeasytype = data.get("wxeasytype", apps_obj.wxeasytype)
                     else:

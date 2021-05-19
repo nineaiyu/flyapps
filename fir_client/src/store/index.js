@@ -16,6 +16,7 @@ const store = new Vuex.Store({
         appInfoIndex: [],
         userInfoIndex: 0,
         show_domain_msg: false,
+        domain_action: false,
     },
     mutations: {
         setuserinfo(state, data) {
@@ -32,9 +33,15 @@ const store = new Vuex.Store({
         },
         setdomainshow(state, val) {
             state.show_domain_msg = val
+        },
+        setdomainaction(state, val) {
+            state.domain_action = val
         }
     },
     actions: {
+        dodomainaction(context, data) {
+            context.commit('setdomainaction', data);
+        },
         dodomainshow(context, data) {
             context.commit('setdomainshow', data);
         },

@@ -49,6 +49,7 @@
                         <el-dropdown-menu slot="dropdown">
                             <el-dropdown-item command="userinfo">个人资料</el-dropdown-item>
                             <el-dropdown-item command="apitoken">API token</el-dropdown-item>
+                            <el-dropdown-item command="setdomian">设置域名</el-dropdown-item>
                             <el-dropdown-item command="storage" v-if="$store.state.userinfo.storage_active">存储管理
                             </el-dropdown-item>
                             <el-dropdown-item command="supersign" v-if="$store.state.userinfo.supersign_active">超级签名
@@ -117,6 +118,8 @@
                         }
                     }, {methods: 'GET', token: this.token});
 
+                } else if (command === 'setdomian') {
+                    this.$store.dispatch("dodomainaction", true);
                 } else if (command === 'myorder') {
                     this.$router.push({"name": 'FirUserOrders'})
                 } else if (command === 'exit') {

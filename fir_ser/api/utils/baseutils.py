@@ -11,6 +11,7 @@ from api.utils.app.randomstrings import make_app_uuid
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 import logging
+from dns.resolver import Resolver
 
 logger = logging.getLogger(__name__)
 
@@ -102,3 +103,13 @@ def format_storage_selection(storage_info_list, storage_choice_list):
         if not storage_choice['storage_info']:
             storage_choice_list.remove(storage_choice)
     return storage_choice_list
+
+
+def get_cname_from_domain(domain):
+    dns_resolver = Resolver()
+    dns_resolver.nameservers = ["8.8.8.8", "8.8.4.4"]
+    domain = domain.lower().strip()
+    try:
+        return dns_resolver.query(domain, 'CNAME')[0].to_text()
+    except Exception:
+        return str(None)

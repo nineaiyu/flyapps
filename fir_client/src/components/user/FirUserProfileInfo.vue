@@ -138,22 +138,31 @@
                 </el-row>
             </el-form-item>
 
+            <!--            <el-form-item label="下载域名">-->
+            <!--                <el-row :gutter="36">-->
+            <!--                    <el-col :span="16">-->
+            <!--                        <el-input v-model="userinfo.domain_name" :readonly="editdomain_name !== true" ref="domain_name"-->
+            <!--                                  prefix-icon="el-icon-download"-->
+            <!--                                  placeholder="下载页域名" clearable/>-->
+            <!--                    </el-col>-->
+            <!--                    <el-col :span="1">-->
+            <!--                        <el-button icon="el-icon-edit" @click="changeDomainValue">-->
+            <!--                        </el-button>-->
+            <!--                    </el-col>-->
+            <!--                    <el-col :span="5" v-if="editdomain_name === true">-->
+            <!--                        <el-button type="success" @click="saveDomain" plain-->
+            <!--                                   class="save-button">-->
+            <!--                            保存-->
+            <!--                        </el-button>-->
+            <!--                    </el-col>-->
+            <!--                </el-row>-->
+            <!--            </el-form-item>-->
             <el-form-item label="下载域名">
                 <el-row :gutter="36">
                     <el-col :span="16">
-                        <el-input v-model="userinfo.domain_name" :readonly="editdomain_name !== true" ref="domain_name"
+                        <el-input v-model="userinfo.domain_name" :readonly="true" ref="domain_name"
                                   prefix-icon="el-icon-download"
                                   placeholder="下载页域名" clearable/>
-                    </el-col>
-                    <el-col :span="1">
-                        <el-button icon="el-icon-edit" @click="changeDomainValue">
-                        </el-button>
-                    </el-col>
-                    <el-col :span="5" v-if="editdomain_name === true">
-                        <el-button type="success" @click="saveDomain" plain
-                                   class="save-button">
-                            保存
-                        </el-button>
                     </el-col>
                 </el-row>
             </el-form-item>

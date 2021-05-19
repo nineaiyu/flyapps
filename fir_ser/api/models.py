@@ -41,7 +41,7 @@ class UserInfo(AbstractUser):
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name="注册时间")
     download_times = models.PositiveIntegerField(default=0, verbose_name="可用下载次数,需要用户充值")
     all_download_times = models.BigIntegerField(default=0, verbose_name="总共下载次数")
-    domain_name = models.CharField(verbose_name="下载页面域名", blank=True, null=True, max_length=64)
+    # domain_name = models.CharField(verbose_name="下载页面域名", blank=True, null=True, max_length=64)
     history_release_limit = models.IntegerField(default=10, verbose_name="app 历史记录版本", blank=True, null=True)
     storage = models.OneToOneField(to='AppStorage', related_name='app_storage',
                                    on_delete=models.SET_NULL, verbose_name="存储", null=True, blank=True)
@@ -445,3 +445,34 @@ class CertificationInfo(models.Model):
 
     def __str__(self):
         return "%s-%s" % (self.user_id, self.certification_url)
+
+
+class DomainCnameInfo(models.Model):
+    domain_record = models.CharField(max_length=128, primary_key=True, verbose_name="记录值")
+    ip_address = models.GenericIPAddressField(verbose_name="域名解析地址", null=False)
+    # reference_count = models.BigIntegerField(default=0, verbose_name="引用记录值")
+    is_enable = models.BooleanField(default=True, verbose_name="是否启用该解析")
+    description = models.TextField(verbose_name='备注', blank=True, null=True, default='')
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+
+    class Meta:
+        verbose_name = '分发域名信息'
+        verbose_name_plural = "分发域名信息"
+
+    def __str__(self):
+        return "%s-%s-%s" % (self.domain_record, self.ip_address, self.is_enable)
+
+
+class UserDomainInfo(models.Model):
+    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    cname_id = models.ForeignKey(to="DomainCnameInfo", verbose_name="cname解析ID", on_delete=models.CASCADE)
+    domain_name = models.CharField(verbose_name="下载页面域名", db_index=True, max_length=64, null=False, blank=False)
+    is_enable = models.BooleanField(default=False, verbose_name="绑定成功")
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+
+    class Meta:
+        verbose_name = '分发域名绑定'
+        verbose_name_plural = "分发域名绑定"
+
+    def __str__(self):
+        return "%s-%s-%s" % (self.user_id, self.cname_id, self.domain_name)

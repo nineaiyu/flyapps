@@ -539,3 +539,19 @@ export function changeInfoFun(callBack, params, load = true) {
         true
     );
 }
+
+
+/**用户绑定域名*/
+export function domainFun(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/cname_domain',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
