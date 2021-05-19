@@ -1,7 +1,13 @@
 <template>
-
-
     <div style="margin-top: 20px;width: 66%;margin-left: 8%">
+        <el-dialog
+                title="绑定应用专属下载页域名"
+                :close-on-click-modal="false"
+                :close-on-press-escape="false"
+                :visible.sync="bind_domain_sure"
+                width="666px">
+            <bind-domain transitionName="bind-user-domain" :app_id="this.currentapp.app_id"/>
+        </el-dialog>
         <el-form label-width="80px">
             <el-form-item label-width="200px" label="访问密码">
 
@@ -46,7 +52,7 @@
                 <el-input v-model="currentapp.domain_name" clearable
                           style="width: 60%;margin-right: 10px" prefix-icon="el-icon-download"
                           :placeholder="defualt_dtitle"/>
-                <el-button @click="save_app_domain()">保存</el-button>
+                <el-button @click="bind_domain_sure=true">保存</el-button>
             </el-form-item>
 
             <el-form-item label-width="200px" label="微信内访问简易模式">
@@ -82,18 +88,17 @@
 
 
         </el-form>
-
     </div>
-
-
 </template>
 
 <script>
     import {apputils,} from "@/restful"
     import {deepCopy} from "@/utils";
+    import BindDomain from "@/components/base/BindDomain";
 
     export default {
         name: "FirAppInfossecurity",
+        components: {BindDomain},
         data() {
             return {
                 currentapp: {},
@@ -108,6 +113,7 @@
                 wxredirectflag: false,
                 wxeasy_disable: false,
                 defualt_dtitle: '专属下载页域名',
+                bind_domain_sure: false,
             }
         },
         methods: {

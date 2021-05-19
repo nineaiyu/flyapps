@@ -17,8 +17,8 @@ from api.utils.serializer import AppsSerializer, AppReleaseSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
 from fir_ser.settings import SERVER_DOMAIN
-from api.utils.utils import delete_local_files, delete_app_screenshots_files, get_user_domain_name
-from api.utils.baseutils import is_valid_domain
+from api.utils.utils import delete_local_files, delete_app_screenshots_files
+from api.utils.baseutils import is_valid_domain, get_user_domain_name
 from api.base_views import app_delete
 
 logger = logging.getLogger(__name__)
@@ -142,7 +142,7 @@ class AppInfoView(APIView):
                 return Response(res.dict)
 
             has_combo = data.get("has_combo", None)
-            domain_name = data.get("domain_name", None)
+            # domain_name = data.get("domain_name", None)
             if has_combo:
                 actions = has_combo.get("action", None)
                 hcombo_id = has_combo.get("hcombo_id", None)
@@ -168,36 +168,36 @@ class AppInfoView(APIView):
                         logger.error("app_id:%s actions:%s hcombo_id:%s Exception:%s" % (app_id, actions, hcombo_id, e))
                         res.code = 1004
                         res.msg = "该应用已经关联"
-            elif domain_name:
-                apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
-                logger.info("app_id:%s update old data:%s" % (app_id, apps_obj.__dict__))
-                domain_name_list = domain_name.strip(' ').replace("http://", "").replace("https://", "").split("/")
-                if len(domain_name_list) > 0:
-                    domain_name = domain_name_list[0]
-                    if len(domain_name) > 3 and is_valid_domain(domain_name):
-                        if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
-                            user_admin_obj = UserInfo.objects.filter(is_superuser=True, uid=request.user.uid).order_by(
-                                'pk').first()
-                            if user_admin_obj:
-                                apps_obj.domain_name = domain_name
-                            else:
-                                res.code = 1004
-                                res.msg = "域名设置失败，请更换其他域名"
-                                return Response(res.dict)
-                        else:
-                            apps_obj.domain_name = domain_name
-                    else:
-                        res.code = 1004
-                        res.msg = "域名校验失败"
-                        return Response(res.dict)
-
-                if domain_name == '':
-                    apps_obj.domain_name = None
-                    if not get_user_domain_name(request.user):
-                        apps_obj.wxeasytype = True
-                apps_obj.save()
-                del_cache_response_by_short(apps_obj.app_id)
-                return Response(res.dict)
+            # elif domain_name:
+            #     apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
+            #     logger.info("app_id:%s update old data:%s" % (app_id, apps_obj.__dict__))
+            #     domain_name_list = domain_name.strip(' ').replace("http://", "").replace("https://", "").split("/")
+            #     if len(domain_name_list) > 0:
+            #         domain_name = domain_name_list[0]
+            #         if len(domain_name) > 3 and is_valid_domain(domain_name):
+            #             if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
+            #                 user_admin_obj = UserInfo.objects.filter(is_superuser=True, uid=request.user.uid).order_by(
+            #                     'pk').first()
+            #                 if user_admin_obj:
+            #                     apps_obj.domain_name = domain_name
+            #                 else:
+            #                     res.code = 1004
+            #                     res.msg = "域名设置失败，请更换其他域名"
+            #                     return Response(res.dict)
+            #             else:
+            #                 apps_obj.domain_name = domain_name
+            #         else:
+            #             res.code = 1004
+            #             res.msg = "域名校验失败"
+            #             return Response(res.dict)
+            #
+            #     if domain_name == '':
+            #         apps_obj.domain_name = None
+            #         if not get_user_domain_name(request.user):
+            #             apps_obj.wxeasytype = True
+            #     apps_obj.save()
+            #     del_cache_response_by_short(apps_obj.app_id)
+            #     return Response(res.dict)
             else:
                 try:
                     do_sign_flag = 0

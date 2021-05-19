@@ -122,7 +122,7 @@ class Apps(models.Model):
     supersign_limit_number = models.IntegerField(verbose_name="签名使用限额", default=0)
     wxredirect = models.BooleanField(verbose_name="微信内第三方链接自动跳转", default=True)
     wxeasytype = models.BooleanField(verbose_name="微信内简易模式，避免微信封停", default=True)
-    domain_name = models.CharField(verbose_name="专属访问域名", blank=True, null=True, max_length=64)
+    # domain_name = models.CharField(verbose_name="专属访问域名", blank=True, null=True, max_length=64)
     description = models.TextField('描述', blank=True, null=True, default=None, )
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
@@ -465,6 +465,7 @@ class DomainCnameInfo(models.Model):
 
 class UserDomainInfo(models.Model):
     user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="APP专属域名", null=True, blank=True)
     cname_id = models.ForeignKey(to="DomainCnameInfo", verbose_name="cname解析ID", on_delete=models.CASCADE)
     domain_name = models.CharField(verbose_name="下载页面域名", db_index=True, max_length=64, null=False, blank=False)
     is_enable = models.BooleanField(default=False, verbose_name="绑定成功")

@@ -6,7 +6,7 @@
 
 import os, re
 from fir_ser.settings import SUPER_SIGN_ROOT
-from api.models import AppReleaseInfo
+from api.models import AppReleaseInfo, UserDomainInfo
 from api.utils.app.randomstrings import make_app_uuid
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -113,3 +113,17 @@ def get_cname_from_domain(domain):
         return dns_resolver.query(domain, 'CNAME')[0].to_text()
     except Exception:
         return str(None)
+
+
+def get_user_domain_name(obj):
+    domain_obj = UserDomainInfo.objects.filter(user_id=obj, is_enable=True).first()
+    if domain_obj:
+        return domain_obj.domain_name
+    return ''
+
+
+def get_app_domain_name(obj):
+    domain_obj = UserDomainInfo.objects.filter(app_id=obj, is_enable=True).first()
+    if domain_obj:
+        return domain_obj.domain_name
+    return ''

@@ -306,10 +306,3 @@ def get_choices_name_from_key(choices, key):
         if choice[0] == key:
             return choice[1]
     return ''
-
-
-def get_user_domain_name(obj):
-    domain_obj = UserDomainInfo.objects.filter(user_id=obj, is_enable=True).first()
-    if domain_obj:
-        return domain_obj.domain_name
-    return ''

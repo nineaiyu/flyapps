@@ -12,7 +12,7 @@ from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
     USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
 from api.utils.storage.storage import Storage, LocalStorage
-from api.utils.baseutils import get_app_d_count_by_app_id, file_format_path
+from api.utils.baseutils import get_app_d_count_by_app_id, file_format_path, get_app_domain_name
 import logging
 from django.db.models import F
 
@@ -293,7 +293,7 @@ def set_default_app_wx_easy(user_obj, only_clean_cache=False):
         if only_clean_cache:
             del_cache_response_by_short(app_obj.app_id)
         else:
-            if not app_obj.domain_name:
+            if not get_app_domain_name(app_obj):
                 app_obj.wxeasytype = True
                 app_obj.save()
                 del_cache_response_by_short(app_obj.app_id)

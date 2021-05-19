@@ -24,7 +24,8 @@ SECRET_KEY = 'j!g@^bc(z(a3*i&kp$_@bgb)bug&^#3=amch!3lz&1x&s6ss6t'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'synchrotron', '172.16.133.34','ali.cdn.flyapp.dvcloud.xin','api.src.flyapp.dvcloud.xin']
+ALLOWED_HOSTS = ['127.0.0.1', 'synchrotron', '172.16.133.34', 'ali.cdn.flyapp.dvcloud.xin',
+                 'api.src.flyapp.dvcloud.xin']
 
 # Application definition
 

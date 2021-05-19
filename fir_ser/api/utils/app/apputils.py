@@ -6,6 +6,8 @@
 from api.utils.app.randomstrings import make_app_uuid
 from api.models import AppReleaseInfo, Apps
 import random
+
+from api.utils.baseutils import get_user_domain_name
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short
 import logging
@@ -127,7 +129,7 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
             "short": short,
             "bundle_id": bundle_id,
             "count_hits": 0,
-            "wxeasytype": False if user_obj.domain_name else True
+            "wxeasytype": False if get_user_domain_name(user_obj) else True
         }
         try:
             appmobj = Apps.objects.create(**appdata)

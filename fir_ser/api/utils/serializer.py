@@ -3,8 +3,9 @@ from api import models
 from api.utils.app.apputils import bytes2human
 from api.utils.TokenManager import DownloadToken
 from api.utils.app.supersignutils import get_redirect_server_domain
+from api.utils.baseutils import get_user_domain_name, get_app_domain_name
 from api.utils.storage.storage import Storage
-from api.utils.utils import get_developer_udided, get_choices_dict, get_choices_name_from_key, get_user_domain_name
+from api.utils.utils import get_developer_udided, get_choices_dict, get_choices_name_from_key
 from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
 import os, json, logging
 
@@ -134,7 +135,7 @@ class AppsSerializer(serializers.ModelSerializer):
     preview_url = serializers.SerializerMethodField()
 
     def get_preview_url(self, obj):
-        return get_redirect_server_domain(None, obj.user_id, obj.domain_name)
+        return get_redirect_server_domain(None, obj.user_id, get_app_domain_name(obj))
 
     sign_type_choice = serializers.SerializerMethodField()
 
@@ -227,6 +228,11 @@ class AppsShortSerializer(serializers.ModelSerializer):
 
     def get_screenshots(self, obj):
         return get_screenshots_from_self(self, obj, True)
+
+    domain_name = serializers.SerializerMethodField()
+
+    def get_domain_name(self, obj):
+        return get_app_domain_name(obj)
 
     need_password = serializers.SerializerMethodField()
 
