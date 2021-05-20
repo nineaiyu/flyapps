@@ -6,40 +6,16 @@
 
         </div>
         <el-header>
-
             <div>
-                <span>登录</span>
+                <span>忘记密码</span>
             </div>
 
         </el-header>
         <el-main>
-
             <el-form ref="form" :model="form">
-
-                <el-tabs v-model="activeName">
-                    <el-tab-pane label="用户名登录" name="username" v-if="allow_ways.up">
-                        <el-form-item>
-                            <el-input v-model="form.email" prefix-icon="el-icon-user" placeholder="用户名" autofocus
-                                      clearable/>
-                        </el-form-item>
-                    </el-tab-pane>
-                    <el-tab-pane :label="rutitle+'登录'" name="smsemail" v-if="allow_ways.sms || allow_ways.email">
-                        <el-form-item>
-                            <el-input v-model="form.email" prefix-icon="el-icon-user" :placeholder="rutitle" autofocus
-                                      clearable/>
-                        </el-form-item>
-                    </el-tab-pane>
-
-                </el-tabs>
-
-                <el-form-item v-if="is_cptch">
-                    <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
-                              @keyup.enter.native="onSubmit"
-                              show-password clearable/>
-                </el-form-item>
-                <el-form-item v-else>
-                    <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="密码"
-                              show-password clearable/>
+                <el-form-item>
+                    <el-input v-model="form.email" prefix-icon="el-icon-user" placeholder="邮箱" autofocus
+                              clearable/>
                 </el-form-item>
                 <el-form-item style="height: 40px" v-if="cptch.cptch_image">
                     <el-row style="height: 40px">
@@ -60,17 +36,16 @@
                 <el-form-item>
                     <div id="captcha" ref="captcha"></div>
                 </el-form-item>
-
-                <el-form-item>
-                    <el-button type="danger" :disabled="login_disable" @click="onSubmit">登录</el-button>
+                <el-form-item style="margin-top: 30px">
+                    <el-button type="danger" :disabled="login_disable" @click="onSubmit">发送重置密码邮件</el-button>
                 </el-form-item>
-
-                <el-form-item v-if="register_enable">
+                <el-form-item style="margin-top: 30px">
+                    <el-button type="primary" @click="onLogin">我是老用户,要登录</el-button>
+                </el-form-item>
+                <el-form-item v-if="register_enable" style="margin-top: 30px">
                     <el-button type="primary" @click="onRegister" plain>注册</el-button>
                 </el-form-item>
-                <el-form-item>
-                    <el-link :underline="false" @click="$router.push({name: 'FirResetPwd'})" plain>忘记密码</el-link>
-                </el-form-item>
+
             </el-form>
 
 
@@ -82,11 +57,11 @@
 </template>
 
 <script>
-    import {loginFun, set_auth_token} from "@/restful";
-    import {checkEmail, checkphone, geetest} from "@/utils";
+    import {loginFun} from "@/restful";
+    import {checkEmail, geetest} from "@/utils";
 
     export default {
-        name: "FirLogin",
+        name: "FirResetPwd",
         data() {
             return {
                 form: {
@@ -113,68 +88,35 @@
             },
             onSubmit() {
                 let email = this.form.email;
-                let password = this.form.password;
                 let authcode = this.form.authcode;
-                let login_type = 'up';
                 let cptch_flag = this.form.authcode.length === this.cptch.length;
                 if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
                     cptch_flag = true
                 }
                 if (cptch_flag) {
-
-                    if (this.activeName === "username") {
-                        if (email.length < 6) {
-                            this.$message({
-                                message: '用户名至少6位',
-                                type: 'error'
-                            });
-                            return
-                        }
-
-                    } else if (this.activeName === "smsemail") {
-                        let checkp = checkphone(this.form.email);
-                        let checke = checkEmail(this.form.email);
-                        if (!checkp && !checke) {
-                            this.$message({
-                                message: '邮箱或者手机号输入有误',
-                                type: 'error'
-                            });
-                            return
-                        }
-                        if (checkp) {
-                            login_type = 'sms';
-                        } else if (checke) {
-                            login_type = 'email';
-                        }
-                    } else {
+                    let checke = checkEmail(this.form.email);
+                    if (!checke) {
                         this.$message({
-                            message: '未知登录方式',
+                            message: '邮箱输入有误',
                             type: 'error'
                         });
                         return
                     }
-                    if (password.length > 6) {
-                        let params = {
-                            "username": email,
-                            "password": password,
-                            "authcode": authcode,
-                            "cptch_key": this.cptch.cptch_key,
-                            "login_type": login_type,
-                        };
-                        this.login_disable = true;
-                        if (this.cptch.geetest) {
-                            geetest(this, params, (n_params) => {
-                                this.do_login(n_params);
-                            })
-                        } else {
-                            this.do_login(params)
-                        }
+                    let params = {
+                        "username": email,
+                        "authcode": authcode,
+                        "cptch_key": this.cptch.cptch_key,
+                        "login_type": 'reset',
+                    };
+                    this.login_disable = true;
+                    if (this.cptch.geetest) {
+                        geetest(this, params, (n_params) => {
+                            this.do_login(n_params);
+                        })
                     } else {
-                        this.$message({
-                            message: '密码长度过短',
-                            type: 'warning'
-                        });
+                        this.do_login(params)
                     }
+
                 } else {
                     this.$message({
                         message: '验证码有误',
@@ -186,16 +128,10 @@
                 loginFun(data => {
                     if (data.code === 1000) {
                         this.$message({
-                            message: '登录成功',
+                            message: '密码重置成功，请登录邮箱查看邮件',
                             type: 'success'
                         });
-                        this.$cookies.remove("auth_token");
-                        this.$cookies.set("token", data['token'], 3600 * 24 * 30);
-                        this.$cookies.set("username", data.userinfo.username, 3600 * 24 * 30);
-                        this.$cookies.set("first_name", data.userinfo.first_name, 3600 * 24 * 30);
-                        this.$store.dispatch("doUserinfo", data.userinfo);
-                        set_auth_token();
-                        this.$router.push({name: 'FirApps'})
+
                     } else {
                         this.$message({
                             message: data.msg,
@@ -212,33 +148,15 @@
             onRegister() {
                 this.$router.push({name: 'FirRegist'})
             },
-            set_activename() {
-                if (this.allow_ways.up) {
-                    this.activeName = 'username';
-                } else {
-                    this.activeName = 'smsemail';
-                }
-            },
-            set_rtitle() {
-                this.rutitle = '';
-                if (this.allow_ways.sms) {
-                    this.rutitle = this.rutitle + '手机号 ';
-                }
-                if (this.allow_ways.email) {
-                    this.rutitle = this.rutitle + '邮箱 ';
-                }
-
-                this.rutitle = this.rutitle.trim().replace(' ', '或');
+            onLogin() {
+                this.$router.push({name: 'FirLogin'})
             },
             get_auth_code() {
                 loginFun(data => {
                     if (data.code === 1000) {
                         this.cptch = data.data;
-                        this.allow_ways = data.data.login_type;
                         this.register_enable = data.data.register_enable;
                         this.form.authcode = '';
-                        this.set_rtitle();
-                        this.set_activename();
                     } else {
                         this.$message({
                             message: data.msg,

@@ -52,7 +52,7 @@
                 <el-input :value="currentapp.domain_name" clearable
                           style="width: 60%;margin-right: 10px" prefix-icon="el-icon-download"
                           :placeholder="defualt_dtitle"/>
-                <el-button @click="bind_domain_sure=true">保存</el-button>
+                <el-button @click="bind_domain_sure=true">设置域名</el-button>
             </el-form-item>
 
             <el-form-item label-width="200px" label="微信内访问简易模式">

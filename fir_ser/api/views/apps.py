@@ -18,7 +18,7 @@ from rest_framework.pagination import PageNumberPagination
 import logging
 from fir_ser.settings import SERVER_DOMAIN
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
-from api.utils.baseutils import is_valid_domain, get_user_domain_name
+from api.utils.baseutils import is_valid_domain, get_user_domain_name, get_app_domain_name
 from api.base_views import app_delete
 
 logger = logging.getLogger(__name__)
@@ -211,8 +211,7 @@ class AppInfoView(APIView):
                                                                apps_obj.supersign_limit_number)
                     apps_obj.isshow = data.get("isshow", apps_obj.isshow)
 
-                    if get_user_domain_name(request.user) or (
-                            apps_obj.domain_name and len(apps_obj.domain_name) > 3):
+                    if get_user_domain_name(request.user) or get_app_domain_name(apps_obj):
                         apps_obj.wxeasytype = data.get("wxeasytype", apps_obj.wxeasytype)
                     else:
                         apps_obj.wxeasytype = 1

@@ -147,6 +147,12 @@ const router = new VueRouter({
 
         },
         {
+            path: '/reset/pwd',
+            name: 'FirResetPwd',
+            component: () => import("@/components/FirResetPwd"),
+
+        },
+        {
             path: '/:short',
             name: 'FirDownload',
             component: () => import("@/components/FirDownload"),

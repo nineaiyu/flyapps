@@ -4,7 +4,7 @@
 # author: NinEveN
 # date: 2021/4/16
 
-import os, re
+import os, re, time
 from fir_ser.settings import SUPER_SIGN_ROOT
 from api.models import AppReleaseInfo, UserDomainInfo
 from api.utils.app.randomstrings import make_app_uuid
@@ -106,17 +106,28 @@ def format_storage_selection(storage_info_list, storage_choice_list):
 
 
 def get_cname_from_domain(domain):
+    dns_list = [
+        ["8.8.8.8", "8.8.4.4"],
+        ["119.29.29.29", "114.114.114.114"],
+        ["223.5.5.5", "223.6.6.6"],
+    ]
     dns_resolver = Resolver()
-    dns_resolver.nameservers = ["8.8.8.8", "8.8.4.4"]
     domain = domain.lower().strip()
-    try:
-        return dns_resolver.query(domain, 'CNAME')[0].to_text()
-    except Exception:
+    count = 3
+    while count:
+        try:
+            dns_resolver.nameservers = dns_list[len(dns_list) - count]
+            return dns_resolver.query(domain, 'CNAME')[0].to_text()
+        except Exception as e:
+            logger.error("dns %s resolve %s failed Exception:%s" % (dns_resolver.nameservers, domain, e))
+        count -= 1
+        time.sleep(0.3)
+    if count <= 0:
         return str(None)
 
 
 def get_user_domain_name(obj):
-    domain_obj = UserDomainInfo.objects.filter(user_id=obj, is_enable=True).first()
+    domain_obj = UserDomainInfo.objects.filter(user_id=obj, is_enable=True, app_id=None).first()
     if domain_obj:
         return domain_obj.domain_name
     return ''

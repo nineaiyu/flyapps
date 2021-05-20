@@ -30,6 +30,16 @@ def get_register_type():
     return REGISTER.get("register_type")
 
 
+def reset_user_pwd(user, surepassword, oldpassword=''):
+    if user is not None:
+        user.set_password(surepassword)
+    user.save()
+    logger.info("user:%s change password success,old %s new %s" % (user, oldpassword, surepassword))
+    for token_obj in Token.objects.filter(user=user):
+        cache.delete(token_obj.access_token)
+        token_obj.delete()
+
+
 def GetAuthenticate(target, password, act, allow_type):
     user_obj = None
     if act == 'email' and allow_type[act]:
@@ -198,6 +208,24 @@ class LoginView(APIView):
 
             login_type = receive.get("login_type", None)
             if login_auth_failed("get", username):
+                if login_type == 'reset':
+                    if is_valid_email(username):
+                        user_obj = UserInfo.objects.filter(email=username).first()
+                        if user_obj:
+                            password = get_random_username()[:16]
+                            msg = '您的新密码为  %s  请用新密码登录之后，及时修改密码' % password
+                            a, b = get_sender_email_token('email', username, 'msg', msg)
+                            if a and b:
+                                reset_user_pwd(user_obj, password, oldpassword='')
+                                login_auth_failed("del", username)
+                        else:
+                            response.code = 1002
+                            response.msg = "邮箱不存在"
+                    else:
+                        response.code = 1003
+                        response.msg = "无效邮箱"
+                    return Response(response.dict)
+
                 password = receive.get("password")
                 user = GetAuthenticate(username, password, login_type, get_login_type())
                 logger.info("username:%s  password:%s" % (username, password))

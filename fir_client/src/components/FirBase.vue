@@ -75,7 +75,7 @@
             let canvas = this.$refs.canvas;
             show_beautpic(this, canvas, 200);
         }, watch: {
-            '$store.state.userinfo.domain_name': function () {
+            '$store.state.userinfo': function () {
                 if (this.$store.state.userinfo.domain_name) {
                     this.$store.dispatch("dodomainshow", false);
                 } else {

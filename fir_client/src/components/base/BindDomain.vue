@@ -166,7 +166,9 @@
                     if (data.code === 1000) {
                         if (this.active++ > 2) this.active = 3;
                         this.bind_status = true;
-                        this.$store.dispatch("dodomainshow", false);
+                        if (!this.app_id) {
+                            this.$store.dispatch("dodomainshow", false);
+                        }
                     } else {
                         if (data.code === 1004) {
                             this.active = 1;
@@ -185,7 +187,9 @@
                         this.bind_status = false;
                         this.active = 1;
                         this.$message.success("解除绑定成功 ");
-                        this.$store.dispatch("dodomainshow", true);
+                        if (!this.app_id) {
+                            this.$store.dispatch("dodomainshow", true);
+                        }
                     } else {
                         this.$message.error("解除绑定失败 " + data.msg)
                     }

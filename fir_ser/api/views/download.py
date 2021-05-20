@@ -20,7 +20,7 @@ from api.utils.serializer import AppsShortSerializer
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInfo
 from django.http import FileResponse
 import logging
-from api.utils.baseutils import get_profile_full_path
+from api.utils.baseutils import get_profile_full_path, get_app_domain_name
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle
 
 logger = logging.getLogger(__file__)
@@ -181,7 +181,7 @@ class ShortDownloadView(APIView):
                                                                "storage": Storage(app_obj.user_id)})
         res.data = app_serializer.data
         res.udid = udid
-        res.domain_name = get_redirect_server_domain(request, app_obj.user_id, app_obj.domain_name)
+        res.domain_name = get_redirect_server_domain(request, app_obj.user_id, get_app_domain_name(app_obj))
         return Response(res.dict)
 
     # key的设置
