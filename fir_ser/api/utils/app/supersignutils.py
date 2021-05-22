@@ -13,7 +13,8 @@ from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit
 from api.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status, delete_local_files, \
     download_files_form_oss, get_developer_udided
-from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, get_user_domain_name
+from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, get_user_domain_name, \
+    get_user_default_domain_name, get_min_default_domain_cname_obj
 from api.utils.storage.storage import Storage
 from django.core.cache import cache
 
@@ -209,22 +210,22 @@ def get_http_server_doamin(request):
 
 
 def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
+    is_https = False
     if user_obj:
         if app_domain_name and len(app_domain_name) > 3:
             domain_name = app_domain_name
         else:
             domain_name = get_user_domain_name(user_obj)
+            if not domain_name:
+                is_https, domain_name = get_user_default_domain_name(user_obj.default_domain_name)
     elif app_domain_name and len(app_domain_name) > 3:
         domain_name = app_domain_name
     else:
-        domain_name = None
-    if domain_name and len(domain_name) > 3:
-        if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
-            server_domain = SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN")
-        else:
-            server_domain = "%s://%s" % ('http', domain_name)  # 第三方域名暂时不支持HTTPS
-    else:
-        server_domain = SERVER_DOMAIN.get('REDIRECT_UDID_DOMAIN', None)
+        is_https, domain_name = get_user_default_domain_name(get_min_default_domain_cname_obj())
+    protocol = 'http'
+    if is_https:
+        protocol = 'https'
+    server_domain = "%s://%s" % (protocol, domain_name)
     return get_server_domain_from_request(request, server_domain)
 
 

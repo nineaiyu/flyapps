@@ -5,8 +5,11 @@
 # date: 2021/4/16
 
 import os, re, time
+
+from django.db.models import Count
+
 from fir_ser.settings import SUPER_SIGN_ROOT
-from api.models import AppReleaseInfo, UserDomainInfo
+from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo
 from api.utils.app.randomstrings import make_app_uuid
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -138,3 +141,14 @@ def get_app_domain_name(obj):
     if domain_obj:
         return domain_obj.domain_name
     return ''
+
+
+def get_user_default_domain_name(domain_cname_obj):
+    if domain_cname_obj:
+        return domain_cname_obj.is_https, domain_cname_obj.domain_record
+    return None, None
+
+
+def get_min_default_domain_cname_obj():
+    return min(DomainCnameInfo.objects.annotate(Count('userdomaininfo')).filter(is_enable=True, is_system=True),
+               key=lambda x: x.userdomaininfo__count)

@@ -1,7 +1,6 @@
 from django.contrib import auth
-from django.db.models import Count
 
-from api.models import Token, UserInfo, UserCertificationInfo, CertificationInfo, DomainCnameInfo
+from api.models import Token, UserInfo, UserCertificationInfo, CertificationInfo
 from rest_framework.response import Response
 from api.utils.serializer import UserInfoSerializer, CertificationSerializer, UserCertificationSerializer
 from django.core.cache import cache
@@ -11,11 +10,11 @@ import os, datetime
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
     check_username_exists
-from api.utils.baseutils import is_valid_domain, is_valid_phone, is_valid_email
+from api.utils.baseutils import is_valid_phone, is_valid_email, get_min_default_domain_cname_obj
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, REGISTER, LOGIN, CHANGER
-from api.utils.storage.caches import login_auth_failed, set_default_app_wx_easy
+from fir_ser.settings import CACHE_KEY_TEMPLATE, REGISTER, LOGIN, CHANGER
+from api.utils.storage.caches import login_auth_failed
 import logging
 from api.utils.geetest.geetest_utils import first_register, second_validate
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle, GetAuthC1Throttle, GetAuthC2Throttle
@@ -338,16 +337,11 @@ class RegistView(APIView):
                 password2 = receive.get("password2")
                 if password == password2:
                     random_username = get_random_username()
-
-                    default_domain_name = min(
-                        DomainCnameInfo.objects.annotate(Count('userdomaininfo')).filter(is_enable=True,
-                                                                                         is_system=True),
-                        key=lambda x: x.userdomaininfo__count)
                     new_data = {
                         "username": random_username,
                         "password": password,
                         "first_name": random_username[:8],
-                        "default_domain_name": default_domain_name
+                        "default_domain_name": get_min_default_domain_cname_obj()
                     }
                     if is_valid_email(username):
 

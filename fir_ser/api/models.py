@@ -452,6 +452,7 @@ class DomainCnameInfo(models.Model):
     ip_address = models.CharField(max_length=128, verbose_name="域名解析地址", null=False)
     is_enable = models.BooleanField(default=True, verbose_name="是否启用该解析")
     is_system = models.BooleanField(default=False, verbose_name="是否是系统自带解析")
+    is_https = models.BooleanField(default=False, verbose_name="是否支持HTTPS")
     description = models.TextField(verbose_name='备注', blank=True, null=True, default='')
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
 
