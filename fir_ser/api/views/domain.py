@@ -57,14 +57,15 @@ class DomainCnameView(APIView):
                     res.data = {'cname_domain': user_domian_obj.cname_id.domain_record}
                 else:
                     UserDomainInfo.objects.filter(**get_domain_filter(request), is_enable=False).delete()
-                    min_domian_cname_info_obj = min(
-                        DomainCnameInfo.objects.annotate(Count('userdomaininfo')).filter(is_enable=True),
+                    min_domain_cname_info_obj = min(
+                        DomainCnameInfo.objects.annotate(Count('userdomaininfo')).filter(is_enable=True,
+                                                                                         is_system=False),
                         key=lambda x: x.userdomaininfo__count)
-                    if min_domian_cname_info_obj:
-                        res.data = {'cname_domain': min_domian_cname_info_obj.domain_record}
+                    if min_domain_cname_info_obj:
+                        res.data = {'cname_domain': min_domain_cname_info_obj.domain_record}
                         data_dict = {
                             'user_id': request.user,
-                            'cname_id': min_domian_cname_info_obj,
+                            'cname_id': min_domain_cname_info_obj,
                             'domain_name': domain_name,
                             'app_id': None,
                         }

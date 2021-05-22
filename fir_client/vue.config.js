@@ -41,6 +41,7 @@ const index={
     // 提取出来的通用 chunk 和 vendor chunk。
     chunks: ['chunk-vendors', 'chunk-common', 'index','chunk-libs','chunk-elementUI','chunk-commons','runtime','chunk-aliOss','chunk-qiniuJs','chunk-qrcodejs2']
 };
+// eslint-disable-next-line no-unused-vars
 const mshort={
         // page 的入口
         entry: 'src/main.short.js',
@@ -80,13 +81,26 @@ if(page){
         }
     }
 }
+
+function get_public_path(pages) {
+    if(!IS_PROD){
+        return '/'
+    }else if(pages.index ){
+        return 'https://static.dvcloud.xin/'
+    }else {
+        return 'https://static.dvstorage.cn/'   //正式服，需要打包下载页静态资源
+    }
+}
+
+let publicPath = get_public_path(pages);
+
 module.exports = {
     pages: pages,
     productionSourceMap: false, //去除生产环境的productionSourceMap
     assetsDir: "static", //静态文件存储位置
     lintOnSave: true,
     runtimeCompiler:true,
-    // publicPath: './',
+    publicPath: publicPath,
     configureWebpack: {
         // provide the app's title in webpack's name field, so that
         // it can be accessed in index.html to inject the correct title.

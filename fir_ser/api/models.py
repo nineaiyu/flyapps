@@ -41,7 +41,7 @@ class UserInfo(AbstractUser):
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name="注册时间")
     download_times = models.PositiveIntegerField(default=0, verbose_name="可用下载次数,需要用户充值")
     all_download_times = models.BigIntegerField(default=0, verbose_name="总共下载次数")
-    # domain_name = models.CharField(verbose_name="下载页面域名", blank=True, null=True, max_length=64)
+    default_domain_name = models.ForeignKey(to="DomainCnameInfo", verbose_name="默认下载页域名", on_delete=models.CASCADE)
     history_release_limit = models.IntegerField(default=10, verbose_name="app 历史记录版本", blank=True, null=True)
     storage = models.OneToOneField(to='AppStorage', related_name='app_storage',
                                    on_delete=models.SET_NULL, verbose_name="存储", null=True, blank=True)
@@ -448,10 +448,10 @@ class CertificationInfo(models.Model):
 
 
 class DomainCnameInfo(models.Model):
-    domain_record = models.CharField(max_length=128, primary_key=True, verbose_name="记录值")
-    ip_address = models.GenericIPAddressField(verbose_name="域名解析地址", null=False)
-    # reference_count = models.BigIntegerField(default=0, verbose_name="引用记录值")
+    domain_record = models.CharField(max_length=128, unique=True, verbose_name="记录值")
+    ip_address = models.CharField(max_length=128, verbose_name="域名解析地址", null=False)
     is_enable = models.BooleanField(default=True, verbose_name="是否启用该解析")
+    is_system = models.BooleanField(default=False, verbose_name="是否是系统自带解析")
     description = models.TextField(verbose_name='备注', blank=True, null=True, default='')
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
 

@@ -1,5 +1,7 @@
 from django.contrib import auth
-from api.models import Token, UserInfo, UserCertificationInfo, CertificationInfo
+from django.db.models import Count
+
+from api.models import Token, UserInfo, UserCertificationInfo, CertificationInfo, DomainCnameInfo
 from rest_framework.response import Response
 from api.utils.serializer import UserInfoSerializer, CertificationSerializer, UserCertificationSerializer
 from django.core.cache import cache
@@ -336,13 +338,22 @@ class RegistView(APIView):
                 password2 = receive.get("password2")
                 if password == password2:
                     random_username = get_random_username()
+
+                    default_domain_name = min(
+                        DomainCnameInfo.objects.annotate(Count('userdomaininfo')).filter(is_enable=True,
+                                                                                         is_system=True),
+                        key=lambda x: x.userdomaininfo__count)
+                    new_data = {
+                        "username": random_username,
+                        "password": password,
+                        "first_name": random_username[:8],
+                        "default_domain_name": default_domain_name
+                    }
                     if is_valid_email(username):
 
-                        user_obj = UserInfo.objects.create_user(random_username, email=username, password=password,
-                                                                first_name=random_username[:8])
+                        user_obj = UserInfo.objects.create_user(**new_data, email=username)
                     elif is_valid_phone(username):
-                        user_obj = UserInfo.objects.create_user(random_username, mobile=username, password=password,
-                                                                first_name=random_username[:8])
+                        user_obj = UserInfo.objects.create_user(**new_data, mobile=username)
                     else:
                         user_obj = None
                         response.msg = "注册异常"

@@ -5,3 +5,7 @@ fir_ser/venv/
 fir_client/.idea
 fir_admin/.idea/.gitignore
 fir_admin/.idea/
+fir_client/yarn.lock
+fir_download/package-lock.json
+fir_client/src/assets/down_left.png
+fir_client/src/assets/down_right.png
