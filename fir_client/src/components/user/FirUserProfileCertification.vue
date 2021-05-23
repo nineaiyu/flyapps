@@ -425,7 +425,7 @@
     }
 
     .appdownload /deep/ .el-upload-dragger {
-        background: #d1eef9;
+        background: #f1f1f1;
         width: 200px;
         height: 166px;
     }
