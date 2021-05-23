@@ -74,13 +74,15 @@ class AppAnalyseView(APIView):
             upload_file_tmp_name("set", png_key, request.user.id)
             upload_file_tmp_name("set", upload_key, request.user.id)
             res.data = {"app_uuid": app_uuid, "short": short,
-                        "domain_name": settings.SERVER_DOMAIN.get("FILE_UPLOAD_DOMAIN", None),
+                        "short_domain_name": get_redirect_server_domain(request, request.user),
                         "upload_token": upload_token,
                         "upload_key": upload_key,
                         "png_token": png_token,
                         "png_key": png_key,
                         "storage": storage_type,
                         "is_new": is_new, "binary_url": binary_url}
+            if storage_type not in [1, 2]:
+                res.data['domain_name'] = settings.SERVER_DOMAIN.get("FILE_UPLOAD_DOMAIN", None)
         else:
             res.code = 1003
 

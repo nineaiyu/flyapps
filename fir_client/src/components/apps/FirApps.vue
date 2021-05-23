@@ -66,7 +66,7 @@
             <el-dialog
                     :title="getDelappTitle"
                     :visible.sync="willDeleteApp"
-                    width="50%">
+                    width="666px">
 
                 <span v-if="delapp.issupersign">该应用开启了超级签名，执行删除操作，将会删除相关开发者账户下的证书等数据，可能会导致已经下载的APP闪退，并且删除后不可恢复，请谨慎操作</span>
                 <span v-else>删除后不可恢复，请谨慎操作</span>
@@ -83,7 +83,7 @@
                        :visible.sync="willuploadApp"
                        :destroy-on-close="true"
                        :show-close="!uploading"
-                       width="40%"
+                       width="666px"
                        :close-on-click-modal="false"
                        @closed="closeUpload">
                 <div v-if="!uploading">
@@ -135,7 +135,7 @@
                                 <el-row :gutter="20" style="margin-top: 10px;">
                                     <el-col :span="18">
                                         <el-input v-model="short">
-                                            <template slot="prepend">{{analyseappinfo.domain_name}}/</template>
+                                            <template slot="prepend">{{analyseappinfo.short_domain_name}}/</template>
                                         </el-input>
                                     </el-col>
                                 </el-row>
@@ -646,17 +646,10 @@
             getuploadtoken(loading) {
                 analyseApps(data => {
                     if (data.code === 1000) {
-                        this.analyseappinfo.short = data.data.short;
                         this.short = data.data.short;
-                        this.analyseappinfo.domain_name = data.data.domain_name;
-                        this.analyseappinfo.app_uuid = data.data.app_uuid;
-                        this.analyseappinfo.upload_token = data.data.upload_token;
-                        this.analyseappinfo.upload_key = data.data.upload_key;
-                        this.analyseappinfo.png_key = data.data.png_key;
-                        this.analyseappinfo.png_token = data.data.png_token;
-                        this.analyseappinfo.storage = data.data.storage;
-                        this.analyseappinfo.is_new = data.data.is_new;
-                        this.analyseappinfo.binary_url = data.data.binary_url;
+                        for(let name of Object.keys(data.data)){
+                            this.analyseappinfo[name] = data.data[name]
+                        }
                         this.willuploadApp = true;
                     } else {
                         this.$message.error("上传token获取失败，请刷新重试")
