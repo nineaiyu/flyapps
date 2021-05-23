@@ -149,6 +149,6 @@ def get_user_default_domain_name(domain_cname_obj):
     return None, None
 
 
-def get_min_default_domain_cname_obj():
-    return min(DomainCnameInfo.objects.annotate(Count('userdomaininfo')).filter(is_enable=True, is_system=True),
+def get_min_default_domain_cname_obj(is_system=True):
+    return min(DomainCnameInfo.objects.annotate(Count('userdomaininfo')).filter(is_enable=True, is_system=is_system),
                key=lambda x: x.userdomaininfo__count)

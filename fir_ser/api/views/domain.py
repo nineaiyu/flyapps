@@ -6,7 +6,7 @@
 
 from rest_framework.views import APIView
 
-from api.utils.baseutils import is_valid_domain, get_cname_from_domain, get_user_domain_name
+from api.utils.baseutils import is_valid_domain, get_cname_from_domain, get_user_domain_name, get_min_default_domain_cname_obj
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
@@ -57,10 +57,7 @@ class DomainCnameView(APIView):
                     res.data = {'cname_domain': user_domian_obj.cname_id.domain_record}
                 else:
                     UserDomainInfo.objects.filter(**get_domain_filter(request), is_enable=False).delete()
-                    min_domain_cname_info_obj = min(
-                        DomainCnameInfo.objects.annotate(Count('userdomaininfo')).filter(is_enable=True,
-                                                                                         is_system=False),
-                        key=lambda x: x.userdomaininfo__count)
+                    min_domain_cname_info_obj = get_min_default_domain_cname_obj(False)
                     if min_domain_cname_info_obj:
                         res.data = {'cname_domain': min_domain_cname_info_obj.domain_record}
                         data_dict = {

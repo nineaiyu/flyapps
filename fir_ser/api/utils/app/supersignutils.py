@@ -221,7 +221,7 @@ def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
     elif app_domain_name and len(app_domain_name) > 3:
         domain_name = app_domain_name
     else:
-        is_https, domain_name = get_user_default_domain_name(get_min_default_domain_cname_obj())
+        is_https, domain_name = get_user_default_domain_name(get_min_default_domain_cname_obj(True))
     protocol = 'http'
     if is_https:
         protocol = 'https'
