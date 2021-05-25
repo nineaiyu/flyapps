@@ -5,7 +5,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from api.utils.app.randomstrings import make_random_uuid
 from django.contrib.auth.models import AbstractUser
-from api.utils.TokenManager import generateAlphanumericTokenOfLength
+from api.utils.TokenManager import generateAlphanumericTokenOfLength, generateNumericTokenOfLength
 
 
 ######################################## 用户表 ########################################
@@ -457,11 +457,16 @@ class DomainCnameInfo(models.Model):
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
 
     class Meta:
-        verbose_name = '分发域名信息'
-        verbose_name_plural = "分发域名信息"
+        verbose_name = '系统分发域名配置'
+        verbose_name_plural = "系统分发域名配置"
+
+    def save(self, *args, **kwargs):
+        if not self.domain_record or (self.domain_record and len(self.domain_record) < 26):  # 最多3个启用的价格表
+            self.domain_record = '%s.%s' % (generateNumericTokenOfLength(24, 'abcdef'), self.domain_record)
+        super(DomainCnameInfo, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "%s-%s-%s" % (self.domain_record, self.ip_address, self.is_enable)
+        return "%s-%s-is_enable:%s-is_system:%s" % (self.domain_record, self.ip_address, self.is_enable, self.is_system)
 
 
 class UserDomainInfo(models.Model):
@@ -473,8 +478,8 @@ class UserDomainInfo(models.Model):
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
 
     class Meta:
-        verbose_name = '分发域名绑定'
-        verbose_name_plural = "分发域名绑定"
+        verbose_name = '用户分发域名绑定'
+        verbose_name_plural = "用户分发域名绑定"
 
     def __str__(self):
         return "%s-%s-%s" % (self.user_id, self.cname_id, self.domain_name)

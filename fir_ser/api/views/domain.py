@@ -6,7 +6,8 @@
 
 from rest_framework.views import APIView
 
-from api.utils.baseutils import is_valid_domain, get_cname_from_domain, get_user_domain_name, get_min_default_domain_cname_obj
+from api.utils.baseutils import is_valid_domain, get_cname_from_domain, get_user_domain_name, \
+    get_min_default_domain_cname_obj
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response

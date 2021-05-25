@@ -60,8 +60,8 @@ def generateTokenForMedium(medium):
         return generateNumericTokenOfLength(6)
 
 
-def generateNumericTokenOfLength(length):
-    return "".join([random.choice(string.digits) for _ in range(length)])
+def generateNumericTokenOfLength(length, random_str=''):
+    return "".join([random.choice(string.digits + random_str) for _ in range(length)])
 
 
 def generateAlphanumericTokenOfLength(length):
