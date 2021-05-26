@@ -177,26 +177,13 @@ def change_storage_and_change_head_img(user_obj, new_storage_obj):
 
 
 def download_files_form_oss(storage_obj, org_file):
-    download_url = storage_obj.get_download_url(os.path.basename(org_file), 600, key='check_org_file', force_new=True)
-    req = requests.get(download_url)
-    if req.status_code == 200:
-        logger.info("download  file %s success" % org_file)
-    else:
-        logger.error("download  file %s failed %s" % (org_file, req.content))
-        return False
-    try:
-        with open(org_file + ".check.tmp", "wb") as f:
-            for chunk in req.iter_content(chunk_size=5120):
-                if chunk:
-                    f.write(chunk)
-        logger.info("save download  file %s success" % org_file)
-        if os.path.isfile(org_file):
+    if storage_obj.download_file(os.path.basename(org_file), org_file + ".check.tmp"):
+        if os.path.isfile(org_file) and os.path.exists(org_file + ".check.tmp"):
             os.remove(org_file)
-        os.rename(os.path.join(org_file + ".check.tmp"), org_file)
-        return True
-    except Exception as e:
-        logger.error("check download file and move file %s failed Exception %s" % (org_file, e))
-        return False
+        if os.path.exists(org_file + ".check.tmp"):
+            os.rename(os.path.join(org_file + ".check.tmp"), org_file)
+            return True
+    return False
 
 
 def check_storage_is_new_storage(user_obj, new_storage_obj):

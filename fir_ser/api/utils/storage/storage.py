@@ -72,6 +72,13 @@ class Storage(object):
             except Exception as e:
                 logger.error("oss upload  %s failed  Exception %s" % (local_file_full_path, e))
 
+    def download_file(self, file_name, local_file_full_path):
+        if self.storage:
+            try:
+                return self.storage.download_file(file_name, local_file_full_path)
+            except Exception as e:
+                logger.error("oss download  %s failed  Exception %s" % (local_file_full_path, e))
+
     def get_storage(self, user, storage_obj, use_default_storage):
         if storage_obj:
             self.storage_obj = storage_obj

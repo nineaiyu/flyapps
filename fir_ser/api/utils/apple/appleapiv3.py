@@ -25,6 +25,45 @@ def request_format_log(req):
     return req
 
 
+# 需要和model里面的对应起来
+capability = [
+    [],
+    ["PUSH_NOTIFICATIONS"],
+    [
+        "PERSONAL_VPN",
+        "PUSH_NOTIFICATIONS",
+        "NETWORK_EXTENSIONS",
+    ],
+    [
+        "PERSONAL_VPN",
+        "PUSH_NOTIFICATIONS",
+        "NETWORK_EXTENSIONS",
+        "WALLET",
+        "ICLOUD",
+        "INTER_APP_AUDIO",
+        "ASSOCIATED_DOMAINS",
+        "APP_GROUPS",
+        "HEALTHKIT",
+        "HOMEKIT",
+        "WIRELESS_ACCESSORY_CONFIGURATION",
+        "APPLE_PAY",
+        "DATA_PROTECTION",
+        "SIRIKIT",
+        "MULTIPATH",
+        "HOT_SPOT",
+        "NFC_TAG_READING",
+        "CLASSKIT",
+        "AUTOFILL_CREDENTIAL_PROVIDER",
+        "ACCESS_WIFI_INFORMATION",
+        "COREMEDIA_HLS_LOW_LATENCY",
+    ]
+]
+
+
+def get_capability(s_type):
+    return capability[s_type]
+
+
 class DevicesAPI(object):
     # https://developer.apple.com/documentation/appstoreconnectapi/devices
     def __init__(self, base_uri, jwt_headers):
@@ -741,8 +780,30 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             return True
         return False
 
+    def enable_capability_by_s_type(self, bundle_id, s_type):
+        capability_list = get_capability(s_type)
+        if capability_list:
+            for capability in capability_list:
+                req = super().enable_capability(bundle_id, capability)
+                if self.__do_success(req, 201):
+                    logger.info("%s enable_capability %s success" % (bundle_id, capability))
+                else:
+                    logger.warning("%s enable_capability %s failed %s" % (bundle_id, capability, req.content))
+        return True
+
+    def disable_capability_by_s_type(self, bundle_id, s_type=len(capability) - 1):
+        capability_list = get_capability(s_type)
+        if capability_list:
+            for capability in capability_list:
+                req = super().disable_capability(bundle_id, capability)
+                if self.__do_success(req, 204):
+                    logger.info("%s enable_capability %s success" % (bundle_id, capability))
+                else:
+                    logger.warning("%s enable_capability %s failed %s" % (bundle_id, capability, req.content))
+        return True
+
     def enable_push_vpn_capability(self, bundle_id):
-        # 'PUSH_NOTIFICATIONS',  # PERSONAL_VPN
+        # 'PUSH_NOTIFICATIONS',  # PERSONAL_VPN , NETWORK_EXTENSIONS
         req = super().enable_capability(bundle_id, 'PUSH_NOTIFICATIONS')
         if self.__do_success(req, 201):
             req = super().enable_capability(bundle_id, 'PERSONAL_VPN')
@@ -768,10 +829,11 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             req = super().register_bundle_id(bundle_id_name, bundle_id_identifier, platform, seed_id)
             return self.__bundle_ids_store(req, 201)
 
-    def register_bundle_id_enable_capability(self, bundle_id_name, bundle_id_identifier, platform="IOS", seed_id=''):
+    def register_bundle_id_enable_capability(self, bundle_id_name, bundle_id_identifier, s_type, platform="IOS",
+                                             seed_id=''):
         bundle_ids = self.register_bundle_id(bundle_id_name, bundle_id_identifier, platform, seed_id)
         if isinstance(bundle_ids, BundleIds):
-            if self.enable_push_vpn_capability(bundle_ids.id):
+            if self.enable_capability_by_s_type(bundle_ids.id, s_type):
                 return bundle_ids
 
     def delete_bundle_by_identifier(self, identifier):

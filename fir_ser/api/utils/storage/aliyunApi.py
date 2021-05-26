@@ -189,3 +189,9 @@ class AliYunOss(object):
             #     # current = fileobj.tell()
             #     self.bucket.put_object(os.path.basename(local_file_full_path), fileobj)
             return True
+
+    def download_file(self, name, local_file_full_path):
+        dir_path = os.path.dirname(local_file_full_path)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        return self.bucket.get_object_to_file(name, local_file_full_path)

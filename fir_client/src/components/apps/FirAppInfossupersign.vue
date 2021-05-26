@@ -2,10 +2,10 @@
 
 
     <div style="margin-top: 20px;width: 66%;margin-left: 8%">
-        <el-form label-width="80px">
+        <el-form label-width="80px" v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active">
 
 
-            <el-form-item v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active" label-width="200px"
+            <el-form-item label-width="200px"
                           label="超级签名">
 
                 <el-tooltip :content="supersign.msg" placement="top">
@@ -25,8 +25,7 @@
 
             </el-form-item>
 
-            <el-form-item label-width="200px" label="签名限额"
-                          v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active ">
+            <el-form-item label-width="200px" label="签名限额" >
 
 
                 <el-tooltip content="本应用签名使用额度，超过该额度，新设备将无法安装本应用。0代表不限额" placement="top">
@@ -49,8 +48,7 @@
             </el-form-item>
 
 
-            <el-form-item label-width="200px" label="签名类型"
-                          v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active ">
+            <el-form-item label-width="200px" label="签名类型" >
                 <el-select v-model="currentapp.supersign_type" placeholder="特殊签名权限"
                            style="width: 60%;margin-right: 10px" :disabled="supersign_disable">
                     <el-option v-for="st in sign_type_list" :key="st.id" :label="st.name"
@@ -63,8 +61,7 @@
             </el-form-item>
 
 
-            <el-form-item label-width="200px" label="自定义BundleID"
-                          v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active ">
+            <el-form-item label-width="200px" label="自定义BundleID" >
                 <el-tooltip content="新的BundleID可能会导致推送等服务失效，请了解之后进行修改" placement="top">
                     <el-input v-model="currentapp.new_bundle_id" clearable :disabled="supersign_disable"
                               style="width: 60%;margin-right: 10px" prefix-icon="el-icon-s-data"
@@ -76,7 +73,7 @@
             </el-form-item>
 
         </el-form>
-
+        <el-link v-else :underline="false"  type="warning"> 该用户暂未开通超级签权限,请联系管理员申请开通 </el-link>
     </div>
 
 

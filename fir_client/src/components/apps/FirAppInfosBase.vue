@@ -115,7 +115,7 @@
                     margin: 20
                 },
                 icon_url: "",
-                appinfos: {},
+                appinfos: {status:1},
                 master_release: {},
                 allapp: [],
                 activity: {

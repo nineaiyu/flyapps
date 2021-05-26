@@ -115,8 +115,8 @@ class Apps(models.Model):
     password = models.CharField(verbose_name="访问密码", blank=True, help_text='默认 没有密码', max_length=32)
     isshow = models.BooleanField(verbose_name="下载页可见", default=True)
     issupersign = models.BooleanField(verbose_name="是否超级签名包", default=False)
-    supersign_type_choices = ((0, '普通权限'), (1, '特殊权限（包含network、vpn）'))
-    supersign_type = models.SmallIntegerField(choices=supersign_type_choices, default=0, verbose_name="签名类型")
+    supersign_type_choices = ((0, '普通权限'), (1, '推送权限，请上传adhoc包'), (2, 'network、vpn、推送权限，请上传adhoc包'), (3, '特殊权限'))
+    supersign_type = models.SmallIntegerField(choices=supersign_type_choices, default=1, verbose_name="签名类型")
     new_bundle_id = models.CharField(max_length=64, blank=True, null=True, verbose_name="new_bundle_id",
                                      help_text="用于超级签某些因素下需要修改包名")
     supersign_limit_number = models.IntegerField(verbose_name="签名使用限额", default=0)

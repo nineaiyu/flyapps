@@ -217,6 +217,7 @@ class AppDeveloperApiV2(object):
         result = {}
         bundle_id = app_obj.bundle_id
         app_id = app_obj.app_id
+        s_type = app_obj.supersign_type
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             if developer_app_id:
@@ -224,10 +225,10 @@ class AppDeveloperApiV2(object):
                 # bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id)
             else:
                 # bundle_obj = apple_obj.list_bundle_ids_by_identifier(bundleId + app_id)
-                if app_obj.supersign_type == 0:
+                if s_type == 0:
                     bundle_obj = apple_obj.register_bundle_id(app_id, bundle_id + app_id)
                 else:
-                    bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundle_id + app_id)
+                    bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundle_id + app_id, s_type)
                 developer_app_id = bundle_obj.id
                 result['aid'] = developer_app_id
             if udid_info:
@@ -306,11 +307,12 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
             return False, result
 
-    def create_app(self, bundleId, app_id):
+    # 该方法未使用
+    def create_app(self, bundleId, app_id, s_type):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id)
+            bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id, s_type)
             developer_app_id = bundle_obj.id
             result['aid'] = developer_app_id
             return True, result
@@ -323,19 +325,20 @@ class AppDeveloperApiV2(object):
     def modify_capability(self, app_obj, developer_app_id):
         bundle_id = app_obj.bundle_id
         app_id = app_obj.app_id
+        s_type = app_obj.supersign_type
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             if developer_app_id:
-                if app_obj.supersign_type == 0:
-                    result['code'] = apple_obj.disable_push_vpn_capability(developer_app_id)
+                if s_type == 0:
+                    result['code'] = apple_obj.disable_capability_by_s_type(developer_app_id)
                 else:
-                    result['code'] = apple_obj.enable_push_vpn_capability(developer_app_id)
+                    result['code'] = apple_obj.enable_capability_by_s_type(developer_app_id, s_type)
             else:
-                if app_obj.supersign_type == 0:
+                if s_type == 0:
                     bundle_obj = apple_obj.register_bundle_id(app_id, bundle_id + app_id)
                 else:
-                    bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundle_id + app_id)
+                    bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundle_id + app_id, s_type)
                 developer_app_id = bundle_obj.id
                 result['aid'] = developer_app_id
             return True, result

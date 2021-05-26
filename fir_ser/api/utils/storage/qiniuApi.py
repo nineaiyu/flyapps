@@ -8,7 +8,10 @@
 '''
 from qiniu import Auth, put_file, etag
 from qiniu import BucketManager
-import os
+import os, requests
+import logging
+
+logger = logging.getLogger(__file__)
 
 
 class QiNiuOss(object):
@@ -63,3 +66,22 @@ class QiNiuOss(object):
             ret, info = put_file(token, filename, local_file_full_path)
             if ret['key'] == filename and ret['hash'] == etag(local_file_full_path):
                 return True
+
+    def download_file(self, name, local_file_full_path):
+        dir_path = os.path.dirname(local_file_full_path)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        req = requests.get(self.get_download_url(name))
+        if req.status_code != 200:
+            logger.error("download  file %s failed %s" % (name, req.content))
+            return False
+        try:
+            with open(local_file_full_path, "wb") as f:
+                for chunk in req.iter_content(chunk_size=5120):
+                    if chunk:
+                        f.write(chunk)
+            logger.info("save download  file %s success" % local_file_full_path)
+            return True
+        except Exception as e:
+            logger.error("check download file and move file %s failed Exception %s" % (local_file_full_path, e))
+            return False

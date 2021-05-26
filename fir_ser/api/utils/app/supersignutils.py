@@ -286,7 +286,8 @@ class IosUtils(object):
     def create_app(self, app_obj):
         bundleId = self.app_obj.bundle_id
         app_id = self.app_obj.app_id
-        return get_api_obj(self.auth).create_app(bundleId, app_id)
+        s_type = self.app_obj.supersign_type
+        return get_api_obj(self.auth).create_app(bundleId, app_id, s_type)
 
     @staticmethod
     def modify_capability(developer_obj, app_obj, developer_app_id):
