@@ -103,7 +103,7 @@ class Storage(object):
                     new_storage_obj = AliYunOss(**auth)
                 else:
                     new_storage_obj = LocalStorage(**auth)
-                logger.info("user %s make storage obj %s" % (user, new_storage_obj))
+                logger.warning("user %s make storage obj %s" % (user, new_storage_obj))
                 new_storage_obj.storage_type = storage_type
                 cache.set(storage_key, new_storage_obj, 600)
                 return new_storage_obj
@@ -123,7 +123,7 @@ class Storage(object):
                 if storage.get("active", None):
                     storage_type = storage.get('type', None)
                     auth = storage.get('auth', {})
-                    storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'), user.uid,
+                    storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'), 'default',
                                             base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
                     new_storage_obj = cache.get(storage_key)
                     if new_storage_obj:
@@ -140,8 +140,8 @@ class Storage(object):
                             new_storage_obj = LocalStorage(**auth)
                             new_storage_obj.storage_type = 3
                         cache.set(storage_key, new_storage_obj, 600)
-                        logger.info("user %s has not storage obj, admin already has not storage obj, from settings "
-                                    "get default storage %s" % (user, new_storage_obj))
+                        logger.warning("user %s has not storage obj, admin already has not storage obj, from settings "
+                                       "get default storage %s" % (user, new_storage_obj))
                         return new_storage_obj
         return None
 
