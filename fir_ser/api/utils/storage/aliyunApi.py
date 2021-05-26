@@ -139,7 +139,7 @@ class AliYunOss(object):
         self.token.request_id = j['RequestId']
         self.token.expiration = oss2.utils.to_unixtime(j['Credentials']['Expiration'], '%Y-%m-%dT%H:%M:%SZ')
         self.token.bucket = self.bucket_name
-        self.token.endpoint = self.endpoint
+        self.token.endpoint = self.endpoint.replace('-internal', '')
         logger.info("get aliyun sts token %s" % self.token.__dict__)
         return self.token.__dict__
 

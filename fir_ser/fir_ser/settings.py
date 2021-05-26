@@ -245,7 +245,7 @@ THIRD_PART_CONFIG = {
                 'secret_key': '2iLIxy9',
                 'bucket_name': 'fge',
                 'sts_role_arn': 'ap-sage',
-                'endpoint': 'oss-cn-beijing.aliyuncs.com',
+                'endpoint': 'oss-cn-beijing-internal.aliyuncs.com',  # 服务器和oss在同一个地区，填写内网的endpoint
                 'is_https': True,
                 'domain_name': 'aoud.xin',
                 'download_auth_type': 1,  # 1:oss 2:cdn
