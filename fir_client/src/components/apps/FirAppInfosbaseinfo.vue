@@ -140,7 +140,14 @@
                 this.$confirm('确认删除 ' + this.currentapp.name + ' ?')
                     // eslint-disable-next-line no-unused-vars
                     .then(res => {
+                        const loadingobj = this.$loading({
+                            lock: true,
+                            text: '操作中，请耐心等待',
+                            spinner: 'el-icon-loading',
+                            // background: 'rgba(0, 0, 0, 0.7)'
+                        });
                         apputils(data => {
+                            loadingobj.close();
                             if (data.code === 1000) {
                                 this.$message({
                                     message: '删除成功',
