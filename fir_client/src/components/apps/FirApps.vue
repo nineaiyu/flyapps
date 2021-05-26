@@ -647,7 +647,7 @@
                 analyseApps(data => {
                     if (data.code === 1000) {
                         this.short = data.data.short;
-                        for(let name of Object.keys(data.data)){
+                        for (let name of Object.keys(data.data)) {
                             this.analyseappinfo[name] = data.data[name]
                         }
                         this.willuploadApp = true;
