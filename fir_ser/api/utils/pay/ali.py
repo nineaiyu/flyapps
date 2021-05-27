@@ -6,9 +6,8 @@
 # pip install alipay-sdk-python==3.3.398
 
 
-from api.utils.alipay import AliPay
-from api.utils.alipay.utils import AliPayConfig
-from fir_ser.settings import PAY_CONFIG
+from api.utils.pay.alipay import AliPay
+from api.utils.pay.alipay.utils import AliPayConfig
 from datetime import datetime, timedelta
 from api.utils.storage.caches import update_order_info, update_order_status
 import json

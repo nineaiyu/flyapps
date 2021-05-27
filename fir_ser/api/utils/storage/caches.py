@@ -229,18 +229,6 @@ def get_app_today_download_times(app_ids):
     return download_times_count
 
 
-# def developer_auth_code(act, user_obj, developer_issuer_id, code=None):
-#     auth_key = file_format_path(user_obj, email=developer_issuer_id)
-#     key = "_".join([CACHE_KEY_TEMPLATE.get("developer_auth_code_key"), auth_key])
-#     if act == "set":
-#         cache.delete(key)
-#         cache.set(key, code, 60 * 10)
-#     elif act == "get":
-#         return cache.get(key)
-#     elif act == "del":
-#         cache.delete(key)
-
-
 def upload_file_tmp_name(act, filename, user_obj_id):
     tmp_key = "_".join([CACHE_KEY_TEMPLATE.get("upload_file_tmp_name_key"), filename])
     if act == "set":
