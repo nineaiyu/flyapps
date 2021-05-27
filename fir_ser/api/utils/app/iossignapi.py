@@ -5,7 +5,7 @@
 # date: 2020/4/24
 import OpenSSL
 
-from api.utils.app.shellcmds import shell_command, use_user_pass, pshell_command
+from api.utils.app.shellcmds import shell_command, use_user_pass
 from fir_ser.settings import SUPER_SIGN_ROOT
 import os
 from api.utils.app.randomstrings import make_app_uuid
@@ -33,80 +33,10 @@ def exec_shell(cmd, remote=False, timeout=None):
         if result.get("exit_code") != 0:
             err_info = result.get("err_info", None)
             if err_info:
-                if "have access to this membership resource. Contact your team" in err_info:
-                    result["err_info"] = "You currently don't have access to this membership resource 【您没有权限执行该操作】"
-                elif "Maximum number of certificates generated" in err_info:
-                    result["err_info"] = "Maximum number of certificates generated 【开发证书数量到上限】"
-                else:
-                    result["err_info"] = "Unknown Error"
+                logger.error("exec_shell cmd:%s  failed: %s" % (cmd, err_info))
+                result["err_info"] = "Unknown Error"
             return False, result
         return True, result
-
-
-class AppDeveloperApi(object):
-    def __init__(self, username, password, certid):
-        self.username = username
-        self.password = password
-        self.certid = certid
-        script_path = os.path.join(SUPER_SIGN_ROOT, 'scripts', 'apple_api.rb')
-        self.cmd = "ruby %s '%s' '%s'" % (script_path, self.username, self.password)
-
-    def active(self, user_obj):
-        self.cmd = self.cmd + " active "
-        logger.info("ios developer active cmd:%s" % (self.cmd))
-        result = {}
-        try:
-            result = pshell_command(self.cmd, user_obj, self.username)
-            logger.info("ios developer active cmd:%s  result:%s" % (self.cmd, result))
-            if result["exit_code"] == 0:
-                return True, result
-        except Exception as e:
-            logger.error("ios developer active cmd:%s Failed Exception:%s" % (self.cmd, e))
-        return False, result
-
-    def file_format_path_name(self, user_obj):
-        cert_dir_name = make_app_uuid(user_obj, self.username)
-        cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name)
-        if not os.path.isdir(cert_dir_path):
-            os.makedirs(cert_dir_path)
-        return os.path.join(cert_dir_path, cert_dir_name)
-
-    def create_cert(self, user_obj):
-        self.cmd = self.cmd + " cert add  '%s'" % (self.file_format_path_name(user_obj))
-        return exec_shell(self.cmd)
-
-    def get_profile(self, bundleId, app_id, device_udid, device_name, provisionName, auth=None, first_sign=None,
-                    device_id_list=None):
-        self.cmd = self.cmd + " profile add '%s' '%s' '%s' '%s' '%s' '%s'" % (
-            bundleId, app_id, device_udid, device_name, self.certid, provisionName)
-        return exec_shell(self.cmd)
-
-    def del_profile(self, bundleId, app_id):
-        self.cmd = self.cmd + " profile del '%s' '%s'" % (bundleId, app_id)
-        result = exec_shell(self.cmd)
-
-    def set_device_status(self, status, device_udid):
-        if status == "enable":
-            self.cmd = self.cmd + " device enable '%s'" % (device_udid)
-        else:
-            self.cmd = self.cmd + " device disable '%s'" % (device_udid)
-        result = exec_shell(self.cmd)
-
-    def add_device(self, device_udid, device_name):
-        self.cmd = self.cmd + " device add '%s' '%s'" % (device_udid, device_name)
-        result = exec_shell(self.cmd)
-
-    def get_device(self, user_obj):
-        self.cmd = self.cmd + " device get '%s' " % (self.file_format_path_name(user_obj))
-        return exec_shell(self.cmd)
-
-    def create_app(self, bundleId, app_id):
-        self.cmd = self.cmd + " app add '%s' '%s'" % (bundleId, app_id)
-        result = exec_shell(self.cmd)
-
-    def del_app(self, bundleId, app_id):
-        self.cmd = self.cmd + " app del '%s' '%s'" % (bundleId, app_id)
-        result = exec_shell(self.cmd)
 
 
 class ResignApp(object):
@@ -114,7 +44,6 @@ class ResignApp(object):
     def __init__(self, my_local_key, app_dev_pem):
         self.my_local_key = my_local_key
         self.app_dev_pem = app_dev_pem
-        # script_path=os.path.join(SUPER_SIGN_ROOT,'scripts','apple_api.rb')
         self.cmd = "isign  -c '%s'  -k '%s' " % (self.app_dev_pem, self.my_local_key)
 
     @staticmethod
@@ -143,11 +72,12 @@ class AppDeveloperApiV2(object):
         self.p8key = p8key
         self.certid = certid
 
-    def active(self, user_obj):
+    def active(self):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             certificates = apple_obj.get_all_certificates()
+            result['data'] = certificates
             logger.info("ios developer active result:%s" % certificates)
             if len(certificates) > 0:
                 return True, result
@@ -222,9 +152,7 @@ class AppDeveloperApiV2(object):
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             if developer_app_id:
                 pass
-                # bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id)
             else:
-                # bundle_obj = apple_obj.list_bundle_ids_by_identifier(bundleId + app_id)
                 if s_type == 0:
                     bundle_obj = apple_obj.register_bundle_id(app_id, bundle_id + app_id)
                 else:
@@ -254,7 +182,7 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
             return False, result
 
-    def del_profile(self, bundleId, app_id):
+    def del_profile(self, app_id):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
@@ -283,7 +211,7 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
         return False, result
 
-    def get_device(self, user_obj):
+    def get_device(self):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)

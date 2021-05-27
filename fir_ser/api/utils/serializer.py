@@ -7,7 +7,7 @@ from api.utils.baseutils import get_user_domain_name, get_app_domain_name
 from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided, get_choices_dict, get_choices_name_from_key
 from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
-import os, json, logging
+import os, logging
 
 logger = logging.getLogger(__file__)
 
@@ -393,7 +393,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppIOSDeveloperInfo
         # depth = 1
-        exclude = ["password", "id", "user_id", "p8key"]
+        exclude = ["id", "user_id", "p8key"]
 
     developer_used_number = serializers.SerializerMethodField()
     developer_used_other_number = serializers.SerializerMethodField()
@@ -408,7 +408,6 @@ class DeveloperSerializer(serializers.ModelSerializer):
 class SuperSignUsedSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.APPSuperSignUsedInfo
-        # depth = 1
         fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name"]
 
     device_udid = serializers.SerializerMethodField()
@@ -424,10 +423,7 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
         return obj.udid.product
 
     def get_developer_id(self, obj):
-        developer_id = obj.developerid.email
-        if obj.developerid.issuer_id:
-            developer_id = obj.developerid.issuer_id
-        return developer_id
+        return obj.developerid.issuer_id
 
     def get_bundle_id(self, obj):
         return obj.app_id.bundle_id

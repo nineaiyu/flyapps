@@ -4,13 +4,10 @@
 # author: liuyu
 # date: 2020/3/23
 
-from api.models import UserInfo
 from .aliyunApi import AliMsgSender
 from .emailApi import EmailMsgSender
 from .jiguangApi import JiGuangMsgSender
-import json, time, base64
-from fir_ser.settings import THIRD_PART_CONFIG, CACHE_KEY_TEMPLATE
-from django.core.cache import cache
+from fir_ser.settings import THIRD_PART_CONFIG
 import logging
 
 logger = logging.getLogger(__file__)

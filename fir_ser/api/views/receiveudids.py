@@ -26,9 +26,8 @@ class IosUDIDView(View):
         status = True
         try:
             app_info = Apps.objects.filter(short=short).first()
-
             if app_info:
-                server_domain = get_redirect_server_domain(request, None, get_app_domain_name(app_info))
+                server_domain = get_redirect_server_domain(request, app_info.user_id, get_app_domain_name(app_info))
                 if app_info.issupersign and app_info.user_id.supersign_active:
                     ios_obj = IosUtils(format_udid_info, app_info.user_id, app_info)
                     status, msg = ios_obj.sign()

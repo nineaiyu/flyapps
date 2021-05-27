@@ -242,42 +242,27 @@ class AppUDID(models.Model):
 
 class AppIOSDeveloperInfo(models.Model):
     user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
-    email = models.EmailField(
-        verbose_name='email address',
-        max_length=64,
-        blank=True,
-        null=True
-    )
-    password = models.CharField(max_length=64, )
+    issuer_id = models.CharField(max_length=64, null=False, verbose_name="标识创建认证令牌的发放者")
+    private_key_id = models.CharField(max_length=64, null=False, verbose_name="密钥 ID")
+    p8key = models.TextField(max_length=512, null=False, verbose_name="p8key")
     is_actived = models.BooleanField(default=False, verbose_name="是否已经激活")
     certid = models.CharField(max_length=64, blank=True, verbose_name="超级签名自动创建证书ID", null=True)
     usable_number = models.IntegerField(verbose_name="可使用设备数", default=100)
     use_number = models.IntegerField(verbose_name="已消耗设备数", default=0)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    cert_expire_time = models.DateTimeField(blank=True, null=True, verbose_name="证书过期时间")
     description = models.TextField('备注', blank=True, null=True, default='')
-    issuer_id = models.CharField(max_length=64, blank=True, null=True, verbose_name="标识创建认证令牌的发放者")
-    private_key_id = models.CharField(max_length=64, blank=True, null=True, verbose_name="密钥 ID")
-    p8key = models.TextField(max_length=512, blank=True, null=True, verbose_name="p8key")
-    auth_type_choices = ((0, 'p8key认证'), (1, '用户名密码认证'))
+    auth_type_choices = ((0, 'p8key认证'),)
     auth_type = models.SmallIntegerField(choices=auth_type_choices, default=0, verbose_name="认证类型")
 
     class Meta:
         verbose_name = '苹果开发者账户'
         verbose_name_plural = "苹果开发者账户"
-        unique_together = (('user_id', 'email',), ('user_id', 'issuer_id'))
-
-    def save(self, *args, **kwargs):
-        if self.auth_type == 0:
-            if self.issuer_id and self.private_key_id and self.p8key:
-                return super(AppIOSDeveloperInfo, self).save(*args, **kwargs)
-        if self.auth_type == 1:
-            if self.email and self.password:
-                return super(AppIOSDeveloperInfo, self).save(*args, **kwargs)
-        raise
+        unique_together = (('user_id', 'issuer_id'),)
 
     def __str__(self):
-        return "%s-%s" % (self.user_id, self.email)
+        return "%s-%s" % (self.user_id, self.issuer_id)
 
 
 class APPSuperSignUsedInfo(models.Model):
@@ -421,7 +406,7 @@ class UserCertificationInfo(models.Model):
     status = models.SmallIntegerField(choices=status_choices, default=0, verbose_name="认证状态")
     msg = models.CharField(max_length=512, null=True, blank=True, verbose_name="备注")
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
-    reviewed_time = models.DateTimeField(auto_now_add=True, verbose_name="审核时间")
+    reviewed_time = models.DateTimeField(auto_now=True, verbose_name="审核时间")
 
     class Meta:
         verbose_name = '用户认证信息'

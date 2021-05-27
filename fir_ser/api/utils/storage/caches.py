@@ -12,7 +12,7 @@ from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
     USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
 from api.utils.storage.storage import Storage, LocalStorage
-from api.utils.baseutils import get_app_d_count_by_app_id, file_format_path, get_app_domain_name
+from api.utils.baseutils import get_app_d_count_by_app_id, get_app_domain_name  # file_format_path,
 import logging
 from django.db.models import F
 
@@ -229,16 +229,16 @@ def get_app_today_download_times(app_ids):
     return download_times_count
 
 
-def developer_auth_code(act, user_obj, developer_email, code=None):
-    auth_key = file_format_path(user_obj, email=developer_email)
-    key = "_".join([CACHE_KEY_TEMPLATE.get("developer_auth_code_key"), auth_key])
-    if act == "set":
-        cache.delete(key)
-        cache.set(key, code, 60 * 10)
-    elif act == "get":
-        return cache.get(key)
-    elif act == "del":
-        cache.delete(key)
+# def developer_auth_code(act, user_obj, developer_issuer_id, code=None):
+#     auth_key = file_format_path(user_obj, email=developer_issuer_id)
+#     key = "_".join([CACHE_KEY_TEMPLATE.get("developer_auth_code_key"), auth_key])
+#     if act == "set":
+#         cache.delete(key)
+#         cache.set(key, code, 60 * 10)
+#     elif act == "get":
+#         return cache.get(key)
+#     elif act == "del":
+#         cache.delete(key)
 
 
 def upload_file_tmp_name(act, filename, user_obj_id):

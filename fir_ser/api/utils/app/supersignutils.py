@@ -6,7 +6,7 @@
 
 import uuid, xmltodict, os, re, logging, time
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILECONFIG_SIGN_SSL
-from api.utils.app.iossignapi import AppDeveloperApi, ResignApp, AppDeveloperApiV2
+from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
     UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID
 from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
@@ -14,7 +14,7 @@ from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_
 from api.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status, delete_local_files, \
     download_files_form_oss, get_developer_udided
 from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, get_user_domain_name, \
-    get_user_default_domain_name, get_min_default_domain_cname_obj
+    get_user_default_domain_name, get_min_default_domain_cname_obj, format_apple_date
 from api.utils.storage.storage import Storage
 from django.core.cache import cache
 
@@ -157,14 +157,7 @@ def get_post_udid_url(request, short):
 
 
 def get_auth_form_developer(developer_obj):
-    if developer_obj.email:
-        auth = {
-            "username": developer_obj.email,
-            "password": developer_obj.password,
-            "certid": developer_obj.certid
-        }
-
-    elif developer_obj.issuer_id:
+    if developer_obj.issuer_id:
         auth = {
             "issuer_id": developer_obj.issuer_id,
             "private_key_id": developer_obj.private_key_id,
@@ -177,9 +170,7 @@ def get_auth_form_developer(developer_obj):
 
 
 def get_api_obj(auth):
-    if auth.get("username"):
-        app_api_obj = AppDeveloperApi(**auth)
-    elif auth.get("issuer_id"):
+    if auth.get("issuer_id"):
         app_api_obj = AppDeveloperApiV2(**auth)
     else:
         app_api_obj = None
@@ -187,7 +178,7 @@ def get_api_obj(auth):
 
 
 def get_apple_udid_key(auth):
-    mpkey = auth.get("username")
+    mpkey = ''
     if auth.get("issuer_id"):
         mpkey = auth.get("issuer_id")
     return mpkey
@@ -267,9 +258,8 @@ class IosUtils(object):
             if developer_udid_obj:
                 developer_obj = developer_udid_obj.developerid
             else:
-                for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj,
-                                                                        is_actived=True, certid__isnull=False).order_by(
-                    "created_time"):
+                for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj, is_actived=True,
+                                                                        certid__isnull=False).order_by("created_time"):
                     usable_number = developer_obj.usable_number
                     flyapp_used = get_developer_udided(developer_obj)[1]
                     if flyapp_used < usable_number:
@@ -283,11 +273,11 @@ class IosUtils(object):
                                                   self.auth, developer_app_id, device_id_list)
 
     # 开启超级签直接在开发者账户创建
-    def create_app(self, app_obj):
-        bundleId = self.app_obj.bundle_id
-        app_id = self.app_obj.app_id
-        s_type = self.app_obj.supersign_type
-        return get_api_obj(self.auth).create_app(bundleId, app_id, s_type)
+    # def create_app(self, app_obj):
+    #     bundleId = self.app_obj.bundle_id
+    #     app_id = self.app_obj.app_id
+    #     s_type = self.app_obj.supersign_type
+    #     return get_api_obj(self.auth).create_app(bundleId, app_id, s_type)
 
     @staticmethod
     def modify_capability(developer_obj, app_obj, developer_app_id):
@@ -537,7 +527,7 @@ class IosUtils(object):
             if APPSuperSignUsedInfo.objects.filter(developerid=developer_obj, app_id_id=app_id).count() == 0:
                 app_api_obj = get_api_obj(auth)
                 app_obj = Apps.objects.filter(pk=app_id).first()
-                app_api_obj.del_profile(app_obj.bundle_id, app_obj.app_id)
+                app_api_obj.del_profile(app_obj.app_id)
                 app_api_obj2 = get_api_obj(auth)
                 app_api_obj2.del_app(app_obj.bundle_id, app_obj.app_id)
                 DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
@@ -597,7 +587,7 @@ class IosUtils(object):
         auth = get_auth_form_developer(developer_obj)
         DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
         app_api_obj = get_api_obj(auth)
-        app_api_obj.del_profile(app_obj.bundle_id, app_obj.app_id)
+        app_api_obj.del_profile(app_obj.app_id)
         app_api_obj2 = get_api_obj(auth)
         app_api_obj2.del_app(app_obj.bundle_id, app_obj.app_id)
 
@@ -626,7 +616,7 @@ class IosUtils(object):
                 developer_obj, user_obj, e))
 
     @staticmethod
-    def active_developer(developer_obj, user_obj):
+    def active_developer(developer_obj):
         '''
         激活开发者账户
         :param developer_obj:
@@ -635,8 +625,12 @@ class IosUtils(object):
         '''
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)
-        status, result = app_api_obj.active(user_obj)
+        status, result = app_api_obj.active()
         if status:
+            for cert_obj in result.get('data', []):
+                if cert_obj.id == developer_obj.certid:
+                    developer_obj.cert_expire_time = format_apple_date(cert_obj.expirationDate)
+                    break
             developer_obj.is_actived = True
             developer_obj.save()
         return status, result
@@ -651,30 +645,14 @@ class IosUtils(object):
                 cert_id = result.id
                 AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
                     is_actived=True,
-                    certid=cert_id)
-            else:
-
-                file_format_path_name = file_format_path(user_obj, auth)
-                cert_info = None
-                try:
-                    with open(file_format_path_name + '.info', "r") as f:
-                        cert_info = f.read()
-                except Exception as e:
-                    logger.error(
-                        "create_developer_cert developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
-                            developer_obj, user_obj, e))
-                if cert_info:
-                    cert_id = re.findall(r'.*\n\tid=(.*),.*', cert_info)[0].replace('"', '')
-                    AppIOSDeveloperInfo.objects.filter(user_id=user_obj, email=auth.get("username")).update(
-                        is_actived=True,
-                        certid=cert_id)
+                    certid=cert_id, cert_expire_time=format_apple_date(result.expirationDate))
         return status, result
 
     @staticmethod
     def get_device_from_developer(developer_obj, user_obj):
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)
-        status, result = app_api_obj.get_device(user_obj)
+        status, result = app_api_obj.get_device()
         if status:
             if auth.get("issuer_id"):
                 UDIDsyncDeveloper.objects.filter(developerid=developer_obj, platform=1).delete()

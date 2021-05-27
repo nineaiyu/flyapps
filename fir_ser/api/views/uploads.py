@@ -5,6 +5,7 @@
 # date: 2020/3/6
 
 from api.utils.app.apputils import get_random_short, SaveAppInfos
+from api.utils.baseutils import get_app_domain_name
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
 from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo
@@ -49,10 +50,12 @@ class AppAnalyseView(APIView):
                 is_new = False
                 short = app_obj.short
                 app_release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
+                short_domain_name = get_redirect_server_domain(request, request.user, get_app_domain_name(app_obj))
                 if app_release_obj:
                     binary_url = app_release_obj.binary_url
             else:
                 is_new = True
+                short_domain_name = get_redirect_server_domain(request, request.user)
                 short = get_random_short()
             if app_type == 'iOS':
                 upload_key = release_id + '.ipa' + settings.FILE_UPLOAD_TMP_KEY
@@ -74,7 +77,7 @@ class AppAnalyseView(APIView):
             upload_file_tmp_name("set", png_key, request.user.id)
             upload_file_tmp_name("set", upload_key, request.user.id)
             res.data = {"app_uuid": app_uuid, "short": short,
-                        "short_domain_name": get_redirect_server_domain(request, request.user),
+                        "short_domain_name": short_domain_name,
                         "upload_token": upload_token,
                         "upload_key": upload_key,
                         "png_token": png_token,

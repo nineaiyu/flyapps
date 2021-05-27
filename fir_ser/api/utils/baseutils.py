@@ -7,7 +7,8 @@
 import os, re, time
 
 from django.db.models import Count
-
+import datetime
+from django.utils import timezone
 from fir_ser.settings import SUPER_SIGN_ROOT
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo
 from api.utils.app.randomstrings import make_app_uuid
@@ -27,14 +28,8 @@ def get_app_d_count_by_app_id(app_id):
     return d_count
 
 
-def file_format_path(user_obj, auth=None, email=None):
-    if email:
-        cert_dir_name = make_app_uuid(user_obj, email)
-    else:
-        pkey = auth.get("username")
-        if auth.get("issuer_id"):
-            pkey = auth.get("issuer_id")
-        cert_dir_name = make_app_uuid(user_obj, pkey)
+def file_format_path(user_obj, auth=None):
+    cert_dir_name = make_app_uuid(user_obj, auth.get("issuer_id"))
     cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name)
     if not os.path.isdir(cert_dir_path):
         os.makedirs(cert_dir_path)
@@ -43,10 +38,7 @@ def file_format_path(user_obj, auth=None, email=None):
 
 
 def get_profile_full_path(developer_obj, app_obj):
-    pkey = developer_obj.email
-    if developer_obj.issuer_id:
-        pkey = developer_obj.issuer_id
-    cert_dir_name = make_app_uuid(developer_obj.user_id, pkey)
+    cert_dir_name = make_app_uuid(developer_obj.user_id, developer_obj.issuer_id)
     cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name, "profile")
     provision_name = os.path.join(cert_dir_path, app_obj.app_id)
     return provision_name + '.mobileprovision'
@@ -152,3 +144,10 @@ def get_user_default_domain_name(domain_cname_obj):
 def get_min_default_domain_cname_obj(is_system=True):
     return min(DomainCnameInfo.objects.annotate(Count('userdomaininfo')).filter(is_enable=True, is_system=is_system),
                key=lambda x: x.userdomaininfo__count)
+
+
+def format_apple_date(s_date):
+    f_date = datetime.datetime.strptime(s_date, '%Y-%m-%dT%H:%M:%S.000+0000')
+    if not timezone.is_naive(f_date):
+        f_date = timezone.make_naive(f_date, timezone.utc)
+    return f_date

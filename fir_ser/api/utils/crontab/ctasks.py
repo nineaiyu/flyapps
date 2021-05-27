@@ -76,7 +76,7 @@ def auto_check_ios_developer_active():
     for ios_developer in all_ios_developer:
         userinfo = ios_developer.user_id
         if userinfo.supersign_active:
-            status, result = IosUtils.active_developer(ios_developer, userinfo)
+            status, result = IosUtils.active_developer(ios_developer)
             msg = "auto_check_ios_developer_active  user:%s  ios.developer:%s  status:%s  result:%s" % (
                 ios_developer.user_id, ios_developer, status, result)
             if status:

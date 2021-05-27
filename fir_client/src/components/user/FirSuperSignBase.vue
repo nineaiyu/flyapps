@@ -23,16 +23,6 @@
                     </el-form-item>
                 </div>
 
-                <div v-if="editdeveloperinfo.auth_type===1">
-                    <el-form-item label-width="110px" label="APP_ID">
-                        <el-input :disabled='isedit' v-model="editdeveloperinfo.email"/>
-                    </el-form-item>
-
-                    <el-form-item label-width="110px" label="password">
-                        <el-input v-model="editdeveloperinfo.password" :placeholder="placeholder"/>
-                    </el-form-item>
-                </div>
-
                 <el-form-item label-width="110px" label="设备数量">
                     <el-input v-model="editdeveloperinfo.usable_number"/>
                 </el-form-item>
@@ -58,32 +48,13 @@
             </el-form>
         </el-dialog>
 
-
-        <el-dialog
-                title="请在5分钟内输入验证码"
-                :visible.sync="codeactiveVisible"
-                width="30%"
-                center>
-            <div>
-                <el-input
-                        placeholder="一般为6位数字"
-                        v-model="authcode">
-                </el-input>
-            </div>
-
-            <span slot="footer" class="dialog-footer">
-                <el-button @click="codeactiveVisible = false">取 消</el-button>
-                <el-button type="primary" @click="inputcode">确 定</el-button>
-          </span>
-        </el-dialog>
-
         <el-tabs v-model="activeName" type="border-card" @tab-click="handleClick" tab-position="top">
             <el-tab-pane label="开发者账户" name="iosdeveloper">
                 <el-input
                         style="width: 30%;margin-right: 30px;margin-bottom: 10px"
                         v-model="appidseach"
                         clearable
-                        placeholder="输入用户APPID"/>
+                        placeholder="输入用户ID"/>
                 <el-button type="primary" icon="el-icon-search" @click="handleCurrentChange(pagination.currentPage)">
                     搜索
                 </el-button>
@@ -108,8 +79,8 @@
 
                     <el-table-column
                             fixed
-                            prop="email"
-                            label="用户"
+                            prop="issuer_id"
+                            label="用户 issuer_id"
                             width="300">
                         <template slot-scope="scope">
                             <el-popover trigger="hover" placement="top">
@@ -120,9 +91,6 @@
                                     ?scope.row.usable_number-scope.row.developer_used_number :0 }}</p>
 
                                 <div slot="reference" class="name-wrapper">
-                                    <el-tag size="medium" v-if="scope.row.email"><i class="el-icon-s-custom"/> {{
-                                        scope.row.email }}
-                                    </el-tag>
                                     <el-tag size="medium" v-if="scope.row.issuer_id"><i class="el-icon-key"/> {{
                                         scope.row.issuer_id }}
                                     </el-tag>
@@ -194,8 +162,8 @@
 
                     <el-table-column
                             :formatter="formatter"
-                            prop="updated_time"
-                            label="更新时间"
+                            prop="cert_expire_time"
+                            label="证书到期时间"
                             width="160">
                     </el-table-column>
                     <el-table-column
@@ -251,17 +219,6 @@
                         </el-form-item>
                     </div>
 
-                    <div v-if="editdeveloperinfo.auth_type===1">
-                        <el-form-item label-width="110px" label="APP_ID">
-                            <el-input :disabled='isedit' v-model="editdeveloperinfo.email"/>
-                        </el-form-item>
-
-                        <el-form-item label-width="110px" label="password">
-                            <el-input v-model="editdeveloperinfo.password" :placeholder="placeholder"/>
-                        </el-form-item>
-                    </div>
-
-
                     <el-form-item label-width="110px" label="设备数量">
                         <el-input v-model="editdeveloperinfo.usable_number"/>
                     </el-form-item>
@@ -291,7 +248,7 @@
                         style="width: 23%;margin-right: 30px;margin-bottom: 10px"
                         v-model="appidseach"
                         clearable
-                        placeholder="输入用户APPID"/>
+                        placeholder="输入用户ID"/>
                 <el-button type="primary" icon="el-icon-search" @click="handleCurrentChange(pagination.currentPage)">
                     搜索
                 </el-button>
@@ -438,7 +395,7 @@
 <script>
 
     import {iosdeveloper, iosdevices, iosdevicesudid} from "@/restful";
-    import {getUserInfoFun, IsNum, removeAaary} from "@/utils";
+    import {getUserInfoFun, removeAaary} from "@/utils";
 
     export default {
         name: "FirSuperSignBase",
@@ -456,12 +413,9 @@
                 editdeveloperinfo: {auth_type: 0},
                 isedit: false,
                 placeholder: "",
-                codeactiveVisible: false,
                 pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
                 developer_used_info: {"all_usable_number": 0, "other_used_sum": 0, "all_use_number": 0},
                 percentage: 0,
-                authcode: "",
-                authemail: "",
                 apple_auth_list: [],
                 apple_auth_type: 0,
                 loadingfun: {},
@@ -504,46 +458,19 @@
                 })
             },
             syncdevices() {
-                let data = {"email": this.editdeveloperinfo.email, "act": "syncdevice"};
-                if (this.editdeveloperinfo.issuer_id) {
-                    data = {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "syncdevice"};
-                }
                 this.iosdeveloperFun({
                     "methods": "PUT",
-                    "data": data
+                    "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "syncdevice"}
                 });
             },
             isocertcert() {
-                let data = {"email": this.editdeveloperinfo.email, "act": "ioscert"};
-                if (this.editdeveloperinfo.issuer_id) {
-                    data = {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "ioscert"};
-                }
                 this.iosdeveloperFun({
                     "methods": "PUT",
-                    "data": data
+                    "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "ioscert"}
                 });
             },
-            inputcode() {
-                this.authcode = this.authcode.replace(/^\s+|\s+$/g, "");
-                if (this.authcode.toString().length > 5 && IsNum(this.authcode)) {
-                    this.iosdeveloperFun({
-                        "methods": "PUT",
-                        "data": {"email": this.authemail, "act": "nowactive", "code": this.authcode}
-                    });
-                    this.authcode = "";
-                    this.authemail = ""
-                }
-            },
             activedeveloperFun(developer, act) {
-                if (developer.email) {
-                    this.iosdeveloperFun({"methods": "PUT", "data": {"email": developer.email, "act": act}});
-                    this.codeactiveVisible = true;
-                    this.authemail = developer.email;
-                } else if (developer.issuer_id) {
-                    this.iosdeveloperFun({"methods": "PUT", "data": {"issuer_id": developer.issuer_id, "act": act}});
-                }
-
-                // this.inputcode(developer)
+                this.iosdeveloperFun({"methods": "PUT", "data": {"issuer_id": developer.issuer_id, "act": act}});
             },
             canceledit() {
                 this.dialogaddDeveloperVisible = false;
@@ -562,14 +489,7 @@
                 if (this.isedit) {
                     this.iosdeveloperFun({"methods": "PUT", "data": this.editdeveloperinfo})
                 } else {
-
-                    if (this.editdeveloperinfo.auth_type === 1) {
-                        if (this.editdeveloperinfo.email && this.editdeveloperinfo.password && this.editdeveloperinfo.usable_number) {
-                            this.iosdeveloperFun({"methods": "POST", "data": this.editdeveloperinfo});
-                        } else {
-                            this.$message.warning("输入格式有误")
-                        }
-                    } else if (this.editdeveloperinfo.auth_type === 0) {
+                    if (this.editdeveloperinfo.auth_type === 0) {
                         if (this.editdeveloperinfo.issuer_id && this.editdeveloperinfo.private_key_id && this.editdeveloperinfo.usable_number && this.editdeveloperinfo.p8key) {
                             this.iosdeveloperFun({"methods": "POST", "data": this.editdeveloperinfo});
                         } else {
@@ -582,18 +502,12 @@
                 }
             },
             handleDeleteDeveloper(developer_info) {
-
-
                 this.$confirm('此操作会删除该苹果开发者账户下面的生成的证书等数据,可能会导致超级签包的闪退, 是否继续?', '警告', {
                     confirmButtonText: '确定',
                     cancelButtonText: '取消',
                     type: 'warning'
                 }).then(() => {
-                    let data = {"email": developer_info.email};
-                    if (developer_info.issuer_id) {
-                        data = {"issuer_id": developer_info.issuer_id};
-                    }
-                    this.iosdeveloperFun({"methods": "DELETE", "data": data});
+                    this.iosdeveloperFun({"methods": "DELETE", "data": {"issuer_id": developer_info.issuer_id}});
                 }).catch(() => {
                     this.$message({
                         type: 'info',
@@ -634,7 +548,7 @@
             },
             // eslint-disable-next-line no-unused-vars
             formatter(row, column) {
-                let stime = row.updated_time;
+                let stime = row.cert_expire_time;
                 if (stime) {
                     stime = stime.split(".")[0].split("T");
                     return stime[0] + " " + stime[1]
@@ -682,7 +596,7 @@
                             this.activeName = "iosdeveloper";
                             this.editdeveloperinfo = {auth_type: 0};
                         }
-                        if (!this.edit && (this.editdeveloperinfo.email || this.editdeveloperinfo.issuer_id)) {
+                        if (!this.edit && this.editdeveloperinfo.issuer_id) {
                             this.$message.success("添加成功");
                             this.activeName = "iosdeveloper";
                             this.editdeveloperinfo = {auth_type: 0};
@@ -691,9 +605,6 @@
                         this.$message.error(data.msg);
                     } else {
                         this.$message.error("操作失败")
-                    }
-                    if (this.codeactiveVisible) {
-                        this.codeactiveVisible = false;
                     }
                     if (params.methods !== 'GET') {
                         this.loadingfun.close();
