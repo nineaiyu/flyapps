@@ -172,8 +172,10 @@ def delete_app_screenshots_files(storage_obj, app_obj):
         screenshot_obj.delete()
 
 
-def change_storage_and_change_head_img(user_obj, new_storage_obj):
-    migrating_storage_file_data(user_obj, user_obj.head_img, new_storage_obj)
+def change_storage_and_change_head_img(user_obj, new_storage_obj, clean_old_data=True):
+    if user_obj.head_img == 'head_img.jpeg':
+        clean_old_data = False
+    migrating_storage_file_data(user_obj, user_obj.head_img, new_storage_obj, clean_old_data)
 
 
 def download_files_form_oss(storage_obj, org_file):

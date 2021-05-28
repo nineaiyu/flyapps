@@ -4,7 +4,7 @@
 # author: liuyu
 # date: 2020/3/6
 
-from api.utils.app.supersignutils import udid_bytes_to_dict, get_redirect_server_domain, IosUtils
+from api.utils.app.supersignutils import udid_bytes_to_dict, get_redirect_server_domain
 from api.models import Apps
 from django.views import View
 from django.http import HttpResponsePermanentRedirect

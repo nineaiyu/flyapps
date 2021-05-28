@@ -430,39 +430,6 @@ class UserInfoView(APIView):
                 res.code = 1004
                 res.msg = "老密码校验失败"
         else:
-            # # 修改个人资料
-            # domain_name = data.get("domain_name", None)
-            # if domain_name:
-            #     domain_name_list = domain_name.strip(' ').replace("http://", "").replace("https://", "").split("/")
-            #     if len(domain_name_list) > 0:
-            #         domain_name = domain_name_list[0]
-            #         if len(domain_name) > 3 and is_valid_domain(domain_name):
-            #             if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
-            #                 user_admin_obj = UserInfo.objects.filter(is_superuser=True, uid=request.user.uid).order_by(
-            #                     'pk').first()
-            #                 if user_admin_obj:
-            #                     request.user.domain_name = domain_name
-            #                     set_default_app_wx_easy(request.user, True)
-            #                 else:
-            #                     serializer = UserInfoSerializer(request.user)
-            #                     res.data = serializer.data
-            #                     res.code = 1004
-            #                     res.msg = "域名设置失败，请更换其他域名"
-            #                     return Response(res.dict)
-            #             else:
-            #                 request.user.domain_name = domain_name
-            #                 set_default_app_wx_easy(request.user, True)
-            #         else:
-            #             serializer = UserInfoSerializer(request.user)
-            #             res.data = serializer.data
-            #             res.code = 1004
-            #             res.msg = "域名校验失败"
-            #             return Response(res.dict)
-            #
-            # if domain_name == '':
-            #     request.user.domain_name = None
-            #     set_default_app_wx_easy(request.user)
-
             username = data.get("username", None)
             if username and username != request.user.username:
                 if check_username_exists(username):

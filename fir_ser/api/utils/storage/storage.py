@@ -113,7 +113,7 @@ class Storage(object):
 
     def get_default_storage(self, user, storage_obj, use_default_storage):
         admin_obj = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
-        if admin_obj and admin_obj.storage:
+        if admin_obj and admin_obj.storage and admin_obj.pk != user.pk:
             logger.info("user %s has not storage obj, from admin "
                         "get default storage" % user)
             return self.get_storage(admin_obj, storage_obj, use_default_storage)
