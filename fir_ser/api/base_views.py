@@ -4,23 +4,16 @@
 # author: NinEveN
 # date: 2021/4/13
 
-from rest_framework.views import APIView
 from api.utils.response import BaseResponse
-from api.utils.auth import ExpiringTokenAuthentication
-from rest_framework.response import Response
-from django.db.models import Sum
-from api.utils.app.supersignutils import IosUtils, resign_by_app_obj
+
+from api.utils.app.supersignutils import IosUtils
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app, \
     del_cache_storage
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo, AppScreenShot, AppStorage
-from api.utils.serializer import AppsSerializer, AppReleaseSerializer
-from rest_framework.pagination import PageNumberPagination
 import logging
-from fir_ser.settings import SERVER_DOMAIN
 from api.utils.utils import delete_local_files, delete_app_screenshots_files, change_storage_and_change_head_img, \
     migrating_storage_data, clean_storage_data, check_storage_is_new_storage
-from api.utils.baseutils import is_valid_domain
 
 logger = logging.getLogger(__name__)
 

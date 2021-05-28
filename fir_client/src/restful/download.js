@@ -86,3 +86,14 @@ export function getdownloadurl(callBack, params) {
         },
     );
 }
+
+/**获取签名任务状态 */
+export function gettask(callBack, params) {
+    getData(
+        USERSEVER + '/task/' + params.short,
+        params.data,
+        data => {
+            callBack(data);
+        },
+    );
+}

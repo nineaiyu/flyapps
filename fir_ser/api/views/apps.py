@@ -5,20 +5,21 @@
 # date: 2020/3/4
 
 from rest_framework.views import APIView
+
+from api.tasks import run_resign_task
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
 from django.db.models import Sum
-from api.utils.app.supersignutils import IosUtils, resign_by_app_obj
+from api.utils.app.supersignutils import IosUtils
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo, AppScreenShot
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
-from fir_ser.settings import SERVER_DOMAIN
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
-from api.utils.baseutils import is_valid_domain, get_user_domain_name, get_app_domain_name
+from api.utils.baseutils import get_user_domain_name, get_app_domain_name
 from api.base_views import app_delete
 
 logger = logging.getLogger(__name__)
@@ -142,7 +143,6 @@ class AppInfoView(APIView):
                 return Response(res.dict)
 
             has_combo = data.get("has_combo", None)
-            # domain_name = data.get("domain_name", None)
             if has_combo:
                 actions = has_combo.get("action", None)
                 hcombo_id = has_combo.get("hcombo_id", None)
@@ -168,36 +168,6 @@ class AppInfoView(APIView):
                         logger.error("app_id:%s actions:%s hcombo_id:%s Exception:%s" % (app_id, actions, hcombo_id, e))
                         res.code = 1004
                         res.msg = "该应用已经关联"
-            # elif domain_name:
-            #     apps_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
-            #     logger.info("app_id:%s update old data:%s" % (app_id, apps_obj.__dict__))
-            #     domain_name_list = domain_name.strip(' ').replace("http://", "").replace("https://", "").split("/")
-            #     if len(domain_name_list) > 0:
-            #         domain_name = domain_name_list[0]
-            #         if len(domain_name) > 3 and is_valid_domain(domain_name):
-            #             if domain_name == SERVER_DOMAIN.get("REDIRECT_UDID_DOMAIN").split("//")[1]:
-            #                 user_admin_obj = UserInfo.objects.filter(is_superuser=True, uid=request.user.uid).order_by(
-            #                     'pk').first()
-            #                 if user_admin_obj:
-            #                     apps_obj.domain_name = domain_name
-            #                 else:
-            #                     res.code = 1004
-            #                     res.msg = "域名设置失败，请更换其他域名"
-            #                     return Response(res.dict)
-            #             else:
-            #                 apps_obj.domain_name = domain_name
-            #         else:
-            #             res.code = 1004
-            #             res.msg = "域名校验失败"
-            #             return Response(res.dict)
-            #
-            #     if domain_name == '':
-            #         apps_obj.domain_name = None
-            #         if not get_user_domain_name(request.user):
-            #             apps_obj.wxeasytype = True
-            #     apps_obj.save()
-            #     del_cache_response_by_short(apps_obj.app_id)
-            #     return Response(res.dict)
             else:
                 try:
                     do_sign_flag = 0
@@ -250,11 +220,15 @@ class AppInfoView(APIView):
                     logger.info("app_id:%s update new data:%s" % (app_id, apps_obj.__dict__))
                     apps_obj.save()
                     if apps_obj.issupersign:
+                        c_task = None
                         if do_sign_flag == 1:
-                            resign_by_app_obj(apps_obj)
+                            c_task = run_resign_task.apply_async((apps_obj.app_id, True))
                         if do_sign_flag == 2:
-                            resign_by_app_obj(apps_obj, need_download_profile=False)
-
+                            c_task = run_resign_task.apply_async((apps_obj.app_id, False)).get(propagate=False)
+                        if c_task:
+                            c_task.get(propagate=False)
+                            if c_task.successful():
+                                c_task.forget()
                     del_cache_response_by_short(apps_obj.app_id)
                 except Exception as e:
                     logger.error("app_id:%s update Exception:%s" % (app_id, e))

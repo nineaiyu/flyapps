@@ -234,7 +234,7 @@ def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_d
 
 
 def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
-    with cache.lock("%s_%s" % ('migrating_storage_data', user_obj.uid)):
+    with cache.lock("%s_%s" % ('migrating_storage_data', user_obj.uid), timeout=60 * 60 * 24):
 
         auth_status = False
         certification = getattr(user_obj, 'certification', None)

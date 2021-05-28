@@ -13,7 +13,7 @@ from api.utils.app.apputils import make_resigned
 from api.utils.app.supersignutils import make_sign_udid_mobileconfig, get_post_udid_url, get_redirect_server_domain
 from api.utils.storage.storage import Storage, get_local_storage
 from api.utils.storage.caches import get_app_instance_by_cache, get_download_url_by_cache, set_app_download_by_cache, \
-    del_cache_response_by_short, consume_user_download_times, check_user_has_all_download_times
+    del_cache_response_by_short, consume_user_download_times, check_app_permission
 import os
 from rest_framework_extensions.cache.decorators import cache_response
 from api.utils.serializer import AppsShortSerializer
@@ -150,24 +150,8 @@ class ShortDownloadView(APIView):
         release_id = request.query_params.get("release_id", None)
         udid = request.query_params.get("udid", None)
         app_obj = Apps.objects.filter(short=short).first()
-        if not app_obj:
-            res.code = 1003
-            res.msg = "该应用不存在"
-            return Response(res.dict)
-
-        if app_obj.status != 1:
-            res.code = 1004
-            res.msg = "该应用被封禁，无法下载安装"
-            return Response(res.dict)
-
-        if not check_user_has_all_download_times(app_obj):
-            res.code = 1009
-            res.msg = "可用下载额度不足，请联系开发者"
-            return Response(res.dict)
-
-        if not app_obj.isshow:
-            res.code = 1004
-            res.msg = "您没有权限访问该应用"
+        res = check_app_permission(app_obj, res)
+        if res.code != 1000:
             return Response(res.dict)
 
         if udid:

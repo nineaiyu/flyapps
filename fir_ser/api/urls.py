@@ -22,7 +22,7 @@ from api.views.apps import AppsView, AppInfoView, AppReleaseinfoView
 from api.views.download import ShortDownloadView
 from api.views.uploads import AppAnalyseView, UploadView
 from api.views.storage import StorageView
-from api.views.receiveudids import IosUDIDView
+from api.views.receiveudids import IosUDIDView, TaskView
 from api.views.order import PriceView, OrderView, PaySuccess
 from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView
 from api.views.domain import DomainCnameView
@@ -47,6 +47,7 @@ urlpatterns = [
     re_path("^token", UserApiTokenView.as_view()),
     re_path(r"^short/(?P<short>\w+)$", ShortDownloadView.as_view()),
     re_path(r"^udid/(?P<short>\w+)$", IosUDIDView.as_view()),
+    re_path(r"^task/(?P<short>\w+)$", TaskView.as_view()),
     re_path("^analyse$", AppAnalyseView.as_view()),
     re_path("^supersign/developer$", DeveloperView.as_view()),
     re_path("^supersign/devices$", SuperSignUsedView.as_view()),

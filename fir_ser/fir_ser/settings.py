@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django_apscheduler',  # 定时执行任务
     'rest_framework',
     'captcha',
+    'django_celery_beat',
+    'django_celery_results',
 ]
 
 MIDDLEWARE = [
@@ -163,7 +165,7 @@ AUTH_USER_MODEL = "api.UserInfo"
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379",
+        "LOCATION": "redis://127.0.0.1:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "CONNECTION_POOL_KWARGS": {"max_connections": 100},
@@ -507,3 +509,40 @@ bIX1aWjPxirQX9mzaL3oEQI=
         }
     }
 ]
+
+# 结果存放到Django|redis
+# CELERY_RESULT_BACKEND = 'django-db'
+# CELERY_RESULT_BACKEND = 'django-cache'
+# result_backend = 'redis://username:password@host:port/db'
+# result_backend = 'redis://:password@host:port/db'
+CELERY_RESULT_BACKEND = 'django-db'
+# CELERY_RESULT_BACKEND = 'db+sqlite:///results.sqlite'
+
+
+# broker redis|mq
+DJANGO_DEFAULT_CACHES = CACHES['default']
+CELERY_BROKER_URL = 'redis://:%s@%s/2' % (
+    DJANGO_DEFAULT_CACHES["OPTIONS"]["PASSWORD"], DJANGO_DEFAULT_CACHES["LOCATION"].split("/")[2])
+# CELERY_BROKER_URL = 'amqp://guest@localhost//'
+#: Only add pickle to this list if your broker is secured
+
+
+CELERY_ENABLE_UTC = True
+
+CELERYD_CONCURRENCY = 4  # worker并发数
+CELERYD_FORCE_EXECV = True  # 非常重要,有些情况下可以防止死
+CELERY_TASK_RESULT_EXPIRES = 3600  # 任务结果过期时间
+
+CELERY_DISABLE_RATE_LIMITS = True  # 任务发出后，经过一段时间还未收到acknowledge , 就将任务重新交给其他worker执行
+CELERYD_PREFETCH_MULTIPLIER = 3  # celery worker 每次去redis取任务的数量
+
+CELERYD_MAX_TASKS_PER_CHILD = 200  # 每个worker执行了多少任务就会死掉，我建议数量可以大一些，比如200
+
+# CELERYD_WORKER_PREFETCH_MULTIPLIER  =1
+
+
+CELERY_TIMEZONE = 'Asia/Shanghai'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'

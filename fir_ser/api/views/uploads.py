@@ -17,7 +17,8 @@ from api.utils.app.randomstrings import make_from_user_uuid
 from rest_framework.response import Response
 from fir_ser import settings
 from api.utils.TokenManager import DownloadToken
-from api.utils.app.supersignutils import resign_by_app_obj, get_redirect_server_domain
+from api.utils.app.supersignutils import get_redirect_server_domain
+from api.tasks import run_resign_task
 import os, json, logging
 
 logger = logging.getLogger(__file__)
@@ -127,7 +128,10 @@ class AppAnalyseView(APIView):
                 app_info = Apps.objects.filter(bundle_id=data.get("bundleid")).first()
                 if app_info:
                     if app_info.issupersign and app_info.user_id.supersign_active:
-                        resign_by_app_obj(app_info, need_download_profile=False)
+                        c_task = run_resign_task.apply_async((app_info.app_id, False)).get(propagate=False)
+                        c_task.get(propagate=False)
+                        if c_task.successful():
+                            c_task.forget()
             else:
                 storage.delete_file(app_tmp_filename)
                 storage.delete_file(png_tmp_filename)

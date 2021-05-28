@@ -70,8 +70,8 @@
                                     </el-button>
 
                                     <button type="button" v-else-if="wrong">{{ msg }}</button>
-                                    <div v-else>
-                                        <div v-if="isdownload" style="margin-top: 20%;margin-bottom: 20%">
+                                    <div v-else style="margin-top: 20%;margin-bottom: 20%">
+                                        <div v-if="isdownload">
                                             <div v-if="gomobile">
                                                 <button disabled="" class="loading"
                                                         style="min-width: 42px; width: 42px; padding: 21px 0; border-top-color: transparent; border-left-color: transparent;">
@@ -94,7 +94,7 @@
                                             </div>
                                         </div>
 
-                                        <div v-else style="margin-top: 20%;margin-bottom: 20%">
+                                        <div v-else>
                                             <div v-if="currentappinfo.need_password" style="margin:0 auto; width:166px">
                                                 <el-input prefix-icon="el-icon-lock" clearable
                                                           placeholder="请输入密码" v-model="password"
@@ -250,7 +250,7 @@
 <script>
     import QRCode from 'qrcodejs2'
 
-    import {getdownloadurl, getShortAppinfo} from '@/restful'
+    import {getdownloadurl, getShortAppinfo, gettask} from '@/restful'
 
     export default {
         name: "FirDownload",
@@ -301,6 +301,46 @@
             clearTimeout(this.timer);
         },
         methods: {
+            show_err_msg(msg) {
+                this.msg = msg;
+                this.$message({
+                    message: msg,
+                    type: 'error',
+                    duration: 0
+                });
+            },
+            loop_check_task() {
+                let c_count = 1;
+                // eslint-disable-next-line no-unused-vars
+                const loop_t = window.setInterval(res => {
+                    gettask(data => {
+                        c_count += 1;
+                        if (c_count > 120) {
+                            window.clearInterval(loop_t);
+                        }
+                        if (data.code === 1000) {
+                            window.clearInterval(loop_t);
+                            if (data.msg) {
+                                this.show_err_msg(data.msg);
+                            } else {
+                                this.$message.success('签名完成，请点击下载安装');
+                                this.wrong = false;
+                            }
+                        } else {
+                            if (data.code === 1002) {
+                                window.clearInterval(loop_t);
+                                data.msg = '应用不存在'
+                            }
+                            if (data.msg) {
+                                this.msg = data.msg + ' ○ ' + c_count;
+                            }
+                        }
+                    }, {
+                        "short": this.$route.params.short,
+                        data: {"task_id": this.$route.query.task_id}
+                    })
+                }, 3000)
+            },
             jiaocheng(act) {
                 let signhelp = this.$refs.signhelp;
                 let bg = this.$refs.signhelp;
@@ -316,104 +356,99 @@
             gomobileaction() {
                 window.location.href = this.mobileprovision;
             },
-            check_msg(callback) {
-                if (this.$route.query.msg && this.$route.query.udid) {
-                    this.wrong = true;
-                    this.msg = this.$route.query.msg;
-                    this.$message({
-                        message: this.msg,
-                        type: 'error',
-                        duration: 0
-                    });
-                } else (
-                    callback()
-                )
+            check_msg() {
+                if (this.$route.query.udid) {
+                    if (this.$route.query.task_id) {
+                        this.wrong = true;
+                        this.msg = '签名处理中，请耐心等待';
+                        this.loop_check_task()
+                    } else if (this.$route.query.msg) {
+                        this.wrong = true;
+                        this.show_err_msg(this.$route.query.msg);
+                    }
+                }
             },
-
             download() {
                 if (this.currentappinfo.app_id) {
-                    // eslint-disable-next-line no-unused-vars
-                    this.check_msg(_ => {
-                        this.isdownload = true;
-                        getdownloadurl(res => {
-                            if (res.code === 1000) {
-                                if (res.data.download_url === "") {
-                                    window.location.href = this.full_url.split("?")[0];
-                                    return
-                                }
-                                if (this.currentappinfo.type === 1) {
-                                    if (this.currentappinfo.issupersign) {
-                                        if (this.$route.query.udid && this.udid === this.$route.query.udid) {
-                                            if (this.agent !== '') {
-                                                let download_url = res.data.download_url;
-                                                this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
-                                                // eslint-disable-next-line no-unused-vars
-                                                this.timmer = setTimeout(data => {
-                                                    this.gomobile = false;
-                                                }, 5000);
-                                            }
-                                        } else {
-                                            if (this.agent !== '') {
-                                                this.downloadurl = res.data.download_url;
-                                                window.location.href = this.downloadurl;
-                                                if (res.data.extra_url !== "") {
-                                                    // eslint-disable-next-line no-unused-vars
-                                                    this.timmer = setTimeout(data => {
-                                                        window.location.href = res.data.extra_url;
-                                                    }, 3000);
-                                                }
-
-                                                return;
-                                            }
-                                        }
-                                    } else {
-                                        let download_url = res.data.download_url;
-                                        this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
-                                        if (res.data.extra_url !== "") {
-                                            this.mobileprovision = res.data.extra_url;
+                    this.isdownload = true;
+                    getdownloadurl(res => {
+                        if (res.code === 1000) {
+                            if (res.data.download_url === "") {
+                                window.location.href = this.full_url.split("?")[0];
+                                return
+                            }
+                            if (this.currentappinfo.type === 1) {
+                                if (this.currentappinfo.issupersign) {
+                                    if (this.$route.query.udid && this.udid === this.$route.query.udid) {
+                                        if (this.agent !== '') {
+                                            let download_url = res.data.download_url;
+                                            this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
                                             // eslint-disable-next-line no-unused-vars
                                             this.timmer = setTimeout(data => {
                                                 this.gomobile = false;
                                             }, 5000);
                                         }
+                                    } else {
+                                        if (this.agent !== '') {
+                                            this.downloadurl = res.data.download_url;
+                                            window.location.href = this.downloadurl;
+                                            if (res.data.extra_url !== "") {
+                                                // eslint-disable-next-line no-unused-vars
+                                                this.timmer = setTimeout(data => {
+                                                    window.location.href = res.data.extra_url;
+                                                }, 3000);
+                                            }
+
+                                            return;
+                                        }
                                     }
                                 } else {
-                                    if (this.agent !== '') {
-                                        this.downloadurl = res.data.download_url;
+                                    let download_url = res.data.download_url;
+                                    this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
+                                    if (res.data.extra_url !== "") {
+                                        this.mobileprovision = res.data.extra_url;
+                                        // eslint-disable-next-line no-unused-vars
+                                        this.timmer = setTimeout(data => {
+                                            this.gomobile = false;
+                                        }, 5000);
                                     }
                                 }
-
-                                window.location.href = this.downloadurl;
-                            } else if (res.code === 1009) {
-                                this.isdownload = false;
-                                document.title = res.msg;
-                                this.wrong = true;
-                                this.msg = res.msg;
-                                this.$message({
-                                    message: res.msg,
-                                    type: 'error',
-                                });
                             } else {
-                                this.isdownload = false;
-                                this.$message({
-                                    message: "密码错误，或者下载链接失效",
-                                    type: 'error',
-                                });
-                                if (!this.password) {
-                                    window.location.reload();
+                                if (this.agent !== '') {
+                                    this.downloadurl = res.data.download_url;
                                 }
-                                this.password = '';
                             }
-                        }, {
-                            'data': {
-                                'token': this.mcurrentappinfo.download_token,
-                                'short': this.currentappinfo.short,
-                                'release_id': this.mcurrentappinfo.release_id,
-                                'password': this.password,
-                                'udid': this.udid,
-                            },
-                            'app_id': this.currentappinfo.app_id
-                        })
+
+                            window.location.href = this.downloadurl;
+                        } else if (res.code === 1009) {
+                            this.isdownload = false;
+                            document.title = res.msg;
+                            this.wrong = true;
+                            this.msg = res.msg;
+                            this.$message({
+                                message: res.msg,
+                                type: 'error',
+                            });
+                        } else {
+                            this.isdownload = false;
+                            this.$message({
+                                message: "密码错误，或者下载链接失效",
+                                type: 'error',
+                            });
+                            if (!this.password) {
+                                window.location.reload();
+                            }
+                            this.password = '';
+                        }
+                    }, {
+                        'data': {
+                            'token': this.mcurrentappinfo.download_token,
+                            'short': this.currentappinfo.short,
+                            'release_id': this.mcurrentappinfo.release_id,
+                            'password': this.password,
+                            'udid': this.udid,
+                        },
+                        'app_id': this.currentappinfo.app_id
                     })
                 }
             },
@@ -626,6 +661,9 @@
             this.getDownloadTokenFun();
             this.full_url = location.href;
             this.qrcode();
+            if (this.agent !== '') {
+                this.check_msg();
+            }
         }, filters: {
             formatName: function (name) {
                 if (name) {

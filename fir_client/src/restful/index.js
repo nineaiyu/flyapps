@@ -555,3 +555,18 @@ export function domainFun(callBack, params, load = true) {
         true
     );
 }
+
+/**获取签名任务状态 */
+export function gettask(callBack, params, load = true) {
+    getData(
+        'GET',
+        USERSEVER + '/task/' + params.short,
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}

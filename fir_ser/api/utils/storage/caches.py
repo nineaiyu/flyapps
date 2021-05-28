@@ -333,8 +333,8 @@ def get_user_free_download_times(user_id, act='get', amount=1, auth_status=False
 
 
 def consume_user_download_times(user_id, app_id, amount=1, auth_status=False):
-    with cache.lock("%s_%s" % ('consume_user_download_times', user_id)):
-        if get_user_free_download_times(user_id, 'get', amount, auth_status) > 0:
+    with cache.lock("%s_%s" % ('consume_user_download_times', user_id), timeout=10, blocking_timeout=6):
+        if get_user_free_download_times(user_id, 'get', amount, auth_status) - amount >= 0:
             get_user_free_download_times(user_id, 'set', amount, auth_status)
         else:
             if not check_user_can_download(user_id):
@@ -357,7 +357,7 @@ def enable_user_download(user_id):
 
 
 def add_user_download_times(user_id, download_times=0):
-    with cache.lock("%s_%s" % ('consume_user_download_times', user_id)):
+    with cache.lock("%s_%s" % ('consume_user_download_times', user_id), timeout=10, blocking_timeout=6):
         try:
             UserInfo.objects.filter(pk=user_id).update(download_times=F('download_times') + download_times)
             return enable_user_download(user_id)
@@ -377,7 +377,9 @@ def get_user_cert_auth_status(user_id):
 def check_user_has_all_download_times(app_obj):
     user_id = app_obj.user_id_id
     auth_status = get_user_cert_auth_status(user_id)
-    return get_user_free_download_times(user_id, auth_status=auth_status) > 0 or check_user_can_download(user_id)
+    d_count = get_app_d_count_by_app_id(app_obj.app_id)
+    return get_user_free_download_times(user_id, auth_status=auth_status) - d_count >= 0 or check_user_can_download(
+        user_id)
 
 
 def user_auth_success(user_id):
@@ -392,7 +394,7 @@ def user_auth_success(user_id):
 
 
 def update_order_status(out_trade_no, status):
-    with cache.lock("%s_%s" % ('user_order_', out_trade_no)):
+    with cache.lock("%s_%s" % ('user_order_', out_trade_no), timeout=10, blocking_timeout=6):
         order_obj = Order.objects.filter(order_number=out_trade_no).first()
         if order_obj:
             order_obj.status = status
@@ -400,7 +402,7 @@ def update_order_status(out_trade_no, status):
 
 
 def update_order_info(user_id, out_trade_no, payment_number, payment_type):
-    with cache.lock("%s_%s" % ('user_order_', out_trade_no)):
+    with cache.lock("%s_%s" % ('user_order_', out_trade_no), timeout=10, blocking_timeout=6):
         try:
             user_obj = UserInfo.objects.filter(pk=user_id).first()
             order_obj = Order.objects.filter(user_id=user_obj, order_number=out_trade_no).first()
@@ -434,3 +436,23 @@ def update_order_info(user_id, out_trade_no, payment_number, payment_type):
         except Exception as e:
             logger.error("%s download_times less then 0. Exception:%s" % (user_obj, e))
         return False
+
+
+def check_app_permission(app_obj, res):
+    if not app_obj:
+        res.code = 1003
+        res.msg = "该应用不存在"
+
+    if app_obj.status != 1:
+        res.code = 1004
+        res.msg = "该应用被封禁，无法下载安装"
+
+    if not check_user_has_all_download_times(app_obj):
+        res.code = 1009
+        res.msg = "可用下载额度不足，请联系开发者"
+
+    if not app_obj.isshow:
+        res.code = 1004
+        res.msg = "您没有权限访问该应用"
+
+    return res
