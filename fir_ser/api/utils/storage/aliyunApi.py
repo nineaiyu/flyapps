@@ -107,18 +107,21 @@ class AliYunOss(object):
         self.endpoint = endpoint
         self.sts_role_arn = sts_role_arn
         self.region_id = '-'.join(self.endpoint.split('.')[0].split("-")[1:3])
-        self.token = StsToken()
         self.is_https = is_https
         self.download_auth_type = download_auth_type
         self.cnd_auth_key = cnd_auth_key
         self.domain_name = domain_name
-        self.get_auth_bucket('init', 900)
+        self.bucket_get = None
+        self.bucket = None
+        self.make_auth_bucket('init_get', 900, True)
+        self.make_auth_bucket('init_auth', 900)
 
-    def fetch_sts_token(self, name, expires):
+    def fetch_sts_token(self, name, expires, only_put=False, only_get=False):
         """子用户角色扮演获取临时用户的密钥
-        :param access_key_id: 子用户的 access key id
-        :param access_key_secret: 子用户的 access key secret
-        :param role_arn: STS角色的Arn
+        :param only_put:  是否只允许下载
+        :param only_get: 是否只允许上传
+        :param expires: 过期时间
+        :param name: obj name
         :return StsToken: 临时用户密钥
         """
         clt = client.AcsClient(self.access_key_id, self.access_key_secret, self.region_id)
@@ -126,28 +129,43 @@ class AliYunOss(object):
 
         req.set_accept_format('json')
         req.set_RoleArn(self.sts_role_arn)
-        req.set_RoleSessionName(name[0:31])
+        req.set_RoleSessionName(name)
         req.set_DurationSeconds(expires)
+        if only_put:
+            p_action = ["oss:PutObject", "oss:AbortMultipartUpload"]
+        if only_get:
+            p_action = "oss:GetObject"
+            name = '*'
 
+        if only_get or only_put:
+            policy = {
+                "Statement": [
+                    {
+                        "Action": p_action,
+                        "Effect": "Allow",
+                        "Resource": ["acs:oss:*:*:%s/%s" % (self.bucket_name, name), ]
+                    }
+                ],
+                "Version": "1"
+            }
+            req.set_Policy(json.dumps(policy))
         body = clt.do_action_with_exception(req)
-
         j = json.loads(oss2.to_unicode(body))
-
-        self.token.access_key_id = j['Credentials']['AccessKeyId']
-        self.token.access_key_secret = j['Credentials']['AccessKeySecret']
-        self.token.security_token = j['Credentials']['SecurityToken']
-        self.token.request_id = j['RequestId']
-        self.token.expiration = oss2.utils.to_unixtime(j['Credentials']['Expiration'], '%Y-%m-%dT%H:%M:%SZ')
-        self.token.bucket = self.bucket_name
-        self.token.endpoint = self.endpoint.replace('-internal', '')
-        logger.info("get aliyun sts token %s" % self.token.__dict__)
-        return self.token.__dict__
+        token = StsToken()
+        token.access_key_id = j['Credentials']['AccessKeyId']
+        token.access_key_secret = j['Credentials']['AccessKeySecret']
+        token.security_token = j['Credentials']['SecurityToken']
+        token.request_id = j['RequestId']
+        token.expiration = oss2.utils.to_unixtime(j['Credentials']['Expiration'], '%Y-%m-%dT%H:%M:%SZ')
+        token.bucket = self.bucket_name
+        token.endpoint = self.endpoint.replace('-internal', '')
+        logger.info("get aliyun sts token %s" % token.__dict__)
+        return token
 
     def get_upload_token(self, name, expires=1800):
-        return self.fetch_sts_token(name, expires)
+        return self.fetch_sts_token(name, expires, only_put=True).__dict__
 
-    def get_auth_bucket(self, name, expires):
-        self.fetch_sts_token(name, expires)
+    def make_auth_bucket(self, name, expires, only_get=False):
         uri = 'http://'
         if self.is_https:
             uri = 'https://'
@@ -156,13 +174,15 @@ class AliYunOss(object):
         if self.domain_name and self.download_auth_type == 1:
             url = self.domain_name
             is_cname = True
-
-        auth = oss2.StsAuth(self.token.access_key_id, self.token.access_key_secret, self.token.security_token)
-        self.bucket = oss2.Bucket(auth, uri + url, self.bucket_name, is_cname=is_cname)
+        token = self.fetch_sts_token(name, expires, only_get=only_get)
+        auth = oss2.StsAuth(token.access_key_id, token.access_key_secret, token.security_token)
+        if only_get:
+            self.bucket_get = oss2.Bucket(auth, uri + url, self.bucket_name, is_cname=is_cname)
+        else:
+            self.bucket = oss2.Bucket(auth, uri + url, self.bucket_name, is_cname=is_cname)
 
     def get_download_url(self, name, expires=1800, force_new=False):
-        # self.get_auth_bucket(name,expires)
-        private_url = self.bucket.sign_url('GET', name, expires)
+        private_url = self.bucket_get.sign_url('GET', name, expires)
         return private_url
 
     def del_file(self, name):
@@ -189,6 +209,8 @@ class AliYunOss(object):
             #     # current = fileobj.tell()
             #     self.bucket.put_object(os.path.basename(local_file_full_path), fileobj)
             return True
+        else:
+            logger.error("file %s is not file" % local_file_full_path)
 
     def download_file(self, name, local_file_full_path):
         dir_path = os.path.dirname(local_file_full_path)

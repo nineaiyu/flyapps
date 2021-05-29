@@ -70,7 +70,8 @@ class AppAnalyseView(APIView):
                 upload_token = storage.get_upload_token(upload_key)
                 png_token = storage.get_upload_token(png_key)
             elif storage_type == 2:
-                png_token = upload_token = storage.get_upload_token(upload_key)
+                upload_token = storage.get_upload_token(upload_key)
+                png_token = storage.get_upload_token(png_key)
             else:
                 upload_token = storage.get_upload_token(upload_key)
                 png_token = storage.get_upload_token(png_key)
