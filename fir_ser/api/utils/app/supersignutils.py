@@ -12,7 +12,8 @@ from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
     UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID
 from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
-from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission
+from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
+    consume_user_download_times_by_app_obj
 from api.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status, delete_local_files, \
     download_files_form_oss, get_developer_udided
 from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, get_user_domain_name, \
@@ -464,6 +465,12 @@ class IosUtils(object):
         res = check_app_permission(self.app_obj, BaseResponse())
         if res.code != 1000:
             return False, {'code': res.code, 'msg': res.msg}
+
+        if consume_user_download_times_by_app_obj(self.app_obj):
+            d_result['code'] = 1009
+            d_result['msg'] = '可用下载额度不足，请联系开发者'
+            logger.error(d_result)
+            return False, d_result
 
         if not self.developer_obj:
             msg = "udid %s app %s not exists apple developer" % (self.udid_info.get('udid'), self.app_obj)

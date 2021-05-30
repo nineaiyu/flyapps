@@ -230,9 +230,9 @@ class InstallView(APIView):
                     logger.info("remote ip %s short %s download_url %s app_obj %s" % (ip, short, download_url, app_obj))
                     set_app_download_by_cache(app_id)
                     amount = app_obj.get("d_count")
-                    # 超级签需要多消耗2倍下载次数
-                    if app_obj.get("issupersign"):
-                        amount *= 2
+                    # # 超级签需要多消耗2倍下载次数
+                    # if app_obj.get("issupersign"):
+                    #     amount *= 2
                     auth_status = False
                     status = app_obj.get('user_id__certification__status', None)
                     if status and status == 1:

@@ -382,6 +382,15 @@ def check_user_has_all_download_times(app_obj):
         user_id)
 
 
+def consume_user_download_times_by_app_obj(app_obj):
+    user_id = app_obj.user_id_id
+    auth_status = get_user_cert_auth_status(user_id)
+    amount = get_app_d_count_by_app_id(app_obj.app_id)
+    if consume_user_download_times(user_id, app_obj.app_id, amount, auth_status):
+        return False
+    return True
+
+
 def user_auth_success(user_id):
     '''
     认证成功，需要调用该方法增加次数
