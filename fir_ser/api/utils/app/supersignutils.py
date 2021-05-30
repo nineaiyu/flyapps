@@ -466,12 +466,6 @@ class IosUtils(object):
         if res.code != 1000:
             return False, {'code': res.code, 'msg': res.msg}
 
-        if consume_user_download_times_by_app_obj(self.app_obj):
-            d_result['code'] = 1009
-            d_result['msg'] = '可用下载额度不足，请联系开发者'
-            logger.error(d_result)
-            return False, d_result
-
         if not self.developer_obj:
             msg = "udid %s app %s not exists apple developer" % (self.udid_info.get('udid'), self.app_obj)
             d_result['code'] = 1005
@@ -488,6 +482,12 @@ class IosUtils(object):
                     logger.info(d_result)
                     return True, d_result
         logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
+
+        if consume_user_download_times_by_app_obj(self.app_obj):
+            d_result['code'] = 1009
+            d_result['msg'] = '可用下载额度不足，请联系开发者'
+            logger.error(d_result)
+            return False, d_result
 
         call_flag = True
         download_flag = False
