@@ -27,6 +27,20 @@ class InstallShortThrottle(SimpleRateThrottle):
         return 'short_access_' + self.get_ident(request)
 
 
+class InstallThrottle1(VisitShortThrottle):
+    """短连接用户访问频率限制"""
+    scope = "InstallAccess1"
+
+    def get_cache_key(self, request, view):
+        return 'install_access_' + self.get_ident(request) + hashlib.md5(
+            request.META.get('HTTP_USER_AGENT', '').encode("utf-8")).hexdigest()
+
+
+class InstallThrottle2(InstallThrottle1):
+    """短连接用户访问频率限制"""
+    scope = "InstallAccess2"
+
+
 class LoginUserThrottle(SimpleRateThrottle):
     """登录用户访问频率限制"""
     scope = "LoginUser"

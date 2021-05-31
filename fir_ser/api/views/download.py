@@ -15,13 +15,13 @@ from api.utils.storage.storage import Storage, get_local_storage
 from api.utils.storage.caches import get_app_instance_by_cache, get_download_url_by_cache, set_app_download_by_cache, \
     del_cache_response_by_short, consume_user_download_times, check_app_permission
 import os
-from rest_framework_extensions.cache.decorators import cache_response
+from api.utils.decorators import cache_response  # 本来使用的是 drf-extensions==0.7.0 但是还未支持该版本Django
 from api.utils.serializer import AppsShortSerializer
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInfo
 from django.http import FileResponse
 import logging
 from api.utils.baseutils import get_profile_full_path, get_app_domain_name
-from api.utils.throttle import VisitShortThrottle, InstallShortThrottle
+from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 
 logger = logging.getLogger(__file__)
 
@@ -185,7 +185,7 @@ class ShortDownloadView(APIView):
 
 
 class InstallView(APIView):
-    throttle_classes = [VisitShortThrottle, InstallShortThrottle]
+    throttle_classes = [InstallThrottle1, InstallThrottle2]
     '''
     安装操作，前端通过token 认证，认证成功之后，返回 下载连接，并且 让下载次数加一
     '''

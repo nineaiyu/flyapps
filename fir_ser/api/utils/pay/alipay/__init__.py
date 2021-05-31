@@ -11,9 +11,9 @@ from functools import partial
 
 import hashlib
 import OpenSSL
-from Cryptodome.Hash import SHA, SHA256
-from Cryptodome.PublicKey import RSA
-from Cryptodome.Signature import PKCS1_v1_5
+from Crypto.Hash import SHA, SHA256
+from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
 
 from .compat import decodebytes, encodebytes, quote_plus, urlopen
 from .exceptions import AliPayException, AliPayValidationError

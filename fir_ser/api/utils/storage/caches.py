@@ -148,7 +148,6 @@ def del_cache_response_by_short(app_id, udid=''):
 
 def del_cache_response_by_short_util(short, app_id, udid):
     logger.info("del_cache_response_by_short short:%s app_id:%s udid:%s" % (short, app_id, udid))
-    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short]))
     key = "_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short, '*'])
     for app_download_key in cache.iter_keys(key):
         cache.delete(app_download_key)
@@ -427,8 +426,8 @@ def update_order_info(user_id, out_trade_no, payment_number, payment_type):
                         if not timezone.is_naive(now):
                             now = timezone.make_naive(now, timezone.utc)
                         order_obj.pay_time = now
-                        order_obj.description = "充值成功，充值下载次数 %s ，现总共可用次数 %s" % (
-                            download_times, user_obj.download_times)
+                        order_obj.description = "充值成功，充值下载次数 %s ，现共可用次数 %s" % (
+                            download_times, user_obj.download_times + download_times)
                         order_obj.save()
                         add_user_download_times(user_id, download_times)
                         logger.info("%s 订单 %s msg：%s" % (user_obj, out_trade_no, order_obj.description))

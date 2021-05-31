@@ -6,9 +6,17 @@
 
 from celery import shared_task
 from django.core.cache import cache
+from celery import Celery
+
+from api.utils.storage.storage import get_local_storage
 
 from api.models import Apps
 from api.utils.app.supersignutils import IosUtils, resign_by_app_id
+from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_delete_tmp_file, \
+    auto_check_ios_developer_active
+from api.utils.geetest.geetest_utils import check_bypass_status
+
+app = Celery()
 
 
 @shared_task
@@ -41,3 +49,35 @@ def run_resign_task(app_id, need_download_profile=True):
     app_obj = Apps.objects.filter(app_id=app_id).first()
     with cache.lock("%s_%s" % ('task_resign', app_id), timeout=60 * 60):
         return resign_by_app_id(app_obj, need_download_profile)
+
+
+@app.task
+def start_api_sever_do_clean():
+    # 启动服务的时候，同时执行下面操作,主要是修改配置存储的时候，需要执行清理，否则会出问题，如果不修改，则无需执行
+    get_local_storage(clean_cache=True)
+    check_bypass_status()
+
+
+@app.task
+def sync_download_times_job():
+    sync_download_times()
+
+
+@app.task
+def check_bypass_status_job():
+    check_bypass_status()
+
+
+@app.task
+def auto_clean_upload_tmp_file_job():
+    auto_clean_upload_tmp_file()
+
+
+@app.task
+def auto_delete_tmp_file_job():
+    auto_delete_tmp_file()
+
+
+@app.task
+def auto_check_ios_developer_active_job():
+    auto_check_ios_developer_active()

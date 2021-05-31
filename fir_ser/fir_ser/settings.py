@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api.apps.ApiConfig',
-    'django_apscheduler',  # 定时执行任务
     'rest_framework',
     'captcha',
     'django_celery_beat',
@@ -131,6 +130,8 @@ REST_FRAMEWORK = {
         'RegisterUser2': '300/h',
         'GetAuthC1': '60/m',
         'GetAuthC2': '300/h',
+        'InstallAccess1': '10/m',
+        'InstallAccess2': '20/h',
     }
 }
 # Internationalization
@@ -145,6 +146,8 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = False
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
@@ -527,8 +530,6 @@ CELERY_BROKER_URL = 'redis://:%s@%s/2' % (
 #: Only add pickle to this list if your broker is secured
 
 
-CELERY_ENABLE_UTC = True
-
 CELERYD_CONCURRENCY = 4  # worker并发数
 CELERYD_FORCE_EXECV = True  # 非常重要,有些情况下可以防止死
 CELERY_TASK_RESULT_EXPIRES = 3600  # 任务结果过期时间
@@ -540,9 +541,44 @@ CELERYD_MAX_TASKS_PER_CHILD = 200  # 每个worker执行了多少任务就会死�
 
 # CELERYD_WORKER_PREFETCH_MULTIPLIER  =1
 
-
-CELERY_TIMEZONE = 'Asia/Shanghai'
+CELERY_ENABLE_UTC = False
+DJANGO_CELERY_BEAT_TZ_AWARE = False
+CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULE = {
+    'sync_download_times_job': {
+        'task': 'api.tasks.sync_download_times_job',
+        'schedule': SYNC_CACHE_TO_DATABASE.get("download_times"),
+        'args': ()
+    },
+    'check_bypass_status_job': {
+        'task': 'api.tasks.check_bypass_status_job',
+        'schedule': GEETEST_CYCLE_TIME,
+        'args': ()
+    },
+    'auto_clean_upload_tmp_file_job': {
+        'task': 'api.tasks.auto_clean_upload_tmp_file_job',
+        'schedule': SYNC_CACHE_TO_DATABASE.get("auto_clean_tmp_file_times"),
+        'args': ()
+    },
+    'auto_delete_tmp_file_job': {
+        'task': 'api.tasks.auto_delete_tmp_file_job',
+        'schedule': SYNC_CACHE_TO_DATABASE.get("auto_clean_local_tmp_file_times"),
+        'args': ()
+    },
+    'auto_check_ios_developer_active_job': {
+        'task': 'api.tasks.auto_check_ios_developer_active_job',
+        'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
+        'args': ()
+    },
+    'start_api_sever_do_clean': {
+        'task': 'api.tasks.start_api_sever_do_clean',
+        'schedule': 6,
+        'args': (),
+        'one_off': True
+    },
+}

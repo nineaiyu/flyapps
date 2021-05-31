@@ -224,7 +224,7 @@ class AppInfoView(APIView):
                         if do_sign_flag == 1:
                             c_task = run_resign_task.apply_async((apps_obj.app_id, True))
                         if do_sign_flag == 2:
-                            c_task = run_resign_task.apply_async((apps_obj.app_id, False)).get(propagate=False)
+                            c_task = run_resign_task.apply_async((apps_obj.app_id, False))
                         if c_task:
                             c_task.get(propagate=False)
                             if c_task.successful():

@@ -8,6 +8,8 @@ import os
 from celery import Celery
 
 # set the default Django settings module for the 'celery' program.
+from fir_ser.settings import SYNC_CACHE_TO_DATABASE, GEETEST_CYCLE_TIME
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'fir_ser.settings')
 
 app = Celery('fir_ser')

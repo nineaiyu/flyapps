@@ -680,7 +680,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         }
         jwt_encoded = jwt.encode(data, self.p8_private_key, algorithm=self.JWT_ALG, headers=jwt_headers)
         headers = {
-            'Authorization': 'Bearer %s' % (jwt_encoded.decode('utf-8'))
+            'Authorization': 'Bearer %s' % jwt_encoded
         }
         self.headers = headers
 

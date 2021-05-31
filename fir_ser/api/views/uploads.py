@@ -65,17 +65,8 @@ class AppAnalyseView(APIView):
             png_key = png_id + '.png' + settings.FILE_UPLOAD_TMP_KEY
             storage = Storage(request.user)
             storage_type = storage.get_storage_type()
-
-            if storage_type == 1:
-                upload_token = storage.get_upload_token(upload_key)
-                png_token = storage.get_upload_token(png_key)
-            elif storage_type == 2:
-                upload_token = storage.get_upload_token(upload_key)
-                png_token = storage.get_upload_token(png_key)
-            else:
-                upload_token = storage.get_upload_token(upload_key)
-                png_token = storage.get_upload_token(png_key)
-
+            upload_token = storage.get_upload_token(upload_key)
+            png_token = storage.get_upload_token(png_key)
             upload_file_tmp_name("set", png_key, request.user.id)
             upload_file_tmp_name("set", upload_key, request.user.id)
             res.data = {"app_uuid": app_uuid, "short": short,
@@ -130,7 +121,6 @@ class AppAnalyseView(APIView):
                 if app_info:
                     if app_info.issupersign and app_info.user_id.supersign_active:
                         c_task = run_resign_task.apply_async((app_info.app_id, False)).get(propagate=False)
-                        c_task.get(propagate=False)
                         if c_task.successful():
                             c_task.forget()
             else:

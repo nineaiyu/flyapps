@@ -11,7 +11,6 @@ from api.utils.utils import send_ios_developer_active_status
 from django.core.cache import cache
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT
 import time, os
-from django_apscheduler.models import DjangoJobExecution
 import logging
 
 logger = logging.getLogger(__file__)
@@ -45,16 +44,6 @@ def auto_clean_upload_tmp_file():
 
                 cache.delete(upload_tem_file_key)
                 logger.info("auto_clean_upload_tmp_file upload_tem_file_key :%s " % (upload_tem_file_key))
-
-
-def auto_delete_job_log():
-    job_execution = DjangoJobExecution.objects.order_by("-id").values("id").first()
-    if job_execution:
-        need_count = SYNC_CACHE_TO_DATABASE.get("auto_clean_apscheduler_log", 10000)
-        max_id = job_execution.get("id")
-        count = DjangoJobExecution.objects.count()
-        if count > need_count:
-            DjangoJobExecution.objects.filter(id__lte=max_id - need_count).delete()
 
 
 def auto_delete_tmp_file():
