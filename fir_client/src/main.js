@@ -20,6 +20,8 @@ import {
     Button,
     ButtonGroup,
     Card,
+    Carousel,
+    CarouselItem,
     Checkbox,
     CheckboxGroup,
     Col,
@@ -100,6 +102,8 @@ router.beforeEach((to, from, next) => {
 
 Vue.config.productionTip = false;
 
+Vue.use(CarouselItem);
+Vue.use(Carousel);
 Vue.use(Progress);
 Vue.use(OptionGroup);
 Vue.use(Link);

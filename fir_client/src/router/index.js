@@ -21,13 +21,24 @@ const router = new VueRouter({
         },
         {
             path: '/index',
-            name: 'FirIndex',
-            component: () => import("@/components/FirIndex")
+            component: () => import("@/components/index/FirIndexTem"),
+            children: [
+                {
+                    path: '',
+                    name: 'FirIndex',
+                    component: () => import("@/components/index/FirIndexBody"),
+                },
+                {
+                    path: 'service',
+                    name: 'FirService',
+                    component: () => import("@/components/index/FirService")
+                },
+            ]
         },
+
         {
             path: '/apps',
             component: () => import("@/components/FirBase"),
-
             children: [
                 {
                     path: '',

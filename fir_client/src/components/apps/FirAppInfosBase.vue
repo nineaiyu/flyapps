@@ -1,5 +1,5 @@
 <template>
-    <el-main>
+    <div class="main">
         <div class="page-app app-info">
             <div class="banner">
                 <div class="middle-wrapper">
@@ -92,7 +92,7 @@
                 </el-container>
             </div>
         </div>
-    </el-main>
+    </div>
 
 </template>
 
@@ -247,8 +247,8 @@
 </script>
 
 <style scoped>
-    .el-main {
-        margin: 10px auto 100px;
+    .main {
+        margin: 40px auto 100px;
         position: relative;
         padding-bottom: 1px;
         color: #9b9b9b;

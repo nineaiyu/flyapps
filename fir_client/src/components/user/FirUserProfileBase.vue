@@ -1,5 +1,5 @@
 <template>
-    <el-main>
+    <div class="main">
         <div class="user-info">
 
             <el-upload
@@ -58,7 +58,7 @@
 
         </div>
 
-    </el-main>
+    </div>
 </template>
 
 <script>
@@ -139,7 +139,7 @@
 </script>
 
 <style scoped>
-    .el-main {
+    .main {
         position: relative;
         padding-bottom: 1px;
         color: #9b9b9b;
