@@ -19,12 +19,12 @@
         </div>
 
         <div id="whyChooseUs">
-            <div class="container">
+            <div style="width: 80%;margin-right: auto; margin-left: auto;">
                 <div class="whyChooseUs-title text-center">
                     <p>为什么选择我们的服务</p>
                     <p>THE REASON TO CHOOSING US</p>
                 </div>
-                <el-row :gutter="20">
+                <el-row :gutter="24">
                     <el-col :span="6" v-for="(item,index) in serverList" :key="index">
                         <div class="server-block"
                              onmouseenter="this.style.color='#28f';this.style.borderColor='#28f'"
@@ -45,9 +45,9 @@
 
         <el-container id="contactUs">
             <el-main class="contactUs-container">
-                <div class="content">您身边的应用托管分发</div>
+                <div class="content">您身边的应用托管分发专家</div>
                 <div class="content">7x24小时提供出色的不间断服务</div>
-                <el-button
+                <el-button  @click="$router.push({name:'FirContact'})"
                         onmouseleave="this.style.borderColor='#ffffff'; this.style.backgroundColor='#ffffff'; this.style.color='#3f3f3f';"
                         onmouseenter="this.style.backgroundColor='transparent'; this.style.borderColor='#ffffff'; this.style.color='#ffffff';"
                 >联系我们

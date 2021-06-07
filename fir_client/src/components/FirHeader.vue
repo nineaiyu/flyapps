@@ -55,6 +55,7 @@
                             <el-dropdown-item command="supersign" v-if="$store.state.userinfo.supersign_active">超级签名
                             </el-dropdown-item>
                             <el-dropdown-item command="myorder">订单信息</el-dropdown-item>
+                            <el-dropdown-item command="contact">联系我们</el-dropdown-item>
                             <el-dropdown-item command="exit">退出</el-dropdown-item>
 
                         </el-dropdown-menu>
@@ -87,17 +88,26 @@
                 this.$message.success('复制剪切板成功');
             },
             maketoken() {
-                apitoken(data => {
-                    if (data.code === 1000) {
-                        this.token = data.data.token;
-                        this.$message({
-                            type: 'success',
-                            message: '重新生成成功!'
-                        });
-                    } else {
-                        this.$message.error("失败了 " + data.msg)
-                    }
-                }, {methods: 'PUT', token: this.token});
+                this.$confirm('确认重新生成新的密钥么?', '警告', {
+                    type: 'warning'
+                })
+                    // eslint-disable-next-line no-unused-vars
+                    .then(res => {
+                        apitoken(data => {
+                            if (data.code === 1000) {
+                                this.token = data.data.token;
+                                this.$message({
+                                    type: 'success',
+                                    message: '重新生成成功!'
+                                });
+                            } else {
+                                this.$message.error("失败了 " + data.msg)
+                            }
+                        }, {methods: 'PUT', token: this.token});
+                    })
+                    .catch(err => {
+                        this.$message.error(err)
+                    });
             },
             handleCommand(command) {
                 if (command === 'userinfo') {
@@ -122,6 +132,8 @@
                     this.$store.dispatch("dodomainaction", true);
                 } else if (command === 'myorder') {
                     this.$router.push({"name": 'FirUserOrders'})
+                } else if (command === 'contact') {
+                    this.$router.push({"name": 'FirContact'})
                 } else if (command === 'exit') {
                     logout(data => {
                         if (data.code === 1000) {

@@ -936,7 +936,6 @@
             }
 
         }, mounted() {
-            this.PaymentQuestionMsg = window.g.PaymentQuestionMsg;
             getUserInfoFun(this);
             this.$store.dispatch('doucurrentapp', {});
             this.getappsFun({});

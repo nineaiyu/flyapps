@@ -15,12 +15,17 @@
                                 <el-link @click="$router.push({name:'FirService'})">服务</el-link>
                             </el-col>
                             <el-col :span="8">
+                                <el-link @click="$router.push({name:'FirNews'})">新闻</el-link>
+                            </el-col>
+                            <el-col :span="8">
                                 <el-link @click="$router.push({name:'FirApps'})">登录</el-link>
                             </el-col>
                             <el-col :span="8">
                                 <el-link @click="$router.push({name:'FirRegist'})">注册</el-link>
                             </el-col>
-
+                            <el-col :span="8">
+                                <el-link @click="$router.push({name:'FirContact'})">联系我们</el-link>
+                            </el-col>
                         </el-row>
                     </el-col>
                 </el-row>
@@ -59,55 +64,6 @@
                     'line-height': '45px',
                     background: '#e7eaf1'
                 },
-                swiperList: [
-                    {
-                        img: require("@/assets/imgs/banner2.jpg"),
-                        path: "",
-                        title: '超级签名',
-                        content: '自定义超级签签名，不再为频繁填写udid打包而烦恼',
-                    },
-                    {
-                        img: require("@/assets/imgs/banner1.png"),
-                        path: "",
-                        title: '内测托管',
-                        content: '一键上传应用，扫描二维码下载',
-                    },
-                    {
-                        img: require("@/assets/imgs/banner_2.jpg"),
-                        path: "",
-                        title: '应用合并',
-                        content: '扫描同一个二维码，根据设备类型自动下载对应的 iOS 或 Android 应用',
-                    },
-                    {
-                        img: require("@/assets/imgs/banner_1.jpg"),
-                        path: "",
-                        title: '权限控制',
-                        content: '灵活的访问权限控制，密码授权，下载页展示，管理应用',
-                    },
-
-                ],
-                serverList: [
-                    {
-                        logo: require("@/assets/imgs/tel.png"),
-                        title: "核心优势1",
-                        content: "<p>由专业客服提供人工服务</p>负责疑难问题和故障受理"
-                    },
-                    {
-                        logo: require("@/assets/imgs/computer.png"),
-                        title: "核心优势2",
-                        content: "<p>可定制私有化部署</p>帮助客户进行私有操作"
-                    },
-                    {
-                        logo: require("@/assets/imgs/qq.png"),
-                        title: "核心优势3",
-                        content: "<p>利用QQ微信等提供在线解答</p>帮助用户快速准确解决问题和故障"
-                    },
-                    {
-                        logo: require("@/assets/imgs/skill.png"),
-                        title: "核心优势4",
-                        content: "<p>由技术支持工程师，负责问题解答</p>需求受理及故障受理"
-                    }
-                ]
             }
         }
     }

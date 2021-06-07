@@ -107,10 +107,8 @@
 
 
             </div>
-
-
             <span slot="footer">
-                        {{ PaymentQuestionMsg }}
+                        <el-button @click="$router.push({'name':'FirContact'})"> 如对充值订单有疑问，请联系我们</el-button>
                     </span>
         </el-dialog>
 
@@ -275,7 +273,6 @@
                 show_order_info: false,
                 current_order_info: {},
                 loading: false,
-                PaymentQuestionMsg: '',
             }
         },
         methods: {
@@ -431,7 +428,6 @@
                 }, {methods: 'GET', data: params})
             },
         }, mounted() {
-            this.PaymentQuestionMsg = window.g.PaymentQuestionMsg;
             getUserInfoFun(this);
             let out_trade_no = this.$route.params.out_trade_no;
             if (out_trade_no) {

@@ -450,16 +450,13 @@ def check_app_permission(app_obj, res):
     if not app_obj:
         res.code = 1003
         res.msg = "该应用不存在"
-
-    if app_obj.status != 1:
+    elif app_obj.status != 1:
         res.code = 1004
         res.msg = "该应用被封禁，无法下载安装"
-
-    if not check_user_has_all_download_times(app_obj):
+    elif not check_user_has_all_download_times(app_obj):
         res.code = 1009
         res.msg = "可用下载额度不足，请联系开发者"
-
-    if not app_obj.isshow:
+    elif not app_obj.isshow:
         res.code = 1004
         res.msg = "您没有权限访问该应用"
 

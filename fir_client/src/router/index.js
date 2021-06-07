@@ -20,7 +20,7 @@ const router = new VueRouter({
             redirect: {name: 'FirIndex'}
         },
         {
-            path: '/index',
+            path: '/home',
             component: () => import("@/components/index/FirIndexTem"),
             children: [
                 {
@@ -32,6 +32,16 @@ const router = new VueRouter({
                     path: 'service',
                     name: 'FirService',
                     component: () => import("@/components/index/FirService")
+                },
+                {
+                    path: 'news',
+                    name: 'FirNews',
+                    component: () => import("@/components/index/FirNews")
+                },
+                {
+                    path: 'contact',
+                    name: 'FirContact',
+                    component: () => import("@/components/index/FirContact")
                 },
             ]
         },

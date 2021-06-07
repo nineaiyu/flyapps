@@ -5,22 +5,24 @@
             <p style="color:#b2b2b2">The Best Service You Never See</p>
         </div>
         <div class="Service-container">
-            <el-row :gutter="20">
-                <el-col :span="6" v-for="(item,index) in serviceList" :key="index">
-                    <div class="Service-item Service-item-wrapper">
-                        <div class="Service-item-top">
-                            <h4>{{item.title}}</h4>
-                            <i/>
-                            <p>{{item.eng_title}}</p>
+            <transition name="el-zoom-in-center">
+                <el-row :gutter="20" v-show="show">
+                    <el-col :span="6" v-for="(item,index) in serviceList" :key="index">
+                        <div class="Service-item Service-item-wrapper">
+                            <div class="Service-item-top">
+                                <h4>{{item.title}}</h4>
+                                <i/>
+                                <p>{{item.eng_title}}</p>
+                            </div>
+                            <div class="Service-item-img">
+                                <img :src="item.img" alt="服务">
+                            </div>
+                            <div class="Service-item-border"></div>
                         </div>
-                        <div class="Service-item-img">
-                            <img :src="item.img" alt="服务">
-                        </div>
-                        <div class="Service-item-border"></div>
-                    </div>
 
-                </el-col>
-            </el-row>
+                    </el-col>
+                </el-row>
+            </transition>
 
         </div>
     </div>
@@ -31,6 +33,7 @@
         name: "FirService",
         data() {
             return {
+                show: false,
                 serviceList: [
                     {
                         id: 'section-1',
@@ -56,6 +59,9 @@
                 ]
             }
         },
+        mounted() {
+            this.show = true;
+        }
     }
 </script>
 

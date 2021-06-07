@@ -7,14 +7,14 @@ python manage.py loaddata dumpdata.json
 #celery -A fir_ser worker --scheduler django --loglevel=debug
 
 启动多节点
-celery multi start 4 -A fir_ser -l INFO -c4 --pidfile=/var/run/celery/%n.pid --logfile=logs/%p.log
+celery multi start 4 -A fir_ser -l INFO -c4  --pidfile=/var/run/celery/%n.pid --logfile=logs/%p.log
 
 启动beat
-celery -A fir_ser beat --scheduler django -l INFO
+nohup celery -A fir_ser beat --uid=1000 --pidfile=logs/beat.pid --scheduler django -l INFO --logfile=logs/beat.log &
 
 
 #开发测试
-celery -A fir_ser worker --beat --scheduler django --loglevel=debug
+celery -A fir_ser worker --uid=1000 --beat --scheduler django --loglevel=debug
 
     var app_id = 21254;
     var app_name = '';

@@ -10,7 +10,7 @@ Axios.defaults.withCredentials = true;
 // });
 
 
-const DOMAIN = window.g.baseUrl;
+const DOMAIN = process.env.base_env.baseUrl;
 const APIPATH = '/api/v1/fir/server';
 let USERSEVER = DOMAIN + APIPATH;
 
