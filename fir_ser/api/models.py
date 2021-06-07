@@ -25,7 +25,7 @@ class UserInfo(AbstractUser):
     qq = models.BigIntegerField(verbose_name="QQ", blank=True, null=True, db_index=True)
     is_active = models.BooleanField(default=True, verbose_name="账户状态，默认启用")
     storage_active = models.BooleanField(default=False, verbose_name="配置存储，默认关闭")
-    supersign_active = models.BooleanField(default=False, verbose_name="配置超级签，默认关闭")
+    supersign_active = models.BooleanField(default=True, verbose_name="配置超级签，默认关闭")
 
     job = models.TextField("职位", max_length=128, blank=True, null=True)
     company = models.CharField("公司", max_length=128, blank=True, null=True)
