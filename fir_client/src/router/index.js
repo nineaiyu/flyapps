@@ -152,7 +152,12 @@ const router = new VueRouter({
                     meta: {label: '订单详情'},
                     component: () => import("@/components/user/FirUserOrders"),
                 },
-
+                {
+                    path: 'supersign-help',
+                    name: 'FirSuperSignHelp',
+                    meta: {label: '密钥获取帮助'},
+                    component: () => import("@/components/user/FirSuperSignHelp"),
+                }
             ]
         },
         {

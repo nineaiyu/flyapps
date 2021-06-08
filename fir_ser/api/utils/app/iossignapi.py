@@ -105,7 +105,7 @@ class AppDeveloperApiV2(object):
         req.get_subject().L = 'BJ'
         req.get_subject().ST = 'BJ'
         req.get_subject().C = 'CN'
-        req.get_subject().emailAddress = 'fly@fly.com'
+        req.get_subject().emailAddress = 'flyapps@126.com'
         req.set_pubkey(key)
         req.sign(key, 'sha256')
         csr_content = dump_certificate_request(FILETYPE_PEM, req)

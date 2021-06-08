@@ -113,8 +113,8 @@ class AliYunOss(object):
         self.domain_name = domain_name
         self.bucket_get = None
         self.bucket = None
-        self.make_auth_bucket('init_get', 900, True)
-        self.make_auth_bucket('init_auth', 900)
+        self.make_auth_bucket('init_get', 1800, True)
+        self.make_auth_bucket('init_auth', 1800)
 
     def fetch_sts_token(self, name, expires, only_put=False, only_get=False):
         """子用户角色扮演获取临时用户的密钥

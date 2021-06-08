@@ -23,8 +23,8 @@
                     </el-form-item>
                 </div>
 
-                <el-form-item label-width="110px" label="设备数量">
-                    <el-input v-model="editdeveloperinfo.usable_number"/>
+                <el-form-item label-width="110px" label="设备数量" style="text-align: left">
+                    <el-input-number v-model="editdeveloperinfo.usable_number" :min="0" :max="100" label="设备数量"></el-input-number>
                 </el-form-item>
 
                 <el-form-item label-width="110px" label="备注">
@@ -219,8 +219,8 @@
                         </el-form-item>
                     </div>
 
-                    <el-form-item label-width="110px" label="设备数量">
-                        <el-input v-model="editdeveloperinfo.usable_number"/>
+                    <el-form-item label-width="110px" label="设备数量" style="text-align: left">
+                        <el-input-number v-model="editdeveloperinfo.usable_number" :min="0" :max="100" label="设备数量"></el-input-number>
                     </el-form-item>
 
                     <el-form-item label-width="110px" label="备注">
@@ -232,6 +232,21 @@
                     </div>
 
                 </el-form>
+                <el-card style="margin-top: 20px;text-align: left" header="获取密钥帮助">
+                    <h1>获取密钥：</h1>
+                    <p>前往 AppStore Connect 。按照
+                        <el-button plain type="primary" size="small" @click="$router.push({name:'FirSuperSignHelp'})">
+                            此步骤
+                        </el-button>
+                        获取 API 密钥，将获取到的密钥添加到这里。
+                    </p>
+
+                    <h1>注意事项：</h1>
+                    <p>1.添加后，请勿撤销 API 密钥，否则会导致用户安装的软件闪退或无法安装！</p>
+                    <p>2.每个开发者账号最多可创建两本证书，请确保至少还可以创建一本证书！</p>
+                    <p>3.添加后，系统会自动创建证书、设备和描述文件，请勿删除这些文件，否则会导致用户安装的软件闪退或无法安装！</p>
+
+                </el-card>
             </el-tab-pane>
             <el-tab-pane label="设备消耗" name="useddevices">
                 <el-input
@@ -410,7 +425,7 @@
                 appidseach: "",
                 dialogaddDeveloperVisible: false,
                 title: "",
-                editdeveloperinfo: {auth_type: 0},
+                editdeveloperinfo: {auth_type: 0, usable_number: 100},
                 isedit: false,
                 placeholder: "",
                 pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
@@ -474,7 +489,7 @@
             },
             canceledit() {
                 this.dialogaddDeveloperVisible = false;
-                this.editdeveloperinfo = {auth_type: 0};
+                this.editdeveloperinfo = {auth_type: 0,usable_number:100};
                 this.isedit = false;
                 this.placeholder = ""
             },
@@ -586,7 +601,11 @@
                         if (data.use_num) {
                             this.developer_used_info = data.use_num;
                             if (this.developer_used_info.all_usable_number !== 0) {
-                                this.percentage = parseInt(this.developer_used_info.flyapp_used_sum * 100 / this.developer_used_info.all_usable_number);
+                                let p = parseInt(this.developer_used_info.flyapp_used_sum * 100 / this.developer_used_info.all_usable_number);
+                                if (p < 0 || p >= 100) {
+                                    p = 100
+                                }
+                                this.percentage = p;
                             }
                         }
 

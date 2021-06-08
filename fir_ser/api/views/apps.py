@@ -226,7 +226,8 @@ class AppInfoView(APIView):
                         if do_sign_flag == 2:
                             c_task = run_resign_task.apply_async((apps_obj.app_id, False))
                         if c_task:
-                            c_task.get(propagate=False)
+                            msg = c_task.get(propagate=False)
+                            logger.info("app %s run_resign_task msg:%s" % (apps_obj, msg))
                             if c_task.successful():
                                 c_task.forget()
                     del_cache_response_by_short(apps_obj.app_id)

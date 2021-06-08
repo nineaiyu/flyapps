@@ -594,12 +594,19 @@
                     delete this.analyseappinfo.icon;
                     this.$message.success(file.name + '上传成功');
                     this.analyseappinfo.short = this.short;
+                    const loading = this.$loading({
+                        lock: true,
+                        text: '应用入库中，请耐心等待',
+                        spinner: 'el-icon-loading',
+                        // background: 'rgba(0, 0, 0, 0.7)'
+                    });
                     analyseApps(data => {
                         if (data.code === 1000) {
                             let app_uuid = this.analyseappinfo.app_uuid;
                             this.closeUpload();
                             this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
                         }
+                        loading.close()
                     }, {'methods': 'PUT', 'data': this.analyseappinfo});
                 }
             },

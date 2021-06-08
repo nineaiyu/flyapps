@@ -9,7 +9,7 @@ from api.utils.storage.storage import Storage
 from api.utils.app.supersignutils import IosUtils
 from api.utils.utils import send_ios_developer_active_status
 from django.core.cache import cache
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT, MSGTEMPLATE
 import time, os
 import logging
 
@@ -67,11 +67,12 @@ def auto_check_ios_developer_active():
         if userinfo.supersign_active:
             status, result = IosUtils.active_developer(ios_developer)
             msg = "auto_check_ios_developer_active  user:%s  ios.developer:%s  status:%s  result:%s" % (
-                ios_developer.user_id, ios_developer, status, result)
+                userinfo, ios_developer, status, result)
             if status:
                 logger.info(msg)
             else:
                 ios_developer.is_actived = False
                 ios_developer.save()
                 logger.error(msg)
-                send_ios_developer_active_status(ios_developer.user_id, msg)
+                send_ios_developer_active_status(userinfo, MSGTEMPLATE.get('AUTO_CHECK_DEVELOPER') % (
+                userinfo.first_name, ios_developer.name))

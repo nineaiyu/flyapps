@@ -7,7 +7,7 @@
 import uuid, xmltodict, os, re, logging, time
 
 from api.utils.response import BaseResponse
-from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILECONFIG_SIGN_SSL
+from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILECONFIG_SIGN_SSL, MSGTEMPLATE
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
     UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID
@@ -37,6 +37,7 @@ def check_org_file(user_obj, org_file):
 
 def resign_by_app_id(app_obj, need_download_profile=True):
     user_obj = app_obj.user_id
+    info_list = []
     if app_obj.issupersign and user_obj.supersign_active:
         for dappid_obj in DeveloperAppID.objects.filter(app_id=app_obj).all():
             developer_obj = dappid_obj.developerid
@@ -49,7 +50,10 @@ def resign_by_app_id(app_obj, need_download_profile=True):
             else:
                 download_flag = True
             with cache.lock("%s_%s_%s" % ('run_sign', app_obj.app_id, developer_obj.issuer_id), timeout=60 * 10):
-                IosUtils.run_sign(user_obj, app_obj, developer_obj, download_flag, None, d_time, {}, True)
+                status, result = IosUtils.run_sign(user_obj, app_obj, developer_obj, download_flag, None, d_time, {},
+                                                   True)
+                info_list.append({'developer_id': developer_obj.issuer_id, 'result': (status, result)})
+    return info_list
 
 
 def check_app_sign_limit(app_obj):
@@ -243,9 +247,9 @@ class IosUtils(object):
             if self.user_obj.email:
                 if send_msg_over_limit("get", self.user_obj.email):
                     send_msg_over_limit("set", self.user_obj.email)
-                    send_ios_developer_active_status(self.user_obj,
-                                                     'user %s app %s sign failed. has not exists enabled developer' % (
-                                                         self.user_obj, self.app_obj))
+                    send_ios_developer_active_status(self.user_obj, MSGTEMPLATE.get('NOT_EXIST_DEVELOPER', '')
+                                                     % (
+                                                         self.user_obj.first_name, self.app_obj.name))
                 else:
                     logger.error("user %s send msg failed. over limit" % self.user_obj)
 
@@ -341,8 +345,9 @@ class IosUtils(object):
             developer_obj.is_actived = False
             developer_obj.save()
             send_ios_developer_active_status(developer_obj.user_id,
-                                             'app %s developer %s sign failed %s. disable this developer' % (
-                                                 app_obj, developer_obj, result))
+                                             MSGTEMPLATE.get('ERROR_DEVELOPER') % (
+                                                 developer_obj.user_id.first_name, app_obj.name,
+                                                 developer_obj.issuer_id))
             return False, result
 
         if not developer_app_id and result.get("aid", None):

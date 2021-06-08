@@ -8,8 +8,6 @@
                             <div class="topplayer-top">
                                 <div class="word">{{ item.title }}</div>
                                 <div class="content">{{ item.content }}</div>
-
-                                <!--                                                <el-button @click="$router.push({name:'FirApps'})">开始分发 &gt;</el-button>-->
                             </div>
                         </div>
                     </el-carousel-item>
@@ -29,7 +27,7 @@
                         <div class="server-block"
                              onmouseenter="this.style.color='#28f';this.style.borderColor='#28f'"
                              onmouseleave="this.style.color='#666';this.style.borderColor='#ccc'">
-                            <img class="center-block" :src="item.logo" alt="logo">
+                            <img class="center-block" v-lazy="item.logo" alt="logo">
                             <p class="text-center">{{item.title}}</p>
                             <div
                                     class="text-center"
@@ -47,9 +45,9 @@
             <el-main class="contactUs-container">
                 <div class="content">您身边的应用托管分发专家</div>
                 <div class="content">7x24小时提供出色的不间断服务</div>
-                <el-button  @click="$router.push({name:'FirContact'})"
-                        onmouseleave="this.style.borderColor='#ffffff'; this.style.backgroundColor='#ffffff'; this.style.color='#3f3f3f';"
-                        onmouseenter="this.style.backgroundColor='transparent'; this.style.borderColor='#ffffff'; this.style.color='#ffffff';"
+                <el-button @click="$router.push({name:'FirContact'})"
+                           onmouseleave="this.style.borderColor='#ffffff'; this.style.backgroundColor='#ffffff'; this.style.color='#3f3f3f';"
+                           onmouseenter="this.style.backgroundColor='transparent'; this.style.borderColor='#ffffff'; this.style.color='#ffffff';"
                 >联系我们
                 </el-button>
                 <div class="contactUs-contactWay">

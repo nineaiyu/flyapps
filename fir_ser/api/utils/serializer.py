@@ -15,7 +15,7 @@ token_obj = DownloadToken()
 
 
 def get_download_url_from_context(self, obj, key, url, force_new=False):
-    icon_url = ""
+    download_url = ""
     if self.context.get("key", None) and self.context.get("key") != "undefined":
         key = self.context.get("key", '')
     if self.context.get("storage", None) and self.context.get("storage") != "undefined":
@@ -25,11 +25,15 @@ def get_download_url_from_context(self, obj, key, url, force_new=False):
             storage = Storage(obj.user_id)
         elif isinstance(obj, models.AppReleaseInfo):
             storage = Storage(obj.app_id.user_id)
+        elif isinstance(obj, models.UserInfo):
+            storage = Storage(obj)
         else:
             storage = None
     if storage:
-        icon_url = storage.get_download_url(os.path.basename(url), 600, key, force_new)
-    return icon_url
+        download_url = storage.get_download_url(os.path.basename(url), 600, key, force_new)
+        logger.info(
+            'get %s download_url %s force_new:%s key:%s' % (os.path.basename(url), download_url, force_new, key))
+    return download_url
 
 
 def get_app_master_obj_from_context(self, obj):
@@ -59,8 +63,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
     head_img = serializers.SerializerMethodField()
 
     def get_head_img(self, obj):
-        storage = Storage(obj)
-        return storage.get_download_url(obj.head_img)
+        return get_download_url_from_context(self, obj, '', obj.head_img)
 
     free_download_times = serializers.SerializerMethodField()
 
@@ -315,7 +318,7 @@ class AppReleaseSerializer(serializers.ModelSerializer):
         return token_obj.make_token(obj.release_id, 600)
 
     def get_icon_url(self, obj):
-        return get_download_url_from_context(self, obj, '', os.path.basename(obj.icon_url), force_new=False)
+        return get_download_url_from_context(self, obj, '', os.path.basename(obj.icon_url))
 
     def get_master_color(self, obj):
         if obj.is_master:

@@ -261,6 +261,13 @@ class AppIOSDeveloperInfo(models.Model):
         verbose_name_plural = "苹果开发者账户"
         unique_together = (('user_id', 'issuer_id'),)
 
+    def save(self, *args, **kwargs):
+        if self.usable_number > 100:
+            self.usable_number = 100
+        elif self.usable_number < 0:
+            self.usable_number = 0
+        return super(AppIOSDeveloperInfo, self).save(*args, **kwargs)
+
     def __str__(self):
         return "%s-%s" % (self.user_id, self.issuer_id)
 
