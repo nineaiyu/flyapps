@@ -20,7 +20,8 @@ logger = logging.getLogger(__file__)
 class Storage(object):
     def __init__(self, user, storage_obj=None, use_default_storage=False):
         try:
-            self.storage = self.get_storage(user, storage_obj, use_default_storage)
+            with cache.lock("%s_%s" % ('make_storage_cache', user.uid), timeout=10, blocking_timeout=6):
+                self.storage = self.get_storage(user, storage_obj, use_default_storage)
         except Exception as e:
             logger.error("get %s storage failed Exception:%s" % (user, e))
             self.storage = None
