@@ -41,7 +41,7 @@
             </div>
         </div>
 
-        <el-container id="contactUs">
+        <el-container id="contactUs" :style="{background:`url(${contact_images.bg}) 0 0 no-repeat`}">
             <el-main class="contactUs-container">
                 <div class="content">您身边的应用托管分发专家</div>
                 <div class="content">7x24小时提供出色的不间断服务</div>
@@ -51,9 +51,9 @@
                 >联系我们
                 </el-button>
                 <div class="contactUs-contactWay">
-                    <span/>
-                    <span/>
-                    <span/>
+                    <img v-lazy="contact_images.weixin"/>
+                    <img v-lazy="contact_images.weibo"/>
+                    <img v-lazy="contact_images.twitter"/>
                 </div>
             </el-main>
         </el-container>
@@ -66,6 +66,12 @@
         name: "FirIndex",
         data() {
             return {
+                contact_images: {
+                    bg: require("@/assets/imgs/contact_us_bg.jpg"),
+                    weixin: require("@/assets/imgs/weixin.png"),
+                    weibo: require("@/assets/imgs/weibo.png"),
+                    twitter: require("@/assets/imgs/twitter.png"),
+                },
                 swiperList: [
                     {
                         img: require("@/assets/imgs/banner2.jpg"),
@@ -186,7 +192,6 @@
         color: #fff;
         height: 400px;
         text-align: center;
-        background: url("../../assets/imgs/contact_us_bg.jpg") 0 0 no-repeat;
         background-size: 100% 100%;
         transition: all ease 0.6s;
     }
@@ -201,26 +206,11 @@
         margin-top: 40px;
     }
 
-    #contactUs .contactUs-container .contactUs-contactWay span {
+    #contactUs .contactUs-container .contactUs-contactWay img {
         display: inline-block;
         width: 48px;
         height: 48px;
         margin: 30px;
-    }
-
-    #contactUs .contactUs-container .contactUs-contactWay span:nth-of-type(1) {
-        background: url("../../assets/imgs/weixin.png") 0 0 no-repeat;
-        background-size: 100% 100%;
-    }
-
-    #contactUs .contactUs-container .contactUs-contactWay span:nth-of-type(2) {
-        background: url("../../assets/imgs/weibo.png") 0 0 no-repeat;
-        background-size: 100% 100%;
-    }
-
-    #contactUs .contactUs-container .contactUs-contactWay span:nth-of-type(3) {
-        background: url("../../assets/imgs/twitter.png") 0 0 no-repeat;
-        background-size: 100% 100%;
     }
 
     /* 为什么选择我们 */

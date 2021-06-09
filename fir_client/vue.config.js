@@ -95,11 +95,11 @@ const dev_base_env = {
 };
 let base_evn = dev_base_env;
 
-// if (IS_PROD) {
-//     base_evn = pro_base_env
-// } else {
-//     base_evn = dev_base_env
-// }
+if (IS_PROD) {
+    base_evn = pro_base_env
+} else {
+    base_evn = dev_base_env
+}
 
 function get_public_path(pages) {
     if (!IS_PROD) {
