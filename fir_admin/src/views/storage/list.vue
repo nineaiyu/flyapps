@@ -167,7 +167,6 @@ export default {
         access_key: undefined,
         storage_type: undefined,
         domain_name: undefined,
-        user_id: undefined,
         used_id: undefined
       },
       sortOptions,
@@ -175,6 +174,7 @@ export default {
     }
   },
   created() {
+    this.listQuery.user_id = this.$route.params && this.$route.params.user_id
     this.fetchData()
   }, mounted() {
     if (this.$route.query.user_id) {

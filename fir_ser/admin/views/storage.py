@@ -49,8 +49,9 @@ class StorageInfoView(APIView):
                                                      view=self)
         serializer = AdminStorageSerializer(page_serializer, many=True)
         res.data = serializer.data
-        res.storage_selection = format_storage_selection(serializer.data, serializer.data[0].get('storage_choices'))
         res.total = obj_list.count()
+        if res.total:
+            res.storage_selection = format_storage_selection(serializer.data, serializer.data[0].get('storage_choices'))
         return Response(res.dict)
 
     def put(self, request):

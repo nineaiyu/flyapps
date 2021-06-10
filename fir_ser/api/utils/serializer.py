@@ -92,7 +92,7 @@ class AdminUserInfoSerializer(UserInfoSerializer):
         read_only_fields = ["id", "head_img", "free_download_times", "last_login",
                             "is_superuser", "last_name", "is_staff", "uid", "storage_active", "supersign_active",
                             "date_joined", "download_times", "all_download_times", "storage", "groups",
-                            "user_permissions", "certification_id"]
+                            "user_permissions", "certification_id", " app_count"]
 
     gender_choices = serializers.SerializerMethodField()
 
@@ -118,6 +118,11 @@ class AdminUserInfoSerializer(UserInfoSerializer):
 
     def get_certification_id(self, obj):
         return models.UserCertificationInfo.objects.filter(user_id=obj).values('id').first()
+
+    app_count = serializers.SerializerMethodField()
+
+    def get_app_count(self, obj):
+        return models.Apps.objects.filter(user_id=obj).count()
 
     def update(self, instance, validated_data):
         return super(AdminUserInfoSerializer, self).update(instance, validated_data)
@@ -407,16 +412,18 @@ class DeveloperSerializer(serializers.ModelSerializer):
     def get_developer_used_other_number(self, obj):
         return get_developer_udided(obj)[0]
 
-class  AdminDeveloperSerializer(DeveloperSerializer):
+
+class AdminDeveloperSerializer(DeveloperSerializer):
     class Meta:
         model = models.AppIOSDeveloperInfo
         # depth = 1
-        exclude = [ "p8key",]
+        exclude = ["p8key", ]
 
     auth_type_choices = serializers.SerializerMethodField()
 
     def get_auth_type_choices(self, obj):
         return get_choices_dict(obj.auth_type_choices)
+
 
 class SuperSignUsedSerializer(serializers.ModelSerializer):
     class Meta:
@@ -448,7 +455,8 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
 class AdminSuperSignUsedSerializer(SuperSignUsedSerializer):
     class Meta:
         model = models.APPSuperSignUsedInfo
-        fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name","app_id","id","user_id","short","developer_pk"]
+        fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name", "app_id",
+                  "id", "user_id", "short", "developer_pk"]
 
     app_id = serializers.SerializerMethodField()
 
@@ -469,6 +477,7 @@ class AdminSuperSignUsedSerializer(SuperSignUsedSerializer):
 
     def get_developer_pk(self, obj):
         return obj.developerid.pk
+
 
 class DeviceUDIDSerializer(serializers.ModelSerializer):
     class Meta:

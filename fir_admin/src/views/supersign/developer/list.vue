@@ -59,7 +59,9 @@
       </el-table-column>
       <el-table-column label="消耗设备数" align="center" width="100">
         <template slot-scope="scope">
-          {{ scope.row.use_number }}
+          <router-link :to="{name: 'devices_info_list',params:{issuer_id:scope.row.issuer_id}}">
+            <el-link type="primary"> {{ scope.row.use_number }}</el-link>
+          </router-link>
         </template>
       </el-table-column>
 

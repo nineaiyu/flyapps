@@ -642,11 +642,18 @@ class CertificationView(APIView):
             if CHANGER.get('change_type').get('sms'):
                 is_valid, target = is_valid_sender_code('sms', data.get("auth_token", None), data.get("auth_key", None))
                 if is_valid and str(target) == str(data.get("mobile")):
-                    if login_auth_failed("get", data.get("mobile")):
+                    if login_auth_failed("get", str(data.get("mobile"))):
                         del data["auth_key"]
                         del data["auth_token"]
-                        UserCertificationInfo.objects.update_or_create(user_id=request.user, status=0, defaults=data)
-                        return self.get(request)
+                        data['status'] = 0
+
+                        if CertificationInfo.objects.filter(user_id=request.user).count() == 3:
+                            UserCertificationInfo.objects.update_or_create(defaults=data, user_id=request.user)
+                            return self.get(request)
+                        else:
+                            res.code = 1009
+                            res.msg = "请上传照片"
+                            return Response(res.dict)
                     else:
                         res.code = 1006
                         logger.error("username:%s failed too try , locked" % (request.user,))
@@ -655,7 +662,13 @@ class CertificationView(APIView):
                     res.code = 1001
                     res.msg = "短信验证码有误"
             else:
-                UserCertificationInfo.objects.update_or_create(user_id=request.user, status=0, defaults=data)
+                data['status'] = 0
+                if CertificationInfo.objects.filter(user_id=request.user).count() == 3:
+                    UserCertificationInfo.objects.update_or_create(defaults=data, user_id=request.user)
+                else:
+                    res.code = 1009
+                    res.msg = "请上传照片"
+                    return Response(res.dict)
                 return self.get(request)
         except Exception as e:
             logger.error("%s UserCertificationInfo save %s failed Exception: %s" % (request.user, data, e))

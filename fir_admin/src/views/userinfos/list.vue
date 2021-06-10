@@ -60,6 +60,13 @@
           {{ scope.row.download_times }}
         </template>
       </el-table-column>
+      <el-table-column label="应用数量" width="100" align="center">
+        <template slot-scope="scope">
+          <router-link :to="{name: 'app_info_list',params:{user_id:scope.row.id}}">
+            <el-link type="primary"> {{ scope.row.app_count }}</el-link>
+          </router-link>
+        </template>
+      </el-table-column>
       <el-table-column class-name="status-col" label="是否激活" width="80" align="center">
         <template slot-scope="scope">
           <el-tag :type="scope.row.is_active | statusFilter">{{ scope.row.is_active }}</el-tag>
@@ -68,13 +75,19 @@
 
       <el-table-column class-name="status-col" label="私有存储" width="80" align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.storage_active | statusFilter">{{ scope.row.storage_active }}</el-tag>
+          <router-link v-if="scope.row.storage_active" :to="{name: 'storage_info_list',params:{user_id:scope.row.id}}">
+            <el-link type="primary"> <el-tag :type="scope.row.storage_active | statusFilter">{{ scope.row.storage_active }}</el-tag></el-link>
+          </router-link>
+          <el-tag v-else :type="scope.row.storage_active | statusFilter">{{ scope.row.storage_active }}</el-tag>
         </template>
       </el-table-column>
 
       <el-table-column class-name="status-col" label="超级签" width="80" align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.supersign_active | statusFilter">{{ scope.row.supersign_active }}</el-tag>
+          <router-link v-if="scope.row.supersign_active" :to="{name: 'devices_info_list',params:{user_id:scope.row.id}}">
+            <el-link type="primary"> <el-tag :type="scope.row.supersign_active | statusFilter">{{ scope.row.supersign_active }}</el-tag></el-link>
+          </router-link>
+          <el-tag v-else :type="scope.row.supersign_active | statusFilter">{{ scope.row.supersign_active }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column class-name="status-col" label="实名认证" width="95" align="center">

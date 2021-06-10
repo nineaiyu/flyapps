@@ -489,7 +489,7 @@
             },
             canceledit() {
                 this.dialogaddDeveloperVisible = false;
-                this.editdeveloperinfo = {auth_type: 0,usable_number:100};
+                this.editdeveloperinfo = {auth_type: 0, usable_number: 100};
                 this.isedit = false;
                 this.placeholder = ""
             },

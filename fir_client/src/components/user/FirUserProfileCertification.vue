@@ -269,13 +269,17 @@
                         return false;
                     }
                 }
+                delete this.form['email'];
                 this.get_user_certification({methods: 'POST', data: this.form})
             },
             get_user_certification(params) {
                 user_certification(res => {
                     if (res.code === 1000) {
                         if (params.methods === 'POST') {
-                            this.$message.success("信息提交成功，正在审核中")
+                            this.$message.success("信息提交成功，正在审核中");
+                            this.cert_edit_flag = false;
+                            this.certification_status = 0;
+                            this.get_user_certification({methods: 'GET', data: {act: 'usercert'}});
                         }
                         if (res.data.usercert) {
                             this.certification = res.data.usercert;
@@ -302,28 +306,30 @@
                     "authcode": this.form.authcode,
                     "cptch_key": this.cptch.cptch_key,
                 };
-                if (!this.form.authcode) {
-                    this.$message.error("图片验证码输入有误");
-                    return;
-                }
-                let cptch_flag = this.form.authcode.length === this.cptch.length;
-                if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
-                    cptch_flag = true
-                }
-                if (cptch_flag) {
-                    let checkp = checkphone(this.form.mobile);
-                    if (!checkp) {
-                        this.$message.error("手机号输入有误");
+                if (this.cptch.cptch_image) {
+                    if (!this.form.authcode) {
+                        this.$message.error("图片验证码输入有误");
+                        return;
+                    }
+                    let cptch_flag = this.form.authcode.length === this.cptch.length;
+                    if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
+                        cptch_flag = true
+                    }
+                    if (!cptch_flag) {
+                        this.$message.error("图片验证码输入有误");
                         return
                     }
+                }
 
-                } else {
-                    this.$message.error("图片验证码输入有误");
+                let checkp = checkphone(this.form.mobile);
+                if (!checkp) {
+                    this.$message.error("手机号输入有误");
                     return
                 }
+
                 let params = {'act': act, 'target': target, 'ext': picode, 'user_id': target, 'ftype': 'certification'};
-                this.form.email = this.form.mobile;
                 if (this.cptch.geetest) {
+                    this.form.email = this.form.mobile;
                     geetest(this, params, (n_params) => {
                         this.get_phone_code(n_params);
                     })

@@ -189,6 +189,7 @@ export default {
     }
   },
   created() {
+    this.listQuery.user_id = this.$route.params && this.$route.params.user_id
     this.fetchData()
   },
   methods: {

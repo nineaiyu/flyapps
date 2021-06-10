@@ -19,7 +19,7 @@ from admin.views.user import UserInfoView, UserCertificationInfoView
 from admin.views.app import AppInfoView, AppReleaseInfoView
 from admin.views.storage import StorageInfoView, StorageChangeView
 from admin.views.order import OrderPayView, OrderInfoView
-from admin.views.supersign import DeveloperInfoView,DevicesInfoView
+from admin.views.supersign import DeveloperInfoView, DevicesInfoView
 
 urlpatterns = [
     # path("",include(router.urls)),

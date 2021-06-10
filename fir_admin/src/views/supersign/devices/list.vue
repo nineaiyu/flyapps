@@ -170,6 +170,8 @@ export default {
     }
   },
   created() {
+    this.listQuery.issuer_id = this.$route.params && this.$route.params.issuer_id
+    this.listQuery.user_id = this.$route.params && this.$route.params.user_id
     this.fetchData()
   },
   methods: {
@@ -178,6 +180,7 @@ export default {
       this.fetchData()
     },
     fetchData() {
+      console.log(this.listQuery)
       this.listLoading = true
       getDevicesInfo(this.listQuery).then(response => {
         this.list = response.data
