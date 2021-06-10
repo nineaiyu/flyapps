@@ -2,17 +2,12 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input v-model="listQuery.user_id" placeholder="用户ID" style="width: 140px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.payment_number" placeholder="payment_number" style="width: 300px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.order_number" placeholder="order_number" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.payment_name" placeholder="支付商家" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-select v-model="listQuery.payment_type" placeholder="支付类型" clearable class="filter-item" style="width: 140px" @change="handleFilter">
-        <el-option v-for="item in payment_type_choices" :key="item.id" :label="item.name" :value="item.id" />
-      </el-select>
-      <el-select v-model="listQuery.status" placeholder="订单状态" clearable class="filter-item" style="width: 140px" @change="handleFilter">
-        <el-option v-for="item in status_choices" :key="item.id" :label="item.name" :value="item.id" />
-      </el-select>
-      <el-select v-model="listQuery.order_type" placeholder="订单类型" clearable class="filter-item" style="width: 140px" @change="handleFilter">
-        <el-option v-for="item in order_type_choices" :key="item.id" :label="item.name" :value="item.id" />
+      <el-input v-model="listQuery.issuer_id" placeholder="issuer_id" style="width: 300px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.private_key_id" placeholder="private_key_id" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.certid" placeholder="证书ID" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.description" placeholder="备注" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-select v-model="listQuery.auth_type" placeholder="账户类型" clearable class="filter-item" style="width: 140px" @change="handleFilter">
+        <el-option v-for="item in auth_type_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
@@ -42,46 +37,44 @@
           </router-link>
         </template>
       </el-table-column>
-      <el-table-column label="支付商家" width="80px">
+      <el-table-column label="issuer_id" width="300">
         <template slot-scope="scope">
-          {{ scope.row.payment_name }}
+          {{ scope.row.issuer_id }}
         </template>
       </el-table-column>
-      <el-table-column label="订单号" align="center">
+      <el-table-column label="private_key_id" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.row.order_number }}</span>
+          <span>{{ scope.row.private_key_id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="第三方订单号" align="center">
+      <el-table-column label="certid" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.row.payment_number }}</span>
+          {{ scope.row.certid }}
         </template>
       </el-table-column>
-      <el-table-column label="实付金额" align="center" width="80px">
+      <el-table-column label="可用设备数" align="center" width="100">
         <template slot-scope="scope">
-          ￥ {{ scope.row.actual_amount/100 }}
+          {{ scope.row.usable_number }}
         </template>
       </el-table-column>
-      <el-table-column label="购买数量" align="center" width="90px">
+      <el-table-column label="消耗设备数" align="center" width="100">
         <template slot-scope="scope">
-          {{ scope.row.actual_download_times }}
+          {{ scope.row.use_number }}
         </template>
       </el-table-column>
-      <el-table-column label="赠送数量" align="center" width="90px">
+
+      <el-table-column class-name="status-col" label="账户类型" width="130" align="center">
         <template slot-scope="scope">
-          {{ scope.row.actual_download_gift_times }}
+          <el-tag :type="scope.row.auth_type | certStatusFilter">{{ scope.row| certLableFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column class-name="status-col" label="支付类型" width="95" align="center">
+
+      <el-table-column class-name="status-col" label="是否激活" width="80" align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.payment_type | payStatusFilter">{{ scope.row| payLableFilter }}</el-tag>
+          <el-tag :type="scope.row.is_actived | statusFilter">{{ scope.row.is_actived }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column class-name="status-col" label="订单状态" width="95" align="center">
-        <template slot-scope="scope">
-          <el-tag :type="scope.row.status | certStatusFilter">{{ scope.row| statusLableFilter }}</el-tag>
-        </template>
-      </el-table-column>
+
       <el-table-column align="center" prop="created_time" label="创建时间" width="120">
         <template slot-scope="scope">
           <i class="el-icon-time" />
@@ -90,17 +83,17 @@
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="created_time" label="支付时间" width="120">
+      <el-table-column align="center" prop="created_time" label="证书过期时间" width="120">
         <template slot-scope="scope">
           <i class="el-icon-time" />
-          <el-tooltip :content="scope.row.pay_time">
-            <span>{{ scope.row.pay_time|formatTime }}</span>
+          <el-tooltip :content="scope.row.updated_time">
+            <span>{{ scope.row.cert_expire_time|formatTime }}</span>
           </el-tooltip>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <router-link :to="{name: 'order_info_edit',params:{id:scope.row.id}}">
+          <router-link :to="{name: 'developer_user_info_edit',params:{id:scope.row.id}}">
             <el-button type="primary" size="mini">
               查看编辑
             </el-button>
@@ -117,46 +110,42 @@
 </template>
 
 <script>
-import { getOrderInfo } from '@/api/order'
-import { baseFilter } from '@/utils'
+import { getDeveloperInfo } from '@/api/developer'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
 
 const sortOptions = [
   { label: '创建时间 Ascending', key: 'created_time' },
   { label: '创建时间 Descending', key: '-created_time' },
-  { label: '付款时间 Ascending', key: 'pay_time' },
-  { label: '付款时间 Descending', key: '-pay_time' }
+  { label: '更新时间 Ascending', key: 'updated_time' },
+  { label: '更新时间 Descending', key: '-updated_time' },
+  { label: '证书过期时间 Ascending', key: 'cert_expire_time' },
+  { label: '证书过期时间 Descending', key: '-cert_expire_time' }
 ]
 
 export default {
-  name: 'OrderInfo',
+  name: 'StorageInfo',
   components: { Pagination },
   directives: { waves },
   filters: {
     formatTime(time) {
-      if (time) {
-        return time.split('T')[0]
-      }
-    },
-    payStatusFilter(status) {
-      const statusMap = {
-        '0': 'gray',
-        '1': 'success' }
-      return statusMap[status]
+      return time.split('T')[0]
     },
     certStatusFilter(status) {
       const statusMap = {
-        '0': 'success',
-        '1': 'info',
-        '2': 'gray' }
+        '0': 'danger',
+        '1': 'success',
+        '2': 'gray',
+        '3': 'info'
+      }
       return statusMap[status]
     },
-    payLableFilter(row) {
-      return baseFilter(row.payment_type, row.payment_type_choices)
-    },
-    statusLableFilter(row) {
-      return baseFilter(row.status, row.status_choices)
+    certLableFilter(row) {
+      for (const v of row.auth_type_choices) {
+        if (v.id === row.auth_type) {
+          return v.name
+        }
+      }
     },
     statusFilter(status) {
       const statusMap = {
@@ -189,27 +178,20 @@ export default {
       listQuery: {
         page: 1,
         limit: 10,
-        user_id: undefined,
         sort: '-created_time',
-        payment_type: undefined,
-        payment_name: undefined,
-        payment_number: undefined,
-        order_number: undefined,
-        status: undefined,
-        order_type: undefined
+        issuer_id: undefined,
+        private_key_id: undefined,
+        certid: undefined,
+        description: undefined,
+        user_id: undefined,
+        auth_type: undefined
       },
       sortOptions,
-      payment_type_choices: [],
-      status_choices: [],
-      order_type_choices: []
+      auth_type_choices: []
     }
   },
   created() {
     this.fetchData()
-  }, mounted() {
-    if (this.$route.query.user_id) {
-      this.listQuery.user_id = this.$route.query.user_id
-    }
   },
   methods: {
     handleFilter() {
@@ -218,12 +200,10 @@ export default {
     },
     fetchData() {
       this.listLoading = true
-      getOrderInfo(this.listQuery).then(response => {
+      getDeveloperInfo(this.listQuery).then(response => {
         this.list = response.data
         if (this.list && this.list.length > 0) {
-          this.payment_type_choices = this.list[0].payment_type_choices
-          this.status_choices = this.list[0].status_choices
-          this.order_type_choices = this.list[0].order_type_choices
+          this.auth_type_choices = this.list[0].auth_type_choices
         }
         this.total = response.total
         this.listLoading = false

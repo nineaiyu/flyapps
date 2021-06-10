@@ -24,7 +24,7 @@
                 </div>
 
                 <el-form-item label-width="110px" label="设备数量" style="text-align: left">
-                    <el-input-number v-model="editdeveloperinfo.usable_number" :min="0" :max="100" label="设备数量"></el-input-number>
+                    <el-input-number v-model="editdeveloperinfo.usable_number" :min="0" :max="100" label="设备数量"/>
                 </el-form-item>
 
                 <el-form-item label-width="110px" label="备注">
@@ -220,7 +220,7 @@
                     </div>
 
                     <el-form-item label-width="110px" label="设备数量" style="text-align: left">
-                        <el-input-number v-model="editdeveloperinfo.usable_number" :min="0" :max="100" label="设备数量"></el-input-number>
+                        <el-input-number v-model="editdeveloperinfo.usable_number" :min="0" :max="100" label="设备数量"/>
                     </el-form-item>
 
                     <el-form-item label-width="110px" label="备注">

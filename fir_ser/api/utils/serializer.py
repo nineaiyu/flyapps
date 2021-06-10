@@ -407,6 +407,16 @@ class DeveloperSerializer(serializers.ModelSerializer):
     def get_developer_used_other_number(self, obj):
         return get_developer_udided(obj)[0]
 
+class  AdminDeveloperSerializer(DeveloperSerializer):
+    class Meta:
+        model = models.AppIOSDeveloperInfo
+        # depth = 1
+        exclude = [ "p8key",]
+
+    auth_type_choices = serializers.SerializerMethodField()
+
+    def get_auth_type_choices(self, obj):
+        return get_choices_dict(obj.auth_type_choices)
 
 class SuperSignUsedSerializer(serializers.ModelSerializer):
     class Meta:
@@ -434,6 +444,31 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
     def get_bundle_name(self, obj):
         return obj.app_id.name
 
+
+class AdminSuperSignUsedSerializer(SuperSignUsedSerializer):
+    class Meta:
+        model = models.APPSuperSignUsedInfo
+        fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name","app_id","id","user_id","short","developer_pk"]
+
+    app_id = serializers.SerializerMethodField()
+
+    def get_app_id(self, obj):
+        return obj.app_id.pk
+
+    user_id = serializers.SerializerMethodField()
+
+    def get_user_id(self, obj):
+        return obj.user_id.pk
+
+    short = serializers.SerializerMethodField()
+
+    def get_short(self, obj):
+        return obj.app_id.short
+
+    developer_pk = serializers.SerializerMethodField()
+
+    def get_developer_pk(self, obj):
+        return obj.developerid.pk
 
 class DeviceUDIDSerializer(serializers.ModelSerializer):
     class Meta:

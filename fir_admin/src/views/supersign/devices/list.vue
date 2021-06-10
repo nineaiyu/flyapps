@@ -2,13 +2,12 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input v-model="listQuery.user_id" placeholder="用户ID" style="width: 140px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.bucket_name" placeholder="bucket_name" style="width: 300px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.access_key" placeholder="access_key" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.name" placeholder="存储名称" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.domain_name" placeholder="下载域名" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-select v-model="listQuery.storage_type" placeholder="存储类型" clearable class="filter-item" style="width: 140px" @change="handleFilter">
-        <el-option v-for="item in storage_choices" :key="item.id" :label="item.name" :value="item.id" />
-      </el-select>
+      <el-input v-model="listQuery.issuer_id" placeholder="开发者issuer_id" style="width: 300px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.udid" placeholder="设备UDID" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.name" placeholder="应用名称" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.bundle_id" placeholder="BundleID" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.short" placeholder="短连接" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+
       <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
@@ -37,31 +36,41 @@
           </router-link>
         </template>
       </el-table-column>
-      <el-table-column label="存储名称">
+      <el-table-column label="应用ID" width="100" align="center">
         <template slot-scope="scope">
-          {{ scope.row.name }}
+          <router-link :to="{name: 'app_info_edit',params:{id:scope.row.app_id}}">
+            <el-link type="primary"> {{ scope.row.app_id }}</el-link>
+          </router-link>
         </template>
       </el-table-column>
-      <el-table-column label="存储访问access_key" align="center">
+      <el-table-column label="开发者issuer_id" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.row.access_key }}</span>
+          <router-link :to="{name: 'developer_user_info_edit',params:{id:scope.row.developer_pk}}">
+            <el-link type="primary"> {{ scope.row.developer_id }}</el-link>
+          </router-link>
         </template>
       </el-table-column>
-      <el-table-column label="存储空间bucket_name" align="center">
+      <el-table-column label="应用名称" align="center" >
         <template slot-scope="scope">
-          {{ scope.row.bucket_name }}
+          {{ scope.row.bundle_name }}
         </template>
       </el-table-column>
-      <el-table-column label="下载域名" align="center">
+      <el-table-column label="短连接" align="center" width="100">
         <template slot-scope="scope">
-          {{ scope.row.domain_name }}
+          {{ scope.row.short }}
         </template>
       </el-table-column>
-      <el-table-column class-name="status-col" label="存储类型" width="95" align="center">
+      <el-table-column label="BundleID" align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.storage_type | certStatusFilter">{{ scope.row| certLableFilter }}</el-tag>
+          {{ scope.row.bundle_id }}
         </template>
       </el-table-column>
+      <el-table-column label="设备UDID" align="center" width="350">
+        <template slot-scope="scope">
+          {{ scope.row.device_udid }}
+        </template>
+      </el-table-column>
+
       <el-table-column align="center" prop="created_time" label="创建时间" width="120">
         <template slot-scope="scope">
           <i class="el-icon-time" />
@@ -70,21 +79,9 @@
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="created_time" label="更新时间" width="120">
-        <template slot-scope="scope">
-          <i class="el-icon-time" />
-          <el-tooltip :content="scope.row.updated_time">
-            <span>{{ scope.row.updated_time|formatTime }}</span>
-          </el-tooltip>
-        </template>
-      </el-table-column>
+
       <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <router-link :to="{name: 'storage_info_edit',params:{id:scope.row.id}}">
-            <el-button type="primary" size="mini">
-              查看编辑
-            </el-button>
-          </router-link>
           <el-button type="danger" size="mini" @click="deleteApp(scope.row.id)">
             删除
           </el-button>
@@ -97,19 +94,17 @@
 </template>
 
 <script>
-import { getStorageInfo } from '@/api/storage'
+import { getDevicesInfo } from '@/api/devices'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
 
 const sortOptions = [
-  { label: '创建时间 Ascending', key: 'reviewed_time' },
-  { label: '创建时间 Descending', key: '-reviewed_time' },
-  { label: '更新时间 Ascending', key: 'created_time' },
-  { label: '更新时间 Descending', key: '-created_time' }
+  { label: '创建时间 Ascending', key: 'created_time' },
+  { label: '创建时间 Descending', key: '-created_time' }
 ]
 
 export default {
-  name: 'StorageInfo',
+  name: 'DevicesInfo',
   components: { Pagination },
   directives: { waves },
   filters: {
@@ -126,8 +121,8 @@ export default {
       return statusMap[status]
     },
     certLableFilter(row) {
-      for (const v of row.storage_choices) {
-        if (v.id === row.storage_type) {
+      for (const v of row.auth_type_choices) {
+        if (v.id === row.auth_type) {
           return v.name
         }
       }
@@ -163,16 +158,15 @@ export default {
       listQuery: {
         page: 1,
         limit: 10,
-        name: undefined,
         sort: '-created_time',
-        bucket_name: undefined,
-        access_key: undefined,
-        storage_type: undefined,
-        domain_name: undefined,
-        user_id: undefined
+        issuer_id: undefined,
+        short: undefined,
+        bundle_id: undefined,
+        name: undefined,
+        user_id: undefined,
+        udid: undefined
       },
-      sortOptions,
-      storage_choices: []
+      sortOptions
     }
   },
   created() {
@@ -185,10 +179,10 @@ export default {
     },
     fetchData() {
       this.listLoading = true
-      getStorageInfo(this.listQuery).then(response => {
+      getDevicesInfo(this.listQuery).then(response => {
         this.list = response.data
         if (this.list && this.list.length > 0) {
-          this.storage_choices = this.list[0].storage_choices
+          this.auth_type_choices = this.list[0].auth_type_choices
         }
         this.total = response.total
         this.listLoading = false

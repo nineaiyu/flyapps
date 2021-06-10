@@ -144,7 +144,7 @@ export default {
       return statusMap[status]
     },
     certLableFilter(row) {
-      return baseFilter(row.certification,row.certification_status_choices)
+      return baseFilter(row.certification, row.certification_status_choices)
     }
   },
   data() {

@@ -100,10 +100,10 @@ import Pagination from '@/components/Pagination' // secondary package based on e
 import waves from '@/directive/waves' // waves directive
 
 const sortOptions = [
-  { label: '创建时间 Ascending', key: 'reviewed_time' },
-  { label: '创建时间 Descending', key: '-reviewed_time' },
-  { label: '更新时间 Ascending', key: 'created_time' },
-  { label: '更新时间 Descending', key: '-created_time' }
+  { label: '创建时间 Ascending', key: 'created_time' },
+  { label: '创建时间 Descending', key: '-created_time' },
+  { label: '更新时间 Ascending', key: 'updated_time' },
+  { label: '更新时间 Descending', key: '-updated_time' }
 ]
 
 export default {
@@ -176,7 +176,7 @@ export default {
   },
   created() {
     this.fetchData()
-  },mounted() {
+  }, mounted() {
     if (this.$route.query.user_id) {
       this.listQuery.user_id = this.$route.query.user_id
     }

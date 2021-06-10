@@ -10,18 +10,32 @@
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="存储名称">
+          <el-form-item label="issuer_id">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.name" />
+                <el-input v-model="postForm.issuer_id" />
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="存储类型">
+          <el-form-item label="可使用设备数">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-select v-model="postForm.storage_type" class="filter-item" disabled>
-                  <el-option v-for="item in postForm.storage_choices" :key="item.id" :label="item.name" :value="item.id" />
+                <el-input-number v-model="postForm.usable_number" :min="0" :max="100" label="可使用设备数" />
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item label="已消耗设备数">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input-number v-model="postForm.use_number" :min="0" :max="100" label="已消耗设备数" />
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item label="账户类型">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-select v-model="postForm.auth_type" class="filter-item" disabled>
+                  <el-option v-for="item in postForm.auth_type_choices" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </el-col>
             </el-row>
@@ -40,7 +54,7 @@
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="存储描述信息">
+          <el-form-item label="描述信息">
             <el-row :gutter="12">
               <el-col :span="16">
                 <el-input v-model="postForm.description" :autosize="{ minRows: 4, maxRows: 6}" type="textarea" />
@@ -49,61 +63,49 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-
-          <el-form-item label="存储访问access_key" label-width="160px">
+          <el-form-item label="账户状态" label-width="160px">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.access_key" />
+                <el-tooltip :content="postForm.is_actived|userStatusFilter" placement="top">
+                  <el-switch
+                    v-model="postForm.is_actived"
+                    active-color="#13ce66"
+                    inactive-color="#ff4949"
+                    :active-value="true"
+                    :inactive-value="false"
+                  />
+                </el-tooltip>
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="存储访问secret_key" label-width="160px">
-            <el-row :gutter="12">
-              <el-col :span="16">
-                <el-input v-model="postForm.secret_key" />
+          <el-form-item label="证书过期时间" prop="timestamp" label-width="160px">
+            <el-row :gutter="20">
+              <el-col :span="8">
+                <el-date-picker :value="postForm.cert_expire_time" type="datetime" disabled />
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="存储空间bucket_name" label-width="160px">
+          <el-form-item label="private_key_id" label-width="160px">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.bucket_name" />
+                <el-input v-model="postForm.private_key_id" />
               </el-col>
             </el-row>
           </el-form-item>
-          <div v-if="postForm.storage_type===2">
-            <el-form-item label="阿里云sts_role_arn" label-width="160px">
-              <el-row :gutter="12">
-                <el-col :span="16">
-                  <el-input v-model="postForm.sts_role_arn" />
-                </el-col>
-              </el-row>
-            </el-form-item>
-
-            <el-form-item label="阿里云endpoint" label-width="160px">
-              <el-row :gutter="12">
-                <el-col :span="16">
-                  <el-input v-model="postForm.endpoint" />
-                </el-col>
-              </el-row>
-            </el-form-item>
-            <el-form-item label="阿里云下载授权方式" label-width="160px">
-              <el-row :gutter="12">
-                <el-col :span="16">
-                  <el-select v-model="postForm.download_auth_type" class="filter-item" style="width: 100%">
-                    <el-option v-for="item in postForm.download_auth_type_choices" :key="item.id" :label="item.name" :value="item.id" />
-                  </el-select>
-                </el-col>
-              </el-row>
-            </el-form-item>
-            <el-form-item v-if="postForm.download_auth_type===2" label="阿里云cnd_auth_key" label-width="160px">
-              <el-row :gutter="12">
-                <el-col :span="16">
-                  <el-input v-model="postForm.cnd_auth_key" />
-                </el-col>
-              </el-row>
-            </el-form-item>
-          </div>
+          <el-form-item label="p8key" label-width="160px">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input v-model="postForm.p8key" :autosize="{ minRows: 4, maxRows: 6}" type="textarea" />
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item label="certid" label-width="160px">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input v-model="postForm.certid" />
+              </el-col>
+            </el-row>
+          </el-form-item>
         </el-col>
       </el-row>
     </el-form>
@@ -118,29 +120,36 @@
 </template>
 
 <script>
-import { getStorageInfo, updateStorageInfo } from '@/api/storage'
+import { getDeveloperInfo, updatedeveloperInfo } from '@/api/developer'
 
 const defaultForm = {
   user_id: undefined,
-  name: undefined,
-  storage_type: undefined,
-  access_key: undefined,
-  secret_key: undefined,
-  bucket_name: undefined,
-  domain_name: undefined,
+  is_actived: undefined,
+  issuer_id: undefined,
+  private_key_id: undefined,
+  p8key: undefined,
+  certid: undefined,
   created_time: undefined,
   description: undefined,
-  sts_role_arn: undefined,
-  endpoint: undefined,
-  download_auth_type: undefined,
-  cnd_auth_key: undefined,
+  usable_number: undefined,
+  use_number: undefined,
+  auth_type: undefined,
+  cert_expire_time: undefined,
   updated_time: undefined,
-  download_auth_type_choices: []
+  auth_type_choices: []
 }
 
 export default {
-  name: 'StorageDetail',
-  components: { }, filters: {},
+  name: 'DeveloperDetail',
+  components: { }, filters: {
+    userStatusFilter(status) {
+      const statusMap = {
+        true: '激活，允许使用',
+        false: '禁用，禁止使用'
+      }
+      return statusMap[status]
+    }
+  },
   data() {
     return {
       postForm: Object.assign({}, defaultForm),
@@ -155,7 +164,7 @@ export default {
   },
   methods: {
     fetchData(id) {
-      getStorageInfo({ id: id }).then(response => {
+      getDeveloperInfo({ id: id }).then(response => {
         if (response.data.length === 1) {
           this.postForm = response.data[0]
         }
@@ -164,7 +173,7 @@ export default {
       })
     },
     updateData() {
-      updateStorageInfo(this.postForm).then(response => {
+      updatedeveloperInfo(this.postForm).then(response => {
         this.$message.success('更新成功')
         this.postForm = response.data
       }).catch(err => {

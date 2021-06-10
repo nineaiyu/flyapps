@@ -238,8 +238,7 @@
 <script>
 import { validURL } from '@/utils/validate'
 import { getUserInfos, updateUserInfo } from '@/api/user'
-import { getStorageInfo,changeStorageInfo } from '@/api/storage'
-import { CommentDropdown, PlatformDropdown, SourceUrlDropdown } from './Dropdown'
+import { getStorageInfo, changeStorageInfo } from '@/api/storage'
 
 const defaultForm = {
   email: undefined,
@@ -268,7 +267,7 @@ const defaultForm = {
 
 export default {
   name: 'UserDetail',
-  components: { CommentDropdown, PlatformDropdown, SourceUrlDropdown }, filters: {
+  components: { }, filters: {
     userStatusFilter(status) {
       const statusMap = {
         true: '激活，允许登录',
@@ -342,7 +341,7 @@ export default {
   },
   methods: {
     changeStorageData(force) {
-      changeStorageInfo({id: this.postForm.id, use_storage_id: this.postForm.storage,force: force}).then(response => {
+      changeStorageInfo({ id: this.postForm.id, use_storage_id: this.postForm.storage, force: force }).then(response => {
         this.$message.success('存储数据迁移并设置刷新成功')
       }).catch(err => {
         console.log(err)

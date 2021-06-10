@@ -137,18 +137,6 @@ export const constantRoutes = [
         hidden: true
       }
     ]
-  },
-  {
-    path: '/sign',
-    component: Layout,
-    children: [
-      {
-        path: 'index',
-        name: 'index',
-        component: () => import('@/views/form/index'),
-        meta: { title: '超级签名', icon: 'form' }
-      }
-    ]
   }, {
     path: '/authentication',
     component: Layout,
@@ -185,8 +173,53 @@ export const constantRoutes = [
         hidden: true
       }
     ]
-  },
-  {
+  }, {
+    path: '/supersign',
+    component: Layout,
+    redirect: '/supersign/developer',
+    name: '超级签名',
+    meta: {
+      title: '超级签名',
+      icon: 'nested'
+    },
+    children: [
+      {
+        path: 'developer',
+        name: 'developer',
+        redirect: '/supersign/developer/list',
+        component: () => import('@/views/supersign/index'),
+        children: [
+          {
+            path: 'list',
+            name: 'developer_user_info_list',
+            component: () => import('@/views/supersign/developer/list'),
+            meta: { title: '苹果开发者', icon: 'form' }
+          },
+          {
+            path: 'edit/:id(\\d+)',
+            component: () => import('@/views/supersign/developer/Detail'),
+            name: 'developer_user_info_edit',
+            meta: { title: '编辑信息', noCache: true, activeMenu: '/supersign/list' },
+            hidden: true
+          }
+        ]
+      },
+      {
+        path: 'devices',
+        name: 'devices',
+        redirect: '/supersign/devices/list',
+        component: () => import('@/views/supersign/index'),
+        children: [
+          {
+            path: 'list',
+            name: 'devices_info_list',
+            component: () => import('@/views/supersign/devices/list'),
+            meta: { title: '设备消耗', icon: 'form' }
+          },
+        ]
+      }
+    ]
+  }, {
     path: '/settings',
     component: Layout,
     redirect: '/settings/email',
