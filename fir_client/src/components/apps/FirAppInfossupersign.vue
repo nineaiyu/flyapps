@@ -29,8 +29,7 @@
 
 
                 <el-tooltip content="本应用签名使用额度，超过该额度，新设备将无法安装本应用。0代表不限额" placement="top">
-                    <el-input-number v-model="currentapp.supersign_limit_number" :disabled="supersign_disable"
-                                     :placeholder="defualt_dtitle" :min="0"
+                    <el-input-number v-model="currentapp.supersign_limit_number" :disabled="supersign_disable" :min="0"
                                      style="width: 40%;margin-right: 10px" label="签名限额"/>
                 </el-tooltip>
 
@@ -72,6 +71,16 @@
                 </el-button>
             </el-form-item>
 
+            <el-form-item label-width="200px" label="自定义应用名称">
+                <el-input v-model="currentapp.new_bundle_name" clearable :disabled="supersign_disable"
+                          style="width: 60%;margin-right: 10px" prefix-icon="el-icon-s-data"
+                          :placeholder="defualt_dtitle_name"/>
+                <el-button @click="saveappinfo({new_bundle_name:currentapp.new_bundle_name})"
+                           :disabled="supersign_disable"
+                >保存
+                </el-button>
+            </el-form-item>
+
         </el-form>
         <el-link v-else :underline="false" type="warning"> 该用户暂未开通超级签权限,请联系管理员申请开通</el-link>
     </div>
@@ -94,7 +103,8 @@
                 supersign_disable: true,
                 sign_type_list: [],
                 sign_type: 0,
-                defualt_dtitle: ''
+                defualt_dtitle: '',
+                defualt_dtitle_name: ''
             }
         },
         methods: {
@@ -170,6 +180,11 @@
                 } else {
                     this.defualt_dtitle = currentapp.bundle_id
                 }
+                if (this.currentapp.new_bundle_name && currentapp.new_bundle_name.length > 0) {
+                    this.defualt_dtitle_name = currentapp.new_bundle_name
+                } else {
+                    this.defualt_dtitle_name = currentapp.name
+                }
             },
             appinit() {
                 this.currentapp = this.$store.state.currentapp;
@@ -192,6 +207,11 @@
             'currentapp.new_bundle_id': function () {
                 if (!this.currentapp.new_bundle_id || this.currentapp.new_bundle_id.length === 0) {
                     this.defualt_dtitle = this.currentapp.bundle_id
+                }
+            },
+            'currentapp.new_bundle_name': function () {
+                if (!this.currentapp.new_bundle_name || this.currentapp.new_bundle_name.length === 0) {
+                    this.defualt_dtitle_name = this.currentapp.name
                 }
             }
         }, computed: {}

@@ -192,6 +192,7 @@ class AppInfoView(APIView):
                                 do_sign_flag = 1
                             apps_obj.supersign_type = data.get("supersign_type", apps_obj.supersign_type)
                         new_bundle_id = data.get("new_bundle_id", None)
+                        new_bundle_name = data.get("new_bundle_name", None)
                         if new_bundle_id and new_bundle_id != apps_obj.bundle_id and len(new_bundle_id) > 3:
                             if new_bundle_id != apps_obj.new_bundle_id:
                                 do_sign_flag = 2
@@ -200,6 +201,15 @@ class AppInfoView(APIView):
                             if new_bundle_id != apps_obj.new_bundle_id:
                                 do_sign_flag = 2
                             apps_obj.new_bundle_id = None
+
+                        if new_bundle_name and new_bundle_name != apps_obj.name and len(new_bundle_name) > 0:
+                            if new_bundle_name != apps_obj.new_bundle_name:
+                                do_sign_flag = 2
+                            apps_obj.new_bundle_name = new_bundle_name
+                        if new_bundle_name == '':
+                            if new_bundle_name != apps_obj.new_bundle_name:
+                                do_sign_flag = 2
+                            apps_obj.new_bundle_name = None
 
                     apps_obj.wxredirect = data.get("wxredirect", apps_obj.wxredirect)
                     if apps_obj.type == 1 and data.get('issupersign', -1) != -1:

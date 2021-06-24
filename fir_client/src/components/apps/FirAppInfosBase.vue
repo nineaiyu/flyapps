@@ -17,7 +17,14 @@
                         <el-tooltip content="下载量" placement="top">
                             <span><i class="el-icon-cloudy"/><b class="short">{{ appinfos.count_hits }}</b></span>
                         </el-tooltip>
-                        <span class="bundleid ng-binding">BundleID<b class="ng-binding">&nbsp;&nbsp;{{ appinfos.bundle_id }}</b></span>
+                        <span class="bundleid ng-binding">BundleID<b class="ng-binding">
+                          <el-tooltip content="复制到剪切板" placement="top">
+                             <span class="bundleid short"
+                                   v-clipboard:copy="appinfos.bundle_id"
+                                   v-clipboard:success="copy_success"
+                             >&nbsp;{{appinfos.bundle_id }}</span>
+                        </el-tooltip>
+                        </b></span>
                         <span class="version ng-scope">{{ master_release.minimum_os_version }}&nbsp; 或者高版本</span>
                         <span class="short ng-scope" v-if="appinfos.issupersign">超级签</span>
 

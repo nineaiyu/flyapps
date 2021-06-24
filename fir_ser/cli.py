@@ -15,6 +15,14 @@ import oss2
 import requests
 from androguard.core.bytecodes import apk
 
+'''
+pip install --upgrade pip
+pip install setuptools-rust
+pip install oss2
+pip install requests-toolbelt
+pip install androguard
+'''
+
 
 def upload_aliyunoss(access_key_id, access_key_secret, security_token, endpoint, bucket, file_path, file_name):
     stsauth = oss2.StsAuth(access_key_id, access_key_secret, security_token)

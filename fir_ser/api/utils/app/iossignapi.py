@@ -44,7 +44,7 @@ class ResignApp(object):
     def __init__(self, my_local_key, app_dev_pem):
         self.my_local_key = my_local_key
         self.app_dev_pem = app_dev_pem
-        self.cmd = "isign  -c '%s'  -k '%s' " % (self.app_dev_pem, self.my_local_key)
+        self.cmd = "zsign  -c '%s'  -k '%s' " % (self.app_dev_pem, self.my_local_key)
 
     @staticmethod
     def sign_mobileconfig(mobilconfig_path, sign_mobilconfig_path, ssl_pem_path, ssl_key_path):
@@ -58,10 +58,8 @@ class ResignApp(object):
             info_plist_properties = {}
         properties = ""
         for k, v in info_plist_properties.items():
-            properties += "%s=%s," % (k, v)
-        if properties:
-            properties = " -i '%s' " % properties[0:-1]
-        self.cmd = self.cmd + " %s -p '%s' -o '%s'  '%s'" % (properties, new_profile, new_ipa, org_ipa)
+            properties += " %s '%s' " % (k, v)
+        self.cmd = self.cmd + " %s -m '%s' -o '%s' -z 9 '%s'" % (properties, new_profile, new_ipa, org_ipa)
         return exec_shell(self.cmd)
 
 
