@@ -93,16 +93,17 @@ class DeveloperView(APIView):
                         IosUtils.clean_developer(developer_obj, request.user)
                         status, result = IosUtils.revoke_developer_cert(developer_obj, request.user)
                         if status:
-                            status, result = IosUtils.create_developer_cert(developer_obj, request.user)
-                            if status:
-                                IosUtils.get_device_from_developer(developer_obj, request.user)
-                            else:
-                                res.code = 1008
-                                res.msg = result.get("err_info")
-                                return Response(res.dict)
+                            pass
+                            # status, result = IosUtils.create_developer_cert(developer_obj, request.user)
+                            # if status:
+                            #     IosUtils.get_device_from_developer(developer_obj, request.user)
+                            # else:
+                            #     res.code = 1008
+                            #     res.msg = result.get("err_info")
+                            #     return Response(res.dict)
                         else:
                             res.code = 1008
-                            res.msg = result.get("err_info")
+                            res.msg = result.get("err_info", '')
                             return Response(res.dict)
                 elif act == "syncdevice":
                     status, result = IosUtils.get_device_from_developer(developer_obj, request.user)
@@ -185,6 +186,7 @@ class DeveloperView(APIView):
             logger.error("user %s delete developer %s " % (
                 request.user, developer_obj))
             IosUtils.clean_developer(developer_obj, request.user)
+            IosUtils.revoke_developer_cert(developer_obj, request.user)
             developer_obj.delete()
 
         return self.get(request)
@@ -264,6 +266,8 @@ class SuperSignCertView(APIView):
         issuer_id = request.query_params.get('issuer_id', None)
         if issuer_id:
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=issuer_id).first()
+            # resign_app_obj = IosUtils.get_resign_obj(request.user, developer_obj)
+            # resign_app_obj.make_p12_from_cert(developer_obj.certid)
             if developer_obj:
                 zip_file_path = IosUtils.zip_cert(request.user, developer_obj)
                 response = FileResponse(open(zip_file_path, 'rb'))
@@ -286,6 +290,7 @@ class SuperSignCertView(APIView):
                 if not status:
                     res.code = 1002
                     res.msg = str(result['err_info'])
+                    return Response(res.dict)
                 status, result = IosUtils.auto_get_certid_by_p12(developer_obj, request.user)
                 if not status:
                     res.code = 1003

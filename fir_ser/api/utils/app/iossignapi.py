@@ -65,6 +65,9 @@ class ResignApp(object):
             p12.set_privatekey(private_key)
             with open(self.app_dev_p12, 'wb+') as f:
                 f.write(p12.export(password))
+            if password:
+                with open(self.app_dev_p12 + '.pwd', 'w') as f:
+                    f.write(password)
             return True, p12.get_friendlyname()
         except Exception as e:
             result["err_info"] = e
@@ -191,9 +194,16 @@ class AppDeveloperApiV2(object):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            if apple_obj.revoke_certificate(cert_id):
-                logger.info("ios developer cert %s revoke  result:%s" % cert_id)
-                return True, result
+            cert_obj = apple_obj.get_certificate_by_cid(cert_id)
+            if cert_obj:
+                s_date = format_apple_date(cert_obj.expirationDate)
+                if s_date.timestamp() - datetime.datetime.now().timestamp() < 3600 * 24 * 3:
+                    if apple_obj.revoke_certificate(cert_id):
+                        logger.info("ios developer cert %s revoke" % cert_id)
+                        return True, result
+                else:
+                    logger.info("ios developer cert %s not revoke.because expire time < 3 day " % cert_id)
+                    return True, result
         except Exception as e:
             logger.error("ios developer cert %s revoke Failed Exception:%s" % (cert_id, e))
             result['return_info'] = "%s" % e
@@ -208,6 +218,7 @@ class AppDeveloperApiV2(object):
             certificates = apple_obj.get_all_certificates()
             for cert_obj in certificates:
                 f_date = format_apple_date(cert_obj.expirationDate)
+                logger.info("%s-%s - %s " % (cert_obj.id, not_after.timestamp(), f_date.timestamp()))
                 if not_after.timestamp() == f_date.timestamp():
                     return True, cert_obj
             return False, result

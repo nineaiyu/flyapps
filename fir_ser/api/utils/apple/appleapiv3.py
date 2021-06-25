@@ -21,7 +21,10 @@ logger = logging.getLogger(__file__)
 #
 
 def request_format_log(req):
-    logger.info("url:%s header:%s code:%s body:%s" % (req.url, req.headers, req.status_code, req.content))
+    try:
+        logger.info("url:%s header:%s code:%s body:%s" % (req.url, req.headers, req.status_code, req.content))
+    except Exception as e:
+        logger.error(e)
     return req
 
 
@@ -741,6 +744,10 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
 
     def get_all_certificates(self):
         req = self.list_certificate()
+        return self.__certificates_store(req)
+
+    def get_certificate_by_cid(self, certificate_id):
+        req = self.list_certificate_by_certificate_id(certificate_id)
         return self.__certificates_store(req)
 
     def list_device_by_udid(self, udid):

@@ -698,7 +698,9 @@ class IosUtils(object):
                     developer_obj.cert_expire_time = format_apple_date(cert_obj.expirationDate)
                     break
             developer_obj.is_actived = True
-            developer_obj.save()
+        else:
+            developer_obj.is_actived = False
+        developer_obj.save()
         return status, result
 
     @staticmethod
@@ -712,6 +714,8 @@ class IosUtils(object):
                 AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
                     is_actived=True,
                     certid=cert_id, cert_expire_time=format_apple_date(result.expirationDate))
+                resign_app_obj = IosUtils.get_resign_obj(user_obj, developer_obj)
+                resign_app_obj.make_p12_from_cert(cert_id)
         return status, result
 
     @staticmethod
@@ -719,7 +723,8 @@ class IosUtils(object):
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)
         status, result = app_api_obj.revoke_cert(developer_obj.certid)
-        if status:
+        if not status:
+            logger.warning('%s revoke cert failed,but i need clean cert_id %s' % (developer_obj.issuer_id, result))
             AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
                 is_actived=True,
                 certid=None, cert_expire_time=None)

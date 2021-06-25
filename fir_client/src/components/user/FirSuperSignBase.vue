@@ -65,13 +65,16 @@
                     </el-button>
                     <el-button v-if="isedit && editdeveloperinfo.is_actived" size="small" @click="syncdevices">同步设备信息
                     </el-button>
-                    <el-button v-if="isedit && editdeveloperinfo.is_actived && !editdeveloperinfo.certid" size="small"
-                               @click="isocertcert">手动创建发布证书
-                    </el-button>
                     <el-tooltip content="发布证书只能创建两个，请谨慎操作">
+                        <el-button v-if="isedit && editdeveloperinfo.is_actived && !editdeveloperinfo.certid"
+                                   size="small"
+                                   @click="isocertcert">手动创建发布证书
+                        </el-button>
+                    </el-tooltip>
+                    <el-tooltip content="清理发布证书，如果发布证书过期时间大于3天，将不会删除开发者发布证书，发布证书只能同时创建两个，请谨慎操作">
                         <el-button v-if="isedit && editdeveloperinfo.is_actived && editdeveloperinfo.certid"
                                    size="small"
-                                   @click="isorenewcert">删除并创建新发布证书
+                                   @click="isorenewcert">删除发布证书
                         </el-button>
                     </el-tooltip>
                     <el-button v-if="isedit && editdeveloperinfo.is_actived" type="danger" size="small"
@@ -485,7 +488,7 @@
         },
         methods: {
             beforeAvatarUpload(file) {
-                const isLt2M = file.size / 1024 / 1024 < 1;
+                const isLt2M = file.size / 1024 / 1024 < 2;
                 if (file.type === 'application/x-pkcs12') {
                     if (isLt2M) {
                         this.import_cert_info.cert_content = file;
@@ -495,7 +498,9 @@
                             developercert(data => {
                                 if (data.code === 1000) {
                                     this.$message.success("证书导入成功");
-                                    this.importcertDeveloperVisible = false
+                                    this.importcertDeveloperVisible = false;
+                                    this.dialogaddDeveloperVisible = false;
+                                    this.handleCurrentChange(this.pagination.currentPage)
                                 } else {
                                     this.$message.error("证书导入失败 " + data.msg)
                                 }
@@ -561,9 +566,21 @@
                 });
             },
             isocertcert() {
-                this.iosdeveloperFun({
-                    "methods": "PUT",
-                    "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "ioscert"}
+
+                this.$confirm('此操作将要创建新的发布证书, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.iosdeveloperFun({
+                        "methods": "PUT",
+                        "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "ioscert"}
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
                 });
             },
             exportcert() {
@@ -572,10 +589,22 @@
                 }, {methods: 'FILE', data: {issuer_id: this.editdeveloperinfo.issuer_id}})
             },
             isorenewcert() {
-                this.iosdeveloperFun({
-                    "methods": "PUT",
-                    "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "renewcert"}
+                this.$confirm('此操作将永久删除该发布证书, 建议先导出证书。是否继续删除?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.iosdeveloperFun({
+                        "methods": "PUT",
+                        "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "renewcert"}
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
                 });
+
             },
             activedeveloperFun(developer, act) {
                 this.iosdeveloperFun({"methods": "PUT", "data": {"issuer_id": developer.issuer_id, "act": act}});
