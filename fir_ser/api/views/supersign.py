@@ -3,15 +3,18 @@
 # project: 3月 
 # author: liuyu
 # date: 2020/3/4
-
+from django.http.response import FileResponse
 from rest_framework.views import APIView
+
+from api.utils.app.iossignapi import ResignApp
+from api.utils.baseutils import file_format_path
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
 from rest_framework.response import Response
 from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID
 from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer
 from rest_framework.pagination import PageNumberPagination
-from api.utils.app.supersignutils import IosUtils
+from api.utils.app.supersignutils import IosUtils, get_auth_form_developer
 from api.utils.utils import get_developer_devices, get_choices_dict
 import logging
 
@@ -80,6 +83,23 @@ class DeveloperView(APIView):
                         status, result = IosUtils.create_developer_cert(developer_obj, request.user)
                         if status:
                             IosUtils.get_device_from_developer(developer_obj, request.user)
+                        else:
+                            res.code = 1008
+                            res.msg = result.get("err_info")
+                            return Response(res.dict)
+                elif act == "renewcert":
+                    if developer_obj.certid:
+                        # clean developer somethings. remove profile and  revoke cert
+                        IosUtils.clean_developer(developer_obj, request.user)
+                        status, result = IosUtils.revoke_developer_cert(developer_obj, request.user)
+                        if status:
+                            status, result = IosUtils.create_developer_cert(developer_obj, request.user)
+                            if status:
+                                IosUtils.get_device_from_developer(developer_obj, request.user)
+                            else:
+                                res.code = 1008
+                                res.msg = result.get("err_info")
+                                return Response(res.dict)
                         else:
                             res.code = 1008
                             res.msg = result.get("err_info")
@@ -233,4 +253,41 @@ class AppUDIDUsedView(APIView):
             logger.error("user %s delete devices %s" % (request.user, app_udid_obj))
             IosUtils.disable_udid(app_udid_obj.first(), app_id)
             app_udid_obj.delete()
+        return Response(res.dict)
+
+
+class SuperSignCertView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [SuperSignPermission, ]
+
+    def get(self, request):
+        issuer_id = request.query_params.get('issuer_id', None)
+        if issuer_id:
+            developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=issuer_id).first()
+            if developer_obj:
+                zip_file_path = IosUtils.zip_cert(request.user, developer_obj)
+                response = FileResponse(open(zip_file_path, 'rb'))
+                response['Content-Type'] = "application/octet-stream"
+                response["Access-Control-Expose-Headers"] = "Content-Disposition"
+                response['Content-Disposition'] = 'attachment; filename=' + developer_obj.certid + '.zip'
+                return response
+        res = BaseResponse()
+        return Response(res.dict)
+
+    def post(self, request):
+        res = BaseResponse()
+        issuer_id = request.data.get('issuer_id', None)
+        if issuer_id:
+            developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=issuer_id).first()
+            if developer_obj:
+                resign_app_obj = IosUtils.get_resign_obj(request.user, developer_obj)
+                status, result = resign_app_obj.make_cert_from_p12(request.data.get('cert_pwd', ''),
+                                                                   request.data.get('cert_content', None))
+                if not status:
+                    res.code = 1002
+                    res.msg = str(result['err_info'])
+                status, result = IosUtils.auto_get_certid_by_p12(developer_obj, request.user)
+                if not status:
+                    res.code = 1003
+                    res.msg = str('证书未在开发者账户找到，请检查推送证书是否属于该开发者')
         return Response(res.dict)

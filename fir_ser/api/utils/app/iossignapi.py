@@ -3,19 +3,20 @@
 # project: 4月
 # author: liuyu
 # date: 2020/4/24
-import OpenSSL
+import datetime
 
 from api.utils.app.shellcmds import shell_command, use_user_pass
+from api.utils.baseutils import get_format_time, format_apple_date
 from fir_ser.settings import SUPER_SIGN_ROOT
 import os
 from api.utils.app.randomstrings import make_app_uuid
 import logging
 from api.utils.apple.appleapiv3 import AppStoreConnectApi
+import base64
+from OpenSSL.crypto import (load_pkcs12, dump_certificate_request, dump_privatekey, PKey, TYPE_RSA, X509Req,
+                            dump_certificate, load_privatekey, load_certificate, PKCS12, FILETYPE_PEM, FILETYPE_ASN1)
 
 logger = logging.getLogger(__file__)
-import base64
-from OpenSSL.SSL import FILETYPE_PEM
-from OpenSSL.crypto import (dump_certificate_request, dump_privatekey, PKey, TYPE_RSA, X509Req, dump_certificate)
 
 
 def exec_shell(cmd, remote=False, timeout=None):
@@ -41,9 +42,10 @@ def exec_shell(cmd, remote=False, timeout=None):
 
 class ResignApp(object):
 
-    def __init__(self, my_local_key, app_dev_pem):
+    def __init__(self, my_local_key, app_dev_pem, app_dev_p12):
         self.my_local_key = my_local_key
         self.app_dev_pem = app_dev_pem
+        self.app_dev_p12 = app_dev_p12
         self.cmd = "zsign  -c '%s'  -k '%s' " % (self.app_dev_pem, self.my_local_key)
 
     @staticmethod
@@ -52,6 +54,51 @@ class ResignApp(object):
               "-inkey %s -certfile %s -outform der -nodetach " % (
                   mobilconfig_path, sign_mobilconfig_path, ssl_pem_path, ssl_key_path, ssl_pem_path)
         return exec_shell(cmd)
+
+    def make_p12_from_cert(self, password):
+        result = {}
+        try:
+            certificate = load_certificate(FILETYPE_PEM, open(self.app_dev_pem, 'rb').read())
+            private_key = load_privatekey(FILETYPE_PEM, open(self.my_local_key, 'rb').read())
+            p12 = PKCS12()
+            p12.set_certificate(certificate)
+            p12.set_privatekey(private_key)
+            with open(self.app_dev_p12, 'wb+') as f:
+                f.write(p12.export(password))
+            return True, p12.get_friendlyname()
+        except Exception as e:
+            result["err_info"] = e
+            return False, result
+
+    def make_cert_from_p12(self, password, p12_content=None):
+        result = {}
+        try:
+            if p12_content:
+                with open(self.app_dev_p12 + '.bak', 'wb+') as f:
+                    f.write(base64.b64decode(p12_content.split('data:application/x-pkcs12;base64,')[1]))
+                if password:
+                    with open(self.app_dev_p12 + '.pwd.bak', 'w') as f:
+                        f.write(password)
+            p12 = load_pkcs12(open(self.app_dev_p12, 'rb').read(), password)
+            cert = p12.get_certificate()
+            if cert.has_expired():
+                result["err_info"] = '证书已经过期'
+                return False, result
+            with open(self.my_local_key + '.bak', 'wb+') as f:
+                f.write(dump_privatekey(FILETYPE_PEM, p12.get_privatekey()))
+            with open(self.app_dev_pem + '.bak', 'wb+') as f:
+                f.write(dump_certificate(FILETYPE_PEM, cert))
+            for file in [self.app_dev_p12, self.app_dev_p12 + '.pwd', self.my_local_key, self.app_dev_pem]:
+                if os.path.exists(file):
+                    os.rename(file, file + '.' + get_format_time() + '.bak')
+                os.rename(file + '.bak', file)
+            return True, cert.get_version()
+        except Exception as e:
+            for file in [self.app_dev_p12, self.app_dev_p12 + '.pwd', self.my_local_key, self.app_dev_pem]:
+                if os.path.exists(file + '.bak'):
+                    os.remove(file + '.bak')
+            result["err_info"] = e
+            return False, result
 
     def sign(self, new_profile, org_ipa, new_ipa, info_plist_properties=None):
         if info_plist_properties is None:
@@ -115,7 +162,7 @@ class AppDeveloperApiV2(object):
         return csr_content
 
     def make_pem(self, cer_content, pem_path):
-        cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, cer_content)
+        cert = load_certificate(FILETYPE_ASN1, cer_content)
         with open(pem_path, 'wb+') as f:
             f.write(dump_certificate(FILETYPE_PEM, cert))
 
@@ -137,6 +184,35 @@ class AppDeveloperApiV2(object):
                 return True, certificates
         except Exception as e:
             logger.error("ios developer active Failed Exception:%s" % e)
+            result['return_info'] = "%s" % e
+        return False, result
+
+    def revoke_cert(self, cert_id):
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            if apple_obj.revoke_certificate(cert_id):
+                logger.info("ios developer cert %s revoke  result:%s" % cert_id)
+                return True, result
+        except Exception as e:
+            logger.error("ios developer cert %s revoke Failed Exception:%s" % (cert_id, e))
+            result['return_info'] = "%s" % e
+        return False, result
+
+    def auto_set_certid_by_p12(self, app_dev_pem):
+        result = {}
+        try:
+            cer = load_certificate(FILETYPE_PEM, open(app_dev_pem, 'rb').read())
+            not_after = datetime.datetime.strptime(cer.get_notAfter().decode('utf-8'), "%Y%m%d%H%M%SZ")
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            certificates = apple_obj.get_all_certificates()
+            for cert_obj in certificates:
+                f_date = format_apple_date(cert_obj.expirationDate)
+                if not_after.timestamp() == f_date.timestamp():
+                    return True, cert_obj
+            return False, result
+        except Exception as e:
+            logger.error("ios developer cert %s auto get Failed Exception:%s" % (111, e))
             result['return_info'] = "%s" % e
         return False, result
 

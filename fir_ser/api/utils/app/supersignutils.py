@@ -6,6 +6,8 @@
 
 import uuid, xmltodict, os, re, logging, time
 
+from django.utils import timezone
+import zipfile
 from api.utils.response import BaseResponse
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILECONFIG_SIGN_SSL, MSGTEMPLATE
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
@@ -17,7 +19,7 @@ from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_
 from api.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status, delete_local_files, \
     download_files_form_oss, get_developer_udided
 from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, get_user_domain_name, \
-    get_user_default_domain_name, get_min_default_domain_cname_obj, format_apple_date
+    get_user_default_domain_name, get_min_default_domain_cname_obj, format_apple_date, get_format_time
 from api.utils.storage.storage import Storage
 from django.core.cache import cache
 
@@ -356,12 +358,31 @@ class IosUtils(object):
         return True, result
 
     @staticmethod
-    def exec_sign(user_obj, app_obj, developer_obj, random_file_name, release_obj):
+    def zip_cert(user_obj, developer_obj):
+        auth = get_auth_form_developer(developer_obj)
+        file_format_path_name = file_format_path(user_obj, auth)
+        os.chdir(os.path.dirname(file_format_path_name))
+        zip_file_path = file_format_path_name + '.zip'
+        zipf = zipfile.ZipFile(zip_file_path, mode='w', compression=zipfile.ZIP_DEFLATED)
+        for file in os.listdir(os.path.dirname(file_format_path_name)):
+            if os.path.isfile(file) and file.startswith(os.path.basename(file_format_path_name)) and \
+                    file.split('.')[-1] not in ['zip', 'bak']:
+                zipf.write(file)
+        zipf.close()
+        return zip_file_path
+
+    @staticmethod
+    def get_resign_obj(user_obj, developer_obj):
         auth = get_auth_form_developer(developer_obj)
         file_format_path_name = file_format_path(user_obj, auth)
         my_local_key = file_format_path_name + ".key"
         app_dev_pem = file_format_path_name + ".pem"
-        resign_app_obj = ResignApp(my_local_key, app_dev_pem)
+        app_dev_p12 = file_format_path_name + ".p12"
+        return ResignApp(my_local_key, app_dev_pem, app_dev_p12)
+
+    @staticmethod
+    def exec_sign(user_obj, app_obj, developer_obj, random_file_name, release_obj):
+        resign_app_obj = IosUtils.get_resign_obj(user_obj, developer_obj)
         org_file = os.path.join(MEDIA_ROOT, release_obj.release_id + ".ipa")
         check_org_file(user_obj, org_file)
         new_file = os.path.join(MEDIA_ROOT, random_file_name + ".ipa")
@@ -618,34 +639,44 @@ class IosUtils(object):
                 delete_app_profile_file(developer_obj, app_obj)
 
     @staticmethod
-    def clean_app_by_developer_obj(app_obj, developer_obj):
+    def clean_app_by_developer_obj(app_obj, developer_obj, cert_id=None):
         auth = get_auth_form_developer(developer_obj)
         DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
         app_api_obj = get_api_obj(auth)
         app_api_obj.del_profile(app_obj.app_id)
-        app_api_obj2 = get_api_obj(auth)
-        app_api_obj2.del_app(app_obj.bundle_id, app_obj.app_id)
+        if not cert_id:
+            app_api_obj2 = get_api_obj(auth)
+            app_api_obj2.del_app(app_obj.bundle_id, app_obj.app_id)
 
     @staticmethod
-    def clean_developer(developer_obj, user_obj):
+    def clean_developer(developer_obj, user_obj, cert_id=None):
         '''
         根据消耗记录 删除该苹果账户下所有信息
+        :param user_obj:
+        :param cert_id:
         :param developer_obj:
         :return:
         '''
         for APPToDeveloper_obj in APPToDeveloper.objects.filter(developerid=developer_obj):
             app_obj = APPToDeveloper_obj.app_id
-            IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
+            IosUtils.clean_app_by_developer_obj(app_obj, developer_obj, cert_id)
             delete_app_to_dev_and_file(developer_obj, app_obj.id)
-            IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
+            if not cert_id:
+                IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
         full_path = file_format_path(user_obj, get_auth_form_developer(developer_obj))
         try:
-            for root, dirs, files in os.walk(full_path, topdown=False):
-                for name in files:
-                    os.remove(os.path.join(root, name))
-                for name in dirs:
-                    os.rmdir(os.path.join(root, name))
-            os.rmdir(full_path)
+            # move dirs replace delete
+            new_full_path_dir = os.path.dirname(full_path)
+            new_full_path_name = os.path.basename(full_path)
+            new_full_path = os.path.join(new_full_path_dir,
+                                         '%s_%s_%s' % ('remove', new_full_path_name, get_format_time()))
+            os.rename(full_path, new_full_path)
+            # for root, dirs, files in os.walk(full_path, topdown=False):
+            #     for name in files:
+            #         os.remove(os.path.join(root, name))
+            #     for name in dirs:
+            #         os.rmdir(os.path.join(root, name))
+            # os.rmdir(full_path)
         except Exception as e:
             logger.error("clean_developer developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
                 developer_obj, user_obj, e))
@@ -681,6 +712,30 @@ class IosUtils(object):
                 AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
                     is_actived=True,
                     certid=cert_id, cert_expire_time=format_apple_date(result.expirationDate))
+        return status, result
+
+    @staticmethod
+    def revoke_developer_cert(developer_obj, user_obj):
+        auth = get_auth_form_developer(developer_obj)
+        app_api_obj = get_api_obj(auth)
+        status, result = app_api_obj.revoke_cert(developer_obj.certid)
+        if status:
+            AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
+                is_actived=True,
+                certid=None, cert_expire_time=None)
+        return status, result
+
+    @staticmethod
+    def auto_get_certid_by_p12(developer_obj, user_obj):
+        auth = get_auth_form_developer(developer_obj)
+        app_api_obj = get_api_obj(auth)
+        file_format_path_name = file_format_path(user_obj, auth)
+        app_dev_pem = file_format_path_name + ".pem"
+        status, result = app_api_obj.auto_set_certid_by_p12(app_dev_pem)
+        if status:
+            AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
+                is_actived=True,
+                certid=result.id, cert_expire_time=format_apple_date(result.expirationDate))
         return status, result
 
     @staticmethod

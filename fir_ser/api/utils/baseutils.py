@@ -151,3 +151,10 @@ def format_apple_date(s_date):
     if not timezone.is_naive(f_date):
         f_date = timezone.make_naive(f_date, timezone.utc)
     return f_date
+
+
+def get_format_time():
+    now = timezone.now()
+    if not timezone.is_naive(now):
+        now = timezone.make_naive(now, timezone.utc)
+    return now.strftime('%Y-%m-%d_%H:%M:%S')

@@ -874,3 +874,9 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         if req.status_code == 201:
             return self.__certificates_store(req, 201)
         raise KeyError(req.text)
+
+    def revoke_certificate(self, certificate_id):
+        req = super().revoke_certificate(certificate_id)
+        if req.status_code == 204:
+            return True
+        return False

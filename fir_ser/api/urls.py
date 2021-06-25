@@ -24,7 +24,7 @@ from api.views.uploads import AppAnalyseView, UploadView
 from api.views.storage import StorageView
 from api.views.receiveudids import IosUDIDView, TaskView
 from api.views.order import PriceView, OrderView, PaySuccess
-from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView
+from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView, SuperSignCertView
 from api.views.domain import DomainCnameView
 
 # router=DefaultRouter()
@@ -52,6 +52,7 @@ urlpatterns = [
     re_path("^supersign/developer$", DeveloperView.as_view()),
     re_path("^supersign/devices$", SuperSignUsedView.as_view()),
     re_path("^supersign/udid$", AppUDIDUsedView.as_view()),
+    re_path("^supersign/cert$", SuperSignCertView.as_view()),
     re_path("^package_prices$", PriceView.as_view()),
     re_path("^orders$", OrderView.as_view()),
     re_path("^certification$", CertificationView.as_view()),

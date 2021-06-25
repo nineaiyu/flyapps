@@ -1,12 +1,36 @@
 <template>
     <el-main>
 
+        <el-dialog title="发布证书导入" :visible.sync="importcertDeveloperVisible" :destroy-on-close="true"
+                   :close-on-click-modal="false" style="text-align:center">
+            <el-form label-width="30%">
+                <el-form-item label="发布证书p12文件" style="width: 80%">
+                    <el-upload
+                            drag
+                            ref="upload"
+                            action="#"
+                            :before-upload="beforeAvatarUpload"
+                            accept=".p12"
+                            :file-list="fileList"
+                            :auto-upload="false"
+                            :limit="1"
+                    >
+                        <i class="el-icon-upload"></i>
+                        <div class="el-upload__text">将p12证书文件拖到此处，或<em>点击上传</em></div>
+                    </el-upload>
+                </el-form-item>
+                <el-form-item label="发布证书p12密码" style="width: 80%">
+                    <el-input label="证书密码" v-model="import_cert_info.cert_pwd"></el-input>
+                </el-form-item>
+                <el-button @click="$refs.upload.submit()">确定导入</el-button>
+                <el-button @click="importcertDeveloperVisible=false">取消</el-button>
+            </el-form>
+        </el-dialog>
         <el-dialog :title="title" :visible.sync="dialogaddDeveloperVisible" :destroy-on-close="true"
                    :close-on-click-modal="false" style="text-align:center">
 
             <el-form ref="storageinfoform" :model="editdeveloperinfo"
                      label-width="80px" style="margin:0 auto;">
-
 
                 <div v-if="editdeveloperinfo.auth_type===0">
                     <el-form-item label-width="110px" label="issuer_id">
@@ -26,16 +50,30 @@
                 <el-form-item label-width="110px" label="设备数量" style="text-align: left">
                     <el-input-number v-model="editdeveloperinfo.usable_number" :min="0" :max="100" label="设备数量"/>
                 </el-form-item>
-
+                <el-form-item label-width="110px" label="证书id">
+                    <el-input :disabled='isedit' v-model="editdeveloperinfo.certid"/>
+                </el-form-item>
                 <el-form-item label-width="110px" label="备注">
                     <el-input v-model="editdeveloperinfo.description"/>
                 </el-form-item>
                 <div style="">
+                    <el-button v-if="isedit && editdeveloperinfo.is_actived && editdeveloperinfo.certid" size="small"
+                               @click="exportcert">导出证书
+                    </el-button>
+                    <el-button v-if="isedit && editdeveloperinfo.is_actived && !editdeveloperinfo.certid" size="small"
+                               @click="importcertDeveloperVisible=true">导入p12证书
+                    </el-button>
                     <el-button v-if="isedit && editdeveloperinfo.is_actived" size="small" @click="syncdevices">同步设备信息
                     </el-button>
                     <el-button v-if="isedit && editdeveloperinfo.is_actived && !editdeveloperinfo.certid" size="small"
-                               @click="isocertcert">手动创建证书
+                               @click="isocertcert">手动创建发布证书
                     </el-button>
+                    <el-tooltip content="发布证书只能创建两个，请谨慎操作">
+                        <el-button v-if="isedit && editdeveloperinfo.is_actived && editdeveloperinfo.certid"
+                                   size="small"
+                                   @click="isorenewcert">删除并创建新发布证书
+                        </el-button>
+                    </el-tooltip>
                     <el-button v-if="isedit && editdeveloperinfo.is_actived" type="danger" size="small"
                                @click="activedeveloperFun(editdeveloperinfo,'checkauth')">开发者账户激活检测
                     </el-button>
@@ -227,8 +265,7 @@
                         <el-input v-model="editdeveloperinfo.description"/>
                     </el-form-item>
                     <div style="">
-                        <el-button @click="updateorcreate">添加</el-button>
-                        <el-button @click="canceledit">取消</el-button>
+                        <el-button @click="updateorcreate" type="primary" plain>保存信息并添加</el-button>
                     </div>
 
                 </el-form>
@@ -409,13 +446,14 @@
 
 <script>
 
-    import {iosdeveloper, iosdevices, iosdevicesudid} from "@/restful";
+    import {iosdeveloper, iosdevices, iosdevicesudid, developercert} from "@/restful";
     import {getUserInfoFun, removeAaary} from "@/utils";
 
     export default {
         name: "FirSuperSignBase",
         data() {
             return {
+                fileList: [],
                 app_developer_lists: [],
                 app_devices_lists: [],
                 app_udid_lists: [],
@@ -424,6 +462,7 @@
                 Bundleidsearch: "",
                 appidseach: "",
                 dialogaddDeveloperVisible: false,
+                importcertDeveloperVisible: false,
                 title: "",
                 editdeveloperinfo: {auth_type: 0, usable_number: 100},
                 isedit: false,
@@ -434,10 +473,53 @@
                 apple_auth_list: [],
                 apple_auth_type: 0,
                 loadingfun: {},
-                loading: false
+                loading: false,
+                import_cert_info: {cert_pwd: '', cert_content: ''}
+            }
+        }, watch: {
+            'dialogaddDeveloperVisible': function () {
+                if (this.dialogaddDeveloperVisible === false) {
+                    this.canceledit();
+                }
             }
         },
         methods: {
+            beforeAvatarUpload(file) {
+                const isLt2M = file.size / 1024 / 1024 < 1;
+                if (file.type === 'application/x-pkcs12') {
+                    if (isLt2M) {
+                        this.import_cert_info.cert_content = file;
+                        let reader = new FileReader();
+                        reader.onload = evt => {
+                            this.import_cert_info.cert_content = evt.target.result;
+                            developercert(data => {
+                                if (data.code === 1000) {
+                                    this.$message.success("证书导入成功");
+                                    this.importcertDeveloperVisible = false
+                                } else {
+                                    this.$message.error("证书导入失败 " + data.msg)
+                                }
+                            }, {
+                                methods: 'POST',
+                                data: {
+                                    issuer_id: this.editdeveloperinfo.issuer_id,
+                                    cert_pwd: this.import_cert_info.cert_pwd,
+                                    cert_content: this.import_cert_info.cert_content
+                                }
+                            })
+                        };
+                        reader.readAsDataURL(file);
+                        return false;
+                    } else {
+                        this.$message.error('上传大小有误');
+                    }
+                } else {
+                    this.$message.error('上传文件格式不正确!');
+
+                }
+                return false;
+
+            },
             developer_usedColor(percentage) {
                 if (percentage < 20) {
                     return '#6f7ad3';
@@ -482,6 +564,17 @@
                 this.iosdeveloperFun({
                     "methods": "PUT",
                     "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "ioscert"}
+                });
+            },
+            exportcert() {
+                // eslint-disable-next-line no-unused-vars
+                developercert(data => {
+                }, {methods: 'FILE', data: {issuer_id: this.editdeveloperinfo.issuer_id}})
+            },
+            isorenewcert() {
+                this.iosdeveloperFun({
+                    "methods": "PUT",
+                    "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "renewcert"}
                 });
             },
             activedeveloperFun(developer, act) {

@@ -24,24 +24,24 @@ logger = logging.getLogger(__name__)
 
 
 def delete_app_to_dev_and_file(developer_obj, app_id):
-    APPToDeveloper_obj = APPToDeveloper.objects.filter(developerid=developer_obj, app_id_id=app_id)
-    if APPToDeveloper_obj:
-        binary_file = APPToDeveloper_obj.first().binary_file + ".ipa"
+    app_to_developer_obj = APPToDeveloper.objects.filter(developerid=developer_obj, app_id_id=app_id)
+    if app_to_developer_obj:
+        binary_file = app_to_developer_obj.first().binary_file + ".ipa"
         delete_local_files(binary_file)
         storage = Storage(developer_obj.user_id)
         storage.delete_file(binary_file)
-        APPToDeveloper_obj.delete()
+        app_to_developer_obj.delete()
 
 
 def get_developer_udided(developer_obj):
-    SuperSignUsed_obj = APPSuperSignUsedInfo.objects.filter(developerid=developer_obj)
-    UDIDsyncDeveloper_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj)
+    super_sing_used_obj = APPSuperSignUsedInfo.objects.filter(developerid=developer_obj)
+    udid_sync_developer_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj)
     develoer_udid_lists = []
     supersign_udid_lists = []
-    if UDIDsyncDeveloper_obj:
-        develoer_udid_lists = list(UDIDsyncDeveloper_obj.values_list("udid"))
-    if SuperSignUsed_obj:
-        supersign_udid_lists = list(SuperSignUsed_obj.values_list("udid__udid"))
+    if udid_sync_developer_obj:
+        develoer_udid_lists = list(udid_sync_developer_obj.values_list("udid"))
+    if super_sing_used_obj:
+        supersign_udid_lists = list(super_sing_used_obj.values_list("udid__udid"))
     return len(set(develoer_udid_lists) - set(supersign_udid_lists)), len(develoer_udid_lists)
 
 
