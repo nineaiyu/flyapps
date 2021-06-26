@@ -563,6 +563,11 @@ class IosUtils(object):
 
             self.update_developer_used_data()
 
+        if not self.developer_obj:
+            d_result['code'] = 1005
+            d_result['msg'] = '未找到可用苹果开发者'
+            logger.error(d_result)
+            return False, d_result
         with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id), timeout=60 * 10):
             logger.info("start run_sign ...")
             return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, download_flag, self, start_time,
@@ -668,9 +673,9 @@ class IosUtils(object):
             # move dirs replace delete
             new_full_path_dir = os.path.dirname(full_path)
             new_full_path_name = os.path.basename(full_path)
-            new_full_path = os.path.join(new_full_path_dir,
+            new_full_path = os.path.join(os.path.dirname(new_full_path_dir),
                                          '%s_%s_%s' % ('remove', new_full_path_name, get_format_time()))
-            os.rename(full_path, new_full_path)
+            os.rename(new_full_path_dir, new_full_path)
             # for root, dirs, files in os.walk(full_path, topdown=False):
             #     for name in files:
             #         os.remove(os.path.join(root, name))
