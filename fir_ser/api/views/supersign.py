@@ -164,7 +164,8 @@ class DeveloperView(APIView):
         try:
             logger.error("user %s  add new developer %s  data %s" % (
                 request.user, data.get("issuer_id", ""), datainfo))
-            AppIOSDeveloperInfo.objects.create(user_id=request.user, **datainfo)
+            developer_obj = AppIOSDeveloperInfo.objects.create(user_id=request.user, **datainfo)
+            IosUtils.create_developer_space(developer_obj, request.user)
         except Exception as e:
             logger.error("user %s create developer %s failed Exception:%s" % (
                 request.user, datainfo, e))
@@ -287,12 +288,15 @@ class SuperSignCertView(APIView):
                 resign_app_obj = IosUtils.get_resign_obj(request.user, developer_obj)
                 status, result = resign_app_obj.make_cert_from_p12(request.data.get('cert_pwd', ''),
                                                                    request.data.get('cert_content', None))
-                if not status:
+                if status:
+                    status, result = IosUtils.auto_get_certid_by_p12(developer_obj, request.user)
+                    if status:
+                        resign_app_obj.write_cert()
+                    else:
+                        res.code = 1003
+                        res.msg = str('证书未在开发者账户找到，请检查推送证书是否属于该开发者')
+                else:
                     res.code = 1002
                     res.msg = str(result['err_info'])
                     return Response(res.dict)
-                status, result = IosUtils.auto_get_certid_by_p12(developer_obj, request.user)
-                if not status:
-                    res.code = 1003
-                    res.msg = str('证书未在开发者账户找到，请检查推送证书是否属于该开发者')
         return Response(res.dict)

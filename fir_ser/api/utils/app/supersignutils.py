@@ -704,6 +704,13 @@ class IosUtils(object):
         return status, result
 
     @staticmethod
+    def create_developer_space(developer_obj, user_obj):
+        auth = get_auth_form_developer(developer_obj)
+        file_format_path_name = file_format_path(user_obj, auth)
+        if not os.path.isdir(os.path.dirname(file_format_path_name)):
+            os.makedirs(os.path.dirname(file_format_path_name))
+
+    @staticmethod
     def create_developer_cert(developer_obj, user_obj):
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)
@@ -735,7 +742,7 @@ class IosUtils(object):
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)
         file_format_path_name = file_format_path(user_obj, auth)
-        app_dev_pem = file_format_path_name + ".pem"
+        app_dev_pem = file_format_path_name + ".pem.bak"
         status, result = app_api_obj.auto_set_certid_by_p12(app_dev_pem)
         if status:
             AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(

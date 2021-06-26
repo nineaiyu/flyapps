@@ -73,16 +73,30 @@ class ResignApp(object):
             result["err_info"] = e
             return False, result
 
+    def write_cert(self):
+        for file in [self.app_dev_p12, self.app_dev_p12 + '.pwd', self.my_local_key, self.app_dev_pem]:
+            if os.path.exists(file):
+                os.rename(file, file + '.' + get_format_time() + '.bak')
+            os.rename(file + '.bak', file)
+
     def make_cert_from_p12(self, password, p12_content=None):
         result = {}
         try:
             if p12_content:
-                with open(self.app_dev_p12 + '.bak', 'wb+') as f:
-                    f.write(base64.b64decode(p12_content.split('data:application/x-pkcs12;base64,')[1]))
-                if password:
-                    with open(self.app_dev_p12 + '.pwd.bak', 'w') as f:
-                        f.write(password)
-            p12 = load_pkcs12(open(self.app_dev_p12, 'rb').read(), password)
+                p12_content_list = p12_content.split('data:application/x-pkcs12;base64,')
+                if len(p12_content_list) == 2:
+                    with open(self.app_dev_p12 + '.bak', 'wb+') as f:
+                        f.write(base64.b64decode(p12_content.split('data:application/x-pkcs12;base64,')[1]))
+                    if password:
+                        with open(self.app_dev_p12 + '.pwd.bak', 'w') as f:
+                            f.write(password)
+                else:
+                    result["err_info"] = '非法p12证书文件，请检查'
+                    return False, result
+            else:
+                result["err_info"] = '证书内容有误，请检查'
+                return False, result
+            p12 = load_pkcs12(open(self.app_dev_p12 + '.bak', 'rb').read(), password)
             cert = p12.get_certificate()
             if cert.has_expired():
                 result["err_info"] = '证书已经过期'
@@ -91,16 +105,14 @@ class ResignApp(object):
                 f.write(dump_privatekey(FILETYPE_PEM, p12.get_privatekey()))
             with open(self.app_dev_pem + '.bak', 'wb+') as f:
                 f.write(dump_certificate(FILETYPE_PEM, cert))
-            for file in [self.app_dev_p12, self.app_dev_p12 + '.pwd', self.my_local_key, self.app_dev_pem]:
-                if os.path.exists(file):
-                    os.rename(file, file + '.' + get_format_time() + '.bak')
-                os.rename(file + '.bak', file)
             return True, cert.get_version()
         except Exception as e:
             for file in [self.app_dev_p12, self.app_dev_p12 + '.pwd', self.my_local_key, self.app_dev_pem]:
                 if os.path.exists(file + '.bak'):
                     os.remove(file + '.bak')
             result["err_info"] = e
+            if 'mac verify failure' in str(e):
+                result["err_info"] = 'p12 导入密码错误，请检查'
             return False, result
 
     def sign(self, new_profile, org_ipa, new_ipa, info_plist_properties=None):

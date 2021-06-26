@@ -2,7 +2,7 @@
     <el-main>
 
         <el-dialog title="发布证书导入" :visible.sync="importcertDeveloperVisible" :destroy-on-close="true"
-                   :close-on-click-modal="false" style="text-align:center">
+                   :close-on-click-modal="false" style="text-align:center" width="700px">
             <el-form label-width="30%">
                 <el-form-item label="发布证书p12文件" style="width: 80%">
                     <el-upload
@@ -15,19 +15,19 @@
                             :auto-upload="false"
                             :limit="1"
                     >
-                        <i class="el-icon-upload"></i>
+                        <i class="el-icon-upload"/>
                         <div class="el-upload__text">将p12证书文件拖到此处，或<em>点击上传</em></div>
                     </el-upload>
                 </el-form-item>
                 <el-form-item label="发布证书p12密码" style="width: 80%">
-                    <el-input label="证书密码" v-model="import_cert_info.cert_pwd"></el-input>
+                    <el-input label="证书密码" v-model="cert_pwd"/>
                 </el-form-item>
                 <el-button @click="$refs.upload.submit()">确定导入</el-button>
                 <el-button @click="importcertDeveloperVisible=false">取消</el-button>
             </el-form>
         </el-dialog>
         <el-dialog :title="title" :visible.sync="dialogaddDeveloperVisible" :destroy-on-close="true"
-                   :close-on-click-modal="false" style="text-align:center">
+                   :close-on-click-modal="false" style="text-align:center" width="750px">
 
             <el-form ref="storageinfoform" :model="editdeveloperinfo"
                      label-width="80px" style="margin:0 auto;">
@@ -477,7 +477,7 @@
                 apple_auth_type: 0,
                 loadingfun: {},
                 loading: false,
-                import_cert_info: {cert_pwd: '', cert_content: ''}
+                cert_pwd: '',
             }
         }, watch: {
             'dialogaddDeveloperVisible': function () {
@@ -491,39 +491,39 @@
                 const isLt2M = file.size / 1024 / 1024 < 2;
                 if (file.type === 'application/x-pkcs12') {
                     if (isLt2M) {
-                        this.import_cert_info.cert_content = file;
-                        let reader = new FileReader();
-                        reader.onload = evt => {
-                            this.import_cert_info.cert_content = evt.target.result;
-                            developercert(data => {
-                                if (data.code === 1000) {
-                                    this.$message.success("证书导入成功");
-                                    this.importcertDeveloperVisible = false;
-                                    this.dialogaddDeveloperVisible = false;
-                                    this.handleCurrentChange(this.pagination.currentPage)
-                                } else {
-                                    this.$message.error("证书导入失败 " + data.msg)
-                                }
-                            }, {
-                                methods: 'POST',
-                                data: {
-                                    issuer_id: this.editdeveloperinfo.issuer_id,
-                                    cert_pwd: this.import_cert_info.cert_pwd,
-                                    cert_content: this.import_cert_info.cert_content
-                                }
-                            })
-                        };
-                        reader.readAsDataURL(file);
-                        return false;
+                        if (this.cert_pwd && this.cert_pwd.toString().trim().length > 0) {
+                            let reader = new FileReader();
+                            reader.onload = evt => {
+                                developercert(data => {
+                                    if (data.code === 1000) {
+                                        this.$message.success("证书导入成功");
+                                        this.importcertDeveloperVisible = false;
+                                        this.dialogaddDeveloperVisible = false;
+                                        this.handleCurrentChange(this.pagination.currentPage)
+                                    } else {
+                                        this.$message.error("证书导入失败 " + data.msg)
+                                    }
+                                }, {
+                                    methods: 'POST',
+                                    data: {
+                                        issuer_id: this.editdeveloperinfo.issuer_id,
+                                        cert_pwd: this.cert_pwd,
+                                        cert_content: evt.target.result
+                                    }
+                                })
+                            };
+                            reader.readAsDataURL(file);
+                            return false;
+                        } else {
+                            this.$message.warning('密码不能为空');
+                        }
                     } else {
-                        this.$message.error('上传大小有误');
+                        this.$message.warning('上传大小有误');
                     }
                 } else {
-                    this.$message.error('上传文件格式不正确!');
-
+                    this.$message.warning('上传文件格式不正确!');
                 }
                 return false;
-
             },
             developer_usedColor(percentage) {
                 if (percentage < 20) {
