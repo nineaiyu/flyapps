@@ -738,6 +738,17 @@ class IosUtils(object):
         return status, result
 
     @staticmethod
+    def check_developer_cert(developer_obj,user_obj):
+        auth = get_auth_form_developer(developer_obj)
+        app_api_obj = get_api_obj(auth)
+        status, result = app_api_obj.get_cert_obj_by_cid(developer_obj.certid)
+        if not status:
+            AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
+                certid=None, cert_expire_time=None)
+        return status, result
+
+
+    @staticmethod
     def auto_get_certid_by_p12(developer_obj, user_obj):
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)

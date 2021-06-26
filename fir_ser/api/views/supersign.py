@@ -67,11 +67,13 @@ class DeveloperView(APIView):
             if act:
                 res = BaseResponse()
                 logger.info("user %s iosdeveloper %s act %s" % (request.user, developer_obj, act))
-                if act == "preactive":
+                if act == "checkauth":
                     status, result = IosUtils.active_developer(developer_obj)
                     if status:
                         if not developer_obj.certid:
                             IosUtils.get_device_from_developer(developer_obj, request.user)
+                        else:
+                            IosUtils.check_developer_cert(developer_obj, request.user)
                         return self.get(request)
                     else:
                         res.code = 1008
@@ -110,14 +112,6 @@ class DeveloperView(APIView):
                     if not status:
                         res.code = 1008
                         res.msg = result.get("err_info")
-                        return Response(res.dict)
-                elif act == "checkauth":
-                    status, result = IosUtils.active_developer(developer_obj)
-                    if status:
-                        return self.get(request)
-                    else:
-                        res.code = 1008
-                        res.msg = result.get("return_info")
                         return Response(res.dict)
             else:
                 logger.info("user %s iosdeveloper %s update input data %s" % (request.user, developer_obj, data))

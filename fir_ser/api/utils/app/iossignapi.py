@@ -202,6 +202,21 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
         return False, result
 
+    def get_cert_obj_by_cid(self, cert_id):
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            cert_obj = apple_obj.get_certificate_by_cid(cert_id)
+            if cert_obj and cert_obj.id:
+                return True, result
+            else:
+                logger.info("ios developer get cert %s failed" % cert_id)
+                return False, result
+        except Exception as e:
+            logger.error("ios developer get cert %s Failed Exception:%s" % (cert_id, e))
+            result['return_info'] = "%s" % e
+        return False, result
+
     def revoke_cert(self, cert_id):
         result = {}
         try:

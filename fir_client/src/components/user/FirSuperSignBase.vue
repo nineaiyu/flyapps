@@ -147,7 +147,7 @@
                         <template slot-scope="scope">
                             <el-button v-if="scope.row.is_actived === true" type="success" size="small">已激活</el-button>
                             <el-button v-else type="danger" size="small"
-                                       @click="activedeveloperFun(scope.row,'preactive')">点击激活
+                                       @click="activedeveloperFun(scope.row,'checkauth')">点击激活
                             </el-button>
 
                         </template>
