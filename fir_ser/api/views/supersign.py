@@ -72,8 +72,6 @@ class DeveloperView(APIView):
                     if status:
                         if not developer_obj.certid:
                             IosUtils.get_device_from_developer(developer_obj, request.user)
-                        else:
-                            IosUtils.check_developer_cert(developer_obj, request.user)
                         return self.get(request)
                     else:
                         res.code = 1008

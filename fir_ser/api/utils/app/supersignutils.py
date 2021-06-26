@@ -693,10 +693,18 @@ class IosUtils(object):
         app_api_obj = get_api_obj(auth)
         status, result = app_api_obj.active()
         if status:
+            cert_is_exists = True
             for cert_obj in result.get('data', []):
                 if cert_obj.id == developer_obj.certid:
                     developer_obj.cert_expire_time = format_apple_date(cert_obj.expirationDate)
+                    cert_is_exists = False
                     break
+            if developer_obj.certid and len(developer_obj.certid) > 3 and cert_is_exists and len(
+                    result.get('data', [])) > 0:
+                # 数据库证书id和苹果开发id不一致，可认为被用户删掉，需要执行清理开发者操作
+                IosUtils.clean_developer(developer_obj, developer_obj.user_id)
+                developer_obj.certid = None
+                developer_obj.cert_expire_time = None
             developer_obj.is_actived = True
         else:
             developer_obj.is_actived = False
@@ -738,7 +746,8 @@ class IosUtils(object):
         return status, result
 
     @staticmethod
-    def check_developer_cert(developer_obj,user_obj):
+    def check_developer_cert(developer_obj, user_obj):
+        # 暂时无用
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)
         status, result = app_api_obj.get_cert_obj_by_cid(developer_obj.certid)
@@ -746,7 +755,6 @@ class IosUtils(object):
             AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
                 certid=None, cert_expire_time=None)
         return status, result
-
 
     @staticmethod
     def auto_get_certid_by_p12(developer_obj, user_obj):

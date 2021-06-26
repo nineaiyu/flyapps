@@ -158,7 +158,7 @@
                             width="100">
                         <template slot-scope="scope">
                             <el-popover trigger="hover" placement="top">
-                                <p v-if="!scope.row.certid && scope.row.is_actived === true">开发证书不可用，请在编辑中手动创建开发者证书</p>
+                                <p v-if="!scope.row.certid && scope.row.is_actived === true">开发证书不可用，请在编辑中导入或手动创建发布证书</p>
                                 <p v-if="!scope.row.certid && scope.row.is_actived !== true">请先激活开发者账户</p>
                                 <p v-if="scope.row.certid && scope.row.is_actived === true">账户已经启用</p>
                                 <div slot="reference" class="name-wrapper">

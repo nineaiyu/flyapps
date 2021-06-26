@@ -133,7 +133,7 @@ class AppDeveloperApiV2(object):
         self.certid = certid
 
     def active(self):
-        result = {}
+        result = {'data': []}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             certificates = apple_obj.get_all_certificates()
