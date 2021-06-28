@@ -745,9 +745,9 @@ class IosUtils(object):
         status, result = app_api_obj.revoke_cert(developer_obj.certid)
         if not status:
             logger.warning('%s revoke cert failed,but i need clean cert_id %s' % (developer_obj.issuer_id, result))
-            AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
-                is_actived=True,
-                certid=None, cert_expire_time=None)
+        AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
+            is_actived=True,
+            certid=None, cert_expire_time=None)
         return status, result
 
     @staticmethod
