@@ -163,6 +163,7 @@ class AppInfoView(APIView):
                         else:
                             pass
                         del_cache_response_by_short(apps_obj.first().app_id)
+                        del_cache_response_by_short(has_combo.first().app_id)
 
                     except Exception as e:
                         logger.error("app_id:%s actions:%s hcombo_id:%s Exception:%s" % (app_id, actions, hcombo_id, e))
@@ -308,7 +309,9 @@ class AppReleaseinfoView(APIView):
                         delete_app_screenshots_files(storage, apps_obj)
                         has_combo = apps_obj.has_combo
                         if has_combo:
-                            apps_obj.has_combo.has_combo = None
+                            has_combo.has_combo = None
+                            has_combo.save()
+                            del_cache_response_by_short(has_combo.app_id)
                         apps_obj.delete()
                     else:
                         pass
