@@ -563,9 +563,16 @@
 
                         }
 
-                        if (this.currentappinfo.wxredirect) {
-                            if (this.mcurrentappinfo.binary_url && this.agent !== '' && this.wrong === false) {
-                                window.location.href = this.mcurrentappinfo.binary_url
+                        if (this.mcurrentappinfo.binary_url && !this.wrong) {
+                            if (this.agent === 'wxandroid' || this.agent === 'wxapple') {
+                                if (this.currentappinfo.wxredirect) {
+                                    window.location.href = this.mcurrentappinfo.binary_url;
+                                    return;
+                                }
+                            }
+                            if (this.agent === 'apple' || this.agent === 'android') {
+                                window.location.href = this.mcurrentappinfo.binary_url;
+                                return;
                             }
                         }
                         if (this.currentappinfo.screenshots && this.currentappinfo.screenshots.length > 0) {
