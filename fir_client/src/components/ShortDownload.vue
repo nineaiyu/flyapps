@@ -24,12 +24,14 @@
         <div ref="bg" class="bg"></div>
 
 
-        <div class="wechat_tip_content" v-if="agent === 'wxandroid' || agent === 'wxapple'">
-            <div class="wechat_tip" v-show="agent === 'wxandroid'">
-                <i class="triangle-up"/>请点击右上角<br>选择"在浏览器打开"
-            </div>
-            <div class="wechat_tip" v-show="agent === 'wxapple'">
-                <i class="triangle-up"/>请点击右上角<br>选择"在Safari中打开"
+        <div class="wechat_tip_content" v-if="(agent === 'wxandroid' || agent === 'wxapple') && !wrong">
+            <div class="mask">
+                <div class="wechat_tip" v-show="agent === 'wxandroid'">
+                    <i class="triangle-up"/>请点击右上角<br>选择"在浏览器打开"
+                </div>
+                <div class="wechat_tip" v-show="agent === 'wxapple'">
+                    <i class="triangle-up"/>请点击右上角<br>选择"在Safari中打开"
+                </div>
             </div>
         </div>
 
@@ -85,12 +87,12 @@
 
                                 <div id="actions" class="actions" v-if="agent !==''"
                                      style="margin-top: 20%;margin-bottom: 20%">
+                                    <button type="button" v-if="wrong">{{ msg }}</button>
 
-                                    <button v-if="agent === 'wxandroid' || agent === 'wxapple'">
+                                    <button v-else-if="agent === 'wxandroid' || agent === 'wxapple'">
                                         不支持在微信内下载
                                     </button>
 
-                                    <button type="button" v-else-if="wrong">{{ msg }}</button>
                                     <div v-else style="margin-top: 20%;margin-bottom: 20%">
                                         <div v-if="isdownload">
                                             <div v-if="gomobile">
@@ -678,6 +680,15 @@
 </script>
 
 <style scoped>
+    .mask {
+        z-index: 9;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: rgba(0, 0, 0, .5);
+    }
 
     .text-black {
         color: #505556
@@ -696,7 +707,8 @@
 
     .wechat_tip, .wechat_tip > i {
         position: absolute;
-        right: 10px
+        right: 10px;
+        z-index: 99999;
     }
 
     .wechat_tip {
@@ -713,7 +725,7 @@
         color: #fff;
         font-size: 14px;
         font-weight: 500;
-        width: 135px;
+        width: 166px;
         height: 60px;
         border-radius: 10px;
         top: 15px
