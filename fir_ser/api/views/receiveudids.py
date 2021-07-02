@@ -29,7 +29,7 @@ class IosUDIDView(View):
         format_udid_info = udid_bytes_to_dict(stream_f)
         logger.info("short %s get new udid %s" % (short, format_udid_info))
         server_domain = get_redirect_server_domain(request)
-        if True:
+        try:
             app_info = Apps.objects.filter(short=short).first()
             if app_info:
                 server_domain = get_redirect_server_domain(request, app_info.user_id, get_app_domain_name(app_info))
@@ -56,8 +56,9 @@ class IosUDIDView(View):
             else:
                 return HttpResponsePermanentRedirect(
                     "%s/%s" % (server_domain, short))
-        # except Exception as e:
-        #     logger.error("short %s receive udid Exception:%s" % (short, e))
+        except Exception as e:
+            msg = "&msg=系统内部错误"
+            logger.error("short %s receive udid Exception:%s" % (short, e))
 
         return HttpResponsePermanentRedirect(
             "%s/%s?udid=%s%s" % (server_domain, short, format_udid_info.get("udid"), msg))

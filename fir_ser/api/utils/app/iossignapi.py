@@ -50,6 +50,13 @@ class ResignApp(object):
 
     @staticmethod
     def sign_mobileconfig(mobilconfig_path, sign_mobilconfig_path, ssl_pem_path, ssl_key_path):
+        '''
+        :param mobilconfig_path:  描述文件绝对路径
+        :param sign_mobilconfig_path: 签名之后的文件绝对路径
+        :param ssl_pem_path:    pem证书的绝对路径
+        :param ssl_key_path:    key证书的绝对路径
+        :return:
+        '''
         cmd = "openssl smime -sign -in %s -out %s -signer %s " \
               "-inkey %s -certfile %s -outform der -nodetach " % (
                   mobilconfig_path, sign_mobilconfig_path, ssl_pem_path, ssl_key_path, ssl_pem_path)
