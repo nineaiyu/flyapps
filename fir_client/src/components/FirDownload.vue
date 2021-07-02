@@ -606,6 +606,7 @@
                     } else {
                         if (data.msg) {
                             document.title = data.msg;
+                            this.wrong=true;
                             this.$message({
                                 message: data.msg,
                                 type: 'error',

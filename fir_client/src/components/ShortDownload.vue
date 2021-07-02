@@ -587,6 +587,7 @@
                         window.location.href = location.href.replace(location.search, '');
                     } else {
                         this.iserror = true;
+                        this.wrong = true;
                         if (data.code === 1009) {
                             this.error_msg.head = '温馨提示';
                         }
