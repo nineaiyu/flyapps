@@ -202,10 +202,10 @@ class AppDeveloperApiV2(object):
                 with open(csr_path + ".cer", 'wb') as f:
                     f.write(n)
                 self.make_pem(n, csr_path + ".pem")
-                logger.info("ios developer create  result:%s" % certificates.certificateContent)
+                logger.info("ios developer create cert result:%s" % certificates.certificateContent)
                 return True, certificates
         except Exception as e:
-            logger.error("ios developer active Failed Exception:%s" % e)
+            logger.error("ios developer create cert Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
         return False, result
 
@@ -338,7 +338,7 @@ class AppDeveloperApiV2(object):
             if devices_obj_list:
                 return True, devices_obj_list
         except Exception as e:
-            logger.error("ios developer delete profile Failed Exception:%s" % e)
+            logger.error("ios developer get device Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
             return False, result
 
@@ -350,7 +350,7 @@ class AppDeveloperApiV2(object):
                 return True, {}
 
         except Exception as e:
-            logger.error("ios developer delete profile Failed Exception:%s" % e)
+            logger.error("ios developer delete app Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
             return False, result
 
