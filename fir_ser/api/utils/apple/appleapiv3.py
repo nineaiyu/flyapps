@@ -651,7 +651,14 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
     JWT_AUD = 'appstoreconnect-v1'
     JWT_ALG = 'ES256'
 
-    def __init__(self, issuer_id, private_key_id, p8_private_key, exp_seconds=1800):
+    def __init__(self, issuer_id, private_key_id, p8_private_key, exp_seconds=1200):
+        '''
+        根据 Apple 文档，会话最长持续时间为 20 分钟：https : //developer.apple.com/documentation/appstoreconnectapi/generating_tokens_for_api_requests
+        :param issuer_id:
+        :param private_key_id:
+        :param p8_private_key:
+        :param exp_seconds: max 20*60
+        '''
         self.issuer_id = issuer_id
         self.private_key_id = private_key_id
         self.p8_private_key = p8_private_key
@@ -669,6 +676,12 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             if par:
                 limit_info_list = par.split(":")
                 self.rate_limit_info[limit_info_list[0]] = limit_info_list[1]
+        user_rem_info = self.rate_limit_info
+        if int(user_rem_info.get('user-hour-rem')) < 3595:
+            logger.warning("user-hour-rem over limit. so get jwt headers")
+            self.__init__(self.issuer_id, self.private_key_id, self.p8_private_key)
+            self.rate_limit_info = user_rem_info
+        logger.info("rate_limit_info:%s" % self.rate_limit_info)
 
     def __make_jwt_headers(self):
         data = {
@@ -688,6 +701,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         self.headers = headers
 
     def __base_format(self, stype, req, success_code):
+        # self.__set_rate_limit_info(req.headers)
         if req.status_code == success_code:
             req_data = req.json()
             data = req_data.get('data')
@@ -709,8 +723,10 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             else:
                 # self.__init_jwt_headers()
                 raise Exception('error: %s' % (req.text))
-        elif req.status_code == 401:
-            raise Exception('')
+        elif req.status_code == 401:  # 授权问题
+            raise Exception(req.text)
+        elif req.status_code == 429:  # 请求超过每小时限制 {'user-hour-lim': '3600', 'user-hour-rem': '3586'}
+            raise Exception(req.text)
         else:
             raise Exception('unknown error: %s  code:%s' % (req.text, req.status_code))
 
