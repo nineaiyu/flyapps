@@ -83,9 +83,10 @@ if (page) {
 }
 
 const pro_base_env = {
-    baseUrl: 'https://ali.cdn.flyapp.dvcloud.xin',
-    short_static: 'https://static.dvstorage.cn/',
-    index_static: 'https://static.dvcloud.xin/',
+    baseUrl: 'https://flyapps.cn',
+    index_static: 'https://static.flyapps.cn/index/',
+    baseShortUrl: 'https://flyapps.top',
+    short_static: 'https://static.flyapps.top/short/',
 };
 
 const dev_base_env = {
@@ -135,7 +136,7 @@ module.exports = {
         config
             .plugin('define')
             .tap(args => {
-                args[0]['process.env']['base_env'] = JSON.stringify({baseUrl: base_evn.baseUrl});
+                args[0]['process.env']['base_env'] = JSON.stringify({baseUrl: base_evn.baseUrl,baseShortUrl:base_evn.baseShortUrl});
                 return args
             });
 
