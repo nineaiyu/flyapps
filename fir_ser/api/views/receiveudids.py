@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from api.tasks import run_sign_task
 from api.utils.response import BaseResponse
 from api.utils.storage.caches import check_app_permission
+from api.utils.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
 from fir_ser.celery import app
 import logging
 from rest_framework.views import APIView
@@ -23,6 +24,7 @@ logger = logging.getLogger(__file__)
 
 
 class IosUDIDView(View):
+    throttle_classes = [ReceiveUdidThrottle1, ReceiveUdidThrottle2]
 
     def post(self, request, short):
         stream_f = str(request.body)

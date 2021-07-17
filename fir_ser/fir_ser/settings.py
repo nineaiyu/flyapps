@@ -132,6 +132,8 @@ REST_FRAMEWORK = {
         'GetAuthC2': '300/h',
         'InstallAccess1': '10/m',
         'InstallAccess2': '20/h',
+        'ReceiveUdid1': '10/h',
+        'ReceiveUdid2': '20/h',
     }
 }
 # Internationalization

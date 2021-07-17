@@ -82,3 +82,20 @@ class GetAuthC2Throttle(SimpleRateThrottle):
 
     def get_cache_key(self, request, view):
         return 'get_auth_' + self.get_ident(request)
+
+
+class ReceiveUdidThrottle1(VisitShortThrottle):
+    """post接收设备信息访问频率限制"""
+    scope = "ReceiveUdid1"
+
+    def get_cache_key(self, request, view):
+        return 'receive_udid_' + self.get_ident(request) + hashlib.md5(
+            request.META.get('HTTP_USER_AGENT', '').encode("utf-8")).hexdigest()
+
+
+class ReceiveUdidThrottle2(VisitShortThrottle):
+    """post接收设备信息访问频率限制"""
+    scope = "ReceiveUdid2"
+
+    def get_cache_key(self, request, view):
+        return 'receive_udid_' + self.get_ident(request)

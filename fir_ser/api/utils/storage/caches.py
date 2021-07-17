@@ -12,7 +12,7 @@ from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
     USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
 from api.utils.storage.storage import Storage, LocalStorage
-from api.utils.baseutils import get_app_d_count_by_app_id, get_app_domain_name  # file_format_path,
+from api.utils.baseutils import get_app_d_count_by_app_id, get_app_domain_name, check_app_password  # file_format_path,
 import logging
 from django.db.models import F
 
@@ -100,6 +100,9 @@ def get_app_instance_by_cache(app_id, password, limit, udid):
                                                              'user_id__certification__status').first()
         if app_info:
             app_info['d_count'] = get_app_d_count_by_app_id(app_id)
+            app_password = app_info.get("password")
+            if not check_app_password(app_password, password):
+                return None
         return app_info
     app_key = "_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"), app_id])
     app_obj_cache = cache.get(app_key)
@@ -113,12 +116,8 @@ def get_app_instance_by_cache(app_id, password, limit, udid):
 
     app_password = app_obj_cache.get("password")
 
-    if app_password != '':
-        if password is None:
-            return None
-
-        if app_password.lower() != password.strip().lower():
-            return None
+    if not check_app_password(app_password, password):
+        return None
 
     return app_obj_cache
 
