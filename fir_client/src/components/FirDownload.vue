@@ -65,7 +65,7 @@
                                 </div>
 
                                 <div id="actions" class="actions" v-if="agent !==''"
-                                     style="margin-top: 20%;margin-bottom: 20%">
+                                     style="margin-top: 10%;margin-bottom: 20%">
                                     <button type="button" v-if="wrong">{{ msg }}</button>
 
                                     <el-button type="info" round
@@ -73,7 +73,7 @@
                                         不支持在微信内下载
                                     </el-button>
 
-                                    <div v-else style="margin-top: 20%;margin-bottom: 20%">
+                                    <div v-else style="margin-top: 10%;margin-bottom: 20%">
                                         <div v-if="isdownload">
                                             <div v-if="gomobile">
                                                 <button disabled="" class="loading"

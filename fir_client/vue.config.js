@@ -91,6 +91,7 @@ const pro_base_env = {
 
 const dev_base_env = {
     baseUrl: 'https://app.hehelucky.cn',
+    baseShortUrl: 'https://app.hehelucky.cn',
     short_static: '/',
     index_static: '/',
 };
