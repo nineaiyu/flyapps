@@ -1,0 +1,1 @@
+python36 python36-devel  redis  mariadb-devel  gcc-c++ gcc  openssl-devel wget
