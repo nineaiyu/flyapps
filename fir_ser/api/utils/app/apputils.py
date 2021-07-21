@@ -126,6 +126,7 @@ def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, si
             "user_id": user_obj,
             "type": get_app_type(app_file_name),
             "name": appinfo["labelname"],
+            "new_bundle_name": appinfo["labelname"],
             "short": short,
             "bundle_id": bundle_id,
             "count_hits": 0,

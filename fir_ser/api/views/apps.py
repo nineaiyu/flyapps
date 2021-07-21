@@ -208,9 +208,9 @@ class AppInfoView(APIView):
                                 do_sign_flag = 2
                             apps_obj.new_bundle_name = new_bundle_name
                         if new_bundle_name == '':
-                            if new_bundle_name != apps_obj.new_bundle_name:
-                                do_sign_flag = 2
-                            apps_obj.new_bundle_name = None
+                            # if new_bundle_name != apps_obj.new_bundle_name:
+                            #     do_sign_flag = 2
+                            apps_obj.new_bundle_name = apps_obj.name
 
                     apps_obj.wxredirect = data.get("wxredirect", apps_obj.wxredirect)
                     if apps_obj.type == 1 and data.get('issupersign', -1) != -1:

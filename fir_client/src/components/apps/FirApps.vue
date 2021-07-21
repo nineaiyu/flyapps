@@ -97,7 +97,7 @@
                         </el-col>
                         <el-col :span="18">
                             <div class="grid-content bg-purple">
-                                <el-row :gutter="20" style="margin-top: 8px;">
+                                <el-row :gutter="20" style=" margin-top: 8px;">
                                     <el-col :span="18">
                                         {{ analyseappinfo.version}} (Build {{ analyseappinfo.buildversion}}) {{
                                         analyseappinfo.release_type_id|getiOStype}}
