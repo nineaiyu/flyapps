@@ -16,7 +16,7 @@ from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_
     auto_check_ios_developer_active
 from api.utils.geetest.geetest_utils import check_bypass_status
 
-app = Celery()
+from fir_ser.celery import app
 
 
 @shared_task
