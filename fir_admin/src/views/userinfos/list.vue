@@ -73,7 +73,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column class-name="status-col" label="私有存储" width="80" align="center">
+      <el-table-column class-name="status-col" label="私有存储权限" width="80" align="center">
         <template slot-scope="scope">
           <router-link v-if="scope.row.storage_active" :to="{name: 'storage_info_list',params:{user_id:scope.row.id}}">
             <el-link type="primary"> <el-tag :type="scope.row.storage_active | statusFilter">{{ scope.row.storage_active }}</el-tag></el-link>
@@ -82,7 +82,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column class-name="status-col" label="超级签" width="80" align="center">
+      <el-table-column class-name="status-col" label="超级签权限" width="80" align="center">
         <template slot-scope="scope">
           <router-link v-if="scope.row.supersign_active" :to="{name: 'devices_info_list',params:{user_id:scope.row.id}}">
             <el-link type="primary"> <el-tag :type="scope.row.supersign_active | statusFilter">{{ scope.row.supersign_active }}</el-tag></el-link>

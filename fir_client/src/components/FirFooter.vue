@@ -34,14 +34,14 @@
         data() {
             return {
                 footer: {
-                    copyright: 'Copyright © 2017-2021 东城飞阳 版权所有.',
+                    copyright: 'Copyright © 2020-2022 东城飞阳 版权所有.',
                     ipcBeiAn: {
                         url: 'https://beian.miit.gov.cn',
                         text: '粤ICP备2021097895号',
                     },
                     gongAnBeiAn: {
-                        url: 'http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=41142202000049',
-                        text: '粤公网安备 41142202000049号',
+                        url: 'http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=41142202000062',
+                        text: '豫公网安备41142202000062号',
                     },
                 }
             }

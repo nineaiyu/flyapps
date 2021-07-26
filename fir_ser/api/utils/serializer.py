@@ -90,7 +90,7 @@ class AdminUserInfoSerializer(UserInfoSerializer):
         model = models.UserInfo
         exclude = ["password", "api_token"]
         read_only_fields = ["id", "head_img", "free_download_times", "last_login",
-                            "is_superuser", "last_name", "is_staff", "uid", "storage_active", "supersign_active",
+                            "is_superuser", "last_name", "is_staff", "uid",
                             "date_joined", "download_times", "all_download_times", "storage", "groups",
                             "user_permissions", "certification_id", " app_count"]
 
