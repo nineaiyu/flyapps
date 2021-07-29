@@ -21,12 +21,14 @@ def get_download_url_from_context(self, obj, key, url, force_new=False):
     if self.context.get("storage", None) and self.context.get("storage") != "undefined":
         storage = self.context.get("storage", None)
     else:
-        if isinstance(obj, models.Apps) or isinstance(obj, models.UserCertificationInfo):
+        if isinstance(obj, models.Apps):
             storage = Storage(obj.user_id)
         elif isinstance(obj, models.AppReleaseInfo):
             storage = Storage(obj.app_id.user_id)
         elif isinstance(obj, models.UserInfo):
             storage = Storage(obj)
+        elif isinstance(obj, models.UserCertificationInfo) or isinstance(obj, models.CertificationInfo):
+            storage = Storage(obj.user_id, None, True)
         else:
             storage = None
     if storage:

@@ -6,7 +6,7 @@
 
 from api.utils.app.apputils import get_random_short, SaveAppInfos
 from api.utils.baseutils import get_app_domain_name
-from api.utils.storage.storage import Storage
+from api.utils.storage.storage import Storage, get_local_storage
 from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
 from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo
 from api.utils.app.randomstrings import make_app_uuid
@@ -177,6 +177,8 @@ class UploadView(APIView):
                     res.code = 1006
                     res.msg = '类型不允许'
                 else:
+                    if ftype and ftype == 'certification':
+                        storage = Storage(request.user, None, True)
                     upload_key = make_from_user_uuid(request.user) + '.' + app_type + settings.FILE_UPLOAD_TMP_KEY
                     upload_token = storage.get_upload_token(upload_key)
                     storage_type = storage.get_storage_type()
@@ -347,6 +349,7 @@ class UploadView(APIView):
                     if ext:
                         ptype = ext.get('ptype', None)
                         if ptype is not None and ptype in [1, 2, 3]:
+                            storage = Storage(request.user, None, True)
                             certification_obj = CertificationInfo.objects.filter(user_id=request.user,
                                                                                  type=ptype).first()
                             if certification_obj:

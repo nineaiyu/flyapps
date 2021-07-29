@@ -617,8 +617,7 @@ class CertificationView(APIView):
             certification_obj = CertificationInfo.objects.filter(user_id=request.user).all()
             if certification_obj:
                 storage = Storage(request.user)
-                certification_serializer = CertificationSerializer(certification_obj, many=True,
-                                                                   context={"storage": storage})
+                certification_serializer = CertificationSerializer(certification_obj, many=True)
                 res.data["certification"] = certification_serializer.data
         return Response(res.dict)
 
