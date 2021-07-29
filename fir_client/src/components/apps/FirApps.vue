@@ -77,6 +77,63 @@
                     </span>
             </el-dialog>
 
+            <el-dialog
+                    :title="`应用批量上传，`+multiFileList.filter(function(val){return val}).length +` 个应用待上传`"
+                    :visible.sync="multiupload"
+                    @closed="closeUpload"
+                    :destroy-on-close="true"
+                    :close-on-click-modal="false"
+                    :close-on-press-escape="false"
+                    :center="true"
+                    width="766px">
+                <el-table
+                        :data="multiFileList"
+                        stripe
+                        border
+                        height="366px"
+                        style="width: 100%">
+                    <el-table-column
+                            prop="name"
+                            label="文件名称">
+                    </el-table-column>
+                    <el-table-column
+                            prop="size"
+                            label="文件大小"
+                            width="80">
+                        <template slot-scope="scope">
+                            {{ scope.row.size|diskSize }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            label="短连接"
+                            width="70">
+                        <template slot-scope="scope">
+                            {{ uploadprocess[uploadprocessList[multiFileList.indexOf(scope.row)]].short }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            label="应用名称">
+                        <template slot-scope="scope">
+                            {{ uploadprocess[uploadprocessList[multiFileList.indexOf(scope.row)]].appname }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="raw.lastModified"
+                            width="80"
+                            align="center"
+                            label="上传进度">
+                        <template slot-scope="scope">
+                            {{ uploadprocess[uploadprocessList[multiFileList.indexOf(scope.row)]].process }} %
+                        </template>
+                    </el-table-column>
+                </el-table>
+
+                <span slot="footer" class="dialog-footer">
+                        <el-button plain @click="closeUpload">取 消</el-button>
+                        <el-button type="primary" plain @click="multiuploadFun"
+                                   :disabled="multiuploaddisable">开始上传</el-button>
+                    </span>
+            </el-dialog>
 
             <el-dialog class="upload-app"
                        style="position: fixed"
@@ -223,10 +280,13 @@
 
                     </div>
                 </div>
-                <span slot="footer" class="dialog-footer">
-                        <el-progress :text-inside="true" :stroke-width="26" :percentage="uploadprocess"
+                <span slot="footer" class="dialog-footer" v-if="currentfile&& currentfile.uid">
+                    {{ uploadprocess[currentfile.uid] }}
+                        <el-progress :text-inside="true" :stroke-width="26"
+                                     :percentage="uploadprocess[uploadprocessList[multiFileList.indexOf(currentfile)]].process"
                                      v-if="uploadflag === true"/>
-                        <el-button type="primary" plain @click="uploadcloud" v-else>{{ analyseappinfo.is_new|get_upload_text}}</el-button>
+                        <el-button type="primary" plain
+                                   @click="uploadcloud(analyseappinfo,currentfile,false,getappsFun)" v-else>{{ analyseappinfo.is_new|get_upload_text}}</el-button>
                   </span>
             </el-dialog>
 
@@ -374,10 +434,13 @@
                         <div class=" card app card-ios" style="padding: 0">
                             <el-upload
                                     drag
+                                    ref="upload"
+                                    :on-change="onUploadChange"
                                     :show-file-list="false"
-                                    :before-upload="beforeAvatarUpload"
                                     accept=".ipa , .apk"
                                     action="#"
+                                    :auto-upload="false"
+                                    :limit="50"
                                     multiple>
                                 <i class="el-icon-upload" style="color: #fff"/>
                                 <div class="el-upload__text" style="color: #fff;margin-top: 20px">拖拽到这里上传</div>
@@ -409,8 +472,6 @@
                                          :src="r.has_combo.master_release.icon_url|make_icon_url" alt="">
                                 </a>
                             </div>
-
-
                             <br>
                             <p class="appname"><i class="el-icon-user-solid"/><span
                                     class="ng-binding">{{ r.name }}</span>
@@ -497,14 +558,27 @@
         getWindowHeight,
         uploadaliyunoss,
         uploadlocalstorage,
-        uploadqiniuoss
+        uploadqiniuoss,
+        getUserInfoFun,
+        makeFiveC,
+        deepCopy,
+        diskSize
     } from "@/utils";
-    import {getUserInfoFun} from "../../utils";
 
+    let fiveProcess = {};
+    let fiveProcessList = [];
+    for (const c of makeFiveC()) {
+        fiveProcess[c] = {process: 0, short: '', appname: ''};
+        fiveProcessList.push(c)
+    }
     export default {
         name: "FirApps",
         data() {
             return {
+                timer: '',
+                multiupload: false,
+                multiuploaddisable: false,
+                multiFileList: [],
                 default_pay_radio: '',
                 default_price_radio: '',
                 pay_choices: [],
@@ -526,8 +600,8 @@
                 autoloadflag: true,
                 firstloadflag: true,
                 currentfile: null,
-                uploadprocess: 0,
-                uploadsuccess: 0,
+                uploadprocess: deepCopy(fiveProcess),
+                uploadprocessList: fiveProcessList,
                 loadingobj: null,
                 show_buy_download_times: false,
                 data_package_prices: [],
@@ -540,6 +614,79 @@
                 PaymentQuestionMsg: '',
             }
         }, methods: {
+            multirun(process, keylist, func) {
+                let thr = [];
+                for (let i = 0; i < process; i++) {
+                    thr.push(Promise.resolve())
+                }
+                for (let j = 0; j < keylist.length; j += process) {
+                    for (let i = 0; i < process; i++) {
+                        if (i + j < keylist.length) {
+                            // eslint-disable-next-line no-unused-vars
+                            thr[(j + i) % process] = thr[(j + i) % process].then(_ => func(keylist[i + j]))
+                        }
+                    }
+
+                }
+
+            },
+            uploadasync(file) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const loading = this.$loading({
+                            lock: true,
+                            text: `文件 ${file.name} 解析中`,
+                            spinner: 'el-icon-loading',
+                        });
+                        getappinfo(file.raw, appinfo => {
+                            if (appinfo && appinfo.bundleid) {
+                                let analyseappinfo = appinfo;
+                                if (this.currentfile) {
+                                    this.analyseappinfo = appinfo;
+                                }
+                                analyseApps(data => {
+                                    if (data.code === 1000) {
+                                        this.short = data.data.short;
+                                        for (let name of Object.keys(data.data)) {
+                                            analyseappinfo[name] = data.data[name]
+                                        }
+                                        if (this.currentfile) {
+                                            this.willuploadApp = true;
+                                            resolve()
+                                        } else {
+                                            this.uploadcloud(analyseappinfo, file, true, resolve)
+                                        }
+
+                                    } else {
+                                        this.$message.error("应用 " + analyseappinfo.appname + " 上传token获取失败，请刷新重试")
+                                    }
+                                    loading.close();
+                                }, {
+                                    'methods': 'POST',
+                                    'data': {"bundleid": analyseappinfo.bundleid, "type": analyseappinfo.type}
+                                });
+
+                            } else {
+                                this.$message.error("文件 " + file.raw.name + " 解析失败,请检查是否为APP应用")
+                            }
+                        }, err => {
+                            loading.close();
+                            this.$message.error("应用解析失败,请检查是否为APP应用");
+                            // eslint-disable-next-line no-console
+                            console.log('Error ', err);
+                        });
+
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            },
+            multiuploadFun() {
+                this.multiuploaddisable = true;
+                if (this.multiFileList && this.multiFileList.length > 0) {
+                    this.multirun(3, this.multiFileList, this.uploadasync)
+                }
+            },
             show_package_prices() {
                 get_package_prices(res => {
                     if (res.code === 1000) {
@@ -588,89 +735,101 @@
                     dangerouslyUseHTMLString: true,
                 });
             },
-            updateappinfo(file) {
-                this.uploadsuccess += 1;
-                if (this.uploadsuccess === 2) {
-                    delete this.analyseappinfo.icon;
-                    this.$message.success(file.name + '上传成功');
-                    this.analyseappinfo.short = this.short;
+            updateappinfo(file, analyseappinfo, multiFlag, binaryFlag, resolve) {
+                if (binaryFlag) {
+                    delete analyseappinfo.icon;
+                    this.$message.success(file.raw.name + '上传成功');
+                    if (!multiFlag) {
+                        analyseappinfo.short = this.short;
+                    }
                     const loading = this.$loading({
                         lock: true,
-                        text: '应用入库中，请耐心等待',
+                        text: `应用 ${analyseappinfo.appname} 入库中，请耐心等待`,
                         spinner: 'el-icon-loading',
-                        // background: 'rgba(0, 0, 0, 0.7)'
                     });
                     analyseApps(data => {
                         if (data.code === 1000) {
-                            let app_uuid = this.analyseappinfo.app_uuid;
-                            this.closeUpload();
-                            this.$router.push({name: 'FirAppInfostimeline', params: {id: app_uuid}});
+                            if (!multiFlag) {
+                                this.closeUpload();
+                                this.$router.push({name: 'FirAppInfostimeline', params: {id: analyseappinfo.app_uuid}});
+                            } else {
+                                this.$message.success(analyseappinfo.appname + ' 入库成功');
+                            }
                         }
-                        loading.close()
-                    }, {'methods': 'PUT', 'data': this.analyseappinfo});
+                        loading.close();
+                        const start = this.multiFileList.indexOf(file);
+                        if (start > -1) {
+                            delete this.multiFileList[start]
+                        }
+                        if (this.multiFileList && this.multiFileList.filter(function (val) {
+                            return val
+                        }).length === 0) {
+                            this.closeUpload();
+                            this.searchFun();
+                        }
+                        resolve()
+                    }, {'methods': 'PUT', 'data': analyseappinfo});
                 }
             },
-            uploadtostorage(file, certinfo) {
-
-                if (this.analyseappinfo.storage === 1) {
+            uploadtostorage(file, analyseappinfo, multiFlag, binaryFlag, resolve) {
+                let upload_key = analyseappinfo.png_key;
+                let upload_token = analyseappinfo.png_token;
+                let rawfile = file;
+                let process_key = '';
+                if (binaryFlag) {
+                    upload_key = analyseappinfo.upload_key;
+                    upload_token = analyseappinfo.upload_token;
+                    process_key = this.uploadprocessList[this.multiFileList.indexOf(file)];
+                    rawfile = file.raw
+                }
+                let certinfo = {
+                    'upload_key': upload_key,
+                    'upload_token': upload_token
+                };
+                if (analyseappinfo.storage === 1) {
                     // eslint-disable-next-line no-unused-vars,no-unreachable
-                    uploadqiniuoss(file, certinfo, this, res => {
-                        this.updateappinfo(file)
+                    uploadqiniuoss(rawfile, certinfo, this, res => {
+                        this.updateappinfo(file, analyseappinfo, multiFlag, binaryFlag, resolve)
                     }, process => {
-                        if (this.uploadsuccess === 1) {
-                            this.uploadprocess = process;
+                        if (binaryFlag && process_key) {
+                            this.uploadprocess[process_key] = {process, analyseappinfo};
                         }
                     })
-                } else if (this.analyseappinfo.storage === 2) {
+                } else if (analyseappinfo.storage === 2) {
                     // eslint-disable-next-line no-unused-vars
-                    uploadaliyunoss(file, certinfo, this, res => {
-                        this.updateappinfo(file)
-
+                    uploadaliyunoss(rawfile, certinfo, this, res => {
+                        this.updateappinfo(file, analyseappinfo, multiFlag, binaryFlag, resolve)
                     }, process => {
-                        if (this.uploadsuccess === 1) {
-                            this.uploadprocess = process;
+                        if (binaryFlag && process_key) {
+                            this.uploadprocess[process_key] = {
+                                process,
+                                short: analyseappinfo.short,
+                                appname: analyseappinfo.appname
+                            };
                         }
                     });
                 } else {
                     //本地
-                    if (this.analyseappinfo.domain_name) {
-                        certinfo.upload_url = getuploadurl(this.analyseappinfo.domain_name)
+                    if (analyseappinfo.domain_name) {
+                        certinfo.upload_url = getuploadurl(analyseappinfo.domain_name)
                     } else {
                         certinfo.upload_url = getuploadurl();
                     }
                     certinfo.ftype = 'app';
-                    certinfo.app_id = this.analyseappinfo.app_uuid;
+                    certinfo.app_id = analyseappinfo.app_uuid;
                     // eslint-disable-next-line no-unused-vars,no-unreachable
-                    uploadlocalstorage(file, certinfo, this, res => {
-                        this.updateappinfo(file)
+                    uploadlocalstorage(rawfile, certinfo, this, res => {
+                        this.updateappinfo(file, analyseappinfo, multiFlag, binaryFlag, resolve)
                     }, process => {
-                        if (this.uploadsuccess === 1) {
-                            this.uploadprocess = process;
+                        if (binaryFlag && process_key) {
+                            this.uploadprocess[process_key] = {process, analyseappinfo};
                         }
                     })
                 }
             },
-            getuploadtoken(loading) {
-                analyseApps(data => {
-                    if (data.code === 1000) {
-                        this.short = data.data.short;
-                        for (let name of Object.keys(data.data)) {
-                            this.analyseappinfo[name] = data.data[name]
-                        }
-                        this.willuploadApp = true;
-                    } else {
-                        this.$message.error("上传token获取失败，请刷新重试")
-                    }
-                    loading.close();
-                }, {
-                    'methods': 'POST',
-                    'data': {"bundleid": this.analyseappinfo.bundleid, "type": this.analyseappinfo.type}
-                })
-            },
-            uploadcloud() {
-                if (this.analyseappinfo.binary_url !== '') {
-
-                    this.$confirm(`该应用存在第三方下载链接 <a target="_blank" href="${this.analyseappinfo.binary_url}"> ${this.analyseappinfo.binary_url}  </a>更新之后，将不会自动跳转第三方下载；若您还需要第三方跳转，请在第三方平台更新该应用。`, '确定更新应用？', {
+            uploadcloud(analyseappinfo, binary_file, multiFlag, resolve) {
+                if (analyseappinfo.binary_url !== '') {
+                    this.$confirm(`该应用 ${analyseappinfo.appname} 存在第三方下载链接 <a target="_blank" href="${analyseappinfo.binary_url}"> ${analyseappinfo.binary_url}  </a>更新之后，将不会自动跳转第三方下载；若您还需要第三方跳转，请在第三方平台更新该应用。`, '确定更新应用？', {
                         confirmButtonText: '确定',
                         cancelButtonText: '取消',
                         dangerouslyUseHTMLString: true,
@@ -678,52 +837,52 @@
                     }).then(() => {
                         this.$message({
                             type: 'success',
-                            message: '开始更新'
+                            message: '确定更新'
                         });
-                        this.uploadstorage()
+                        this.uploadstorage(analyseappinfo, binary_file, multiFlag, resolve)
                     }).catch(() => {
                         this.$message({
                             type: 'info',
-                            message: '已取消更新'
+                            message: `应用 ${analyseappinfo.appname} 已取消更新`
                         });
-                        this.closeUpload();
+                        if (!multiFlag) {
+                            this.closeUpload();
+                        } else {
+                            const start = this.multiFileList.indexOf(binary_file);
+                            if (start > -1) {
+                                delete this.multiFileList[start]
+                            }
+                            resolve()
+                        }
                     });
                 } else {
-                    this.uploadstorage()
+                    this.uploadstorage(analyseappinfo, binary_file, multiFlag, resolve)
                 }
             },
-            uploadstorage() {
-                this.uploadflag = true;
-                this.uploading = true;
-                // eslint-disable-next-line no-unused-vars
-                // this.timmer = setTimeout(data => {
-                //     let canvas = this.$refs.canvas;
-                //     show_beautpic(this, canvas, 888, 0.6);
-                // }, 100);
-
-                let file = dataURLtoFile(this.analyseappinfo.icon, this.analyseappinfo.png_key);
-
-                this.uploadtostorage(file, {
-                    'upload_key': this.analyseappinfo.png_key,
-                    'upload_token': this.analyseappinfo.png_token
-                });
-
-                file = this.currentfile;
-                this.uploadtostorage(file, {
-                    'upload_key': this.analyseappinfo.upload_key,
-                    'upload_token': this.analyseappinfo.upload_token
-                });
+            uploadstorage(analyseappinfo, binary_file, multiFlag, resolve) {
+                if (!multiFlag) {
+                    this.uploadflag = true;
+                    this.uploading = true;
+                }
+                let file = dataURLtoFile(analyseappinfo.icon, analyseappinfo.png_key);
+                this.uploadtostorage(file, analyseappinfo, multiFlag, false, resolve);
+                this.uploadtostorage(binary_file, analyseappinfo, multiFlag, true, resolve);
 
             },
             closeUpload() {
-                this.uploadsuccess = 0;
-                this.uploadprocess = 0;
                 this.uploadflag = false;
                 this.uploading = false;
                 this.willuploadApp = false;
-                this.currentfile = null;
                 this.uploadflag = false;
                 this.analyseappinfo = {};
+
+                this.multiupload = false;
+                this.multiuploaddisable = false;
+                this.multiFileList = [];
+                this.$refs.upload.clearFiles();
+                this.$refs.upload.abort();
+                this.uploadprocess = deepCopy(fiveProcess);
+                this.uploadprocessList = fiveProcessList;
             },
 
             searchFun() {
@@ -819,28 +978,19 @@
                 }, parms);
 
             },
-            beforeAvatarUpload(file) {
-                const loading = this.$loading({
-                    lock: true,
-                    text: '应用解析中',
-                    spinner: 'el-icon-loading',
-                    // background: 'rgba(0, 0, 0, 0.7)'
-                });
-                getappinfo(file, appinfo => {
-                    if (appinfo.bundleid) {
-                        this.analyseappinfo = appinfo;
-                        this.getuploadtoken(loading);
-                        this.currentfile = file;
-                    } else {
-                        this.$message.error("应用解析失败,请检查是否为APP应用")
+            onUploadChange(file, fileList) {
+                if (fileList && fileList.length > 1) {
+                    this.multiupload = true;
+                }
+                this.multiFileList = fileList;
+                // eslint-disable-next-line no-unused-vars
+                this.timer = setTimeout(data => {
+                    if (fileList && fileList.length === 1) {
+                        this.currentfile = this.multiFileList[0];
+                        this.multiuploadFun();
                     }
-                }, err => {
-                    loading.close();
-                    this.$message.error("应用解析失败,请检查是否为APP应用");
-                    // eslint-disable-next-line no-console
-                    console.log('Error ', err);
-                });
-                return false;
+                    clearTimeout(this.timer);
+                }, 300);
             },
             delApp() {
                 let loadingobj = this.$loading({
@@ -891,6 +1041,7 @@
             },
         },
         filters: {
+            diskSize,
             formatMoney: function (money) {
                 return format_money(money, 19);
             },
@@ -1049,6 +1200,10 @@
         margin-top: -43px;
     }
 
+    .appdownload /deep/ .el-upload-list__item {
+        font-size: 17px;
+        line-height: 1;
+    }
 
     .page-apps .card.app .action a, .page-apps .card.app .appname, .page-apps .card.app table tr td, .upload-modal .state-form .release-body .input-addon {
         font-family: 'Open Sans', sans-serif

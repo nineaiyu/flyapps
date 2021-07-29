@@ -387,7 +387,7 @@
                                             let download_url = res.data.download_url;
                                             this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
                                             // eslint-disable-next-line no-unused-vars
-                                            this.timmer = setTimeout(data => {
+                                            this.timer = setTimeout(data => {
                                                 this.gomobile = false;
                                             }, 5000);
                                         }
@@ -397,7 +397,7 @@
                                             window.location.href = this.downloadurl;
                                             if (res.data.extra_url !== "") {
                                                 // eslint-disable-next-line no-unused-vars
-                                                this.timmer = setTimeout(data => {
+                                                this.timer = setTimeout(data => {
                                                     window.location.href = res.data.extra_url;
                                                 }, 3000);
                                             }
@@ -411,7 +411,7 @@
                                     if (res.data.extra_url !== "") {
                                         this.mobileprovision = res.data.extra_url;
                                         // eslint-disable-next-line no-unused-vars
-                                        this.timmer = setTimeout(data => {
+                                        this.timer = setTimeout(data => {
                                             this.gomobile = false;
                                         }, 5000);
                                     }
@@ -606,7 +606,7 @@
                     } else {
                         if (data.msg) {
                             document.title = data.msg;
-                            this.wrong=true;
+                            this.wrong = true;
                             this.$message({
                                 message: data.msg,
                                 type: 'error',
