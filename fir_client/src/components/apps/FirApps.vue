@@ -94,11 +94,13 @@
                         style="width: 100%">
                     <el-table-column
                             prop="name"
+                            align="center"
                             label="文件名称">
                     </el-table-column>
                     <el-table-column
                             prop="size"
                             label="文件大小"
+                            align="center"
                             width="80">
                         <template slot-scope="scope">
                             {{ scope.row.size|diskSize }}
@@ -106,24 +108,33 @@
                     </el-table-column>
                     <el-table-column
                             label="短连接"
+                            align="center"
                             width="70">
                         <template slot-scope="scope">
                             {{ uploadprocess[uploadprocessList[multiFileList.indexOf(scope.row)]].short }}
                         </template>
                     </el-table-column>
                     <el-table-column
+                            align="center"
                             label="应用名称">
                         <template slot-scope="scope">
                             {{ uploadprocess[uploadprocessList[multiFileList.indexOf(scope.row)]].appname }}
                         </template>
                     </el-table-column>
                     <el-table-column
-                            prop="raw.lastModified"
                             width="80"
                             align="center"
                             label="上传进度">
                         <template slot-scope="scope">
                             {{ uploadprocess[uploadprocessList[multiFileList.indexOf(scope.row)]].process }} %
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            width="100"
+                            align="center"
+                            label="上传速度">
+                        <template slot-scope="scope">
+                            {{ uploadprocess[uploadprocessList[multiFileList.indexOf(scope.row)]].speed }}/s
                         </template>
                     </el-table-column>
                 </el-table>
@@ -281,10 +292,11 @@
                     </div>
                 </div>
                 <span slot="footer" class="dialog-footer" v-if="currentfile&& currentfile.uid">
-                    {{ uploadprocess[currentfile.uid] }}
-                        <el-progress :text-inside="true" :stroke-width="26"
-                                     :percentage="uploadprocess[uploadprocessList[multiFileList.indexOf(currentfile)]].process"
-                                     v-if="uploadflag === true"/>
+                    <span v-if="uploadflag === true">
+                         {{ uploadprocess[uploadprocessList[multiFileList.indexOf(currentfile)]].speed }}/s
+                            <el-progress :text-inside="true" :stroke-width="26"
+                                         :percentage="uploadprocess[uploadprocessList[multiFileList.indexOf(currentfile)]].process"/>
+                    </span>
                         <el-button type="primary" plain
                                    @click="uploadcloud(analyseappinfo,currentfile,false,getappsFun)" v-else>{{ analyseappinfo.is_new|get_upload_text}}</el-button>
                   </span>
@@ -562,13 +574,14 @@
         getUserInfoFun,
         makeFiveC,
         deepCopy,
-        diskSize
+        diskSize,
+        upspeed
     } from "@/utils";
 
     let fiveProcess = {};
     let fiveProcessList = [];
     for (const c of makeFiveC()) {
-        fiveProcess[c] = {process: 0, short: '', appname: ''};
+        fiveProcess[c] = {process: 0, short: '', appname: '', percent: [], speed: '0 MB'};
         fiveProcessList.push(c)
     }
     export default {
@@ -771,6 +784,25 @@
                     }, {'methods': 'PUT', 'data': analyseappinfo});
                 }
             },
+            updateprocess(binaryFlag, process_key, process, analyseappinfo, rawfile) {
+                if (binaryFlag && process_key) {
+                    this.uploadprocess[process_key].percent.push({time: Date.now(), process});
+                    const pnumber = 20;
+                    this.uploadprocess[process_key].process = process;
+                    this.uploadprocess[process_key].short = analyseappinfo.short;
+                    this.uploadprocess[process_key].appname = analyseappinfo.appname;
+                    if (process > 0) {
+                        let percent = this.uploadprocess[process_key].percent;
+                        if (percent.length > pnumber) {
+                            this.uploadprocess[process_key].speed = upspeed(percent[percent.length - pnumber].time, rawfile.size, process - percent[percent.length - pnumber].process)
+                        } else {
+                            if (percent.length > 1) {
+                                this.uploadprocess[process_key].speed = upspeed(percent[0].time, rawfile.size, process)
+                            }
+                        }
+                    }
+                }
+            },
             uploadtostorage(file, analyseappinfo, multiFlag, binaryFlag, resolve) {
                 let upload_key = analyseappinfo.png_key;
                 let upload_token = analyseappinfo.png_token;
@@ -791,22 +823,14 @@
                     uploadqiniuoss(rawfile, certinfo, this, res => {
                         this.updateappinfo(file, analyseappinfo, multiFlag, binaryFlag, resolve)
                     }, process => {
-                        if (binaryFlag && process_key) {
-                            this.uploadprocess[process_key] = {process, analyseappinfo};
-                        }
+                        this.updateprocess(binaryFlag, process_key, process, analyseappinfo, rawfile);
                     })
                 } else if (analyseappinfo.storage === 2) {
                     // eslint-disable-next-line no-unused-vars
                     uploadaliyunoss(rawfile, certinfo, this, res => {
                         this.updateappinfo(file, analyseappinfo, multiFlag, binaryFlag, resolve)
                     }, process => {
-                        if (binaryFlag && process_key) {
-                            this.uploadprocess[process_key] = {
-                                process,
-                                short: analyseappinfo.short,
-                                appname: analyseappinfo.appname
-                            };
-                        }
+                        this.updateprocess(binaryFlag, process_key, process, analyseappinfo, rawfile);
                     });
                 } else {
                     //本地
@@ -821,9 +845,7 @@
                     uploadlocalstorage(rawfile, certinfo, this, res => {
                         this.updateappinfo(file, analyseappinfo, multiFlag, binaryFlag, resolve)
                     }, process => {
-                        if (binaryFlag && process_key) {
-                            this.uploadprocess[process_key] = {process, analyseappinfo};
-                        }
+                        this.updateprocess(binaryFlag, process_key, process, analyseappinfo, rawfile);
                     })
                 }
             },

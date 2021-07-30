@@ -604,5 +604,9 @@ export function diskSize(num) {
         i = l; //不小于1的话这个单位就合适或者还要大于这个单位 接着循环
     }
     return (num / Math.pow(k, i)).toFixed(1) + ' ' + sizeStr[i];  //循环结束 或 条件成立 返回字符
+}
 
+export function upspeed(start_time, file_size, percent) {
+    const now_time = Date.now();
+    return diskSize(file_size * percent * 10 / (now_time - start_time))
 }
