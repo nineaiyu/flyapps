@@ -3,16 +3,16 @@
 # project: 3月 
 # author: liuyu
 # date: 2020/3/18
-'''
+"""
 本地存储api
-'''
-from api.utils.TokenManager import DownloadToken
+"""
+from api.utils.TokenManager import make_token
 from api.utils.storage.aliyunApi import AliYunCdn
 from fir_ser import settings
 import os
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class LocalStorage(object):
@@ -22,22 +22,20 @@ class LocalStorage(object):
         self.download_auth_type = download_auth_type
         self.cnd_auth_key = cnd_auth_key
 
-    def get_upload_token(self, name, expires):
-        dtoken = DownloadToken()
-        return dtoken.make_token(name, expires)
+    @staticmethod
+    def get_upload_token(name, expires):
+        return make_token(name, expires)
 
     def get_base_url(self):
         uri = 'http://'
         if self.is_https:
             uri = 'https://'
-        return "%s%s" % (uri, self.domain_name)
+        return f"{uri}${self.domain_name}"
 
     def get_download_url(self, name, expires=600, force_new=False):
-        dtoken = DownloadToken()
         download_url = '/'.join([self.get_base_url(), 'download', name])
         if self.download_auth_type == 1:
-            download_url = "%s?%s=%s" % (
-                download_url, settings.DATA_DOWNLOAD_KEY, dtoken.make_token(name, expires, force_new=force_new))
+            download_url = f"{download_url}?{settings.DATA_DOWNLOAD_KEY}={make_token(name, expires, force_new=force_new)}"
         elif self.download_auth_type == 2:
             cdn_obj = AliYunCdn(self.cnd_auth_key, self.is_https, self.domain_name)
             download_url = cdn_obj.get_cdn_download_token(name, expires)
@@ -45,25 +43,28 @@ class LocalStorage(object):
             pass
         return download_url
 
-    def del_file(self, name):
+    @staticmethod
+    def del_file(name):
         file = os.path.join(settings.MEDIA_ROOT, name)
         try:
             if os.path.isfile(file):
                 os.remove(file)
             return True
         except Exception as e:
-            logger.error("delete file %s failed Exception %s" % (file, e))
+            logger.error(f"delete file {file} failed Exception {e}")
             return False
 
-    def rename_file(self, oldfilename, newfilename):
+    @staticmethod
+    def rename_file(old_filename, new_filename):
         try:
-            os.rename(os.path.join(settings.MEDIA_ROOT, oldfilename), os.path.join(settings.MEDIA_ROOT, newfilename))
+            os.rename(os.path.join(settings.MEDIA_ROOT, old_filename), os.path.join(settings.MEDIA_ROOT, new_filename))
             return True
         except Exception as e:
-            logger.error("rename_file file %s to %s failed Exception %s" % (oldfilename, newfilename, e))
+            logger.error(f"rename_file file {old_filename} to {new_filename} failed Exception {e}")
             return False
 
-    def upload_file(self, local_file_full_path):
+    @staticmethod
+    def upload_file(local_file_full_path):
         if os.path.isfile(local_file_full_path):
             return True
         return False

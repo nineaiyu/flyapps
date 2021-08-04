@@ -11,8 +11,7 @@ from api.utils.baseutils import is_valid_domain, get_cname_from_domain, get_user
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
-from api.models import UserDomainInfo, DomainCnameInfo, Apps
-from django.db.models import Count
+from api.models import UserDomainInfo, Apps
 import logging
 
 from api.utils.storage.caches import set_default_app_wx_easy, del_cache_response_by_short
@@ -52,10 +51,10 @@ class DomainCnameView(APIView):
                 res.code = 1001
                 res.msg = "该域名已经被绑定，请更换其他域名"
             else:
-                user_domian_obj = UserDomainInfo.objects.filter(**get_domain_filter(request),
+                user_domain_obj = UserDomainInfo.objects.filter(**get_domain_filter(request),
                                                                 domain_name=domain_name).first()
-                if user_domian_obj:
-                    res.data = {'cname_domain': user_domian_obj.cname_id.domain_record}
+                if user_domain_obj:
+                    res.data = {'cname_domain': user_domain_obj.cname_id.domain_record}
                 else:
                     UserDomainInfo.objects.filter(**get_domain_filter(request), is_enable=False).delete()
                     min_domain_cname_info_obj = get_min_default_domain_cname_obj(False)
@@ -80,13 +79,13 @@ class DomainCnameView(APIView):
 
     def put(self, request):
         res = BaseResponse()
-        user_domian_obj = UserDomainInfo.objects.filter(**get_domain_filter(request)).first()
-        if user_domian_obj:
-            cname = get_cname_from_domain(user_domian_obj.domain_name)
-            if cname == user_domian_obj.cname_id.domain_record + '.':
-                user_domian_obj.is_enable = True
-                user_domian_obj.save()
-                UserDomainInfo.objects.filter(domain_name=user_domian_obj.domain_name, is_enable=False).delete()
+        user_domain_obj = UserDomainInfo.objects.filter(**get_domain_filter(request)).first()
+        if user_domain_obj:
+            cname = get_cname_from_domain(user_domain_obj.domain_name)
+            if cname == user_domain_obj.cname_id.domain_record + '.':
+                user_domain_obj.is_enable = True
+                user_domain_obj.save()
+                UserDomainInfo.objects.filter(domain_name=user_domain_obj.domain_name, is_enable=False).delete()
                 app_id = request.data.get("app_id", None)
                 if app_id:
                     app_obj = Apps.objects.filter(app_id=app_id).first()

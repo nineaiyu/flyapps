@@ -7,8 +7,6 @@
 from rest_framework.throttling import SimpleRateThrottle
 import hashlib
 
-from rest_framework.exceptions import Throttled
-
 
 class VisitShortThrottle(SimpleRateThrottle):
     """短连接用户访问频率限制1"""

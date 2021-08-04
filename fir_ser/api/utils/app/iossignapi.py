@@ -16,25 +16,25 @@ import base64
 from OpenSSL.crypto import (load_pkcs12, dump_certificate_request, dump_privatekey, PKey, TYPE_RSA, X509Req,
                             dump_certificate, load_privatekey, load_certificate, PKCS12, FILETYPE_PEM, FILETYPE_ASN1)
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def exec_shell(cmd, remote=False, timeout=None):
     if remote:
-        hostip = "10.66.6.66"
+        host_ip = "10.66.6.66"
         port = 65534
         user = "root"
         passwd = "root"
-        result = use_user_pass(hostip, port, user, passwd, cmd)
+        result = use_user_pass(host_ip, port, user, passwd, cmd)
         return result
     else:
-        logger.info("exec_shell cmd:%s" % (cmd))
+        logger.info(f"exec_shell cmd:{cmd}")
         result = shell_command(cmd, timeout)
-        logger.info("exec_shell cmd:%s  result:%s" % (cmd, result))
+        logger.info(f"exec_shell cmd:{cmd}  result:{result}")
         if result.get("exit_code") != 0:
             err_info = result.get("err_info", None)
             if err_info:
-                logger.error("exec_shell cmd:%s  failed: %s" % (cmd, err_info))
+                logger.error(f"exec_shell cmd:{cmd}  failed: {err_info}")
                 result["err_info"] = "Unknown Error"
             return False, result
         return True, result
@@ -49,17 +49,17 @@ class ResignApp(object):
         self.cmd = "zsign  -c '%s'  -k '%s' " % (self.app_dev_pem, self.my_local_key)
 
     @staticmethod
-    def sign_mobileconfig(mobilconfig_path, sign_mobilconfig_path, ssl_pem_path, ssl_key_path):
-        '''
-        :param mobilconfig_path:  描述文件绝对路径
-        :param sign_mobilconfig_path: 签名之后的文件绝对路径
+    def sign_mobile_config(mobile_config_path, sign_mobile_config_path, ssl_pem_path, ssl_key_path):
+        """
+        :param mobile_config_path:  描述文件绝对路径
+        :param sign_mobile_config_path: 签名之后的文件绝对路径
         :param ssl_pem_path:    pem证书的绝对路径
         :param ssl_key_path:    key证书的绝对路径
         :return:
-        '''
+        """
         cmd = "openssl smime -sign -in %s -out %s -signer %s " \
               "-inkey %s -certfile %s -outform der -nodetach " % (
-                  mobilconfig_path, sign_mobilconfig_path, ssl_pem_path, ssl_key_path, ssl_pem_path)
+                  mobile_config_path, sign_mobile_config_path, ssl_pem_path, ssl_key_path, ssl_pem_path)
         return exec_shell(cmd)
 
     def make_p12_from_cert(self, password):
@@ -132,12 +132,42 @@ class ResignApp(object):
         return exec_shell(self.cmd)
 
 
+def make_csr_content(csr_file_path, private_key_path):
+    # create public/private key
+    key = PKey()
+    key.generate_key(TYPE_RSA, 2048)
+    # Generate CSR
+    req = X509Req()
+    req.get_subject().CN = 'FLY APP'
+    req.get_subject().O = 'FLY APP Inc'
+    req.get_subject().OU = 'IT'
+    req.get_subject().L = 'BJ'
+    req.get_subject().ST = 'BJ'
+    req.get_subject().C = 'CN'
+    req.get_subject().emailAddress = 'flyapps@126.com'
+    req.set_pubkey(key)
+    req.sign(key, 'sha256')
+    csr_content = dump_certificate_request(FILETYPE_PEM, req)
+    with open(csr_file_path, 'wb+') as f:
+        f.write(csr_content)
+    with open(private_key_path, 'wb+') as f:
+        f.write(dump_privatekey(FILETYPE_PEM, key))
+
+    return csr_content
+
+
+def make_pem(cer_content, pem_path):
+    cert = load_certificate(FILETYPE_ASN1, cer_content)
+    with open(pem_path, 'wb+') as f:
+        f.write(dump_certificate(FILETYPE_PEM, cert))
+
+
 class AppDeveloperApiV2(object):
-    def __init__(self, issuer_id, private_key_id, p8key, certid):
+    def __init__(self, issuer_id, private_key_id, p8key, cert_id):
         self.issuer_id = issuer_id
         self.private_key_id = private_key_id
         self.p8key = p8key
-        self.certid = certid
+        self.cert_id = cert_id
 
     def active(self):
         result = {'data': []}
@@ -145,11 +175,11 @@ class AppDeveloperApiV2(object):
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             certificates = apple_obj.get_all_certificates()
             result['data'] = certificates
-            logger.info("ios developer active result:%s" % certificates)
+            logger.info(f"ios developer active result:{certificates}")
             if len(certificates) > 0:
                 return True, result
         except Exception as e:
-            logger.error("ios developer active Failed Exception:%s" % e)
+            logger.error(f"ios developer active Failed Exception:{e}")
             result['return_info'] = "%s" % e
         return False, result
 
@@ -160,34 +190,6 @@ class AppDeveloperApiV2(object):
             os.makedirs(cert_dir_path)
         return os.path.join(cert_dir_path, cert_dir_name)
 
-    def make_csr_content(self, csr_file_path, private_key_path):
-        # create public/private key
-        key = PKey()
-        key.generate_key(TYPE_RSA, 2048)
-        # Generate CSR
-        req = X509Req()
-        req.get_subject().CN = 'FLY APP'
-        req.get_subject().O = 'FLY APP Inc'
-        req.get_subject().OU = 'IT'
-        req.get_subject().L = 'BJ'
-        req.get_subject().ST = 'BJ'
-        req.get_subject().C = 'CN'
-        req.get_subject().emailAddress = 'flyapps@126.com'
-        req.set_pubkey(key)
-        req.sign(key, 'sha256')
-        csr_content = dump_certificate_request(FILETYPE_PEM, req)
-        with open(csr_file_path, 'wb+') as f:
-            f.write(csr_content)
-        with open(private_key_path, 'wb+') as f:
-            f.write(dump_privatekey(FILETYPE_PEM, key))
-
-        return csr_content
-
-    def make_pem(self, cer_content, pem_path):
-        cert = load_certificate(FILETYPE_ASN1, cer_content)
-        with open(pem_path, 'wb+') as f:
-            f.write(dump_certificate(FILETYPE_PEM, cert))
-
     def create_cert(self, user_obj):
         result = {}
         try:
@@ -195,51 +197,51 @@ class AppDeveloperApiV2(object):
             csr_path = self.file_format_path_name(user_obj)
             if not os.path.isdir(os.path.dirname(csr_path)):
                 os.makedirs(os.path.dirname(csr_path))
-            csr_content = self.make_csr_content(csr_path + ".csr", csr_path + ".key")
+            csr_content = make_csr_content(csr_path + ".csr", csr_path + ".key")
             certificates = apple_obj.create_certificate(csr_content.decode("utf-8"))
             if certificates:
                 n = base64.b64decode(certificates.certificateContent)
                 with open(csr_path + ".cer", 'wb') as f:
                     f.write(n)
-                self.make_pem(n, csr_path + ".pem")
-                logger.info("ios developer create cert result:%s" % certificates.certificateContent)
+                make_pem(n, csr_path + ".pem")
+                logger.info(f"ios developer create cert result:{certificates.certificateContent}")
                 return True, certificates
         except Exception as e:
-            logger.error("ios developer create cert Failed Exception:%s" % e)
+            logger.error(f"ios developer create cert Failed Exception:{e}")
             result['return_info'] = "%s" % e
         return False, result
 
-    def get_cert_obj_by_cid(self, cert_id):
+    def get_cert_obj_by_cid(self):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            cert_obj = apple_obj.get_certificate_by_cid(cert_id)
+            cert_obj = apple_obj.get_certificate_by_cid(self.cert_id)
             if cert_obj and cert_obj.id:
                 return True, result
             else:
-                logger.info("ios developer get cert %s failed" % cert_id)
+                logger.info(f"ios developer get cert {self.cert_id} failed")
                 return False, result
         except Exception as e:
-            logger.error("ios developer get cert %s Failed Exception:%s" % (cert_id, e))
+            logger.error(f"ios developer get cert {self.cert_id} Failed Exception:{e}")
             result['return_info'] = "%s" % e
         return False, result
 
-    def revoke_cert(self, cert_id):
+    def revoke_cert(self):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            cert_obj = apple_obj.get_certificate_by_cid(cert_id)
+            cert_obj = apple_obj.get_certificate_by_cid(self.cert_id)
             if cert_obj:
                 s_date = format_apple_date(cert_obj.expirationDate)
                 if s_date.timestamp() - datetime.datetime.now().timestamp() < 3600 * 24 * 3:
-                    if apple_obj.revoke_certificate(cert_id):
-                        logger.info("ios developer cert %s revoke" % cert_id)
+                    if apple_obj.revoke_certificate(self.cert_id):
+                        logger.info(f"ios developer cert {self.cert_id} revoke")
                         return True, result
                 else:
-                    logger.info("ios developer cert %s not revoke.because expire time < 3 day " % cert_id)
+                    logger.info(f"ios developer cert {self.cert_id} not revoke.because expire time < 3 day ")
                     return True, result
         except Exception as e:
-            logger.error("ios developer cert %s revoke Failed Exception:%s" % (cert_id, e))
+            logger.error(f"ios developer cert {self.cert_id} revoke Failed Exception:{e}")
             result['return_info'] = "%s" % e
         return False, result
 
@@ -252,12 +254,12 @@ class AppDeveloperApiV2(object):
             certificates = apple_obj.get_all_certificates()
             for cert_obj in certificates:
                 f_date = format_apple_date(cert_obj.expirationDate)
-                logger.info("%s-%s - %s " % (cert_obj.id, not_after.timestamp(), f_date.timestamp()))
+                logger.info(f"{cert_obj.id}-{not_after.timestamp()} - {f_date.timestamp()} ")
                 if not_after.timestamp() == f_date.timestamp():
                     return True, cert_obj
             return False, result
         except Exception as e:
-            logger.error("ios developer cert %s auto get Failed Exception:%s" % (111, e))
+            logger.error(f"ios developer cert {app_dev_pem} auto get Failed Exception:{e}")
             result['return_info'] = "%s" % e
         return False, result
 
@@ -297,7 +299,7 @@ class AppDeveloperApiV2(object):
                     f.write(n)
                 return True, result
         except Exception as e:
-            logger.error("ios developer make profile Failed Exception:%s" % e)
+            logger.error(f"app_id {app_obj.app_id} ios developer make profile Failed Exception:{e}")
             result['return_info'] = "%s" % e
             return False, result
 
@@ -310,7 +312,7 @@ class AppDeveloperApiV2(object):
                 if apple_obj.delete_profile_by_id(profile_obj.id):
                     return True, profile_obj
         except Exception as e:
-            logger.error("ios developer delete profile Failed Exception:%s" % e)
+            logger.error(f"ios developer delete profile Failed Exception:{e}")
             result['return_info'] = "%s" % e
             return False, result
 

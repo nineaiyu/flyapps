@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-import json
 from enum import Enum
 
 from .core import Core, RequestType
 
 
-class WeChatPay():
+class WeChatPay(object):
     def __init__(self,
                  wechatpay_type,
                  mchid,
@@ -17,10 +16,10 @@ class WeChatPay():
         """
         :param wechatpay_type: 微信支付类型，示例值：WeChatPayType.MINIPROG
         :param mchid: 直连商户号，示例值：'1230000109'
-        :param mch_private_key: 商户证书私钥，示例值：'MIIEvwIBADANBgkqhkiG9w0BAQE...'
-        :param mch_key_serial_no: 商户证书序列号，示例值：'444F4864EA9B34415...'
+        :param parivate_key: 商户证书私钥，示例值：'MIIEvwIBADANBgkqhkiG9w0BAQE...'
+        :param cert_serial_no: 商户证书序列号，示例值：'444F4864EA9B34415...'
         :param appid: 应用ID，示例值：'wxd678efh567hg6787'
-        :param mch_apiv3_key: 商户APIv3密钥，示例值：'a12d3924fd499edac8a5efc...'
+        :param apiv3_key: 商户APIv3密钥，示例值：'a12d3924fd499edac8a5efc...'
         :param notify_url: 通知地址，示例值：'https://www.weixin.qq.com/wxpay/pay.php'
         """
         self._type = wechatpay_type
@@ -58,10 +57,7 @@ class WeChatPay():
         :param settle_info: 结算信息，示例值：{'profit_sharing':False}
         :param notify_url: 通知地址，示例值：'https://www.weixin.qq.com/wxpay/pay.php'
         """
-        params = {}
-        params['appid'] = self._appid
-        params['mchid'] = self._mchid
-        params['notify_url'] = notify_url or self._notify_url
+        params = {'appid': self._appid, 'mchid': self._mchid, 'notify_url': notify_url or self._notify_url}
         if description:
             params.update({'description': description})
         else:
@@ -88,6 +84,7 @@ class WeChatPay():
             params.update({'detail': detail})
         if settle_info:
             params.update({'settle_info': settle_info})
+        path = ""
         if self._type in [WeChatPayType.JSAPI, WeChatPayType.MINIPROG]:
             if not payer:
                 raise Exception('payer is not assigned')
@@ -100,7 +97,10 @@ class WeChatPay():
             path = '/v3/pay/transactions/h5'
         elif self._type == WeChatPayType.NATIVE:
             path = '/v3/pay/transactions/native'
-        return self._core.request(path, method=RequestType.POST, data=params)
+        if path:
+            return self._core.request(path, method=RequestType.POST, data=params)
+        else:
+            raise Exception('path is not assigned')
 
     def close(self, out_trade_no):
         """关闭订单
@@ -145,8 +145,7 @@ class WeChatPay():
         :param goods_detail: 退款商品，示例值：{'merchant_goods_id':'1217752501201407033233368018', 'wechatpay_goods_id':'1001', 'goods_name':'iPhone6s 16G', 'unit_price':528800, 'refund_amount':528800, 'refund_quantity':1}
         :param notify_url: 通知地址，示例值：'https://www.weixin.qq.com/wxpay/pay.php'
         """
-        params = {}
-        params['notify_url'] = notify_url or self._notify_url
+        params = {'notify_url': notify_url or self._notify_url}
         if out_refund_no:
             params.update({'out_refund_no': out_refund_no})
         else:
@@ -281,8 +280,7 @@ class WeChatPay():
         :param sub_orders: 子单信息, 示例值：[{'mchid': '1900000109', 'out_trade_no': '20150806125346'}]
         :param combine_appid: 合单商户appid, 示例值：'wxd678efh567hg6787'
         """
-        params = {}
-        params['combine_appid'] = combine_appid or self._appid
+        params = {'combine_appid': combine_appid or self._appid}
 
         if not combine_out_trade_no:
             raise Exception('combine_out_trade_no is not assigned.')

@@ -9,7 +9,7 @@ import logging
 import paramiko, json
 import socket
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def default_result():
@@ -109,7 +109,7 @@ def shell_command(cmdstrs, timeout):
     out = out.strip(b'\n')
     result['return_info'] = out
     result['exit_code'] = child.returncode
-    logging.info(u'shell: %s - %s%s - %s%d' % (cmdstrs, 'return_info: ', out, 'exit_code: ', child.returncode))
+    logger.info(f'shell: {cmdstrs} - return_info:{out} - exit_code:{child.returncode}')
     return result
 
 
@@ -131,8 +131,6 @@ def use_user_pass(hostip, port, user, passwd, cmdstrs):
         outs = outs.strip('\n')
         result['return_info'] = outs
         result['exit_code'] = out['status']
-        # logging.info(u'shell: %s - %s%s - %s%d' % (cmdstrs, 'return_info: ', out, 'exit_code: ', out['status']))
-        logger.info('host: %s user:%s - shell: %s - %s%s - %s%d' % (
-            hostip, user, cmdstrs, 'return_info: ', out, 'exit_code: ', out['status']))
+        logger.info(f'host: {hostip} user:{user} - shell: {cmdstrs} - return_info:{out} - exit_code:{out["status"]}')
         conn.close()
     return result

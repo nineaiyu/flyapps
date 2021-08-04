@@ -13,7 +13,7 @@ from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_S
 import time, os
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def sync_download_times():
@@ -23,7 +23,7 @@ def sync_download_times():
         count_hits = cache.get(app_download)
         app_id = app_download.split(down_tem_key)[1].strip('_')
         Apps.objects.filter(app_id=app_id).update(count_hits=count_hits)
-        logger.info("sync_download_times app_id:%s count_hits:%s" % (app_id, count_hits))
+        logger.info(f"sync_download_times app_id:{app_id} count_hits:{count_hits}")
 
 
 def auto_clean_upload_tmp_file():
@@ -40,10 +40,10 @@ def auto_clean_upload_tmp_file():
                     filename = data.get("filename", None)
                     if filename:
                         storage.delete_file(filename)
-                        logger.info("auto_clean_upload_tmp_file delete_file :%s " % (filename))
+                        logger.info(f"auto_clean_upload_tmp_file delete_file :{filename}")
 
                 cache.delete(upload_tem_file_key)
-                logger.info("auto_clean_upload_tmp_file upload_tem_file_key :%s " % (upload_tem_file_key))
+                logger.info(f"auto_clean_upload_tmp_file upload_tem_file_key :{upload_tem_file_key}")
 
 
 def auto_delete_tmp_file():
@@ -57,7 +57,7 @@ def auto_delete_tmp_file():
                 try:
                     os.remove(file_path)
                 except Exception as e:
-                    logger.error("auto_delete_tmp_file  %s Failed . Exception %s" % (file_path, e))
+                    logger.error(f"auto_delete_tmp_file {file_path} Failed . Exception {e}")
 
 
 def auto_check_ios_developer_active():
@@ -66,8 +66,7 @@ def auto_check_ios_developer_active():
         userinfo = ios_developer.user_id
         if userinfo.supersign_active:
             status, result = IosUtils.active_developer(ios_developer)
-            msg = "auto_check_ios_developer_active  user:%s  ios.developer:%s  status:%s  result:%s" % (
-                userinfo, ios_developer, status, result)
+            msg = f"auto_check_ios_developer_active  user:{userinfo}  ios.developer:{ios_developer}  status:{status}  result:{result}"
             if status:
                 logger.info(msg)
             else:

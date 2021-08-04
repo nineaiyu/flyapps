@@ -16,13 +16,13 @@ Including another URLconf
 from django.urls import path, re_path, include
 
 from cli.views.login import CliUserInfoView
-from cli.views.apps import CliAppsView, CliAppInfoView, CliAppReleaseinfoView
+from cli.views.apps import CliAppsView, CliAppInfoView, CliAppReleaseInfoView
 from cli.views.uploads import CliAppAnalyseView, CliUploadView
 
 urlpatterns = [
     re_path("^apps$", CliAppsView.as_view()),
     re_path("^apps/(?P<app_id>\w+)", CliAppInfoView.as_view()),
-    re_path("^appinfos/(?P<app_id>\w+)/(?P<act>\w+)", CliAppReleaseinfoView.as_view()),
+    re_path("^appinfos/(?P<app_id>\w+)/(?P<act>\w+)", CliAppReleaseInfoView.as_view()),
     re_path("^upload$", CliUploadView.as_view()),
     re_path("^userinfo", CliUserInfoView.as_view()),
     re_path("^analyse$", CliAppAnalyseView.as_view()),

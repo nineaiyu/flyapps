@@ -10,14 +10,12 @@ from api.base_views import storage_change
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication, StoragePermission
 from rest_framework.response import Response
-from api.utils.storage.caches import del_cache_storage
 from api.models import AppStorage, UserInfo
-from api.utils.utils import upload_oss_default_head_img, \
-    change_storage_and_change_head_img, migrating_storage_data, clean_storage_data, get_choices_dict
+from api.utils.utils import upload_oss_default_head_img, get_choices_dict
 from api.utils.serializer import StorageSerializer
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class StorageView(APIView):
@@ -65,25 +63,25 @@ class StorageView(APIView):
     def post(self, request):
         res = BaseResponse()
         data = request.data
-        logger.info("user %s add new storage data:%s" % (request.user, data))
+        logger.info(f"user {request.user} add new storage data:{data}")
         serializer = StorageSerializer(data=data, context={'user_obj': request.user})
         if serializer.is_valid():
             storage_obj = serializer.save()
             if storage_obj:
                 if upload_oss_default_head_img(request.user, storage_obj):
                     res.msg = serializer.validated_data
-                    logger.info("user %s add new storage success" % (request.user))
+                    logger.info(f"user {request.user} add new storage success")
                 else:
                     storage_obj.delete()
-                    logger.error("user %s add new storage failed" % (request.user))
+                    logger.error(f"user {request.user} add new storage failed")
                     res.msg = "文件上传校验失败，请检查参数是否正确"
                     res.code = 1005
             else:
-                logger.info("user %s add new storage failed" % (request.user))
+                logger.info(f"user {request.user} add new storage failed")
                 res.msg = serializer.errors
                 res.code = 1005
         else:
-            logger.info("user %s add new storage failed" % (request.user))
+            logger.info(f"user {request.user} add new storage failed")
             res.msg = serializer.errors
             res.code = 1005
         return Response(res.dict)
@@ -91,7 +89,7 @@ class StorageView(APIView):
     def put(self, request):
         res = BaseResponse()
         data = request.data
-        logger.info("user %s update storage data:%s" % (request.user, data))
+        logger.info(f"user {request.user} update storage data:{data}")
         use_storage_id = data.get("use_storage_id", None)
         force = data.get("force", None)
         if use_storage_id:
@@ -115,14 +113,14 @@ class StorageView(APIView):
                 if new_storage_obj:
                     if upload_oss_default_head_img(request.user, new_storage_obj):
                         res.msg = serializer.validated_data
-                        logger.info("user %s update storage success" % (request.user))
+                        logger.info(f"user {request.user} update storage success")
                     else:
                         storage_obj_bak.save()
-                        logger.error("user %s update storage failed" % (request.user))
+                        logger.error(f"user {request.user} update storage failed")
                         res.msg = "文件上传校验失败，请检查参数是否正确"
                         res.code = 1005
                 else:
-                    logger.info("user %s update storage failed" % (request.user))
+                    logger.info(f"user {request.user} update storage failed")
                     res.msg = serializer.errors
                     res.code = 1005
             else:
@@ -139,9 +137,9 @@ class StorageView(APIView):
         if storage_id:
             try:
                 AppStorage.objects.filter(user_id=request.user, id=storage_id).delete()
-                logger.error("user %s delete storage id:%s success" % (request.user, storage_id))
+                logger.error(f"user {request.user} delete storage id:{storage_id} success")
             except Exception as e:
-                logger.error("user %s delete storage id:%s failed Exception:%s" % (request.user, storage_id, e))
+                logger.error(f"user {request.user} delete storage id:{storage_id} failed Exception:{e}")
         else:
             res.code = 1004
             res.msg = '该存储不存在'

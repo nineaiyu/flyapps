@@ -6,7 +6,6 @@
 
 import uuid, xmltodict, os, re, logging, time
 
-from django.utils import timezone
 import zipfile
 from api.utils.response import BaseResponse
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILECONFIG_SIGN_SSL, MSGTEMPLATE
@@ -23,7 +22,7 @@ from api.utils.baseutils import file_format_path, delete_app_profile_file, get_p
 from api.utils.storage.storage import Storage
 from django.core.cache import cache
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def check_org_file(user_obj, org_file):
@@ -41,9 +40,9 @@ def resign_by_app_id(app_obj, need_download_profile=True):
     user_obj = app_obj.user_id
     info_list = []
     if app_obj.issupersign and user_obj.supersign_active:
-        for dappid_obj in DeveloperAppID.objects.filter(app_id=app_obj).all():
-            developer_obj = dappid_obj.developerid
-            developer_app_id = dappid_obj.aid
+        for developer_app_id_obj in DeveloperAppID.objects.filter(app_id=app_obj).all():
+            developer_obj = developer_app_id_obj.developerid
+            developer_app_id = developer_app_id_obj.aid
             d_time = time.time()
             if need_download_profile:
                 with cache.lock("%s_%s_%s" % ('download_profile', app_obj.app_id, developer_obj.issuer_id), timeout=60):
@@ -77,59 +76,59 @@ def udid_bytes_to_dict(xml_stream):
         for i in range(len(xml_dict['plist']['dict']['key'])):
             new_uuid_info[xml_dict['plist']['dict']['key'][i].lower()] = xml_dict['plist']['dict']['string'][i]
     except Exception as e:
-        logger.error("udid_xml_stream:%s Exception:%s" % (xml_stream, e))
+        logger.error(f"udid_xml_stream:{xml_stream} Exception:{e}")
         return None
     return new_uuid_info
 
 
-def make_sign_udid_mobileconfig(udid_url, PayloadOrganization, appname):
+def make_sign_udid_mobile_config(udid_url, payload_organization, app_name):
     if MOBILECONFIG_SIGN_SSL.get("open"):
         ssl_key_path = MOBILECONFIG_SIGN_SSL.get("ssl_key_path", None)
         ssl_pem_path = MOBILECONFIG_SIGN_SSL.get("ssl_pem_path", None)
 
         if ssl_key_path and ssl_pem_path and os.path.isfile(ssl_key_path) and os.path.isfile(ssl_pem_path):
-            mobileconfig_tmp_dir = os.path.join(SUPER_SIGN_ROOT, 'tmp', 'mobileconfig')
-            if not os.path.exists(mobileconfig_tmp_dir):
-                os.makedirs(mobileconfig_tmp_dir)
+            mobile_config_tmp_dir = os.path.join(SUPER_SIGN_ROOT, 'tmp', 'mobile_config')
+            if not os.path.exists(mobile_config_tmp_dir):
+                os.makedirs(mobile_config_tmp_dir)
 
-            mobileconfig_filename = PayloadOrganization + str(uuid.uuid1())
-            mobilconfig_path = os.path.join(mobileconfig_tmp_dir, mobileconfig_filename)
+            mobile_config_filename = payload_organization + str(uuid.uuid1())
+            mobile_config_path = os.path.join(mobile_config_tmp_dir, mobile_config_filename)
 
-            sign_mobilconfig_path = os.path.join(mobileconfig_tmp_dir, 'sign_' + mobileconfig_filename)
-            with open(mobilconfig_path, "w") as f:
-                f.write(make_udid_mobileconfig(udid_url, PayloadOrganization, appname))
+            sign_mobile_config_path = os.path.join(mobile_config_tmp_dir, 'sign_' + mobile_config_filename)
+            with open(mobile_config_path, "w") as f:
+                f.write(make_udid_mobile_config(udid_url, payload_organization, app_name))
 
-            status, result = ResignApp.sign_mobileconfig(mobilconfig_path, sign_mobilconfig_path, ssl_pem_path,
-                                                         ssl_key_path)
+            status, result = ResignApp.sign_mobile_config(mobile_config_path, sign_mobile_config_path, ssl_pem_path,
+                                                          ssl_key_path)
             if status:
-                mobileconfig_body = open(sign_mobilconfig_path, 'rb')
+                mobile_config_body = open(sign_mobile_config_path, 'rb')
             else:
                 logger.error(
-                    "%s %s sign_mobileconfig failed ERROR:%s" % (PayloadOrganization, appname, result.get("err_info")))
-                return make_udid_mobileconfig(udid_url, PayloadOrganization, appname)
+                    f"{payload_organization} {app_name} sign_mobile_config failed ERROR:{result.get('err_info')}")
+                return make_udid_mobile_config(udid_url, payload_organization, app_name)
 
-            return mobileconfig_body
+            return mobile_config_body
 
         else:
-            logger.error("sign_mobileconfig %s or %s is not exists" % (ssl_key_path, ssl_pem_path))
-            return make_udid_mobileconfig(udid_url, PayloadOrganization, appname)
+            logger.error(f"sign_mobile_config {ssl_key_path} or {ssl_pem_path} is not exists")
+            return make_udid_mobile_config(udid_url, payload_organization, app_name)
 
     else:
-        return make_udid_mobileconfig(udid_url, PayloadOrganization, appname)
+        return make_udid_mobile_config(udid_url, payload_organization, app_name)
 
 
-def make_udid_mobileconfig(udid_url, PayloadOrganization, appname, PayloadUUID=uuid.uuid1(),
-                           PayloadDescription='该文件仅用来获取设备ID，帮助用户安装授权',
-                           PayloadDisplayName='设备安装授权'):
+def make_udid_mobile_config(udid_url, payload_organization, app_name, payload_uuid=uuid.uuid1(),
+                            payload_description='该文件仅用来获取设备ID，帮助用户安装授权',
+                            display_name='设备安装授权'):
     # <!--参考:https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/iPhoneOTAConfiguration/ConfigurationProfileExamples/ConfigurationProfileExamples.html-->
-    mobileconfig = '''<?xml version="1.0" encoding="UTF-8"?>
+    return f'''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
     <dict>
         <key>PayloadContent</key>
         <dict>
             <key>URL</key>
-            <string>%s</string>
+            <string>{udid_url}</string>
             <key>DeviceAttributes</key>
             <array>
                 <string>SERIAL</string>
@@ -141,29 +140,27 @@ def make_udid_mobileconfig(udid_url, PayloadOrganization, appname, PayloadUUID=u
             </array>
         </dict>
         <key>PayloadOrganization</key>
-        <string>%s</string>
+        <string>{payload_organization}</string>
         <key>PayloadDisplayName</key>
-        <string>%s</string>
+        <string>{app_name}--{display_name}</string>
         <key>PayloadVersion</key>
         <integer>1</integer>
         <key>PayloadUUID</key>
-        <string>%s</string>
+        <string>{payload_uuid}</string>
         <key>PayloadIdentifier</key>
-        <string>%s.profile-service</string>
+        <string>{payload_organization}.profile-service</string>
         <key>PayloadDescription</key>
-        <string>%s</string>
+        <string>{payload_description}</string>
         <key>PayloadType</key>
         <string>Profile Service</string>
     </dict>
-</plist>''' % (udid_url, PayloadOrganization, appname + " -- " + PayloadDisplayName, PayloadUUID, PayloadOrganization,
-               PayloadDescription)
-    return mobileconfig
+</plist>'''
 
 
 def get_post_udid_url(request, short):
-    server_domain = get_http_server_doamin(request)
-    PATH_INFO_lists = [server_domain, "udid", short]
-    udid_url = "/".join(PATH_INFO_lists)
+    server_domain = get_http_server_domain(request)
+    path_info_lists = [server_domain, "udid", short]
+    udid_url = "/".join(path_info_lists)
     return udid_url
 
 
@@ -189,24 +186,24 @@ def get_api_obj(auth):
 
 
 def get_apple_udid_key(auth):
-    mpkey = ''
+    m_key = ''
     if auth.get("issuer_id"):
-        mpkey = auth.get("issuer_id")
-    return mpkey
+        m_key = auth.get("issuer_id")
+    return m_key
 
 
 def get_server_domain_from_request(request, server_domain):
     if not server_domain or not server_domain.startswith("http"):
-        HTTP_HOST = request.META.get('HTTP_HOST')
-        SERVER_PROTOCOL = request.META.get('SERVER_PROTOCOL')
+        http_host = request.META.get('HTTP_HOST')
+        server_protocol = request.META.get('SERVER_PROTOCOL')
         protocol = 'https'
-        if SERVER_PROTOCOL == 'HTTP/1.1':
+        if server_protocol == 'HTTP/1.1':
             protocol = 'http'
-        server_domain = "%s://%s" % (protocol, HTTP_HOST)
+        server_domain = "%s://%s" % (protocol, http_host)
     return server_domain
 
 
-def get_http_server_doamin(request):
+def get_http_server_domain(request):
     server_domain = SERVER_DOMAIN.get('POST_UDID_DOMAIN', None)
     return get_server_domain_from_request(request, server_domain)
 
@@ -245,7 +242,7 @@ class IosUtils(object):
         if self.developer_obj:
             self.auth = get_auth_form_developer(self.developer_obj)
         else:
-            logger.error("user %s has no actived apple developer" % self.user_obj)
+            logger.error(f"user {self.user_obj} has no active apple developer")
             if self.user_obj.email:
                 if send_msg_over_limit("get", self.user_obj.email):
                     send_msg_over_limit("set", self.user_obj.email)
@@ -253,15 +250,15 @@ class IosUtils(object):
                                                      % (
                                                          self.user_obj.first_name, self.app_obj.name))
                 else:
-                    logger.error("user %s send msg failed. over limit" % self.user_obj)
+                    logger.error(f"user {self.user_obj} send msg failed. over limit")
 
     def get_developer_user_by_app_udid(self):
-        usedeviceobj = APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'),
-                                                           user_id=self.user_obj, developerid__is_actived=True,
-                                                           developerid__certid__isnull=False).first()
+        use_device_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'),
+                                                             user_id=self.user_obj, developerid__is_actived=True,
+                                                             developerid__certid__isnull=False).first()
         # 只要账户下面存在udid,就可以使用该苹果开发者账户，避免多个开发者账户下面出现同一个udid
-        if usedeviceobj:
-            developer_obj = usedeviceobj.developerid
+        if use_device_obj:
+            developer_obj = use_device_obj.developerid
         else:
             developer_udid_obj = UDIDsyncDeveloper.objects.filter(udid=self.udid_info.get('udid'),
                                                                   developerid__is_actived=True,
@@ -271,9 +268,7 @@ class IosUtils(object):
             else:
                 for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj, is_actived=True,
                                                                         certid__isnull=False).order_by("created_time"):
-                    usable_number = developer_obj.usable_number
-                    flyapp_used = get_developer_udided(developer_obj)[1]
-                    if flyapp_used < usable_number:
+                    if get_developer_udided(developer_obj)[1] < developer_obj.usable_number:
                         return developer_obj
                 return None
         return developer_obj
@@ -307,19 +302,20 @@ class IosUtils(object):
     def exec_download_profile(app_obj, developer_obj, udid_info, sign_try_attempts=3):
         result = {}
         developer_app_id = None
-        add_did_flag = False
         auth = get_auth_form_developer(developer_obj)
         while sign_try_attempts > 0:
-            logger.info("exec_download_profile appid:%s developer:%s sign_try_attempts:%s" % (
-                app_obj, developer_obj, sign_try_attempts))
+            logger.info(
+                f"exec_download_profile app_id:{app_obj} developer:{developer_obj} sign_try_attempts:{sign_try_attempts}")
             device_id_list = DeveloperDevicesID.objects.filter(app_id=app_obj,
                                                                developerid=developer_obj).values_list('did')
             device_id_lists = [did[0] for did in device_id_list]
             developer_app_id = None
-            developer_appid_obj = DeveloperAppID.objects.filter(developerid=developer_obj,
-                                                                app_id=app_obj).first()
-            if developer_appid_obj:
-                developer_app_id = developer_appid_obj.aid
+            add_did_flag = False
+            sync_device_obj = None
+            developer_app_id_obj = DeveloperAppID.objects.filter(developerid=developer_obj,
+                                                                 app_id=app_obj).first()
+            if developer_app_id_obj:
+                developer_app_id = developer_app_id_obj.aid
             if udid_info:
                 sync_device_obj = UDIDsyncDeveloper.objects.filter(udid=udid_info.get('udid'),
                                                                    developerid=developer_obj).first()
@@ -327,23 +323,22 @@ class IosUtils(object):
                     device_id_lists.append(sync_device_obj.serial)
                     udid_info = None
                     add_did_flag = True
-                    logger.info(
-                        "app %s device %s already in developer %s" % (app_obj, sync_device_obj.serial, developer_obj))
+                    logger.info(f"app {app_obj} device {sync_device_obj.serial} already in developer {developer_obj}")
 
             status, result = get_api_obj(auth).get_profile(app_obj, udid_info,
                                                            get_profile_full_path(developer_obj, app_obj),
                                                            auth, developer_app_id, device_id_lists)
-            if add_did_flag:
+            if add_did_flag and sync_device_obj:
                 result['did'] = sync_device_obj.serial
                 result['did_exists'] = True
             if not status:
                 sign_try_attempts -= 1
-                logger.warning("app %s  developer %s sign failed %s .try again " % (app_obj, developer_obj, result))
+                logger.warning(f"app {app_obj}  developer {developer_obj} sign failed {result} .try again ")
                 time.sleep(3)
             else:
                 sign_try_attempts = -1
         if sign_try_attempts != -1:
-            logger.error("app %s  developer %s sign failed %s" % (app_obj, developer_obj, result))
+            logger.error(f"app {app_obj} developer {developer_obj} sign failed {result}")
             developer_obj.is_actived = False
             developer_obj.save()
             send_ios_developer_active_status(developer_obj.user_id,
@@ -394,11 +389,10 @@ class IosUtils(object):
         status, result = resign_app_obj.sign(get_profile_full_path(developer_obj, app_obj), org_file, new_file,
                                              properties_info)
         if status:
-            logger.info("%s %s %s sign_ipa success" % (user_obj, developer_obj, app_obj))
+            logger.info(f"{user_obj} {developer_obj} {app_obj} sign_ipa success")
             return True, result
         else:
-            logger.error(
-                "%s %s %s sign_ipa failed ERROR:%s" % (user_obj, developer_obj, app_obj, result.get("err_info")))
+            logger.error(f"{user_obj} {developer_obj} {app_obj} sign_ipa failed ERROR:{result.get('err_info')}")
             return False, result
 
     @staticmethod
@@ -423,8 +417,8 @@ class IosUtils(object):
         if appsupersign_obj.count() == 0:
             developer_obj = self.developer_obj
             developer_obj.use_number = developer_obj.use_number + 1
-            logger.info("developer %s use_number+1 now %s udid %s app_id %s" % (
-                developer_obj, developer_obj.use_number, self.udid_info.get('udid'), self.app_obj))
+            logger.info(
+                f"developer {developer_obj} use_number+1 now {developer_obj.use_number} udid {self.udid_info.get('udid')} app_id {self.app_obj}")
             developer_obj.save()
 
         if not appsupersign_obj.filter(app_id=self.app_obj, user_id=self.user_obj).first():
@@ -451,13 +445,13 @@ class IosUtils(object):
         d_result = {'code': 0, 'msg': 'success'}
         start_time = time.time()
         if download_flag:
-            logger.info("app_id %s download profile success. time:%s" % (app_obj, start_time - d_time))
+            logger.info(f"app_id {app_obj} download profile success. time:{start_time - d_time}")
             random_file_name = make_from_user_uuid(user_obj)
             release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
             status, e_result = IosUtils.exec_sign(user_obj, app_obj, developer_obj, random_file_name, release_obj)
             if status:
                 s_time1 = time.time()
-                logger.info("app_id %s exec sign ipa success. time:%s" % (app_obj, s_time1 - start_time))
+                logger.info(f"app_id {app_obj} exec sign ipa success. time:{s_time1 - start_time}")
                 if resign:
                     IosUtils.update_sign_file_name(user_obj, app_obj, developer_obj, release_obj, random_file_name)
                 else:
@@ -465,12 +459,12 @@ class IosUtils(object):
             else:
                 return status, e_result
         else:
-            msg = "app_id %s download profile failed. %s time:%s" % (app_obj, result, time.time() - start_time)
+            msg = f"app_id {app_obj} download profile failed. {result} time:{time.time() - start_time}"
             d_result['code'] = 1002
             d_result['msg'] = msg
             logger.error(d_result)
             return False, d_result
-        msg = "app_id %s developer %s sign end... time:%s" % (app_obj, developer_obj, time.time() - start_time)
+        msg = f"app_id {app_obj} developer {developer_obj} sign end... time:{time.time() - start_time}"
         logger.info(msg)
         d_result['msg'] = msg
         return True, d_result
@@ -627,16 +621,16 @@ class IosUtils(object):
 
     @staticmethod
     def clean_app_by_user_obj(app_obj, user_obj):
-        '''
+        """
         该APP为超级签，删除app的时候，需要清理一下开发者账户里面的profile 和 bundleid
         :param app_obj:
         :param user_obj:
         :return:
-        '''
-        SuperSign_obj_lists = list(
+        """
+        super_sign_obj_lists = list(
             set(APPSuperSignUsedInfo.objects.values_list("developerid").filter(user_id=user_obj, app_id=app_obj)))
-        for SuperSign_obj in SuperSign_obj_lists:
-            developer_obj = AppIOSDeveloperInfo.objects.filter(pk=SuperSign_obj[0]).first()
+        for super_sign_obj in super_sign_obj_lists:
+            developer_obj = AppIOSDeveloperInfo.objects.filter(pk=super_sign_obj[0]).first()
             if developer_obj:
                 IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
                 delete_app_to_dev_and_file(developer_obj, app_obj.id)
@@ -655,13 +649,13 @@ class IosUtils(object):
 
     @staticmethod
     def clean_developer(developer_obj, user_obj, cert_id=None):
-        '''
+        """
         根据消耗记录 删除该苹果账户下所有信息
         :param user_obj:
         :param cert_id:
         :param developer_obj:
         :return:
-        '''
+        """
         for APPToDeveloper_obj in APPToDeveloper.objects.filter(developerid=developer_obj):
             app_obj = APPToDeveloper_obj.app_id
             IosUtils.clean_app_by_developer_obj(app_obj, developer_obj, cert_id)
@@ -688,12 +682,11 @@ class IosUtils(object):
 
     @staticmethod
     def active_developer(developer_obj):
-        '''
+        """
         激活开发者账户
         :param developer_obj:
-        :param code:
         :return:
-        '''
+        """
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)
         status, result = app_api_obj.active()
@@ -742,7 +735,7 @@ class IosUtils(object):
     def revoke_developer_cert(developer_obj, user_obj):
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)
-        status, result = app_api_obj.revoke_cert(developer_obj.certid)
+        status, result = app_api_obj.revoke_cert()
         if not status:
             logger.warning('%s revoke cert failed,but i need clean cert_id %s' % (developer_obj.issuer_id, result))
         AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
@@ -755,14 +748,14 @@ class IosUtils(object):
         # 暂时无用
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)
-        status, result = app_api_obj.get_cert_obj_by_cid(developer_obj.certid)
+        status, result = app_api_obj.get_cert_obj_by_cid()
         if not status:
             AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
                 certid=None, cert_expire_time=None)
         return status, result
 
     @staticmethod
-    def auto_get_certid_by_p12(developer_obj, user_obj):
+    def auto_get_cert_id_by_p12(developer_obj, user_obj):
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)
         file_format_path_name = file_format_path(user_obj, auth)

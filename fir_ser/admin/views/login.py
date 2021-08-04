@@ -11,9 +11,8 @@ from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.serializer import UserInfoSerializer
 from django.core.cache import cache
 from rest_framework.views import APIView
-import binascii
 import os, datetime
-from api.utils.utils import get_captcha, valid_captcha
+from api.utils.utils import get_captcha, valid_captcha, set_user_token
 from api.utils.response import BaseResponse
 from fir_ser.settings import CACHE_KEY_TEMPLATE, LOGIN
 from api.utils.storage.caches import login_auth_failed
@@ -25,9 +24,6 @@ logger = logging.getLogger(__name__)
 
 class LoginView(APIView):
     throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
-
-    def generate_key(self):
-        return binascii.hexlify(os.urandom(32)).decode()
 
     def post(self, request):
         response = BaseResponse()
@@ -41,18 +37,12 @@ class LoginView(APIView):
             if login_auth_failed("get", username):
                 password = receive.get("password")
                 user = auth.authenticate(username=username, password=password)
-                logger.info("username:%s  password:%s" % (username, password))
+                logger.info(f"username:{username}  password:{password}")
                 if user:
                     if user.is_active:
                         if user.role == 3:
                             login_auth_failed("del", username)
-                            # update the token
-                            key = self.generate_key()
-                            now = datetime.datetime.now()
-                            user_info = UserInfo.objects.get(pk=user.pk)
-                            auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'), key])
-                            cache.set(auth_key, {'uid': user_info.uid, 'username': user_info.username}, 3600 * 24 * 7)
-                            Token.objects.create(user=user, **{"access_token": key, "created": now})
+                            key, user_info = set_user_token(user)
                             response.data = {
                                 "username": user_info.username,
                                 "token": key
@@ -69,7 +59,7 @@ class LoginView(APIView):
                     response.code = 1002
             else:
                 response.code = 1006
-                logger.error("username:%s failed too try , locked" % (username,))
+                logger.error(f"username:{username} failed too try , locked")
                 response.msg = "用户登录失败次数过多，已被锁定，请1小时之后再次尝试"
         else:
             response.code = 1001

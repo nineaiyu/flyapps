@@ -14,7 +14,7 @@ from fir_ser.settings import THIRD_PART_CONFIG, CACHE_KEY_TEMPLATE
 from django.core.cache import cache
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def get_storage_auth(storage_obj):
@@ -38,7 +38,7 @@ def get_storage(user, assigned_storage_obj, use_default_storage):
         storage_type = storage_obj.storage_type
         new_storage_obj = cache.get(storage_key)
         if new_storage_obj and not assigned_storage_obj:
-            logger.info("user %s get storage obj %s cache %s" % (user, storage_key, new_storage_obj))
+            logger.info(f"user {user} get storage obj {storage_key} cache {new_storage_obj}")
             return new_storage_obj
         else:
             if storage_type == 1:
@@ -47,12 +47,12 @@ def get_storage(user, assigned_storage_obj, use_default_storage):
                 new_storage_obj = AliYunOss(**auth)
             else:
                 new_storage_obj = LocalStorage(**auth)
-            logger.warning("user %s make storage obj key:%s obj: %s" % (user, storage_key, new_storage_obj))
+            logger.warning(f"user {user} make storage obj key:{storage_key} obj: {new_storage_obj}")
             new_storage_obj.storage_type = storage_type
             cache.set(storage_key, new_storage_obj, 600)
             return new_storage_obj
     else:
-        logger.info("user %s has not storage obj, so get default" % user)
+        logger.info(f"user {user} has not storage obj, so get default")
         # return self.get_default_storage(user, storage_obj, False)
         # 不需要管理存储，直接从配置文件获取默认存储
         return get_storage_form_conf(user)
@@ -61,8 +61,7 @@ def get_storage(user, assigned_storage_obj, use_default_storage):
 def get_default_storage(user, storage_obj, use_default_storage):
     admin_obj = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
     if admin_obj and admin_obj.storage and admin_obj.pk != user.pk:
-        logger.info("user %s has not storage obj, from admin "
-                    "get default storage" % user)
+        logger.info(f"user {user} has not storage obj, from admin get default storage")
         return get_storage(admin_obj, storage_obj, use_default_storage)
     else:
         return get_storage_form_conf(user)
@@ -74,7 +73,7 @@ class Storage(object):
             with cache.lock("%s_%s" % ('make_storage_cache', user.uid), timeout=10, blocking_timeout=6):
                 self.storage = get_storage(user, assigned_storage_obj, use_default_storage)
         except Exception as e:
-            logger.error("get %s storage failed Exception:%s" % (user, e))
+            logger.error(f"get {user} storage failed Exception:{e}")
             self.storage = None
 
     def get_upload_token(self, filename, expires=900):
@@ -97,39 +96,39 @@ class Storage(object):
             cache.set(down_key, {"download_url": download_url, "time": now + expires}, expires)
             return download_url
 
-    def delete_file(self, filename, apptype=None):
+    def delete_file(self, filename, app_type=None):
         if self.storage:
-            if apptype is not None:
-                if apptype == 0:
+            if app_type is not None:
+                if app_type == 0:
                     filename = filename + '.apk'
                 else:
                     filename = filename + '.ipa'
             try:
-                logger.info("storage %s delete file  %s" % (self.storage, filename))
+                logger.info(f"storage {self.storage} delete file  {filename}")
                 return self.storage.del_file(filename)
             except Exception as e:
-                logger.error("delete file  %s  failed  Exception %s" % (filename, e))
+                logger.error(f"delete file {filename} failed  Exception {e}")
 
-    def rename_file(self, oldfilename, newfilename):
+    def rename_file(self, old_filename, new_filename):
         if self.storage:
             try:
-                return self.storage.rename_file(oldfilename, newfilename)
+                return self.storage.rename_file(old_filename, new_filename)
             except Exception as e:
-                logger.error("rename %s to %s failed  Exception %s" % (oldfilename, newfilename, e))
+                logger.error(f"rename {old_filename} to {new_filename} failed  Exception {e}")
 
     def upload_file(self, local_file_full_path):
         if self.storage:
             try:
                 return self.storage.upload_file(local_file_full_path)
             except Exception as e:
-                logger.error("oss upload  %s failed  Exception %s" % (local_file_full_path, e))
+                logger.error(f"oss upload  {local_file_full_path} failed  Exception {e}")
 
     def download_file(self, file_name, local_file_full_path):
         if self.storage:
             try:
                 return self.storage.download_file(file_name, local_file_full_path)
             except Exception as e:
-                logger.error("oss download  %s failed  Exception %s" % (local_file_full_path, e))
+                logger.error(f"oss download  {local_file_full_path} failed  Exception {e}")
 
     def get_storage_type(self):
         if self.storage:
@@ -145,18 +144,17 @@ def get_local_storage(clean_cache=False):
             storage_key = "_".join(['local_storage_', CACHE_KEY_TEMPLATE.get('user_storage_key'), "_system_",
                                     base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
             if clean_cache:
-                logger.info("system clean local storage obj cache storage_key %s" % storage_key)
+                logger.info(f"system clean local storage obj cache storage_key {storage_key}")
                 cache.delete(storage_key)
             new_storage_obj = cache.get(storage_key)
             if new_storage_obj:
-                logger.info("system get local storage obj cache %s" % new_storage_obj)
+                logger.info(f"system get local storage obj cache {new_storage_obj}")
                 return new_storage_obj
             else:
                 new_storage_obj = LocalStorage(**auth)
                 new_storage_obj.storage_type = 3
                 cache.set(storage_key, new_storage_obj, 600)
-                logger.info("system get local storage obj, from settings "
-                            "storage %s" % new_storage_obj)
+                logger.info(f"system get local storage obj, from settings  storage {new_storage_obj}")
                 return new_storage_obj
 
 
@@ -170,7 +168,7 @@ def get_storage_form_conf(user):
                                     base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
             new_storage_obj = cache.get(storage_key)
             if new_storage_obj:
-                logger.info("user %s get default storage %s obj cache %s " % (user, storage_key, new_storage_obj))
+                logger.info(f"user {user} get default storage {storage_key} obj cache {new_storage_obj} ")
                 return new_storage_obj
             else:
                 if storage_type == 1:
@@ -183,7 +181,7 @@ def get_storage_form_conf(user):
                     new_storage_obj = LocalStorage(**auth)
                     new_storage_obj.storage_type = 3
                 cache.set(storage_key, new_storage_obj, 600)
-                logger.warning("user %s has not storage obj, from settings "
-                               "get default storage key:%s obj:%s" % (user, storage_key, new_storage_obj))
+                logger.warning(
+                    f"user {user} has not storage obj, from settings  get default storage key:{storage_key} obj:{new_storage_obj}")
                 return new_storage_obj
     return None

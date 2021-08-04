@@ -6,7 +6,6 @@
 
 from celery import shared_task
 from django.core.cache import cache
-from celery import Celery
 
 from api.utils.storage.storage import get_local_storage
 

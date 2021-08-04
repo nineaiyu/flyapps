@@ -5,7 +5,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from api.utils.app.randomstrings import make_random_uuid
 from django.contrib.auth.models import AbstractUser
-from api.utils.TokenManager import generateAlphanumericTokenOfLength, generateNumericTokenOfLength
+from api.utils.TokenManager import generate_alphanumeric_token_of_length, generate_numeric_token_of_length
 
 
 ######################################## 用户表 ########################################
@@ -58,7 +58,7 @@ class UserInfo(AbstractUser):
         if len(self.uid) < 8:
             self.uid = make_random_uuid()
         if len(self.api_token) < 8:
-            self.api_token = self.uid + generateAlphanumericTokenOfLength(64)
+            self.api_token = self.uid + generate_alphanumeric_token_of_length(64)
         super(UserInfo, self).save(*args, **kwargs)
 
 
@@ -93,7 +93,7 @@ class VerifyName(models.Model):
         verbose_name_plural = "实名认证"
 
     def __str__(self):
-        return "%s" % (self.name)
+        return f"self.name"
 
 
 ######################################## APP表 ########################################
@@ -456,7 +456,7 @@ class DomainCnameInfo(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.domain_record or (self.domain_record and len(self.domain_record) < 26):  # 最多3个启用的价格表
-            self.domain_record = '%s.%s' % (generateNumericTokenOfLength(24, 'abcdef'), self.domain_record)
+            self.domain_record = '%s.%s' % (generate_numeric_token_of_length(24, 'abcdef'), self.domain_record)
         super(DomainCnameInfo, self).save(*args, **kwargs)
 
     def __str__(self):

@@ -13,7 +13,7 @@ import jwt
 import logging
 from collections import namedtuple
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 # https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api
@@ -22,7 +22,7 @@ logger = logging.getLogger(__file__)
 
 def request_format_log(req):
     try:
-        logger.info("url:%s header:%s code:%s body:%s" % (req.url, req.headers, req.status_code, req.content))
+        logger.info(f"url:{req.url} header:{req.headers} code:{req.status_code} body:{req.content}")
     except Exception as e:
         logger.error(e)
     return req
@@ -273,6 +273,7 @@ class BundleIDsCapabilityAPI(object):
 
     def disable_capability(self, bundle_id, capability_type):
         """
+        :param capability_type:
         :param bundle_id:
         :return:
             204	No Content
@@ -652,13 +653,13 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
     JWT_ALG = 'ES256'
 
     def __init__(self, issuer_id, private_key_id, p8_private_key, exp_seconds=1200):
-        '''
+        """
         根据 Apple 文档，会话最长持续时间为 20 分钟：https : //developer.apple.com/documentation/appstoreconnectapi/generating_tokens_for_api_requests
         :param issuer_id:
         :param private_key_id:
         :param p8_private_key:
         :param exp_seconds: max 20*60
-        '''
+        """
         self.issuer_id = issuer_id
         self.private_key_id = private_key_id
         self.p8_private_key = p8_private_key
@@ -678,10 +679,10 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
                 self.rate_limit_info[limit_info_list[0]] = limit_info_list[1]
         user_rem_info = self.rate_limit_info
         if int(user_rem_info.get('user-hour-rem')) < 3595:
-            logger.warning("user-hour-rem over limit. so get jwt headers")
+            logger.warning(f"user-hour-rem over limit. so get jwt headers")
             self.__init__(self.issuer_id, self.private_key_id, self.p8_private_key)
             self.rate_limit_info = user_rem_info
-        logger.info("rate_limit_info:%s" % self.rate_limit_info)
+        logger.info(f"rate_limit_info:{self.rate_limit_info}")
 
     def __make_jwt_headers(self):
         data = {
@@ -700,7 +701,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         }
         self.headers = headers
 
-    def __base_format(self, stype, req, success_code):
+    def __base_format(self, s_type, req, success_code):
         # self.__set_rate_limit_info(req.headers)
         if req.status_code == success_code:
             req_data = req.json()
@@ -709,20 +710,20 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
                 obj = None
                 if isinstance(data, dict):
                     data = [data]
-                if stype == 'devices':
+                if s_type == 'devices':
                     obj = Devices.from_json_list(data)
-                elif stype == 'bundleIds':
+                elif s_type == 'bundleIds':
                     obj = BundleIds.from_json_list(data)
-                elif stype == 'profiles':
+                elif s_type == 'profiles':
                     obj = Profiles.from_json_list(data)
-                elif stype == 'certificates':
+                elif s_type == 'certificates':
                     obj = Certificates.from_json_list(data)
                 if len(obj) == 1:
                     return obj[0]
                 return obj
             else:
                 # self.__init_jwt_headers()
-                raise Exception('error: %s' % (req.text))
+                raise Exception(f'error instance: {req.text}')
         elif req.status_code == 401:  # 授权问题
             raise Exception(req.text)
         elif req.status_code == 429:  # 请求超过每小时限制 {'user-hour-lim': '3600', 'user-hour-rem': '3586'}
@@ -809,9 +810,9 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             for capability in capability_list:
                 req = super().enable_capability(bundle_id, capability)
                 if self.__do_success(req, 201):
-                    logger.info("%s enable_capability %s success" % (bundle_id, capability))
+                    logger.info(f"{bundle_id} enable_capability {capability} success")
                 else:
-                    logger.warning("%s enable_capability %s failed %s" % (bundle_id, capability, req.content))
+                    logger.warning(f"{bundle_id} enable_capability {capability} failed {req.content}")
         return True
 
     def disable_capability_by_s_type(self, bundle_id, s_type=len(capability) - 1):
@@ -820,13 +821,12 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             for capability in capability_list:
                 req = super().disable_capability(bundle_id, capability)
                 if self.__do_success(req, 204):
-                    logger.info("%s enable_capability %s success" % (bundle_id, capability))
+                    logger.info(f"{bundle_id} enable_capability {capability} success")
                 else:
-                    logger.warning("%s enable_capability %s failed %s" % (bundle_id, capability, req.content))
+                    logger.warning(f"{bundle_id} enable_capability {capability} failed {req.content}")
         return True
 
     def enable_push_vpn_capability(self, bundle_id):
-        # 'PUSH_NOTIFICATIONS',  # PERSONAL_VPN , NETWORK_EXTENSIONS
         req = super().enable_capability(bundle_id, 'PUSH_NOTIFICATIONS')
         if self.__do_success(req, 201):
             req = super().enable_capability(bundle_id, 'PERSONAL_VPN')
@@ -835,7 +835,6 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         return False
 
     def disable_push_vpn_capability(self, bundle_id):
-        # 'PUSH_NOTIFICATIONS',  # PERSONAL_VPN
         req = super().disable_capability(bundle_id, 'PUSH_NOTIFICATIONS')
         if self.__do_success(req, 204):
             req = super().disable_capability(bundle_id, 'PERSONAL_VPN')

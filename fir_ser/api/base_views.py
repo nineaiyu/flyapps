@@ -8,9 +8,9 @@ from api.utils.response import BaseResponse
 
 from api.utils.app.supersignutils import IosUtils
 from api.utils.storage.storage import Storage
-from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app, \
+from api.utils.storage.caches import del_cache_response_by_short, del_cache_by_delete_app, \
     del_cache_storage
-from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo, AppScreenShot, AppStorage
+from api.models import AppReleaseInfo, APPToDeveloper, UserInfo, AppScreenShot, AppStorage
 import logging
 from api.utils.utils import delete_local_files, delete_app_screenshots_files, change_storage_and_change_head_img, \
     migrating_storage_data, clean_storage_data, check_storage_is_new_storage
@@ -27,21 +27,19 @@ def app_delete(app_obj):
     user_obj = app_obj.user_id
     count = APPToDeveloper.objects.filter(app_id=app_obj).count()
     if app_obj.issupersign or count > 0:
-        logger.info("app_id:%s is supersign ,delete this app need clean IOS developer" % (app_obj.app_id))
+        logger.info(f"app_id:{app_obj.app_id} is supersign ,delete this app need clean IOS developer")
         IosUtils.clean_app_by_user_obj(app_obj, user_obj)
 
     storage = Storage(user_obj)
     has_combo = app_obj.has_combo
     if has_combo:
         logger.info(
-            "app_id:%s has_combo ,delete this app need uncombo and clean del_cache_response_by_short" % (
-                app_obj.app_id))
+            f"app_id:{app_obj.app_id} has_combo ,delete this app need uncombo and clean del_cache_response_by_short")
         has_combo.has_combo = None
     del_cache_response_by_short(app_obj.app_id)
     del_cache_by_delete_app(app_obj.app_id)
     for app_release_obj in AppReleaseInfo.objects.filter(app_id=app_obj).all():
-        logger.info("delete app_id:%s  need clean all release,release_id:%s" % (
-            app_obj.app_id, app_release_obj.release_id))
+        logger.info(f"delete app_id:{app_obj.app_id}  need clean all release,release_id:{app_release_obj.release_id}")
         storage.delete_file(app_release_obj.release_id, app_release_obj.release_type)
         delete_local_files(app_release_obj.release_id, app_release_obj.release_type)
         storage.delete_file(app_release_obj.icon_url)
@@ -67,17 +65,17 @@ def app_release_delete(app_obj, release_id, storage):
         apprelease_count = AppReleaseInfo.objects.filter(app_id=app_obj).values("release_id").count()
         appreleaseobj = AppReleaseInfo.objects.filter(app_id=app_obj, release_id=release_id).first()
         if not appreleaseobj.is_master:
-            logger.info("delete app release %s" % (appreleaseobj))
+            logger.info(f"delete app release {appreleaseobj}")
             storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
             delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
             storage.delete_file(appreleaseobj.icon_url)
 
             appreleaseobj.delete()
         elif appreleaseobj.is_master and apprelease_count < 2:
-            logger.info("delete app master release %s and clean app %s " % (appreleaseobj, app_obj))
+            logger.info(f"delete app master release {appreleaseobj} and clean app {app_obj} ")
             count = APPToDeveloper.objects.filter(app_id=app_obj).count()
             if app_obj.issupersign or count > 0:
-                logger.info("app_id:%s is supersign ,delete this app need clean IOS developer" % (app_obj.app_id))
+                logger.info(f"app_id:{app_obj.app_id} is supersign ,delete this app need clean IOS developer")
                 IosUtils.clean_app_by_user_obj(app_obj, user_obj)
 
             storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
@@ -118,7 +116,7 @@ def storage_change(use_storage_id, user_obj, force):
                 UserInfo.objects.filter(pk=user_obj.pk).update(storage_id=use_storage_id)
 
     except Exception as e:
-        logger.error("update user %s storage failed Exception:%s" % (user_obj, e))
+        logger.error(f"update user {user_obj} storage failed Exception:{e}")
         if force:
             if use_storage_id == -1:
                 UserInfo.objects.filter(pk=user_obj.pk).update(storage=None)

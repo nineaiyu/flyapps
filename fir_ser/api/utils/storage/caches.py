@@ -16,7 +16,7 @@ from api.utils.baseutils import get_app_d_count_by_app_id, get_app_domain_name, 
 import logging
 from django.db.models import F
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def sync_download_times_by_app_id(app_ids):
@@ -28,7 +28,7 @@ def sync_download_times_by_app_id(app_ids):
     for k, v in down_times_lists.items():
         app_id = k.split(CACHE_KEY_TEMPLATE.get("download_times_key"))[1].strip('_')
         Apps.objects.filter(app_id=app_id).update(count_hits=v)
-        logger.info("sync_download_times_by_app_id app_id:%s count_hits:%s" % (app_id, v))
+        logger.info(f"sync_download_times_by_app_id app_id:{app_id} count_hits:{v}")
 
 
 def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='', udid=None):
@@ -42,17 +42,17 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
         else:
             appudid_obj = AppUDID.objects.filter(app_id_id=app_obj.get("pk"), udid=udid, is_signed=True).first()
             if appudid_obj:
-                SuperSign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=udid,
-                                                                    app_id_id=app_obj.get("pk")).first()
-                if SuperSign_obj and SuperSign_obj.user_id.supersign_active:
-                    APPToDeveloper_obj = APPToDeveloper.objects.filter(app_id_id=app_obj.get("pk"),
-                                                                       developerid=SuperSign_obj.developerid).first()
-                    if APPToDeveloper_obj:
+                super_sign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=udid,
+                                                                     app_id_id=app_obj.get("pk")).first()
+                if super_sign_obj and super_sign_obj.user_id.supersign_active:
+                    app_to_developer_obj = APPToDeveloper.objects.filter(app_id_id=app_obj.get("pk"),
+                                                                         developerid=super_sign_obj.developerid).first()
+                    if app_to_developer_obj:
                         release_obj = AppReleaseInfo.objects.filter(app_id_id=app_obj.get("pk"), is_master=True).first()
-                        if release_obj.release_id == APPToDeveloper_obj.release_file:
-                            binary_file = APPToDeveloper_obj.binary_file
+                        if release_obj.release_id == app_to_developer_obj.release_file:
+                            binary_file = app_to_developer_obj.binary_file
                         else:
-                            binary_file = APPToDeveloper_obj.release_file
+                            binary_file = app_to_developer_obj.release_file
                         return local_storage.get_download_url(
                             binary_file + "." + download_url_type, limit), ""
                     else:
@@ -146,7 +146,7 @@ def del_cache_response_by_short(app_id, udid=''):
 
 
 def del_cache_response_by_short_util(short, app_id, udid):
-    logger.info("del_cache_response_by_short short:%s app_id:%s udid:%s" % (short, app_id, udid))
+    logger.info(f"del_cache_response_by_short short:{short} app_id:{app_id} udid:{udid}")
     key = "_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short, '*'])
     for app_download_key in cache.iter_keys(key):
         cache.delete(app_download_key)
@@ -188,7 +188,7 @@ def del_cache_by_app_id(app_id, user_obj):
 
 
 def del_cache_storage(user_obj):
-    logger.info("del_cache_storage user:%s" % user_obj)
+    logger.info(f"del_cache_storage user:{user_obj}")
     for app_obj in Apps.objects.filter(user_id=user_obj):
         del_cache_response_by_short(app_obj.app_id)
         del_cache_by_app_id(app_obj.app_id, user_obj)
@@ -249,13 +249,13 @@ def limit_cache_util(act, cache_key, cache_limit_times):
         if cdata:
             data["count"] = cdata["count"] + 1
             data["time"] = time.time()
-        logger.info("limit_cache_util  cache_key:%s  data:%s" % (cache_key, data))
+        logger.info(f"limit_cache_util  cache_key:{cache_key}  data:{data}")
         cache.set(cache_key, data, cache_times)
     elif act == "get":
         cdata = cache.get(cache_key)
         if cdata:
             if cdata["count"] > limit_times:
-                logging.error("limit_cache_util cache_key %s  over limit ,is locked . cdata:%s" % (cache_key, cdata))
+                logger.error(f"limit_cache_util cache_key {cache_key}  over limit ,is locked . cdata:{cdata}")
                 return False
         return True
     elif act == "del":
@@ -263,7 +263,7 @@ def limit_cache_util(act, cache_key, cache_limit_times):
 
 
 def login_auth_failed(act, email):
-    logger.error("login email:%s act:%s" % (email, act))
+    logger.error(f"login email:{email} act:{act}")
     auth_code_key = "_".join([CACHE_KEY_TEMPLATE.get("login_failed_try_times_key"), email])
     return limit_cache_util(act, auth_code_key, SYNC_CACHE_TO_DATABASE.get("try_login_times"))
 
@@ -340,7 +340,7 @@ def consume_user_download_times(user_id, app_id, amount=1, auth_status=False):
             try:
                 UserInfo.objects.filter(pk=user_id).update(download_times=F('download_times') - amount)
             except Exception as e:
-                logger.error("%s download_times less then 0. Exception:%s" % (user_id, e))
+                logger.error(f"{user_id} download_times less then 0. Exception:{e}")
                 disable_user_download_times_flag(user_id)
                 del_cache_response_by_short(app_id)
                 return False
@@ -360,7 +360,7 @@ def add_user_download_times(user_id, download_times=0):
             UserInfo.objects.filter(pk=user_id).update(download_times=F('download_times') + download_times)
             return enable_user_download(user_id)
         except Exception as e:
-            logger.error("%s download_times less then 0. Exception:%s" % (user_id, e))
+            logger.error(f"{user_id} download_times less then 0. Exception:{e}")
             return False
 
 
@@ -390,11 +390,11 @@ def consume_user_download_times_by_app_obj(app_obj):
 
 
 def user_auth_success(user_id):
-    '''
+    """
     认证成功，需要调用该方法增加次数
     :param user_id:
     :return:
-    '''
+    """
     get_user_free_download_times(user_id, 'get')
     get_user_free_download_times(user_id, 'set', USER_FREE_DOWNLOAD_TIMES - AUTH_USER_FREE_DOWNLOAD_TIMES)
     return enable_user_download(user_id)
@@ -429,19 +429,19 @@ def update_order_info(user_id, out_trade_no, payment_number, payment_type):
                             download_times, user_obj.download_times + download_times)
                         order_obj.save()
                         add_user_download_times(user_id, download_times)
-                        logger.info("%s 订单 %s msg：%s" % (user_obj, out_trade_no, order_obj.description))
+                        logger.info(f"{user_obj} 订单 {out_trade_no} msg：{order_obj.description}")
                         return True
                     except Exception as e:
-                        logger.error("%s 订单 %s 更新失败 Exception：%s" % (user_obj, out_trade_no, e))
+                        logger.error(f"{user_obj} 订单 {out_trade_no} 更新失败 Exception：{e}")
                 elif order_obj.status == 0:
                     return True
                 else:
                     return False
             else:
-                logger.error("%s 订单 %s 订单获取失败，或订单已经支付" % (user_obj, out_trade_no))
+                logger.error(f"{user_obj} 订单 {out_trade_no} 订单获取失败，或订单已经支付")
 
         except Exception as e:
-            logger.error("%s download_times less then 0. Exception:%s" % (user_obj, e))
+            logger.error(f"{user_obj} download_times less then 0. Exception:{e}")
         return False
 
 

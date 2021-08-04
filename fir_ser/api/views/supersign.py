@@ -6,19 +6,17 @@
 from django.http.response import FileResponse
 from rest_framework.views import APIView
 
-from api.utils.app.iossignapi import ResignApp
-from api.utils.baseutils import file_format_path
 from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
 from rest_framework.response import Response
 from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID
 from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer
 from rest_framework.pagination import PageNumberPagination
-from api.utils.app.supersignutils import IosUtils, get_auth_form_developer
+from api.utils.app.supersignutils import IosUtils
 from api.utils.utils import get_developer_devices, get_choices_dict
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class PageNumber(PageNumberPagination):
@@ -36,11 +34,11 @@ class DeveloperView(APIView):
 
         res = BaseResponse()
 
-        appid = request.query_params.get("appid", None)
+        app_id = request.query_params.get("appid", None)
         developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
         res.use_num = get_developer_devices(developer_obj)
-        if appid:
-            developer_obj = developer_obj.filter(issuer_id=appid)
+        if app_id:
+            developer_obj = developer_obj.filter(issuer_id=app_id)
 
         page_obj = PageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=developer_obj.order_by("-updated_time"),
@@ -66,7 +64,7 @@ class DeveloperView(APIView):
             act = data.get("act", None)
             if act:
                 res = BaseResponse()
-                logger.info("user %s iosdeveloper %s act %s" % (request.user, developer_obj, act))
+                logger.info(f"user {request.user} ios developer {developer_obj} act {act}")
                 if act == "checkauth":
                     status, result = IosUtils.active_developer(developer_obj)
                     if status:
@@ -112,16 +110,16 @@ class DeveloperView(APIView):
                         res.msg = result.get("err_info")
                         return Response(res.dict)
             else:
-                logger.info("user %s iosdeveloper %s update input data %s" % (request.user, developer_obj, data))
-                logger.info("user %s iosdeveloper %s update old data %s" % (
-                    request.user, developer_obj, developer_obj.__dict__))
+                logger.info(f"user {request.user} ios developer {developer_obj} update input data {data}")
+                logger.info(
+                    f"user {request.user} ios developer {developer_obj} update old data {developer_obj.__dict__}")
                 try:
                     usable_number = int(data.get("usable_number", developer_obj.usable_number))
                     if 0 <= usable_number <= 100:
                         developer_obj.usable_number = usable_number
                 except Exception as e:
-                    logger.error("developer %s usable_number %s get failed Exception:%s" % (
-                        developer_obj, data.get("usable_number", developer_obj.usable_number), e))
+                    logger.error(
+                        f"developer {developer_obj} usable_number {data.get('usable_number', developer_obj.usable_number)} get failed Exception:{e}")
                 developer_obj.description = data.get("description", developer_obj.description)
                 private_key_id = data.get("private_key_id", developer_obj.private_key_id)
                 p8key = data.get("p8key", developer_obj.p8key)
@@ -133,19 +131,19 @@ class DeveloperView(APIView):
                     developer_obj.is_actived = False
                 try:
                     developer_obj.save()
-                    logger.info("user %s iosdeveloper %s update now data %s" % (
-                        request.user, developer_obj, developer_obj.__dict__))
+                    logger.info(
+                        f"user {request.user} ios developer {developer_obj} update now data {developer_obj.__dict__}")
                 except Exception as e:
-                    logger.error("user %s iosdeveloper %s update error data %s Exception %s" % (
-                        request.user, developer_obj, data, e))
+                    logger.error(
+                        f"user {request.user} ios developer {developer_obj} update error data {data} Exception {e}")
 
         return self.get(request)
 
     def post(self, request):
         data = request.data
-        datainfo = {}
+        data_info = {}
         if data.get("auth_type") == 0:
-            datainfo = {
+            data_info = {
                 "usable_number": data.get("usable_number", ""),
                 "description": data.get("description", ""),
                 "issuer_id": data.get("issuer_id", ""),
@@ -154,13 +152,11 @@ class DeveloperView(APIView):
                 "auth_type": 0
             }
         try:
-            logger.error("user %s  add new developer %s  data %s" % (
-                request.user, data.get("issuer_id", ""), datainfo))
-            developer_obj = AppIOSDeveloperInfo.objects.create(user_id=request.user, **datainfo)
+            logger.error(f"user {request.user} add new developer {data.get('issuer_id', '')} data {data_info}")
+            developer_obj = AppIOSDeveloperInfo.objects.create(user_id=request.user, **data_info)
             IosUtils.create_developer_space(developer_obj, request.user)
         except Exception as e:
-            logger.error("user %s create developer %s failed Exception:%s" % (
-                request.user, datainfo, e))
+            logger.error(f"user {request.user} create developer {data_info} failed Exception:{e}")
             res = BaseResponse()
             res.code = 1005
             res.msg = "添加失败"
@@ -176,8 +172,7 @@ class DeveloperView(APIView):
             return self.get(request)
 
         if developer_obj:
-            logger.error("user %s delete developer %s " % (
-                request.user, developer_obj))
+            logger.error(f"user {request.user} delete developer {developer_obj}")
             IosUtils.clean_developer(developer_obj, request.user)
             IosUtils.revoke_developer_cert(developer_obj, request.user)
             developer_obj.delete()
@@ -193,25 +188,25 @@ class SuperSignUsedView(APIView):
         res = BaseResponse()
 
         udid = request.query_params.get("udid", None)
-        bundleid = request.query_params.get("bundleid", None)
-        developerid = request.query_params.get("appid", None)
+        bundle_id = request.query_params.get("bundleid", None)
+        developer_id = request.query_params.get("appid", None)
 
-        SuperSignUsed_obj = APPSuperSignUsedInfo.objects.filter(user_id=request.user, )
+        super_sign_used_objs = APPSuperSignUsedInfo.objects.filter(user_id=request.user, )
 
-        if developerid:
-            SuperSignUsed_obj = SuperSignUsed_obj.filter(developerid__issuer_id=developerid)
+        if developer_id:
+            super_sign_used_objs = super_sign_used_objs.filter(developerid__issuer_id=developer_id)
         if udid:
-            SuperSignUsed_obj = SuperSignUsed_obj.filter(udid__udid=udid)
-        if bundleid:
-            SuperSignUsed_obj = SuperSignUsed_obj.filter(app_id__bundle_id=bundleid)
+            super_sign_used_objs = super_sign_used_objs.filter(udid__udid=udid)
+        if bundle_id:
+            super_sign_used_objs = super_sign_used_objs.filter(app_id__bundle_id=bundle_id)
 
         page_obj = PageNumber()
-        app_page_serializer = page_obj.paginate_queryset(queryset=SuperSignUsed_obj.order_by("-created_time"),
+        app_page_serializer = page_obj.paginate_queryset(queryset=super_sign_used_objs.order_by("-created_time"),
                                                          request=request,
                                                          view=self)
         app_serializer = SuperSignUsedSerializer(app_page_serializer, many=True, )
         res.data = app_serializer.data
-        res.count = SuperSignUsed_obj.count()
+        res.count = super_sign_used_objs.count()
         return Response(res.dict)
 
 
@@ -223,29 +218,29 @@ class AppUDIDUsedView(APIView):
         res = BaseResponse()
 
         udid = request.query_params.get("udid", None)
-        bundleid = request.query_params.get("bundleid", None)
-        AppUDID_obj = AppUDID.objects.filter(app_id__user_id_id=request.user)
+        bundle_id = request.query_params.get("bundleid", None)
+        app_udid_objs = AppUDID.objects.filter(app_id__user_id_id=request.user)
         if udid:
-            AppUDID_obj = AppUDID_obj.filter(udid=udid)
-        if bundleid:
-            AppUDID_obj = AppUDID_obj.filter(app_id__bundle_id=bundleid)
+            app_udid_objs = app_udid_objs.filter(udid=udid)
+        if bundle_id:
+            app_udid_objs = app_udid_objs.filter(app_id__bundle_id=bundle_id)
 
         page_obj = PageNumber()
-        app_page_serializer = page_obj.paginate_queryset(queryset=AppUDID_obj.order_by("-created_time"),
+        app_page_serializer = page_obj.paginate_queryset(queryset=app_udid_objs.order_by("-created_time"),
                                                          request=request,
                                                          view=self)
         app_serializer = DeviceUDIDSerializer(app_page_serializer, many=True, )
         res.data = app_serializer.data
-        res.count = AppUDID_obj.count()
+        res.count = app_udid_objs.count()
         return Response(res.dict)
 
     def delete(self, request):
         res = BaseResponse()
-        id = request.query_params.get("id", None)
+        pk = request.query_params.get("id", None)
         app_id = request.query_params.get("aid", None)
-        app_udid_obj = AppUDID.objects.filter(app_id__user_id_id=request.user, pk=id)
+        app_udid_obj = AppUDID.objects.filter(app_id__user_id_id=request.user, pk=pk)
         if app_udid_obj:
-            logger.error("user %s delete devices %s" % (request.user, app_udid_obj))
+            logger.error(f"user {request.user} delete devices {app_udid_obj}")
             IosUtils.disable_udid(app_udid_obj.first(), app_id)
             app_udid_obj.delete()
         return Response(res.dict)
@@ -281,12 +276,12 @@ class SuperSignCertView(APIView):
                 status, result = resign_app_obj.make_cert_from_p12(request.data.get('cert_pwd', ''),
                                                                    request.data.get('cert_content', None))
                 if status:
-                    status, result = IosUtils.auto_get_certid_by_p12(developer_obj, request.user)
+                    status, result = IosUtils.auto_get_cert_id_by_p12(developer_obj, request.user)
                     if status:
                         resign_app_obj.write_cert()
                     else:
                         res.code = 1003
-                        res.msg = str('证书未在开发者账户找到，请检查推送证书是否属于该开发者')
+                        res.msg = '证书未在开发者账户找到，请检查推送证书是否属于该开发者'
                 else:
                     res.code = 1002
                     res.msg = str(result['err_info'])

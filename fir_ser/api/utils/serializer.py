@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from api import models
+from api.utils.TokenManager import make_token
 from api.utils.app.apputils import bytes2human
-from api.utils.TokenManager import DownloadToken
 from api.utils.app.supersignutils import get_redirect_server_domain
 from api.utils.baseutils import get_user_domain_name, get_app_domain_name
 from api.utils.storage.storage import Storage
@@ -9,9 +9,7 @@ from api.utils.utils import get_developer_udided, get_choices_dict, get_choices_
 from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
 import os, logging
 
-logger = logging.getLogger(__file__)
-
-token_obj = DownloadToken()
+logger = logging.getLogger(__name__)
 
 
 def get_download_url_from_context(self, obj, key, url, force_new=False):
@@ -33,8 +31,7 @@ def get_download_url_from_context(self, obj, key, url, force_new=False):
             storage = None
     if storage:
         download_url = storage.get_download_url(os.path.basename(url), 600, key, force_new)
-        logger.info(
-            'get %s download_url %s force_new:%s key:%s' % (os.path.basename(url), download_url, force_new, key))
+        logger.info(f'get {os.path.basename(url)} download_url {download_url} force_new:{force_new} key:{key}')
     return download_url
 
 
@@ -187,7 +184,7 @@ class AppsSerializer(serializers.ModelSerializer):
                 "binary_url": master_release_obj.binary_url,
             }
 
-            download_token = token_obj.make_token(master_release_obj.release_id, 600, key=key)
+            download_token = make_token(master_release_obj.release_id, 600, key=key)
             datainfo["download_token"] = download_token
             udid_lists = []
             try:
@@ -284,7 +281,7 @@ class AppsShortSerializer(serializers.ModelSerializer):
                 "binary_url": master_release_obj.binary_url,
             }
 
-            download_token = token_obj.make_token(master_release_obj.release_id, 600, key=key, force_new=True)
+            download_token = make_token(master_release_obj.release_id, 600, key=key, force_new=True)
             datainfo["download_token"] = download_token
             return datainfo
         else:
@@ -322,7 +319,7 @@ class AppReleaseSerializer(serializers.ModelSerializer):
         return bytes2human(obj.binary_size)
 
     def get_download_token(self, obj):
-        return token_obj.make_token(obj.release_id, 600)
+        return make_token(obj.release_id, 600)
 
     def get_icon_url(self, obj):
         return get_download_url_from_context(self, obj, '', os.path.basename(obj.icon_url))

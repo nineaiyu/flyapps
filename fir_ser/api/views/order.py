@@ -62,7 +62,7 @@ class OrderView(APIView):
                 pay_url = pay_obj.get_pay_pc_url(order_number, int(order_obj.actual_amount),
                                                  {'user_id': request.user.id})
                 res.data = pay_url
-                logger.info("%s 下单成功 %s" % (request.user, res.dict))
+                logger.info(f"{request.user} 下单成功 {res.dict}")
                 return Response(res.dict)
             if price_obj:
                 try:
@@ -75,14 +75,14 @@ class OrderView(APIView):
                                          actual_download_times=price_obj.package_size, payment_name=pay_obj.name,
                                          actual_download_gift_times=price_obj.download_count_gift)
                     res.data = pay_url
-                    logger.info("%s 下单成功 %s" % (request.user, res.dict))
+                    logger.info(f"{request.user} 下单成功 {res.dict}")
                     return Response(res.dict)
                 except Exception as e:
-                    logger.error("%s 订单 %s 保存失败 Exception：%s" % (request.user, price_id, e))
+                    logger.error(f"{request.user} 订单 {price_id} 保存失败 Exception：{e}")
                     res.code = 1003
                     res.msg = "订单保存失败"
             else:
-                logger.error("%s 价格 %s 获取失败" % (request.user, price_id))
+                logger.error(f"{request.user} 价格 {price_id} 获取失败")
                 res.code = 1002
                 res.msg = "价格获取失败，请稍后重试"
         else:
@@ -107,11 +107,11 @@ class OrderView(APIView):
                         # wxpay = Weixinpay()
                         # wxpay.update_order_status(order_obj.order_number)
                 except Exception as e:
-                    logger.error("%s 订单 %s 更新失败 Exception：%s" % (request.user, order_number, e))
+                    logger.error(f"{request.user} 订单 {order_number} 更新失败 Exception：{e}")
                     res.code = 1003
                 return Response(res.dict)
             else:
-                logger.error("%s 订单 %s 获取失败" % (request.user, order_number))
+                logger.error(f"{request.user} 订单 {order_number} 获取失败")
                 res.code = 1003
                 res.msg = "订单获取失败，或订单已经支付"
         else:
@@ -130,11 +130,11 @@ class PriceView(APIView):
         res.pay_choices = get_enable_pay_choices()
         return Response(res.dict)
 
-    def delete(self, request, price_id):
+    def delete(self, request):
         res = BaseResponse()
         return Response(res.dict)
 
-    def put(self, request, price_id):
+    def put(self, request):
         res = BaseResponse()
         return Response(res.dict)
 
@@ -149,8 +149,8 @@ class PaySuccess(APIView):
         pay_obj = get_pay_obj_form_name(name)
         msg = 'failure'
         if pay_obj:
-            logger.info("支付回调参数：%s" % request.body)
-            logger.info("支付回调头部：%s" % request.META)
+            logger.info(f"支付回调参数：{request.body}")
+            logger.info(f"支付回调头部：{request.META}")
             if pay_obj.p_type == 'ALI':
                 if pay_obj.valid_order(request):
                     msg = 'success'

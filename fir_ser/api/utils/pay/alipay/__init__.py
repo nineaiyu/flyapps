@@ -210,7 +210,6 @@ class BaseAliPay:
         data = self.build_body(api_name, biz_content, **kwargs)
         # alipay.trade.query => alipay_trade_query_response
         response_type = api_name.replace(".", "_") + "_response"
-        print(data)
         return self.verified_sync_response(data, response_type)
 
     def api_alipay_trade_wap_pay(

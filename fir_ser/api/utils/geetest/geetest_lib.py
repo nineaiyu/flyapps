@@ -81,14 +81,16 @@ class GeetestLib:
             self.libResult.set_all(1, data, "")
 
     # 正常流程下（即验证初始化成功），二次验证
-    def successValidate(self, challenge, validate, seccode, param_dict={}):
+    def success_validate(self, challenge, validate, seccode, param_dict=None):
+        if param_dict is None:
+            param_dict = {}
         self.gtlog(
-            "successValidate(): 开始二次验证 正常模式, challenge={0}, validate={1}, seccode={2}.".format(challenge, validate,
-                                                                                               seccode))
+            "success_validate(): 开始二次验证 正常模式, challenge={0}, validate={1}, seccode={2}.".format(challenge, validate,
+                                                                                                seccode))
         if not self.check_param(challenge, validate, seccode):
             self.libResult.set_all(0, "", "正常模式，本地校验，参数challenge、validate、seccode不可为空")
         else:
-            response_seccode = self.requestValidate(challenge, validate, seccode, param_dict)
+            response_seccode = self.request_validate(challenge, validate, seccode, param_dict)
             if not response_seccode:
                 self.libResult.set_all(0, "", "请求极验validate接口失败")
             elif response_seccode == "false":
@@ -100,19 +102,19 @@ class GeetestLib:
 
     # 异常流程下（即验证初始化失败，宕机模式），二次验证
     # 注意：由于是宕机模式，初衷是保证验证业务不会中断正常业务，所以此处只作简单的参数校验，可自行设计逻辑。
-    def failValidate(self, challenge, validate, seccode):
+    def fail_validate(self, challenge, validate, seccode):
         self.gtlog(
-            "failValidate(): 开始二次验证 宕机模式, challenge={0}, validate={1}, seccode={2}.".format(challenge, validate,
-                                                                                            seccode))
+            "fail_validate(): 开始二次验证 宕机模式, challenge={0}, validate={1}, seccode={2}.".format(challenge, validate,
+                                                                                             seccode))
         if not self.check_param(challenge, validate, seccode):
             self.libResult.set_all(0, "", "宕机模式，本地校验，参数challenge、validate、seccode不可为空.")
         else:
             self.libResult.set_all(1, "", "")
-        self.gtlog("failValidate(): 二次验证 宕机模式, lib包返回信息={0}.".format(self.libResult))
+        self.gtlog("fail_validate(): 二次验证 宕机模式, lib包返回信息={0}.".format(self.libResult))
         return self.libResult
 
     # 向极验发送二次验证的请求，POST方式
-    def requestValidate(self, challenge, validate, seccode, param_dict):
+    def request_validate(self, challenge, validate, seccode, param_dict):
         param_dict.update(
             {"seccode": seccode, "json_format": self.JSON_FORMAT, "challenge": challenge, "sdk": self.VERSION,
              "captchaid": self.geetest_id})

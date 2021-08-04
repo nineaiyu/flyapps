@@ -16,7 +16,7 @@ import hashlib
 import time
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 # 以下代码展示了STS的用法，包括角色扮演获取临时用户的密钥、使用临时用户的密钥访问OSS。
@@ -62,19 +62,19 @@ class AliYunCdn(object):
         if not args: args = ""
         rand = "0"  # "0" by default, other value is ok
         uid = "0"  # "0" by default, other value is ok
-        sstring = "%s-%s-%s-%s-%s" % (path, exp, rand, uid, self.key)
-        hashvalue = md5sum(sstring.encode("utf-8"))
-        auth_key = "%s-%s-%s-%s" % (exp, rand, uid, hashvalue)
+        ss_string = f"{path}-{exp}-{rand}-{uid}-{self.key}"
+        hash_value = md5sum(ss_string.encode("utf-8"))
+        auth_key = f"{exp}-{rand}-{uid}-{hash_value}"
         if args:
-            return "%s%s%s%s&auth_key=%s" % (scheme, host, path, args, auth_key)
+            return f"{scheme}{host}{path}{args}&auth_key={auth_key}"
         else:
-            return "%s%s%s%s?auth_key=%s" % (scheme, host, path, args, auth_key)
+            return f"{scheme}{host}{path}{args}?auth_key={auth_key}"
 
     def get_cdn_download_token(self, filename, expires=1800):
-        uri = "%s/%s" % (self.domain, filename)
+        uri = f"{self.domain}/{filename}"
         exp = int(time.time()) + expires
         download_url = self.a_auth(uri, exp)
-        logger.info("make cdn download url %s" % download_url)
+        logger.info(f"make cdn download url {download_url}")
         return download_url
 
 
@@ -131,6 +131,7 @@ class AliYunOss(object):
         req.set_RoleArn(self.sts_role_arn)
         req.set_RoleSessionName(name)
         req.set_DurationSeconds(expires)
+        p_action = "oss:GetObject"
         if only_put:
             p_action = ["oss:PutObject", "oss:AbortMultipartUpload"]
         if only_get:
@@ -159,7 +160,7 @@ class AliYunOss(object):
         token.expiration = oss2.utils.to_unixtime(j['Credentials']['Expiration'], '%Y-%m-%dT%H:%M:%SZ')
         token.bucket = self.bucket_name
         token.endpoint = self.endpoint.replace('-internal', '')
-        logger.info("get aliyun sts token %s" % token.__dict__)
+        logger.info(f"get aliyun sts token {token.__dict__}")
         return token
 
     def get_upload_token(self, name, expires=1800):
@@ -191,9 +192,9 @@ class AliYunOss(object):
         # bucket = oss2.Bucket(auth, self.endpoint,self.bucket_name)
         return self.bucket.delete_object(name)
 
-    def rename_file(self, oldfilename, newfilename):
-        self.bucket.copy_object(self.bucket_name, oldfilename, newfilename)
-        return self.del_file(oldfilename)
+    def rename_file(self, old_filename, new_filename):
+        self.bucket.copy_object(self.bucket_name, old_filename, new_filename)
+        return self.del_file(old_filename)
 
     def upload_file(self, local_file_full_path):
         if os.path.isfile(local_file_full_path):
@@ -210,7 +211,7 @@ class AliYunOss(object):
             #     self.bucket.put_object(os.path.basename(local_file_full_path), fileobj)
             return True
         else:
-            logger.error("file %s is not file" % local_file_full_path)
+            logger.error(f"file {local_file_full_path} is not file")
 
     def download_file(self, name, local_file_full_path):
         dir_path = os.path.dirname(local_file_full_path)

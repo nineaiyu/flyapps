@@ -3,10 +3,10 @@
 # project: 3月
 # author: liuyu
 # date: 2020/3/6
-
-from api.utils.app.apputils import get_random_short, SaveAppInfos
+from api.utils.TokenManager import verify_token
+from api.utils.app.apputils import get_random_short, save_app_infos
 from api.utils.baseutils import get_app_domain_name
-from api.utils.storage.storage import Storage, get_local_storage
+from api.utils.storage.storage import Storage
 from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
 from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo
 from api.utils.app.randomstrings import make_app_uuid
@@ -16,33 +16,32 @@ from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.app.randomstrings import make_from_user_uuid
 from rest_framework.response import Response
 from fir_ser import settings
-from api.utils.TokenManager import DownloadToken
 from api.utils.app.supersignutils import get_redirect_server_domain
 from api.tasks import run_resign_task
 import os, json, logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class AppAnalyseView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
 
     def post(self, request):
-        '''
+        """
         应用上传前 分析数据，并返回应用上传信息
         :param request:
         :return:
-        '''
+        """
         res = BaseResponse()
         # 1.接收 bundelid ，返回随机应用名称和短连接
-        bundleid = request.data.get("bundleid", None)
+        bundle_id = request.data.get("bundleid", None)
         app_type = request.data.get("type", None)
 
-        if bundleid and app_type:
+        if bundle_id and app_type:
             ap = 'apk'
             if app_type.lower() == 'iOS'.lower():
                 ap = 'ipa'
-            app_uuid = make_app_uuid(request.user, bundleid + ap)
+            app_uuid = make_app_uuid(request.user, bundle_id + ap)
             release_id = make_from_user_uuid(request.user)
             png_id = make_from_user_uuid(request.user)
             app_obj = Apps.objects.filter(app_id=app_uuid).first()
@@ -85,14 +84,14 @@ class AppAnalyseView(APIView):
         return Response(res.dict)
 
     def put(self, request):
-        '''
+        """
         该方法就是 应用上传完成之后的回调方法，更新或者创建新应用信息
         :param request:
         :return:
-        '''
+        """
         res = BaseResponse()
         data = request.data
-        appinfo = {
+        app_info = {
             "labelname": data.get("appname"),
             "version": data.get("buildversion"),
             "versioncode": data.get("version"),
@@ -110,19 +109,19 @@ class AppAnalyseView(APIView):
 
             png_tmp_filename = data.get("png_key")
             png_new_filename = data.get("png_key").strip(settings.FILE_UPLOAD_TMP_KEY)
-            logger.info("user %s create or update app %s  data:%s" % (request.user, data.get("bundleid"), data))
-            if SaveAppInfos(app_new_filename, request.user, appinfo,
-                            data.get("bundleid"), png_new_filename, data.get("short"), data.get('filesize')):
+            logger.info(f"user {request.user} create or update app  {data.get('bundleid')}  data:{data}")
+            if save_app_infos(app_new_filename, request.user, app_info,
+                              data.get("bundleid"), png_new_filename, data.get("short"), data.get('filesize')):
                 # 需要将tmp 文件修改为正式文件
                 storage.rename_file(app_tmp_filename, app_new_filename)
                 storage.rename_file(png_tmp_filename, png_new_filename)
 
-                app_info = Apps.objects.filter(bundle_id=data.get("bundleid")).first()
-                if app_info:
-                    if app_info.issupersign and app_info.user_id.supersign_active:
-                        c_task = run_resign_task.apply_async((app_info.app_id, False))
+                app_obj = Apps.objects.filter(bundle_id=data.get("bundleid")).first()
+                if app_obj:
+                    if app_obj.issupersign and app_obj.user_id.supersign_active:
+                        c_task = run_resign_task.apply_async((app_obj.app_id, False))
                         msg = c_task.get(propagate=False)
-                        logger.info("app %s run_resign_task msg:%s" % (app_info, msg))
+                        logger.info(f"app {app_obj} run_resign_task msg:{msg}")
                         if c_task.successful():
                             c_task.forget()
             else:
@@ -133,7 +132,7 @@ class AppAnalyseView(APIView):
             upload_file_tmp_name("del", png_tmp_filename, request.user.id)
 
         except Exception as e:
-            logger.error("user %s %s save app info failed Exception:%s" % (request.user, data.get("bundleid"), e))
+            logger.error(f"user {request.user} save app {data.get('bundleid')} info {app_info} failed Exception:{e}")
             res.code = 10003
             res.msg = 'save app info failed'
 
@@ -141,27 +140,27 @@ class AppAnalyseView(APIView):
 
 
 class UploadView(APIView):
-    '''
+    """
     上传文件接口
-    '''
+    """
     authentication_classes = [ExpiringTokenAuthentication, ]
 
     def get(self, request):
-        '''
+        """
         该方法 主要是本地上传，通过该方法获取上传的 应用图片或者用户头像 的上传信息
         :param request:
         :return:
-        '''
+        """
         res = BaseResponse()
         storage = Storage(request.user)
         request_upload_key = request.query_params.get("upload_key", None)
         app_id = request.query_params.get("app_id", None)
-        ftype = request.query_params.get("ftype", None)
-        if ftype and app_id and request_upload_key:
-            if ftype == 'app' or ftype == 'screen':
+        f_type = request.query_params.get("ftype", None)
+        if f_type and app_id and request_upload_key:
+            if f_type == 'app' or f_type == 'screen':
                 app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
 
-            elif ftype and ftype in ['head', 'certification']:
+            elif f_type and f_type in ['head', 'certification']:
                 if request.user.uid != app_id:
                     res.code = 1007
                     res.msg = '该用户不存在'
@@ -177,7 +176,7 @@ class UploadView(APIView):
                     res.code = 1006
                     res.msg = '类型不允许'
                 else:
-                    if ftype and ftype == 'certification':
+                    if f_type and f_type == 'certification':
                         storage = Storage(request.user, None, True)
                     upload_key = make_from_user_uuid(request.user) + '.' + app_type + settings.FILE_UPLOAD_TMP_KEY
                     upload_token = storage.get_upload_token(upload_key)
@@ -188,7 +187,7 @@ class UploadView(APIView):
                         "upload_key": upload_key,
                         "storage": storage_type,
                         "app_id": app_id,
-                        "ftype": ftype
+                        "ftype": f_type
                     }
             else:
                 res.code = 1006
@@ -198,43 +197,42 @@ class UploadView(APIView):
         return Response(res.dict)
 
     def post(self, request):
-        '''
+        """
         该方法 主要是本地上传文件接口，负责上传 应用图片，应用文件或者用户头像
         :param request:
         :return:
-        '''
+        """
         res = BaseResponse()
 
         # 获取多个file
         files = request.FILES.getlist('file', None)
-        certinfo = request.data.get('certinfo', None)
+        cert_info = request.data.get('certinfo', None)
 
         try:
-            certinfo = json.loads(certinfo)
-            if not certinfo:
+            cert_info = json.loads(cert_info)
+            if not cert_info:
                 res.msg = "数据信息 校验失败"
                 res.code = 1006
                 return Response(res.dict)
         except Exception as e:
-            logger.error("%s certinfo:%s get failed Exception:%s" % (request.user, certinfo, e))
+            logger.error(f"{request.user} cert_info:{cert_info} get failed Exception:{e}")
             res.msg = "token 校验失败"
             res.code = 1006
             return Response(res.dict)
 
-        token_obj = DownloadToken()
-        if token_obj.verify_token(token=certinfo.get("upload_token", None),
-                                  release_id=certinfo.get("upload_key", None)):
+        if verify_token(token=cert_info.get("upload_token", None),
+                        release_id=cert_info.get("upload_key", None)):
 
-            app_id = certinfo.get("app_id", None)
-            ftype = certinfo.get("ftype", None)
-            if ftype and ftype in ['app', 'screen']:
+            app_id = cert_info.get("app_id", None)
+            f_type = cert_info.get("ftype", None)
+            if f_type and f_type in ['app', 'screen']:
                 pass
                 # app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
                 # if not app_obj:
                 #     res.code = 1006
                 #     res.msg = '该应用不存在'
                 #     return Response(res.dict)
-            elif ftype and ftype in ['head', 'certification']:
+            elif f_type and f_type in ['head', 'certification']:
                 if request.user.uid != app_id:
                     res.code = 1007
                     res.msg = '该用户不存在'
@@ -252,18 +250,18 @@ class UploadView(APIView):
                     if app_type == "tmp":
                         app_type = file_obj.name.split(".")[-2]
                     if app_type not in ["apk", "ipa", 'png', 'jpeg', 'jpg']:
-                        logger.error("user:%s  upload file type error file:%s " % (request.user, file_obj.name))
+                        logger.error(f"user:{request.user} upload file type error file:{file_obj.name}")
                         raise TypeError
                 except Exception as e:
-                    logger.error("user:%s  upload file type error Exception:%s " % (request.user, e))
+                    logger.error(f"user:{request.user} upload file type error Exception:{e}")
                     res.code = 1003
                     res.msg = "错误的类型"
                     return Response(res.dict)
 
                 random_file_name = make_from_user_uuid(request.user)
-                local_file = os.path.join(settings.MEDIA_ROOT, certinfo.get("upload_key", random_file_name))
+                local_file = os.path.join(settings.MEDIA_ROOT, cert_info.get("upload_key", random_file_name))
                 # 读取传入的文件
-                logger.info("user:%s  save file:%s" % (request.user, local_file))
+                logger.info(f"user:{request.user} save file:{local_file}")
                 try:
                     destination = open(local_file, 'wb+')
                     for chunk in file_obj.chunks():
@@ -271,14 +269,14 @@ class UploadView(APIView):
                     destination.close()
 
                 except Exception as e:
-                    logger.error("user:%s  save file:%s error Exception:%s " % (request.user, local_file, e))
+                    logger.error(f"user:{request.user} save file:{local_file} error Exception:{e}")
                     res.code = 1003
                     res.msg = "数据写入失败"
                     try:
                         if os.path.isfile(local_file):
                             os.remove(local_file)
                     except Exception as e:
-                        logger.error("user:%s  delete file:%s error Exception:%s " % (request.user, local_file, e))
+                        logger.error(f"user:{request.user} delete file:{local_file} error Exception:{e}")
                     return Response(res.dict)
         else:
             res.msg = "token 校验失败"
@@ -287,27 +285,27 @@ class UploadView(APIView):
         return Response(res.dict)
 
     def put(self, request):
-        '''
+        """
         该方法就是 应用图片或者用户头像上传完成之后的回调方法，为了更新上传完成的信息
         :param request:
         :return:
-        '''
+        """
         res = BaseResponse()
-        certinfo = request.data.get('certinfo', None)
-        if certinfo:
-            app_id = certinfo.get("app_id", None)
-            logger.info("user %s update img %s info" % (request.user, app_id))
+        cert_info = request.data.get('certinfo', None)
+        if cert_info:
+            app_id = cert_info.get("app_id", None)
+            logger.info(f"user {request.user} update img {app_id} info")
 
-            ftype = certinfo.get('ftype', None)
-            upload_key = certinfo.get("upload_key", None)
-            if ftype and upload_key:
+            f_type = cert_info.get('ftype', None)
+            upload_key = cert_info.get("upload_key", None)
+            if f_type and upload_key:
                 storage = Storage(request.user)
                 new_upload_key = upload_key.strip(settings.FILE_UPLOAD_TMP_KEY)
             else:
                 res.msg = '参数有误'
                 res.code = 1008
                 return Response(res.dict)
-            if ftype and app_id and ftype == 'app':
+            if f_type and app_id and f_type == 'app':
                 app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
                 if app_obj:
                     release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
@@ -319,11 +317,10 @@ class UploadView(APIView):
                         del_cache_response_by_short(app_id)
                         storage.delete_file(old_file_key)
                         return Response(res.dict)
-            elif ftype and app_id and ftype == 'screen':
+            elif f_type and app_id and f_type == 'screen':
                 app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
                 if app_obj:
-                    scount = AppScreenShot.objects.filter(app_id=app_obj).count()
-                    if scount >= 5:
+                    if AppScreenShot.objects.filter(app_id=app_obj).count() >= 5:
                         storage.delete_file(upload_key)
                         res.msg = '最多支持五张截图'
                         res.code = 1009
@@ -333,32 +330,32 @@ class UploadView(APIView):
                     del_cache_response_by_short(app_id)
                     return Response(res.dict)
 
-            elif ftype and app_id and ftype in ['head', 'certification']:
+            elif f_type and app_id and f_type in ['head', 'certification']:
                 if request.user.uid != app_id:
                     res.code = 1007
                     res.msg = '该用户不存在'
                     return Response(res.dict)
-                if ftype == 'head':
+                if f_type == 'head':
                     old_file_key = request.user.head_img
                     UserInfo.objects.filter(pk=request.user.id).update(head_img=new_upload_key)
                     if old_file_key != "" or old_file_key != 'head_img.jpeg':
                         storage.delete_file(old_file_key)
                         storage.rename_file(upload_key, new_upload_key)
-                elif ftype == 'certification':
-                    ext = certinfo.get('ext', None)
+                elif f_type == 'certification':
+                    ext = cert_info.get('ext', None)
                     if ext:
-                        ptype = ext.get('ptype', None)
-                        if ptype is not None and ptype in [1, 2, 3]:
+                        p_type = ext.get('ptype', None)
+                        if p_type is not None and p_type in [1, 2, 3]:
                             storage = Storage(request.user, None, True)
                             certification_obj = CertificationInfo.objects.filter(user_id=request.user,
-                                                                                 type=ptype).first()
+                                                                                 type=p_type).first()
                             if certification_obj:
                                 old_certification_url = certification_obj.certification_url
                                 certification_obj.certification_url = new_upload_key
                                 certification_obj.save()
                                 storage.delete_file(old_certification_url)
                             else:
-                                CertificationInfo.objects.create(user_id=request.user, type=ptype,
+                                CertificationInfo.objects.create(user_id=request.user, type=p_type,
                                                                  certification_url=new_upload_key)
                             storage.rename_file(upload_key, new_upload_key)
 

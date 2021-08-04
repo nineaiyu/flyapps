@@ -12,7 +12,7 @@ from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def make_resigned(bin_url, img_url, bundle_id, app_version, name):
@@ -27,7 +27,7 @@ def make_resigned(bin_url, img_url, bundle_id, app_version, name):
           <key>kind</key>
           <string>software-package</string>
           <key>url</key>
-          <string><![CDATA[%s]]></string>
+          <string><![CDATA[{bin_url}]]></string>
         </dict>
         <dict>
           <key>kind</key>
@@ -35,7 +35,7 @@ def make_resigned(bin_url, img_url, bundle_id, app_version, name):
           <key>needs-shine</key>
           <integer>0</integer>
           <key>url</key>
-          <string><![CDATA[%s]]></string>
+          <string><![CDATA[{img_url}]]></string>
         </dict>
         <dict>
           <key>kind</key>
@@ -43,26 +43,26 @@ def make_resigned(bin_url, img_url, bundle_id, app_version, name):
           <key>needs-shine</key>
           <true/>
           <key>url</key>
-          <string><![CDATA[%s]]></string>
+          <string><![CDATA[{img_url}]]></string>
         </dict>
       </array>
       <key>metadata</key>
       <dict>
         <key>bundle-identifier</key>
-        <string>%s</string>
+        <string>{bundle_id}</string>
         <key>bundle-version</key>
-        <string><![CDATA[%s]]></string>
+        <string><![CDATA[{app_version}]]></string>
         <key>kind</key>
         <string>software</string>
         <key>title</key>
-        <string><![CDATA[%s]]></string>
+        <string><![CDATA[{name}]]></string>
       </dict>
     </dict>
   </array>
 </dict>
-</plist>""" % (bin_url, img_url, img_url, bundle_id, app_version, name)
-    logger.info("make_resigned bin_url %s ,img_url %s, img_url %s, bundle_id %s, app_version %s, name %s" % (
-        bin_url, img_url, img_url, bundle_id, app_version, name))
+</plist>""".format(bin_url=bin_url, img_url=img_url, bundle_id=bundle_id, app_version=app_version, name=name)
+    logger.info(
+        f"make_resigned bin_url {bin_url} ,img_url {img_url}, bundle_id {bundle_id}, app_version {app_version}, name {name}")
     return ios_plist_tem
 
 
@@ -78,10 +78,10 @@ def bytes2human(n):
     return '%sB' % n
 
 
-def get_release_type(app_file_name, appinfo):
+def get_release_type(app_file_name, app_info):
     extension = app_file_name.split(".")[1]
     if extension == "ipa":
-        release_type = appinfo.get("release_type")
+        release_type = app_info.get("release_type")
         if release_type == "Adhoc":  # Adhoc： 内测版   Inhouse：企业版
             return 1
         elif release_type == "Inhouse":
@@ -106,94 +106,94 @@ def get_random_short():
     short_url = ''.join(random.sample(
         ['z', 'y', 'x', 'w', 'v', 'u', 't', 's', 'r', 'q', 'p', 'o', 'n', 'm', 'l', 'k', 'j', 'i', 'h', 'g', 'f',
          'e', 'd', 'c', 'b', 'a'], 4))
-    appobj = Apps.objects.filter(short=short_url).first()
-    if appobj:
+    app_obj = Apps.objects.filter(short=short_url).first()
+    if app_obj:
         return get_random_short()
     else:
         return short_url
 
 
-def SaveAppInfos(app_file_name, user_obj, appinfo, bundle_id, app_img, short, size):
+def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short, size):
     app_uuid = make_app_uuid(user_obj, bundle_id + app_file_name.split(".")[1])
     ##判断是否存在该app
-    appmobj = Apps.objects.filter(app_id=app_uuid, user_id=user_obj).first()
+    app_obj = Apps.objects.filter(app_id=app_uuid, user_id=user_obj).first()
     storage = Storage(user_obj)
-    newapp = False
-    if not appmobj:
-        newapp = True
+    is_new_app = False
+    if not app_obj:
+        is_new_app = True
         appdata = {
             "app_id": app_uuid,
             "user_id": user_obj,
             "type": get_app_type(app_file_name),
-            "name": appinfo["labelname"],
-            "new_bundle_name": appinfo["labelname"],
+            "name": app_info["labelname"],
+            "new_bundle_name": app_info["labelname"],
             "short": short,
             "bundle_id": bundle_id,
             "count_hits": 0,
             "wxeasytype": False if get_user_domain_name(user_obj) else True
         }
         try:
-            appmobj = Apps.objects.create(**appdata)
+            app_obj = Apps.objects.create(**appdata)
         except Exception as e:
-            logger.error("create new app failed,appdata:%s  Exception:%s" % (appdata, e))
+            logger.error(f"create new app failed,appdata:{appdata}  Exception:{e}")
             return False
     else:
         try:
-            newapp = False
-            appmobj.short = short
-            appmobj.name = appinfo["labelname"]
+            is_new_app = False
+            app_obj.short = short
+            app_obj.name = app_info["labelname"]
             # appmobj.wxeasytype = False if user_obj.domain_name or appmobj.domain_name else True
-            appmobj.bundle_id = bundle_id
-            appmobj.save()
-            del_cache_response_by_short(appmobj.app_id)
+            app_obj.bundle_id = bundle_id
+            app_obj.save()
+            del_cache_response_by_short(app_obj.app_id)
         except Exception as e:
-            logger.error("save app info failed,appmobj:%s  Exception:%s" % (appmobj, e))
-            appmobj.bundle_id = bundle_id
-            appmobj.name = appinfo["labelname"]
-            appmobj.save()
+            logger.error(f"save app info failed,app_obj:{app_obj}  Exception:{e}")
+            app_obj.bundle_id = bundle_id
+            app_obj.name = app_info["labelname"]
+            app_obj.save()
 
-    AppReleaseInfo.objects.filter(app_id=appmobj).update(**{"is_master": False})
+    AppReleaseInfo.objects.filter(app_id=app_obj).update(**{"is_master": False})
 
     release_data = {
-        "app_id": appmobj,
+        "app_id": app_obj,
         "icon_url": app_img,
         "release_id": app_file_name.split(".")[0],
-        "build_version": str(appinfo.get("version", "latest")),
-        "app_version": str(appinfo.get("versioncode", "latest")),
-        "release_type": get_release_type(app_file_name, appinfo),
-        "minimum_os_version": str(appinfo.get("miniOSversion", "latest")),
+        "build_version": str(app_info.get("version", "latest")),
+        "app_version": str(app_info.get("versioncode", "latest")),
+        "release_type": get_release_type(app_file_name, app_info),
+        "minimum_os_version": str(app_info.get("miniOSversion", "latest")),
         "binary_size": size,
         "is_master": True,
-        "changelog": appinfo.get("changelog", ''),
-        "udid": appinfo.get("udid", ''),
-        "distribution_name": appinfo.get("distribution_name", ''),
+        "changelog": app_info.get("changelog", ''),
+        "udid": app_info.get("udid", ''),
+        "distribution_name": app_info.get("distribution_name", ''),
     }
     try:
         AppReleaseInfo.objects.create(**release_data)
     except Exception as e:
-        logging.error("create app release failed,release_data:%s  Exception:%s" % (release_data, e))
-        if newapp:
-            logger.info("create app release failed,release_data:%s ,and app is new ,so delete this app:%s" % (
-                release_data, appmobj))
-            appmobj.delete()
+        logger.error(f"create app release failed,release_data:{release_data}  Exception:{e}")
+        if is_new_app:
+            logger.info(
+                f"create app release failed,release_data:{release_data} ,and app is new ,so delete this app:{app_obj}")
+            app_obj.delete()
         return False
     try:
         history_release_limit = int(user_obj.history_release_limit)
     except Exception as e:
-        logger.error("get history_release_limit failed,history_release_limit:%s  Exception:%s" % (
-            user_obj.history_release_limit, e))
+        logger.error(
+            f"get history_release_limit failed,history_release_limit:{user_obj.history_release_limit}  Exception:{e}")
         return True
 
     if history_release_limit != 0:
-        release_queryset = AppReleaseInfo.objects.filter(app_id=appmobj).order_by("-created_time")
+        release_queryset = AppReleaseInfo.objects.filter(app_id=app_obj).order_by("-created_time")
         if release_queryset.count() > history_release_limit:
             flag = 0
             for release_obj in release_queryset:
                 flag += 1
                 if flag > history_release_limit:
-                    logging.info("history_release_limit:%s this release is to more,so delete it release_id:%s" % (
-                        history_release_limit, release_obj.release_id))
-                    storage.delete_file(release_obj.release_id, appmobj.type)
+                    logger.info(
+                        f"history_release_limit:{history_release_limit} this release is to more,so delete it release_id:{release_obj.release_id}")
+                    storage.delete_file(release_obj.release_id, app_obj.type)
                     storage.delete_file(release_obj.icon_url)
                     release_obj.delete()
     return True

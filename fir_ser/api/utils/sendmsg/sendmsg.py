@@ -10,71 +10,74 @@ from .jiguangApi import JiGuangMsgSender
 from fir_ser.settings import THIRD_PART_CONFIG
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
+
+
+def get_default_sender(send_type):
+    """
+        sender_type :
+            0: 邮件
+            1: 阿里云
+            2: 极光
+    """
+    sender_lists = THIRD_PART_CONFIG.get('sender')
+    for sender in sender_lists:
+        if sender.get("active", None):
+            sender_type = sender.get('type', None)
+            auth = sender.get('auth', {})
+            if sender_type == 0 and send_type == 0:
+                return EmailMsgSender(**auth)
+            if sender_type == 1:
+                return AliMsgSender(**auth)
+            elif sender_type == 2:
+                return JiGuangMsgSender(**auth)
+            else:
+                continue
+    return None
+
+
+def get_sms_sender():
+    return get_default_sender(1)
+
+
+def get_email_sender():
+    return get_default_sender(0)
 
 
 class SendMessage(object):
-    def __init__(self, type):
-        '''
-        :param type:  sms or email
-        '''
-        self.type = type
+    def __init__(self, send_type):
+        """
+        :param send_type:  sms or email
+        """
+        self.send_type = send_type
         try:
-            if type == 'sms':
-                self.sender = self._get_sms_sender()
-            elif type == 'email':
-                self.sender = self._get_email_sender()
+            if send_type == 'sms':
+                self.sender = get_sms_sender()
+            elif send_type == 'email':
+                self.sender = get_email_sender()
             if self.sender is None:
                 raise
         except Exception as e:
-            logger.error("get %s sender failed Exception:%s" % (type, e))
+            logger.error(f"get {send_type} sender failed Exception:{e}")
             self.sender = None
 
     def send_register_msg(self, target, code):
         status, msg = self.sender.send_register_msg(target, code)
-        logger.info("send_register_msg target:%s code:%s status:%s msg:%s" % (target, code, status, msg))
+        logger.info(f"send_register_msg target:{target} code:{code} status:{status} msg:{msg}")
         return status, msg
 
     def send_change_msg(self, target, code):
         status, msg = self.sender.send_change_msg(target, code)
-        logger.info("send_change_msg target:%s code:%s status:%s msg:%s" % (target, code, status, msg))
+        logger.info(f"send_change_msg target:{target} code:{code} status:{status} msg:{msg}")
         return status, msg
 
     def send_login_msg(self, target, code):
         status, msg = self.sender.send_login_msg(target, code)
-        logger.info("send_login_msg target:%s code:%s status:%s msg:%s" % (target, code, status, msg))
+        logger.info(f"send_login_msg target:{target} code:{code} status:{status} msg:{msg}")
         return status, msg
 
     def send_email_msg(self, email, text):
-        if self.type == 'email':
+        if self.send_type == 'email':
             status, msg = self.sender.send_email_msg(email, text)
-            logger.info("send_email_msg target:%s text:%s status:%s msg:%s" % (email, text, status, msg))
+            logger.info(f"send_email_msg target:{email} text:{text} status:{status} msg:{msg}")
             return status, msg
-
-    def _get_email_sender(self):
-        return self._get_default_sender(0)
-
-    def _get_sms_sender(self):
-        return self._get_default_sender(1)
-
-    def _get_default_sender(self, type):
-        '''
-            sender_type :
-                0: 邮件
-                1: 阿里云
-                2: 极光
-        '''
-        sender_lists = THIRD_PART_CONFIG.get('sender')
-        for sender in sender_lists:
-            if sender.get("active", None):
-                sender_type = sender.get('type', None)
-                auth = sender.get('auth', {})
-                if sender_type == 0 and type == 0:
-                    return EmailMsgSender(**auth)
-                if sender_type == 1:
-                    return AliMsgSender(**auth)
-                elif sender_type == 2:
-                    return JiGuangMsgSender(**auth)
-                else:
-                    continue
-        return None

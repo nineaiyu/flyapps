@@ -10,7 +10,7 @@ from api.utils.storage.caches import update_order_info, update_order_status
 import json
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class Weixinpay(object):
@@ -54,7 +54,7 @@ class Weixinpay(object):
         }
         result = self.wxpay.decrypt_callback(headers, request.body.decode('utf-8'))
         if result:
-            logger.info("付款成功，等待下一步验证 %s" % result)
+            logger.info(f"付款成功，等待下一步验证 {result}")
             data = json.loads(result)
             passback_params = data.get("attach", "")
             out_trade_no = data.get("out_trade_no", "")
@@ -64,16 +64,16 @@ class Weixinpay(object):
                 transaction_id = data.get("transaction_id", "")
                 return update_order_info(user_id, out_trade_no, transaction_id, 0)
             else:
-                logger.error("passback_params %s  user_id not exists" % passback_params)
+                logger.error(f"passback_params {passback_params}  user_id not exists")
         else:
-            logger.error("消息解密失败")
+            logger.error(f"消息解密失败 {request.body}")
         return False
 
     def update_order_status(self, out_trade_no):
         code, data = self.wxpay.query(out_trade_no=out_trade_no)
         # (0, '交易成功'), (1, '待支付'), (2, '订单已创建'),  (3, '退费申请中'), (4, '已退费'), (5, '主动取消'), (6, '超时取消')
         data = json.loads(data)
-        logger.info("out_trade_no: %s info:%s" % (out_trade_no, data))
+        logger.info(f"out_trade_no: {out_trade_no} info:{data}")
         if code == 200:
             trade_status = data.get("trade_state", '')
             if trade_status in ['SUCCESS']:

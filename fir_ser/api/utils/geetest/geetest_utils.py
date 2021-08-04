@@ -12,7 +12,7 @@ from fir_ser.settings import GEETEST_ID, GEETEST_KEY, GEETEST_BYPASS_URL, \
     GEETEST_BYPASS_STATUS_KEY
 from api.utils.geetest.geetest_lib import GeetestLib
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 # 发送bypass请求，获取bypass状态并进行缓存（如何缓存可根据自身情况合理选择,这里是使用redis进行缓存）
@@ -22,16 +22,16 @@ def check_bypass_status():
     try:
         response = requests.get(url=GEETEST_BYPASS_URL, params=params)
     except Exception as e:
-        logger.error("check_bypass_status failed Exception:%s" % e)
+        logger.error(f"check_bypass_status failed Exception:{e}")
     if response and response.status_code == 200:
-        logger.debug("check_bypass_status success %s" % response.content)
+        logger.debug(f"check_bypass_status success {response.content}")
         bypass_status_str = response.content.decode("utf-8")
         bypass_status = json.loads(bypass_status_str).get("status")
         redis_connect.set(GEETEST_BYPASS_STATUS_KEY, bypass_status)
     else:
         bypass_status = "fail"
         redis_connect.set(GEETEST_BYPASS_STATUS_KEY, bypass_status)
-    logger.debug("bypass状态已经获取并存入redis，当前状态为 {}".format(bypass_status))
+    logger.debug(f"bypass状态已经获取并存入redis，当前状态为 {bypass_status}")
 
 
 # 从缓存中取出当前缓存的bypass状态(success/fail)
@@ -70,13 +70,13 @@ def second_validate(rdata):
     bypass_status = get_bypass_cache()
     gt_lib = GeetestLib(GEETEST_ID, GEETEST_KEY)
     if bypass_status == "success":
-        result = gt_lib.successValidate(challenge, validate, seccode)
+        result = gt_lib.success_validate(challenge, validate, seccode)
     else:
-        result = gt_lib.failValidate(challenge, validate, seccode)
+        result = gt_lib.fail_validate(challenge, validate, seccode)
     # 注意，不要更改返回的结构和值类型
     if result.status == 1:
         response = {"result": "success", "version": GeetestLib.VERSION}
     else:
         response = {"result": "fail", "version": GeetestLib.VERSION, "msg": result.msg}
-    logger.info("geetest second_validate info %s" % response)
+    logger.info(f"geetest second_validate info {response}")
     return response

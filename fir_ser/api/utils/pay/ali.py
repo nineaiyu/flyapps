@@ -13,7 +13,7 @@ from api.utils.storage.caches import update_order_info, update_order_status
 import json
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class Alipay(object):
@@ -56,7 +56,7 @@ class Alipay(object):
         signature = data.pop("sign")
         success = self.alipay.verify(data, signature)
         if success and data["trade_status"] in ("TRADE_SUCCESS", "TRADE_FINISHED"):
-            logger.info("付款成功，等待下一步验证 %s" % data)
+            logger.info(f"付款成功，等待下一步验证 {data}")
             app_id = data.get("app_id", "")
             if app_id == self.ali_config.get("APP_ID"):
                 out_trade_no = data.get("out_trade_no", "")  # 服务器订单号
@@ -67,15 +67,15 @@ class Alipay(object):
                     payment_number = data.get("trade_no", "")
                     return update_order_info(user_id, out_trade_no, payment_number, 1)
                 else:
-                    logger.error("passback_params %s  user_id not exists" % passback_params)
+                    logger.error(f"passback_params {passback_params}  user_id not exists")
             else:
-                logger.error("APP_ID 校验失败 response: %s  server: %s" % (app_id, self.ali_config.get("APP_ID")))
+                logger.error(f"APP_ID 校验失败 response: {app_id}  server: {self.ali_config.get('APP_ID')}")
         return False
 
     def update_order_status(self, out_trade_no):
         data = self.alipay.api_alipay_trade_query(out_trade_no=out_trade_no)
         code = data.get("code", '')
-        logger.info("out_trade_no: %s info:%s" % (out_trade_no, data))
+        logger.info(f"out_trade_no: {out_trade_no} info:{data}")
         if code == '10000':
             trade_status = data.get("trade_status", '')
             if trade_status in ['TRADE_SUCCESS']:

@@ -4,13 +4,14 @@
 # author: liuyu
 # date: 2020/3/6
 from rest_framework.views import APIView
+
+from api.utils.TokenManager import verify_token
 from api.utils.response import BaseResponse
 from rest_framework.response import Response
 from fir_ser import settings
-from api.utils.TokenManager import DownloadToken
 from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.apputils import make_resigned
-from api.utils.app.supersignutils import make_sign_udid_mobileconfig, get_post_udid_url, get_redirect_server_domain
+from api.utils.app.supersignutils import make_sign_udid_mobile_config, get_post_udid_url, get_redirect_server_domain
 from api.utils.storage.storage import Storage, get_local_storage
 from api.utils.storage.caches import get_app_instance_by_cache, get_download_url_by_cache, set_app_download_by_cache, \
     del_cache_response_by_short, consume_user_download_times, check_app_permission
@@ -23,35 +24,36 @@ import logging
 from api.utils.baseutils import get_profile_full_path, get_app_domain_name
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class DownloadView(APIView):
-    '''
+    """
     文件下载接口,适用于本地存储和所有plist文件下载
-    '''
+    """
 
     def get(self, request, filename):
         res = BaseResponse()
-        downtoken = request.query_params.get(settings.DATA_DOWNLOAD_KEY, None)
-        ftype = filename.split(".")[-1]
+        down_token = request.query_params.get(settings.DATA_DOWNLOAD_KEY, None)
+        f_type = filename.split(".")[-1]
         flag = True
         storage_obj = get_local_storage()
         if storage_obj.download_auth_type == 1:
-            if not downtoken:
+            if not down_token:
                 res.code = 1004
                 res.msg = "缺失token"
+                logger.error(f"file {filename} download failed lost down_token")
                 return Response(res.dict)
 
-            dtoken = DownloadToken()
-            flag = dtoken.verify_token(downtoken, filename)
+            flag = verify_token(down_token, filename)
 
         if flag:
-            if ftype == 'plist':
+            if f_type == 'plist':
                 release_id = filename.split('.')[0]
-                apptodev_obj = APPToDeveloper.objects.filter(binary_file=release_id).first()
-                if apptodev_obj:
-                    release_obj = AppReleaseInfo.objects.filter(is_master=True, app_id=apptodev_obj.app_id).first()
+                app_to_developer_obj = APPToDeveloper.objects.filter(binary_file=release_id).first()
+                if app_to_developer_obj:
+                    release_obj = AppReleaseInfo.objects.filter(is_master=True,
+                                                                app_id=app_to_developer_obj.app_id).first()
                 else:
                     release_obj = AppReleaseInfo.objects.filter(release_id=release_id).first()
                 if release_obj:
@@ -67,32 +69,32 @@ class DownloadView(APIView):
                     response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid()
                     return response
                 res.msg = "plist release_id error"
-            elif ftype == 'mobileconifg':
+            elif f_type == 'mobileconifg':
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
                 if release_obj:
                     bundle_id = release_obj.app_id.bundle_id
                     udid_url = get_post_udid_url(request, release_obj.app_id.short)
-                    ios_udid_mobileconfig = make_sign_udid_mobileconfig(udid_url, bundle_id, release_obj.app_id.name)
-                    response = FileResponse(ios_udid_mobileconfig)
+                    ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, bundle_id, release_obj.app_id.name)
+                    response = FileResponse(ios_udid_mobile_config)
                     response['Content-Type'] = "application/x-apple-aspen-config"
                     response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileconfig'
                     return response
-                res.msg = "mobileconifg release_id error"
-            elif ftype == 'mobileprovision':
+                res.msg = "mobile_config release_id error"
+            elif f_type == 'mobileprovision':
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
                 if release_obj:
-                    appsuper_obj = APPSuperSignUsedInfo.objects.filter(app_id=release_obj.app_id).last()
-                    if not appsuper_obj:
-                        appsuper_obj = APPSuperSignUsedInfo.objects.last()
+                    app_super_obj = APPSuperSignUsedInfo.objects.filter(app_id=release_obj.app_id).last()
+                    if not app_super_obj:
+                        app_super_obj = APPSuperSignUsedInfo.objects.last()
 
-                    if not appsuper_obj:
+                    if not app_super_obj:
                         file_path = settings.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
                         if os.path.isfile(file_path):
                             response = FileResponse(open(file_path, 'rb'))
                         else:
                             response = FileResponse()
                     else:
-                        developer_obj = appsuper_obj.developerid
+                        developer_obj = app_super_obj.developerid
                         file_path = get_profile_full_path(developer_obj, release_obj.app_id)
                         if os.path.isfile(file_path):
                             response = FileResponse(open(file_path, 'rb'))
@@ -105,8 +107,8 @@ class DownloadView(APIView):
                     response['Content-Type'] = "application/x-apple-aspen-config"
                     response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileprovision'
                     return response
-                res.msg = "mobileprovision release_id error"
-            elif ftype == 'dmobileprovision':
+                res.msg = "mobile_provision release_id error"
+            elif f_type == 'dmobileprovision':
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
                 if release_obj:
                     file_path = settings.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
@@ -117,7 +119,7 @@ class DownloadView(APIView):
                     response['Content-Type'] = "application/x-apple-aspen-config"
                     response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileprovision'
                     return response
-                res.msg = "dmobileprovision release_id error"
+                res.msg = "d_mobile_provision release_id error"
 
             else:
                 file_path = os.path.join(settings.MEDIA_ROOT, filename)
@@ -127,7 +129,7 @@ class DownloadView(APIView):
                     else:
                         response = FileResponse()
                 except Exception as e:
-                    logger.error("read %s failed  Exception:%s" % (file_path, e))
+                    logger.error(f"read {file_path} failed  Exception:{e}")
                     response = FileResponse()
                 response['content_type'] = "application/octet-stream"
                 response['Content-Disposition'] = 'attachment; filename=' + filename
@@ -135,6 +137,7 @@ class DownloadView(APIView):
 
         res.code = 1004
         res.msg = "token校验失败"
+        logger.error(f"file {filename} download failed. down_token verify failed")
         return Response(res.dict)
 
 
@@ -178,8 +181,7 @@ class ShortDownloadView(APIView):
             udid = time
         if not udid:
             udid = ""
-        logging.info(
-            "get or make cache_response short:%s release_id:%s udid:%s" % (kwargs.get("short", ''), release_id, udid))
+        logging.info(f"get or make cache_response short:{kwargs.get('short', '')} release_id:{release_id} udid:{udid}")
         return "_".join(
             [settings.CACHE_KEY_TEMPLATE.get("download_short_key"), kwargs.get("short", ''), release_id, udid])
 
@@ -192,32 +194,32 @@ class InstallView(APIView):
 
     def get(self, request, app_id):
         res = BaseResponse()
-        downtoken = request.query_params.get("token", None)
-        short = request.query_params.get("short", None)
-        release_id = request.query_params.get("release_id", None)
-        isdownload = request.query_params.get("isdownload", None)
-        password = request.query_params.get("password", None)
-        udid = request.query_params.get("udid", None)
+        query_params = request.query_params
+        downtoken = query_params.get("token", None)
+        short = query_params.get("short", None)
+        release_id = query_params.get("release_id", None)
+        isdownload = query_params.get("isdownload", None)
+        password = query_params.get("password", None)
+        udid = query_params.get("udid", None)
 
         if not downtoken or not short or not release_id:
             res.code = 1004
             res.msg = "参数丢失"
             return Response(res.dict)
 
-        dtoken = DownloadToken()
-        if dtoken.verify_token(downtoken, release_id):
+        if verify_token(downtoken, release_id):
             app_obj = get_app_instance_by_cache(app_id, password, 900, udid)
             if app_obj:
                 if app_obj.get("type") == 0:
-                    apptype = '.apk'
-                    download_url, extra_url = get_download_url_by_cache(app_obj, release_id + apptype, 600)
+                    app_type = '.apk'
+                    download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600)
                 else:
-                    apptype = '.ipa'
+                    app_type = '.ipa'
                     if isdownload:
-                        download_url, extra_url = get_download_url_by_cache(app_obj, release_id + apptype, 600,
+                        download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600,
                                                                             udid=udid)
                     else:
-                        download_url, extra_url = get_download_url_by_cache(app_obj, release_id + apptype, 600,
+                        download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600,
                                                                             isdownload,
                                                                             udid=udid)
 
@@ -227,7 +229,7 @@ class InstallView(APIView):
                         ip = request.META['HTTP_X_FORWARDED_FOR']
                     else:
                         ip = request.META['REMOTE_ADDR']
-                    logger.info("remote ip %s short %s download_url %s app_obj %s" % (ip, short, download_url, app_obj))
+                    logger.info(f"remote ip {ip} short {short} download_url {download_url} app_obj {app_obj}")
                     set_app_download_by_cache(app_id)
                     amount = app_obj.get("d_count")
                     # # 超级签需要多消耗2倍下载次数

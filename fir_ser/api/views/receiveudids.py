@@ -20,7 +20,7 @@ from rest_framework.views import APIView
 from api.utils.baseutils import get_app_domain_name
 from celery.exceptions import TimeoutError
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class IosUDIDView(View):
@@ -29,7 +29,7 @@ class IosUDIDView(View):
     def post(self, request, short):
         stream_f = str(request.body)
         format_udid_info = udid_bytes_to_dict(stream_f)
-        logger.info("short %s get new udid %s" % (short, format_udid_info))
+        logger.info(f"short {short} receive new udid {format_udid_info}")
         server_domain = get_redirect_server_domain(request)
         try:
             app_info = Apps.objects.filter(short=short).first()
@@ -42,7 +42,7 @@ class IosUDIDView(View):
                     else:
                         c_task = run_sign_task.apply_async((format_udid_info, short))
                         task_id = c_task.id
-                        logger.info("sign app %s task_id:%s" % (app_info, task_id))
+                        logger.info(f"sign app {app_info} task_id:{task_id}")
                         try:
                             result = c_task.get(propagate=False, timeout=2)
                         except TimeoutError:
@@ -60,7 +60,7 @@ class IosUDIDView(View):
                     "%s/%s" % (server_domain, short))
         except Exception as e:
             msg = "&msg=系统内部错误"
-            logger.error("short %s receive udid Exception:%s" % (short, e))
+            logger.error(f"short {short} receive udid Exception:{e}")
 
         return HttpResponsePermanentRedirect(
             "%s/%s?udid=%s%s" % (server_domain, short, format_udid_info.get("udid"), msg))
@@ -75,7 +75,7 @@ class TaskView(APIView):
             app_info = Apps.objects.filter(short=short).first()
             if app_info:
                 result = app.AsyncResult(task_id)
-                logger.info("app %s sign task state %s  AA %s" % (app_info, result.state, result.successful()))
+                logger.info(f"app {app_info} sign task state {result.state}  AA {result.successful()}")
                 if result.successful():
                     res.msg = result.get(propagate=False)
                     return Response(res.dict)

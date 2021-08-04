@@ -13,12 +13,12 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path, re_path, include
+from django.urls import re_path
 
 from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, \
     UserApiTokenView, CertificationView, ChangeInfoView
 from api.views.logout import LogoutView
-from api.views.apps import AppsView, AppInfoView, AppReleaseinfoView
+from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView
 from api.views.download import ShortDownloadView
 from api.views.uploads import AppAnalyseView, UploadView
 from api.views.storage import StorageView
@@ -41,7 +41,7 @@ urlpatterns = [
     re_path("^apps$", AppsView.as_view()),
     re_path("^storage$", StorageView.as_view()),
     re_path(r"^apps/(?P<app_id>\w+)", AppInfoView.as_view()),
-    re_path(r"^appinfos/(?P<app_id>\w+)/(?P<act>\w+)", AppReleaseinfoView.as_view()),
+    re_path(r"^appinfos/(?P<app_id>\w+)/(?P<act>\w+)", AppReleaseInfoView.as_view()),
     re_path("^upload$", UploadView.as_view()),
     re_path("^userinfo", UserInfoView.as_view()),
     re_path("^token", UserApiTokenView.as_view()),

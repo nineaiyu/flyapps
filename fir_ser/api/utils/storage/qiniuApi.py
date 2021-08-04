@@ -3,15 +3,15 @@
 # project: 3月 
 # author: liuyu
 # date: 2020/3/18
-'''
+"""
 主要是调用七牛云存储，处理七牛云存储的逻辑
-'''
+"""
 from qiniu import Auth, put_file, etag
 from qiniu import BucketManager
 import os, requests
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class QiNiuOss(object):
@@ -41,7 +41,7 @@ class QiNiuOss(object):
         uri = 'http://'
         if self.is_https:
             uri = 'https://'
-        base_url = '%s%s/%s' % (uri, self.domain_name, name)
+        base_url = f'{uri}{self.domain_name}/{name}'
         # 或者直接输入url的方式下载
         # 可以设置token过期时间
         private_url = self.qiniu_obj.private_download_url(base_url, expires=expires)
@@ -54,9 +54,9 @@ class QiNiuOss(object):
         ret, info = bucket.delete(self.bucket_name, name)
         return ret
 
-    def rename_file(self, oldfilename, newfilename):
+    def rename_file(self, old_filename, new_filename):
         bucket = BucketManager(self.qiniu_obj)
-        ret, info = bucket.move(self.bucket_name, oldfilename, self.bucket_name, newfilename)
+        ret, info = bucket.move(self.bucket_name, old_filename, self.bucket_name, new_filename)
         return ret
 
     def upload_file(self, local_file_full_path):
@@ -73,15 +73,15 @@ class QiNiuOss(object):
             os.makedirs(dir_path)
         req = requests.get(self.get_download_url(name))
         if req.status_code != 200:
-            logger.error("download  file %s failed %s" % (name, req.content))
+            logger.error(f"download file {name} failed {req.content}")
             return False
         try:
             with open(local_file_full_path, "wb") as f:
                 for chunk in req.iter_content(chunk_size=5120):
                     if chunk:
                         f.write(chunk)
-            logger.info("save download  file %s success" % local_file_full_path)
+            logger.info(f"save download  file {local_file_full_path} success")
             return True
         except Exception as e:
-            logger.error("check download file and move file %s failed Exception %s" % (local_file_full_path, e))
+            logger.error(f"check download file and move file {local_file_full_path} failed Exception {e}")
             return False

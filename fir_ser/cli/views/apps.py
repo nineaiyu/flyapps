@@ -5,7 +5,7 @@
 # date: 2020/3/4
 
 from api.utils.auth import ApiTokenAuthentication
-from api.views.apps import AppsView, AppInfoView, AppReleaseinfoView
+from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,5 +19,5 @@ class CliAppInfoView(AppInfoView):
     authentication_classes = [ApiTokenAuthentication, ]
 
 
-class CliAppReleaseinfoView(AppReleaseinfoView):
+class CliAppReleaseInfoView(AppReleaseInfoView):
     authentication_classes = [ApiTokenAuthentication, ]

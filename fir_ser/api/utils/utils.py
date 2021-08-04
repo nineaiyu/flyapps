@@ -3,15 +3,17 @@
 # project: 5月
 # author: liuyu
 # date: 2020/5/7
-import os, json, requests, datetime, random
-from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
+import os, datetime, random
+import binascii
+from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT, CACHE_KEY_TEMPLATE
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
-    UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, UserDomainInfo
+    UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, Token
 from api.utils.storage.caches import get_app_d_count_by_app_id
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
-from api.utils.tempcaches import tmpCache
-from api.utils.TokenManager import DownloadToken, generateNumericTokenOfLength, generateAlphanumericTokenOfLength
+from api.utils.tempcaches import TmpCache
+from api.utils.TokenManager import generate_numeric_token_of_length, generate_alphanumeric_token_of_length, make_token, \
+    verify_token
 from api.utils.sendmsg.sendmsg import SendMessage
 from django.db.models import Sum
 from captcha.models import CaptchaStore
@@ -77,7 +79,7 @@ def get_captcha():
 def valid_captcha(cptch_key, code, username):
     if username:
         challenge = CaptchaStore.objects.filter(hashkey=cptch_key).values("challenge").first()
-        logger.info("cptch_key:%s code:%s  challenge:%s" % ((cptch_key, code, challenge)))
+        logger.info(f"cptch_key:{cptch_key} code:{code}  challenge:{challenge}")
         if challenge:
             if cptch_key and code and code.strip(" ").lower() == challenge.get("challenge").lower():
                 return True
@@ -92,10 +94,9 @@ def upload_oss_default_head_img(user_obj, storage_obj):
 
 
 def get_sender_token(sender, user_id, target, action, msg=None):
-    sms_token_obj = DownloadToken()
-    code = generateNumericTokenOfLength(6)
-    token = sms_token_obj.make_token(code, time_limit=300, key=user_id)
-    tmpCache.set_tmp_cache(user_id, token, target)
+    code = generate_numeric_token_of_length(6)
+    token = make_token(code, time_limit=300, key=user_id)
+    TmpCache.set_tmp_cache(user_id, token, target)
     if action == 'change':
         sender.send_change_msg(target, code)
     elif action == 'register':
@@ -105,7 +106,7 @@ def get_sender_token(sender, user_id, target, action, msg=None):
     elif action == 'msg':
         sender.send_email_msg(target, msg)
     else:
-        logger.error("get_sender_token failed. action is %s" % (action))
+        logger.error(f"get_sender_token failed. action is {action}")
         return None, None
     return token, code
 
@@ -116,8 +117,7 @@ def get_sender_sms_token(key, phone, action):
 
 
 def is_valid_sender_code(key, token, code):
-    sms_token_obj = DownloadToken()
-    return sms_token_obj.verify_token(token, code), tmpCache.get_tmp_cache(key, token)
+    return verify_token(token, code), TmpCache.get_tmp_cache(key, token)
 
 
 def get_sender_email_token(key, email, action, msg=None):
@@ -133,7 +133,7 @@ def check_username_exists(username):
 
 
 def get_random_username(length=16):
-    username = generateAlphanumericTokenOfLength(length)
+    username = generate_alphanumeric_token_of_length(length)
     if check_username_exists(username):
         return get_random_username(length)
     return username
@@ -145,7 +145,7 @@ def send_ios_developer_active_status(user_info, msg):
     if email:
         get_sender_email_token(act, email, 'msg', msg)
     else:
-        logger.warning("user %s has no email. so %s can't send!" % (user_info, msg))
+        logger.warning(f"user {user_info} has no email. so {msg} can't send!")
 
 
 def get_filename_from_apptype(filename, apptype):
@@ -163,7 +163,7 @@ def delete_local_files(filename, apptype=None):
     try:
         return storage.del_file(filename)
     except Exception as e:
-        logger.error("delete file  %s  failed  Exception %s" % (filename, e))
+        logger.error(f"delete file {filename} failed  Exception  {e}")
 
 
 def delete_app_screenshots_files(storage_obj, app_obj):
@@ -262,7 +262,7 @@ def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
 
 def clean_storage_data(user_obj, storage_obj=None):
     storage_obj = Storage(user_obj, storage_obj)
-    logger.info("%s clean_storage_data %s" % (user_obj, storage_obj))
+    logger.info(f"{user_obj} clean_storage_data {storage_obj}")
     for app_release_obj in AppReleaseInfo.objects.filter(app_id__user_id=user_obj).all():
         storage_obj.delete_file(app_release_obj.release_id, app_release_obj.release_type)
         storage_obj.delete_file(app_release_obj.icon_url)
@@ -295,3 +295,13 @@ def get_choices_name_from_key(choices, key):
         if choice[0] == key:
             return choice[1]
     return ''
+
+
+def set_user_token(user_obj):
+    key = binascii.hexlify(os.urandom(32)).decode()
+    now = datetime.datetime.now()
+    user_info = UserInfo.objects.get(pk=user_obj.pk)
+    auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'), key])
+    cache.set(auth_key, {'uid': user_info.uid, 'username': user_info.username}, 3600 * 24 * 7)
+    Token.objects.create(user=user_obj, **{"access_token": key, "created": now})
+    return key, user_info

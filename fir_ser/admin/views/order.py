@@ -87,7 +87,7 @@ class OrderPayView(APIView):
             return Response(res.dict)
         obj = UserInfo.objects.filter(pk=pk).first()
         if obj:
-            logger.info("user %s update storage data:%s" % (obj, data))
+            logger.info(f"user {obj} update storage data:{data}")
             use_storage_id = data.get("use_storage_id", None)
             force = data.get("force", None)
             if use_storage_id:

@@ -8,7 +8,7 @@ from django.core.cache import cache
 import base64
 
 
-class tmpCache(object):
+class TmpCache(object):
 
     @staticmethod
     def set_tmp_cache(key, token, target, limit=60 * 5):

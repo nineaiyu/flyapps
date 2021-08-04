@@ -5,15 +5,13 @@ from rest_framework.response import Response
 from api.utils.serializer import UserInfoSerializer, CertificationSerializer, UserCertificationSerializer
 from django.core.cache import cache
 from rest_framework.views import APIView
-import binascii
-import os, datetime
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
-    check_username_exists
+    check_username_exists, set_user_token
 from api.utils.baseutils import is_valid_phone, is_valid_email, get_min_default_domain_cname_obj
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
-from fir_ser.settings import CACHE_KEY_TEMPLATE, REGISTER, LOGIN, CHANGER
+from fir_ser.settings import REGISTER, LOGIN, CHANGER
 from api.utils.storage.caches import login_auth_failed
 import logging
 from api.utils.geetest.geetest_utils import first_register, second_validate
@@ -31,17 +29,17 @@ def get_register_type():
     return REGISTER.get("register_type")
 
 
-def reset_user_pwd(user, surepassword, oldpassword=''):
+def reset_user_pwd(user, sure_password, old_password=''):
     if user is not None:
-        user.set_password(surepassword)
+        user.set_password(sure_password)
     user.save()
-    logger.info("user:%s change password success,old %s new %s" % (user, oldpassword, surepassword))
+    logger.info(f"user:{user} change password success,old {old_password} new {sure_password}")
     for token_obj in Token.objects.filter(user=user):
         cache.delete(token_obj.access_token)
         token_obj.delete()
 
 
-def GetAuthenticate(target, password, act, allow_type):
+def get_authenticate(target, password, act, allow_type):
     user_obj = None
     if act == 'email' and allow_type[act]:
         if is_valid_email(target):
@@ -58,7 +56,7 @@ def GetAuthenticate(target, password, act, allow_type):
     return user_obj
 
 
-def CheckRegisterUerinfo(target, act, key):
+def check_register_userinfo(target, act, key):
     res = BaseResponse()
     res.data = {}
     times_key = "%s_%s_%s" % (key, act, target)
@@ -121,7 +119,7 @@ def CheckRegisterUerinfo(target, act, key):
     return res
 
 
-def CheckChangeUerinfo(target, act, key, user, ftype=None):
+def check_change_userinfo(target, act, key, user, ftype=None):
     res = BaseResponse()
     res.data = {}
 
@@ -186,9 +184,6 @@ def CheckChangeUerinfo(target, act, key, user, ftype=None):
 class LoginView(APIView):
     throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
 
-    def generate_key(self):
-        return binascii.hexlify(os.urandom(32)).decode()
-
     def post(self, request):
         response = BaseResponse()
         receive = request.data
@@ -217,7 +212,7 @@ class LoginView(APIView):
                             msg = '您的新密码为  %s  请用新密码登录之后，及时修改密码' % password
                             a, b = get_sender_email_token('email', username, 'msg', msg)
                             if a and b:
-                                reset_user_pwd(user_obj, password, oldpassword='')
+                                reset_user_pwd(user_obj, password)
                                 login_auth_failed("del", username)
                         else:
                             response.code = 1002
@@ -228,20 +223,13 @@ class LoginView(APIView):
                     return Response(response.dict)
 
                 password = receive.get("password")
-                user = GetAuthenticate(username, password, login_type, get_login_type())
-                logger.info("username:%s  password:%s" % (username, password))
+                user = get_authenticate(username, password, login_type, get_login_type())
+                logger.info(f"username:{username}  password:{password}")
                 if user:
                     if user.is_active:
                         login_auth_failed("del", username)
                         # update the token
-                        key = self.generate_key()
-                        now = datetime.datetime.now()
-                        user_info = UserInfo.objects.get(pk=user.pk)
-
-                        auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'), key])
-                        cache.set(auth_key, {'uid': user_info.uid, 'username': user_info.username}, 3600 * 24 * 7)
-                        Token.objects.create(user=user, **{"access_token": key, "created": now})
-
+                        key, user_info = set_user_token(user)
                         serializer = UserInfoSerializer(user_info, )
                         data = serializer.data
                         response.msg = "验证成功!"
@@ -262,7 +250,7 @@ class LoginView(APIView):
                     #     response.code = 1003
             else:
                 response.code = 1006
-                logger.error("username:%s failed too try , locked" % (username,))
+                logger.error(f"username:{username} failed too try , locked")
                 response.msg = "用户登录失败次数过多，已被锁定，请1小时之后再次尝试"
         else:
             response.code = 1001
@@ -297,9 +285,6 @@ class LoginView(APIView):
 
 class RegistView(APIView):
     throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
-
-    def generate_key(self):
-        return binascii.hexlify(os.urandom(32)).decode()
 
     def post(self, request):
         response = BaseResponse()
@@ -395,11 +380,11 @@ class UserInfoView(APIView):
     def put(self, request):
         res = BaseResponse()
         data = request.data
-        logger.info("user:%s update old data:%s" % (request.user, request.user.__dict__))
-        logger.info("user:%s update new data:%s" % (request.user, data))
+        logger.info(f"user:{request.user} update old data:{request.user.__dict__}")
+        logger.info(f"user:{request.user} update new data:{data}")
 
-        oldpassword = data.get("oldpassword", None)
-        surepassword = data.get("surepassword", None)
+        old_password = data.get("oldpassword", None)
+        sure_password = data.get("surepassword", None)
 
         mobile = data.get("mobile", None)
         email = data.get("email", None)
@@ -411,13 +396,13 @@ class UserInfoView(APIView):
                     res.msg = "图片验证码异常"
                     return Response(res.dict)
 
-        if oldpassword and surepassword:
-            user = auth.authenticate(username=request.user.username, password=oldpassword)
+        if old_password and sure_password:
+            user = auth.authenticate(username=request.user.username, password=old_password)
             if user is not None:
-                user.set_password(surepassword)
+                user.set_password(sure_password)
                 user.save()
                 res.msg = "密码修改成功"
-                logger.info("user:%s change password success,old %s new %s" % (request.user, oldpassword, surepassword))
+                logger.info(f"user:{request.user} change password success,old {old_password} new {sure_password}")
 
                 auth_token = request.auth
                 for token_obj in Token.objects.filter(user=user):
@@ -435,7 +420,7 @@ class UserInfoView(APIView):
                 if check_username_exists(username):
                     res.msg = "用户名已经存在"
                     res.code = 1005
-                    logger.error("User %s info save failed. Excepiton:%s" % (request.user, 'username already exists'))
+                    logger.error(f"User {request.user} info save failed. username already exists")
                     return Response(res.dict)
                 if len(username) < 6:
                     res.msg = "用户名至少6位"
@@ -480,7 +465,7 @@ class UserInfoView(APIView):
                 res.data = serializer.data
                 res.code = 1004
                 res.msg = "信息保存失败"
-                logger.error("User %s info save failed. Excepiton:%s" % (request.user, e))
+                logger.error(f"User {request.user} info save failed. Exception:{e}")
                 return Response(res.dict)
             serializer = UserInfoSerializer(request.user)
             res.data = serializer.data
@@ -525,7 +510,7 @@ class AuthorizationView(APIView):
                 res.msg = "geetest验证有误"
                 return Response(res.dict)
 
-        res = CheckRegisterUerinfo(target, act, 'register')
+        res = check_register_userinfo(target, act, 'register')
 
         return Response(res.dict)
 
@@ -540,7 +525,7 @@ class ChangeAuthorizationView(APIView):
         act = request.data.get("act", None)
         target = request.data.get("target", None)
         ext = request.data.get("ext", None)
-        ftype = request.data.get("ftype", None)
+        f_type = request.data.get("ftype", None)
         if REGISTER.get("captcha"):
             if ext and valid_captcha(ext.get("cptch_key", None), ext.get("authcode", None), target):
                 pass
@@ -558,7 +543,7 @@ class ChangeAuthorizationView(APIView):
                 res.msg = "geetest验证有误"
                 return Response(res.dict)
 
-        res = CheckChangeUerinfo(target, act, 'change', request.user, ftype)
+        res = check_change_userinfo(target, act, 'change', request.user, f_type)
         return Response(res.dict)
 
 
@@ -576,13 +561,13 @@ class UserApiTokenView(APIView):
         res = BaseResponse()
         data = request.data
 
-        oldtoken = data.get("token", None)
-        if oldtoken == request.user.api_token:
+        old_token = data.get("token", None)
+        if old_token == request.user.api_token:
             request.user.api_token = 'reset'
         try:
             request.user.save()
         except Exception as e:
-            logger.error("User %s api_token save failed. Excepiton:%s" % (request.user, e))
+            logger.error(f"User {request.user} api_token save failed. Exception:{e}")
             res.code = 1002
             res.msg = "token 生成失败"
             return Response(res.dict)
@@ -616,7 +601,6 @@ class CertificationView(APIView):
         if 'certpic' in act:
             certification_obj = CertificationInfo.objects.filter(user_id=request.user).all()
             if certification_obj:
-                storage = Storage(request.user)
                 certification_serializer = CertificationSerializer(certification_obj, many=True)
                 res.data["certification"] = certification_serializer.data
         return Response(res.dict)
@@ -655,7 +639,7 @@ class CertificationView(APIView):
                             return Response(res.dict)
                     else:
                         res.code = 1006
-                        logger.error("username:%s failed too try , locked" % (request.user,))
+                        logger.error(f"username:{request.user} failed too try , locked")
                         res.msg = "用户注册失败次数过多，已被锁定，请1小时之后再次尝试"
                 else:
                     res.code = 1001
@@ -670,7 +654,7 @@ class CertificationView(APIView):
                     return Response(res.dict)
                 return self.get(request)
         except Exception as e:
-            logger.error("%s UserCertificationInfo save %s failed Exception: %s" % (request.user, data, e))
+            logger.error(f"{request.user} UserCertificationInfo save {data} failed Exception: {e}")
             res.msg = "数据异常，请检查"
             res.code = 1002
         return Response(res.dict)
