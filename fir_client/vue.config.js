@@ -82,12 +82,14 @@ if (page) {
     }
 }
 
+const version='1.2.6';
+
 const pro_base_env = {
     baseUrl: 'https://flyapps.cn',
     index_static: 'https://static.flyapps.cn/index/',
     baseShortUrl: 'https://flyapps.top',
     short_static: 'https://static.flyapps.top/short/',
-    version: '1.2.5',
+    version: version,
 };
 
 const dev_base_env = {
@@ -95,7 +97,7 @@ const dev_base_env = {
     baseShortUrl: 'https://app.hehelucky.cn',
     short_static: '/',
     index_static: '/',
-    version: '1.2.5',
+    version: version,
 };
 let base_evn = dev_base_env;
 

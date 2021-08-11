@@ -137,7 +137,16 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
 
 
     let retryCount = 0;
-    let retryCountMax = 5;
+    let partSize= 1024 * 1024;
+
+    let f_count = Math.floor(file.size/partSize);
+
+    if(f_count > 200){
+        f_count=Math.floor(f_count*0.3)
+    }else {
+        f_count = 60
+    }
+    let retryCountMax = 5 + f_count;
     let currentCheckpoint;
     const progress = async function progress(p, checkpoint) {
         currentCheckpoint = checkpoint;
