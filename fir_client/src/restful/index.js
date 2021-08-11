@@ -9,6 +9,8 @@ Axios.defaults.withCredentials = true;
 //     keepAlive: true
 // });
 
+// eslint-disable-next-line no-console
+console.log("flyapps js version:"+process.env.base_env.version);
 
 const DOMAIN = process.env.base_env.baseUrl;
 const APIPATH = '/api/v1/fir/server';

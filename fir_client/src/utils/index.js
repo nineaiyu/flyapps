@@ -158,7 +158,7 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
             progress,
             parallel: 10,
             partSize: 1024 * 1024,
-            timeout: 180000,
+            timeout: 600000,
         };
 
         if (currentCheckpoint) {
@@ -179,7 +179,7 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
                 uploadFile('')
             } else {
                 app.$message({
-                    message: file.name + '上传失败，请刷新页面重试',
+                    message: file.name + ' 重试了'+retryCount+'次，还是上传失败了，请刷新页面重试',
                     type: 'error',
                     duration: 0
                 });
