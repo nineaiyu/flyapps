@@ -127,7 +127,7 @@ export function dataURLtoFile(dataurl, filename) {//将base64转换为文件
 
 export function uploadaliyunoss(file, certinfo, app, successcallback, processcallback) {
     let token = certinfo.upload_token;
-    let client = new app.oss({
+    let uploadFileClient = new app.oss({
         endpoint: token.endpoint,
         accessKeyId: token.access_key_id,
         accessKeySecret: token.access_key_secret,
@@ -135,7 +135,9 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
         bucket: token.bucket
     });
 
-    // eslint-disable-next-line no-unused-vars
+
+    let retryCount = 0;
+    let retryCountMax = 5;
     let currentCheckpoint;
     const progress = async function progress(p, checkpoint) {
         currentCheckpoint = checkpoint;
@@ -146,28 +148,45 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
         processcallback(Math.floor(p * 100));
 
     };
-    const options = {
-        progress,
-        partSize: 1024 * 1024 / 4,
-        // meta: {
-        //     year: 2017,
-        //     people: 'test',
-        // },
-    };
-    client.multipartUpload(certinfo.upload_key, file, options).then((res) => {
-        // eslint-disable-next-line no-console
-        // console.log('upload success: %j', res);
-        successcallback(res);
-        currentCheckpoint = null;
-    }).catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error(err);
-        app.$message({
-            message: file.name + '上传失败，请刷新页面重试',
-            type: 'error',
-            duration: 0
+
+    const uploadFile = function uploadFile(client) {
+        if (!uploadFileClient || Object.keys(uploadFileClient).length === 0) {
+            uploadFileClient = client;
+        }
+
+        const options = {
+            progress,
+            parallel: 10,
+            partSize: 1024 * 1024,
+            timeout: 180000,
+        };
+
+        if (currentCheckpoint) {
+            options.checkpoint = currentCheckpoint;
+        }
+        return uploadFileClient.multipartUpload(certinfo.upload_key, file, options).then((res) => {
+            successcallback(res);
+            currentCheckpoint = null;
+        }).catch((err) => {
+            // eslint-disable-next-line no-console
+            console.error(err);
+
+            //retry
+            if (retryCount < retryCountMax) {
+                retryCount++;
+                // eslint-disable-next-line no-console
+                console.error("retryCount : " + retryCount);
+                uploadFile('')
+            } else {
+                app.$message({
+                    message: file.name + '上传失败，请刷新页面重试',
+                    type: 'error',
+                    duration: 0
+                });
+            }
         });
-    });
+    };
+    uploadFile(uploadFileClient)
 }
 
 
