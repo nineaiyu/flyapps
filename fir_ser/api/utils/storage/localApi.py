@@ -30,7 +30,7 @@ class LocalStorage(object):
         uri = 'http://'
         if self.is_https:
             uri = 'https://'
-        return f"{uri}${self.domain_name}"
+        return f"{uri}{self.domain_name}"
 
     def get_download_url(self, name, expires=600, force_new=False):
         download_url = '/'.join([self.get_base_url(), 'download', name])
