@@ -38,11 +38,7 @@ class AliMsgSender(object):
         else:
             return False, data.get('Message')
 
-    def send_register_msg(self, phone, code):
-        return self.send_msg(self.template_code.get('register'), phone, code)
-
-    def send_change_msg(self, phone, code):
-        return self.send_msg(self.template_code.get('change'), phone, code)
-
-    def send_login_msg(self, phone, code):
-        return self.send_msg(self.template_code.get('login'), phone, code)
+    def send_msg_by_act(self, phone, code, act):
+        if act not in self.template_code.keys():
+            return False, f'act {act} not found'
+        return self.send_msg(self.template_code.get(act), phone, code)

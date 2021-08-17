@@ -95,14 +95,12 @@ def upload_oss_default_head_img(user_obj, storage_obj):
 
 def get_sender_token(sender, user_id, target, action, msg=None):
     code = generate_numeric_token_of_length(6)
+    if msg:
+        code = msg
     token = make_token(code, time_limit=300, key=user_id)
     TmpCache.set_tmp_cache(user_id, token, target)
-    if action == 'change':
-        sender.send_change_msg(target, code)
-    elif action == 'register':
-        sender.send_register_msg(target, code)
-    elif action == 'login':
-        sender.send_login_msg(target, code)
+    if action in ('change', 'password', 'register', 'login'):
+        sender.send_msg_by_act(target, code, action)
     elif action == 'msg':
         sender.send_email_msg(target, msg)
     else:
@@ -111,9 +109,9 @@ def get_sender_token(sender, user_id, target, action, msg=None):
     return token, code
 
 
-def get_sender_sms_token(key, phone, action):
+def get_sender_sms_token(key, phone, action, msg=None):
     sender = SendMessage('sms')
-    return get_sender_token(sender, key, phone, action)
+    return get_sender_token(sender, key, phone, action, msg)
 
 
 def is_valid_sender_code(key, token, code):

@@ -7,7 +7,7 @@ from django.core.cache import cache
 from rest_framework.views import APIView
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
-    check_username_exists, set_user_token
+    check_username_exists, set_user_token, get_sender_token
 from api.utils.baseutils import is_valid_phone, is_valid_email, get_min_default_domain_cname_obj
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
@@ -16,7 +16,6 @@ from api.utils.storage.caches import login_auth_failed
 import logging
 from api.utils.geetest.geetest_utils import first_register, second_validate
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle, GetAuthC1Throttle, GetAuthC2Throttle
-from api.utils.storage.storage import Storage
 
 logger = logging.getLogger(__name__)
 
@@ -205,21 +204,37 @@ class LoginView(APIView):
             login_type = receive.get("login_type", None)
             if login_auth_failed("get", username):
                 if login_type == 'reset':
+                    user1_obj = None
+                    user2_obj = None
                     if is_valid_email(username):
-                        user_obj = UserInfo.objects.filter(email=username).first()
-                        if user_obj:
-                            password = get_random_username()[:16]
-                            msg = '您的新密码为  %s  请用新密码登录之后，及时修改密码' % password
-                            a, b = get_sender_email_token('email', username, 'msg', msg)
+                        user1_obj = UserInfo.objects.filter(email=username).first()
+
+                    if is_valid_phone(username):
+                        user2_obj = UserInfo.objects.filter(mobile=username).first()
+
+                    if user1_obj or user2_obj:
+                        user_obj = user1_obj if user1_obj else user2_obj
+                        password = get_random_username()[:16]
+
+                        if login_auth_failed("get", user_obj.uid):
+                            login_auth_failed("set", user_obj.uid)
+                            if user2_obj:
+                                a, b = get_sender_sms_token('sms', username, 'password', password)
+                            else:
+                                a, b = get_sender_email_token('email', username, 'password', password)
                             if a and b:
                                 reset_user_pwd(user_obj, password)
                                 login_auth_failed("del", username)
+                                logger.warning(f'{user_obj} 找回密码成功，您的新密码为 {password} 请用新密码登录之后，及时修改密码')
+                            else:
+                                response.code = 1007
+                                response.msg = "密码重置失败，请稍后重试或者联系管理员"
                         else:
-                            response.code = 1002
-                            response.msg = "邮箱不存在"
+                            response.code = 1008
+                            response.msg = "手机或者邮箱已经超过最大发送，请24小时后重试"
                     else:
-                        response.code = 1003
-                        response.msg = "无效邮箱"
+                        response.code = 1002
+                        response.msg = "邮箱或者手机号不存在"
                     return Response(response.dict)
 
                 password = receive.get("password")

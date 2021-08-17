@@ -41,18 +41,14 @@ class EmailMsgSender(object):
         except Exception as e:
             return False, e
 
-    def send_register_msg(self, phone, code):
-        return self.send_msg(self.template_code.get('register'), phone, code)
-
-    def send_change_msg(self, phone, code):
-        return self.send_msg(self.template_code.get('change'), phone, code)
-
-    def send_login_msg(self, phone, code):
-        return self.send_msg(self.template_code.get('login'), phone, code)
-
     def send_email_msg(self, email, text):
         try:
             response = send_mail("重要消息通知", text, self.form, [email], )
         except Exception as e:
             return -1, e
         return response, text
+
+    def send_msg_by_act(self, phone, code, act):
+        if act not in self.template_code.keys():
+            return False, f'act {act} not found'
+        return self.send_msg(self.template_code.get(act), phone, code)

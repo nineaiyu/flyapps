@@ -14,7 +14,7 @@
         <el-main>
             <el-form ref="form" :model="form">
                 <el-form-item>
-                    <el-input v-model="form.email" prefix-icon="el-icon-user" placeholder="邮箱" autofocus
+                    <el-input v-model="form.email" prefix-icon="el-icon-user" placeholder="邮箱或手机号" autofocus
                               clearable/>
                 </el-form-item>
                 <el-form-item style="height: 40px" v-if="cptch.cptch_image">
@@ -59,6 +59,7 @@
 <script>
     import {loginFun} from "@/restful";
     import {checkEmail, geetest} from "@/utils";
+    import {checkphone} from "../utils";
 
     export default {
         name: "FirResetPwd",
@@ -95,26 +96,27 @@
                 }
                 if (cptch_flag) {
                     let checke = checkEmail(this.form.email);
-                    if (!checke) {
-                        this.$message({
-                            message: '邮箱输入有误',
-                            type: 'error'
-                        });
-                        return
-                    }
-                    let params = {
-                        "username": email,
-                        "authcode": authcode,
-                        "cptch_key": this.cptch.cptch_key,
-                        "login_type": 'reset',
-                    };
-                    this.login_disable = true;
-                    if (this.cptch.geetest) {
-                        geetest(this, params, (n_params) => {
-                            this.do_login(n_params);
-                        })
-                    } else {
-                        this.do_login(params)
+                    let checkp = checkphone(this.form.email);
+                    if(checke||checkp){
+                        let params = {
+                            "username": email,
+                            "authcode": authcode,
+                            "cptch_key": this.cptch.cptch_key,
+                            "login_type": 'reset',
+                        };
+                        this.login_disable = true;
+                        if (this.cptch.geetest) {
+                            geetest(this, params, (n_params) => {
+                                this.do_login(n_params);
+                            })
+                        } else {
+                            this.do_login(params)
+                        }
+                    }else {
+                            this.$message({
+                                message: '邮箱或手机号输入有误',
+                                type: 'error'
+                            });
                     }
 
                 } else {
@@ -128,7 +130,7 @@
                 loginFun(data => {
                     if (data.code === 1000) {
                         this.$message({
-                            message: '密码重置成功，请登录邮箱查看邮件',
+                            message: '密码重置成功，请登录邮箱或者手机短信查看',
                             type: 'success'
                         });
 

@@ -61,23 +61,13 @@ class SendMessage(object):
             logger.error(f"get {send_type} sender failed Exception:{e}")
             self.sender = None
 
-    def send_register_msg(self, target, code):
-        status, msg = self.sender.send_register_msg(target, code)
-        logger.info(f"send_register_msg target:{target} code:{code} status:{status} msg:{msg}")
-        return status, msg
-
-    def send_change_msg(self, target, code):
-        status, msg = self.sender.send_change_msg(target, code)
-        logger.info(f"send_change_msg target:{target} code:{code} status:{status} msg:{msg}")
-        return status, msg
-
-    def send_login_msg(self, target, code):
-        status, msg = self.sender.send_login_msg(target, code)
-        logger.info(f"send_login_msg target:{target} code:{code} status:{status} msg:{msg}")
-        return status, msg
-
     def send_email_msg(self, email, text):
         if self.send_type == 'email':
             status, msg = self.sender.send_email_msg(email, text)
             logger.info(f"send_email_msg target:{email} text:{text} status:{status} msg:{msg}")
             return status, msg
+
+    def send_msg_by_act(self, target, code, act):
+        status, msg = self.sender.send_msg_by_act(target, code, act)
+        logger.info(f"send_{act}_msg target:{target} code:{code} status:{status} msg:{msg}")
+        return status, msg
