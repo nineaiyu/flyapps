@@ -7,7 +7,7 @@ from django.core.cache import cache
 from rest_framework.views import APIView
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
-    check_username_exists, set_user_token, get_sender_token
+    check_username_exists, set_user_token
 from api.utils.baseutils import is_valid_phone, is_valid_email, get_min_default_domain_cname_obj
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
@@ -55,7 +55,7 @@ def get_authenticate(target, password, act, allow_type):
     return user_obj
 
 
-def check_register_userinfo(target, act, key):
+def check_register_userinfo(target, act, key, ftype=None):
     res = BaseResponse()
     res.data = {}
     times_key = "%s_%s_%s" % (key, act, target)
@@ -70,7 +70,7 @@ def check_register_userinfo(target, act, key):
         if is_valid_phone(target):
             if login_auth_failed("get", times_key):
                 login_auth_failed("set", times_key)
-                if UserInfo.objects.filter(mobile=target):
+                if UserInfo.objects.filter(mobile=target) and ftype is None:
                     res.code = 1005
                     res.msg = "手机号已经存在"
                 else:
@@ -87,7 +87,7 @@ def check_register_userinfo(target, act, key):
         if is_valid_email(target):
             if login_auth_failed("get", times_key):
                 login_auth_failed("set", times_key)
-                if UserInfo.objects.filter(email=target):
+                if UserInfo.objects.filter(email=target) and ftype is None:
                     res.code = 1005
                     res.msg = "邮箱已经存在"
                 else:
@@ -102,7 +102,7 @@ def check_register_userinfo(target, act, key):
     elif act == "up":
         if login_auth_failed("get", times_key):
             login_auth_failed("set", times_key)
-            if UserInfo.objects.filter(username=target):
+            if UserInfo.objects.filter(username=target) and ftype is None:
                 res.code = 1005
                 res.msg = "用户名已经存在"
             else:
@@ -140,7 +140,7 @@ def check_change_userinfo(target, act, key, user, ftype=None):
                     res.data["auth_token"] = token
             else:
                 res.code = 1009
-                res.msg = "该手机号今日注册次数已经达到上限"
+                res.msg = "该手机号今日使用次数已经达到上限"
         else:
             res.code = 1005
             res.msg = "手机号校验失败"
@@ -149,7 +149,7 @@ def check_change_userinfo(target, act, key, user, ftype=None):
         if is_valid_email(target) and str(user.email) != str(target):
             if login_auth_failed("get", times_key):
                 login_auth_failed("set", times_key)
-                if UserInfo.objects.filter(email=target):
+                if UserInfo.objects.filter(email=target) and ftype is None:
                     res.code = 1005
                     res.msg = "邮箱已经存在"
                 else:
@@ -157,14 +157,14 @@ def check_change_userinfo(target, act, key, user, ftype=None):
                     res.data["auth_token"] = token
             else:
                 res.code = 1009
-                res.msg = "该邮箱今日注册次数已经达到上限"
+                res.msg = "该邮箱今日使用次数已经达到上限"
         else:
             res.code = 1006
             res.msg = "邮箱校验失败"
     elif act == "up":
         if login_auth_failed("get", times_key):
             login_auth_failed("set", times_key)
-            if UserInfo.objects.filter(username=target):
+            if UserInfo.objects.filter(username=target) and ftype is None:
                 res.code = 1005
                 res.msg = "用户名已经存在"
             else:
@@ -202,15 +202,19 @@ class LoginView(APIView):
                     return Response(response.dict)
 
             login_type = receive.get("login_type", None)
+            seicode = receive.get("seicode", None)
             if login_auth_failed("get", username):
                 if login_type == 'reset':
                     user1_obj = None
                     user2_obj = None
+                    act = None
                     if is_valid_email(username):
                         user1_obj = UserInfo.objects.filter(email=username).first()
+                        act = "email"
 
                     if is_valid_phone(username):
                         user2_obj = UserInfo.objects.filter(mobile=username).first()
+                        act = "sms"
 
                     if user1_obj or user2_obj:
                         user_obj = user1_obj if user1_obj else user2_obj
@@ -218,17 +222,29 @@ class LoginView(APIView):
 
                         if login_auth_failed("get", user_obj.uid):
                             login_auth_failed("set", user_obj.uid)
-                            if user2_obj:
-                                a, b = get_sender_sms_token('sms', username, 'password', password)
+
+                            if seicode:
+                                is_valid, target = is_valid_sender_code(act, receive.get("auth_token", None), seicode)
+                                if is_valid and str(target) == str(username):
+                                    if user2_obj:
+                                        a, b = get_sender_sms_token('sms', username, 'password', password)
+                                    else:
+                                        a, b = get_sender_email_token('email', username, 'password', password)
+                                    if a and b:
+                                        reset_user_pwd(user_obj, password)
+                                        login_auth_failed("del", username)
+                                        logger.warning(f'{user_obj} 找回密码成功，您的新密码为 {password} 请用新密码登录之后，及时修改密码')
+                                    else:
+                                        response.code = 1007
+                                        response.msg = "密码重置失败，请稍后重试或者联系管理员"
+                                else:
+                                    response.code = 1009
+                                    response.msg = "验证码有误，请检查或者重新尝试"
+
                             else:
-                                a, b = get_sender_email_token('email', username, 'password', password)
-                            if a and b:
-                                reset_user_pwd(user_obj, password)
-                                login_auth_failed("del", username)
-                                logger.warning(f'{user_obj} 找回密码成功，您的新密码为 {password} 请用新密码登录之后，及时修改密码')
-                            else:
-                                response.code = 1007
-                                response.msg = "密码重置失败，请稍后重试或者联系管理员"
+                                res = check_register_userinfo(username, act, 'change', 'reset')
+                                return Response(res.dict)
+
                         else:
                             response.code = 1008
                             response.msg = "手机或者邮箱已经超过最大发送，请24小时后重试"

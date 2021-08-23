@@ -34,10 +34,24 @@
                 </el-form-item>
 
                 <el-form-item>
+                    <el-row>
+                        <el-col :span="16">
+                            <el-input v-model="form.seicode" prefix-icon="el-icon-mobile"
+                                      placeholder="验证码" clearable/>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-button type="info" @click="onGetCode" plain
+                                       style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px">获取验证码
+                            </el-button>
+                        </el-col>
+                    </el-row>
+                </el-form-item>
+
+                <el-form-item>
                     <div id="captcha" ref="captcha"></div>
                 </el-form-item>
                 <el-form-item style="margin-top: 30px">
-                    <el-button type="danger" :disabled="login_disable" @click="onSubmit">发送重置密码邮件</el-button>
+                    <el-button type="danger" :disabled="login_disable" @click="onReset">发送重置密码邮件</el-button>
                 </el-form-item>
                 <el-form-item style="margin-top: 30px">
                     <el-button type="primary" @click="onLogin">我是老用户,要登录</el-button>
@@ -58,8 +72,7 @@
 
 <script>
     import {loginFun} from "@/restful";
-    import {checkEmail, geetest} from "@/utils";
-    import {checkphone} from "../utils";
+    import {checkEmail, geetest, checkphone} from "@/utils";
 
     export default {
         name: "FirResetPwd",
@@ -68,7 +81,9 @@
                 form: {
                     email: '',
                     password: '',
-                    authcode: ''
+                    authcode: '',
+                    seicode: '',
+                    auth_token: ''
                 },
                 cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
                 activeName: 'username',
@@ -80,6 +95,18 @@
             }
         },
         methods: {
+            onGetCode() {
+                this.form.auth_token = '';
+                this.form.seicode = '';
+                this.onSubmit();
+            },
+            onReset() {
+                if (this.form.auth_token && this.form.seicode && this.form.seicode.length > 3) {
+                    this.onSubmit()
+                } else {
+                    this.$message.error("输入有误，请检查")
+                }
+            },
             is_cptch() {
                 let cptch_flag = this.form.authcode.length === this.cptch.length;
                 if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
@@ -97,13 +124,21 @@
                 if (cptch_flag) {
                     let checke = checkEmail(this.form.email);
                     let checkp = checkphone(this.form.email);
-                    if(checke||checkp){
+                    if (checke || checkp) {
                         let params = {
                             "username": email,
                             "authcode": authcode,
                             "cptch_key": this.cptch.cptch_key,
                             "login_type": 'reset',
                         };
+                        let seicode = this.form.seicode;
+                        let auth_token = this.form.auth_token;
+                        if (seicode && seicode.length > 3) {
+                            params['seicode'] = seicode
+                        }
+                        if (auth_token && auth_token.length > 3) {
+                            params['auth_token'] = auth_token
+                        }
                         this.login_disable = true;
                         if (this.cptch.geetest) {
                             geetest(this, params, (n_params) => {
@@ -112,11 +147,11 @@
                         } else {
                             this.do_login(params)
                         }
-                    }else {
-                            this.$message({
-                                message: '邮箱或手机号输入有误',
-                                type: 'error'
-                            });
+                    } else {
+                        this.$message({
+                            message: '邮箱或手机号输入有误',
+                            type: 'error'
+                        });
                     }
 
                 } else {
@@ -129,8 +164,13 @@
             do_login(params) {
                 loginFun(data => {
                     if (data.code === 1000) {
+                        let msg = '密码重置成功，请登录邮箱或者手机短信查看';
+                        if (data.data && data.data.auth_token) {
+                            this.form.auth_token = data.data.auth_token;
+                            msg = "验证码发送成功，请登录邮箱或者手机短信查看"
+                        }
                         this.$message({
-                            message: '密码重置成功，请登录邮箱或者手机短信查看',
+                            message: msg,
                             type: 'success'
                         });
 

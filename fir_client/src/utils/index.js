@@ -137,13 +137,13 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
 
 
     let retryCount = 0;
-    let partSize= 1024 * 1024;
+    let partSize = 1024 * 1024;
 
-    let f_count = Math.floor(file.size/partSize);
+    let f_count = Math.floor(file.size / partSize);
 
-    if(f_count > 200){
-        f_count=Math.floor(f_count*0.3)
-    }else {
+    if (f_count > 200) {
+        f_count = Math.floor(f_count * 0.3)
+    } else {
         f_count = 60
     }
     let retryCountMax = 5 + f_count;
@@ -188,7 +188,7 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
                 uploadFile('')
             } else {
                 app.$message({
-                    message: file.name + ' 重试了'+retryCount+'次，还是上传失败了，请刷新页面重试',
+                    message: file.name + ' 重试了' + retryCount + '次，还是上传失败了，请刷新页面重试',
                     type: 'error',
                     duration: 0
                 });
