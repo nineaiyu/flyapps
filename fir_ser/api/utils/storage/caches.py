@@ -231,7 +231,7 @@ def upload_file_tmp_name(act, filename, user_obj_id):
     tmp_key = "_".join([CACHE_KEY_TEMPLATE.get("upload_file_tmp_name_key"), filename])
     if act == "set":
         cache.delete(tmp_key)
-        cache.set(tmp_key, {'time': time.time(), 'id': user_obj_id, "filename": filename}, 60 * 60)
+        cache.set(tmp_key, {'u_time': time.time(), 'id': user_obj_id, "filename": filename}, 2 * 60 * 60)
     elif act == "get":
         return cache.get(tmp_key)
     elif act == "del":

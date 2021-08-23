@@ -170,7 +170,7 @@ def get_auth_form_developer(developer_obj):
             "issuer_id": developer_obj.issuer_id,
             "private_key_id": developer_obj.private_key_id,
             "p8key": developer_obj.p8key,
-            "certid": developer_obj.certid
+            "cert_id": developer_obj.certid
         }
     else:
         auth = {}

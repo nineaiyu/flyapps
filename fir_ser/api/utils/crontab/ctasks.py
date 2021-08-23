@@ -32,8 +32,8 @@ def auto_clean_upload_tmp_file():
     for upload_tem_file_key in cache.iter_keys(key):
         data = cache.get(upload_tem_file_key)
         if data:
-            stime = data.get("stime", None)
-            if stime and time.time() - stime > 60 * 20:
+            u_time = data.get("u_time", None)
+            if u_time and time.time() - u_time > 60 * 20:
                 user_obj = UserInfo.objects.filter(pk=data.get("id")).first()
                 if user_obj:
                     storage = Storage(user_obj)
@@ -46,9 +46,9 @@ def auto_clean_upload_tmp_file():
                 logger.info(f"auto_clean_upload_tmp_file upload_tem_file_key :{upload_tem_file_key}")
 
 
-def auto_delete_tmp_file():
-    mobileconfig_tmp_dir = os.path.join(SUPER_SIGN_ROOT, 'tmp', 'mobileconfig')
-    for root, dirs, files in os.walk(mobileconfig_tmp_dir, topdown=False):
+def auto_delete_ios_mobile_tmp_file():
+    mobile_config_tmp_dir = os.path.join(SUPER_SIGN_ROOT, 'tmp', 'mobileconfig')
+    for root, dirs, files in os.walk(mobile_config_tmp_dir, topdown=False):
         now_time = time.time()
         for name in files:
             file_path = os.path.join(root, name)
