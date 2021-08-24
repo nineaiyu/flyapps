@@ -288,7 +288,7 @@ class AppDeveloperApiV2(object):
                     result['did'] = device_obj.id
                     device_id_list.append(device_obj.id)
 
-            profile_obj = apple_obj.create_profile(developer_app_id, auth.get('certid'),
+            profile_obj = apple_obj.create_profile(developer_app_id, auth.get('cert_id'),
                                                    provisionName.split("/")[-1],
                                                    device_id_list)
             if profile_obj:
