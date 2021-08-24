@@ -21,9 +21,10 @@ def sync_download_times():
     key = "_".join([down_tem_key, '*'])
     for app_download in cache.iter_keys(key):
         count_hits = cache.get(app_download)
-        app_id = app_download.split(down_tem_key)[1].strip('_')
-        Apps.objects.filter(app_id=app_id).update(count_hits=count_hits)
-        logger.info(f"sync_download_times app_id:{app_id} count_hits:{count_hits}")
+        if count_hits:
+            app_id = app_download.split(down_tem_key)[1].strip('_')
+            Apps.objects.filter(app_id=app_id).update(count_hits=count_hits)
+            logger.info(f"sync_download_times app_id:{app_id} count_hits:{count_hits}")
 
 
 def auto_clean_upload_tmp_file():
