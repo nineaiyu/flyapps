@@ -736,12 +736,12 @@
                             this.canceledit();
                             this.$message.success("操作成功");
                             this.activeName = "iosdeveloper";
-                            this.editdeveloperinfo = {auth_type: 0};
+                            this.editdeveloperinfo = {auth_type: 0, usable_number: 100};
                         }
                         if (!this.edit && this.editdeveloperinfo.issuer_id) {
                             this.$message.success("添加成功");
                             this.activeName = "iosdeveloper";
-                            this.editdeveloperinfo = {auth_type: 0};
+                            this.editdeveloperinfo = {auth_type: 0, usable_number: 100};
                         }
                     } else if (data.code === 1008) {
                         this.$message.error(data.msg);
