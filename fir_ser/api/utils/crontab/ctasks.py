@@ -66,13 +66,19 @@ def auto_check_ios_developer_active():
     for ios_developer in all_ios_developer:
         userinfo = ios_developer.user_id
         if userinfo.supersign_active:
-            status, result = IosUtils.active_developer(ios_developer)
-            msg = f"auto_check_ios_developer_active  user:{userinfo}  ios.developer:{ios_developer}  status:{status}  result:{result}"
-            if status:
-                logger.info(msg)
-            else:
-                ios_developer.is_actived = False
-                ios_developer.save()
-                logger.error(msg)
-                send_ios_developer_active_status(userinfo, MSGTEMPLATE.get('AUTO_CHECK_DEVELOPER') % (
-                    userinfo.first_name, ios_developer.name))
+            count = 3
+            while count > 0:
+                status, result = IosUtils.active_developer(ios_developer)
+                msg = f"auto_check_ios_developer_active  user:{userinfo}  ios.developer:{ios_developer}  status:{status}  result:{result}"
+                if status:
+                    logger.info(msg)
+                    break
+                else:
+                    count -= 1
+                    time.sleep(5)
+                if count == 0:
+                    ios_developer.is_actived = False
+                    ios_developer.save(update_fields=['is_actived'])
+                    logger.error(msg)
+                    send_ios_developer_active_status(userinfo, MSGTEMPLATE.get('AUTO_CHECK_DEVELOPER') % (
+                        userinfo.first_name, ios_developer.name))
