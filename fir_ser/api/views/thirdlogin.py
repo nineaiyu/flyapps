@@ -124,13 +124,14 @@ class ValidWxChatToken(APIView):
                         uid = rec_msg.Eventkey.split('.')[-1]
                         wx_user_obj = ThirdWeChatUserInfo.objects.filter(openid=to_user).first()
                         user_obj = UserInfo.objects.filter(uid=uid).first()
-                        update_or_create_wx_userinfo(to_user, user_obj)
                         if wx_user_obj:
                             if user_obj and user_obj.uid == wx_user_obj.user_id.uid:
                                 content = f'账户 {wx_user_obj.user_id.first_name} 已经绑定成功，感谢您的使用'
+                                update_or_create_wx_userinfo(to_user, user_obj)
                             else:
                                 content = f'账户已经被 {wx_user_obj.user_id.first_name} 绑定'
                         else:
+                            update_or_create_wx_userinfo(to_user, user_obj)
                             content = f'账户绑定 {wx_user_obj.user_id.first_name} 成功'
                         set_wx_ticket_login_info_cache(rec_msg.Ticket, user_obj.pk)
                         reply_msg = reply.TextMsg(to_user, from_user, content)
