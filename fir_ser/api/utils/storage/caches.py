@@ -9,6 +9,7 @@ from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, 
     UserCertificationInfo, Order
 import time, os
 from django.utils import timezone
+
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
     USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
 from api.utils.storage.storage import Storage, LocalStorage
@@ -460,14 +461,6 @@ def check_app_permission(app_obj, res):
         res.msg = "您没有权限访问该应用"
 
     return res
-
-
-def get_wx_access_token_cache():
-    wx_access_token_key = CACHE_KEY_TEMPLATE.get("wx_access_token_key")
-    access_token = cache.get(wx_access_token_key)
-    if access_token:
-        return access_token.get('access_token')
-    return ''
 
 
 def set_wx_ticket_login_info_cache(ticket, data=None, expire_seconds=600):

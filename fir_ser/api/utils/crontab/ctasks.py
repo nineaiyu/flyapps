@@ -83,14 +83,3 @@ def auto_check_ios_developer_active():
                     logger.error(msg)
                     send_ios_developer_active_status(userinfo, MSGTEMPLATE.get('AUTO_CHECK_DEVELOPER') % (
                         userinfo.first_name, ios_developer.name))
-
-
-def sync_wx_access_token():
-    wx_access_token_key = CACHE_KEY_TEMPLATE.get("wx_access_token_key")
-    access_token_info = cache.get(wx_access_token_key)
-    if not access_token_info:
-        access_token_info = make_wx_auth_obj().get_access_token()
-        expires_in = access_token_info.get('expires_in')
-        if expires_in:
-            cache.set(wx_access_token_key, access_token_info, expires_in - 60)
-    return access_token_info

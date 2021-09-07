@@ -7,12 +7,43 @@ from hashlib import sha1
 import requests
 import logging
 import json
-from fir_ser.settings import THIRDLOGINCONF
+
+from django.core.cache import cache
+
+from fir_ser.settings import THIRDLOGINCONF, CACHE_KEY_TEMPLATE
 from api.utils.mp.utils import WxMsgCryptBase
-from api.utils.storage.caches import get_wx_access_token_cache
 
 logger = logging.getLogger(__name__)
 wx_login_info = THIRDLOGINCONF.wx_official
+
+def format_req_json(j_data,func,*args,**kwargs):
+    if j_data.get("errcode")==40001 or 'invalid credential'  in j_data.get('errmsg',''):
+        logger.error(f"error j_data {j_data}")
+        sync_wx_access_token(True)
+        return func(*args,**kwargs)[1]
+    return j_data
+
+
+def sync_wx_access_token(force=False):
+    wx_access_token_key = CACHE_KEY_TEMPLATE.get("wx_access_token_key")
+    access_token_info = cache.get(wx_access_token_key)
+    if not access_token_info or force:
+        access_token_info = make_wx_auth_obj().get_access_token()
+        expires_in = access_token_info.get('expires_in')
+        if expires_in:
+            cache.set(wx_access_token_key, access_token_info, expires_in - 60)
+    return access_token_info
+
+
+def get_wx_access_token_cache(c_count=1,):
+    if c_count > 10:
+        return ''
+    wx_access_token_key = CACHE_KEY_TEMPLATE.get("wx_access_token_key")
+    access_token = cache.get(wx_access_token_key)
+    if access_token:
+        return access_token.get('access_token')
+    sync_wx_access_token(True)
+    return get_wx_access_token_cache(c_count + 1)
 
 
 def create_menu():
@@ -70,7 +101,7 @@ def make_wx_login_qrcode(scene_str='web.login', expire_seconds=600):
             "action_info": {"scene": {"scene_str": scene_str}}}
     req = requests.post(t_url, json=data)
     if req.status_code == 200:
-        return True, req.json()
+        return True, format_req_json(req.json(),make_wx_login_qrcode,scene_str,expire_seconds)
     logger.error(f"make wx login qrcode failed {req.status_code} {req.text}")
     return False, req.text
 
@@ -79,7 +110,7 @@ def get_userinfo_from_openid(open_id):
     t_url = f'https://api.weixin.qq.com/cgi-bin/user/info?access_token={get_wx_access_token_cache()}&openid={open_id}&lang=zh_CN'
     req = requests.get(t_url)
     if req.status_code == 200:
-        return True, req.json()
+        return True, format_req_json(req.json(),get_userinfo_from_openid,open_id)
     logger.error(f"get userinfo from openid failed {req.status_code} {req.text}")
     return False, req.text
 
