@@ -570,3 +570,9 @@ class AdminUserCertificationSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         return super(AdminUserCertificationSerializer, self).update(instance, validated_data)
+
+
+class ThirdWxSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ThirdWeChatUserInfo
+        exclude = ["id"]

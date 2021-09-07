@@ -71,6 +71,25 @@
                 <el-form-item>
                     <el-link :underline="false" @click="$router.push({name: 'FirResetPwd'})" plain>忘记密码</el-link>
                 </el-form-item>
+
+                <div class="other-way">
+                    <hr>
+                    <span class="info">或使用以下账户登录</span>
+
+                    <el-popover
+                            placement="top"
+                            trigger="manual"
+                            title="微信扫码关注公众号登录"
+                            v-model="wx_visible">
+                        <div>
+                            <el-image :src="wx_login_qr_url" style="width: 176px;height: 166px"/>
+                        </div>
+                        <el-button style="color: #1fc939;border: 1px solid rgba(31,201,57,.5); width: 110px"
+                                   slot="reference" size="small" @click="wxLogin">微信
+                        </el-button>
+                    </el-popover>
+
+                </div>
             </el-form>
 
 
@@ -82,7 +101,7 @@
 </template>
 
 <script>
-    import {loginFun, set_auth_token} from "@/restful";
+    import {loginFun, set_auth_token, wxLoginFun} from "@/restful";
     import {checkEmail, checkphone, geetest} from "@/utils";
 
     export default {
@@ -101,9 +120,75 @@
                 rctitle: '',
                 register_enable: false,
                 login_disable: false,
+                wx_login_qr_url: '',
+                wx_visible: false,
+                loop_flag: false,
             }
         },
         methods: {
+
+            set_cookie_and_token(data) {
+                this.$cookies.remove("auth_token");
+                this.$cookies.set("token", data['token'], 3600 * 24 * 30);
+                this.$cookies.set("username", data.userinfo.username, 3600 * 24 * 30);
+                this.$cookies.set("first_name", data.userinfo.first_name, 3600 * 24 * 30);
+                this.$store.dispatch("doUserinfo", data.userinfo);
+                set_auth_token();
+                this.$router.push({name: 'FirApps'})
+            },
+            loop_get_wx_info(wx_login_ticket) {
+                if (wx_login_ticket && wx_login_ticket.length < 3) {
+                    this.$message.error("获取登陆码失败，请稍后再试");
+                    return
+                }
+                let c_count = 1;
+                // eslint-disable-next-line no-unused-vars
+                const loop_t = window.setInterval(res => {
+                    if (!this.loop_flag) {
+                        window.clearInterval(loop_t);
+                    }
+                    wxLoginFun(data => {
+                        c_count += 1;
+                        if (c_count > 120) {
+                            window.clearInterval(loop_t);
+                        }
+                        if (data.code === 1000) {
+                            window.clearInterval(loop_t);
+                            this.set_cookie_and_token(data);
+                        } else if (data.code === 1005) {
+                            window.clearInterval(loop_t);
+                            this.wx_visible = false;
+                            this.loop_flag = false;
+                            this.$message({
+                                message: data.msg,
+                                type: 'error',
+                                duration: 30000
+                            });
+                        }
+                    }, {
+                        "methods": "POST",
+                        data: {"ticket": wx_login_ticket}
+                    })
+                }, 3000)
+
+            },
+            wxLogin() {
+                this.wx_visible = !this.wx_visible;
+                this.wx_login_qr_url = '';
+                if (this.wx_visible) {
+                    wxLoginFun(data => {
+                        if (data.code === 1000) {
+                            this.wx_login_qr_url = data.data.qr;
+                            this.loop_flag = true;
+                            this.loop_get_wx_info(data.data.ticket);
+                        }
+                    }, {
+                        "methods": "GET",
+                    })
+                } else {
+                    this.loop_flag = false;
+                }
+            },
             is_cptch() {
                 let cptch_flag = this.form.authcode.length === this.cptch.length;
                 if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
@@ -189,13 +274,7 @@
                             message: '登录成功',
                             type: 'success'
                         });
-                        this.$cookies.remove("auth_token");
-                        this.$cookies.set("token", data['token'], 3600 * 24 * 30);
-                        this.$cookies.set("username", data.userinfo.username, 3600 * 24 * 30);
-                        this.$cookies.set("first_name", data.userinfo.first_name, 3600 * 24 * 30);
-                        this.$store.dispatch("doUserinfo", data.userinfo);
-                        set_auth_token();
-                        this.$router.push({name: 'FirApps'})
+                        this.set_cookie_and_token(data);
                     } else {
                         this.$message({
                             message: data.msg,
@@ -259,6 +338,29 @@
 </script>
 
 <style scoped>
+
+    .other-way {
+        position: relative;
+        text-align: center;
+    }
+
+    .other-way hr {
+        height: 1px;
+        margin: 30px 0;
+        border: 0;
+        background-color: #e4e7ed;
+    }
+
+    .other-way span.info {
+        font-size: 12px;
+        line-height: 1;
+        position: absolute;
+        top: -6px;
+        left: 50%;
+        padding: 0 10px;
+        transform: translate(-50%, 0);
+        color: #9ba3af;
+    }
 
     .el-container {
         margin: 10px auto;

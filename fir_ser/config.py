@@ -64,6 +64,19 @@ class CACHECONF(object):
     password = ''
 
 
+class THIRDLOGINCONF(object):
+    wx_official = {
+        'name': 'wx_official',
+        'auth': {
+            'app_id': 'we6',
+            'app_secret': '5bfb678',
+            'token': 'f0ae1b879b8',
+            'encoding_aes_key': '7b9URovp83gG',
+        },
+        'active': True
+    }
+
+
 class AUTHCONF(object):
     # 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG.sender 信息
     REGISTER = {

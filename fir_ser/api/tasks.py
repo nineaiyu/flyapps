@@ -12,7 +12,7 @@ from api.utils.storage.storage import get_local_storage
 from api.models import Apps
 from api.utils.app.supersignutils import IosUtils, resign_by_app_id
 from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_delete_ios_mobile_tmp_file, \
-    auto_check_ios_developer_active
+    auto_check_ios_developer_active, sync_wx_access_token
 from api.utils.geetest.geetest_utils import check_bypass_status
 
 from fir_ser.celery import app
@@ -80,3 +80,8 @@ def auto_delete_tmp_file_job():
 @app.task
 def auto_check_ios_developer_active_job():
     auto_check_ios_developer_active()
+
+
+@app.task
+def sync_wx_access_token_job():
+    sync_wx_access_token()

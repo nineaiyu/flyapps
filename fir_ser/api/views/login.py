@@ -2,6 +2,8 @@ from django.contrib import auth
 
 from api.models import Token, UserInfo, UserCertificationInfo, CertificationInfo
 from rest_framework.response import Response
+
+from api.utils.mp.wechat import make_wx_login_qrcode, show_qrcode_url
 from api.utils.serializer import UserInfoSerializer, CertificationSerializer, UserCertificationSerializer
 from django.core.cache import cache
 from rest_framework.views import APIView
@@ -12,7 +14,7 @@ from api.utils.baseutils import is_valid_phone, is_valid_email, get_min_default_
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
 from fir_ser.settings import REGISTER, LOGIN, CHANGER
-from api.utils.storage.caches import login_auth_failed
+from api.utils.storage.caches import login_auth_failed, set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache
 import logging
 from api.utils.geetest.geetest_utils import first_register, second_validate
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle, GetAuthC1Throttle, GetAuthC2Throttle
@@ -398,6 +400,19 @@ class RegistView(APIView):
         return Response(response.dict)
 
 
+def wx_qr_code_response(ret, code, qr_info):
+    if code:
+        logger.info(f"微信登录码获取成功， {qr_info}")
+        ticket = qr_info.get('ticket')
+        if ticket:
+            set_wx_ticket_login_info_cache(ticket)
+            ret.data = {'qr': show_qrcode_url(ticket), 'ticket': ticket}
+    else:
+        ret.code = code
+        ret.msg = "微信登录码获取失败，请稍后"
+    return Response(ret.dict)
+
+
 class UserInfoView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
 
@@ -503,6 +518,12 @@ class UserInfoView(APIView):
             return Response(res.dict)
 
         return Response(res.dict)
+
+    def post(self, request):
+        ret = BaseResponse()
+        uid = request.user.uid
+        code, qr_info = make_wx_login_qrcode(f"web.bind.{uid}")
+        return wx_qr_code_response(ret, code, qr_info)
 
 
 class AuthorizationView(APIView):
@@ -706,3 +727,41 @@ class ChangeInfoView(APIView):
             response.data['change_type'] = CHANGER.get("change_type")
         response.data['enable'] = allow_f
         return Response(response.dict)
+
+
+class WeChatLoginView(APIView):
+    throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
+
+    def get(self, request):
+        ret = BaseResponse()
+        code, qr_info = make_wx_login_qrcode()
+        return wx_qr_code_response(ret, code, qr_info)
+
+
+class WeChatLoginCheckView(APIView):
+    def post(self, request):
+        ret = BaseResponse()
+        ticket = request.data.get("ticket")
+        if ticket:
+            wx_ticket_data = get_wx_ticket_login_info_cache(ticket)
+            if wx_ticket_data:
+                if wx_ticket_data == -1:
+                    ret.msg = "还未绑定用户，请通过手机或者邮箱登录账户之后进行绑定"
+                    ret.code = 1005
+                else:
+                    user = UserInfo.objects.filter(pk=wx_ticket_data).first()
+                    if user.is_active:
+                        key, user_info = set_user_token(user)
+                        serializer = UserInfoSerializer(user_info)
+                        data = serializer.data
+                        ret.msg = "验证成功!"
+                        ret.userinfo = data
+                        ret.token = key
+                    else:
+                        ret.msg = "用户被禁用"
+                        ret.code = 1005
+            else:
+                ret.code = 1006
+        else:
+            ret.code = 1006
+        return Response(ret.dict)

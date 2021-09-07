@@ -12,7 +12,7 @@ from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
     USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
 from api.utils.storage.storage import Storage, LocalStorage
-from api.utils.baseutils import get_app_d_count_by_app_id, get_app_domain_name, check_app_password  # file_format_path,
+from api.utils.baseutils import get_app_d_count_by_app_id, get_app_domain_name, check_app_password
 import logging
 from django.db.models import F
 
@@ -281,7 +281,7 @@ def set_default_app_wx_easy(user_obj, only_clean_cache=False):
         else:
             if not get_app_domain_name(app_obj):
                 app_obj.wxeasytype = True
-                app_obj.save()
+                app_obj.save(update_fields=['wxeasytype'])
                 del_cache_response_by_short(app_obj.app_id)
 
 
@@ -405,7 +405,7 @@ def update_order_status(out_trade_no, status):
         order_obj = Order.objects.filter(order_number=out_trade_no).first()
         if order_obj:
             order_obj.status = status
-            order_obj.save()
+            order_obj.save(update_fields=['status'])
 
 
 def update_order_info(user_id, out_trade_no, payment_number, payment_type):
@@ -460,3 +460,27 @@ def check_app_permission(app_obj, res):
         res.msg = "您没有权限访问该应用"
 
     return res
+
+
+def get_wx_access_token_cache():
+    wx_access_token_key = CACHE_KEY_TEMPLATE.get("wx_access_token_key")
+    access_token = cache.get(wx_access_token_key)
+    if access_token:
+        return access_token.get('access_token')
+    return ''
+
+
+def set_wx_ticket_login_info_cache(ticket, data=None, expire_seconds=600):
+    if data is None:
+        data = {}
+    wx_ticket_info_key = CACHE_KEY_TEMPLATE.get("wx_ticket_info_key")
+    cache.set("_".join([wx_ticket_info_key, ticket]), data, expire_seconds)
+
+
+def get_wx_ticket_login_info_cache(ticket):
+    wx_ticket_info_key = CACHE_KEY_TEMPLATE.get("wx_ticket_info_key")
+    wx_t_key = "_".join([wx_ticket_info_key, ticket])
+    wx_ticket_info = cache.get(wx_t_key)
+    if wx_ticket_info:
+        cache.delete(wx_t_key)
+    return wx_ticket_info

@@ -216,6 +216,25 @@ export function loginFun(callBack, params, load = true) {
     );
 }
 
+/**微信公众号关注登录 */
+export function wxLoginFun(callBack, params, load = true) {
+    let g_url = 'third.wx.login';
+    if (params.methods === 'POST') {
+        g_url = 'third.wx.sync'
+    }
+    getData(
+        params.methods,
+        USERSEVER + '/' + g_url,
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 /**获取验证token */
 export function getAuthTokenFun(callBack, params, load = true) {
     getData(
@@ -619,6 +638,21 @@ export function developercert(callBack, params, load = true) {
     getData(
         params.methods,
         USERSEVER + '/supersign/cert',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+/**微信用户绑定 */
+export function wxutils(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/twx/info',
         params.data,
         data => {
             callBack(data);

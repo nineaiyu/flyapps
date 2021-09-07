@@ -62,6 +62,21 @@ class UserInfo(AbstractUser):
         super(UserInfo, self).save(*args, **kwargs)
 
 
+class ThirdWeChatUserInfo(models.Model):
+    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    openid = models.CharField(max_length=64, unique=True, verbose_name="普通用户的标识，对当前公众号唯一")
+    nickname = models.CharField(max_length=64, verbose_name="昵称", blank=True)
+    sex = models.SmallIntegerField(default=0, verbose_name="性别", help_text="值为1时是男性，值为2时是女性，值为0时是未知")
+    subscribe_time = models.BigIntegerField(verbose_name="订阅时间")
+    head_img_url = models.CharField(max_length=256, verbose_name="用户头像", blank=True, null=True)
+    address = models.CharField(max_length=128, verbose_name="地址", blank=True, null=True)
+    subscribe = models.BooleanField(verbose_name="是否订阅公众号", default=0)
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="授权时间")
+
+    def __str__(self):
+        return f"{self.user_id}-{self.nickname}-{self.openid}"
+
+
 class Token(models.Model):
     """
     The default authorization token model.

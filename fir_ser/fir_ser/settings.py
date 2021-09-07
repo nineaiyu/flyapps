@@ -209,7 +209,9 @@ CACHE_KEY_TEMPLATE = {
     'upload_file_tmp_name_key': 'upload_file_tmp_name',
     'login_failed_try_times_key': 'login_failed_try_times',
     'user_free_download_times_key': 'user_free_download_times',
-    'super_sign_failed_send_msg_times_key': 'super_sign_failed_send_msg_times'
+    'super_sign_failed_send_msg_times_key': 'super_sign_failed_send_msg_times',
+    'wx_access_token_key': 'wx_basic_access_token',
+    'wx_ticket_info_key': 'wx_ticket_info',
 }
 
 DATA_DOWNLOAD_KEY = "d_token"
@@ -219,6 +221,7 @@ AUTH_USER_FREE_DOWNLOAD_TIMES = 60
 
 SYNC_CACHE_TO_DATABASE = {
     'download_times': 10,  # 下载次数同步时间
+    'wx_get_access_token_times': 60 * 10,  # 微信access_token 自动获取时间
     'try_login_times': (10, 12 * 60 * 60),  # 当天登录失败次数，超过该失败次数，锁定24小时
     'auto_clean_tmp_file_times': 60 * 30,  # 定时清理上传失误生成的临时文件
     'auto_clean_local_tmp_file_times': 60 * 30,  # 定时清理临时文件,现在包含超级签名描述临时文件
@@ -376,6 +379,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 6,
         'args': (),
         'one_off': True
+    },
+    'sync_wx_access_token_job': {
+        'task': 'api.tasks.sync_wx_access_token_job',
+        'schedule': SYNC_CACHE_TO_DATABASE.get("wx_get_access_token_times"),
+        'args': (),
     },
 }
 

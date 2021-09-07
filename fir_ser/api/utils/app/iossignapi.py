@@ -264,7 +264,7 @@ class AppDeveloperApiV2(object):
         return False, result
 
     def get_profile(self, app_obj, udid_info, provisionName, auth, developer_app_id,
-                    device_id_list):
+                    device_id_list, err_callback):
         result = {}
         bundle_id = app_obj.bundle_id
         app_id = app_obj.app_id
@@ -301,6 +301,9 @@ class AppDeveloperApiV2(object):
         except Exception as e:
             logger.error(f"app_id {app_obj.app_id} ios developer make profile Failed Exception:{e}")
             result['return_info'] = "%s" % e
+            if "There are no current ios devices" in e:
+                err_callback()
+
             return False, result
 
     def del_profile(self, app_id):

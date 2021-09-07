@@ -192,6 +192,13 @@ def get_apple_udid_key(auth):
     return m_key
 
 
+def err_callback(func, a, b):
+    def wrapper():
+        return func(a, b)
+
+    return wrapper
+
+
 def get_server_domain_from_request(request, server_domain):
     if not server_domain or not server_domain.startswith("http"):
         http_host = request.META.get('HTTP_HOST')
@@ -273,10 +280,10 @@ class IosUtils(object):
                 return None
         return developer_obj
 
-    def download_profile(self, developer_app_id, device_id_list):
-        return get_api_obj(self.auth).get_profile(self.app_obj, self.udid_info,
-                                                  self.get_profile_full_path(),
-                                                  self.auth, developer_app_id, device_id_list)
+    # def download_profile(self, developer_app_id, device_id_list):
+    #     return get_api_obj(self.auth).get_profile(self.app_obj, self.udid_info,
+    #                                               self.get_profile_full_path(),
+    #                                               self.auth, developer_app_id, device_id_list, )
 
     # 开启超级签直接在开发者账户创建
     # def create_app(self, app_obj):
@@ -327,7 +334,9 @@ class IosUtils(object):
 
             status, result = get_api_obj(auth).get_profile(app_obj, udid_info,
                                                            get_profile_full_path(developer_obj, app_obj),
-                                                           auth, developer_app_id, device_id_lists)
+                                                           auth, developer_app_id, device_id_lists,
+                                                           err_callback(IosUtils.get_device_from_developer,
+                                                                        developer_obj, developer_obj.user_id))
             if add_did_flag and sync_device_obj:
                 result['did'] = sync_device_obj.serial
                 result['did_exists'] = True
@@ -340,7 +349,7 @@ class IosUtils(object):
         if sign_try_attempts != -1:
             logger.error(f"app {app_obj} developer {developer_obj} sign failed {result}")
             developer_obj.is_actived = False
-            developer_obj.save()
+            developer_obj.save(update_fields=['is_actived'])
             send_ios_developer_active_status(developer_obj.user_id,
                                              MSGTEMPLATE.get('ERROR_DEVELOPER') % (
                                                  developer_obj.user_id.first_name, app_obj.name,
@@ -404,7 +413,7 @@ class IosUtils(object):
             storage_obj.delete_file(apptodev_obj.binary_file + ".ipa")
             apptodev_obj.binary_file = random_file_name
             apptodev_obj.release_file = release_obj.release_id
-            apptodev_obj.save()
+            apptodev_obj.save(update_fields=['binary_file', 'release_file'])
         else:
             APPToDeveloper.objects.create(developerid=developer_obj, app_id=app_obj,
                                           binary_file=random_file_name, release_file=release_obj.release_id)
@@ -419,7 +428,7 @@ class IosUtils(object):
             developer_obj.use_number = developer_obj.use_number + 1
             logger.info(
                 f"developer {developer_obj} use_number+1 now {developer_obj.use_number} udid {self.udid_info.get('udid')} app_id {self.app_obj}")
-            developer_obj.save()
+            developer_obj.save(update_fields=['use_number'])
 
         if not appsupersign_obj.filter(app_id=self.app_obj, user_id=self.user_obj).first():
             APPSuperSignUsedInfo.objects.create(app_id=self.app_obj, user_id=self.user_obj,
@@ -602,7 +611,7 @@ class IosUtils(object):
 
             if developer_obj.use_number > 0:
                 developer_obj.use_number = developer_obj.use_number - 1
-                developer_obj.save()
+                developer_obj.save(update_fields=['use_number'])
 
         udid_obj.delete()
 
@@ -706,7 +715,7 @@ class IosUtils(object):
             developer_obj.is_actived = True
         else:
             developer_obj.is_actived = False
-        developer_obj.save()
+        developer_obj.save(update_fields=['certid', 'cert_expire_time', 'is_actived'])
         return status, result
 
     @staticmethod

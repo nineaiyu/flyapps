@@ -91,7 +91,7 @@ class DomainCnameView(APIView):
                     app_obj = Apps.objects.filter(app_id=app_id).first()
                     if app_obj:
                         app_obj.wxeasytype = False
-                        app_obj.save()
+                        app_obj.save(update_fields=['wxeasytype'])
                         del_cache_response_by_short(app_obj.app_id)
                 else:
                     set_default_app_wx_easy(request.user, True)
@@ -111,7 +111,7 @@ class DomainCnameView(APIView):
                 app_obj = Apps.objects.filter(app_id=app_id).first()
                 if app_obj and not get_user_domain_name(request.user):
                     app_obj.wxeasytype = True
-                    app_obj.save()
+                    app_obj.save(update_fields=['wxeasytype'])
                     del_cache_response_by_short(app_obj.app_id)
             else:
                 set_default_app_wx_easy(request.user)
