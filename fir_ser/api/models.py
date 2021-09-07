@@ -16,13 +16,12 @@ class UserInfo(AbstractUser):
     email = models.EmailField(
         verbose_name='email address',
         max_length=255,
-        unique=True,
+        db_index=True,
         blank=True,
         null=True
     )
     uid = models.CharField(max_length=64, unique=True, db_index=True)  # user_id，唯一标识
-    mobile = models.BigIntegerField(verbose_name="手机", unique=True, help_text="用于手机验证码登录", null=True)
-    qq = models.BigIntegerField(verbose_name="QQ", blank=True, null=True, db_index=True)
+    mobile = models.BigIntegerField(verbose_name="手机", db_index=True, help_text="用于手机验证码登录", null=True)
     is_active = models.BooleanField(default=True, verbose_name="账户状态，默认启用")
     storage_active = models.BooleanField(default=False, verbose_name="配置存储，默认关闭")
     supersign_active = models.BooleanField(default=True, verbose_name="配置超级签，默认关闭")

@@ -3,6 +3,7 @@ django-celery-results==2.0.1
 django-celery-beat==2.2.0
 Django==3.2.3
 djangorestframework==3.12.4
+djangorestframework-xml==2.0.0
 django-simple-captcha==0.5.14
 mysqlclient==2.0.3
 django-redis==4.12.1
