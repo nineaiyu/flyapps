@@ -404,12 +404,16 @@ class DeveloperSerializer(serializers.ModelSerializer):
 
     developer_used_number = serializers.SerializerMethodField()
     developer_used_other_number = serializers.SerializerMethodField()
+    use_number = serializers.SerializerMethodField()
 
     def get_developer_used_number(self, obj):
         return models.UDIDsyncDeveloper.objects.filter(developerid=obj).count()
 
     def get_developer_used_other_number(self, obj):
         return get_developer_udided(obj)[0]
+
+    def get_use_number(self, obj):
+        return models.DeveloperDevicesID.objects.filter(developerid=obj).count()
 
 
 class AdminDeveloperSerializer(DeveloperSerializer):

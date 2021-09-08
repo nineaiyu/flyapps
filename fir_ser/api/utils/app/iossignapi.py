@@ -301,7 +301,7 @@ class AppDeveloperApiV2(object):
         except Exception as e:
             logger.error(f"app_id {app_obj.app_id} ios developer make profile Failed Exception:{e}")
             result['return_info'] = "%s" % e
-            if "There are no current ios devices" in e:
+            if "There are no current ios devices" in str(e):
                 err_callback()
 
             return False, result

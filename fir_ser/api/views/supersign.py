@@ -69,7 +69,7 @@ class DeveloperView(APIView):
                     status, result = IosUtils.active_developer(developer_obj)
                     if status:
                         if not developer_obj.certid:
-                            IosUtils.get_device_from_developer(developer_obj, request.user)
+                            IosUtils.get_device_from_developer(developer_obj)
                         return self.get(request)
                     else:
                         res.code = 1008
@@ -80,7 +80,7 @@ class DeveloperView(APIView):
                     if not developer_obj.certid:
                         status, result = IosUtils.create_developer_cert(developer_obj, request.user)
                         if status:
-                            IosUtils.get_device_from_developer(developer_obj, request.user)
+                            IosUtils.get_device_from_developer(developer_obj)
                         else:
                             res.code = 1008
                             res.msg = result.get("err_info")
@@ -104,7 +104,7 @@ class DeveloperView(APIView):
                             res.msg = result.get("err_info", '')
                             return Response(res.dict)
                 elif act == "syncdevice":
-                    status, result = IosUtils.get_device_from_developer(developer_obj, request.user)
+                    status, result = IosUtils.get_device_from_developer(developer_obj)
                     if not status:
                         res.code = 1008
                         res.msg = result.get("err_info")

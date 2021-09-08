@@ -192,9 +192,9 @@ def get_apple_udid_key(auth):
     return m_key
 
 
-def err_callback(func, a, b):
+def err_callback(func, *args, **kwargs):
     def wrapper():
-        return func(a, b)
+        return func(*args, **kwargs)
 
     return wrapper
 
@@ -327,6 +327,10 @@ class IosUtils(object):
                 sync_device_obj = UDIDsyncDeveloper.objects.filter(udid=udid_info.get('udid'),
                                                                    developerid=developer_obj).first()
                 if sync_device_obj:
+                    DeveloperDevicesID.objects.update_or_create(did=sync_device_obj.serial, udid=sync_device_obj,
+                                                                developerid=developer_obj,
+                                                                app_id=app_obj)
+
                     device_id_lists.append(sync_device_obj.serial)
                     udid_info = None
                     add_did_flag = True
@@ -336,7 +340,7 @@ class IosUtils(object):
                                                            get_profile_full_path(developer_obj, app_obj),
                                                            auth, developer_app_id, device_id_lists,
                                                            err_callback(IosUtils.get_device_from_developer,
-                                                                        developer_obj, developer_obj.user_id))
+                                                                        developer_obj))
             if add_did_flag and sync_device_obj:
                 result['did'] = sync_device_obj.serial
                 result['did_exists'] = True
@@ -421,20 +425,11 @@ class IosUtils(object):
         storage_obj.upload_file(os.path.join(MEDIA_ROOT, random_file_name + ".ipa"))
 
     def update_developer_used_data(self):
-        appsupersign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'),
-                                                               developerid=self.developer_obj)
-        if appsupersign_obj.count() == 0:
-            developer_obj = self.developer_obj
-            developer_obj.use_number = developer_obj.use_number + 1
-            logger.info(
-                f"developer {developer_obj} use_number+1 now {developer_obj.use_number} udid {self.udid_info.get('udid')} app_id {self.app_obj}")
-            developer_obj.save(update_fields=['use_number'])
-
-        if not appsupersign_obj.filter(app_id=self.app_obj, user_id=self.user_obj).first():
-            APPSuperSignUsedInfo.objects.create(app_id=self.app_obj, user_id=self.user_obj,
-                                                developerid=self.developer_obj,
-                                                udid=AppUDID.objects.filter(app_id=self.app_obj,
-                                                                            udid=self.udid_info.get('udid')).first())
+        udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
+        APPSuperSignUsedInfo.objects.update_or_create(app_id=self.app_obj,
+                                                      user_id=self.user_obj,
+                                                      developerid=self.developer_obj,
+                                                      udid=udid_obj)
 
     def update_sign_data(self, random_file_name, release_obj):
         newdata = {
@@ -530,7 +525,7 @@ class IosUtils(object):
                 "call_loop download_profile appid:%s developer:%s count:%s" % (self.app_obj, self.developer_obj, count))
             if self.developer_obj:
                 with cache.lock("%s_%s_%s" % ('download_profile', self.app_obj.app_id, self.developer_obj.issuer_id),
-                                timeout=60):
+                                timeout=180):
                     download_flag, result = IosUtils.exec_download_profile(self.app_obj, self.developer_obj,
                                                                            self.udid_info, sign_try_attempts)
                 if download_flag:
@@ -609,10 +604,6 @@ class IosUtils(object):
             app_api_obj.set_device_status("disable", udid_obj.udid)
             UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid, developerid=developer_obj).delete()
 
-            if developer_obj.use_number > 0:
-                developer_obj.use_number = developer_obj.use_number - 1
-                developer_obj.save(update_fields=['use_number'])
-
         udid_obj.delete()
 
     @staticmethod
@@ -679,12 +670,6 @@ class IosUtils(object):
             new_full_path = os.path.join(os.path.dirname(new_full_path_dir),
                                          '%s_%s_%s' % ('remove', new_full_path_name, get_format_time()))
             os.rename(new_full_path_dir, new_full_path)
-            # for root, dirs, files in os.walk(full_path, topdown=False):
-            #     for name in files:
-            #         os.remove(os.path.join(root, name))
-            #     for name in dirs:
-            #         os.rmdir(os.path.join(root, name))
-            # os.rmdir(full_path)
         except Exception as e:
             logger.error("clean_developer developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
                 developer_obj, user_obj, e))
@@ -777,54 +762,34 @@ class IosUtils(object):
         return status, result
 
     @staticmethod
-    def get_device_from_developer(developer_obj, user_obj):
+    def get_device_from_developer(developer_obj):
         auth = get_auth_form_developer(developer_obj)
         app_api_obj = get_api_obj(auth)
         status, result = app_api_obj.get_device()
-        if status:
-            if auth.get("issuer_id"):
-                UDIDsyncDeveloper.objects.filter(developerid=developer_obj, platform=1).delete()
-                for device_obj in result:
-                    device = {
-                        "serial": device_obj.id,
-                        "product": device_obj.name,
-                        "udid": device_obj.udid,
-                        "version": device_obj.model,
-                        "platform": 1
-                    }
-                    app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj, udid=device.get("udid"))
-                    if app_udid_obj:
-                        pass
-                    else:
-                        UDIDsyncDeveloper.objects.create(developerid=developer_obj, **device)
-            else:
+        if status and auth.get("issuer_id"):
 
-                file_format_path_name = file_format_path(user_obj, auth)
-                devices_info = ""
-                try:
-                    with open(file_format_path_name + ".devices.info", "r") as f:
-                        devices_info = f.read().replace("\n\t", "").replace("[", "").replace("]", "")
-                except Exception as e:
-                    logger.error(
-                        "get_device_from_developer developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
-                            developer_obj, user_obj, e))
+            udid_developer_obj_list = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).values_list('udid')
+            udid_developer_list = [x[0] for x in udid_developer_obj_list if len(x) > 0]
+            udid_result_list = [device.udid for device in result]
 
-                UDIDsyncDeveloper.objects.filter(developerid=developer_obj, platform=1).delete()
-                for devicestr in devices_info.split(">"):
-                    formatdevice = re.findall(r'.*Device id="(.*)",.*name="(.*)",.*udid="(.*?)",.*model=(.*),.*',
-                                              devicestr)
-                    if formatdevice:
-                        device = {
-                            "serial": formatdevice[0][0],
-                            "product": formatdevice[0][1],
-                            "udid": formatdevice[0][2],
-                            "version": formatdevice[0][3],
-                            "platform": 1
-                        }
-                        app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,
-                                                                        udid=device.get("udid"))
-                        if app_udid_obj:
-                            pass
-                        else:
-                            UDIDsyncDeveloper.objects.create(developerid=developer_obj, **device)
+            will_del_udid_list = list(set(udid_developer_list) - set(udid_result_list))
+
+            for device_obj in result:
+                device = {
+                    "serial": device_obj.id,
+                    "product": device_obj.name,
+                    "udid": device_obj.udid,
+                    "version": device_obj.model,
+                    "platform": 1
+                }
+                obj, create = UDIDsyncDeveloper.objects.update_or_create(developerid=developer_obj,
+                                                                         udid=device_obj.udid, defaults=device)
+                if not create:
+                    DeveloperDevicesID.objects.filter(udid=obj, developerid=developer_obj).update(
+                        **{'did': device_obj.id})
+            AppUDID.objects.filter(udid__in=will_del_udid_list,
+                                   app_id__developerdevicesid__udid__in=UDIDsyncDeveloper.objects.filter(
+                                       udid__in=will_del_udid_list)).delete()
+            UDIDsyncDeveloper.objects.filter(udid__in=will_del_udid_list).delete()
+
         return status, result

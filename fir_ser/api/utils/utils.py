@@ -7,7 +7,7 @@ import os, datetime, random
 import binascii
 from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT, CACHE_KEY_TEMPLATE
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
-    UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, Token
+    UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, Token, DeveloperDevicesID
 from api.utils.storage.caches import get_app_d_count_by_app_id
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
@@ -36,8 +36,8 @@ def delete_app_to_dev_and_file(developer_obj, app_id):
 
 
 def get_developer_udided(developer_obj):
-    super_sing_used_obj = APPSuperSignUsedInfo.objects.filter(developerid=developer_obj)
-    udid_sync_developer_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj)
+    super_sing_used_obj = APPSuperSignUsedInfo.objects.filter(developerid=developer_obj).all()
+    udid_sync_developer_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).all()
     develoer_udid_lists = []
     supersign_udid_lists = []
     if udid_sync_developer_obj:
@@ -55,16 +55,19 @@ def get_developer_devices(developer_obj_lists):
         other_used_sum += other_used
         flyapp_used_sum += flyapp_used
 
-    use_number_obj = developer_obj_lists.filter(is_actived=True)
-    if use_number_obj:
-        use_number_dict = use_number_obj.aggregate(usable_number=Sum('usable_number'), use_number=Sum('use_number'))
-        use_num = {
-            "all_usable_number": use_number_dict.get("usable_number", 0),
-            "all_use_number": use_number_dict.get("use_number", 0),
-            "other_used_sum": other_used_sum,
-            "flyapp_used_sum": flyapp_used_sum,
-        }
-        return use_num
+    use_number_obj_list = developer_obj_lists.filter(is_actived=True)
+    all_use_number = 0
+    all_usable_number = 0
+    for use_number_obj in use_number_obj_list:
+        all_usable_number += use_number_obj.usable_number
+        all_use_number += DeveloperDevicesID.objects.filter(developerid=use_number_obj).count()
+    use_num = {
+        "all_usable_number": all_usable_number,
+        "all_use_number": all_use_number,
+        "other_used_sum": other_used_sum,
+        "flyapp_used_sum": flyapp_used_sum,
+    }
+    return use_num
 
 
 def get_captcha():
