@@ -340,7 +340,7 @@ class AppDeveloperApiV2(object):
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             devices_obj_list = apple_obj.list_enabled_devices()
-            if devices_obj_list:
+            if devices_obj_list is not None:
                 return True, devices_obj_list
         except Exception as e:
             logger.error("ios developer get device Failed Exception:%s" % e)
