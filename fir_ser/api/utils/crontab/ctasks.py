@@ -49,7 +49,7 @@ def auto_clean_upload_tmp_file():
 
 
 def auto_delete_ios_mobile_tmp_file():
-    mobile_config_tmp_dir = os.path.join(SUPER_SIGN_ROOT, 'tmp', 'mobileconfig')
+    mobile_config_tmp_dir = os.path.join(SUPER_SIGN_ROOT, 'tmp', 'mobile_config')
     for root, dirs, files in os.walk(mobile_config_tmp_dir, topdown=False):
         now_time = time.time()
         for name in files:

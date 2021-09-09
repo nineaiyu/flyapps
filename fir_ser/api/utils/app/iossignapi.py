@@ -9,6 +9,7 @@ from api.utils.app.shellcmds import shell_command, use_user_pass
 from api.utils.baseutils import get_format_time, format_apple_date
 from fir_ser.settings import SUPER_SIGN_ROOT
 import os
+import re
 from api.utils.app.randomstrings import make_app_uuid
 import logging
 from api.utils.apple.appleapiv3 import AppStoreConnectApi
@@ -49,18 +50,46 @@ class ResignApp(object):
         self.cmd = "zsign  -c '%s'  -k '%s' " % (self.app_dev_pem, self.my_local_key)
 
     @staticmethod
-    def sign_mobile_config(mobile_config_path, sign_mobile_config_path, ssl_pem_path, ssl_key_path):
+    def sign_mobile_config(sign_data, ssl_pem_path, ssl_key_path):
         """
-        :param mobile_config_path:  描述文件绝对路径
-        :param sign_mobile_config_path: 签名之后的文件绝对路径
+        :param sign_data:  签名的数据
         :param ssl_pem_path:    pem证书的绝对路径
         :param ssl_key_path:    key证书的绝对路径
         :return:
         """
-        cmd = "openssl smime -sign -in %s -out %s -signer %s " \
-              "-inkey %s -certfile %s -outform der -nodetach " % (
-                  mobile_config_path, sign_mobile_config_path, ssl_pem_path, ssl_key_path, ssl_pem_path)
-        return exec_shell(cmd)
+        #
+        # cmd = "openssl smime -sign -in %s -out %s -signer %s " \
+        #       "-inkey %s -certfile %s -outform der -nodetach " % (
+        #           mobile_config_path, sign_mobile_config_path, ssl_pem_path, ssl_key_path, ssl_pem_path)
+        # return exec_shell(cmd)
+        result = {}
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.serialization import pkcs7
+        from cryptography import x509
+        try:
+            cert_list = re.findall('-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----',
+                                   open(ssl_pem_path, 'r').read(), re.S)
+            if len(cert_list) == 0:
+                raise Exception('load cert failed')
+            else:
+                cert = x509.load_pem_x509_certificate(cert_list[0].encode('utf-8'))
+                cas = [cert]
+                if len(cert_list) > 1:
+                    cas.extend([x509.load_pem_x509_certificate(x.encode('utf-8')) for x in cert_list[1:]])
+                key = serialization.load_pem_private_key(open(ssl_key_path, 'rb').read(), None)
+                result['data'] = pkcs7.PKCS7SignatureBuilder(
+                    data=sign_data,
+                    signers=[
+                        (cert, key, hashes.SHA512()),
+                    ],
+                    additional_certs=cas,
+                ).sign(
+                    serialization.Encoding.DER, options=[],
+                )
+        except Exception as e:
+            result['err_info'] = str(e)
+            return False, result
+        return True, result
 
     def make_p12_from_cert(self, password):
         result = {}

@@ -3,11 +3,12 @@
 # project: 3月
 # author: liuyu
 # date: 2020/3/6
-
-from api.utils.app.supersignutils import udid_bytes_to_dict, get_redirect_server_domain
+from api.utils.app.randomstrings import make_random_uuid
+from api.utils.app.supersignutils import udid_bytes_to_dict, get_redirect_server_domain, make_sign_udid_mobile_config, \
+    get_post_udid_url, get_http_server_domain
 from api.models import Apps
 from django.views import View
-from django.http import HttpResponsePermanentRedirect
+from django.http import HttpResponsePermanentRedirect, FileResponse
 from rest_framework.response import Response
 from api.tasks import run_sign_task
 from api.utils.response import BaseResponse
@@ -89,3 +90,23 @@ class TaskView(APIView):
                 return Response(res.dict)
         res.code = 1002
         return Response(res.dict)
+
+
+class ShowUdidView(View):
+    def get(self, request):
+        server_domain = get_http_server_domain(request)
+        path_info_lists = [server_domain, "look_udid"]
+        udid_url = "/".join(path_info_lists)
+        ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, 'show_udid_info', 'flyapps.cn', '查询设备udid')
+        response = FileResponse(ios_udid_mobile_config)
+        response['Content-Type'] = "application/x-apple-aspen-config"
+        response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileconfig'
+        return response
+
+    def post(self, request):
+        stream_f = str(request.body)
+        format_udid_info = udid_bytes_to_dict(stream_f)
+        logger.info(f"look_udid receive new udid {format_udid_info}")
+        server_domain = get_redirect_server_domain(request)
+        return HttpResponsePermanentRedirect(
+            "%sudid=%s" % (server_domain, format_udid_info.get("udid")))

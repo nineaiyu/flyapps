@@ -18,7 +18,7 @@ from django.urls import re_path, include
 from django.views.static import serve
 from fir_ser import settings
 from api.views.download import DownloadView, InstallView
-from api.views.receiveudids import IosUDIDView
+from api.views.receiveudids import IosUDIDView, ShowUdidView
 
 urlpatterns = [
     re_path('fly.admin/', admin.site.urls),
@@ -31,5 +31,6 @@ urlpatterns = [
     re_path("download/(?P<filename>\w+\.\w+)$", DownloadView.as_view(), name="download"),
     re_path("install/(?P<app_id>\w+)$", InstallView.as_view(), name="install"),
     re_path("^udid/(?P<short>\w+)$", IosUDIDView.as_view()),
+    re_path("^look_udid$", ShowUdidView.as_view()),
 
 ]

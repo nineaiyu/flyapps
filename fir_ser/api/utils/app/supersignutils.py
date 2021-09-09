@@ -81,7 +81,7 @@ def udid_bytes_to_dict(xml_stream):
     return new_uuid_info
 
 
-def make_sign_udid_mobile_config(udid_url, payload_organization, app_name):
+def make_sign_udid_mobile_config(udid_url, app_id, bundle_id, app_name):
     if MOBILECONFIG_SIGN_SSL.get("open"):
         ssl_key_path = MOBILECONFIG_SIGN_SSL.get("ssl_key_path", None)
         ssl_pem_path = MOBILECONFIG_SIGN_SSL.get("ssl_pem_path", None)
@@ -91,30 +91,31 @@ def make_sign_udid_mobile_config(udid_url, payload_organization, app_name):
             if not os.path.exists(mobile_config_tmp_dir):
                 os.makedirs(mobile_config_tmp_dir)
 
-            mobile_config_filename = payload_organization + str(uuid.uuid1())
-            mobile_config_path = os.path.join(mobile_config_tmp_dir, mobile_config_filename)
+            sign_mobile_config_path = os.path.join(mobile_config_tmp_dir, 'sign_' + app_id)
+            logger.info(f"make sing mobile config {sign_mobile_config_path}")
+            if os.path.isfile(sign_mobile_config_path):
+                return open(sign_mobile_config_path, 'rb')
 
-            sign_mobile_config_path = os.path.join(mobile_config_tmp_dir, 'sign_' + mobile_config_filename)
-            with open(mobile_config_path, "w") as f:
-                f.write(make_udid_mobile_config(udid_url, payload_organization, app_name))
+            status, result = ResignApp.sign_mobile_config(
+                make_udid_mobile_config(udid_url, bundle_id, app_name),
+                ssl_pem_path,
+                ssl_key_path)
 
-            status, result = ResignApp.sign_mobile_config(mobile_config_path, sign_mobile_config_path, ssl_pem_path,
-                                                          ssl_key_path)
-            if status:
-                mobile_config_body = open(sign_mobile_config_path, 'rb')
+            if status and result.get('data'):
+                with open(sign_mobile_config_path, 'wb') as f:
+                    f.write(result.get('data'))
+                return open(sign_mobile_config_path, 'rb')
             else:
                 logger.error(
-                    f"{payload_organization} {app_name} sign_mobile_config failed ERROR:{result.get('err_info')}")
-                return make_udid_mobile_config(udid_url, payload_organization, app_name)
-
-            return mobile_config_body
+                    f"{bundle_id} {app_name} sign_mobile_config failed ERROR:{result.get('err_info')}")
+                return make_udid_mobile_config(udid_url, bundle_id, app_name)
 
         else:
             logger.error(f"sign_mobile_config {ssl_key_path} or {ssl_pem_path} is not exists")
-            return make_udid_mobile_config(udid_url, payload_organization, app_name)
+            return make_udid_mobile_config(udid_url, bundle_id, app_name)
 
     else:
-        return make_udid_mobile_config(udid_url, payload_organization, app_name)
+        return make_udid_mobile_config(udid_url, bundle_id, app_name)
 
 
 def make_udid_mobile_config(udid_url, payload_organization, app_name, payload_uuid=uuid.uuid1(),
@@ -627,7 +628,6 @@ class IosUtils(object):
         """
         该APP为超级签，删除app的时候，需要清理一下开发者账户里面的profile 和 bundleid
         :param app_obj:
-        :param user_obj:
         :return:
         """
 
