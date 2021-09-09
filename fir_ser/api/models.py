@@ -326,8 +326,7 @@ class UDIDsyncDeveloper(models.Model):
     serial = models.CharField(max_length=64, verbose_name="序列号", blank=True, null=True, )
     version = models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间"),
-    platform_choices = ((0, 'fly分发'), (1, 'app developer'),)
-    platform = models.SmallIntegerField(choices=platform_choices, default=0, verbose_name="udid所在平台")
+    status = models.BooleanField(verbose_name="设备在开发者平台状态", default=False)
 
     class Meta:
         verbose_name = 'iOS开发平台同步设备信息'

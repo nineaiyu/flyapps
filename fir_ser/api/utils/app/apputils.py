@@ -152,7 +152,7 @@ def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short,
             app_obj.name = app_info["labelname"]
             app_obj.save()
 
-    AppReleaseInfo.objects.filter(app_id=app_obj).update(**{"is_master": False})
+    AppReleaseInfo.objects.filter(app_id=app_obj).update(is_master=False)
 
     release_data = {
         "app_id": app_obj,

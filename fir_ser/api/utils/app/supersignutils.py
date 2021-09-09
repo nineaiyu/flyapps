@@ -325,7 +325,7 @@ class IosUtils(object):
                 developer_app_id = developer_app_id_obj.aid
             if udid_info:
                 sync_device_obj = UDIDsyncDeveloper.objects.filter(udid=udid_info.get('udid'),
-                                                                   developerid=developer_obj).first()
+                                                                   developerid=developer_obj, status=True).first()
                 if sync_device_obj:
                     DeveloperDevicesID.objects.update_or_create(did=sync_device_obj.serial, udid=sync_device_obj,
                                                                 developerid=developer_obj,
@@ -540,7 +540,7 @@ class IosUtils(object):
                                              defaults=self.udid_info)
             if not result.get("did_exists", None):
                 app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=self.developer_obj,
-                                                                udid=self.udid_info.get('udid')).first()
+                                                                udid=self.udid_info.get('udid'), status=True).first()
                 if not app_udid_obj:
                     appudid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid'))
                     device = appudid_obj.values("serial",
@@ -549,7 +549,10 @@ class IosUtils(object):
                                                 'version').first()
                     if result.get("did", None):
                         device['serial'] = result["did"]
-                        app_udid_obj = UDIDsyncDeveloper.objects.create(developerid=self.developer_obj, **device)
+                        device['status'] = True
+                        app_udid_obj, _ = UDIDsyncDeveloper.objects.update_or_create(developerid=self.developer_obj,
+                                                                                     udid=device['udid'],
+                                                                                     defaults=device)
                         DeveloperDevicesID.objects.create(did=result["did"], udid=app_udid_obj,
                                                           developerid=self.developer_obj,
                                                           app_id=self.app_obj)
@@ -602,7 +605,7 @@ class IosUtils(object):
         if udid_lists.count((udid_obj.udid,)) == 1:
             app_api_obj = get_api_obj(auth)
             app_api_obj.set_device_status("disable", udid_obj.udid)
-            UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid, developerid=developer_obj).delete()
+            UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid, developerid=developer_obj).update(status=False)
 
         udid_obj.delete()
 
@@ -620,17 +623,18 @@ class IosUtils(object):
             SuperSignUsed_obj.delete()
 
     @staticmethod
-    def clean_app_by_user_obj(app_obj, user_obj):
+    def clean_app_by_user_obj(app_obj):
         """
         该APP为超级签，删除app的时候，需要清理一下开发者账户里面的profile 和 bundleid
         :param app_obj:
         :param user_obj:
         :return:
         """
-        super_sign_obj_lists = list(
-            set(APPSuperSignUsedInfo.objects.values_list("developerid").filter(user_id=user_obj, app_id=app_obj)))
-        for super_sign_obj in super_sign_obj_lists:
-            developer_obj = AppIOSDeveloperInfo.objects.filter(pk=super_sign_obj[0]).first()
+
+        developer_id_lists = list(set(DeveloperAppID.objects.values_list("developerid").filter(app_id=app_obj)))
+
+        for developer_id in developer_id_lists:
+            developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_id[0]).first()
             if developer_obj:
                 IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
                 delete_app_to_dev_and_file(developer_obj, app_obj.id)
@@ -774,22 +778,26 @@ class IosUtils(object):
 
             will_del_udid_list = list(set(udid_developer_list) - set(udid_result_list))
 
+            udid_enabled_result_list = [device.udid for device in result if device.status == 'ENABLED']
+            will_del_disabled_udid_list = list(set(udid_developer_list) - set(udid_enabled_result_list))
+
             for device_obj in result:
                 device = {
                     "serial": device_obj.id,
                     "product": device_obj.name,
                     "udid": device_obj.udid,
                     "version": device_obj.model,
-                    "platform": 1
+                    "status": True if device_obj.status == 'ENABLED' else False
                 }
                 obj, create = UDIDsyncDeveloper.objects.update_or_create(developerid=developer_obj,
                                                                          udid=device_obj.udid, defaults=device)
                 if not create:
                     DeveloperDevicesID.objects.filter(udid=obj, developerid=developer_obj).update(
                         **{'did': device_obj.id})
-            AppUDID.objects.filter(udid__in=will_del_udid_list,
+            AppUDID.objects.filter(udid__in=will_del_disabled_udid_list,
                                    app_id__developerdevicesid__udid__in=UDIDsyncDeveloper.objects.filter(
-                                       udid__in=will_del_udid_list)).delete()
+                                       udid__in=will_del_disabled_udid_list)).delete()
             UDIDsyncDeveloper.objects.filter(udid__in=will_del_udid_list).delete()
+            DeveloperDevicesID.objects.filter(udid__udid__in=will_del_disabled_udid_list).delete()
 
         return status, result

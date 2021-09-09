@@ -138,7 +138,7 @@ class AppInfoView(APIView):
             if clean:
                 logger.info(f"app_id:{app_id} clean:{clean} ,close super_sign should clean_app_by_user_obj")
                 app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
-                IosUtils.clean_app_by_user_obj(app_obj, request.user)
+                IosUtils.clean_app_by_user_obj(app_obj)
                 return Response(res.dict)
 
             has_combo = data.get("has_combo", None)
@@ -153,12 +153,12 @@ class AppInfoView(APIView):
                     try:
                         if actions == "UNCOMBO":
                             if apps_obj.filter(has_combo=has_combo.first()).first():
-                                apps_obj.update(**{"has_combo": None})
-                                has_combo.update(**{"has_combo": None})
+                                apps_obj.update(has_combo=None)
+                                has_combo.update(has_combo=None)
 
                         elif actions == "COMBO":
-                            apps_obj.update(**{"has_combo": has_combo.first()})
-                            has_combo.update(**{"has_combo": apps_obj.first()})
+                            apps_obj.update(has_combo=has_combo.first())
+                            has_combo.update(has_combo=apps_obj.first())
                         else:
                             pass
                         del_cache_response_by_short(apps_obj.first().app_id)
@@ -297,7 +297,7 @@ class AppReleaseInfoView(APIView):
                         count = APPToDeveloper.objects.filter(app_id=app_obj).count()
                         if app_obj.issupersign or count > 0:
                             logger.info(f"app_id:{app_id} is super_sign ,delete this app need clean IOS developer")
-                            IosUtils.clean_app_by_user_obj(app_obj, request.user)
+                            IosUtils.clean_app_by_user_obj(app_obj)
 
                         storage.delete_file(app_release_obj.release_id, app_release_obj.release_type)
                         delete_local_files(app_release_obj.release_id, app_release_obj.release_type)
@@ -329,11 +329,10 @@ class AppReleaseInfoView(APIView):
                 make_master = data.get("make_master", None)
                 try:
                     if make_master and make_master == act:
-                        AppReleaseInfo.objects.filter(app_id=app_obj).update(**{"is_master": False})
-                        app_release_objs.update(**{"is_master": True})
+                        AppReleaseInfo.objects.filter(app_id=app_obj).update(is_master=False)
+                        app_release_objs.update(is_master=True)
                     else:
-                        app_release_objs.update(
-                            **{"changelog": data.get("changelog", app_release_objs.first().changelog)})
+                        app_release_objs.update(changelog=data.get("changelog", app_release_objs.first().changelog))
                         binary_url = data.get("binary_url", None)
                         if binary_url != '':
                             if binary_url:
@@ -342,7 +341,7 @@ class AppReleaseInfoView(APIView):
                             else:
                                 binary_url = app_release_objs.first().binary_url
 
-                        app_release_objs.update(**{"binary_url": binary_url})
+                        app_release_objs.update(binary_url=binary_url)
                     logger.info(f"update app:{app_obj} release:{app_release_objs} data:{data}")
                 except Exception as e:
                     logger.error(f"update app:{app_obj} release:{app_release_objs} failed Exception:{e}")

@@ -28,7 +28,7 @@ def app_delete(app_obj):
     count = APPToDeveloper.objects.filter(app_id=app_obj).count()
     if app_obj.issupersign or count > 0:
         logger.info(f"app_id:{app_obj.app_id} is supersign ,delete this app need clean IOS developer")
-        IosUtils.clean_app_by_user_obj(app_obj, user_obj)
+        IosUtils.clean_app_by_user_obj(app_obj)
 
     storage = Storage(user_obj)
     has_combo = app_obj.has_combo
@@ -76,7 +76,7 @@ def app_release_delete(app_obj, release_id, storage):
             count = APPToDeveloper.objects.filter(app_id=app_obj).count()
             if app_obj.issupersign or count > 0:
                 logger.info(f"app_id:{app_obj.app_id} is supersign ,delete this app need clean IOS developer")
-                IosUtils.clean_app_by_user_obj(app_obj, user_obj)
+                IosUtils.clean_app_by_user_obj(app_obj)
 
             storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
             delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
