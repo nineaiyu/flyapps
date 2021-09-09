@@ -207,6 +207,16 @@
                     </div>
 
                 </div>
+                <div class="footer"
+                     v-if="(currentappinfo.issupersign || mcurrentappinfo.release_type === 2) && $route.query.udid"
+                     style="margin-top: 5%">
+                    <el-tag type="success">UDID:</el-tag>
+                    <el-tag>
+                        {{ $route.query.udid }}
+                    </el-tag>
+                    <br>
+                    <el-link type="warning" :underline="false">若安装异常，请复制UDID，发送给管理员</el-link>
+                </div>
 
                 <div class="footer" style="margin-top: 30%">
                     免责声明：<br>

@@ -219,6 +219,19 @@
                     </div>
 
                 </div>
+
+                <div class="footer"
+                     v-if="(currentappinfo.issupersign || mcurrentappinfo.release_type === 2) && $route.query.udid"
+                     style="margin-top: 5%">
+                    <span class="el-tag"
+                          style="background-color: #f0f9eb;border-color: #e1f3d8;color: #67c23a;">UDID: </span>
+                    <span class="el-tag">
+                        {{ $route.query.udid }}
+                    </span>
+                    <br>
+                    <span style="color: #ebb563">若安装异常，请复制UDID，发送给管理员</span>
+                </div>
+
                 <div class="footer" style="margin-top: 30%">
                     免责声明：<br>
                     本网站仅提供下载托管，应用为用户自行上传，请甄别应用风险后进行下载！
@@ -688,6 +701,23 @@
 </script>
 
 <style scoped>
+    .el-tag {
+        background-color: #ecf5ff;
+        border-color: #d9ecff;
+        display: inline-block;
+        height: 32px;
+        padding: 0 10px;
+        line-height: 30px;
+        font-size: 12px;
+        color: #409EFF;
+        border-width: 1px;
+        border-style: solid;
+        border-radius: 4px;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        white-space: nowrap;
+    }
+
     .mask {
         z-index: 9;
         position: fixed;
