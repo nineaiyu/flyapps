@@ -32,10 +32,6 @@ def app_delete(app_obj):
 
     storage = Storage(user_obj)
     has_combo = app_obj.has_combo
-    if has_combo:
-        logger.info(
-            f"app_id:{app_obj.app_id} has_combo ,delete this app need uncombo and clean del_cache_response_by_short")
-        has_combo.has_combo = None
     del_cache_response_by_short(app_obj.app_id)
     del_cache_by_delete_app(app_obj.app_id)
     for app_release_obj in AppReleaseInfo.objects.filter(app_id=app_obj).all():
@@ -45,6 +41,12 @@ def app_delete(app_obj):
         storage.delete_file(app_release_obj.icon_url)
         app_release_obj.delete()
     delete_app_screenshots_files(storage, app_obj)
+    if has_combo:
+        logger.info(
+            f"app_id:{app_obj.app_id} has_combo ,delete this app need uncombo and clean del_cache_response_by_short")
+        has_combo.has_combo = None
+        has_combo.save(update_fields=['has_combo'])
+
     app_obj.delete()
 
     return res
