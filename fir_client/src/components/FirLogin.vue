@@ -181,7 +181,7 @@
                             this.wx_login_qr_url = data.data.qr;
                             this.loop_flag = true;
                             this.loop_get_wx_info(data.data.ticket);
-                        }else {
+                        } else {
                             this.$message.error(data.msg);
                             this.wx_visible = false;
                             this.loop_flag = false;
