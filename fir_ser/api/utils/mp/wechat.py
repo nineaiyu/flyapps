@@ -20,7 +20,9 @@ wx_login_info = THIRDLOGINCONF.wx_official
 def format_req_json(j_data, func, *args, **kwargs):
     if j_data.get("errcode") == 40001 or 'invalid credential' in j_data.get('errmsg', ''):
         logger.error(f"error j_data {j_data}")
-        sync_wx_access_token(True)
+        status, result = sync_wx_access_token(True)
+        if not status:
+            return result
         return func(*args, **kwargs)[1]
     return j_data
 
@@ -29,21 +31,25 @@ def sync_wx_access_token(force=False):
     wx_access_token_key = CACHE_KEY_TEMPLATE.get("wx_access_token_key")
     access_token_info = cache.get(wx_access_token_key)
     if not access_token_info or force:
-        access_token_info = make_wx_auth_obj().get_access_token()
+        access_token_info = WxOfficialBase.make_wx_auth_obj().get_access_token()
+        if access_token_info.get('errcode') in ['40013'] or 'invalid appid' in access_token_info.get('errmsg'):
+            return False, access_token_info
         expires_in = access_token_info.get('expires_in')
         if expires_in:
             cache.set(wx_access_token_key, access_token_info, expires_in - 60)
-    return access_token_info
+    return True, access_token_info
 
 
 def get_wx_access_token_cache(c_count=1, ):
-    if c_count > 10:
+    if c_count > 5:
         return ''
     wx_access_token_key = CACHE_KEY_TEMPLATE.get("wx_access_token_key")
     access_token = cache.get(wx_access_token_key)
     if access_token:
         return access_token.get('access_token')
-    sync_wx_access_token(True)
+    status, result = sync_wx_access_token(True)
+    if not status:
+        return result
     return get_wx_access_token_cache(c_count + 1)
 
 
@@ -128,13 +134,14 @@ class WxOfficialBase(object):
         t_url = f'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={self.app_id}&secret={self.app_secret}'
         req = requests.get(t_url)
         if req.status_code == 200:
+            logger.info(f"get access token {req.status_code} {req.text}")
             return req.json()
         logger.error(f"get access token failed {req.status_code} {req.text}")
         return req.text
 
-
-def make_wx_auth_obj():
-    return WxOfficialBase(**wx_login_info.get('auth'))
+    @classmethod
+    def make_wx_auth_obj(cls):
+        return cls(**wx_login_info.get('auth'))
 
 
 def check_signature(params):

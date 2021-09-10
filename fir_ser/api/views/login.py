@@ -403,12 +403,17 @@ class RegistView(APIView):
 def wx_qr_code_response(ret, code, qr_info):
     if code:
         logger.info(f"微信登录码获取成功， {qr_info}")
-        ticket = qr_info.get('ticket')
-        if ticket:
-            set_wx_ticket_login_info_cache(ticket)
-            ret.data = {'qr': show_qrcode_url(ticket), 'ticket': ticket}
+        errmsg = qr_info.get('errmsg')
+        if errmsg:
+            ret.code = 1003
+            ret.msg = "微信登录码获取失败，请稍后"
+        else:
+            ticket = qr_info.get('ticket')
+            if ticket:
+                set_wx_ticket_login_info_cache(ticket)
+                ret.data = {'qr': show_qrcode_url(ticket), 'ticket': ticket}
     else:
-        ret.code = code
+        ret.code = 1003
         ret.msg = "微信登录码获取失败，请稍后"
     return Response(ret.dict)
 

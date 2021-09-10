@@ -5,7 +5,6 @@
 # date: 2020/4/7
 
 from api.models import Apps, UserInfo, AppIOSDeveloperInfo
-from api.utils.mp.wechat import make_wx_auth_obj
 from api.utils.storage.storage import Storage
 from api.utils.app.supersignutils import IosUtils
 from api.utils.utils import send_ios_developer_active_status
