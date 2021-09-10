@@ -5,10 +5,10 @@
 # date: 2020/3/6
 from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.supersignutils import udid_bytes_to_dict, get_redirect_server_domain, make_sign_udid_mobile_config, \
-    get_post_udid_url, get_http_server_domain
+    get_post_udid_url, get_http_server_domain, get_server_domain_from_request
 from api.models import Apps
 from django.views import View
-from django.http import HttpResponsePermanentRedirect, FileResponse
+from django.http import HttpResponsePermanentRedirect, FileResponse, HttpResponse
 from rest_framework.response import Response
 from api.tasks import run_sign_task
 from api.utils.response import BaseResponse
@@ -94,8 +94,11 @@ class TaskView(APIView):
 
 class ShowUdidView(View):
     def get(self, request):
+        udid = request.GET.get("udid")
+        if udid:
+            return HttpResponse("udid: %s" % udid)
         server_domain = get_http_server_domain(request)
-        path_info_lists = [server_domain, "look_udid"]
+        path_info_lists = [server_domain, "show_udid"]
         udid_url = "/".join(path_info_lists)
         ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, 'show_udid_info', 'flyapps.cn', '查询设备udid')
         response = FileResponse(ios_udid_mobile_config)
@@ -106,7 +109,7 @@ class ShowUdidView(View):
     def post(self, request):
         stream_f = str(request.body)
         format_udid_info = udid_bytes_to_dict(stream_f)
-        logger.info(f"look_udid receive new udid {format_udid_info}")
-        server_domain = get_redirect_server_domain(request)
+        logger.info(f"show_udid receive new udid {format_udid_info}")
+        server_domain = get_http_server_domain(request)
         return HttpResponsePermanentRedirect(
-            "%sudid=%s" % (server_domain, format_udid_info.get("udid")))
+            "%s/show_udid?udid=%s" % (server_domain, format_udid_info.get("udid")))

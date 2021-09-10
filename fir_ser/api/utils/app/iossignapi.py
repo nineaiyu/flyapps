@@ -78,7 +78,7 @@ class ResignApp(object):
                     cas.extend([x509.load_pem_x509_certificate(x.encode('utf-8')) for x in cert_list[1:]])
                 key = serialization.load_pem_private_key(open(ssl_key_path, 'rb').read(), None)
                 result['data'] = pkcs7.PKCS7SignatureBuilder(
-                    data=sign_data,
+                    data=sign_data.encode('utf-8'),
                     signers=[
                         (cert, key, hashes.SHA512()),
                     ],

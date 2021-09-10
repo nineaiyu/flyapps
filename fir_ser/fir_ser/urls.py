@@ -31,6 +31,6 @@ urlpatterns = [
     re_path("download/(?P<filename>\w+\.\w+)$", DownloadView.as_view(), name="download"),
     re_path("install/(?P<app_id>\w+)$", InstallView.as_view(), name="install"),
     re_path("^udid/(?P<short>\w+)$", IosUDIDView.as_view()),
-    re_path("^look_udid$", ShowUdidView.as_view()),
+    re_path("^show_udid$", ShowUdidView.as_view()),
 
 ]
