@@ -6,7 +6,7 @@
 
 API_DOMAIN = "https://app.hehelucky.cn"
 WEB_DOMAIN = "https://app.hehelucky.cn"
-MOBILEPROVISION = "https://ali-static.jappstore.com/embedded.mobileprovision"
+MOBILEPROVISION = "https://ali-static.jappstore.com/embedded2.mobileprovision"
 
 
 class BASECONF(object):
@@ -219,7 +219,7 @@ class SENDERCONF(object):
 class IPACONF(object):
     MOBILECONFIG_SIGN_SSL = {
         # 描述文件是否签名，默认是关闭状态；如果开启，并且ssl_key_path 和 ssl_pem_path 正常，则使用填写的ssl进行签名,否则默认不签名
-        'open': False,
+        'open': True,
         'ssl_key_path': '/data/cert/%s.key' % API_DOMAIN.split("://")[1],
         'ssl_pem_path': '/data/cert/%s.pem' % API_DOMAIN.split("://")[1]
     }
