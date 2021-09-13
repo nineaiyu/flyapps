@@ -81,7 +81,7 @@
         </el-dialog>
 
         <el-form ref="form" :model="userinfo" label-width="90px">
-            <el-form-item label="用户名">
+            <el-form-item label="用户名" v-if="userinfo && userinfo.login_type && userinfo.login_type.up">
                 <el-row :gutter="36">
                     <el-col :span="16">
                         <el-input v-model="userinfo.username" :readonly="edituser_name !== true"

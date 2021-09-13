@@ -425,7 +425,7 @@ class UserInfoView(APIView):
         res = BaseResponse()
         serializer = UserInfoSerializer(request.user)
         res.data = serializer.data
-
+        res.data['login_type'] = get_login_type()
         return Response(res.dict)
 
     def put(self, request):
@@ -466,22 +466,22 @@ class UserInfoView(APIView):
                 res.code = 1004
                 res.msg = "老密码校验失败"
         else:
-            username = data.get("username", None)
-            if username and username != request.user.username:
-                if check_username_exists(username):
-                    res.msg = "用户名已经存在"
-                    res.code = 1005
-                    logger.error(f"User {request.user} info save failed. username already exists")
-                    return Response(res.dict)
-                if len(username) < 6:
-                    res.msg = "用户名至少6位"
-                    res.code = 1006
-                    return Response(res.dict)
+            if get_login_type().get('up'):
+                username = data.get("username", None)
+                if username and username != request.user.username:
+                    if check_username_exists(username):
+                        res.msg = "用户名已经存在"
+                        res.code = 1005
+                        logger.error(f"User {request.user} info save failed. username already exists")
+                        return Response(res.dict)
+                    if len(username) < 6:
+                        res.msg = "用户名至少6位"
+                        res.code = 1006
+                        return Response(res.dict)
+                request.user.username = data.get("username", request.user.username)
 
             request.user.job = data.get("job", request.user.job)
             request.user.first_name = data.get("first_name", request.user.first_name)
-            request.user.username = data.get("username", request.user.username)
-
             sms_token = data.get("auth_token", None)
             if sms_token:
                 act = data.get("act", None)

@@ -106,7 +106,7 @@ class AUTHCONF(object):
         "login_type": {
             'sms': True,  # 短信登录
             'email': True,  # 邮件登录
-            'up': True,  # 密码登录
+            'up': False,  # 密码登录
         }
     }
 
