@@ -18,7 +18,7 @@ wx_login_info = THIRDLOGINCONF.wx_official
 
 
 def format_req_json(j_data, func, *args, **kwargs):
-    if j_data.get("errcode") == 40001 or 'invalid credential' in j_data.get('errmsg', ''):
+    if j_data.get("errcode", -1) in [40001] or 'invalid credential' in j_data.get('errmsg', ''):
         logger.error(f"error j_data {j_data}")
         status, result = sync_wx_access_token(True)
         if not status:
@@ -32,7 +32,7 @@ def sync_wx_access_token(force=False):
     access_token_info = cache.get(wx_access_token_key)
     if not access_token_info or force:
         access_token_info = WxOfficialBase.make_wx_auth_obj().get_access_token()
-        if access_token_info.get('errcode') in ['40013'] or 'invalid appid' in access_token_info.get('errmsg'):
+        if access_token_info.get('errcode', -1) in [40013] or 'invalid appid' in access_token_info.get('errmsg', ''):
             return False, access_token_info
         expires_in = access_token_info.get('expires_in')
         if expires_in:
