@@ -706,8 +706,11 @@
                         this.show_buy_download_times = true;
                         this.data_package_prices = res.data;
                         this.pay_choices = res.pay_choices;
-                        if (this.pay_choices) {
-                            this.default_pay_radio = this.pay_choices[0].name
+                        if (this.pay_choices && this.pay_choices.length > 0) {
+                            this.default_pay_radio = this.pay_choices[0].name;
+                        }
+                        if (this.data_package_prices && this.data_package_prices.length > 0) {
+                            this.default_price_radio = this.data_package_prices[parseInt(this.data_package_prices.length / 2)].name;
                         }
                     } else {
                         this.$message.error("获取价格异常");
