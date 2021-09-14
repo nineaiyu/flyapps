@@ -17,6 +17,7 @@ from api.utils.mp.wechat import check_signature, WxMsgCrypt, get_userinfo_from_o
 from api.utils.response import BaseResponse
 from api.utils.serializer import ThirdWxSerializer
 from api.utils.storage.caches import set_wx_ticket_login_info_cache
+from api.views.login import get_login_type
 
 logger = logging.getLogger(__name__)
 
@@ -155,23 +156,25 @@ class ThirdWxAccount(APIView):
 
     def get(self, request):
         res = BaseResponse()
-        # wx_open_id = request.query_params.get("openid", None)
-        wx_obj_lists = ThirdWeChatUserInfo.objects.filter(user_id=request.user)
-        # if wx_open_id:
-        #     wx_obj_lists = wx_obj_lists.filter(openid=wx_open_id)
-        page_obj = PageNumber()
-        info_serializer = page_obj.paginate_queryset(queryset=wx_obj_lists.order_by("-subscribe_time"),
-                                                     request=request,
-                                                     view=self)
-        wx_user_info = ThirdWxSerializer(info_serializer, many=True, )
-        res.data = wx_user_info.data
-        res.count = wx_obj_lists.count()
+
+        if get_login_type().get('third', '').get('wxp'):
+            # wx_open_id = request.query_params.get("openid", None)
+            wx_obj_lists = ThirdWeChatUserInfo.objects.filter(user_id=request.user)
+            # if wx_open_id:
+            #     wx_obj_lists = wx_obj_lists.filter(openid=wx_open_id)
+            page_obj = PageNumber()
+            info_serializer = page_obj.paginate_queryset(queryset=wx_obj_lists.order_by("-subscribe_time"),
+                                                         request=request,
+                                                         view=self)
+            wx_user_info = ThirdWxSerializer(info_serializer, many=True, )
+            res.data = wx_user_info.data
+            res.count = wx_obj_lists.count()
 
         return Response(res.dict)
 
     def delete(self, request):
         openid = request.query_params.get("openid")
         user_id = request.query_params.get("user_id")
-        if openid and user_id:
+        if get_login_type().get('third', '').get('wxp') and openid and user_id:
             ThirdWeChatUserInfo.objects.filter(user_id_id=user_id, openid=openid).delete()
         return self.get(request)

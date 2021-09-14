@@ -247,10 +247,10 @@
                 </el-row>
             </el-form-item>
 
-            <div class="other-way">
+            <div class="other-way" v-if="userinfo && userinfo.login_type && userinfo.login_type.third && JSON.stringify(userinfo.login_type.third).indexOf('true')!==-1">
                 <hr>
                 <span class="info">绑定第三方账户</span>
-                <el-row :gutter="20">
+                <el-row :gutter="20" v-if="userinfo.login_type.third && userinfo.login_type.third.wxp">
                     <el-col :span="6" :offset="6">
                         <el-popover
                                 placement="top"

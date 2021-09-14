@@ -72,11 +72,12 @@
                     <el-link :underline="false" @click="$router.push({name: 'FirResetPwd'})" plain>忘记密码</el-link>
                 </el-form-item>
 
-                <div class="other-way">
+                <div class="other-way" v-if="allow_ways.third && JSON.stringify(allow_ways.third).indexOf('true')!==-1">
                     <hr>
                     <span class="info">或使用以下账户登录</span>
 
                     <el-popover
+                            v-if="allow_ways.third && allow_ways.third.wxp"
                             placement="top"
                             trigger="manual"
                             title="微信扫码关注公众号登录"
@@ -115,7 +116,7 @@
                 },
                 cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
                 activeName: 'username',
-                allow_ways: {},
+                allow_ways: {'third':{}},
                 rutitle: '',
                 rctitle: '',
                 register_enable: false,

@@ -739,13 +739,17 @@ class WeChatLoginView(APIView):
 
     def get(self, request):
         ret = BaseResponse()
-        code, qr_info = make_wx_login_qrcode()
-        return wx_qr_code_response(ret, code, qr_info)
+        if get_login_type().get('third', '').get('wxp'):
+            code, qr_info = make_wx_login_qrcode()
+            return wx_qr_code_response(ret, code, qr_info)
+        return Response(ret.dict)
 
 
 class WeChatLoginCheckView(APIView):
     def post(self, request):
         ret = BaseResponse()
+        if not get_login_type().get('third', '').get('wxp'):
+            return Response(ret.dict)
         ticket = request.data.get("ticket")
         if ticket:
             wx_ticket_data = get_wx_ticket_login_info_cache(ticket)

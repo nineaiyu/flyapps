@@ -64,6 +64,7 @@ class CACHECONF(object):
     password = ''
 
 
+# 微信公众号登录配置
 class THIRDLOGINCONF(object):
     wx_official = {
         'name': 'wx_official',
@@ -107,6 +108,9 @@ class AUTHCONF(object):
             'sms': True,  # 短信登录
             'email': True,  # 邮件登录
             'up': False,  # 密码登录
+            'third': {
+                'wxp': False  # 微信公众号登录，需要在 THIRDLOGINCONF 配置好微信公众号登录
+            },
         }
     }
 
