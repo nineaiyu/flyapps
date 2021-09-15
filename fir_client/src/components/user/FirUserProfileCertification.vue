@@ -220,7 +220,7 @@
 
 <script>
     import {changeInfoFun, getAuthcTokenFun, user_certification} from "@/restful";
-    import {AvatarUploadUtils, checkphone, geetest} from "@/utils";
+    import {AvatarUploadUtils, checkphone, geetest, getUserInfoFun} from "@/utils";
 
     export default {
         name: "FirUserProfileCertification",
@@ -279,6 +279,7 @@
                             this.$message.success("信息提交成功，正在审核中");
                             this.cert_edit_flag = false;
                             this.certification_status = 0;
+                            getUserInfoFun(this);
                             this.get_user_certification({methods: 'GET', data: {act: 'usercert'}});
                         }
                         if (res.data.usercert) {

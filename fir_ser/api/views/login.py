@@ -716,7 +716,7 @@ class CertificationView(APIView):
                 return self.get(request)
         except Exception as e:
             logger.error(f"{request.user} UserCertificationInfo save {data} failed Exception: {e}")
-            res.msg = "数据异常，请检查"
+            res.msg = "数据异常，或身份证已经被绑定，请检查"
             res.code = 1002
         return Response(res.dict)
 
