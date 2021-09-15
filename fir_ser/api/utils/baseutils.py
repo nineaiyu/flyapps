@@ -189,8 +189,8 @@ def get_user_default_domain_name(domain_cname_obj):
 
 
 def get_min_default_domain_cname_obj(is_system=True):
-    return min(DomainCnameInfo.objects.annotate(Count('userdomaininfo')).filter(is_enable=True, is_system=is_system),
-               key=lambda x: x.userdomaininfo__count)
+    return min(DomainCnameInfo.objects.annotate(Count('userinfo')).filter(is_enable=True, is_system=is_system),
+               key=lambda x: x.userinfo__count)
 
 
 def format_apple_date(s_date):

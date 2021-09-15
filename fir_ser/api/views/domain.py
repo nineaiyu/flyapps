@@ -84,7 +84,7 @@ class DomainCnameView(APIView):
             cname = get_cname_from_domain(user_domain_obj.domain_name)
             if cname == user_domain_obj.cname_id.domain_record + '.':
                 user_domain_obj.is_enable = True
-                user_domain_obj.save()
+                user_domain_obj.save(update_fields=["is_enable"])
                 UserDomainInfo.objects.filter(domain_name=user_domain_obj.domain_name, is_enable=False).delete()
                 app_id = request.data.get("app_id", None)
                 if app_id:

@@ -180,17 +180,18 @@ class AppInfoView(APIView):
                     app_obj.supersign_limit_number = data.get("supersign_limit_number",
                                                               app_obj.supersign_limit_number)
                     app_obj.isshow = data.get("isshow", app_obj.isshow)
-
+                    update_fields = ["description", "short", "name", "password", "supersign_limit_number"]
                     if get_user_domain_name(request.user) or get_app_domain_name(app_obj):
                         app_obj.wxeasytype = data.get("wxeasytype", app_obj.wxeasytype)
                     else:
                         app_obj.wxeasytype = 1
-
+                    update_fields.append("wxeasytype")
                     if app_obj.issupersign:
                         if app_obj.supersign_type in [x[0] for x in list(app_obj.supersign_type_choices)]:
                             if app_obj.supersign_type != data.get("supersign_type", app_obj.supersign_type):
                                 do_sign_flag = 1
                             app_obj.supersign_type = data.get("supersign_type", app_obj.supersign_type)
+                            update_fields.append("supersign_type")
                         new_bundle_id = data.get("new_bundle_id", None)
                         new_bundle_name = data.get("new_bundle_name", None)
                         if new_bundle_id and new_bundle_id != app_obj.bundle_id and len(new_bundle_id) > 3:
@@ -210,8 +211,9 @@ class AppInfoView(APIView):
                             # if new_bundle_name != apps_obj.new_bundle_name:
                             #     do_sign_flag = 2
                             app_obj.new_bundle_name = app_obj.name
-
+                        update_fields.extend(["new_bundle_name", "new_bundle_id"])
                     app_obj.wxredirect = data.get("wxredirect", app_obj.wxredirect)
+                    update_fields.append("wxredirect")
                     if app_obj.type == 1 and data.get('issupersign', -1) != -1:
                         # 为啥注释掉，就是该udid已经在该平台使用了，虽然已经没有余额，但是其他应用也是可以超级签名的
                         # developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
@@ -227,8 +229,9 @@ class AppInfoView(APIView):
                             res.msg = "超级签开发者不存在，无法开启"
                             return Response(res.dict)
                         app_obj.issupersign = data.get("issupersign", app_obj.issupersign)
+                        update_fields.append("issupersign")
                     logger.info(f"app_id:{app_id} update new data:{app_obj.__dict__}")
-                    app_obj.save()
+                    app_obj.save(update_fields=update_fields)
                     if app_obj.issupersign:
                         c_task = None
                         if do_sign_flag == 1:
@@ -309,7 +312,7 @@ class AppReleaseInfoView(APIView):
                         has_combo = app_obj.has_combo
                         if has_combo:
                             has_combo.has_combo = None
-                            has_combo.save()
+                            has_combo.save(update_fields=["has_combo"])
                             del_cache_response_by_short(has_combo.app_id)
                         app_obj.delete()
                     else:

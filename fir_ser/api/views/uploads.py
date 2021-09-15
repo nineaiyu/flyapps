@@ -312,7 +312,7 @@ class UploadView(APIView):
                     if release_obj:
                         old_file_key = release_obj.icon_url
                         release_obj.icon_url = new_upload_key
-                        release_obj.save()
+                        release_obj.save(update_fields=["icon_url"])
                         storage.rename_file(upload_key, new_upload_key)
                         del_cache_response_by_short(app_id)
                         storage.delete_file(old_file_key)
@@ -352,7 +352,7 @@ class UploadView(APIView):
                             if certification_obj:
                                 old_certification_url = certification_obj.certification_url
                                 certification_obj.certification_url = new_upload_key
-                                certification_obj.save()
+                                certification_obj.save(update_fields=["certification_url"])
                                 storage.delete_file(old_certification_url)
                             else:
                                 CertificationInfo.objects.create(user_id=request.user, type=p_type,

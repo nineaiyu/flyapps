@@ -144,13 +144,13 @@ def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short,
             app_obj.name = app_info["labelname"]
             # appmobj.wxeasytype = False if user_obj.domain_name or appmobj.domain_name else True
             app_obj.bundle_id = bundle_id
-            app_obj.save()
-            del_cache_response_by_short(app_obj.app_id)
+            app_obj.save(update_fields=["short", "name", "bundle_id"])
         except Exception as e:
             logger.error(f"save app info failed,app_obj:{app_obj}  Exception:{e}")
             app_obj.bundle_id = bundle_id
             app_obj.name = app_info["labelname"]
-            app_obj.save()
+            app_obj.save(update_fields=["name", "bundle_id"])
+        del_cache_response_by_short(app_obj.app_id)
 
     AppReleaseInfo.objects.filter(app_id=app_obj).update(is_master=False)
 
@@ -175,6 +175,8 @@ def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short,
         if is_new_app:
             logger.info(
                 f"create app release failed,release_data:{release_data} ,and app is new ,so delete this app:{app_obj}")
+            storage.delete_file(release_data.get("release_id"), app_obj.type)
+            storage.delete_file(app_img)
             app_obj.delete()
         return False
     try:

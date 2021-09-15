@@ -110,6 +110,7 @@ class DeveloperView(APIView):
                         res.msg = result.get("err_info")
                         return Response(res.dict)
             else:
+                update_fields = []
                 logger.info(f"user {request.user} ios developer {developer_obj} update input data {data}")
                 logger.info(
                     f"user {request.user} ios developer {developer_obj} update old data {developer_obj.__dict__}")
@@ -117,20 +118,25 @@ class DeveloperView(APIView):
                     usable_number = int(data.get("usable_number", developer_obj.usable_number))
                     if 0 <= usable_number <= 100:
                         developer_obj.usable_number = usable_number
+                        update_fields.append("usable_number")
                 except Exception as e:
                     logger.error(
                         f"developer {developer_obj} usable_number {data.get('usable_number', developer_obj.usable_number)} get failed Exception:{e}")
                 developer_obj.description = data.get("description", developer_obj.description)
+                update_fields.append("description")
                 private_key_id = data.get("private_key_id", developer_obj.private_key_id)
                 p8key = data.get("p8key", developer_obj.p8key)
                 if private_key_id != "" and private_key_id != developer_obj.private_key_id:
                     developer_obj.private_key_id = private_key_id
                     developer_obj.is_actived = False
+                    update_fields.append("private_key_id")
                 if p8key != "" and p8key != developer_obj.p8key:
                     developer_obj.p8key = p8key
                     developer_obj.is_actived = False
+                    update_fields.append("p8key")
                 try:
-                    developer_obj.save()
+                    update_fields.append("is_actived")
+                    developer_obj.save(update_fields=update_fields)
                     logger.info(
                         f"user {request.user} ios developer {developer_obj} update now data {developer_obj.__dict__}")
                 except Exception as e:

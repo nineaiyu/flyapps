@@ -428,7 +428,9 @@ def update_order_info(user_id, out_trade_no, payment_number, payment_type):
                         order_obj.pay_time = now
                         order_obj.description = "充值成功，充值下载次数 %s ，现共可用次数 %s" % (
                             download_times, user_obj.download_times + download_times)
-                        order_obj.save()
+                        order_obj.save(
+                            update_fields=["status", "payment_type", "order_type", "payment_number", "pay_time",
+                                           "description"])
                         add_user_download_times(user_id, download_times)
                         logger.info(f"{user_obj} 订单 {out_trade_no} msg：{order_obj.description}")
                         return True

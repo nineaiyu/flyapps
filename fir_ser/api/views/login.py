@@ -33,7 +33,7 @@ def get_register_type():
 def reset_user_pwd(user, sure_password, old_password=''):
     if user is not None:
         user.set_password(sure_password)
-    user.save()
+    user.save(update_fields=["password"])
     logger.info(f"user:{user} change password success,old {old_password} new {sure_password}")
     for token_obj in Token.objects.filter(user=user):
         cache.delete(token_obj.access_token)
@@ -451,7 +451,7 @@ class UserInfoView(APIView):
             user = auth.authenticate(username=request.user.username, password=old_password)
             if user is not None:
                 user.set_password(sure_password)
-                user.save()
+                user.save(update_fields=['password'])
                 res.msg = "密码修改成功"
                 logger.info(f"user:{request.user} change password success,old {old_password} new {sure_password}")
 
@@ -466,6 +466,7 @@ class UserInfoView(APIView):
                 res.code = 1004
                 res.msg = "老密码校验失败"
         else:
+            update_fields = []
             if get_login_type().get('up'):
                 username = data.get("username", None)
                 if username and username != request.user.username:
@@ -479,9 +480,10 @@ class UserInfoView(APIView):
                         res.code = 1006
                         return Response(res.dict)
                 request.user.username = data.get("username", request.user.username)
-
+                update_fields.append("username")
             request.user.job = data.get("job", request.user.job)
             request.user.first_name = data.get("first_name", request.user.first_name)
+            update_fields.extend(["job", "first_name"])
             sms_token = data.get("auth_token", None)
             if sms_token:
                 act = data.get("act", None)
@@ -492,6 +494,7 @@ class UserInfoView(APIView):
                         if str(target) == str(mobile):
                             if is_valid_phone(mobile):
                                 request.user.mobile = data.get("mobile", request.user.mobile)
+                                update_fields.append("mobile")
                         else:
                             res.code = 1005
                             res.msg = "手机号异常"
@@ -499,6 +502,7 @@ class UserInfoView(APIView):
                         if str(target) == str(email):
                             if is_valid_email(email):
                                 request.user.email = data.get("email", request.user.email)
+                                update_fields.append("email")
                         else:
                             res.code = 1005
                             res.msg = "邮箱异常"
@@ -510,7 +514,7 @@ class UserInfoView(APIView):
                     return Response(res.dict)
 
             try:
-                request.user.save()
+                request.user.save(update_fields=update_fields)
             except Exception as e:
                 serializer = UserInfoSerializer(request.user)
                 res.data = serializer.data
@@ -622,7 +626,7 @@ class UserApiTokenView(APIView):
         if old_token == request.user.api_token:
             request.user.api_token = 'reset'
         try:
-            request.user.save()
+            request.user.save(update_fields=["api_token"])
         except Exception as e:
             logger.error(f"User {request.user} api_token save failed. Exception:{e}")
             res.code = 1002
