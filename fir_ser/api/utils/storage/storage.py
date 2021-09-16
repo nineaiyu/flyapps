@@ -134,6 +134,16 @@ class Storage(object):
         if self.storage:
             return self.storage.storage_type
 
+    def get_storage_uuid(self):
+        if self.storage:
+            if self.storage.storage_type == 1:
+                return self.storage.access_key
+            elif self.storage.storage_type == 2:
+                return self.storage.access_key_id
+            else:
+                return self.storage.domain_name
+        return id(self)
+
 
 def get_local_storage(clean_cache=False):
     storage_lists = THIRD_PART_CONFIG.get('storage')

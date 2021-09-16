@@ -195,7 +195,7 @@ def check_storage_is_new_storage(user_obj, new_storage_obj):
         new_storage_obj = Storage(user_obj, None, True)
     else:
         new_storage_obj = Storage(user_obj, new_storage_obj)
-    if old_storage_obj.get_storage_type() == new_storage_obj.get_storage_type():
+    if old_storage_obj.get_storage_uuid() == new_storage_obj.get_storage_uuid():
         return False
     return True
 
@@ -208,7 +208,7 @@ def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_d
     else:
         new_storage_obj = Storage(user_obj, new_storage_obj)
 
-    if old_storage_obj.get_storage_type() == new_storage_obj.get_storage_type():
+    if old_storage_obj.get_storage_uuid() == new_storage_obj.get_storage_uuid():
         # 同一个存储，无需迁移数据
         return True
 

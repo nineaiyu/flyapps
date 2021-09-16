@@ -11,6 +11,7 @@ from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication, StoragePermission
 from rest_framework.response import Response
 from api.models import AppStorage, UserInfo
+from api.utils.storage.caches import MigrateStorageState
 from api.utils.utils import upload_oss_default_head_img, get_choices_dict
 from api.utils.serializer import StorageSerializer
 import logging
@@ -93,6 +94,11 @@ class StorageView(APIView):
         use_storage_id = data.get("use_storage_id", None)
         force = data.get("force", None)
         if use_storage_id:
+            if MigrateStorageState.get_state(request.user.uid):
+                res.code = 1007
+                res.msg = "数据迁移中,请耐心等待"
+                return Response(res.dict)
+            MigrateStorageState.set_state(request.user.uid)
             if not storage_change(use_storage_id, request.user, force):
                 res.code = 1006
                 res.msg = '修改失败'
