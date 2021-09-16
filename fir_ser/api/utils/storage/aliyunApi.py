@@ -118,8 +118,8 @@ class AliYunOss(object):
 
     def fetch_sts_token(self, name, expires, only_put=False, only_get=False):
         """子用户角色扮演获取临时用户的密钥
-        :param only_put:  是否只允许下载
-        :param only_get: 是否只允许上传
+        :param only_put:  是否只允许上传
+        :param only_get: 是否只允许下载
         :param expires: 过期时间
         :param name: obj name
         :return StsToken: 临时用户密钥
