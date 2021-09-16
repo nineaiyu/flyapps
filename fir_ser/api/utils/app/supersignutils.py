@@ -417,8 +417,11 @@ class IosUtils(object):
             delete_local_files(apptodev_obj.binary_file + ".ipa")
             storage_obj.delete_file(apptodev_obj.binary_file + ".ipa")
             apptodev_obj.binary_file = random_file_name
+            old_release_file = apptodev_obj.release_file
             apptodev_obj.release_file = release_obj.release_id
             apptodev_obj.save(update_fields=['binary_file', 'release_file'])
+            if storage_obj.get_storage_type() in [1, 2]:
+                delete_local_files(old_release_file + ".ipa")
         else:
             APPToDeveloper.objects.create(developerid=developer_obj, app_id=app_obj,
                                           binary_file=random_file_name, release_file=release_obj.release_id)
