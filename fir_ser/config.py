@@ -7,7 +7,7 @@ import os
 
 API_DOMAIN = "https://app.hehelucky.cn"
 WEB_DOMAIN = "https://app.hehelucky.cn"
-MOBILEPROVISION = "https://ali-static.jappstore.com/embedded3.mobileprovision"
+MOBILEPROVISION = "https://ali-static.jappstore.com/embedded5.mobileprovision"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
