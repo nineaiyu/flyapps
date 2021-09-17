@@ -10,7 +10,10 @@ import random
 import re
 import json
 import zipfile
-from requests_toolbelt import MultipartEncoder
+
+from oss2 import determine_part_size, SizedFileAdapter
+from oss2.models import PartInfo
+from requests_toolbelt.multipart.encoder import MultipartEncoderMonitor
 import oss2
 import requests
 from androguard.core.bytecodes import apk
@@ -24,24 +27,65 @@ pip install androguard
 '''
 
 
-def upload_aliyunoss(access_key_id, access_key_secret, security_token, endpoint, bucket, file_path, file_name):
+def progress(percent, width=50):
+    if percent >= 1:
+        percent = 1
+    show_str = ('[%%-%ds]' % width) % (int(width * percent) * '#')
+    print('\r%s %d%% ' % (show_str, int(100 * percent)), file=sys.stdout, flush=True, end='')
+
+
+def local_upload_callback(monitor):
+    progress(monitor.bytes_read / monitor.len, width=100)
+
+
+def qiniu_progress_callback(upload_size, total_size):
+    progress(upload_size / total_size, width=100)
+
+
+def alioss_progress_callback_fun(offset, total_size):
+    def progress_callback(upload_size, now_part_size):
+        percent = (offset + upload_size) / total_size  # 接收的比例
+        progress(percent, width=100)
+
+    return progress_callback
+
+
+def upload_aliyunoss(access_key_id, access_key_secret, security_token, endpoint, bucket, local_file_full_path, filename,
+                     headers=None):
     stsauth = oss2.StsAuth(access_key_id, access_key_secret, security_token)
     bucket = oss2.Bucket(stsauth, endpoint, bucket)
-    with open(file_path, 'rb') as fileobj:
-        bucket.put_object(file_name, fileobj)
+    total_size = os.path.getsize(local_file_full_path)
+    # determine_part_size方法用于确定分片大小。
+    part_size = determine_part_size(total_size, preferred_size=1024 * 1024 * 10)
+    upload_id = bucket.init_multipart_upload(filename, headers=headers).upload_id
+    parts = []
+    # 逐个上传分片。
+
+    with open(local_file_full_path, 'rb') as f:
+        part_number = 1
+        offset = 0
+        while offset < total_size:
+            num_to_upload = min(part_size, total_size - offset)
+            result = bucket.upload_part(filename, upload_id, part_number,
+                                        SizedFileAdapter(f, num_to_upload),
+                                        progress_callback=alioss_progress_callback_fun(offset, total_size))
+            parts.append(PartInfo(part_number, result.etag))
+            offset += num_to_upload
+            part_number += 1
+    bucket.complete_multipart_upload(filename, upload_id, parts)
     print("数据上传存储成功.")
 
 
 def upload_qiniuyunoss(key, token, file_path):
     from qiniu import put_file
-    ret, info = put_file(token, key, file_path)
+    ret, info = put_file(token, key, file_path, progress_handler=qiniu_progress_callback)
     if info.status_code == 200:
         print("数据上传存储成功.")
     else:
         raise AssertionError(info.text)
 
 
-class FLY_CLI_SER(object):
+class FLYCliSer(object):
 
     def __init__(self, fly_cli_domain, fly_cli_token):
         self.fly_cli_domain = fly_cli_domain
@@ -72,7 +116,7 @@ class FLY_CLI_SER(object):
 
     def upload_local_storage(self, upload_key, upload_token, app_id, file_path):
         url = '%s/api/v2/fir/server/upload' % self.fly_cli_domain
-        m = MultipartEncoder(fields={
+        m = MultipartEncoderMonitor.from_fields(fields={
             'file': (os.path.basename(file_path), open(file_path, 'rb'), 'application/octet-stream'),
             'certinfo': json.dumps(
                 {
@@ -82,7 +126,7 @@ class FLY_CLI_SER(object):
                     'app_id': app_id,
                 }
             ),
-        })
+        }, callback=local_upload_callback)
         header = {
             'Content-Type': m.content_type,
         }
@@ -99,6 +143,16 @@ class FLY_CLI_SER(object):
         icon_path = appobj.make_app_png(icon_path=appinfo.get("icon_path", None))
         bundle_id = appinfo.get("bundle_id")
         upcretsdata = self.get_upload_token(bundle_id, appinfo.get("type"))
+        if appinfo.get('iOS', '') == 'iOS':
+            f_type = '.ipa'
+        else:
+            f_type = '.apk'
+        filename = "%s-%s-%s%s" % (appinfo.get('labelname'), appinfo.get('version'), upcretsdata.get('short'), f_type)
+        headers = {
+            'Content-Disposition': 'attachment; filename="%s"' % filename.encode(
+                "utf-8").decode("latin1"),
+            'Cache-Control': ''
+        }
         if upcretsdata['storage'] == 1:
             # 七牛云存储
             upload_qiniuyunoss(upcretsdata['png_key'], upcretsdata['png_token'], icon_path)
@@ -113,7 +167,7 @@ class FLY_CLI_SER(object):
             file_auth = upcretsdata['upload_token']
 
             upload_aliyunoss(file_auth['access_key_id'], file_auth['access_key_secret'], file_auth['security_token'],
-                             file_auth['endpoint'], file_auth['bucket'], app_path, upcretsdata['upload_key'])
+                             file_auth['endpoint'], file_auth['bucket'], app_path, upcretsdata['upload_key'], headers)
         elif upcretsdata['storage'] == 3:
             # 本地存储
             self.upload_local_storage(upcretsdata['png_key'], upcretsdata['png_token'], upcretsdata['app_uuid'],
@@ -267,9 +321,9 @@ class AppInfo(object):
 
 
 if __name__ == '__main__':
-    fly_cli_domain = 'https://fly.harmonygames.cn'
-    fly_cli_token = '4baf717aff0011ea80c000163e069e27x2gRvmf2035rP3YWITJxvF4VVE32M55AuVHxOvSbTgdwgF54UeXFzrNLkP1lgUID'
-    fly_obj = FLY_CLI_SER(fly_cli_domain, fly_cli_token)
+    fly_cli_domain = 'https://app.hehelucky.cn'
+    fly_cli_token = 'f63d05d2bb0511eb9fa400163e069e27oTa51Q3N6rJT5yjddCrkmgiFeKRQNa0L3TctPLTYd0CrdIqgO3wfYCKsFnJysQXJ'
+    fly_obj = FLYCliSer(fly_cli_domain, fly_cli_token)
     if len(sys.argv) != 2:
         raise ValueError('参数有误')
     app_path = sys.argv[1]

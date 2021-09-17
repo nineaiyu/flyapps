@@ -116,7 +116,7 @@
                 },
                 cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
                 activeName: 'username',
-                allow_ways: {'third':{}},
+                allow_ways: {'third': {}},
                 rutitle: '',
                 rctitle: '',
                 register_enable: false,

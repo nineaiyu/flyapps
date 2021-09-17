@@ -21,10 +21,21 @@ from api.utils.serializer import AppsShortSerializer
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInfo
 from django.http import FileResponse
 import logging
-from api.utils.baseutils import get_profile_full_path, get_app_domain_name
+from api.utils.baseutils import get_profile_full_path, get_app_domain_name, get_filename_form_file
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 
 logger = logging.getLogger(__name__)
+
+
+def file_response(stream, filename, content_type):
+    return FileResponse(stream, as_attachment=True,
+                        filename=filename,
+                        content_type=content_type)
+
+
+def mobileprovision_file_response(file_path):
+    return file_response(open(file_path, 'rb'), make_random_uuid() + '.mobileprovision',
+                         "application/x-apple-aspen-config")
 
 
 class DownloadView(APIView):
@@ -64,10 +75,7 @@ class DownloadView(APIView):
                     ios_plist_bytes = make_resigned(storage.get_download_url(filename.split('.')[0] + ".ipa"),
                                                     storage.get_download_url(release_obj.icon_url), bundle_id,
                                                     app_version, name)
-                    response = FileResponse(ios_plist_bytes)
-                    response['Content-Type'] = "application/x-plist"
-                    response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid()
-                    return response
+                    return file_response(ios_plist_bytes, make_random_uuid(), "application/x-plist")
                 res.msg = "plist release_id error"
             elif f_type == 'mobileconifg':
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
@@ -76,10 +84,8 @@ class DownloadView(APIView):
                     app_obj = release_obj.app_id
                     ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, app_obj.app_id, app_obj.bundle_id,
                                                                           app_obj.name)
-                    response = FileResponse(ios_udid_mobile_config)
-                    response['Content-Type'] = "application/x-apple-aspen-config"
-                    response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileconfig'
-                    return response
+                    return file_response(ios_udid_mobile_config, make_random_uuid() + '.mobileconfig',
+                                         "application/x-apple-aspen-config")
                 res.msg = "mobile_config release_id error"
             elif f_type == 'mobileprovision':
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
@@ -90,51 +96,34 @@ class DownloadView(APIView):
 
                     if not app_super_obj:
                         file_path = settings.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
-                        if os.path.isfile(file_path):
-                            response = FileResponse(open(file_path, 'rb'))
-                        else:
-                            response = FileResponse()
+                        if file_path and os.path.isfile(file_path):
+                            return mobileprovision_file_response(file_path)
                     else:
                         developer_obj = app_super_obj.developerid
                         file_path = get_profile_full_path(developer_obj, release_obj.app_id)
                         if os.path.isfile(file_path):
-                            response = FileResponse(open(file_path, 'rb'))
+                            return mobileprovision_file_response(file_path)
                         else:
                             file_path = settings.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
-                            if os.path.isfile(file_path):
-                                response = FileResponse(open(file_path, 'rb'))
-                            else:
-                                response = FileResponse()
-                    response['Content-Type'] = "application/x-apple-aspen-config"
-                    response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileprovision'
-                    return response
+                            if file_path and os.path.isfile(file_path):
+                                return mobileprovision_file_response(file_path)
+
                 res.msg = "mobile_provision release_id error"
-            elif f_type == 'dmobileprovision':
+            elif f_type == 'dmobileprovision':  # 企业签名安装信任跳转
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
                 if release_obj:
-                    file_path = settings.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
-                    if os.path.isfile(file_path):
-                        response = FileResponse(open(file_path, 'rb'))
-                    else:
-                        response = FileResponse()
-                    response['Content-Type'] = "application/x-apple-aspen-config"
-                    response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileprovision'
-                    return response
+                    file_path = settings.DEFAULT_MOBILEPROVISION.get("enterprise").get('path')
+                    if file_path and os.path.isfile(file_path):
+                        return mobileprovision_file_response(file_path)
                 res.msg = "d_mobile_provision release_id error"
-
             else:
                 file_path = os.path.join(settings.MEDIA_ROOT, filename)
                 try:
                     if os.path.isfile(file_path):
-                        response = FileResponse(open(file_path, 'rb'))
-                    else:
-                        response = FileResponse()
+                        return FileResponse(open(file_path, 'rb'), as_attachment=True,
+                                            filename=get_filename_form_file(filename))
                 except Exception as e:
                     logger.error(f"read {file_path} failed  Exception:{e}")
-                    response = FileResponse()
-                response['content_type'] = "application/octet-stream"
-                response['Content-Disposition'] = 'attachment; filename=' + filename
-                return response
 
         res.code = 1004
         res.msg = "token校验失败"

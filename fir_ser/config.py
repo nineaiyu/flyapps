@@ -3,10 +3,12 @@
 # project: 7月 
 # author: NinEveN
 # date: 2021/7/19
+import os
 
 API_DOMAIN = "https://app.hehelucky.cn"
 WEB_DOMAIN = "https://app.hehelucky.cn"
-MOBILEPROVISION = "https://ali-static.jappstore.com/embedded2.mobileprovision"
+MOBILEPROVISION = "https://ali-static.jappstore.com/embedded3.mobileprovision"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class BASECONF(object):
@@ -231,12 +233,14 @@ class IPACONF(object):
         # 默认描述文件路径或者下载路径，用户企业签名或者超级签名 跳转 [设置 - 通用 - 描述文件|设备管理] 页面
         # 如果配置了path路径，则走路径，如果配置了url，则走URL，path 优先级大于url优先级
         'enterprise': {
-            'url': MOBILEPROVISION
+            'url': MOBILEPROVISION,
+            # 'path': os.path.join(BASE_DIR,'files', 'embedded.mobileprovision'),
         },
         'supersign': {
             # 超级签名，如果self 为True，则默认用自己的描述文件，否则同企业配置顺序一致,自己的配置文件有时候有问题
             'self': False,
-            'url': MOBILEPROVISION
+            'url': MOBILEPROVISION,
+            # 'path': os.path.join(BASE_DIR,'files', 'embedded.mobileprovision'),
         }
     }
 

@@ -214,3 +214,17 @@ def check_app_password(app_password, password):
     if app_password.lower() != password.strip().lower():
         return None
     return True
+
+
+def get_filename_form_file(filename):
+    file_id_list = filename.split('.')
+    if file_id_list[-1] in ['ipa', 'apk']:
+        app_release_obj = AppReleaseInfo.objects.filter(release_id='.'.join(file_id_list[0:-1])).first()
+        if app_release_obj:
+            app_obj = app_release_obj.app_id
+            if app_obj.type == 0:
+                f_type = '.apk'
+            else:
+                f_type = '.ipa'
+            return f"{app_obj.name}-{app_release_obj.app_version}-{app_obj.short}{f_type}"
+    return filename

@@ -125,6 +125,24 @@ export function dataURLtoFile(dataurl, filename) {//将base64转换为文件
     return new File([u8arr], filename, {type: mime});
 }
 
+function get_file_type(upload_key) {
+    if (upload_key) {
+        const key_list = upload_key.split('.');
+        if (key_list.length > 2) {
+            return key_list[key_list.length - 2]
+        }
+    }
+}
+
+function get_filename(app_info, upload_key) {
+    if (app_info) {
+        let app_type = app_info.type;
+        if (app_type === 'iOS' || app_info === 'Android') {
+            return app_info.appname + '-' + app_info.version + '-' + app_info.short + '.' + get_file_type(upload_key)
+        }
+    }
+}
+
 export function uploadaliyunoss(file, certinfo, app, successcallback, processcallback) {
     let token = certinfo.upload_token;
     let uploadFileClient = new app.oss({
@@ -163,12 +181,19 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
             uploadFileClient = client;
         }
 
-        const options = {
+        let options = {
             progress,
             parallel: 10,
             partSize: 1024 * 1024,
             timeout: 600000,
         };
+        let filename = get_filename(certinfo.app_info, certinfo.upload_key);
+        if (filename) {
+            options['headers'] = {
+                'Content-Disposition': 'attachment; filename="' + encodeURIComponent(filename) + '"',
+                'Cache-Control': ''
+            }
+        }
 
         if (currentCheckpoint) {
             options.checkpoint = currentCheckpoint;

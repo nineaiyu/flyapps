@@ -819,7 +819,8 @@
                 }
                 let certinfo = {
                     'upload_key': upload_key,
-                    'upload_token': upload_token
+                    'upload_token': upload_token,
+                    'app_info': analyseappinfo
                 };
                 if (analyseappinfo.storage === 1) {
                     // eslint-disable-next-line no-unused-vars,no-unreachable

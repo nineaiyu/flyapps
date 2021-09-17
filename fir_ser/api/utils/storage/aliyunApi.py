@@ -15,6 +15,10 @@ import re
 import hashlib
 import time
 import logging
+from oss2 import SizedFileAdapter, determine_part_size
+from oss2.models import PartInfo
+
+from api.utils.baseutils import get_filename_form_file
 
 logger = logging.getLogger(__name__)
 
@@ -197,10 +201,13 @@ class AliYunOss(object):
         return self.del_file(old_filename)
 
     def upload_file(self, local_file_full_path):
+        return self.multipart_upload_file(local_file_full_path)
+
         if os.path.isfile(local_file_full_path):
             filename = os.path.basename(local_file_full_path)
             headers = {
-                'Content-Disposition': 'attachment; filename="%s"' % filename
+                'Content-Disposition': 'attachment; filename="%s"' % filename,
+                'Cache-Control': ''
             }
             self.bucket.put_object_from_file(filename, local_file_full_path, headers)
             # with open(local_file_full_path, 'rb') as fileobj:
@@ -218,3 +225,39 @@ class AliYunOss(object):
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
         return self.bucket.get_object_to_file(name, local_file_full_path)
+
+    def multipart_upload_file(self, local_file_full_path):
+        if os.path.isfile(local_file_full_path):
+            total_size = os.path.getsize(local_file_full_path)
+            # determine_part_size方法用于确定分片大小。
+            part_size = determine_part_size(total_size, preferred_size=1024 * 1024 * 10)
+            filename = os.path.basename(local_file_full_path)
+            headers = {
+                'Content-Disposition': 'attachment; filename="%s"' % get_filename_form_file(filename).encode(
+                    "utf-8").decode("latin1"),
+                'Cache-Control': ''
+            }
+            # 初始化分片。
+            # 如需在初始化分片时设置文件存储类型，请在init_multipart_upload中设置相关headers，参考如下。
+            # headers = dict()
+            # headers["x-oss-storage-class"] = "Standard"
+            upload_id = self.bucket.init_multipart_upload(filename, headers=headers).upload_id
+            parts = []
+
+            # 逐个上传分片。
+            with open(local_file_full_path, 'rb') as f:
+                part_number = 1
+                offset = 0
+                while offset < total_size:
+                    num_to_upload = min(part_size, total_size - offset)
+                    # 调用SizedFileAdapter(fileobj, size)方法会生成一个新的文件对象，重新计算起始追加位置。
+                    result = self.bucket.upload_part(filename, upload_id, part_number,
+                                                     SizedFileAdapter(f, num_to_upload))
+                    parts.append(PartInfo(part_number, result.etag))
+
+                    offset += num_to_upload
+                    part_number += 1
+            self.bucket.complete_multipart_upload(filename, upload_id, parts)
+            return True
+        else:
+            logger.error(f"file {local_file_full_path} is not file")
