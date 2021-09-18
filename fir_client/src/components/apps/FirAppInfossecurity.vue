@@ -6,7 +6,7 @@
                 :close-on-press-escape="false"
                 :visible.sync="bind_domain_sure"
                 width="666px">
-            <bind-domain transitionName="bind-user-domain" :app_id="this.currentapp.app_id"/>
+            <bind-domain v-if="bind_domain_sure" transitionName="bind-app-domain" :app_id="this.currentapp.app_id"/>
         </el-dialog>
         <el-form label-width="80px">
             <el-form-item label-width="200px" label="访问密码">

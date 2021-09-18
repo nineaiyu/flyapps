@@ -50,6 +50,9 @@
                             <el-dropdown-item command="userinfo">个人资料</el-dropdown-item>
                             <el-dropdown-item command="apitoken">API token</el-dropdown-item>
                             <el-dropdown-item command="setdomian">设置域名</el-dropdown-item>
+                            <el-dropdown-item command="setqrdomian"
+                                              v-if="$store.state.userinfo&&$store.state.userinfo.role >1">下载码域名
+                            </el-dropdown-item>
                             <el-dropdown-item command="storage" v-if="$store.state.userinfo.storage_active">存储管理
                             </el-dropdown-item>
                             <el-dropdown-item command="supersign" v-if="$store.state.userinfo.supersign_active">超级签名
@@ -129,7 +132,9 @@
                     }, {methods: 'GET', token: this.token});
 
                 } else if (command === 'setdomian') {
-                    this.$store.dispatch("dodomainaction", true);
+                    this.$store.dispatch("dodomainaction", 1);
+                } else if (command === 'setqrdomian') {
+                    this.$store.dispatch("dodomainaction", 2);
                 } else if (command === 'myorder') {
                     this.$router.push({"name": 'FirUserOrders'})
                 } else if (command === 'contact') {

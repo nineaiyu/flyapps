@@ -28,9 +28,10 @@
                         <span class="version ng-scope">{{ master_release.minimum_os_version }}&nbsp; 或者高版本</span>
                         <span class="short ng-scope" v-if="appinfos.issupersign">超级签</span>
 
-                        <el-popover v-if="$store.state.userinfo.role === 3"
-                                    placement="right"
-                                    width="288">
+                        <el-popover
+                                v-if="$store.state.userinfo&&$store.state.userinfo.role >1 &&$store.state.userinfo.qrcode_domain_name.length>3 "
+                                placement="right"
+                                width="288">
                             <div style="text-align: center; margin: 0">
                                 <vue-qr :margin="qrinfo.margin"
                                         :logoSrc="icon_url" :logoScale="qrinfo.logoScale"
@@ -149,7 +150,10 @@
                 a.dispatchEvent(new MouseEvent('click'))
             },
             short_url() {
-                return location.origin + '/' + this.appinfos.short;
+                const userinfo = this.$store.state.userinfo;
+                if (userinfo && userinfo.role > 1 && userinfo.qrcode_domain_name.length > 3) {
+                    return 'http://' + userinfo.qrcode_domain_name + '/' + this.appinfos.short;
+                }
             },
             setfunactive(item, index) {
                 for (let key in this.$refs) {

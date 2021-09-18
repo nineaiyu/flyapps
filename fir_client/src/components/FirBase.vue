@@ -1,12 +1,13 @@
 <template>
     <div ref="appbase">
         <el-dialog
-                title="绑定下载页域名"
+                :title="bind_domain_title"
                 :close-on-click-modal="false"
                 :close-on-press-escape="false"
                 :visible.sync="bind_domain_sure"
                 width="666px">
-            <bind-domain transitionName="bind-user-domain"/>
+            <bind-domain v-if="bind_domain_sure" :transitionName="`bind-user-domain`+ bind_domain_type"
+                         :domain_type="bind_domain_type"/>
         </el-dialog>
         <canvas ref="canvas" class="canvas" @mousemove="canvas_move" @mouseleave="canvas_leave"/>
         <el-container>
@@ -56,6 +57,8 @@
             return {
                 mousePosition: {},
                 bind_domain_sure: false,
+                bind_domain_title: '绑定下载页域名',
+                bind_domain_type: 1,
                 active: 1,
                 domain_name: '',
                 bind_status: false,
@@ -84,7 +87,14 @@
             },
             '$store.state.domain_action': function () {
                 if (this.$store.state.domain_action) {
-                    this.$store.dispatch("dodomainaction", false);
+                    if (this.$store.state.domain_action === 2) {
+                        this.bind_domain_title = '绑定下载码域名';
+                        this.bind_domain_type = 0
+                    } else {
+                        this.bind_domain_title = '绑定下载页域名';
+                        this.bind_domain_type = 1
+                    }
+                    this.$store.dispatch("dodomainaction", 0);
                     this.bind_domain_sure = true;
                 }
             },

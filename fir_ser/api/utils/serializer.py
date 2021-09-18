@@ -57,7 +57,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
         model = models.UserInfo
         fields = ["username", "uid", "mobile", "job", "email", "domain_name", "role", "first_name",
                   'head_img', 'storage_active', 'supersign_active', 'free_download_times', 'download_times',
-                  'certification']
+                  'certification', 'qrcode_domain_name']
 
     head_img = serializers.SerializerMethodField()
 
@@ -82,6 +82,12 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     def get_domain_name(self, obj):
         return get_user_domain_name(obj)
+
+    qrcode_domain_name = serializers.SerializerMethodField()
+
+    def get_qrcode_domain_name(self, obj):
+        if obj.role and obj.role > 1:
+            return get_user_domain_name(obj, 0)
 
 
 class AdminUserInfoSerializer(UserInfoSerializer):

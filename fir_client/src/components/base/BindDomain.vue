@@ -138,11 +138,15 @@
         props: {
             transitionName: {
                 type: String,
-                default: 'bind-domian'
+                default: 'bind-domain'
             },
             app_id: {
                 type: String,
                 default: undefined
+            },
+            domain_type: {
+                type: Number,
+                default: 1
             },
         },
         data() {
@@ -155,7 +159,7 @@
             }
         },
         mounted() {
-            this.bind_click()
+            this.bind_click();
         },
         beforeDestroy() {
             this.bind_domain_sure = false;
@@ -179,7 +183,7 @@
                         this.bind_status = false;
                         this.$message.error("绑定失败 " + data.msg)
                     }
-                }, {methods: 'PUT', data: {app_id: this.app_id}})
+                }, {methods: 'PUT', data: {app_id: this.app_id, domain_type: this.domain_type}})
             },
             remove_domain() {
                 domainFun(data => {
@@ -188,12 +192,14 @@
                         this.active = 1;
                         this.$message.success("解除绑定成功 ");
                         if (!this.app_id) {
-                            this.$store.dispatch("dodomainshow", true);
+                            if (this.domain_type === 1) {
+                                this.$store.dispatch("dodomainshow", true);
+                            }
                         }
                     } else {
                         this.$message.error("解除绑定失败 " + data.msg)
                     }
-                }, {methods: 'DELETE', data: {app_id: this.app_id}});
+                }, {methods: 'DELETE', data: {app_id: this.app_id, domain_type: this.domain_type}});
             },
             bind_click() {
                 domainFun(data => {
@@ -215,7 +221,7 @@
                     } else {
                         this.$message.error("绑定失败 " + data.msg)
                     }
-                }, {methods: 'GET', data: {app_id: this.app_id}});
+                }, {methods: 'GET', data: {app_id: this.app_id, domain_type: this.domain_type}});
             },
             format_domain_tData(cname_domain) {
                 let domain_name_list = this.domain_name.split('.');
@@ -239,7 +245,10 @@
                         } else {
                             this.$message.error("绑定失败 " + data.msg)
                         }
-                    }, {methods: 'POST', data: {domain_name: this.domain_name, app_id: this.app_id}})
+                    }, {
+                        methods: 'POST',
+                        data: {domain_name: this.domain_name, app_id: this.app_id, domain_type: this.domain_type}
+                    })
                 } else if (this.active === 2) {
                     this.check_cname()
                 }

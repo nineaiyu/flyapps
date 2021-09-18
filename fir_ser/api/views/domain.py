@@ -22,8 +22,12 @@ logger = logging.getLogger(__name__)
 def get_domain_filter(request):
     filter_dict = {'user_id': request.user, 'app_id__app_id': None}
     app_id = request.query_params.get("app_id", request.data.get("app_id", None))
-    if app_id:
+    domain_type = request.query_params.get("domain_type", request.data.get("domain_type", None))
+    if app_id is not None:
         filter_dict['app_id__app_id'] = app_id
+    if domain_type is not None:
+        filter_dict['domain_type'] = domain_type
+    logger.info(f"domain filter {filter_dict}")
     return filter_dict
 
 
@@ -44,10 +48,16 @@ class DomainCnameView(APIView):
     def post(self, request):
         res = BaseResponse()
         domain_name = request.data.get("domain_name", None)
+        domain_type = request.data.get('domain_type', 1)
+        if domain_type not in [x[0] for x in list(UserDomainInfo.domain_type_choices)]:
+            res.code = 1001
+            res.msg = "绑定失败"
+            return Response(res.dict)
         if domain_name:
             domain_name = domain_name.strip(" ")
         if domain_name and len(domain_name) > 3 and is_valid_domain(domain_name):
-            if UserDomainInfo.objects.filter(domain_name=domain_name, is_enable=True).count() != 0:
+            if UserDomainInfo.objects.filter(domain_name=domain_name, is_enable=True,
+                                             domain_type=domain_type).count() != 0:
                 res.code = 1001
                 res.msg = "该域名已经被绑定，请更换其他域名"
             else:
@@ -65,6 +75,7 @@ class DomainCnameView(APIView):
                             'cname_id': min_domain_cname_info_obj,
                             'domain_name': domain_name,
                             'app_id': None,
+                            'domain_type': domain_type
                         }
                         app_id = request.data.get("app_id", None)
                         if app_id:
@@ -85,7 +96,8 @@ class DomainCnameView(APIView):
             if cname == user_domain_obj.cname_id.domain_record + '.':
                 user_domain_obj.is_enable = True
                 user_domain_obj.save(update_fields=["is_enable"])
-                UserDomainInfo.objects.filter(domain_name=user_domain_obj.domain_name, is_enable=False).delete()
+                UserDomainInfo.objects.filter(domain_name=user_domain_obj.domain_name, is_enable=False,
+                                              domain_type=user_domain_obj.domain_type).delete()
                 app_id = request.data.get("app_id", None)
                 if app_id:
                     app_obj = Apps.objects.filter(app_id=app_id).first()

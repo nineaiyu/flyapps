@@ -168,15 +168,16 @@ def get_cname_from_domain(domain):
         return str(None)
 
 
-def get_user_domain_name(obj):
-    domain_obj = UserDomainInfo.objects.filter(user_id=obj, is_enable=True, app_id=None).first()
+def get_user_domain_name(obj, domain_type=1):
+    domain_obj = UserDomainInfo.objects.filter(user_id=obj, is_enable=True, app_id=None,
+                                               domain_type=domain_type).first()
     if domain_obj:
         return domain_obj.domain_name
     return ''
 
 
 def get_app_domain_name(obj):
-    domain_obj = UserDomainInfo.objects.filter(app_id=obj, is_enable=True).first()
+    domain_obj = UserDomainInfo.objects.filter(app_id=obj, is_enable=True, domain_type=1).first()
     if domain_obj:
         return domain_obj.domain_name
     return ''
