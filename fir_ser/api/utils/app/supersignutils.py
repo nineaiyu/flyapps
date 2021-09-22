@@ -4,7 +4,7 @@
 # author: liuyu
 # date: 2020/3/6
 
-import uuid, xmltodict, os, re, logging, time
+import uuid, xmltodict, os, logging, time
 
 import zipfile
 from api.utils.response import BaseResponse

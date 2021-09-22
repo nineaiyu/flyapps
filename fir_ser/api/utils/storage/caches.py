@@ -13,7 +13,7 @@ from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
     USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
 from api.utils.storage.storage import Storage, LocalStorage
-from api.utils.baseutils import get_app_d_count_by_app_id, get_app_domain_name, check_app_password
+from api.utils.baseutils import get_app_d_count_by_app_id, get_app_domain_name, check_app_password, get_user_domain_name
 import logging
 from django.db.models import F
 
@@ -146,11 +146,15 @@ def del_cache_response_by_short(app_id, udid=''):
                 del_cache_response_by_short_util(combo_dict.get("short"), combo_dict.get("app_id"), udid)
 
 
-def del_cache_response_by_short_util(short, app_id, udid):
-    logger.info(f"del_cache_response_by_short short:{short} app_id:{app_id} udid:{udid}")
+def del_short_cache(short):
     key = "_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short, '*'])
     for app_download_key in cache.iter_keys(key):
         cache.delete(app_download_key)
+
+
+def del_cache_response_by_short_util(short, app_id, udid):
+    logger.info(f"del_cache_response_by_short short:{short} app_id:{app_id} udid:{udid}")
+    del_short_cache(short)
 
     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"), app_id]))
 
@@ -274,16 +278,27 @@ def send_msg_over_limit(act, email):
     return limit_cache_util(act, auth_code_key, SYNC_CACHE_TO_DATABASE.get("try_send_msg_over_limit_times"))
 
 
-def set_default_app_wx_easy(user_obj, only_clean_cache=False):
-    app_obj_lists = Apps.objects.filter(user_id=user_obj)
-    for app_obj in app_obj_lists:
-        if only_clean_cache:
-            del_cache_response_by_short(app_obj.app_id)
-        else:
-            if not get_app_domain_name(app_obj):
-                app_obj.wxeasytype = True
-                app_obj.save(update_fields=['wxeasytype'])
-                del_cache_response_by_short(app_obj.app_id)
+def reset_short_response_cache(user_obj, app_obj=None):
+    if app_obj is None:
+        app_obj_short_list = [x[0] for x in Apps.objects.filter(user_id=user_obj).values_list('short').all() if x]
+    else:
+        app_obj_short_list = [app_obj.short]
+    for short in app_obj_short_list:
+        del_short_cache(short)
+
+
+def reset_app_wx_easy_type(user_obj, app_obj=None):
+    if get_user_domain_name(user_obj):
+        return reset_short_response_cache(user_obj, app_obj)
+    if app_obj is None:
+        app_obj_list = Apps.objects.filter(user_id=user_obj).all()
+    else:
+        app_obj_list = [app_obj]
+    for app_obj in app_obj_list:
+        if not get_app_domain_name(app_obj):
+            app_obj.wxeasytype = True
+            app_obj.save(update_fields=['wxeasytype'])
+        del_short_cache(app_obj.short)
 
 
 def enable_user_download_times_flag(user_id):

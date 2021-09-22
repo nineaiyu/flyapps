@@ -3,6 +3,8 @@
 # project: 3月 
 # author: liuyu
 # date: 2020/3/6
+from urllib.parse import urlsplit
+
 from rest_framework.views import APIView
 
 from api.utils.TokenManager import verify_token
@@ -21,7 +23,8 @@ from api.utils.serializer import AppsShortSerializer
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInfo
 from django.http import FileResponse
 import logging
-from api.utils.baseutils import get_profile_full_path, get_app_domain_name, get_filename_form_file
+from api.utils.baseutils import get_profile_full_path, get_app_domain_name, get_filename_form_file, \
+    check_app_domain_name_access
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 
 logger = logging.getLogger(__name__)
@@ -146,19 +149,24 @@ class ShortDownloadView(APIView):
         res = check_app_permission(app_obj, res)
         if res.code != 1000:
             return Response(res.dict)
+        origin_domain_name = request.META.get('HTTP_ORIGIN', 'xx').split('//')[-1]
+        domain_name = get_redirect_server_domain(request, app_obj.user_id, get_app_domain_name(app_obj))
+        if not check_app_domain_name_access(app_obj, origin_domain_name, domain_name.split('//')[-1]):
+            res.code = 1004
+            res.msg = "访问域名不合法"
+        else:
+            if udid:
+                if not app_obj.issupersign:
+                    res.code = 1002
+                    res.msg = "参数有误"
+                    return Response(res.dict)
+                del_cache_response_by_short(app_obj.app_id, udid=udid)
 
-        if udid:
-            if not app_obj.issupersign:
-                res.code = 1002
-                res.msg = "参数有误"
-                return Response(res.dict)
-            del_cache_response_by_short(app_obj.app_id, udid=udid)
-
-        app_serializer = AppsShortSerializer(app_obj, context={"key": "ShortDownloadView", "release_id": release_id,
-                                                               "storage": Storage(app_obj.user_id)})
-        res.data = app_serializer.data
-        res.udid = udid
-        res.domain_name = get_redirect_server_domain(request, app_obj.user_id, get_app_domain_name(app_obj))
+            app_serializer = AppsShortSerializer(app_obj, context={"key": "ShortDownloadView", "release_id": release_id,
+                                                                   "storage": Storage(app_obj.user_id)})
+            res.data = app_serializer.data
+            res.udid = udid
+            res.domain_name = domain_name
         return Response(res.dict)
 
     # key的设置
@@ -167,13 +175,18 @@ class ShortDownloadView(APIView):
         release_id = request.query_params.get("release_id", '')
         udid = request.query_params.get("udid", None)
         time = request.query_params.get("time", None)
+        origin_domain_name = request.META.get('HTTP_ORIGIN', 'xx').split('//')[-1]
+        if not origin_domain_name:
+            origin_domain_name = 'default.site'
         if udid and time:
             udid = time
         if not udid:
             udid = ""
-        logging.info(f"get or make cache_response short:{kwargs.get('short', '')} release_id:{release_id} udid:{udid}")
+        logging.info(
+            f"get or make cache_response short:{kwargs.get('short', '')} origin_domain_name:{origin_domain_name} release_id:{release_id} udid:{udid}")
         return "_".join(
-            [settings.CACHE_KEY_TEMPLATE.get("download_short_key"), kwargs.get("short", ''), release_id, udid])
+            [settings.CACHE_KEY_TEMPLATE.get("download_short_key"), kwargs.get("short", ''), origin_domain_name,
+             release_id, udid])
 
 
 class InstallView(APIView):

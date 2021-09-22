@@ -229,3 +229,16 @@ def get_filename_form_file(filename):
                 f_type = '.ipa'
             return f"{app_obj.name}-{app_release_obj.app_version}-{app_obj.short}{f_type}"
     return filename
+
+
+def check_app_domain_name_access(app_obj, access_domain_name, extra_domain=None):
+    if app_obj and access_domain_name:
+        domain_list = []
+        if extra_domain:
+            domain_list.append(extra_domain)
+        app_domain_name = get_app_domain_name(app_obj)
+        if app_domain_name: domain_list.append(app_domain_name)
+        user_domain_name = get_user_domain_name(app_obj.user_id)
+        if user_domain_name: domain_list.append(user_domain_name)
+        if access_domain_name in domain_list:
+            return True
