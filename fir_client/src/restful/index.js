@@ -662,3 +662,18 @@ export function wxutils(callBack, params, load = true) {
         true
     );
 }
+
+/**访问域名绑定 */
+export function domaininfo(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/domain_info',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}

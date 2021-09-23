@@ -177,7 +177,7 @@ def get_user_domain_name(obj, domain_type=1):
 
 
 def get_app_domain_name(obj):
-    domain_obj = UserDomainInfo.objects.filter(app_id=obj, is_enable=True, domain_type=1).first()
+    domain_obj = UserDomainInfo.objects.filter(app_id=obj, is_enable=True, domain_type=2).first()
     if domain_obj:
         return domain_obj.domain_name
     return ''

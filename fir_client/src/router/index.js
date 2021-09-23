@@ -153,6 +153,12 @@ const router = new VueRouter({
                     component: () => import("@/components/user/FirUserOrders"),
                 },
                 {
+                    path: 'domain',
+                    name: 'FirUserDomain',
+                    meta: {label: '绑定域名详情'},
+                    component: () => import("@/components/user/FirUserDomain"),
+                },
+                {
                     path: 'supersign-help',
                     name: 'FirSuperSignHelp',
                     meta: {label: '密钥获取帮助'},

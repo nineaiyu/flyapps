@@ -115,7 +115,7 @@
 
         <div>
             <el-input
-                    style="width: 30%;margin-right: 30px;margin-bottom: 10px"
+                    style="width: 30%;margin-right: 30px;margin-bottom: 5px"
                     v-model="order_id_seach"
                     clearable
                     placeholder="输入订单ID"/>

@@ -25,7 +25,7 @@ from api.views.storage import StorageView
 from api.views.receiveudids import IosUDIDView, TaskView
 from api.views.order import PriceView, OrderView, PaySuccess
 from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView, SuperSignCertView
-from api.views.domain import DomainCnameView
+from api.views.domain import DomainCnameView, DomainInfoView
 from api.views.thirdlogin import ValidWxChatToken, ThirdWxAccount
 
 # router=DefaultRouter()
@@ -59,6 +59,7 @@ urlpatterns = [
     re_path("^certification$", CertificationView.as_view()),
     re_path(r"^pay_success/(?P<name>\w+)$", PaySuccess.as_view()),
     re_path("^cname_domain$", DomainCnameView.as_view()),
+    re_path("^domain_info$", DomainInfoView.as_view()),
     re_path("^mp.weixin$", ValidWxChatToken.as_view()),
     re_path("^third.wx.login$", WeChatLoginView.as_view()),
     re_path("^third.wx.sync$", WeChatLoginCheckView.as_view()),

@@ -586,3 +586,21 @@ class ThirdWxSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ThirdWeChatUserInfo
         exclude = ["id"]
+
+
+class DomainNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserDomainInfo
+        exclude = ["id", "user_id"]
+
+    app_info = serializers.SerializerMethodField()
+
+    def get_app_info(self, obj):
+        app_obj = obj.app_id
+        if app_obj:
+            app_info = {
+                'app_id': app_obj.app_id,
+                'name': app_obj.name,
+            }
+            return app_info
+        return {}

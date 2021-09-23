@@ -482,13 +482,19 @@ class UserDomainInfo(models.Model):
     domain_name = models.CharField(verbose_name="下载页面域名", db_index=True, max_length=64, null=False, blank=False)
     is_enable = models.BooleanField(default=False, verbose_name="绑定成功")
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
-    domain_type_choices = ((0, '下载码域名'), (1, '预览下载域名'),)
+    domain_type_choices = ((0, '下载码域名'), (1, '下载页域名'), (2, '应用专用域名'))
     domain_type = models.SmallIntegerField(choices=domain_type_choices, default=1, verbose_name="域名类型",
                                            help_text="0 表示下载码域名，扫描下载码域名，会自动跳转到预览域名")
 
     class Meta:
         verbose_name = '用户分发域名绑定'
         verbose_name_plural = "用户分发域名绑定"
+
+    def save(self, *args, **kwargs):
+        if self.domain_type == 2:
+            if not self.app_id:
+                raise KeyError('app_id must exists when domain_type is 2')
+        super(UserDomainInfo, self).save(*args, **kwargs)
 
     def __str__(self):
         return "%s-%s-%s" % (self.user_id, self.cname_id, self.domain_name)

@@ -3,7 +3,7 @@
 # project: 3月 
 # author: NinEveN
 # date: 2021/3/29
-
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
 
 from api.utils.baseutils import is_valid_domain, get_cname_from_domain, get_user_domain_name, \
@@ -14,7 +14,9 @@ from rest_framework.response import Response
 from api.models import UserDomainInfo, Apps
 import logging
 
+from api.utils.serializer import DomainNameSerializer
 from api.utils.storage.caches import del_cache_response_by_short, reset_app_wx_easy_type, reset_short_response_cache
+from api.utils.utils import get_choices_dict
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,7 @@ def add_new_domain_info(res, request, domain_name, domain_type):
             app_obj = Apps.objects.filter(app_id=app_id).first()
             if app_obj:
                 data_dict['app_id'] = app_obj
+                data_dict['domain_type'] = 2
         UserDomainInfo.objects.create(**data_dict)
 
 
@@ -163,4 +166,39 @@ class DomainCnameView(APIView):
                 app_obj = Apps.objects.filter(app_id=app_id).first()
             reset_app_wx_easy_type(request.user, app_obj)
             user_domain_obj.delete()
+        return Response(res.dict)
+
+
+class PageNumber(PageNumberPagination):
+    page_size = 10  # 每页显示多少条
+    page_size_query_param = 'size'  # URL中每页显示条数的参数
+    page_query_param = 'page'  # URL中页码的参数
+    max_page_size = None  # 最大页码数限制
+
+
+class DomainInfoView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+
+    def get(self, request):
+        res = BaseResponse()
+        search_key = request.query_params.get("search_key", None)
+        obj_lists = UserDomainInfo.objects.filter(user_id=request.user)
+        if search_key:
+            obj_lists1 = obj_lists.filter(domain_name=search_key)
+            if not obj_lists1:
+                obj_lists = obj_lists.filter(app_id__name__contains=search_key)
+            else:
+                obj_lists = obj_lists1
+
+        page_obj = PageNumber()
+        domain_info_serializer = page_obj.paginate_queryset(
+            queryset=obj_lists.order_by("-created_time").order_by('domain_type'),
+            request=request,
+            view=self)
+        domain_info = DomainNameSerializer(domain_info_serializer, many=True, )
+        res.data = domain_info.data
+        res.count = obj_lists.count()
+
+        res.domain_type_choices = get_choices_dict(UserDomainInfo.domain_type_choices)
+
         return Response(res.dict)

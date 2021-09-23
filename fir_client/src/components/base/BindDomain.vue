@@ -37,11 +37,12 @@
                                     label="主机记录"
                             >
                                 <template slot-scope="scope">
-                                <el-tooltip content="点击复制到剪贴板">
-                                    <el-link  v-if="scope.row.host" :underline="false" v-clipboard:copy="scope.row.host"
-                                             v-clipboard:success="copy_success">{{ scope.row.host }}
-                                    </el-link>
-                                </el-tooltip>
+                                    <el-tooltip content="点击复制到剪贴板">
+                                        <el-link v-if="scope.row.host" :underline="false"
+                                                 v-clipboard:copy="scope.row.host"
+                                                 v-clipboard:success="copy_success">{{ scope.row.host }}
+                                        </el-link>
+                                    </el-tooltip>
                                 </template>
                             </el-table-column>
                             <el-table-column
@@ -51,8 +52,9 @@
                                     width="300">
                                 <template slot-scope="scope">
                                     <el-tooltip content="点击复制到剪贴板">
-                                        <el-link  v-if="scope.row.dns" :underline="false" v-clipboard:copy="scope.row.dns"
-                                                  v-clipboard:success="copy_success">{{ scope.row.dns }}
+                                        <el-link v-if="scope.row.dns" :underline="false"
+                                                 v-clipboard:copy="scope.row.dns"
+                                                 v-clipboard:success="copy_success">{{ scope.row.dns }}
                                         </el-link>
                                     </el-tooltip>
                                 </template>
@@ -72,7 +74,7 @@
                                 </el-link>
                             </div>
 
-                            <p style="margin: 10px 0">您的账户正在绑定域名：<strong>{{ domain_name }}</strong></p>
+                            <p style="margin: 10px 0">{{b_t_msg}}正在绑定域名：<strong>{{ domain_name }}</strong></p>
                             <el-row>
                                 <el-col :span="16"><p>系统未检出到您的CNAME记录，请检查您的配置。</p></el-col>
                                 <el-col :span="6">
@@ -92,7 +94,7 @@
                             </div>
 
                             <el-row>
-                                <el-col :span="16"><p>您的账户已绑定域名：<strong>{{ domain_name }}</strong></p></el-col>
+                                <el-col :span="16"><p>{{b_t_msg}}已绑定域名：<strong>{{ domain_name }}</strong></p></el-col>
                                 <el-col :span="6">
                                     <el-button type="danger" size="small" plain style="margin-top: 8px"
                                                @click="remove_domain">
@@ -137,7 +139,7 @@
                 <el-button @click="last"
                            :disabled="bind_status|| active===1 ">上一步
                 </el-button>
-                <el-button  v-if="force_bind" @click="next(1)">强制绑定</el-button>
+                <el-button v-if="force_bind" @click="next(1)">强制绑定</el-button>
                 <el-button v-else @click="next(0)">下一步</el-button>
 
             </div>
@@ -164,6 +166,10 @@
                 type: Number,
                 default: 1
             },
+            domain_state: {
+                type: Boolean,
+                default: false
+            },
         },
         data() {
             return {
@@ -172,10 +178,14 @@
                 bind_domain_sure: true,
                 domain_name: '',
                 domain_tData: [{'type': 'CNAME', 'host': 'xxx', 'dns': 'demo.xxx.cn'}],
-                force_bind:false,
+                force_bind: false,
+                b_t_msg: '您的账户',
             }
         },
         mounted() {
+            if (this.domain_type === 2) {
+                this.b_t_msg = '您的应用'
+            }
             this.bind_click();
         },
         beforeDestroy() {
@@ -194,6 +204,9 @@
                             if (this.domain_type === 1) {
                                 this.$store.dispatch("dodomainshow", false);
                             }
+                        }
+                        if (this.domain_state) {
+                            this.$store.dispatch("dosetdomainstate", true);
                         }
                     } else {
                         if (data.code === 1004) {
@@ -218,12 +231,16 @@
                                 this.$store.dispatch("dodomainshow", true);
                             }
                         }
+                        if (this.domain_state) {
+                            this.$store.dispatch("dosetdomainstate", true);
+                        }
                     } else {
                         this.$message.error("解除绑定失败 " + data.msg)
                     }
                 }, {methods: 'DELETE', data: {app_id: this.app_id, domain_type: this.domain_type}});
             },
             bind_click() {
+                this.$store.dispatch("dosetdomainstate", false);
                 domainFun(data => {
                     if (data.code === 1000) {
                         if (data.data) {
@@ -266,13 +283,18 @@
                             }
                         } else {
                             this.$message.error("绑定失败 " + data.msg);
-                            if(data.code === 1011){
-                                this.force_bind=true
+                            if (data.code === 1011) {
+                                this.force_bind = true
                             }
                         }
                     }, {
                         methods: 'POST',
-                        data: {domain_name: this.domain_name, app_id: this.app_id, domain_type: this.domain_type,force_bind:force_bind}
+                        data: {
+                            domain_name: this.domain_name,
+                            app_id: this.app_id,
+                            domain_type: this.domain_type,
+                            force_bind: force_bind
+                        }
                     })
                 } else if (this.active === 2) {
                     this.check_cname()
