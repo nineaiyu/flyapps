@@ -129,6 +129,10 @@ def get_dict_from_filter_fields(filter_fields, data):
     for filed in filter_fields:
         f_value = data.get(filed, None)
         if f_value:
+            if f_value == 'true':
+                f_value = True
+            if f_value == 'false':
+                f_value = False
             filter_data[filed] = f_value
     return filter_data
 

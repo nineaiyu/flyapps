@@ -105,7 +105,7 @@
               查看编辑
             </el-button>
           </router-link>
-          <el-button type="danger" size="mini" @click="deleteApp(scope.row.id)">
+          <el-button type="danger" size="mini" @click="remove_order_info(scope.row)">
             删除
           </el-button>
         </template>
@@ -117,7 +117,7 @@
 </template>
 
 <script>
-import { getOrderInfo } from '@/api/order'
+import { getOrderInfo, deleteOrderInfo } from '@/api/order'
 import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
@@ -207,11 +207,21 @@ export default {
   created() {
     this.fetchData()
   }, mounted() {
-    if (this.$route.query.user_id) {
-      this.listQuery.user_id = this.$route.query.user_id
+    if (this.$route.params.user_id) {
+      this.listQuery.user_id = this.$route.params.user_id
     }
   },
   methods: {
+    remove_order_info(order_info) {
+      deleteOrderInfo({ id: order_info.id }).then(response => {
+        this.list = response.data
+        if (response.code === 1000) {
+          this.fetchData()
+        } else {
+          this.$message.error('操作失败了 ' + response.msg)
+        }
+      })
+    },
     handleFilter() {
       this.listQuery.page = 1
       this.fetchData()

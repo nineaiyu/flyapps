@@ -194,7 +194,9 @@
           <el-form-item label="下载域名" prop="domain_name">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.domain_name" />
+                <router-link v-if="postForm.id" :to="{name: 'domain_info_list',params:{user_id:postForm.id}}">
+                  <el-button type="primary">查看下载域名绑定信息</el-button>
+                </router-link>
               </el-col>
             </el-row>
           </el-form-item>
@@ -204,7 +206,9 @@
                 <el-input :value="postForm.download_times" disabled />
               </el-col>
               <el-col :span="8">
-                <el-button>后台充值</el-button>
+                <router-link v-if="postForm.id" :to="{name: 'order_info_list',params:{user_id:postForm.id}}">
+                  <el-button type="primary">查看充值订单信息</el-button>
+                </router-link>
               </el-col>
             </el-row>
           </el-form-item>
@@ -225,7 +229,11 @@
         </el-col>
       </el-row>
     </el-form>
+
     <el-col :span="9" style="float: right">
+      <el-col :span="8">
+        <el-button @click="add_amount_download_times(postForm.id)">下载次数充值</el-button>
+      </el-col>
       <el-button v-if="!is_edit" type="primary" @click="is_edit=true">修改</el-button>
       <div v-else>
         <el-button type="primary" @click="is_edit=false">取消</el-button>
@@ -238,6 +246,7 @@
 <script>
 import { validURL } from '@/utils/validate'
 import { getUserInfos, updateUserInfo } from '@/api/user'
+import { createOrderInfo } from '@/api/order'
 import { getStorageInfo, changeStorageInfo } from '@/api/storage'
 
 const defaultForm = {
@@ -259,6 +268,7 @@ const defaultForm = {
   date_joined: undefined,
   storage_active: undefined,
   storage: undefined,
+  certification_id: undefined,
   supersign_active: undefined,
   role_choices: [],
   gender_choices: [],
@@ -340,6 +350,26 @@ export default {
     }
   },
   methods: {
+
+    add_amount_download_times(user_id) {
+      this.$prompt('请输入要充值的下载次数', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }).then(({ value }) => {
+        createOrderInfo({ id: user_id, amount: parseInt(value) }).then(res => {
+          if (res.code === 1000) {
+            this.$message.success('下载次数充值成功')
+            this.fetchData(user_id)
+          }
+        })
+      }).catch((e) => {
+        console.log(e)
+        this.$message({
+          type: 'info',
+          message: '取消充值'
+        })
+      })
+    },
     changeStorageData(force) {
       changeStorageInfo({ id: this.postForm.id, use_storage_id: this.postForm.storage, force: force }).then(response => {
         this.$message.success('存储数据迁移并设置刷新成功')

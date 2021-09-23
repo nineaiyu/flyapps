@@ -34,12 +34,12 @@
           <el-image :src="scope.row.head_img" :preview-src-list="[scope.row.head_img]" fit="contain" style="width: 80px; height: 80px" />
         </template>
       </el-table-column>
-      <el-table-column label="登录名">
+      <el-table-column label="登录名" align="center">
         <template slot-scope="scope">
           {{ scope.row.username }}
         </template>
       </el-table-column>
-      <el-table-column label="昵称">
+      <el-table-column label="昵称" align="center">
         <template slot-scope="scope">
           {{ scope.row.first_name }}
         </template>
@@ -49,7 +49,7 @@
           <span>{{ scope.row.mobile }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="邮箱" width="210" align="center">
+      <el-table-column label="邮箱" width="200" align="center">
         <template slot-scope="scope">
           {{ scope.row.email }}
         </template>
@@ -104,7 +104,7 @@
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="110" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <router-link :to="{name: 'user_info_edit',params:{id:scope.row.id}}">
             <el-button type="primary" size="mini">

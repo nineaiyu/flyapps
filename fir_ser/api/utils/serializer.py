@@ -604,3 +604,15 @@ class DomainNameSerializer(serializers.ModelSerializer):
             }
             return app_info
         return {}
+
+
+class AdminDomainNameSerializer(DomainNameSerializer):
+    class Meta:
+        model = models.UserDomainInfo
+        fields = "__all__"
+        read_only_fields = ["id", "app_id", "domain_type", "created_time", "cname_id"]
+
+    domain_type_choices = serializers.SerializerMethodField()
+
+    def get_domain_type_choices(self, obj):
+        return get_choices_dict(obj.domain_type_choices)

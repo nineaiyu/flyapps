@@ -157,7 +157,7 @@ export default {
       return statusMap[status]
     },
     appStatusNameFilter(row) {
-      return baseFilter(row.status,row.status_choices)
+      return baseFilter(row.status, row.status_choices)
     },
     appStatusFilter(status) {
       const statusMap = {
@@ -190,6 +190,7 @@ export default {
   },
   created() {
     this.listQuery.user_id = this.$route.params && this.$route.params.user_id
+    this.listQuery.id = this.$route.params && this.$route.params.app_id
     this.fetchData()
   },
   methods: {

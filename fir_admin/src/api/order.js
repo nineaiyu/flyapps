@@ -15,4 +15,18 @@ export function updateOrderInfo(data) {
     data
   })
 }
+export function deleteOrderInfo(data) {
+  return request({
+    url: '/order/info',
+    method: 'delete',
+    data
+  })
+}
+export function createOrderInfo(data) {
+  return request({
+    url: '/order/info',
+    method: 'post',
+    data
+  })
+}
 

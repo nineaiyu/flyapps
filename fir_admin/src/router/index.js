@@ -155,7 +155,8 @@ export const constantRoutes = [
         hidden: true
       }
     ]
-  }, {
+  },
+  {
     path: '/order',
     component: Layout,
     children: [
@@ -173,7 +174,27 @@ export const constantRoutes = [
         hidden: true
       }
     ]
-  }, {
+  },
+  {
+    path: '/domain',
+    component: Layout,
+    children: [
+      {
+        path: 'list',
+        name: 'domain_info_list',
+        component: () => import('@/views/domain/list'),
+        meta: { title: '下载域名管理', icon: 'form' }
+      },
+      {
+        path: 'edit/:id(\\d+)',
+        component: () => import('@/views/domain/Detail'),
+        name: 'domain_info_edit',
+        meta: { title: '编辑信息', noCache: true, activeMenu: '/domain/list' },
+        hidden: true
+      }
+    ]
+  },
+  {
     path: '/supersign',
     component: Layout,
     redirect: '/supersign/developer',
@@ -215,11 +236,12 @@ export const constantRoutes = [
             name: 'devices_info_list',
             component: () => import('@/views/supersign/devices/list'),
             meta: { title: '设备消耗', icon: 'form' }
-          },
+          }
         ]
       }
     ]
-  }, {
+  },
+  {
     path: '/settings',
     component: Layout,
     redirect: '/settings/email',
@@ -264,7 +286,6 @@ export const constantRoutes = [
       }
     ]
   },
-
   {
     path: '/nested',
     component: Layout,

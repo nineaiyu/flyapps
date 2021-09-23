@@ -435,7 +435,6 @@ def update_order_info(user_id, out_trade_no, payment_number, payment_type):
                     try:
                         order_obj.status = 0
                         order_obj.payment_type = payment_type
-                        order_obj.order_type = 0
                         order_obj.payment_number = payment_number
                         now = timezone.now()
                         if not timezone.is_naive(now):

@@ -16,10 +16,10 @@ from django.core.cache import cache
 from rest_framework.views import APIView
 import binascii
 import os, datetime
-from api.utils.utils import get_captcha, valid_captcha, get_choices_dict
+from api.utils.utils import get_captcha, valid_captcha, get_choices_dict, get_order_num
 from api.utils.response import BaseResponse
 from fir_ser.settings import CACHE_KEY_TEMPLATE, LOGIN
-from api.utils.storage.caches import login_auth_failed
+from api.utils.storage.caches import login_auth_failed, update_order_info
 import logging
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle
 from rest_framework.pagination import PageNumberPagination
@@ -28,7 +28,7 @@ from api.utils.baseutils import format_storage_selection
 logger = logging.getLogger(__name__)
 
 
-class AppsPageNumber(PageNumberPagination):
+class PageNumber(PageNumberPagination):
     page_size = 20  # 每页显示多少条
     page_size_query_param = 'limit'  # URL中每页显示条数的参数
     page_query_param = 'page'  # URL中页码的参数
@@ -44,7 +44,7 @@ class OrderInfoView(APIView):
                          "order_type"]
         filter_data = get_dict_from_filter_fields(filter_fields, request.query_params)
         sort = request.query_params.get("sort", "-created_time")
-        page_obj = AppsPageNumber()
+        page_obj = PageNumber()
         obj_list = Order.objects.filter(**filter_data).order_by(sort)
         page_serializer = page_obj.paginate_queryset(queryset=obj_list, request=request,
                                                      view=self)
@@ -62,40 +62,56 @@ class OrderInfoView(APIView):
             res.msg = "参数错误"
             return Response(res.dict)
         obj = Order.objects.filter(pk=pk).first()
+        old_status = obj.status
+        new_status = data.get('status', -99)
         if obj:
             data['pk'] = pk
             serializer = AdminOrdersSerializer(obj, data=data, partial=True)
             if serializer.is_valid():
-                serializer.save()
+                if old_status != new_status and new_status == 0:
+                    update_order_info(obj.user_id.pk, obj.order_number, obj.order_number, obj.payment_type)
+                else:
+                    serializer.save()
                 res.data = serializer.data
                 return Response(res.dict)
         res.code = 1004
         res.msg = "数据校验失败"
         return Response(res.dict)
 
-
-class OrderPayView(APIView):
-    authentication_classes = [AdminTokenAuthentication, ]
-
-    def put(self, request):
+    def delete(self, request):
         res = BaseResponse()
         data = request.data
         pk = data.get("id", None)
         if not pk:
             res.code = 1003
             res.msg = "参数错误"
+        else:
+            order_obj = Order.objects.filter(pk=pk).first()
+            order_obj.delete()
+        return Response(res.dict)
+
+    def post(self, request):
+        res = BaseResponse()
+        data = request.data
+        pk = data.get("id", None)
+        amount = data.get("amount", 0)
+        if not pk:
+            res.code = 1003
+            res.msg = "参数错误"
             return Response(res.dict)
         obj = UserInfo.objects.filter(pk=pk).first()
         if obj:
-            logger.info(f"user {obj} update storage data:{data}")
-            use_storage_id = data.get("use_storage_id", None)
-            force = data.get("force", None)
-            if use_storage_id:
-                if not storage_change(use_storage_id, obj, force):
-                    res.code = 1006
-                    res.msg = '修改失败'
-                return Response(res.dict)
-
+            if amount > 0:
+                order_number = get_order_num()
+                order_obj = Order.objects.create(payment_type=2, order_number=order_number, payment_number=order_number,
+                                                 user_id=obj, status=1, order_type=1, actual_amount=0,
+                                                 actual_download_times=amount, payment_name='后台管理员充值',
+                                                 actual_download_gift_times=0)
+                if update_order_info(obj.pk, order_obj.order_number, order_obj.order_number, order_obj.payment_type):
+                    return Response(res.dict)
+                else:
+                    res.code = 1005
+                    res.msg = "订单创建失败"
         res.code = 1004
         res.msg = "数据校验失败"
         return Response(res.dict)

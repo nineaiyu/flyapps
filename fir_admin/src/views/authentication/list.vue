@@ -86,9 +86,7 @@
               查看编辑
             </el-button>
           </router-link>
-          <el-button type="danger" size="mini" @click="deleteApp(scope.row.id)">
-            删除
-          </el-button>
+
         </template>
       </el-table-column>
     </el-table>
