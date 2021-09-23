@@ -7,6 +7,8 @@
 from django.contrib import auth
 from api.models import Token, AppReleaseInfo, Apps
 from rest_framework.response import Response
+
+from api.utils.TokenManager import verify_token
 from api.utils.auth import AdminTokenAuthentication
 from api.utils.serializer import AdminAppsSerializer, AdminAppReleaseSerializer
 from django.core.cache import cache
@@ -16,7 +18,8 @@ import os, datetime
 from api.utils.utils import get_captcha, valid_captcha, get_choices_dict
 from api.utils.response import BaseResponse
 from fir_ser.settings import CACHE_KEY_TEMPLATE, LOGIN
-from api.utils.storage.caches import login_auth_failed, del_cache_response_by_short
+from api.utils.storage.caches import login_auth_failed, del_cache_response_by_short, get_app_instance_by_cache, \
+    get_download_url_by_cache
 import logging
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle
 from rest_framework.pagination import PageNumberPagination
@@ -124,4 +127,35 @@ class AppReleaseInfoView(APIView):
                 return Response(res.dict)
         res.code = 1004
         res.msg = "数据校验失败"
+        return Response(res.dict)
+
+    def post(self, request):
+        res = BaseResponse()
+        data = request.data
+        downtoken = data.get("token", None)
+        app_id = data.get("app_id", None)
+        release_id = data.get("release_id", None)
+
+        if not downtoken or not app_id or not release_id:
+            res.code = 1004
+            res.msg = "参数丢失"
+            return Response(res.dict)
+
+        if verify_token(downtoken, release_id):
+            app_obj = Apps.objects.filter(pk=app_id).values("pk", 'user_id', 'type').first()
+            release_obj = AppReleaseInfo.objects.filter(app_id=app_id, release_id=release_id).count()
+            if app_obj and release_obj:
+                if app_obj.get("type") == 0:
+                    app_type = '.apk'
+                else:
+                    app_type = '.ipa'
+                download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600)
+                res.data = {"download_url": download_url, "extra_url": extra_url}
+                return Response(res.dict)
+        else:
+            res.code = 1004
+            res.msg = "token校验失败"
+            return Response(res.dict)
+        res.code = 1006
+        res.msg = "该应用不存在"
         return Response(res.dict)

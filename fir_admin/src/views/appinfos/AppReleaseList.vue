@@ -67,13 +67,16 @@
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <router-link :to="{name: 'app_release_info_edit',params:{app_id:listQuery.app_id,id:scope.row.id}}">
             <el-button type="primary" size="mini">
               查看编辑
             </el-button>
           </router-link>
+          <el-button type="info" size="mini" @click="download_bin(scope.row)">
+            下载源文件
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -83,7 +86,7 @@
 </template>
 
 <script>
-import { getAppReleaseInfos } from '@/api/app'
+import { getAppReleaseInfos, downloadAppReleaseInfos } from '@/api/app'
 import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
@@ -130,6 +133,7 @@ export default {
         page: 1,
         limit: 10,
         app_id: undefined,
+        download_token: undefined,
         release_id: undefined,
         sort: '-created_time'
       },
@@ -143,6 +147,21 @@ export default {
     this.fetchData()
   },
   methods: {
+    download_bin(app_info) {
+      downloadAppReleaseInfos(
+        {
+          'token': app_info.download_token,
+          'release_id': app_info.release_id,
+          'app_id': app_info.app_id
+        }
+      ).then(res => {
+        if (res.code === 1000) {
+          window.location.href = res.data.download_url
+        } else {
+          this.$message.error(res.msg)
+        }
+      })
+    },
     handleFilter() {
       this.listQuery.page = 1
       this.fetchData()

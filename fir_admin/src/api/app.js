@@ -39,3 +39,10 @@ export function updateReleaseAppInfo(data) {
     data
   })
 }
+export function downloadAppReleaseInfos(data) {
+  return request({
+    url: '/app/release/info',
+    method: 'post',
+    data
+  })
+}
