@@ -51,7 +51,7 @@ class UserInfo(AbstractUser):
         verbose_name_plural = "账户信息"
 
     def __str__(self):
-        return "%s(%s)" % (self.username, self.get_role_display())
+        return "%s_%s_%s(%s)" % (self.uid, self.email, self.mobile, self.get_role_display())
 
     def save(self, *args, **kwargs):
         if len(self.uid) < 8:
