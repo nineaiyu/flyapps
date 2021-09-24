@@ -10,7 +10,7 @@ from api.utils.storage.caches import update_order_info, update_order_status
 import json
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('pay')
 
 
 class Weixinpay(object):
@@ -43,7 +43,9 @@ class Weixinpay(object):
             time_expire=time_expire,
             attach=json.dumps(passback_params),
         )
-        return {'type': self.p_type, 'url': json.loads(data).get('code_url', ''), 'out_trade_no': out_trade_no}
+        result = {'type': self.p_type, 'url': json.loads(data).get('code_url', ''), 'out_trade_no': out_trade_no}
+        logger.info(f"微信支付连接生成成功 {result}")
+        return result
 
     def valid_order(self, request):
         headers = {

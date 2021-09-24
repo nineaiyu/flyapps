@@ -299,10 +299,33 @@ LOGGING = {
             'formatter': 'standard',
             'encoding': 'utf-8',
         },
+        'warning': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
+            'filename': os.path.join(BASE_LOG_DIR, "flyapp_warning.log"),  # 日志文件
+            'maxBytes': 1024 * 1024 * 5,  # 日志大小 50M
+            'backupCount': 10,
+            'formatter': 'standard',
+            'encoding': 'utf-8',
+        },
+        'pay': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
+            'filename': os.path.join(BASE_LOG_DIR, "flyapp_pay.log"),  # 日志文件
+            'maxBytes': 1024 * 1024 * 5,  # 日志大小 50M
+            'backupCount': 10,
+            'formatter': 'standard',
+            'encoding': 'utf-8',
+        },
     },
     'loggers': {
         '': {  # 默认的logger应用如下配置
-            'handlers': ['TF', 'console', 'error'],  # 上线之后可以把'console'移除
+            'handlers': ['TF', 'console', 'error', 'warning'],  # 上线之后可以把'console'移除
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'pay': {  # 默认的logger应用如下配置
+            'handlers': ['pay'],  # 上线之后可以把'console'移除
             'level': 'DEBUG',
             'propagate': True,
         },

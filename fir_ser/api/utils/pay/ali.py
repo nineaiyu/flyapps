@@ -13,7 +13,7 @@ from api.utils.storage.caches import update_order_info, update_order_status
 import json
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('pay')
 
 
 class Alipay(object):
@@ -47,9 +47,10 @@ class Alipay(object):
             return_url=self.ali_config.get("RETURN_URL"),
             passback_params=json.dumps(passback_params)
         )
-
-        return {'type': self.p_type, 'url': "https://openapi.alipay.com/gateway.do?%s" % order_string,
-                'out_trade_no': out_trade_no}
+        result = {'type': self.p_type, 'url': "https://openapi.alipay.com/gateway.do?%s" % order_string,
+                  'out_trade_no': out_trade_no}
+        logger.info(f"支付宝支付连接生成成功 {result}")
+        return result
 
     def valid_order(self, request):
         data = request.data.copy().dict()

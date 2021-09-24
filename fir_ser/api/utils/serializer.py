@@ -143,7 +143,7 @@ class AppsSerializer(serializers.ModelSerializer):
     def get_has_combo(self, obj):
         if obj.has_combo:
             obj.has_combo.has_combo = None
-            return AppsSerializer(obj.has_combo, context=self.context).data
+            return AppsListSerializer(obj.has_combo, context=self.context).data
 
     preview_url = serializers.SerializerMethodField()
 
@@ -204,6 +204,35 @@ class AppsSerializer(serializers.ModelSerializer):
             return datainfo
         else:
             return {}
+
+
+class AppsListSerializer(AppsSerializer):
+    class Meta:
+        model = models.Apps
+        fields = ["app_id", "bundle_id", "issupersign", "name", "preview_url", "short", "type", "master_release",
+                  "has_combo"]
+
+    def get_master_release(self, obj):
+        master_release_obj = get_app_master_obj_from_context(self, obj)
+        if master_release_obj:
+            key = ''
+            icon_url = get_download_url_from_context(self, obj, key, master_release_obj.icon_url)
+            datainfo = {
+                "app_version": master_release_obj.app_version,
+                "icon_url": icon_url,
+                "build_version": master_release_obj.build_version,
+                "binary_size": bytes2human(master_release_obj.binary_size),
+                "binary_url": master_release_obj.binary_url,
+                "release_type": master_release_obj.release_type,
+            }
+            return datainfo
+        else:
+            return {}
+
+    def get_has_combo(self, obj):
+        if obj.has_combo:
+            obj.has_combo.has_combo = None
+            return AppsListSerializer(obj.has_combo, context=self.context).data
 
 
 class AdminAppsSerializer(AppsSerializer):

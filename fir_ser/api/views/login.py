@@ -425,6 +425,7 @@ class UserInfoView(APIView):
         res = BaseResponse()
         serializer = UserInfoSerializer(request.user)
         res.data = serializer.data
+        del res.data['username']
         res.data['login_type'] = get_login_type()
         return Response(res.dict)
 

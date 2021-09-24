@@ -15,7 +15,7 @@ from api.utils.app.supersignutils import IosUtils
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo, AppScreenShot
-from api.utils.serializer import AppsSerializer, AppReleaseSerializer
+from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
@@ -94,7 +94,7 @@ class AppsView(APIView):
         app_page_serializer = page_obj.paginate_queryset(queryset=apps_obj.order_by("-updated_time"), request=request,
                                                          view=self)
 
-        app_serializer = AppsSerializer(app_page_serializer, many=True, context={"storage": Storage(request.user)})
+        app_serializer = AppsListSerializer(app_page_serializer, many=True, context={"storage": Storage(request.user)})
 
         res.userinfo = {}
         res.has_next = {}
