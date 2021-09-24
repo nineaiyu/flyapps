@@ -81,6 +81,11 @@
           {{ scope.row.master_release.binary_size }}
         </template>
       </el-table-column>
+      <el-table-column label="应用类型" width="80" align="center">
+        <template slot-scope="scope">
+          {{ scope.row |appTypeNameFilter }}
+        </template>
+      </el-table-column>
       <el-table-column label="历史版本数" width="100" align="center">
         <template slot-scope="scope">
           <router-link :to="{name: 'app_release_info_list',params:{app_id:scope.row.id}}">
@@ -158,6 +163,9 @@ export default {
     },
     appStatusNameFilter(row) {
       return baseFilter(row.status, row.status_choices)
+    },
+    appTypeNameFilter(row) {
+      return baseFilter(row.type, row.type_choices)
     },
     appStatusFilter(status) {
       const statusMap = {
