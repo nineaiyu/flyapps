@@ -24,7 +24,7 @@ from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInf
 from django.http import FileResponse
 import logging
 from api.utils.baseutils import get_profile_full_path, get_app_domain_name, get_filename_form_file, \
-    check_app_domain_name_access
+    check_app_domain_name_access, get_real_ip_address
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 
 logger = logging.getLogger(__name__)
@@ -228,10 +228,7 @@ class InstallView(APIView):
 
                 res.data = {"download_url": download_url, "extra_url": extra_url}
                 if download_url != "" and "mobileconifg" not in download_url:
-                    if request.META.get('HTTP_X_FORWARDED_FOR', None):
-                        ip = request.META['HTTP_X_FORWARDED_FOR']
-                    else:
-                        ip = request.META['REMOTE_ADDR']
+                    ip = get_real_ip_address(request)
                     logger.info(f"remote ip {ip} short {short} download_url {download_url} app_obj {app_obj}")
                     set_app_download_by_cache(app_id)
                     amount = app_obj.get("d_count")

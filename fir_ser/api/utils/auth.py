@@ -105,3 +105,15 @@ class SuperSignPermission(BasePermission):
         if results and results[0]:
             return results[0].supersign_active
         return True
+
+
+class DownloadQrPermission(BasePermission):
+    message = "权限不足"
+
+    def has_permission(self, request, view):
+        domain_type = request.query_params.get('domain_type', -1)
+        results = get_user_from_request_auth(request)
+        if results and results[0]:
+            if domain_type == '0' and results[0].role < 2:
+                return False
+        return True

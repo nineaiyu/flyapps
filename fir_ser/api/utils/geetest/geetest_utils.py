@@ -35,11 +35,17 @@ def check_bypass_status():
 
 
 # 从缓存中取出当前缓存的bypass状态(success/fail)
-def get_bypass_cache():
+def get_bypass_cache(count=3):
     bypass_status_cache = redis_connect.get(GEETEST_BYPASS_STATUS_KEY)
-    if not bypass_status_cache:
-        bypass_status_cache = 'fail'
-    return bypass_status_cache
+    if bypass_status_cache:
+        return bypass_status_cache
+    else:
+        if count > 0:
+            check_bypass_status()
+            count -= 1
+            return get_bypass_cache(count)
+        else:
+            return 'fail'
 
 
 # 验证初始化接口，GET请求

@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
     check_username_exists, set_user_token
-from api.utils.baseutils import is_valid_phone, is_valid_email, get_min_default_domain_cname_obj
+from api.utils.baseutils import is_valid_phone, is_valid_email, get_min_default_domain_cname_obj, get_real_ip_address
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
 from fir_ser.settings import REGISTER, LOGIN, CHANGER
@@ -400,7 +400,7 @@ class RegistView(APIView):
         return Response(response.dict)
 
 
-def wx_qr_code_response(ret, code, qr_info):
+def wx_qr_code_response(ret, code, qr_info, ip_addr):
     if code:
         logger.info(f"微信登录码获取成功， {qr_info}")
         errmsg = qr_info.get('errmsg')
@@ -410,7 +410,7 @@ def wx_qr_code_response(ret, code, qr_info):
         else:
             ticket = qr_info.get('ticket')
             if ticket:
-                set_wx_ticket_login_info_cache(ticket)
+                set_wx_ticket_login_info_cache(ticket, {'ip_addr': ip_addr})
                 ret.data = {'qr': show_qrcode_url(ticket), 'ticket': ticket}
     else:
         ret.code = 1003
@@ -533,7 +533,7 @@ class UserInfoView(APIView):
         ret = BaseResponse()
         uid = request.user.uid
         code, qr_info = make_wx_login_qrcode(f"web.bind.{uid}")
-        return wx_qr_code_response(ret, code, qr_info)
+        return wx_qr_code_response(ret, code, qr_info, get_real_ip_address(request))
 
 
 class AuthorizationView(APIView):
@@ -746,7 +746,7 @@ class WeChatLoginView(APIView):
         ret = BaseResponse()
         if get_login_type().get('third', '').get('wxp'):
             code, qr_info = make_wx_login_qrcode()
-            return wx_qr_code_response(ret, code, qr_info)
+            return wx_qr_code_response(ret, code, qr_info, get_real_ip_address(request))
         return Response(ret.dict)
 
 
@@ -758,12 +758,12 @@ class WeChatLoginCheckView(APIView):
         ticket = request.data.get("ticket")
         if ticket:
             wx_ticket_data = get_wx_ticket_login_info_cache(ticket)
-            if wx_ticket_data:
-                if wx_ticket_data == -1:
+            if wx_ticket_data and wx_ticket_data.get('pk'):
+                if wx_ticket_data.get('pk', -1) == -1:
                     ret.msg = "还未绑定用户，请通过手机或者邮箱登录账户之后进行绑定"
                     ret.code = 1005
                 else:
-                    user = UserInfo.objects.filter(pk=wx_ticket_data).first()
+                    user = UserInfo.objects.filter(pk=wx_ticket_data['pk']).first()
                     if user.is_active:
                         key, user_info = set_user_token(user)
                         serializer = UserInfoSerializer(user_info)

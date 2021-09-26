@@ -614,7 +614,14 @@ class AdminUserCertificationSerializer(serializers.ModelSerializer):
 class ThirdWxSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ThirdWeChatUserInfo
-        exclude = ["id"]
+        exclude = ["id", "sex", "address", "user_id"]
+
+
+class AdminThirdWxSerializer(ThirdWxSerializer):
+    class Meta:
+        model = models.ThirdWeChatUserInfo
+        fields = "__all__"
+        read_only_fields = ["id", "openid", "user_id", "head_img_url"]
 
 
 class DomainNameSerializer(serializers.ModelSerializer):

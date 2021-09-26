@@ -195,6 +195,25 @@ export const constantRoutes = [
     ]
   },
   {
+    path: '/wxbind',
+    component: Layout,
+    children: [
+      {
+        path: 'list',
+        name: 'wxbind_info_list',
+        component: () => import('@/views/wxbind/list'),
+        meta: { title: '微信绑定管理', icon: 'form' }
+      },
+      {
+        path: 'edit/:id(\\d+)',
+        component: () => import('@/views/wxbind/Detail'),
+        name: 'wxbind_info_edit',
+        meta: { title: '编辑信息', noCache: true, activeMenu: '/wxbind/list' },
+        hidden: true
+      }
+    ]
+  },
+  {
     path: '/supersign',
     component: Layout,
     redirect: '/supersign/developer',

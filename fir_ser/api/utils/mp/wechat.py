@@ -10,6 +10,7 @@ import json
 
 from django.core.cache import cache
 
+from api.utils.baseutils import get_format_time
 from fir_ser.settings import THIRDLOGINCONF, CACHE_KEY_TEMPLATE
 from api.utils.mp.utils import WxMsgCryptBase
 
@@ -65,14 +66,24 @@ def create_menu():
                 "name": "分发平台",
                 "sub_button": [
                     {
-                        "type": "view",
+                        "type": "click",
                         "name": "官方地址",
-                        "url": "https://flyapps.cn"
+                        "key": "flyapps"
                     },
                     {
                         "type": "view",
                         "name": "留言反馈",
                         "url": "https://flyapps.cn/gbook/"
+                    },
+                    {
+                        "type": "click",
+                        "name": "查询登录绑定",
+                        "key": "query_bind"
+                    },
+                    {
+                        "type": "click",
+                        "name": "解除登录绑定",
+                        "key": "unbind"
                     },
                 ]
             },
@@ -156,3 +167,216 @@ def check_signature(params):
 class WxMsgCrypt(WxMsgCryptBase):
     def __init__(self):
         super().__init__(**wx_login_info.get('auth'))
+
+
+class WxTemplateMsg(object):
+
+    def send_msg(self, to_user, template_id, content):
+        msg_uri = f'https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={get_wx_access_token_cache()}'
+        data = {
+            "touser": to_user,
+            "template_id": template_id,
+            # "url": "http://weixin.qq.com/download",
+            "topcolor": "#FF0000",
+            "data": content
+        }
+        req = requests.post(msg_uri, json=data)
+        if req.status_code == 200:
+            return True, format_req_json(req.json(), get_userinfo_from_openid, to_user)
+        logger.error(f"send msg from openid failed {req.status_code} {req.text}")
+        return False, req.text
+
+    def login_success_msg(self, to_user, wx_nick_name, username):
+        """
+        您进行了微信扫一扫登录操作
+        系统帐号：yin.xiaogang
+        登录系统：OA系统
+        登录时间：2014-11-28 10:06:32
+        如有疑问，请致电IT服务台400-888-8888 或 关注公众号在线反馈
+        :param to_user:
+        :param wx_nick_name:    微信昵称
+        :param username:  flyapps 用户昵称
+        :return:
+        """
+        now_time = get_format_time()
+        msg_id = 'EJhBbxJvHdWnwwexaqb0lCC2sM7D7WMex5-yJvTL5sU'
+        content_data = {
+            "first": {
+                "value": f"您的微信账户“{wx_nick_name}”进行了网站登录操作",
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": username,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": "fly应用分发平台",
+                "color": "#173177"
+            },
+            "keyword3": {
+                "value": now_time.replace('_', ' '),
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "感谢您的关注",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(to_user, msg_id, content_data)
+
+    def login_failed_msg(self, to_user, wx_nick_name):
+        now_time = get_format_time()
+        msg_id = '9rChJFw6nR0Wbp7SXsImh99qm6Dj1hrRWJo1NpEJ_3g'
+        content_data = {
+            "first": {
+                "value": f"您的微信账户“{wx_nick_name}”登录失败",
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": "还未绑定用户，请通过手机或者邮箱登录账户之后进行绑定",
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": now_time.replace('_', ' '),
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "感谢您的关注",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(to_user, msg_id, content_data)
+
+    def bind_success_msg(self, to_user, wx_nick_name, username):
+        now_time = get_format_time()
+        msg_id = 'twMMQn9AKZKevbZBYh8EcFMk7BnC5Y09FmDkZQEH43w'
+        content_data = {
+            "first": {
+                "value": f"您的微信账户“{wx_nick_name}”绑定成功",
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": username,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": now_time.replace('_', ' '),
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "感谢您的关注",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(to_user, msg_id, content_data)
+
+    def bind_failed_msg(self, to_user, wx_nick_name, msg):
+        now_time = get_format_time()
+        msg_id = 'WIrRuHiDG0f976seBAmY-rjSil0AiT9E5l0PHrPnsfs'
+        content_data = {
+            "first": {
+                "value": f"您的微信账户“{wx_nick_name}”绑定失败",
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": msg,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": now_time.replace('_', ' '),
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "每个微信只可以绑定一个登录账户，请先解绑，然后重新扫描绑定。感谢您的关注",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(to_user, msg_id, content_data)
+
+    def unbind_success_msg(self, to_user, wx_nick_name, username):
+        now_time = get_format_time()
+        msg_id = 'RabYMg8-jPGhonk957asbW17iLHSLp8BfEXnyesRZ60'
+        content_data = {
+            "first": {
+                "value": f"您的微信账户“{wx_nick_name}”已经解除绑定",
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": username,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": now_time.replace('_', ' '),
+                "color": "#173177"
+            },
+            "keyword3": {
+                "value": "解除绑定成功，您将无法使用微信扫描登录平台",
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "如需重新绑定，请登陆平台，在个人资料进行绑定。感谢您的关注",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(to_user, msg_id, content_data)
+
+    def bind_query_success_msg(self, to_user, wx_nick_name, username, name, mobile, email):
+        msg_id = 'yU15jLNSULagJTff01X67mDtDytBSs3iBpOBi8c7dvs'
+        content_data = {
+            "first": {
+                "value": f"您的微信账户“{wx_nick_name}”绑定信息结果",
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": username,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": name,
+                "color": "#173177"
+            },
+            "keyword3": {
+                "value": mobile,
+                "color": "#173177"
+            },
+            "keyword4": {
+                "value": email,
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "感谢您的关注",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(to_user, msg_id, content_data)
+
+    def query_bind_info_failed_msg(self, to_user, wx_nick_name, action_msg, failed_msg):
+        now_time = get_format_time()
+        msg_id = 'uCxjYt216zRAv_sPZihKk4xp7-6pLmRW1oNLLW7L3oI'
+        content_data = {
+            "first": {
+                "value": f"您的微信账户“{wx_nick_name}” {action_msg}失败了",
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": wx_nick_name,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": action_msg,
+                "color": "#173177"
+            },
+            "keyword3": {
+                "value": failed_msg,
+                "color": "#173177"
+            },
+            "keyword4": {
+                "value": now_time.replace('_', ' '),
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "暂无登录绑定信息，如需绑定，请登陆平台，在个人资料进行绑定。感谢您的关注",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(to_user, msg_id, content_data)

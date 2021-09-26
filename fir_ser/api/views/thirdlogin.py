@@ -5,19 +5,21 @@
 # date: 2021/3/29
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from django.http.response import HttpResponse
 import logging
 import random
 from rest_framework.views import APIView
 from rest_framework_xml.parsers import XMLParser
-from api.models import ThirdWeChatUserInfo, UserInfo
+from api.models import ThirdWeChatUserInfo, UserInfo, UserCertificationInfo
 from api.utils.auth import ExpiringTokenAuthentication
 
 from api.utils.mp.chat import reply, receive
-from api.utils.mp.wechat import check_signature, WxMsgCrypt, get_userinfo_from_openid
+from api.utils.mp.wechat import check_signature, WxMsgCrypt, get_userinfo_from_openid, WxTemplateMsg
 from api.utils.response import BaseResponse
 from api.utils.serializer import ThirdWxSerializer
-from api.utils.storage.caches import set_wx_ticket_login_info_cache
+from api.utils.storage.caches import set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache
 from api.views.login import get_login_type
+from config import WEB_DOMAIN
 
 logger = logging.getLogger(__name__)
 
@@ -43,15 +45,27 @@ def reply_login_msg(rec_msg, to_user, from_user, ):
     content = f'还未绑定用户，请通过手机或者邮箱登录账户之后进行绑定'
     u_data_id = -1
     wx_user_obj = ThirdWeChatUserInfo.objects.filter(openid=to_user).first()
+
+    wx_ticket_info = get_wx_ticket_login_info_cache(rec_msg.Ticket)
+
     if wx_user_obj:
         u_data_id = wx_user_obj.user_id.pk
         content = f'用户 {wx_user_obj.user_id.first_name} 登录成功'
-    set_wx_ticket_login_info_cache(rec_msg.Ticket, u_data_id)
+        WxTemplateMsg().login_success_msg(to_user, wx_user_obj.nickname, wx_user_obj.user_id.first_name)
+    else:
+        wx_user_info = update_or_create_wx_userinfo(to_user, None, False)
+        WxTemplateMsg().login_failed_msg(to_user, wx_user_info.get('nickname', ''))
+
+    if wx_ticket_info and wx_ticket_info.get('ip_addr'):
+        ip_addr = wx_ticket_info.get('ip_addr')
+        logger.info(f"{content} ip:{ip_addr}")
+
+    set_wx_ticket_login_info_cache(rec_msg.Ticket, {'pk': u_data_id})
     reply_msg = reply.TextMsg(to_user, from_user, content)
     return reply_msg.send()
 
 
-def update_or_create_wx_userinfo(to_user, user_obj):
+def update_or_create_wx_userinfo(to_user, user_obj, create=True):
     code, wx_user_info = get_userinfo_from_openid(to_user)
     logger.info(f"get openid:{to_user} info:{to_user} code:{code}")
     if code:
@@ -64,7 +78,9 @@ def update_or_create_wx_userinfo(to_user, user_obj):
             'address': f"{wx_user_info.get('country')}-{wx_user_info.get('province')}-{wx_user_info.get('city')}",
             'subscribe': wx_user_info.get('subscribe'),
         }
+    if create:
         ThirdWeChatUserInfo.objects.update_or_create(user_id=user_obj, openid=to_user, defaults=wx_user_info)
+    return wx_user_info
 
 
 class ValidWxChatToken(APIView):
@@ -72,7 +88,7 @@ class ValidWxChatToken(APIView):
 
     def get(self, request):
         params = request.query_params
-        return Response(check_signature(params))
+        return HttpResponse(check_signature(params))
 
     def post(self, request):
         params = request.query_params
@@ -100,7 +116,8 @@ class ValidWxChatToken(APIView):
                     result = reply_msg.send()
                 else:
                     result = reply.Msg().send()
-
+                logger.info(f"replay msg: {result}")
+                return HttpResponse(result)
             elif isinstance(rec_msg, receive.EventMsg):
                 to_user = rec_msg.FromUserName
                 from_user = rec_msg.ToUserName
@@ -109,6 +126,57 @@ class ValidWxChatToken(APIView):
                         content = random.choices(GOOD_XX)[0]
                         reply_msg = reply.TextMsg(to_user, from_user, content)
                         result = reply_msg.send()
+                        logger.info(f"replay msg: {result}")
+                        return HttpResponse(result)
+                    elif rec_msg.Eventkey == 'flyapps':
+                        reply_msg = reply.TextMsg(to_user, from_user, WEB_DOMAIN)
+                        result = reply_msg.send()
+                        logger.info(f"replay msg: {result}")
+                        return HttpResponse(result)
+                    elif rec_msg.Eventkey in ['query_bind', 'unbind']:
+                        wx_user_obj = ThirdWeChatUserInfo.objects.filter(openid=to_user).first()
+                        if rec_msg.Eventkey == 'query_bind':
+                            if wx_user_obj:
+                                user_obj = wx_user_obj.user_id
+                                content = f'绑定用户 {user_obj.first_name}\n'
+                                if user_obj.email:
+                                    content += f' 登录邮箱：{user_obj.email}\n'
+                                if user_obj.mobile:
+                                    content += f' 登录手机：{user_obj.mobile}'
+                                if content.endswith('\n'):
+                                    content = content[0:-1]
+                                user_cert_obj = UserCertificationInfo.objects.filter(user_id=user_obj,
+                                                                                     status=1).first()
+                                if user_cert_obj:
+                                    name = user_cert_obj.name
+                                else:
+                                    name = user_obj.first_name
+                                WxTemplateMsg().bind_query_success_msg(to_user, wx_user_obj.nickname,
+                                                                       user_obj.first_name, name, user_obj.mobile,
+                                                                       user_obj.email)
+                            else:
+                                content = '暂无登录绑定信息'
+                                wx_user_info = update_or_create_wx_userinfo(to_user, None, False)
+                                WxTemplateMsg().query_bind_info_failed_msg(to_user, wx_user_info.get('nickname'),
+                                                                           "查询登录绑定", content)
+
+
+                        elif rec_msg.Eventkey == 'unbind':
+                            if wx_user_obj:
+                                content = f'解绑用户 {wx_user_obj.user_id.first_name} 成功'
+                                WxTemplateMsg().unbind_success_msg(to_user, wx_user_obj.nickname,
+                                                                   wx_user_obj.user_id.first_name)
+                                ThirdWeChatUserInfo.objects.filter(openid=to_user).delete()
+                            else:
+                                content = f'暂无登录绑定信息'
+                                wx_user_info = update_or_create_wx_userinfo(to_user, None, False)
+                                WxTemplateMsg().query_bind_info_failed_msg(to_user, wx_user_info.get('nickname'),
+                                                                           "解除登录绑定", content)
+
+                        logger.info(f"to_user:{to_user} from_user:{from_user} reply msg: {content}")
+                        reply_msg = reply.TextMsg(to_user, from_user, content)
+                        result = reply_msg.send()
+
                 elif rec_msg.Event in ['subscribe', 'unsubscribe']:  # 订阅
                     reply_msg = reply.TextMsg(to_user, from_user, content)
                     result = reply_msg.send()
@@ -129,19 +197,23 @@ class ValidWxChatToken(APIView):
                             if user_obj and user_obj.uid == wx_user_obj.user_id.uid:
                                 content = f'账户 {wx_user_obj.user_id.first_name} 已经绑定成功，感谢您的使用'
                                 update_or_create_wx_userinfo(to_user, user_obj)
+                                WxTemplateMsg().bind_success_msg(to_user, wx_user_obj.nickname, user_obj.first_name)
                             else:
                                 content = f'账户已经被 {wx_user_obj.user_id.first_name} 绑定'
+                                WxTemplateMsg().bind_failed_msg(to_user, wx_user_obj.nickname, content)
                         else:
-                            update_or_create_wx_userinfo(to_user, user_obj)
+                            wx_user_info = update_or_create_wx_userinfo(to_user, user_obj)
                             content = f'账户绑定 {wx_user_obj.user_id.first_name} 成功'
-                        set_wx_ticket_login_info_cache(rec_msg.Ticket, user_obj.pk)
+                            WxTemplateMsg().bind_success_msg(to_user, wx_user_info.get('nickname', ''),
+                                                             user_obj.first_name)
+
+                        set_wx_ticket_login_info_cache(rec_msg.Ticket, {'pk': user_obj.pk})
                         reply_msg = reply.TextMsg(to_user, from_user, content)
                         result = reply_msg.send()
-
         else:
             logger.error('密文解密失败')
-
-        return Response(result)
+        logger.info(f"replay msg: {result}")
+        return HttpResponse("success")
 
 
 class PageNumber(PageNumberPagination):

@@ -2,13 +2,10 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input v-model="listQuery.user_id" placeholder="用户ID" style="width: 140px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.domain_name" placeholder="下载域名" style="width: 300px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.app_name" placeholder="应用名称" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-select v-model="listQuery.domain_type" placeholder="下载域名类型" clearable class="filter-item" style="width: 140px" @change="handleFilter">
-        <el-option v-for="item in domain_type_choices" :key="item.id" :label="item.name" :value="item.id" />
-      </el-select>
-      <el-select v-model="listQuery.is_enable" placeholder="域名绑定状态" clearable class="filter-item" style="width: 140px" @change="handleFilter">
-        <el-option v-for="item in domain_state_choices" :key="item.id" :label="item.name" :value="item.id" />
+      <el-input v-model="listQuery.openid" placeholder="微信openid" style="width: 300px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.nickname" placeholder="微信昵称" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-select v-model="listQuery.subscribe" placeholder="玩家是否订阅" clearable class="filter-item" style="width: 140px" @change="handleFilter">
+        <el-option v-for="item in wxbind_state_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
@@ -38,24 +35,34 @@
           </router-link>
         </template>
       </el-table-column>
-      <el-table-column label="下载域名" min-width="280px" align="center">
+      <el-table-column label="头像" align="center">
         <template slot-scope="scope">
-          {{ scope.row.domain_name }}
+          <el-image :src="scope.row.head_img_url" :preview-src-list="[scope.row.head_img_url]" fit="contain" style="width: 80px; height: 80px" />
         </template>
       </el-table-column>
-
-      <el-table-column class-name="status-col" label="下载域名类型" width="160" align="center">
+      <el-table-column label="微信昵称" min-width="180px" align="center">
         <template slot-scope="scope">
-          <router-link v-if="scope.row.domain_type===2" :to="{name: 'app_info_list',params:{user_id:scope.row.user_id,app_id:scope.row.app_id}}">
-            <el-tag :type="scope.row.domain_type | domainStatusFilter">{{ scope.row| domainLableFilter }}</el-tag>
-          </router-link>
-          <el-tag v-else :type="scope.row.domain_type | domainStatusFilter">{{ scope.row| domainLableFilter }}</el-tag>
-
+          {{ scope.row.nickname }}
         </template>
       </el-table-column>
-      <el-table-column class-name="status-col" label="绑定状态" width="95" align="center">
+      <el-table-column label="微信openid" min-width="280px" align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.is_enable | statusFilter">{{ scope.row| statusLableFilter }}</el-tag>
+          {{ scope.row.openid }}
+        </template>
+      </el-table-column>
+      <el-table-column label="地址" min-width="200px" align="center">
+        <template slot-scope="scope">
+          {{ scope.row.address }}
+        </template>
+      </el-table-column>
+      <el-table-column label="性别" min-width="60px" align="center">
+        <template slot-scope="scope">
+          {{ scope.row |sexLableFilter }}
+        </template>
+      </el-table-column>
+      <el-table-column class-name="status-col" label="订阅状态" width="95" align="center">
+        <template slot-scope="scope">
+          <el-tag :type="scope.row.subscribe | statusFilter">{{ scope.row| statusLableFilter }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column align="center" prop="created_time" label="创建时间" width="120">
@@ -68,12 +75,12 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <router-link :to="{name: 'domain_info_edit',params:{id:scope.row.id}}">
+          <router-link :to="{name: 'wxbind_info_edit',params:{id:scope.row.id}}">
             <el-button type="primary" size="mini">
               查看编辑
             </el-button>
           </router-link>
-          <el-button type="danger" size="mini" @click="remove_domain(scope.row.id)">
+          <el-button type="danger" size="mini" @click="remove_wxbind(scope.row.id)">
             删除
           </el-button>
         </template>
@@ -85,7 +92,7 @@
 </template>
 
 <script>
-import { getDomainInfos, deleteDomain } from '@/api/domain'
+import { getWxBindInfos, deleteWxBind } from '@/api/wxbind'
 import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
@@ -95,13 +102,19 @@ const sortOptions = [
   { label: '创建时间 Descending', key: '-created_time' }
 ]
 
-const domain_state_choices = [
-  { id: false, name: '继续绑定' },
-  { id: true, name: '绑定成功' }
+const wxbind_state_choices = [
+  { id: false, name: '未订阅' },
+  { id: true, name: '已订阅' }
+]
+
+const wxbind_sex_choices = [
+  { id: 0, name: '未知' },
+  { id: 1, name: '男' },
+  { id: 2, name: '女' }
 ]
 
 export default {
-  name: 'DomainInfo',
+  name: 'WxBindInfo',
   components: { Pagination },
   directives: { waves },
   filters: {
@@ -110,21 +123,24 @@ export default {
         return time.split('T')[0]
       }
     },
-    domainStatusFilter(status) {
+    wxbindStatusFilter(status) {
       const statusMap = {
         '1': 'success',
         '0': 'gray',
         '2': 'info' }
       return statusMap[status]
     },
-    domainLableFilter(row) {
-      if (row.domain_type === 2) {
+    wxbindLableFilter(row) {
+      if (row.wxbind_type === 2) {
         return '应用' + row.app_info.name + '域名'
       }
-      return baseFilter(row.domain_type, row.domain_type_choices)
+      return baseFilter(row.wxbind_type, row.wxbind_type_choices)
     },
     statusLableFilter(row) {
-      return baseFilter(row.is_enable, domain_state_choices)
+      return baseFilter(row.subscribe, wxbind_state_choices)
+    },
+    sexLableFilter(row) {
+      return baseFilter(row.sex, wxbind_sex_choices)
     },
     statusFilter(status) {
       const statusMap = {
@@ -144,14 +160,12 @@ export default {
         limit: 10,
         user_id: undefined,
         sort: '-created_time',
-        domain_name: undefined,
-        app_name: undefined,
-        domain_type: undefined,
-        is_enable: undefined
+        openid: undefined,
+        nickname: undefined,
+        subscribe: undefined
       },
       sortOptions,
-      domain_type_choices: [],
-      domain_state_choices
+      wxbind_state_choices
     }
   },
   created() {
@@ -163,12 +177,9 @@ export default {
     console.log(this.$router)
   },
   methods: {
-    remove_domain(domain_id) {
-      deleteDomain({ id: domain_id }).then(response => {
+    remove_wxbind(wxbind_id) {
+      deleteWxBind({ id: wxbind_id }).then(response => {
         this.list = response.data
-        if (this.list && this.list.length > 0) {
-          this.domain_type_choices = this.list[0].domain_type_choices
-        }
         this.total = response.total
         this.listLoading = false
       })
@@ -179,11 +190,8 @@ export default {
     },
     fetchData() {
       this.listLoading = true
-      getDomainInfos(this.listQuery).then(response => {
+      getWxBindInfos(this.listQuery).then(response => {
         this.list = response.data
-        if (this.list && this.list.length > 0) {
-          this.domain_type_choices = this.list[0].domain_type_choices
-        }
         this.total = response.total
         this.listLoading = false
       })

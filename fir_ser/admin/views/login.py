@@ -5,13 +5,10 @@
 # date: 2021/4/11
 
 from django.contrib import auth
-from api.models import Token, UserInfo
 from rest_framework.response import Response
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.serializer import UserInfoSerializer
-from django.core.cache import cache
 from rest_framework.views import APIView
-import os, datetime
 from api.utils.utils import get_captcha, valid_captcha, set_user_token
 from api.utils.response import BaseResponse
 from fir_ser.settings import CACHE_KEY_TEMPLATE, LOGIN

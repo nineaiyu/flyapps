@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from api.utils.baseutils import is_valid_domain, get_cname_from_domain, get_user_domain_name, \
     get_min_default_domain_cname_obj
 from api.utils.response import BaseResponse
-from api.utils.auth import ExpiringTokenAuthentication
+from api.utils.auth import ExpiringTokenAuthentication, DownloadQrPermission
 from rest_framework.response import Response
 from api.models import UserDomainInfo, Apps
 import logging
@@ -62,6 +62,7 @@ def add_new_domain_info(res, request, domain_name, domain_type):
 
 class DomainCnameView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [DownloadQrPermission, ]
 
     def get(self, request):
         res = BaseResponse()

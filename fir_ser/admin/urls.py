@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.urls import re_path
 from admin.views.login import LoginView, LoginUserView
-from admin.views.user import UserInfoView, UserCertificationInfoView
+from admin.views.user import UserInfoView, UserCertificationInfoView, ThirdWxAccountView
 from admin.views.app import AppInfoView, AppReleaseInfoView
 from admin.views.storage import StorageInfoView, StorageChangeView
 from admin.views.order import OrderInfoView
@@ -38,5 +38,6 @@ urlpatterns = [
     re_path("^developer/info", DeveloperInfoView.as_view()),
     re_path("^devices/info", DevicesInfoView.as_view()),
     re_path("^domain/info", DomainNameInfoView.as_view()),
+    re_path("^wxbind/info", ThirdWxAccountView.as_view()),
 
 ]

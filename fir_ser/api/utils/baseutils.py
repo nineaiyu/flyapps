@@ -246,3 +246,10 @@ def check_app_domain_name_access(app_obj, access_domain_name, extra_domain=None)
         if user_domain_name: domain_list.append(user_domain_name)
         if access_domain_name in domain_list:
             return True
+
+
+def get_real_ip_address(request):
+    if request.META.get('HTTP_X_FORWARDED_FOR', None):
+        return request.META.get('HTTP_X_FORWARDED_FOR')
+    else:
+        return request.META.get('REMOTE_ADDR')
