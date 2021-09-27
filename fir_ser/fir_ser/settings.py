@@ -184,16 +184,16 @@ GEETEST_CYCLE_TIME = BASECONF.GEETEST_CYCLE_TIME
 GEETEST_BYPASS_STATUS_KEY = BASECONF.GEETEST_BYPASS_STATUS_KEY
 GEETEST_BYPASS_URL = BASECONF.GEETEST_BYPASS_URL
 
-# 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG.sender 信息
+# 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG_KEY_INFO.sender 信息
 REGISTER = AUTHCONF.REGISTER
 # 个人资料修改修改也会使用该配置
 CHANGER = AUTHCONF.CHANGER
 LOGIN = AUTHCONF.LOGIN
 
-THIRD_PART_CONFIG = {
+THIRD_PART_CONFIG_KEY_INFO = {
     # APP存储配置
-    'storage': STORAGECONF.STORAGE,
-    'sender': SENDERCONF.SENDER
+    'storage_key': STORAGEKEYCONF.STORAGE,
+    'sender_key': SENDERCONF.SENDER
 }
 CACHE_KEY_TEMPLATE = {
     'user_can_download_key': 'user_can_download',
@@ -256,7 +256,9 @@ SESSION_CACHE_ALIAS = "default"
 CAPTCHA_TIMEOUT = 5  # Minutes
 CAPTCHA_LENGTH = 6  # Chars
 
-BASE_LOG_DIR = os.path.join(BASE_DIR, "logs")
+BASE_LOG_DIR = os.path.join(BASE_DIR, "logs", "flyapp")
+if not os.path.isdir(BASE_LOG_DIR):
+    os.makedirs(BASE_LOG_DIR)
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -325,7 +327,7 @@ LOGGING = {
             'propagate': True,
         },
         'pay': {  # 默认的logger应用如下配置
-            'handlers': ['pay'],  # 上线之后可以把'console'移除
+            'handlers': ['pay'],
             'level': 'DEBUG',
             'propagate': True,
         },
@@ -333,7 +335,7 @@ LOGGING = {
 }
 
 PAY_SUCCESS_URL = PAYCONF.PAY_SUCCESS_URL
-PAY_CONFIG = PAYCONF.PAY_CONFIG
+PAY_CONFIG_KEY_INFO = PAYCONF.PAY_CONFIG_KEY_INFO
 
 # 结果存放到Django|redis
 # CELERY_RESULT_BACKEND = 'django-db'
@@ -352,7 +354,7 @@ CELERY_BROKER_URL = 'redis://:%s@%s/2' % (
 #: Only add pickle to this list if your broker is secured
 
 
-CELERYD_CONCURRENCY = 4  # worker并发数
+CELERYD_CONCURRENCY = 10  # worker并发数
 CELERYD_FORCE_EXECV = True  # 非常重要,有些情况下可以防止死
 CELERY_TASK_RESULT_EXPIRES = 3600  # 任务结果过期时间
 
@@ -415,3 +417,10 @@ MSGTEMPLATE = {
     'ERROR_DEVELOPER': '用户 %s 你好，应用 %s 签名失败了，苹果开发者 %s 信息异常，请重新检查苹果开发者状态是否正常。感谢有你!',
     'AUTO_CHECK_DEVELOPER': '用户 %s 你好，苹果开发者 %s 信息异常，请重新检查苹果开发者状态是否正常。感谢有你!',
 }
+
+## listen port
+
+SERVER_BIND_HOST = BASECONF.SERVER_BIND_HOST
+SERVER_LISTEN_PORT = BASECONF.SERVER_LISTEN_PORT
+CELERY_FLOWER_PORT = BASECONF.CELERY_FLOWER_PORT
+CELERY_FLOWER_HOST = BASECONF.CELERY_FLOWER_HOST

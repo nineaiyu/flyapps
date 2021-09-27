@@ -10,7 +10,7 @@ from .qiniuApi import QiNiuOss
 from .localApi import LocalStorage
 import json, time, base64
 from api.utils.baseutils import get_dict_from_filter_fields
-from fir_ser.settings import THIRD_PART_CONFIG, CACHE_KEY_TEMPLATE
+from fir_ser.settings import THIRD_PART_CONFIG_KEY_INFO, CACHE_KEY_TEMPLATE
 from django.core.cache import cache
 import logging
 
@@ -146,7 +146,7 @@ class Storage(object):
 
 
 def get_local_storage(clean_cache=False):
-    storage_lists = THIRD_PART_CONFIG.get('storage')
+    storage_lists = THIRD_PART_CONFIG_KEY_INFO.get('storage_key')
     for storage in storage_lists:
         storage_type = storage.get('type', None)
         if storage_type == 0:
@@ -169,7 +169,7 @@ def get_local_storage(clean_cache=False):
 
 
 def get_storage_form_conf(user):
-    storage_lists = THIRD_PART_CONFIG.get('storage', [])
+    storage_lists = THIRD_PART_CONFIG_KEY_INFO.get('storage_key', [])
     for storage in storage_lists:
         if storage.get("active", None):
             storage_type = storage.get('type', None)

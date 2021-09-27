@@ -7,7 +7,7 @@
 from .aliyunApi import AliMsgSender
 from .emailApi import EmailMsgSender
 from .jiguangApi import JiGuangMsgSender
-from fir_ser.settings import THIRD_PART_CONFIG
+from fir_ser.settings import THIRD_PART_CONFIG_KEY_INFO
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ def get_default_sender(send_type):
             1: 阿里云
             2: 极光
     """
-    sender_lists = THIRD_PART_CONFIG.get('sender')
+    sender_lists = THIRD_PART_CONFIG_KEY_INFO.get('sender_key')
     for sender in sender_lists:
         if sender.get("active", None):
             sender_type = sender.get('type', None)

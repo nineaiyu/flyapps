@@ -138,13 +138,11 @@ class ValidWxChatToken(APIView):
                         if rec_msg.Eventkey == 'query_bind':
                             if wx_user_obj:
                                 user_obj = wx_user_obj.user_id
-                                content = f'绑定用户 {user_obj.first_name}\n'
+                                content = f'绑定用户 {user_obj.first_name} '
                                 if user_obj.email:
-                                    content += f' 登录邮箱：{user_obj.email}\n'
+                                    content += f' 登录邮箱：{user_obj.email} '
                                 if user_obj.mobile:
                                     content += f' 登录手机：{user_obj.mobile}'
-                                if content.endswith('\n'):
-                                    content = content[0:-1]
                                 user_cert_obj = UserCertificationInfo.objects.filter(user_id=user_obj,
                                                                                      status=1).first()
                                 if user_cert_obj:
@@ -202,12 +200,13 @@ class ValidWxChatToken(APIView):
                                 content = f'账户已经被 {wx_user_obj.user_id.first_name} 绑定'
                                 WxTemplateMsg().bind_failed_msg(to_user, wx_user_obj.nickname, content)
                         else:
-                            wx_user_info = update_or_create_wx_userinfo(to_user, user_obj)
-                            content = f'账户绑定 {wx_user_obj.user_id.first_name} 成功'
-                            WxTemplateMsg().bind_success_msg(to_user, wx_user_info.get('nickname', ''),
-                                                             user_obj.first_name)
-
-                        set_wx_ticket_login_info_cache(rec_msg.Ticket, {'pk': user_obj.pk})
+                            if user_obj:
+                                wx_user_info = update_or_create_wx_userinfo(to_user, user_obj)
+                                content = f'账户绑定 {wx_user_obj.user_id.first_name} 成功'
+                                WxTemplateMsg().bind_success_msg(to_user, wx_user_info.get('nickname', ''),
+                                                                 user_obj.first_name)
+                        if user_obj:
+                            set_wx_ticket_login_info_cache(rec_msg.Ticket, {'pk': user_obj.pk})
                         reply_msg = reply.TextMsg(to_user, from_user, content)
                         result = reply_msg.send()
         else:

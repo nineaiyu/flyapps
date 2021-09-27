@@ -15,6 +15,7 @@ from api.utils.app.supersignutils import IosUtils, resign_by_app_id
 from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_delete_ios_mobile_tmp_file, \
     auto_check_ios_developer_active
 from api.utils.geetest.geetest_utils import check_bypass_status
+from api.views.login import get_login_type
 
 from fir_ser.celery import app
 
@@ -85,4 +86,5 @@ def auto_check_ios_developer_active_job():
 
 @app.task
 def sync_wx_access_token_job():
-    sync_wx_access_token()
+    if get_login_type().get('third', '').get('wxp'):
+        sync_wx_access_token()

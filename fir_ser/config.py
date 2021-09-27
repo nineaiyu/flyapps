@@ -17,7 +17,17 @@ class BASECONF(object):
     SECRET_KEY = 'j!g@^bc(z(a3*i&kp$_@bgb)bug&^#3=amch!3lz&1x&s6ss6t'
 
     ALLOWED_HOSTS = ['127.0.0.1', 'synchrotron', '172.16.133.34', 'ali.cdn.flyapp.dvcloud.xin',
-                     'api.src.flyapp.dvcloud.xin']
+                     'api.src.flyapp.dvcloud.xin', 'app.hehelucky.cn']
+
+    # When Django start it will bind this host and port
+    # ./manage.py runserver 127.0.0.1:8080
+    # uwsgi运行时绑定端口
+    SERVER_BIND_HOST = '127.0.0.1'
+    SERVER_LISTEN_PORT = 8898
+
+    # celery flower 任务监控配置
+    CELERY_FLOWER_PORT = 5566
+    CELERY_FLOWER_HOST = '127.0.0.1'
 
     SERVER_DOMAIN = {
         'IOS_PMFILE_DOWNLOAD_DOMAIN': {
@@ -81,7 +91,7 @@ class THIRDLOGINCONF(object):
 
 
 class AUTHCONF(object):
-    # 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG.sender 信息
+    # 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG_KEY_INFO.sender 信息
     REGISTER = {
         "enable": True,
         "captcha": False,  # 是否开启注册字母验证码
@@ -117,7 +127,7 @@ class AUTHCONF(object):
     }
 
 
-class STORAGECONF(object):
+class STORAGEKEYCONF(object):
     STORAGE = [
         {
             'name': 'local',
@@ -247,7 +257,7 @@ class IPACONF(object):
 
 class PAYCONF(object):
     PAY_SUCCESS_URL = '%s/user/orders' % WEB_DOMAIN  # 前端页面，支付成功跳转页面
-    PAY_CONFIG = [
+    PAY_CONFIG_KEY_INFO = [
         {
             'NAME': 'alipay',
             'TYPE': 'ALI',

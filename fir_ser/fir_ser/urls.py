@@ -16,6 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import re_path, include
 from django.views.static import serve
+
+from admin.views.celery_flower import CeleryFlowerView
 from fir_ser import settings
 from api.views.download import DownloadView, InstallView
 from api.views.receiveudids import IosUDIDView, ShowUdidView
@@ -32,5 +34,5 @@ urlpatterns = [
     re_path("install/(?P<app_id>\w+)$", InstallView.as_view(), name="install"),
     re_path("^udid/(?P<short>\w+)$", IosUDIDView.as_view()),
     re_path("^show_udid$", ShowUdidView.as_view()),
-
+    re_path(r'flower/(?P<path>.*)', CeleryFlowerView.as_view()),
 ]

@@ -9,7 +9,15 @@ from rest_framework.exceptions import AuthenticationFailed
 from api.models import UserInfo
 from rest_framework.permissions import BasePermission
 from fir_ser.settings import CACHE_KEY_TEMPLATE
+from django.http.cookie import parse_cookie
 import base64
+
+
+def get_cookie_token(request):
+    cookies = request.META.get('HTTP_COOKIE')
+    if cookies:
+        cookie_dict = parse_cookie(cookies)
+        return cookie_dict.get('auth_token')
 
 
 def get_user_from_api_token(request):
@@ -29,7 +37,8 @@ def get_user_from_request_auth(request):
     if request.method == "OPTIONS":
         return None
     request_token = request.META.get("HTTP_AUTHORIZATION",
-                                     request.META.get("HTTP_X_TOKEN", request.query_params.get("token", None)))
+                                     request.META.get("HTTP_X_TOKEN",
+                                                      request.query_params.get("token", get_cookie_token(request))))
     if request_token:
         try:
             format_token = base64.b64decode(request_token).decode()

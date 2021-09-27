@@ -1,7 +1,7 @@
 import { login, logout, getInfo } from '@/api/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { resetRouter } from '@/router'
-const Base64 = require('js-base64').Base64;
+const Base64 = require('js-base64').Base64
 
 const getDefaultState = () => {
   return {

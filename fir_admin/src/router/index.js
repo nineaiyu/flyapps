@@ -3,6 +3,8 @@ import Router from 'vue-router'
 
 Vue.use(Router)
 
+const celery_flower = process.env.VUE_APP_BASE_API.split('/')
+
 /* Layout */
 import Layout from '@/layout'
 
@@ -370,6 +372,16 @@ export const constantRoutes = [
       {
         path: 'https://panjiachen.github.io/vue-element-admin-site/#/',
         meta: { title: '官方首页', icon: 'link' }
+      }
+    ]
+  },
+  {
+    path: 'celery-flower-link',
+    component: Layout,
+    children: [
+      {
+        path: celery_flower[0] + '//' + celery_flower[2] + '/flower',
+        meta: { title: '任务监控', icon: 'link' }
       }
     ]
   },
