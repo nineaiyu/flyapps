@@ -157,6 +157,8 @@ class BaseService(object):
 
         print(f'Stop service: {self.name}', end='')
         sig = 9 if force else 15
+        if self.name == 'uwsgi' and sig == 15:
+            sig = 2
         os.kill(self.pid, sig)
 
         if self.process is None:

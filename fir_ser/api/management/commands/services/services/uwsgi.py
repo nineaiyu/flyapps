@@ -30,6 +30,7 @@ class UwsgiService(BaseService):
             '--buffer-size', '65536',
             '--vacuum',
             '--enable-threads',
+            '--master',
         ]
 
         if self.uwsgi_socket_mode:
