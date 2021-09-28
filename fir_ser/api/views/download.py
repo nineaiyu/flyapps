@@ -83,9 +83,10 @@ class DownloadView(APIView):
             elif f_type == 'mobileconifg':
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
                 if release_obj:
-                    udid_url = get_post_udid_url(request, release_obj.app_id.short)
                     app_obj = release_obj.app_id
-                    ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, app_obj.app_id, app_obj.bundle_id,
+                    udid_url = get_post_udid_url(request, app_obj.short)
+                    ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, f'{app_obj.app_id}_{app_obj.short}',
+                                                                          app_obj.bundle_id,
                                                                           app_obj.name)
                     return file_response(ios_udid_mobile_config, make_random_uuid() + '.mobileconfig',
                                          "application/x-apple-aspen-config")

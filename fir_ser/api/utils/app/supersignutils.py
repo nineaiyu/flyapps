@@ -81,7 +81,7 @@ def udid_bytes_to_dict(xml_stream):
     return new_uuid_info
 
 
-def make_sign_udid_mobile_config(udid_url, app_id, bundle_id, app_name):
+def make_sign_udid_mobile_config(udid_url, short, bundle_id, app_name):
     if MOBILE_CONFIG_SIGN_SSL.get("open"):
         ssl_key_path = MOBILE_CONFIG_SIGN_SSL.get("ssl_key_path", None)
         ssl_pem_path = MOBILE_CONFIG_SIGN_SSL.get("ssl_pem_path", None)
@@ -91,7 +91,7 @@ def make_sign_udid_mobile_config(udid_url, app_id, bundle_id, app_name):
             if not os.path.exists(mobile_config_tmp_dir):
                 os.makedirs(mobile_config_tmp_dir)
 
-            sign_mobile_config_path = os.path.join(mobile_config_tmp_dir, 'sign_' + app_id)
+            sign_mobile_config_path = os.path.join(mobile_config_tmp_dir, 'sign_' + short)
             logger.info(f"make sing mobile config {sign_mobile_config_path}")
             if os.path.isfile(sign_mobile_config_path):
                 return open(sign_mobile_config_path, 'rb')
@@ -430,6 +430,8 @@ class IosUtils(object):
 
     def update_developer_used_data(self):
         udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
+        udid_obj.is_download = True
+        udid_obj.save(update_fields=['is_download'])
         APPSuperSignUsedInfo.objects.update_or_create(app_id=self.app_obj,
                                                       user_id=self.user_obj,
                                                       developerid=self.developer_obj,
@@ -465,7 +467,9 @@ class IosUtils(object):
                 else:
                     obj.update_sign_data(random_file_name, release_obj)
             else:
-                return status, e_result
+                d_result['code'] = 1004
+                d_result['msg'] = '签名失败，请检查包是否正常'
+                return status, d_result
         else:
             msg = f"app_id {app_obj} download profile failed. {result} time:{time.time() - start_time}"
             d_result['code'] = 1002
@@ -503,14 +507,22 @@ class IosUtils(object):
             logger.error(d_result)
             return False, d_result
         app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
-        if app_udid_obj and app_udid_obj.is_signed:
-            release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
-            for apptodev_obj in APPToDeveloper.objects.filter(app_id=self.app_obj).all():
-                if release_obj.release_id == apptodev_obj.release_file:
-                    msg = "udid %s exists app_id %s" % (self.udid_info.get('udid'), self.app_obj)
-                    d_result['msg'] = msg
-                    logger.info(d_result)
-                    return True, d_result
+        if app_udid_obj and app_udid_obj.is_download:
+            if app_udid_obj.is_signed:
+                release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
+                for apptodev_obj in APPToDeveloper.objects.filter(app_id=self.app_obj).all():
+                    if release_obj.release_id == apptodev_obj.release_file:
+                        msg = "udid %s exists app_id %s" % (self.udid_info.get('udid'), self.app_obj)
+                        d_result['msg'] = msg
+                        logger.info(d_result)
+                        return True, d_result
+            else:
+                with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id),
+                                timeout=60 * 10):
+                    logger.info("start run_sign ...")
+                    return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, 1, self, time.time(),
+                                             None)
+
         logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
 
         if consume_user_download_times_by_app_obj(self.app_obj):

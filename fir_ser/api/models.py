@@ -245,6 +245,7 @@ class AppUDID(models.Model):
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     is_signed = models.BooleanField(verbose_name="是否完成签名打包", default=False)
+    is_download = models.BooleanField(verbose_name="描述文件是否已经下载", default=False)
     binary_file = models.CharField(max_length=128, blank=True, verbose_name="签名包名称", null=True)
 
     class Meta:
