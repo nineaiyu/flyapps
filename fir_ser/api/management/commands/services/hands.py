@@ -3,6 +3,7 @@ import sys
 import logging
 from django.conf import settings
 from config import BASE_DIR
+import psutil
 
 import time
 import subprocess
@@ -65,3 +66,11 @@ def prepare():
     check_database_connection()
     check_migrations()
     perform_db_migrate()
+
+
+def get_sys_thread_num():
+    return psutil.cpu_count(False) if psutil.cpu_count(False) else 2
+
+
+def get_sys_process_num():
+    return psutil.cpu_count(True) if psutil.cpu_count(True) else 4

@@ -99,8 +99,8 @@ class BaseActionCommand(BaseCommand):
             'services', nargs='+', choices=Services.export_services_values(), help='Service',
         )
         parser.add_argument('-d', '--daemon', nargs="?", const=True)
-        parser.add_argument('-up', '--uwsgi_processes', type=int, nargs="?", default=4)
-        parser.add_argument('-ut', '--uwsgi_threads', type=int, nargs="?", default=2)
+        parser.add_argument('-up', '--uwsgi_processes', type=int, nargs="?", default=get_sys_process_num())
+        parser.add_argument('-ut', '--uwsgi_threads', type=int, nargs="?", default=get_sys_thread_num())
         parser.add_argument('-usm', '--uwsgi_socket_mode', nargs="?", const=True,
                             help='run to bind socket mode, default http mode, only uwsgi service')
         parser.add_argument('-f', '--force', nargs="?", const=True)

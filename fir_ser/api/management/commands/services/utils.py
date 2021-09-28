@@ -1,6 +1,5 @@
 import threading
 import signal
-import time
 import daemon
 from daemon import pidfile
 from .hands import *
