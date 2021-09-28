@@ -2,13 +2,14 @@ import os
 import sys
 import logging
 from django.conf import settings
+from config import BASE_DIR
 
+import time
+import subprocess
 from config import BASECONF
 
 try:
-    from apps.jumpserver import const
-
-    __version__ = const.VERSION
+    __version__ = BASECONF.VERSION
 except ImportError as e:
     print("Not found __version__: {}".format(e))
     print("Python is: ")
@@ -26,3 +27,41 @@ BASE_DIR = settings.BASE_DIR
 APPS_DIR = BASE_DIR
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
 TMP_DIR = os.path.join(BASE_DIR, 'tmp')
+
+
+def check_database_connection():
+    os.chdir(BASE_DIR)
+    for i in range(60):
+        logging.info("Check database connection ...")
+        _code = subprocess.call("python manage.py showmigrations api ", shell=True)
+        if _code == 0:
+            logging.info("Database connect success")
+            return
+        time.sleep(1)
+    logging.error("Connection database failed, exit")
+    sys.exit(10)
+
+
+def check_migrations():
+    _cmd = "python manage.py showmigrations | grep '\[.\]' | grep -v '\[X\]'"
+    _code = subprocess.call(_cmd, shell=True, cwd=BASE_DIR)
+
+    if _code == 1:
+        return
+
+
+def perform_db_migrate():
+    logging.info("Check database structure change ...")
+    os.chdir(BASE_DIR)
+    logging.info("Migrate model change to database ...")
+    _code = subprocess.call('python3 manage.py migrate', shell=True)
+    if _code == 0:
+        return
+    logging.error('Perform migrate failed, exit')
+    sys.exit(11)
+
+
+def prepare():
+    check_database_connection()
+    check_migrations()
+    perform_db_migrate()

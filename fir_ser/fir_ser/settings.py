@@ -232,7 +232,7 @@ SYNC_CACHE_TO_DATABASE = {
 
 SERVER_DOMAIN = BASECONF.SERVER_DOMAIN
 
-MOBILECONFIG_SIGN_SSL = IPACONF.MOBILECONFIG_SIGN_SSL
+MOBILE_CONFIG_SIGN_SSL = IPACONF.MOBILE_CONFIG_SIGN_SSL
 
 DEFAULT_MOBILEPROVISION = IPACONF.DEFAULT_MOBILEPROVISION
 # DEFAULT_MOBILEPROVISION = {
@@ -399,12 +399,12 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
         'args': ()
     },
-    'start_api_sever_do_clean': {
-        'task': 'api.tasks.start_api_sever_do_clean',
-        'schedule': 6,
-        'args': (),
-        'one_off': True
-    },
+    # 'start_api_sever_do_clean': {
+    #     'task': 'api.tasks.start_api_sever_do_clean',
+    #     'schedule': 6,
+    #     'args': (),
+    #     'one_off': True
+    # },
     'sync_wx_access_token_job': {
         'task': 'api.tasks.sync_wx_access_token_job',
         'schedule': SYNC_CACHE_TO_DATABASE.get("wx_get_access_token_times"),

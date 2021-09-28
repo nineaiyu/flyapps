@@ -8,7 +8,7 @@ import uuid, xmltodict, os, logging, time
 
 import zipfile
 from api.utils.response import BaseResponse
-from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILECONFIG_SIGN_SSL, MSGTEMPLATE
+from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILE_CONFIG_SIGN_SSL, MSGTEMPLATE
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
     UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID
@@ -82,9 +82,9 @@ def udid_bytes_to_dict(xml_stream):
 
 
 def make_sign_udid_mobile_config(udid_url, app_id, bundle_id, app_name):
-    if MOBILECONFIG_SIGN_SSL.get("open"):
-        ssl_key_path = MOBILECONFIG_SIGN_SSL.get("ssl_key_path", None)
-        ssl_pem_path = MOBILECONFIG_SIGN_SSL.get("ssl_pem_path", None)
+    if MOBILE_CONFIG_SIGN_SSL.get("open"):
+        ssl_key_path = MOBILE_CONFIG_SIGN_SSL.get("ssl_key_path", None)
+        ssl_pem_path = MOBILE_CONFIG_SIGN_SSL.get("ssl_pem_path", None)
 
         if ssl_key_path and ssl_pem_path and os.path.isfile(ssl_key_path) and os.path.isfile(ssl_pem_path):
             mobile_config_tmp_dir = os.path.join(SUPER_SIGN_ROOT, 'tmp', 'mobile_config')

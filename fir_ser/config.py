@@ -12,6 +12,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class BASECONF(object):
+    VERSION = '1.3.1'
+
     DEBUG = True
 
     SECRET_KEY = 'j!g@^bc(z(a3*i&kp$_@bgb)bug&^#3=amch!3lz&1x&s6ss6t'
@@ -121,7 +123,7 @@ class AUTHCONF(object):
             'email': True,  # 邮件登录
             'up': False,  # 密码登录
             'third': {
-                'wxp': False  # 微信公众号登录，需要在 THIRDLOGINCONF 配置好微信公众号登录
+                'wxp': THIRDLOGINCONF.wx_official.get('active')  # 微信公众号登录，需要在 THIRDLOGINCONF 配置好微信公众号登录
             },
         }
     }
@@ -233,7 +235,7 @@ class SENDERCONF(object):
 
 
 class IPACONF(object):
-    MOBILECONFIG_SIGN_SSL = {
+    MOBILE_CONFIG_SIGN_SSL = {
         # 描述文件是否签名，默认是关闭状态；如果开启，并且ssl_key_path 和 ssl_pem_path 正常，则使用填写的ssl进行签名,否则默认不签名
         'open': True,
         'ssl_key_path': '/data/cert/%s.key' % API_DOMAIN.split("://")[1],

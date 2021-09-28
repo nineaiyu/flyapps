@@ -114,7 +114,7 @@ class BaseActionCommand(BaseCommand):
             'uwsgi_threads': options.get('uwsgi_threads'),
             'uwsgi_socket_mode': options.get('uwsgi_socket_mode'),
             'uid': options.get('uid'),
-            'gid': options.get('gid'),
+            'gid': options.get('uid') if options.get('gid') in ['root'] else options.get('gid'),
         }
         services = Services.get_service_objects(service_names=service_names, **service_kwargs)
 

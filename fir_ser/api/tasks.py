@@ -18,6 +18,7 @@ from api.utils.geetest.geetest_utils import check_bypass_status
 from api.views.login import get_login_type
 
 from fir_ser.celery import app
+from fir_ser.settings import LOGIN, CHANGER, REGISTER
 
 
 @shared_task
@@ -66,7 +67,8 @@ def sync_download_times_job():
 
 @app.task
 def check_bypass_status_job():
-    check_bypass_status()
+    if LOGIN.get("geetest") or CHANGER.get('geetest') or REGISTER.get('geetest'):
+        check_bypass_status()
 
 
 @app.task

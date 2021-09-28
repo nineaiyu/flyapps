@@ -1,10 +1,8 @@
 import abc
-import time
 import shutil
 import psutil
 import datetime
 import threading
-import subprocess
 import pwd
 from ..hands import *
 
@@ -123,6 +121,8 @@ class BaseService(object):
     # -- action --
     def open_subprocess(self):
         self.set_work_dir_owner()
+        if self.name in ['uwsgi']:
+            prepare()
         kwargs = {'cwd': self.cwd, 'stderr': self.log_file, 'stdout': self.log_file}
         self._process = subprocess.Popen(self.cmd, **kwargs)
 
@@ -142,7 +142,7 @@ class BaseService(object):
         uid = get_user_id(self.uid)
         gid = get_user_id(self.gid)
         u_gid = uid if uid else gid
-        if u_gid:
+        if u_gid is not None:
             for (dir_path, dir_names, filenames) in os.walk(LOG_DIR):
                 for filename in filenames + dir_names:
                     os.chown(uid=u_gid, gid=u_gid, path=os.path.join(dir_path, filename))
