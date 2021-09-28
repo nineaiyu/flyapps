@@ -208,8 +208,8 @@ class AppInfoView(APIView):
                                 do_sign_flag = 2
                             app_obj.new_bundle_name = new_bundle_name
                         if new_bundle_name == '':
-                            # if new_bundle_name != apps_obj.new_bundle_name:
-                            #     do_sign_flag = 2
+                            if app_obj.name != app_obj.new_bundle_name:
+                                do_sign_flag = 2
                             app_obj.new_bundle_name = app_obj.name
                         update_fields.extend(["new_bundle_name", "new_bundle_id"])
                     app_obj.wxredirect = data.get("wxredirect", app_obj.wxredirect)

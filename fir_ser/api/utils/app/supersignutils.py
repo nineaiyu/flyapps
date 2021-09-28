@@ -420,13 +420,15 @@ class IosUtils(object):
             old_release_file = apptodev_obj.release_file
             apptodev_obj.release_file = release_obj.release_id
             apptodev_obj.save(update_fields=['binary_file', 'release_file'])
-            if storage_obj.get_storage_type() in [1, 2]:
+            if storage_obj.get_storage_type() in [1, 2] and old_release_file != release_obj.release_id:
+                logger.warning(f"update sign file , now clean ole {old_release_file}.ipa file")
                 delete_local_files(old_release_file + ".ipa")
         else:
             APPToDeveloper.objects.create(developerid=developer_obj, app_id=app_obj,
                                           binary_file=random_file_name, release_file=release_obj.release_id)
 
-        storage_obj.upload_file(os.path.join(MEDIA_ROOT, random_file_name + ".ipa"))
+        logger.info(f"update sign file end, now upload {storage_obj.storage} {random_file_name}.ipa file")
+        return storage_obj.upload_file(os.path.join(MEDIA_ROOT, random_file_name + ".ipa"))
 
     def update_developer_used_data(self):
         udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
@@ -438,17 +440,17 @@ class IosUtils(object):
                                                       udid=udid_obj)
 
     def update_sign_data(self, random_file_name, release_obj):
-        newdata = {
-            "is_signed": True,
-            "binary_file": random_file_name
-        }
-        # 更新已经完成签名状态，设备消耗记录，和开发者已消耗数量
-        AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).update(**newdata)
-
         # 更新新签名的ipa包
-        IosUtils.update_sign_file_name(self.user_obj, self.app_obj, self.developer_obj, release_obj, random_file_name)
-
-        del_cache_response_by_short(self.app_obj.app_id, udid=self.udid_info.get('udid'))
+        if IosUtils.update_sign_file_name(self.user_obj, self.app_obj, self.developer_obj, release_obj,
+                                          random_file_name):
+            newdata = {
+                "is_signed": True,
+                "binary_file": random_file_name
+            }
+            # 更新已经完成签名状态，设备消耗记录，和开发者已消耗数量
+            AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).update(**newdata)
+            del_cache_response_by_short(self.app_obj.app_id, udid=self.udid_info.get('udid'))
+            return True
 
     @staticmethod
     def run_sign(user_obj, app_obj, developer_obj, download_flag, obj, d_time, result, resign=False):
@@ -463,9 +465,16 @@ class IosUtils(object):
                 s_time1 = time.time()
                 logger.info(f"app_id {app_obj} exec sign ipa success. time:{s_time1 - start_time}")
                 if resign:
-                    IosUtils.update_sign_file_name(user_obj, app_obj, developer_obj, release_obj, random_file_name)
+                    if not IosUtils.update_sign_file_name(user_obj, app_obj, developer_obj, release_obj,
+                                                          random_file_name):
+                        d_result['code'] = 1004
+                        d_result['msg'] = '数据更新失败，请稍后重试'
+                        return status, d_result
                 else:
-                    obj.update_sign_data(random_file_name, release_obj)
+                    if not obj.update_sign_data(random_file_name, release_obj):
+                        d_result['code'] = 1004
+                        d_result['msg'] = '数据更新失败，请稍后重试'
+                        return status, d_result
             else:
                 d_result['code'] = 1004
                 d_result['msg'] = '签名失败，请检查包是否正常'
