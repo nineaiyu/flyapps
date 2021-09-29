@@ -15,7 +15,7 @@ class CorsMiddleWare(MiddlewareMixin):
             response["Access-Control-Allow-Origin"] = request.META.get("HTTP_ORIGIN")
             response["Access-Control-Allow-Credentials"] = 'true'
 
-            response["Cache-Control"] = "no-cache"
+            # response["Cache-Control"] = "no-cache"
         except Exception as e:
             logger.error(e)
         return response
