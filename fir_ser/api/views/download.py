@@ -150,7 +150,9 @@ class ShortDownloadView(APIView):
         res = check_app_permission(app_obj, res)
         if res.code != 1000:
             return Response(res.dict)
-        origin_domain_name = request.META.get('HTTP_ORIGIN', 'xx').split('//')[-1]
+        origin_domain_name = request.META.get('HTTP_ORIGIN',
+                                              request.META.get('HTTP_REFERER',
+                                                               'http://xxx/xxx')).split('//')[-1].split('/')[0]
         domain_name = get_redirect_server_domain(request, app_obj.user_id, get_app_domain_name(app_obj))
         if not check_app_domain_name_access(app_obj, origin_domain_name, domain_name.split('//')[-1]):
             res.code = 1004
