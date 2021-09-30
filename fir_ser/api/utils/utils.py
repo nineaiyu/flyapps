@@ -113,7 +113,9 @@ def get_sender_token(sender, user_id, target, action, msg=None):
 
 def get_sender_sms_token(key, phone, action, msg=None):
     sender = SendMessage('sms')
-    return get_sender_token(sender, key, phone, action, msg)
+    if sender.sender:
+        return get_sender_token(sender, key, phone, action, msg)
+    return False, False
 
 
 def is_valid_sender_code(key, token, code):
@@ -122,7 +124,9 @@ def is_valid_sender_code(key, token, code):
 
 def get_sender_email_token(key, email, action, msg=None):
     sender = SendMessage('email')
-    return get_sender_token(sender, key, email, action, msg)
+    if sender.sender:
+        return get_sender_token(sender, key, email, action, msg)
+    return False, False
 
 
 def check_username_exists(username):

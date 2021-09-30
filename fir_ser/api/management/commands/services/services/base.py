@@ -121,8 +121,6 @@ class BaseService(object):
     # -- action --
     def open_subprocess(self):
         self.set_work_dir_owner()
-        if self.name in ['uwsgi']:
-            prepare()
         kwargs = {'cwd': self.cwd, 'stderr': self.log_file, 'stdout': self.log_file}
         self._process = subprocess.Popen(self.cmd, **kwargs)
 
@@ -146,6 +144,9 @@ class BaseService(object):
             for (dir_path, dir_names, filenames) in os.walk(LOG_DIR):
                 for filename in filenames + dir_names:
                     os.chown(uid=u_gid, gid=u_gid, path=os.path.join(dir_path, filename))
+            if self.name == 'uwsgi':
+                for dirs in ['files', 'supersign']:
+                    os.chown(uid=u_gid, gid=u_gid, path=os.path.join(BASE_DIR, dirs))
         else:
             logging.error(f'uid: {self.uid} gid:{self.gid} is not exists')
 

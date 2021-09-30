@@ -59,24 +59,26 @@ class OrderView(APIView):
             order_obj = Order.objects.filter(user_id=request.user, order_number=order_number).first()
             if order_obj and order_obj.status in [1, 2] and order_obj.payment_name:
                 pay_obj = get_pay_obj_form_name(order_obj.payment_name)
-                pay_url = pay_obj.get_pay_pc_url(order_number, int(order_obj.actual_amount),
-                                                 {'user_id': request.user.id})
-                res.data = pay_url
-                logger.info(f"{request.user} 下单成功 {res.dict}")
-                return Response(res.dict)
+                if pay_obj:
+                    pay_url = pay_obj.get_pay_pc_url(order_number, int(order_obj.actual_amount),
+                                                     {'user_id': request.user.id})
+                    res.data = pay_url
+                    logger.info(f"{request.user} 下单成功 {res.dict}")
+                    return Response(res.dict)
             if price_obj:
                 try:
                     order_number = get_order_num()
                     actual_amount = price_obj.price
                     pay_obj = get_pay_obj_form_name(pay_id)
-                    pay_url = pay_obj.get_pay_pc_url(order_number, int(actual_amount), {'user_id': request.user.id})
-                    Order.objects.create(payment_type=get_payment_type(pay_obj.p_type), order_number=order_number,
-                                         user_id=request.user, status=1, order_type=0, actual_amount=actual_amount,
-                                         actual_download_times=price_obj.package_size, payment_name=pay_obj.name,
-                                         actual_download_gift_times=price_obj.download_count_gift)
-                    res.data = pay_url
-                    logger.info(f"{request.user} 下单成功 {res.dict}")
-                    return Response(res.dict)
+                    if pay_obj:
+                        pay_url = pay_obj.get_pay_pc_url(order_number, int(actual_amount), {'user_id': request.user.id})
+                        Order.objects.create(payment_type=get_payment_type(pay_obj.p_type), order_number=order_number,
+                                             user_id=request.user, status=1, order_type=0, actual_amount=actual_amount,
+                                             actual_download_times=price_obj.package_size, payment_name=pay_obj.name,
+                                             actual_download_gift_times=price_obj.download_count_gift)
+                        res.data = pay_url
+                        logger.info(f"{request.user} 下单成功 {res.dict}")
+                        return Response(res.dict)
                 except Exception as e:
                     logger.error(f"{request.user} 订单 {price_id} 保存失败 Exception：{e}")
                     res.code = 1003

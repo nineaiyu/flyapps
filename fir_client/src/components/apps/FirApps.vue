@@ -712,6 +712,10 @@
                         if (this.data_package_prices && this.data_package_prices.length > 0) {
                             this.default_price_radio = this.data_package_prices[parseInt(this.data_package_prices.length / 2)].name;
                         }
+                        if (this.pay_choices.length === 0) {
+                            this.$message.warning("暂不支持下载次数购买，请联系管理员");
+                            this.show_buy_download_times = false;
+                        }
                     } else {
                         this.$message.error("获取价格异常");
                         this.show_buy_download_times = false;

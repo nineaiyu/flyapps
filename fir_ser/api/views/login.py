@@ -77,7 +77,11 @@ def check_register_userinfo(target, act, key, ftype=None):
                     res.msg = "手机号已经存在"
                 else:
                     token, code = get_sender_sms_token(act, target, 'register')
-                    res.data["auth_token"] = token
+                    if token:
+                        res.data["auth_token"] = token
+                    else:
+                        res.code = 1009
+                        res.msg = "短信服务异常，请联系管理员"
             else:
                 res.code = 1009
                 res.msg = "该手机号今日使用次数已经达到上限"
@@ -94,7 +98,11 @@ def check_register_userinfo(target, act, key, ftype=None):
                     res.msg = "邮箱已经存在"
                 else:
                     token, code = get_sender_email_token(act, target, 'register')
-                    res.data["auth_token"] = token
+                    if token:
+                        res.data["auth_token"] = token
+                    else:
+                        res.code = 1009
+                        res.msg = "邮件服务异常，请联系管理员"
             else:
                 res.code = 1009
                 res.msg = "该邮箱今日注册次数已经达到上限"
@@ -109,7 +117,11 @@ def check_register_userinfo(target, act, key, ftype=None):
                 res.msg = "用户名已经存在"
             else:
                 token, code = get_sender_email_token(act, target, 'register')
-                res.data["auth_token"] = token
+                if token:
+                    res.data["auth_token"] = token
+                else:
+                    res.code = 1009
+                    res.msg = "未知错误"
         else:
             res.code = 1009
             res.msg = "用户名已经存在"
@@ -139,7 +151,11 @@ def check_change_userinfo(target, act, key, user, ftype=None):
                     res.msg = "手机号已经存在"
                 else:
                     token, code = get_sender_sms_token(act, target, 'change')
-                    res.data["auth_token"] = token
+                    if token:
+                        res.data["auth_token"] = token
+                    else:
+                        res.code = 1009
+                        res.msg = "短信服务异常，请联系管理员"
             else:
                 res.code = 1009
                 res.msg = "该手机号今日使用次数已经达到上限"
@@ -156,7 +172,11 @@ def check_change_userinfo(target, act, key, user, ftype=None):
                     res.msg = "邮箱已经存在"
                 else:
                     token, code = get_sender_email_token(act, target, 'change')
-                    res.data["auth_token"] = token
+                    if token:
+                        res.data["auth_token"] = token
+                    else:
+                        res.code = 1009
+                        res.msg = "邮件服务异常，请联系管理员"
             else:
                 res.code = 1009
                 res.msg = "该邮箱今日使用次数已经达到上限"

@@ -35,6 +35,9 @@ class ServicesUtil(object):
             self.watch()
 
     def start(self):
+        if 'uwsgi' in [service.name for service in self._services]:
+            prepare()
+
         for service in self._services:
             service: BaseService
             service.start()

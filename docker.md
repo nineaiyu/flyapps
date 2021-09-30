@@ -13,9 +13,9 @@ yum install docker -y
 ```
 #### 配置域名和证书，如果有cdn或者oss,也要进行配置
 ```shell script
-Docker/app.hehelucky.cn.key
-Docker/app.hehelucky.cn.pem
-Docker/flyapps-vhost.conf
+nginx.conf.d/app.hehelucky.cn.key
+nginx.conf.d/app.hehelucky.cn.pem
+nginx.conf.d/flyapps-vhost.conf
 ```
 ### api服务需要修改api和web域名，短信，邮箱，geetest，存储等信息
 ```shell script
@@ -40,6 +40,12 @@ const pro_base_env = {
 
 #####  构建静态资源和api服务
 ```
-cd Docker && sh build.sh
+sh build.sh
+```
+
+
+#####  启动所有服务
+```
+sh start.sh
 ```
 
