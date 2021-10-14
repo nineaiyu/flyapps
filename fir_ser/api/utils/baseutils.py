@@ -173,17 +173,18 @@ def get_cname_from_domain(domain):
 
 
 def get_user_domain_name(obj, domain_type=1):
-    domain_obj = UserDomainInfo.objects.filter(user_id=obj, is_enable=True, app_id=None,
-                                               domain_type=domain_type).first()
-    if domain_obj:
-        return domain_obj.domain_name
+    domain_name = UserDomainInfo.objects.filter(user_id=obj, is_enable=True, app_id=None,
+                                                domain_type=domain_type).values_list('domain_name').first()
+    if domain_name:
+        return domain_name[0]
     return ''
 
 
 def get_app_domain_name(obj):
-    domain_obj = UserDomainInfo.objects.filter(app_id=obj, is_enable=True, domain_type=2).first()
-    if domain_obj:
-        return domain_obj.domain_name
+    domain_name = UserDomainInfo.objects.filter(app_id=obj, is_enable=True, domain_type=2).values_list(
+        'domain_name').first()
+    if domain_name:
+        return domain_name[0]
     return ''
 
 
@@ -235,14 +236,14 @@ def get_filename_form_file(filename):
     return filename
 
 
-def check_app_domain_name_access(app_obj, access_domain_name, extra_domain=None):
+def check_app_domain_name_access(app_obj, access_domain_name, user_obj, extra_domain=None):
     if app_obj and access_domain_name:
         domain_list = []
         if extra_domain:
             domain_list.append(extra_domain)
         app_domain_name = get_app_domain_name(app_obj)
         if app_domain_name: domain_list.append(app_domain_name)
-        user_domain_name = get_user_domain_name(app_obj.user_id)
+        user_domain_name = get_user_domain_name(user_obj)
         if user_domain_name: domain_list.append(user_domain_name)
         if access_domain_name in domain_list:
             return True
@@ -253,3 +254,8 @@ def get_real_ip_address(request):
         return request.META.get('HTTP_X_FORWARDED_FOR')
     else:
         return request.META.get('REMOTE_ADDR')
+
+
+def get_origin_domain_name(request):
+    meta = request.META
+    return meta.get('HTTP_ORIGIN', meta.get('HTTP_REFERER', 'http://xxx/xxx')).split('//')[-1].split('/')[0]

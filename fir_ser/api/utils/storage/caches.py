@@ -388,8 +388,11 @@ def get_user_cert_auth_status(user_id):
     return auth_status
 
 
-def check_user_has_all_download_times(app_obj):
-    user_id = app_obj.user_id_id
+def check_user_has_all_download_times(app_obj, user_obj):
+    if user_obj:
+        user_id = user_obj.pk
+    else:
+        user_id = app_obj.user_id_id
     auth_status = get_user_cert_auth_status(user_id)
     d_count = get_app_d_count_by_app_id(app_obj.app_id)
     return get_user_free_download_times(user_id, auth_status=auth_status) - d_count >= 0 or check_user_can_download(
@@ -462,14 +465,14 @@ def update_order_info(user_id, out_trade_no, payment_number, payment_type):
         return False
 
 
-def check_app_permission(app_obj, res):
+def check_app_permission(app_obj, res, user_obj=None):
     if not app_obj:
         res.code = 1003
         res.msg = "该应用不存在"
     elif app_obj.status != 1:
         res.code = 1004
         res.msg = "该应用被封禁，无法下载安装"
-    elif not check_user_has_all_download_times(app_obj):
+    elif not check_user_has_all_download_times(app_obj, user_obj):
         res.code = 1009
         res.msg = "可用下载额度不足，请联系开发者"
     elif not app_obj.isshow:

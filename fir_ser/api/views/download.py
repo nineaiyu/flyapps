@@ -24,7 +24,7 @@ from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInf
 from django.http import FileResponse
 import logging
 from api.utils.baseutils import get_profile_full_path, get_app_domain_name, get_filename_form_file, \
-    check_app_domain_name_access, get_real_ip_address
+    check_app_domain_name_access, get_real_ip_address, get_origin_domain_name
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 
 logger = logging.getLogger(__name__)
@@ -147,29 +147,32 @@ class ShortDownloadView(APIView):
         release_id = request.query_params.get("release_id", None)
         udid = request.query_params.get("udid", None)
         app_obj = Apps.objects.filter(short=short).first()
-        res = check_app_permission(app_obj, res)
+        user_obj = None
+        if app_obj:
+            user_obj = app_obj.user_id
+        res = check_app_permission(app_obj, res, user_obj)
         if res.code != 1000:
             return Response(res.dict)
-        origin_domain_name = request.META.get('HTTP_ORIGIN',
-                                              request.META.get('HTTP_REFERER',
-                                                               'http://xxx/xxx')).split('//')[-1].split('/')[0]
-        domain_name = get_redirect_server_domain(request, app_obj.user_id, get_app_domain_name(app_obj))
-        if not check_app_domain_name_access(app_obj, origin_domain_name, domain_name.split('//')[-1]):
-            res.code = 1004
-            res.msg = "访问域名不合法"
+        domain_name = get_redirect_server_domain(request, user_obj, get_app_domain_name(app_obj))
+        if user_obj and user_obj.role and user_obj.role == 3:
+            ...
         else:
-            if udid:
-                if not app_obj.issupersign:
-                    res.code = 1002
-                    res.msg = "参数有误"
-                    return Response(res.dict)
-                del_cache_response_by_short(app_obj.app_id, udid=udid)
+            if not check_app_domain_name_access(app_obj, get_origin_domain_name(request), user_obj, domain_name.split('//')[-1]):
+                res.code = 1004
+                res.msg = "访问域名不合法"
+                return Response(res.dict)
+        if udid:
+            if not app_obj.issupersign:
+                res.code = 1002
+                res.msg = "参数有误"
+                return Response(res.dict)
+            del_cache_response_by_short(app_obj.app_id, udid=udid)
 
-            app_serializer = AppsShortSerializer(app_obj, context={"key": "ShortDownloadView", "release_id": release_id,
-                                                                   "storage": Storage(app_obj.user_id)})
-            res.data = app_serializer.data
-            res.udid = udid
-            res.domain_name = domain_name
+        app_serializer = AppsShortSerializer(app_obj, context={"key": "ShortDownloadView", "release_id": release_id,
+                                                               "storage": Storage(user_obj)})
+        res.data = app_serializer.data
+        res.udid = udid
+        res.domain_name = domain_name
         return Response(res.dict)
 
     # key的设置
@@ -178,7 +181,7 @@ class ShortDownloadView(APIView):
         release_id = request.query_params.get("release_id", '')
         udid = request.query_params.get("udid", None)
         time = request.query_params.get("time", None)
-        origin_domain_name = request.META.get('HTTP_ORIGIN', 'xx').split('//')[-1]
+        origin_domain_name = get_origin_domain_name(request)
         if not origin_domain_name:
             origin_domain_name = 'default.site'
         if udid and time:
