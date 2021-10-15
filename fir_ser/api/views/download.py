@@ -174,7 +174,7 @@ class ShortDownloadView(APIView):
         res.udid = udid
         res.domain_name = domain_name
         if user_obj and user_obj.role and user_obj.role > 1:
-            res.ad = AppAdInfoSerializer(ad_random_weight(user_obj)).data
+            res.ad = AppAdInfoSerializer(ad_random_weight(user_obj), context={"key": "ShortDownloadView"}).data
         return Response(res.dict)
 
     # key的设置

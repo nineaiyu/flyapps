@@ -225,6 +225,9 @@
                 <div v-if="agent!==''">
                     <div v-if="ad_info.ad_uri" style="margin-bottom: 80px"/>
                     <div class="app_bottom_fixed" v-if="ad_info.ad_uri">
+                        <div class="signhelp-title">
+                            <span><a class="closead" @click="ad_info.ad_uri=undefined">关闭</a></span>
+                        </div>
                         <a :href="ad_info.ad_uri" target="_blank">
                             <img :src="ad_info.ad_pic" alt="welcome" style="object-fit: cover">
                         </a>
@@ -245,7 +248,7 @@
         <div ref="signhelp" class="signhelp screenshots-section">
             <div class="signhelp-title">
                 iOS安装教程
-                <span><a id="closeBtn" @click="jiaocheng('close')">关闭</a></span>
+                <span><a @click="jiaocheng('close')">关闭</a></span>
             </div>
 
             <div class="list-wrapper" style="width: 300px;">
@@ -1574,4 +1577,8 @@
         right: -20px;
     }
 
+    .signhelp-title .closead {
+        top: 38px;
+        right: -6px;
+    }
 </style>

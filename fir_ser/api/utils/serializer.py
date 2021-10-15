@@ -48,8 +48,7 @@ def get_app_master_obj_from_context(self, obj):
 def get_screenshots_from_self(self, obj, force_new=False):
     screenshots_list = []
     for screenshot_obj in models.AppScreenShot.objects.filter(app_id=obj).all():
-        key = ''
-        icon_url = get_download_url_from_context(self, obj, key, screenshot_obj.screenshot_url, force_new)
+        icon_url = get_download_url_from_context(self, obj, '', screenshot_obj.screenshot_url, force_new)
         screenshots_list.append({'id': screenshot_obj.pk, 'url': icon_url})
     return screenshots_list
 
@@ -671,3 +670,8 @@ class AppAdInfoSerializer(UserAdInfoSerializer):
     class Meta:
         model = models.UserAdDisplayInfo
         fields = ["ad_uri", "ad_pic"]
+
+    ad_pic = serializers.SerializerMethodField()
+
+    def get_ad_pic(self, obj):
+        return get_download_url_from_context(self, obj, '', obj.ad_pic, True)
