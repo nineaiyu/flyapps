@@ -120,7 +120,7 @@ class AppAnalyseView(APIView):
                 if app_obj:
                     if app_obj.issupersign and app_obj.user_id.supersign_active:
                         c_task = run_resign_task.apply_async((app_obj.app_id, False))
-                        msg = c_task.get(propagate=False, timeout=30)
+                        msg = c_task.get(propagate=False)
                         logger.info(f"app {app_obj} run_resign_task msg:{msg}")
                         if c_task.successful():
                             c_task.forget()
