@@ -8,9 +8,10 @@ import os, re, time
 
 from django.db.models import Count
 import datetime
+import random
 from django.utils import timezone
 from fir_ser.settings import SUPER_SIGN_ROOT
-from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo
+from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo
 from api.utils.app.randomstrings import make_app_uuid
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -259,3 +260,17 @@ def get_real_ip_address(request):
 def get_origin_domain_name(request):
     meta = request.META
     return meta.get('HTTP_ORIGIN', meta.get('HTTP_REFERER', 'http://xxx/xxx')).split('//')[-1].split('/')[0]
+
+
+def ad_random_weight(user_obj):
+    ad_info_list = UserAdDisplayInfo.objects.filter(user_id=user_obj, is_enable=True).order_by('-created_time')
+    total = sum([ad_info.weight for ad_info in ad_info_list])  # 权重求和
+    ra = random.uniform(0, total)  # 在0与权重和之前获取一个随机数
+    curr_sum = 0
+    ret = ad_info_list.first()
+    for ad_info in ad_info_list:
+        curr_sum += ad_info.weight  # 在遍历中，累加当前权重值
+        if ra <= curr_sum:  # 当随机数<=当前权重和时，返回权重key
+            ret = ad_info
+            break
+    return ret

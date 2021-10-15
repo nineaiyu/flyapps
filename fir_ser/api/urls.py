@@ -27,6 +27,7 @@ from api.views.order import PriceView, OrderView, PaySuccess
 from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView, SuperSignCertView
 from api.views.domain import DomainCnameView, DomainInfoView
 from api.views.thirdlogin import ValidWxChatToken, ThirdWxAccount
+from api.views.advert import UserAdInfoView
 
 # router=DefaultRouter()
 # router.register("apps", AppsView)
@@ -50,6 +51,7 @@ urlpatterns = [
     re_path(r"^udid/(?P<short>\w+)$", IosUDIDView.as_view()),
     re_path(r"^task/(?P<short>\w+)$", TaskView.as_view()),
     re_path("^analyse$", AppAnalyseView.as_view()),
+    re_path("^advert$", UserAdInfoView.as_view()),
     re_path("^supersign/developer$", DeveloperView.as_view()),
     re_path("^supersign/devices$", SuperSignUsedView.as_view()),
     re_path("^supersign/udid$", AppUDIDUsedView.as_view()),

@@ -7,7 +7,7 @@ import os, datetime, random
 import binascii
 from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT, CACHE_KEY_TEMPLATE
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
-    UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, Token, DeveloperDevicesID
+    UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, Token, DeveloperDevicesID, UserAdDisplayInfo
 from api.utils.storage.caches import get_app_d_count_by_app_id
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
@@ -180,6 +180,12 @@ def change_storage_and_change_head_img(user_obj, new_storage_obj, clean_old_data
     if user_obj.head_img == 'head_img.jpeg':
         clean_old_data = False
     migrating_storage_file_data(user_obj, user_obj.head_img, new_storage_obj, clean_old_data)
+    change_storage_and_change_advert_img(user_obj, new_storage_obj, clean_old_data)
+
+
+def change_storage_and_change_advert_img(user_obj, new_storage_obj, clean_old_data=True):
+    for user_advert_obj in UserAdDisplayInfo.objects.filter(user_id=user_obj):
+        migrating_storage_file_data(user_obj, user_advert_obj.ad_pic, new_storage_obj, clean_old_data)
 
 
 def download_files_form_oss(storage_obj, org_file):

@@ -677,3 +677,18 @@ export function domaininfo(callBack, params, load = true) {
         true
     );
 }
+
+/**自定义广告 */
+export function advertinfo(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/advert',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}

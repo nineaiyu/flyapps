@@ -3,7 +3,6 @@
 # project: 3月 
 # author: liuyu
 # date: 2020/3/6
-from urllib.parse import urlsplit
 
 from rest_framework.views import APIView
 
@@ -19,12 +18,12 @@ from api.utils.storage.caches import get_app_instance_by_cache, get_download_url
     del_cache_response_by_short, consume_user_download_times, check_app_permission
 import os
 from api.utils.decorators import cache_response  # 本来使用的是 drf-extensions==0.7.0 但是还未支持该版本Django
-from api.utils.serializer import AppsShortSerializer
+from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInfo
 from django.http import FileResponse
 import logging
 from api.utils.baseutils import get_profile_full_path, get_app_domain_name, get_filename_form_file, \
-    check_app_domain_name_access, get_real_ip_address, get_origin_domain_name
+    check_app_domain_name_access, get_real_ip_address, get_origin_domain_name, ad_random_weight
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 
 logger = logging.getLogger(__name__)
@@ -157,7 +156,8 @@ class ShortDownloadView(APIView):
         if user_obj and user_obj.role and user_obj.role == 3:
             ...
         else:
-            if not check_app_domain_name_access(app_obj, get_origin_domain_name(request), user_obj, domain_name.split('//')[-1]):
+            if not check_app_domain_name_access(app_obj, get_origin_domain_name(request), user_obj,
+                                                domain_name.split('//')[-1]):
                 res.code = 1004
                 res.msg = "访问域名不合法"
                 return Response(res.dict)
@@ -173,6 +173,8 @@ class ShortDownloadView(APIView):
         res.data = app_serializer.data
         res.udid = udid
         res.domain_name = domain_name
+        if user_obj and user_obj.role and user_obj.role > 1:
+            res.ad = AppAdInfoSerializer(ad_random_weight(user_obj)).data
         return Response(res.dict)
 
     # key的设置

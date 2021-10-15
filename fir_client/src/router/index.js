@@ -159,6 +159,12 @@ const router = new VueRouter({
                     component: () => import("@/components/user/FirUserDomain"),
                 },
                 {
+                    path: 'advert',
+                    name: 'FirUserAdvert',
+                    meta: {label: '自定义广告'},
+                    component: () => import("@/components/user/FirUserAdvert"),
+                },
+                {
                     path: 'supersign-help',
                     name: 'FirSuperSignHelp',
                     meta: {label: '密钥获取帮助'},

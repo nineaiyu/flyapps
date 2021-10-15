@@ -23,6 +23,8 @@ def get_download_url_from_context(self, obj, key, url, force_new=False):
             storage = Storage(obj.user_id)
         elif isinstance(obj, models.AppReleaseInfo):
             storage = Storage(obj.app_id.user_id)
+        elif isinstance(obj, models.UserAdDisplayInfo):
+            storage = Storage(obj.user_id)
         elif isinstance(obj, models.UserInfo):
             storage = Storage(obj)
         elif isinstance(obj, models.UserCertificationInfo) or isinstance(obj, models.CertificationInfo):
@@ -652,3 +654,20 @@ class AdminDomainNameSerializer(DomainNameSerializer):
 
     def get_domain_type_choices(self, obj):
         return get_choices_dict(obj.domain_type_choices)
+
+
+class UserAdInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserAdDisplayInfo
+        exclude = ["user_id"]
+
+    ad_pic = serializers.SerializerMethodField()
+
+    def get_ad_pic(self, obj):
+        return get_download_url_from_context(self, obj, '', obj.ad_pic)
+
+
+class AppAdInfoSerializer(UserAdInfoSerializer):
+    class Meta:
+        model = models.UserAdDisplayInfo
+        fields = ["ad_uri", "ad_pic"]

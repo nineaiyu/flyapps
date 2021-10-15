@@ -232,9 +232,17 @@
                     <span style="color: #ebb563">若安装异常，请复制UDID，发送给管理员</span>
                 </div>
 
-                <div class="footer" style="margin-top: 30%">
+                <div class="footer" style="margin-top: 30%;margin-bottom: 8px">
                     免责声明：<br>
                     本网站仅提供下载托管，应用为用户自行上传，请甄别应用风险后进行下载！
+                </div>
+                <div v-if="agent!==''">
+                    <div v-if="ad_info.ad_uri" style="margin-bottom: 80px"/>
+                    <div class="app_bottom_fixed" v-if="ad_info.ad_uri">
+                        <a :href="ad_info.ad_uri" target="_blank">
+                            <img :src="ad_info.ad_pic" alt="welcome" style="object-fit: cover">
+                        </a>
+                    </div>
                 </div>
 
             </div>
@@ -309,6 +317,7 @@
                 timer: '',
                 gomobile: true,
                 mobileprovision: '',
+                ad_info: {ad_pic: '', ad_uri: ''}
             }
         },
         beforeDestroy() {
@@ -464,7 +473,7 @@
                     })
                 }
             },
-            auto_redircet_url(domain_name) {
+            auto_redirect_url(domain_name) {
                 if (domain_name) {
                     let nurl = location.href.split("//")[1].split("/");
                     const user_hostname = domain_name.split("//");
@@ -492,8 +501,11 @@
                 }
                 getShortAppinfo(data => {
                     if (data.code === 1000) {
-                        if (!this.auto_redircet_url(data.domain_name)) {
+                        if (!this.auto_redirect_url(data.domain_name)) {
                             return;
+                        }
+                        if (data.ad && data.ad.ad_uri) {
+                            this.ad_info = data.ad;
                         }
                         this.udid = data.udid;
                         if (!data.data.master_release.release_id) {
@@ -716,6 +728,22 @@
         -webkit-box-sizing: border-box;
         box-sizing: border-box;
         white-space: nowrap;
+    }
+
+    .app_bottom_fixed {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 3;
+        font-size: 0;
+        text-align: center;
+        background: 0 0;
+    }
+
+    .app_bottom_fixed img {
+        width: 100%;
+        max-height: 80px;
     }
 
     .mask {

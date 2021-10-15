@@ -499,3 +499,23 @@ class UserDomainInfo(models.Model):
 
     def __str__(self):
         return "%s-%s-%s" % (self.user_id, self.cname_id, self.domain_name)
+
+
+class UserAdDisplayInfo(models.Model):
+    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    ad_name = models.CharField(verbose_name="广告名称", max_length=256, null=False, blank=False)
+    ad_uri = models.CharField(verbose_name="广告跳转地址", max_length=256, null=False, blank=False)
+    ad_pic = models.CharField(verbose_name="广告图片地址", max_length=256, null=False, blank=False, help_text="像素最高80px", )
+    weight = models.IntegerField(verbose_name="广告展示权重", default=1)
+    description = models.TextField('描述信息', blank=True, null=True, default='')
+    is_enable = models.BooleanField(default=False, verbose_name="广告开启状态")
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="广告创建时间")
+
+    class Meta:
+        verbose_name = '用户自定义广告'
+        verbose_name_plural = "用户自定义广告"
+        indexes = [models.Index(fields=['ad_name', 'user_id'])]
+        unique_together = ('ad_name', 'user_id',)
+
+    def __str__(self):
+        return "%s-%s-%s" % (self.user_id, self.description, self.is_enable)

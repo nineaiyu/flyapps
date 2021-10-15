@@ -8,7 +8,7 @@ from api.utils.app.apputils import get_random_short, save_app_infos
 from api.utils.baseutils import get_app_domain_name
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
-from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo
+from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo, UserAdDisplayInfo
 from api.utils.app.randomstrings import make_app_uuid
 from rest_framework.views import APIView
 from api.utils.response import BaseResponse
@@ -120,7 +120,7 @@ class AppAnalyseView(APIView):
                 if app_obj:
                     if app_obj.issupersign and app_obj.user_id.supersign_active:
                         c_task = run_resign_task.apply_async((app_obj.app_id, False))
-                        msg = c_task.get(propagate=False)
+                        msg = c_task.get(propagate=False, timeout=30)
                         logger.info(f"app {app_obj} run_resign_task msg:{msg}")
                         if c_task.successful():
                             c_task.forget()
@@ -160,7 +160,7 @@ class UploadView(APIView):
             if f_type == 'app' or f_type == 'screen':
                 app_obj = Apps.objects.filter(app_id=app_id, user_id=request.user).first()
 
-            elif f_type and f_type in ['head', 'certification']:
+            elif f_type and f_type in ['head', 'certification', 'advert']:
                 if request.user.uid != app_id:
                     res.code = 1007
                     res.msg = '该用户不存在'
@@ -232,7 +232,7 @@ class UploadView(APIView):
                 #     res.code = 1006
                 #     res.msg = '该应用不存在'
                 #     return Response(res.dict)
-            elif f_type and f_type in ['head', 'certification']:
+            elif f_type and f_type in ['head', 'certification', 'advert']:
                 if request.user.uid != app_id:
                     res.code = 1007
                     res.msg = '该用户不存在'
@@ -330,7 +330,7 @@ class UploadView(APIView):
                     del_cache_response_by_short(app_id)
                     return Response(res.dict)
 
-            elif f_type and app_id and f_type in ['head', 'certification']:
+            elif f_type and app_id and f_type in ['head', 'certification', 'advert']:
                 if request.user.uid != app_id:
                     res.code = 1007
                     res.msg = '该用户不存在'
@@ -360,6 +360,18 @@ class UploadView(APIView):
                             storage.rename_file(upload_key, new_upload_key)
 
                         return Response(res.dict)
+                elif f_type == 'advert':
+                    ext = cert_info.get('ext', None)
+                    if ext:
+                        pk = ext.get('id')
+                        if pk:
+                            ad_info_obj = UserAdDisplayInfo.objects.filter(user_id=request.user, pk=pk).first()
+                            if ad_info_obj:
+                                old_file_key = ad_info_obj.ad_pic
+                                storage.delete_file(old_file_key)
+                                storage.rename_file(upload_key, new_upload_key)
+                                ad_info_obj.ad_pic = new_upload_key
+                                ad_info_obj.save(update_fields=['ad_pic'])
                 return Response(res.dict)
             else:
                 pass
