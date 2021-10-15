@@ -627,6 +627,18 @@
                 PaymentQuestionMsg: '',
             }
         }, methods: {
+            check_short(short, callback) {
+                apputils(data => {
+                    if (data.code === 1000 && data.data === 0) {
+                        callback()
+                    } else {
+                        this.$message.error("短连接已经存在")
+                    }
+                }, {
+                    "methods": "POST",
+                    "app_id": short
+                })
+            },
             multirun(process, keylist, func) {
                 let thr = [];
                 for (let i = 0; i < process; i++) {
@@ -775,6 +787,14 @@
                             } else {
                                 this.$message.success(analyseappinfo.appname + ' 入库成功');
                             }
+                        } else {
+                            if (!multiFlag) {
+                                this.$message.error(analyseappinfo.appname + ' 入库失败 ' + data.msg);
+                                loading.close();
+                                this.closeUpload();
+                                this.currentfile = undefined;
+                                return
+                            }
                         }
                         loading.close();
                         const start = this.multiFileList.indexOf(file);
@@ -857,7 +877,7 @@
                     })
                 }
             },
-            uploadcloud(analyseappinfo, binary_file, multiFlag, resolve) {
+            uploadcloudFun(analyseappinfo, binary_file, multiFlag, resolve) {
                 if (analyseappinfo.binary_url !== '') {
                     this.$confirm(`该应用 ${analyseappinfo.appname} 存在第三方下载链接 <a target="_blank" href="${analyseappinfo.binary_url}"> ${analyseappinfo.binary_url}  </a>更新之后，将不会自动跳转第三方下载；若您还需要第三方跳转，请在第三方平台更新该应用。`, '确定更新应用？', {
                         confirmButtonText: '确定',
@@ -887,6 +907,16 @@
                     });
                 } else {
                     this.uploadstorage(analyseappinfo, binary_file, multiFlag, resolve)
+                }
+            },
+            uploadcloud(analyseappinfo, binary_file, multiFlag, resolve) {
+                if (analyseappinfo.is_new && !multiFlag) {
+                    // eslint-disable-next-line no-unused-vars
+                    this.check_short(this.short, res => {
+                        this.uploadcloudFun(analyseappinfo, binary_file, multiFlag, resolve)
+                    });
+                } else {
+                    this.uploadcloudFun(analyseappinfo, binary_file, multiFlag, resolve)
                 }
             },
             uploadstorage(analyseappinfo, binary_file, multiFlag, resolve) {

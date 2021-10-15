@@ -251,6 +251,11 @@ class AppInfoView(APIView):
 
         return Response(res.dict)
 
+    def post(self, request, app_id):
+        res = BaseResponse()
+        res.data = Apps.objects.filter(short=app_id).count()
+        return Response(res.dict)
+
 
 class AppReleaseInfoView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]

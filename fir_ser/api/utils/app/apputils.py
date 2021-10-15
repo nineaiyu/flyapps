@@ -102,13 +102,14 @@ def get_app_type(app_file_name):
         return 2
 
 
-def get_random_short():
+def get_random_short(number=4):
     short_url = ''.join(random.sample(
         ['z', 'y', 'x', 'w', 'v', 'u', 't', 's', 'r', 'q', 'p', 'o', 'n', 'm', 'l', 'k', 'j', 'i', 'h', 'g', 'f',
-         'e', 'd', 'c', 'b', 'a'], 4))
+         'e', 'd', 'c', 'b', 'a'], number))
     app_obj = Apps.objects.filter(short=short_url).first()
     if app_obj:
-        return get_random_short()
+        number += 2
+        return get_random_short(number)
     else:
         return short_url
 
@@ -133,6 +134,8 @@ def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short,
             "wxeasytype": False if get_user_domain_name(user_obj) else True
         }
         try:
+            if Apps.objects.filter(short=short).count() == 1:
+                appdata['short'] = get_random_short()
             app_obj = Apps.objects.create(**appdata)
         except Exception as e:
             logger.error(f"create new app failed,appdata:{appdata}  Exception:{e}")

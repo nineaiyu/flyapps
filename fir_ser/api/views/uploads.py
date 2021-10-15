@@ -127,6 +127,8 @@ class AppAnalyseView(APIView):
             else:
                 storage.delete_file(app_tmp_filename)
                 storage.delete_file(png_tmp_filename)
+                res.code = 10003
+                res.msg = '应用信息保存失败'
             # 删除redis key
             upload_file_tmp_name("del", app_tmp_filename, request.user.id)
             upload_file_tmp_name("del", png_tmp_filename, request.user.id)
@@ -134,7 +136,7 @@ class AppAnalyseView(APIView):
         except Exception as e:
             logger.error(f"user {request.user} save app {data.get('bundleid')} info {app_info} failed Exception:{e}")
             res.code = 10003
-            res.msg = 'save app info failed'
+            res.msg = '应用信息保存失败'
 
         return Response(res.dict)
 
