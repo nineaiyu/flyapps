@@ -102,7 +102,7 @@
           <el-form-item label="ios内测版 udid" label-width="200px">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.udid" :autosize="{ minRows: 4, maxRows: 6}" type="textarea" disabled />
+                <el-input v-if="postForm.udid" :value="JSON.stringify(postForm.udid)" :autosize="{ minRows: 4, maxRows: 6}" type="textarea" disabled />
               </el-col>
             </el-row>
           </el-form-item>

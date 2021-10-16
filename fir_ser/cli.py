@@ -3,6 +3,7 @@
 # project: 1月 
 # author: NinEveN
 # date: 2021/1/9
+import argparse
 import os
 import sys
 import plistlib
@@ -10,13 +11,7 @@ import random
 import re
 import json
 import zipfile
-
-from oss2 import determine_part_size, SizedFileAdapter
-from oss2.models import PartInfo
-from requests_toolbelt.multipart.encoder import MultipartEncoderMonitor
-import oss2
 import requests
-from androguard.core.bytecodes import apk
 
 '''
 pip install --upgrade pip
@@ -24,6 +19,7 @@ pip install setuptools-rust
 pip install oss2
 pip install requests-toolbelt
 pip install androguard
+pip install qiniu
 '''
 
 
@@ -52,6 +48,9 @@ def alioss_progress_callback_fun(offset, total_size):
 
 def upload_aliyunoss(access_key_id, access_key_secret, security_token, endpoint, bucket, local_file_full_path, filename,
                      headers=None):
+    from oss2 import determine_part_size, SizedFileAdapter
+    from oss2.models import PartInfo
+    import oss2
     stsauth = oss2.StsAuth(access_key_id, access_key_secret, security_token)
     bucket = oss2.Bucket(stsauth, endpoint, bucket)
     total_size = os.path.getsize(local_file_full_path)
@@ -73,14 +72,16 @@ def upload_aliyunoss(access_key_id, access_key_secret, security_token, endpoint,
             offset += num_to_upload
             part_number += 1
     bucket.complete_multipart_upload(filename, upload_id, parts)
-    print("数据上传存储成功.")
+    if not filename.endswith('.png.tmp'):
+        print("\n数据上传存储成功.", end='')
 
 
 def upload_qiniuyunoss(key, token, file_path):
     from qiniu import put_file
     ret, info = put_file(token, key, file_path, progress_handler=qiniu_progress_callback)
     if info.status_code == 200:
-        print("数据上传存储成功.")
+        if not token.endswith('.png.tmp'):
+            print("\n数据上传存储成功.", end='')
     else:
         raise AssertionError(info.text)
 
@@ -110,12 +111,13 @@ class FLYCliSer(object):
         req = requests.put(url, json=data, headers=self._header)
         if req.status_code == 200:
             if req.json()['code'] == 1000:
-                print("APP信息更新成功" + req.text)
+                print("应用 %s  %s 上传更新成功" % (data.get('appname'), data.get('bundleid')))
                 return
         raise AssertionError(req.text)
 
     def upload_local_storage(self, upload_key, upload_token, app_id, file_path):
         url = '%s/api/v2/fir/server/upload' % self.fly_cli_domain
+        from requests_toolbelt.multipart.encoder import MultipartEncoderMonitor
         m = MultipartEncoderMonitor.from_fields(fields={
             'file': (os.path.basename(file_path), open(file_path, 'rb'), 'application/octet-stream'),
             'certinfo': json.dumps(
@@ -133,16 +135,24 @@ class FLYCliSer(object):
         req = requests.post(url, data=m, headers={**self._header, **header})
         if req.status_code == 200:
             if req.json()['code'] == 1000:
-                print("数据上传存储成功." + req.text)
+                if not upload_key.endswith('.png.tmp'):
+                    print("\n数据上传存储成功.", end='')
                 return
         raise AssertionError(req.text)
 
-    def upload_app(self, app_path):
+    def upload_app(self, app_path, r_short, r_name, r_change_log):
         appobj = AppInfo(app_path)
         appinfo = appobj.get_app_data()
         icon_path = appobj.make_app_png(icon_path=appinfo.get("icon_path", None))
         bundle_id = appinfo.get("bundle_id")
         upcretsdata = self.get_upload_token(bundle_id, appinfo.get("type"))
+        if r_short:
+            upcretsdata['short'] = r_short
+        if r_name:
+            appinfo['labelname'] = r_name
+        if r_change_log:
+            upcretsdata['changelog'] = r_change_log
+
         if appinfo.get('iOS', '') == 'iOS':
             f_type = '.ipa'
         else:
@@ -254,6 +264,7 @@ class AppInfo(object):
 
     def __get_android_data(self):
         try:
+            from androguard.core.bytecodes import apk
             apkobj = apk.APK(self.app_path)
         except Exception as err:
             raise err
@@ -320,14 +331,71 @@ class AppInfo(object):
                 return m.group()
 
 
+def check_depends():
+    cmd_list = ['--upgrade pip', 'setuptools-rust', 'oss2', 'requests-toolbelt', 'androguard', 'qiniu']
+    for cmd in cmd_list:
+        os.system('pip install %s' % cmd)
+
+
+def read_token(token_file='.fly_cli_token'):
+    if os.path.isfile(token_file):
+        with open(token_file, 'r') as f:
+            return f.readline()
+
+
+def write_token(token, token_file='.fly_cli_token'):
+    with open(token_file, 'w') as f:
+        f.write(token)
+
+
 if __name__ == '__main__':
-    fly_cli_domain = 'https://app.hehelucky.cn'
-    fly_cli_token = 'f63d05d2bb0511eb9fa400163e069e27oTa51Q3N6rJT5yjddCrkmgiFeKRQNa0L3TctPLTYd0CrdIqgO3wfYCKsFnJysQXJ'
-    fly_obj = FLYCliSer(fly_cli_domain, fly_cli_token)
-    if len(sys.argv) != 2:
-        raise ValueError('参数有误')
-    app_path = sys.argv[1]
-    if os.path.isfile(app_path):
-        fly_obj.upload_app(app_path)
+    domain = 'https://app.hehelucky.cn'
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    parser = argparse.ArgumentParser(
+        description="""
+        flyapps service cli tools;
+        Example: \r\n
+        """
+    )
+    parser.add_argument('-s', '--short', nargs="?", const=True, type=str, help="短连接")
+    parser.add_argument('-cl', '--change_log', nargs="?", const=True, type=str, help="更新日志")
+    parser.add_argument('-n', '--name', nargs="?", const=True, type=str, help="名称")
+    parser.add_argument('-i', '--install_depends', nargs="?", const=True, help="安装依赖")
+    parser.add_argument('-w', '--write_token_info', nargs="?", const=True)
+    parser.add_argument('-t', '--token', nargs="?", type=str, help="token")
+    parser.add_argument('-f', '--filepath', nargs="+", type=str, help="filepath")
+    parser.add_argument('-d', '--dir_path', nargs="+", type=str, help="dir_path")
+    args = parser.parse_args()
+    if args.token and args.write_token_info:
+        write_token(args.token)
+    if args.install_depends:
+        check_depends()
+    elif args.filepath or args.dir_path:
+        token = args.token
+        if not token:
+            token = read_token()
+            if token: token = token.replace('\r', '').replace('\n', '')
+        if not token:
+            raise Exception('token not exist')
+        fly_obj = FLYCliSer(domain, token)
+        file_path_list = []
+        if args.filepath is not None and len(args.filepath) > 0:
+            for args_filepath in args.filepath:
+                file_path_list.extend(os.path.join(base_dir, args_filepath))
+        if args.dir_path is not None and len(args.dir_path) > 0:
+            for args_dir_path in args.dir_path:
+                dir_path = os.path.join(base_dir, args_dir_path)
+                if os.path.isdir(dir_path):
+                    for fil in os.listdir(dir_path):
+                        if os.path.isfile(fil) and fil.split('.')[-1].lower() in ['ipa', 'apk']:
+                            file_path_list.append(fil)
+        err_file = []
+        for filepath in file_path_list:
+            if os.path.isfile(filepath) and filepath.split('.')[-1].lower() in ['ipa', 'apk']:
+                fly_obj.upload_app(filepath, args.short, args.name, args.change_log)
+            else:
+                err_file.append(filepath)
+        if err_file:
+            print("error file", err_file)
     else:
-        raise FileNotFoundError(app_path)
+        parser.print_help()
