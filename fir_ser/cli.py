@@ -11,7 +11,6 @@ import random
 import re
 import json
 import zipfile
-import requests
 
 '''
 pip install --upgrade pip
@@ -87,6 +86,7 @@ def upload_qiniuyunoss(key, token, file_path):
 
 
 class FLYCliSer(object):
+    import requests
 
     def __init__(self, fly_cli_domain, fly_cli_token):
         self.fly_cli_domain = fly_cli_domain
@@ -332,7 +332,7 @@ class AppInfo(object):
 
 
 def check_depends():
-    cmd_list = ['--upgrade pip', 'setuptools-rust', 'oss2', 'requests-toolbelt', 'androguard', 'qiniu']
+    cmd_list = ['--upgrade pip', 'setuptools-rust', 'oss2', 'requests-toolbelt', 'androguard', 'qiniu','requests']
     for cmd in cmd_list:
         os.system('pip install %s' % cmd)
 
@@ -381,7 +381,7 @@ if __name__ == '__main__':
         file_path_list = []
         if args.filepath is not None and len(args.filepath) > 0:
             for args_filepath in args.filepath:
-                file_path_list.extend(os.path.join(base_dir, args_filepath))
+                file_path_list.append(os.path.join(base_dir, args_filepath))
         if args.dir_path is not None and len(args.dir_path) > 0:
             for args_dir_path in args.dir_path:
                 dir_path = os.path.join(base_dir, args_dir_path)

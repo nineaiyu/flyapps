@@ -246,6 +246,8 @@ def check_app_domain_name_access(app_obj, access_domain_name, user_obj, extra_do
         if app_domain_name: domain_list.append(app_domain_name)
         user_domain_name = get_user_domain_name(user_obj)
         if user_domain_name: domain_list.append(user_domain_name)
+        user_qr_domain_name = get_user_domain_name(user_obj, 0)
+        if user_qr_domain_name: domain_list.append(user_qr_domain_name)
         if access_domain_name in domain_list:
             return True
 
