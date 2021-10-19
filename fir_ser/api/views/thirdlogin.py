@@ -202,7 +202,7 @@ class ValidWxChatToken(APIView):
                         else:
                             if user_obj:
                                 wx_user_info = update_or_create_wx_userinfo(to_user, user_obj)
-                                content = f'账户绑定 {wx_user_obj.user_id.first_name} 成功'
+                                content = f'账户绑定 {user_obj.first_name} 成功'
                                 WxTemplateMsg().bind_success_msg(to_user, wx_user_info.get('nickname', ''),
                                                                  user_obj.first_name)
                         if user_obj:
