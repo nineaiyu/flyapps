@@ -476,19 +476,6 @@
                     })
                 }
             },
-            auto_redirect_url(domain_name) {
-                if (domain_name) {
-                    let nurl = location.href.split("//")[1].split("/");
-                    const user_hostname = domain_name.split("//");
-                    if (nurl[0] === user_hostname[1]) {
-                        return true;
-                    } else {
-                        nurl[0] = user_hostname[1];
-                        window.location.href = user_hostname[0] + "//" + nurl.join("/");
-                        return false;
-                    }
-                }
-            },
             getDownloadTokenFun() {
                 let params = {
                     "short": this.$route.params.short,
@@ -504,9 +491,6 @@
                 }
                 getShortAppinfo(data => {
                     if (data.code === 1000) {
-                        if (!this.auto_redirect_url(data.domain_name)) {
-                            return;
-                        }
                         if (data.ad && data.ad.ad_uri) {
                             this.ad_info = data.ad;
                         }
@@ -613,6 +597,8 @@
                         }
                     } else if (data.code === 1002) {
                         window.location.href = location.href.replace(location.search, '');
+                    }else if (data.code === 302 && data.data) {
+                        window.location.href = data.data;
                     } else {
                         this.iserror = true;
                         this.wrong = true;

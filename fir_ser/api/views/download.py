@@ -23,7 +23,7 @@ from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInf
 from django.http import FileResponse
 import logging
 from api.utils.baseutils import get_profile_full_path, get_app_domain_name, get_filename_form_file, \
-    check_app_domain_name_access, get_real_ip_address, get_origin_domain_name, ad_random_weight
+    check_app_domain_name_access, get_real_ip_address, get_origin_domain_name, ad_random_weight, format_get_uri
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 
 logger = logging.getLogger(__name__)
@@ -153,10 +153,16 @@ class ShortDownloadView(APIView):
         if res.code != 1000:
             return Response(res.dict)
         domain_name = get_redirect_server_domain(request, user_obj, get_app_domain_name(app_obj))
+        origin_domain_name = get_origin_domain_name(request)
+        if domain_name.split('//')[-1].split('/')[0] != origin_domain_name:
+            res.code = 302
+            res.data = format_get_uri(domain_name, short, {'release_id': release_id, 'udid': udid})
+            return Response(res.dict)
+
         if user_obj and user_obj.role and user_obj.role == 3:
             ...
         else:
-            if not check_app_domain_name_access(app_obj, get_origin_domain_name(request), user_obj,
+            if not check_app_domain_name_access(app_obj, origin_domain_name, user_obj,
                                                 domain_name.split('//')[-1]):
                 res.code = 1004
                 res.msg = "访问域名不合法"

@@ -276,3 +276,13 @@ def ad_random_weight(user_obj):
             ret = ad_info
             break
     return ret
+
+
+def format_get_uri(domain, short, data):
+    uri = ''
+    for k, v in data.items():
+        if v:
+            uri += f'&{k}={v}'
+    if uri:
+        uri = '?' + uri[1:]
+    return f'{domain}/{short}{uri}'
