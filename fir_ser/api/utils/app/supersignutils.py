@@ -11,7 +11,7 @@ from api.utils.response import BaseResponse
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILE_CONFIG_SIGN_SSL, MSGTEMPLATE
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
-    UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID
+    UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo
 from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
     consume_user_download_times_by_app_obj
@@ -21,6 +21,7 @@ from api.utils.baseutils import file_format_path, delete_app_profile_file, get_p
     get_user_default_domain_name, get_min_default_domain_cname_obj, format_apple_date, get_format_time
 from api.utils.storage.storage import Storage
 from django.core.cache import cache
+from django.db.models import Sum
 
 logger = logging.getLogger(__name__)
 
@@ -216,6 +217,21 @@ def get_http_server_domain(request):
     return get_server_domain_from_request(request, server_domain)
 
 
+def get_ios_developer_public_num(user_obj):
+    ios_developer_base_obj = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj)
+    add_number = ios_developer_base_obj.filter(action=1).aggregate(number=Sum('number'))
+    used_number = ios_developer_base_obj.filter(action=0).aggregate(number=Sum('number'))
+    if add_number:
+        add_number = add_number.get("number", 0)
+        if not used_number:
+            used_number = 0
+        else:
+            used_number = used_number.get("number", 0)
+        if add_number - used_number > 0:
+            return True
+    return False
+
+
 def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
     is_https = False
     if user_obj:
@@ -260,7 +276,9 @@ class IosUtils(object):
                 else:
                     logger.error(f"user {self.user_obj} send msg failed. over limit")
 
-    def get_developer_user_by_app_udid(self):
+    def get_developer_user_by_app_udid(self, user_obj_list=None):
+        if user_obj_list is None:
+            user_obj_list = []
         use_device_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'),
                                                              user_id=self.user_obj, developerid__is_actived=True,
                                                              developerid__certid__isnull=False).first()
@@ -278,7 +296,27 @@ class IosUtils(object):
                                                                         certid__isnull=False).order_by("created_time"):
                     if get_developer_udided(developer_obj)[1] < developer_obj.usable_number:
                         return developer_obj
-                return None
+                if get_ios_developer_public_num(self.user_obj):
+                    if user_obj_list == 'end':
+                        return None
+                    if not user_obj_list and isinstance(user_obj_list, list):
+                        user_obj_list = UserInfo.objects.filter(is_active=True, role=3, is_staff=True).all()
+                    for admin_user_obj in user_obj_list:
+                        if admin_user_obj:
+                            self.user_obj = admin_user_obj
+                            user_obj_list.remove(admin_user_obj)
+                            if len(user_obj_list) == 0:
+                                user_obj_list = 'end'
+                            result = self.get_developer_user_by_app_udid(user_obj_list)
+                            if user_obj_list and isinstance(user_obj_list, list) and result is None:
+                                return self.get_developer_user_by_app_udid(user_obj_list)
+                            else:
+                                return result
+                        else:
+                            return None
+                    return None
+                else:
+                    return None
         return developer_obj
 
     # def download_profile(self, developer_app_id, device_id_list):
