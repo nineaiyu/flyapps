@@ -482,7 +482,10 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
         return obj.udid.product
 
     def get_developer_id(self, obj):
-        return obj.developerid.issuer_id
+        if self.context.get('mine'):
+            return obj.developerid.issuer_id
+        else:
+            return '公共账号池'
 
     def get_bundle_id(self, obj):
         return obj.app_id.bundle_id
@@ -526,6 +529,10 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
 
     bundle_id = serializers.SerializerMethodField()
     bundle_name = serializers.SerializerMethodField()
+    is_mine = serializers.SerializerMethodField()
+
+    def get_is_mine(self, obj):
+        return self.context.get('mine')
 
     def get_bundle_id(self, obj):
         return obj.app_id.bundle_id

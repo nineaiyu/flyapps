@@ -223,10 +223,9 @@ def get_ios_developer_public_num(user_obj):
     used_number = ios_developer_base_obj.filter(action=0).aggregate(number=Sum('number'))
     if add_number:
         add_number = add_number.get("number", 0)
+        used_number = used_number.get("number", 0)
         if not used_number:
             used_number = 0
-        else:
-            used_number = used_number.get("number", 0)
         if add_number - used_number > 0:
             return True
     return False
@@ -250,6 +249,47 @@ def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
         protocol = 'https'
     server_domain = "%s://%s" % (protocol, domain_name)
     return get_server_domain_from_request(request, server_domain)
+
+
+
+def get_developer_user_by_app_udid(user_obj,udid):
+
+    use_device_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=udid,
+                                                         user_id=user_obj, developerid__is_actived=True,
+                                                         developerid__certid__isnull=False).first()
+    # 只要账户下面存在udid,就可以使用该苹果开发者账户，避免多个开发者账户下面出现同一个udid
+    if use_device_obj:
+        developer_obj = use_device_obj.developerid
+    else:
+        developer_udid_obj = UDIDsyncDeveloper.objects.filter(udid=udid,
+                                                              developerid__is_actived=True,
+                                                              developerid__certid__isnull=False).first()
+        if developer_udid_obj and developer_udid_obj.developerid.user_id.pk == user_obj.pk:
+            developer_obj = developer_udid_obj.developerid
+        else:
+            for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id=user_obj, is_actived=True,
+                                                                    certid__isnull=False).order_by("created_time"):
+                if get_developer_udided(developer_obj)[1] < developer_obj.usable_number:
+                    return developer_obj
+            return None
+    return developer_obj
+
+def get_developer_obj_by_others(user_obj, udid):
+    result = get_developer_user_by_app_udid(user_obj, udid)
+    if result:
+        return result
+    if not get_ios_developer_public_num(user_obj):
+        return None
+    admin_user_obj_list = UserInfo.objects.filter(is_active=True, role=3, is_staff=True).all()
+    for admin_user_obj in admin_user_obj_list:
+        result = get_developer_user_by_app_udid(admin_user_obj,udid)
+        if result is None:
+            continue
+        else:
+            logger.warning(f"user admin {admin_user_obj} developer to sign")
+            return result
+    return None
+
 
 
 class IosUtils(object):
@@ -276,48 +316,8 @@ class IosUtils(object):
                 else:
                     logger.error(f"user {self.user_obj} send msg failed. over limit")
 
-    def get_developer_user_by_app_udid(self, user_obj_list=None):
-        if user_obj_list is None:
-            user_obj_list = []
-        use_device_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=self.udid_info.get('udid'),
-                                                             user_id=self.user_obj, developerid__is_actived=True,
-                                                             developerid__certid__isnull=False).first()
-        # 只要账户下面存在udid,就可以使用该苹果开发者账户，避免多个开发者账户下面出现同一个udid
-        if use_device_obj:
-            developer_obj = use_device_obj.developerid
-        else:
-            developer_udid_obj = UDIDsyncDeveloper.objects.filter(udid=self.udid_info.get('udid'),
-                                                                  developerid__is_actived=True,
-                                                                  developerid__certid__isnull=False).first()
-            if developer_udid_obj:
-                developer_obj = developer_udid_obj.developerid
-            else:
-                for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id=self.user_obj, is_actived=True,
-                                                                        certid__isnull=False).order_by("created_time"):
-                    if get_developer_udided(developer_obj)[1] < developer_obj.usable_number:
-                        return developer_obj
-                if get_ios_developer_public_num(self.user_obj):
-                    if user_obj_list == 'end':
-                        return None
-                    if not user_obj_list and isinstance(user_obj_list, list):
-                        user_obj_list = UserInfo.objects.filter(is_active=True, role=3, is_staff=True).all()
-                    for admin_user_obj in user_obj_list:
-                        if admin_user_obj:
-                            self.user_obj = admin_user_obj
-                            user_obj_list.remove(admin_user_obj)
-                            if len(user_obj_list) == 0:
-                                user_obj_list = 'end'
-                            result = self.get_developer_user_by_app_udid(user_obj_list)
-                            if user_obj_list and isinstance(user_obj_list, list) and result is None:
-                                return self.get_developer_user_by_app_udid(user_obj_list)
-                            else:
-                                return result
-                        else:
-                            return None
-                    return None
-                else:
-                    return None
-        return developer_obj
+    def get_developer_user_by_app_udid(self):
+        return get_developer_obj_by_others(self.user_obj, self.udid_info.get('udid'))
 
     # def download_profile(self, developer_app_id, device_id_list):
     #     return get_api_obj(self.auth).get_profile(self.app_obj, self.udid_info,
@@ -476,29 +476,33 @@ class IosUtils(object):
                                                       user_id=self.user_obj,
                                                       developerid=self.developer_obj,
                                                       udid=udid_obj)
-
-    def update_sign_data(self, random_file_name, release_obj):
+        IosDeveloperPublicPoolBill.objects.update_or_create(app_id=self.app_obj,
+                                                      user_id=self.user_obj,
+                                                      developerid=self.developer_obj,
+                                                      udid=udid_obj,action=0,number=1)
+    @staticmethod
+    def update_sign_data(user_obj, app_obj, developer_obj,random_file_name, release_obj,udid):
         # 更新新签名的ipa包
-        if IosUtils.update_sign_file_name(self.user_obj, self.app_obj, self.developer_obj, release_obj,
+        if IosUtils.update_sign_file_name(user_obj, app_obj, developer_obj, release_obj,
                                           random_file_name):
             newdata = {
                 "is_signed": True,
                 "binary_file": random_file_name
             }
             # 更新已经完成签名状态，设备消耗记录，和开发者已消耗数量
-            AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).update(**newdata)
-            del_cache_response_by_short(self.app_obj.app_id, udid=self.udid_info.get('udid'))
+            AppUDID.objects.filter(app_id=app_obj, udid=udid).update(**newdata)
+            del_cache_response_by_short(app_obj.app_id, udid=udid)
             return True
 
     @staticmethod
-    def run_sign(user_obj, app_obj, developer_obj, download_flag, obj, d_time, result, resign=False):
+    def run_sign(user_obj, app_obj, developer_obj, download_flag, udid, d_time, result, resign=False):
         d_result = {'code': 0, 'msg': 'success'}
         start_time = time.time()
         if download_flag:
             logger.info(f"app_id {app_obj} download profile success. time:{start_time - d_time}")
-            random_file_name = make_from_user_uuid(user_obj)
+            random_file_name = make_from_user_uuid(developer_obj.user_id)
             release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
-            status, e_result = IosUtils.exec_sign(user_obj, app_obj, developer_obj, random_file_name, release_obj)
+            status, e_result = IosUtils.exec_sign(developer_obj.user_id, app_obj, developer_obj, random_file_name, release_obj)
             if status:
                 s_time1 = time.time()
                 logger.info(f"app_id {app_obj} exec sign ipa success. time:{s_time1 - start_time}")
@@ -509,7 +513,7 @@ class IosUtils(object):
                         d_result['msg'] = '数据更新失败，请稍后重试'
                         return status, d_result
                 else:
-                    if not obj.update_sign_data(random_file_name, release_obj):
+                    if not IosUtils.update_sign_data(user_obj, app_obj, developer_obj,random_file_name, release_obj,udid):
                         d_result['code'] = 1004
                         d_result['msg'] = '数据更新失败，请稍后重试'
                         return status, d_result
@@ -567,7 +571,7 @@ class IosUtils(object):
                 with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id),
                                 timeout=60 * 10):
                     logger.info("start run_sign ...")
-                    return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, 1, self, time.time(),
+                    return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, 1, self.udid_info.get('udid'), time.time(),
                                              None)
 
         logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
@@ -634,7 +638,7 @@ class IosUtils(object):
             return False, d_result
         with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id), timeout=60 * 10):
             logger.info("start run_sign ...")
-            return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, download_flag, self, start_time,
+            return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, download_flag, self.udid_info.get('udid'), start_time,
                                      result)
 
     @staticmethod

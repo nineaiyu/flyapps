@@ -420,13 +420,18 @@
                     <el-table-column
                             fixed="right"
                             label="操作"
-                            width="80">
+                            align="center"
+                            width="110">
                         <template slot-scope="scope">
                             <el-button
+                                    v-if="scope.row.is_mine"
                                     size="mini"
                                     type="danger"
                                     @click="udidDeleteFun(scope)">删除
                             </el-button>
+                            <el-tag v-else>
+                                不允许操作
+                            </el-tag>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -543,8 +548,7 @@
                 }
             },
             udidDeleteFun(scope) {
-                this.iosdevicesudidFun('DELETE', {id: scope.row.id, aid: scope.row.app_id});
-                this.app_udid_lists = removeAaary(this.app_udid_lists, scope.row)
+                this.iosdevicesudidFun('DELETE', {id: scope.row.id, aid: scope.row.app_id},scope);
             },
             handleSizeChange(val) {
                 this.pagination.pagesize = val;
@@ -661,7 +665,7 @@
                 if (tabname === "useddevices") {
                     this.iosdevicesFun('GET', data)
                 } else if (tabname === "devicesudid") {
-                    this.iosdevicesudidFun('GET', data)
+                    this.iosdevicesudidFun('GET', data, null)
                 } else if (tabname === "adddeveloper") {
                     this.iosdeveloperFun({"methods": "GET", "data": data})
                     // this.title='新增私有开发者账户';
@@ -755,7 +759,7 @@
                     }
                 }, params)
             },
-            iosdevicesudidFun(action, data) {
+            iosdevicesudidFun(action, data, scope) {
                 if (action !== 'GET') {
                     this.loadingfun = this.$loading({
                         lock: true,
@@ -771,7 +775,13 @@
                         if (action !== "DELETE") {
                             this.app_udid_lists = data.data;
                             this.pagination.total = data.count;
+                        }else {
+                            if(scope){
+                                this.app_udid_lists = removeAaary(this.app_udid_lists, scope.row)
+                            }
                         }
+                    }else {
+                        this.$message.error("操作失败了 "+data.msg);
                     }
                     if (action !== 'GET') {
                         this.loadingfun.close()

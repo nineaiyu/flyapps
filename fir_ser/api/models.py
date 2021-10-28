@@ -524,10 +524,10 @@ class UserAdDisplayInfo(models.Model):
 class IosDeveloperPublicPoolBill(models.Model):
     user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
     action_choices = ((0, 'used'), (1, 'add'))
-    action = models.SmallIntegerField(choices=action_choices, default=1, verbose_name="消费类型",
+    action = models.SmallIntegerField(choices=action_choices, default=0, verbose_name="消费类型",
                                       help_text="0 表示消耗 1表示充值")
     number = models.IntegerField(verbose_name="消耗次数", default=1)
-    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
-    udid = models.ForeignKey(to="AppUDID", on_delete=models.CASCADE, verbose_name="所消耗的udid")
-    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
+    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP",null=True,blank=True)
+    udid = models.ForeignKey(to="AppUDID", on_delete=models.CASCADE, verbose_name="所消耗的udid",null=True,blank=True)
+    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户",null=True,blank=True)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")

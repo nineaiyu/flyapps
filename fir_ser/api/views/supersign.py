@@ -186,31 +186,36 @@ class DeveloperView(APIView):
         return self.get(request)
 
 
+def base_super_sign_used_info(request):
+    udid = request.query_params.get("udid", None)
+    bundle_id = request.query_params.get("bundleid", None)
+    developer_id = request.query_params.get("appid", None)
+    mine = False
+    super_sign_used_objs = APPSuperSignUsedInfo.objects.filter(user_id=request.user, )
+    if not super_sign_used_objs:
+        super_sign_used_objs = APPSuperSignUsedInfo.objects.filter(developerid__user_id=request.user, )
+        mine = True
+    if developer_id:
+        super_sign_used_objs = super_sign_used_objs.filter(developerid__issuer_id=developer_id)
+    if udid:
+        super_sign_used_objs = super_sign_used_objs.filter(udid__udid=udid)
+    if bundle_id:
+        super_sign_used_objs = super_sign_used_objs.filter(app_id__bundle_id=bundle_id)
+    return super_sign_used_objs, mine
+
+
 class SuperSignUsedView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
     permission_classes = [SuperSignPermission, ]
 
     def get(self, request):
         res = BaseResponse()
-
-        udid = request.query_params.get("udid", None)
-        bundle_id = request.query_params.get("bundleid", None)
-        developer_id = request.query_params.get("appid", None)
-
-        super_sign_used_objs = APPSuperSignUsedInfo.objects.filter(user_id=request.user, )
-
-        if developer_id:
-            super_sign_used_objs = super_sign_used_objs.filter(developerid__issuer_id=developer_id)
-        if udid:
-            super_sign_used_objs = super_sign_used_objs.filter(udid__udid=udid)
-        if bundle_id:
-            super_sign_used_objs = super_sign_used_objs.filter(app_id__bundle_id=bundle_id)
-
+        super_sign_used_objs, mine = base_super_sign_used_info(request)
         page_obj = PageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=super_sign_used_objs.order_by("-created_time"),
                                                          request=request,
                                                          view=self)
-        app_serializer = SuperSignUsedSerializer(app_page_serializer, many=True, )
+        app_serializer = SuperSignUsedSerializer(app_page_serializer, many=True, context={'mine': mine})
         res.data = app_serializer.data
         res.count = super_sign_used_objs.count()
         return Response(res.dict)
@@ -222,20 +227,13 @@ class AppUDIDUsedView(APIView):
 
     def get(self, request):
         res = BaseResponse()
-
-        udid = request.query_params.get("udid", None)
-        bundle_id = request.query_params.get("bundleid", None)
-        app_udid_objs = AppUDID.objects.filter(app_id__user_id_id=request.user)
-        if udid:
-            app_udid_objs = app_udid_objs.filter(udid=udid)
-        if bundle_id:
-            app_udid_objs = app_udid_objs.filter(app_id__bundle_id=bundle_id)
-
+        super_sign_used_objs, mine = base_super_sign_used_info(request)
+        app_udid_objs = AppUDID.objects.filter(app_id__appsupersignusedinfo__in=super_sign_used_objs)
         page_obj = PageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=app_udid_objs.order_by("-created_time"),
                                                          request=request,
                                                          view=self)
-        app_serializer = DeviceUDIDSerializer(app_page_serializer, many=True, )
+        app_serializer = DeviceUDIDSerializer(app_page_serializer, many=True, context={'mine': mine} )
         res.data = app_serializer.data
         res.count = app_udid_objs.count()
         return Response(res.dict)
@@ -244,11 +242,16 @@ class AppUDIDUsedView(APIView):
         res = BaseResponse()
         pk = request.query_params.get("id", None)
         app_id = request.query_params.get("aid", None)
-        app_udid_obj = AppUDID.objects.filter(app_id__user_id_id=request.user, pk=pk)
+        app_udid_obj = AppUDID.objects.filter(pk=pk)
         if app_udid_obj:
-            logger.error(f"user {request.user} delete devices {app_udid_obj}")
-            IosUtils.disable_udid(app_udid_obj.first(), app_id)
-            app_udid_obj.delete()
+            super_sign_used_obj = APPSuperSignUsedInfo.objects.filter(udid=app_udid_obj.first()).first()
+            if super_sign_used_obj and super_sign_used_obj.developerid.user_id.pk == request.user.pk:
+                logger.error(f"user {request.user} delete devices {app_udid_obj}")
+                IosUtils.disable_udid(app_udid_obj.first(), app_id)
+                app_udid_obj.delete()
+            else:
+                res.code = 10002
+                res.msg = '公共账号池不允许删除'
         return Response(res.dict)
 
 

@@ -11,7 +11,7 @@ from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from rest_framework.response import Response
 from django.db.models import Sum
-from api.utils.app.supersignutils import IosUtils
+from api.utils.app.supersignutils import IosUtils, get_ios_developer_public_num
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo, AppScreenShot
@@ -223,7 +223,7 @@ class AppInfoView(APIView):
                         #     res.msg = "超级签余额不足，无法开启"
                         #     return Response(res.dict)
                         developer_count = AppIOSDeveloperInfo.objects.filter(user_id=request.user).count()
-                        if developer_count == 0:
+                        if developer_count == 0 and not get_ios_developer_public_num(request.user):
                             logger.error(f"app_id:{app_id} can't open super_sign,owner has no ios developer")
                             res.code = 1008
                             res.msg = "超级签开发者不存在，无法开启"
