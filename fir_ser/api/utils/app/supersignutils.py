@@ -197,7 +197,9 @@ def err_callback(func, *args, **kwargs):
 def get_ios_developer_public_num(user_obj):
     add_number = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj, action__in=[1, 2]).aggregate(
         number=Sum('number'))
-    used_number = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj, action=0).aggregate(number=Sum('number'))
+    used_number = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj, action=0,
+                                                            udid_sync_info__isnull=False).aggregate(
+        number=Sum('number'))
     if add_number:
         add_number = add_number.get("number", 0)
         if not add_number:
@@ -433,12 +435,15 @@ class IosUtils(object):
                                                       user_id=self.user_obj,
                                                       developerid=self.developer_obj,
                                                       udid=udid_obj)
+        udid_sync_info = UDIDsyncDeveloper.objects.filter(developerid=self.developer_obj,
+                                                          uuid=self.udid_info.get('udid')).first()
         IosDeveloperPublicPoolBill.objects.update_or_create(user_id=self.user_obj,
                                                             app_info=BillAppInfoSerializer(self.app_obj).data,
                                                             developer_info=BillDeveloperInfoSerializer(
                                                                 self.developer_obj).data,
                                                             udid_info=BillUdidInfoSerializer(udid_obj).data, action=0,
-                                                            number=1)
+                                                            number=1, udid_sync_info=udid_sync_info
+                                                            )
 
     @staticmethod
     def update_sign_data(user_obj, app_obj, developer_obj, random_file_name, release_obj, udid):
@@ -831,7 +836,8 @@ class IosUtils(object):
             AppUDID.objects.filter(udid__in=will_del_disabled_udid_list,
                                    app_id__developerdevicesid__udid__in=UDIDsyncDeveloper.objects.filter(
                                        udid__in=will_del_disabled_udid_list)).delete()
-            UDIDsyncDeveloper.objects.filter(udid__in=will_del_udid_list).delete()
-            DeveloperDevicesID.objects.filter(udid__udid__in=will_del_disabled_udid_list).delete()
+            UDIDsyncDeveloper.objects.filter(udid__in=will_del_udid_list, developerid=developer_obj).delete()
+            DeveloperDevicesID.objects.filter(udid__udid__in=will_del_disabled_udid_list,
+                                              developerid=developer_obj).delete()
 
         return status, result

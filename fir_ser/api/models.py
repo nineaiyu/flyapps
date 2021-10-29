@@ -535,6 +535,8 @@ class IosDeveloperPublicPoolBill(models.Model):
     app_info = models.JSONField(max_length=256, verbose_name="属于哪个APP", null=True, blank=True)
     udid_info = models.JSONField(max_length=256, verbose_name="设备id信息", null=True, blank=True)
     developer_info = models.JSONField(max_length=256, verbose_name="开发者信息", null=True, blank=True)
+    udid_sync_info = models.ForeignKey(to="UDIDsyncDeveloper", on_delete=models.SET_NULL, validators="关联同步设备信息",
+                                       null=True, blank=True)
     # app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP",null=True,blank=True)
     # udid = models.ForeignKey(to="AppUDID", on_delete=models.CASCADE, verbose_name="所消耗的udid",null=True,blank=True)
     # developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户",null=True,blank=True)
