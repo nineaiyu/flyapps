@@ -13,7 +13,8 @@ from django.utils import timezone
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
     USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
 from api.utils.storage.storage import Storage, LocalStorage
-from api.utils.baseutils import get_app_d_count_by_app_id, get_app_domain_name, check_app_password, get_user_domain_name
+from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name
+from api.utils.baseutils import check_app_password
 import logging
 from django.db.models import F
 

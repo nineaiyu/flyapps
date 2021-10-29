@@ -19,7 +19,7 @@
                     </el-switch>
                 </el-tooltip>
                 <el-button @click="clean_app" v-if="!currentapp.issupersign && currentapp.count !== 0"
-                           style="margin-left: 20px" size="small" type="info" plain>清理开发者账户脏数据
+                           style="margin-left: 20px" size="small" type="info" plain>清理该应用脏数据
                 </el-button>
                 <el-link v-else :underline="false" style="margin-left: 20px">超级签名，iOS专用，需要配置好苹果开发者账户，方可开启</el-link>
 

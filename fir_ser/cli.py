@@ -332,7 +332,7 @@ class AppInfo(object):
 
 
 def check_depends():
-    cmd_list = ['--upgrade pip', 'setuptools-rust', 'oss2', 'requests-toolbelt', 'androguard', 'qiniu','requests']
+    cmd_list = ['--upgrade pip', 'setuptools-rust', 'oss2', 'requests-toolbelt', 'androguard', 'qiniu', 'requests']
     for cmd in cmd_list:
         os.system('pip install %s' % cmd)
 

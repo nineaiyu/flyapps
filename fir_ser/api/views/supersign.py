@@ -190,11 +190,11 @@ def base_super_sign_used_info(request):
     udid = request.query_params.get("udid", None)
     bundle_id = request.query_params.get("bundleid", None)
     developer_id = request.query_params.get("appid", None)
-    mine = False
-    super_sign_used_objs = APPSuperSignUsedInfo.objects.filter(user_id=request.user, )
+    mine = True
+    super_sign_used_objs = APPSuperSignUsedInfo.objects.filter(developerid__user_id=request.user, )
     if not super_sign_used_objs:
-        super_sign_used_objs = APPSuperSignUsedInfo.objects.filter(developerid__user_id=request.user, )
-        mine = True
+        super_sign_used_objs = APPSuperSignUsedInfo.objects.filter(user_id=request.user, )
+        mine = False
     if developer_id:
         super_sign_used_objs = super_sign_used_objs.filter(developerid__issuer_id=developer_id)
     if udid:
@@ -215,7 +215,8 @@ class SuperSignUsedView(APIView):
         app_page_serializer = page_obj.paginate_queryset(queryset=super_sign_used_objs.order_by("-created_time"),
                                                          request=request,
                                                          view=self)
-        app_serializer = SuperSignUsedSerializer(app_page_serializer, many=True, context={'mine': mine})
+        app_serializer = SuperSignUsedSerializer(app_page_serializer, many=True,
+                                                 context={'mine': mine, 'user_obj': request.user})
         res.data = app_serializer.data
         res.count = super_sign_used_objs.count()
         return Response(res.dict)
@@ -228,12 +229,13 @@ class AppUDIDUsedView(APIView):
     def get(self, request):
         res = BaseResponse()
         super_sign_used_objs, mine = base_super_sign_used_info(request)
-        app_udid_objs = AppUDID.objects.filter(app_id__appsupersignusedinfo__in=super_sign_used_objs)
+        app_udid_objs = AppUDID.objects.filter(app_id__appsupersignusedinfo__in=super_sign_used_objs).distinct()
         page_obj = PageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=app_udid_objs.order_by("-created_time"),
                                                          request=request,
                                                          view=self)
-        app_serializer = DeviceUDIDSerializer(app_page_serializer, many=True, context={'mine': mine} )
+        app_serializer = DeviceUDIDSerializer(app_page_serializer, many=True,
+                                              context={'mine': mine, 'user_obj': request.user})
         res.data = app_serializer.data
         res.count = app_udid_objs.count()
         return Response(res.dict)

@@ -18,7 +18,7 @@ import logging
 from oss2 import SizedFileAdapter, determine_part_size
 from oss2.models import PartInfo
 
-from api.utils.baseutils import get_filename_form_file
+from api.utils.modelutils import get_filename_form_file
 
 logger = logging.getLogger(__name__)
 

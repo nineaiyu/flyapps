@@ -5,10 +5,11 @@
 # date: 2020/5/7
 import os, datetime, random
 import binascii
+
+from api.utils.modelutils import get_app_d_count_by_app_id
 from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT, CACHE_KEY_TEMPLATE
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
     UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, Token, DeveloperDevicesID, UserAdDisplayInfo
-from api.utils.storage.caches import get_app_d_count_by_app_id
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
 from api.utils.tempcaches import TmpCache

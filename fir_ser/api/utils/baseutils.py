@@ -6,27 +6,38 @@
 
 import os, re, time
 
-from django.db.models import Count
 import datetime
-import random
 from django.utils import timezone
-from fir_ser.settings import SUPER_SIGN_ROOT
-from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo
-from api.utils.app.randomstrings import make_app_uuid
+
+from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 import logging
 from dns.resolver import Resolver
+import uuid
 
 logger = logging.getLogger(__name__)
 
 
-def get_app_d_count_by_app_id(app_id):
-    d_count = 1
-    binary_size = AppReleaseInfo.objects.filter(is_master=True, app_id__app_id=app_id).values('binary_size').first()
-    if binary_size and binary_size.get('binary_size', 0) > 0:
-        d_count += binary_size.get('binary_size') // 1024 // 1024 // 100
-    return d_count
+def make_from_user_uuid(userinfo):
+    user_id = userinfo.uid
+    random_str = uuid.uuid1().__str__().split("-")[0:-1]
+    user_ran_str = uuid.uuid5(uuid.NAMESPACE_DNS, user_id).__str__().split("-")
+    user_ran_str.extend(random_str)
+    new_str = "".join(user_ran_str)
+    return new_str
+
+
+def make_app_uuid(userinfo, bundleid):
+    user_id = userinfo.uid
+    app_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, "%s" % (user_id + bundleid)).__str__().split("-")
+    fapp_uuid = "".join(app_uuid)
+    return fapp_uuid
+
+
+def make_random_uuid():
+    random_str = uuid.uuid1().__str__().split("-")
+    return "".join(random_str)
 
 
 def file_format_path(user_obj, auth=None):
@@ -173,31 +184,32 @@ def get_cname_from_domain(domain):
         return str(None)
 
 
-def get_user_domain_name(obj, domain_type=1):
-    domain_name = UserDomainInfo.objects.filter(user_id=obj, is_enable=True, app_id=None,
-                                                domain_type=domain_type).values_list('domain_name').first()
-    if domain_name:
-        return domain_name[0]
-    return ''
-
-
-def get_app_domain_name(obj):
-    domain_name = UserDomainInfo.objects.filter(app_id=obj, is_enable=True, domain_type=2).values_list(
-        'domain_name').first()
-    if domain_name:
-        return domain_name[0]
-    return ''
-
-
 def get_user_default_domain_name(domain_cname_obj):
     if domain_cname_obj:
         return domain_cname_obj.is_https, domain_cname_obj.domain_record
     return None, None
 
 
-def get_min_default_domain_cname_obj(is_system=True):
-    return min(DomainCnameInfo.objects.annotate(Count('userinfo')).filter(is_enable=True, is_system=is_system),
-               key=lambda x: x.userinfo__count)
+def get_server_domain_from_request(request, server_domain):
+    if not server_domain or not server_domain.startswith("http"):
+        http_host = request.META.get('HTTP_HOST')
+        server_protocol = request.META.get('SERVER_PROTOCOL')
+        protocol = 'https'
+        if server_protocol == 'HTTP/1.1':
+            protocol = 'http'
+        server_domain = "%s://%s" % (protocol, http_host)
+    return server_domain
+
+
+def get_http_server_domain(request):
+    server_domain = SERVER_DOMAIN.get('POST_UDID_DOMAIN', None)
+    return get_server_domain_from_request(request, server_domain)
+
+
+def get_post_udid_url(request, short):
+    server_domain = get_http_server_domain(request)
+    path_info_lists = [server_domain, "udid", short]
+    return "/".join(path_info_lists)
 
 
 def format_apple_date(s_date):
@@ -223,35 +235,6 @@ def check_app_password(app_password, password):
     return True
 
 
-def get_filename_form_file(filename):
-    file_id_list = filename.split('.')
-    if file_id_list[-1] in ['ipa', 'apk']:
-        app_release_obj = AppReleaseInfo.objects.filter(release_id='.'.join(file_id_list[0:-1])).first()
-        if app_release_obj:
-            app_obj = app_release_obj.app_id
-            if app_obj.type == 0:
-                f_type = '.apk'
-            else:
-                f_type = '.ipa'
-            return f"{app_obj.name}-{app_release_obj.app_version}-{app_obj.short}{f_type}"
-    return filename
-
-
-def check_app_domain_name_access(app_obj, access_domain_name, user_obj, extra_domain=None):
-    if app_obj and access_domain_name:
-        domain_list = []
-        if extra_domain:
-            domain_list.append(extra_domain)
-        app_domain_name = get_app_domain_name(app_obj)
-        if app_domain_name: domain_list.append(app_domain_name)
-        user_domain_name = get_user_domain_name(user_obj)
-        if user_domain_name: domain_list.append(user_domain_name)
-        user_qr_domain_name = get_user_domain_name(user_obj, 0)
-        if user_qr_domain_name: domain_list.append(user_qr_domain_name)
-        if access_domain_name in domain_list:
-            return True
-
-
 def get_real_ip_address(request):
     if request.META.get('HTTP_X_FORWARDED_FOR', None):
         return request.META.get('HTTP_X_FORWARDED_FOR')
@@ -261,21 +244,7 @@ def get_real_ip_address(request):
 
 def get_origin_domain_name(request):
     meta = request.META
-    return meta.get('HTTP_ORIGIN', meta.get('HTTP_REFERER', 'http://xxx/xxx')).split('//')[-1].split('/')[0]
-
-
-def ad_random_weight(user_obj):
-    ad_info_list = UserAdDisplayInfo.objects.filter(user_id=user_obj, is_enable=True).order_by('-created_time')
-    total = sum([ad_info.weight for ad_info in ad_info_list])  # 权重求和
-    ra = random.uniform(0, total)  # 在0与权重和之前获取一个随机数
-    curr_sum = 0
-    ret = ad_info_list.first()
-    for ad_info in ad_info_list:
-        curr_sum += ad_info.weight  # 在遍历中，累加当前权重值
-        if ra <= curr_sum:  # 当随机数<=当前权重和时，返回权重key
-            ret = ad_info
-            break
-    return ret
+    return request.META.get('HTTP_ORIGIN', meta.get('HTTP_REFERER', 'http://xxx/xxx')).split('//')[-1].split('/')[0]
 
 
 def format_get_uri(domain, short, data):

@@ -22,11 +22,11 @@ from fir_ser.settings import LOGIN, CHANGER, REGISTER
 
 
 @shared_task
-def run_sign_task(format_udid_info, short):
+def run_sign_task(format_udid_info, short, client_ip):
     app_info = Apps.objects.filter(short=short).first()
     with cache.lock("%s_%s_%s" % ('task_sign', app_info.app_id, format_udid_info.get('udid')), timeout=60 * 10):
         ios_obj = IosUtils(format_udid_info, app_info.user_id, app_info)
-        status, msg = ios_obj.sign()
+        status, msg = ios_obj.sign(client_ip)
         if not status:
             code = msg.get("code", -1)
             if code == 0:

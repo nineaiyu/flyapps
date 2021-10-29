@@ -10,9 +10,8 @@ from api.utils.TokenManager import verify_token
 from api.utils.response import BaseResponse
 from rest_framework.response import Response
 from fir_ser import settings
-from api.utils.app.randomstrings import make_random_uuid
 from api.utils.app.apputils import make_resigned
-from api.utils.app.supersignutils import make_sign_udid_mobile_config, get_post_udid_url, get_redirect_server_domain
+from api.utils.app.supersignutils import make_sign_udid_mobile_config
 from api.utils.storage.storage import Storage, get_local_storage
 from api.utils.storage.caches import get_app_instance_by_cache, get_download_url_by_cache, set_app_download_by_cache, \
     del_cache_response_by_short, consume_user_download_times, check_app_permission
@@ -22,9 +21,11 @@ from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInfo
 from django.http import FileResponse
 import logging
-from api.utils.baseutils import get_profile_full_path, get_app_domain_name, get_filename_form_file, \
-    check_app_domain_name_access, get_real_ip_address, get_origin_domain_name, ad_random_weight, format_get_uri
+from api.utils.baseutils import get_profile_full_path, make_random_uuid, get_real_ip_address, get_origin_domain_name, \
+    format_get_uri, get_post_udid_url
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
+from api.utils.modelutils import get_app_domain_name, get_filename_form_file, check_app_domain_name_access, \
+    ad_random_weight, get_redirect_server_domain
 
 logger = logging.getLogger(__name__)
 

@@ -3,9 +3,10 @@ from django.db import models
 # Create your models here.
 
 from django.contrib.contenttypes.models import ContentType
-from api.utils.app.randomstrings import make_random_uuid
+
 from django.contrib.auth.models import AbstractUser
 from api.utils.TokenManager import generate_alphanumeric_token_of_length, generate_numeric_token_of_length
+from api.utils.baseutils import make_random_uuid
 
 
 ######################################## 用户表 ########################################
@@ -522,12 +523,44 @@ class UserAdDisplayInfo(models.Model):
 
 
 class IosDeveloperPublicPoolBill(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
-    action_choices = ((0, 'used'), (1, 'add'))
-    action = models.SmallIntegerField(choices=action_choices, default=0, verbose_name="消费类型",
-                                      help_text="0 表示消耗 1表示充值")
+    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE,
+                                related_name='org_user_id')
+    to_user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE,
+                                   related_name='to_user_id', null=True, blank=True)
+
+    action_choices = ((0, '消费'), (1, '充值'), (2, '转账'))
+    action = models.SmallIntegerField(choices=action_choices, default=0, verbose_name="资金类型",
+                                      help_text="0 消费 1 充值 2 转账")
     number = models.IntegerField(verbose_name="消耗次数", default=1)
-    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP",null=True,blank=True)
-    udid = models.ForeignKey(to="AppUDID", on_delete=models.CASCADE, verbose_name="所消耗的udid",null=True,blank=True)
-    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户",null=True,blank=True)
+    app_info = models.JSONField(max_length=256, verbose_name="属于哪个APP", null=True, blank=True)
+    udid_info = models.JSONField(max_length=256, verbose_name="设备id信息", null=True, blank=True)
+    developer_info = models.JSONField(max_length=256, verbose_name="开发者信息", null=True, blank=True)
+    # app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP",null=True,blank=True)
+    # udid = models.ForeignKey(to="AppUDID", on_delete=models.CASCADE, verbose_name="所消耗的udid",null=True,blank=True)
+    # developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户",null=True,blank=True)
+    description = models.CharField(verbose_name="操作描述", max_length=128, default='', blank=True)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+
+    class Meta:
+        verbose_name = '资金流转账单'
+        verbose_name_plural = "资金流转账单"
+
+    def __str__(self):
+        return "%s-%s—%s" % (self.user_id, self.to_user_id, self.description)
+
+
+class RemoteClientInfo(models.Model):
+    remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址")
+    user_agent = models.CharField(verbose_name="客户端agent", max_length=512)
+    method = models.CharField(verbose_name="请求方式", max_length=16)
+    uri_info = models.CharField(verbose_name="访问的URI", max_length=256)
+    a_domain = models.CharField(verbose_name="前端域名", max_length=128)
+    description = models.CharField(verbose_name="访问描述", max_length=256)
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="访问时间")
+
+    class Meta:
+        verbose_name = '客户端访问记录'
+        verbose_name_plural = "客户端访问记录"
+
+    def __str__(self):
+        return "%s-%s" % (self.remote_addr, self.description)

@@ -10,7 +10,8 @@ from rest_framework.views import APIView
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
     check_username_exists, set_user_token
-from api.utils.baseutils import is_valid_phone, is_valid_email, get_min_default_domain_cname_obj, get_real_ip_address
+from api.utils.baseutils import is_valid_phone, is_valid_email, get_real_ip_address
+from api.utils.modelutils import get_min_default_domain_cname_obj
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
 from fir_ser.settings import REGISTER, LOGIN, CHANGER

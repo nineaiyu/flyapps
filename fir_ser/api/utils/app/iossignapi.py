@@ -6,11 +6,10 @@
 import datetime
 
 from api.utils.app.shellcmds import shell_command, use_user_pass
-from api.utils.baseutils import get_format_time, format_apple_date
+from api.utils.baseutils import get_format_time, format_apple_date, make_app_uuid
 from fir_ser.settings import SUPER_SIGN_ROOT
 import os
 import re
-from api.utils.app.randomstrings import make_app_uuid
 import logging
 from api.utils.apple.appleapiv3 import AppStoreConnectApi
 import base64

@@ -8,17 +8,17 @@ import uuid, xmltodict, os, logging, time
 
 import zipfile
 from api.utils.response import BaseResponse
-from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, SERVER_DOMAIN, MOBILE_CONFIG_SIGN_SSL, MSGTEMPLATE
+from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer, BillUdidInfoSerializer
+from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, MOBILE_CONFIG_SIGN_SSL, MSGTEMPLATE
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
     UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo
-from api.utils.app.randomstrings import make_app_uuid, make_from_user_uuid
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
     consume_user_download_times_by_app_obj
 from api.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status, delete_local_files, \
     download_files_form_oss, get_developer_udided
-from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, get_user_domain_name, \
-    get_user_default_domain_name, get_min_default_domain_cname_obj, format_apple_date, get_format_time
+from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
+    get_format_time, make_app_uuid, make_from_user_uuid
 from api.utils.storage.storage import Storage
 from django.core.cache import cache
 from django.db.models import Sum
@@ -159,13 +159,6 @@ def make_udid_mobile_config(udid_url, payload_organization, app_name, payload_uu
 </plist>'''
 
 
-def get_post_udid_url(request, short):
-    server_domain = get_http_server_domain(request)
-    path_info_lists = [server_domain, "udid", short]
-    udid_url = "/".join(path_info_lists)
-    return udid_url
-
-
 def get_auth_form_developer(developer_obj):
     if developer_obj.issuer_id:
         auth = {
@@ -201,28 +194,14 @@ def err_callback(func, *args, **kwargs):
     return wrapper
 
 
-def get_server_domain_from_request(request, server_domain):
-    if not server_domain or not server_domain.startswith("http"):
-        http_host = request.META.get('HTTP_HOST')
-        server_protocol = request.META.get('SERVER_PROTOCOL')
-        protocol = 'https'
-        if server_protocol == 'HTTP/1.1':
-            protocol = 'http'
-        server_domain = "%s://%s" % (protocol, http_host)
-    return server_domain
-
-
-def get_http_server_domain(request):
-    server_domain = SERVER_DOMAIN.get('POST_UDID_DOMAIN', None)
-    return get_server_domain_from_request(request, server_domain)
-
-
 def get_ios_developer_public_num(user_obj):
-    ios_developer_base_obj = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj)
-    add_number = ios_developer_base_obj.filter(action=1).aggregate(number=Sum('number'))
-    used_number = ios_developer_base_obj.filter(action=0).aggregate(number=Sum('number'))
+    add_number = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj, action__in=[1, 2]).aggregate(
+        number=Sum('number'))
+    used_number = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj, action=0).aggregate(number=Sum('number'))
     if add_number:
         add_number = add_number.get("number", 0)
+        if not add_number:
+            return False
         used_number = used_number.get("number", 0)
         if not used_number:
             used_number = 0
@@ -231,29 +210,7 @@ def get_ios_developer_public_num(user_obj):
     return False
 
 
-def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
-    is_https = False
-    if user_obj:
-        if app_domain_name and len(app_domain_name) > 3:
-            domain_name = app_domain_name
-        else:
-            domain_name = get_user_domain_name(user_obj)
-            if not domain_name:
-                is_https, domain_name = get_user_default_domain_name(user_obj.default_domain_name)
-    elif app_domain_name and len(app_domain_name) > 3:
-        domain_name = app_domain_name
-    else:
-        is_https, domain_name = get_user_default_domain_name(get_min_default_domain_cname_obj(True))
-    protocol = 'http'
-    if is_https:
-        protocol = 'https'
-    server_domain = "%s://%s" % (protocol, domain_name)
-    return get_server_domain_from_request(request, server_domain)
-
-
-
-def get_developer_user_by_app_udid(user_obj,udid):
-
+def get_developer_user_by_app_udid(user_obj, udid):
     use_device_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=udid,
                                                          user_id=user_obj, developerid__is_actived=True,
                                                          developerid__certid__isnull=False).first()
@@ -274,22 +231,22 @@ def get_developer_user_by_app_udid(user_obj,udid):
             return None
     return developer_obj
 
+
 def get_developer_obj_by_others(user_obj, udid):
     result = get_developer_user_by_app_udid(user_obj, udid)
     if result:
         return result
     if not get_ios_developer_public_num(user_obj):
         return None
-    admin_user_obj_list = UserInfo.objects.filter(is_active=True, role=3, is_staff=True).all()
-    for admin_user_obj in admin_user_obj_list:
-        result = get_developer_user_by_app_udid(admin_user_obj,udid)
+    receive_user_obj_list = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj).all()
+    for receive_user_obj in receive_user_obj_list:
+        result = get_developer_user_by_app_udid(receive_user_obj.user_id, udid)
         if result is None:
             continue
         else:
-            logger.warning(f"user admin {admin_user_obj} developer to sign")
+            logger.warning(f"user receive_user_obj {receive_user_obj.user_id} developer to sign")
             return result
     return None
-
 
 
 class IosUtils(object):
@@ -468,7 +425,7 @@ class IosUtils(object):
         logger.info(f"update sign file end, now upload {storage_obj.storage} {random_file_name}.ipa file")
         return storage_obj.upload_file(os.path.join(MEDIA_ROOT, random_file_name + ".ipa"))
 
-    def update_developer_used_data(self):
+    def update_developer_used_data(self, client_ip):
         udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
         udid_obj.is_download = True
         udid_obj.save(update_fields=['is_download'])
@@ -476,12 +433,15 @@ class IosUtils(object):
                                                       user_id=self.user_obj,
                                                       developerid=self.developer_obj,
                                                       udid=udid_obj)
-        IosDeveloperPublicPoolBill.objects.update_or_create(app_id=self.app_obj,
-                                                      user_id=self.user_obj,
-                                                      developerid=self.developer_obj,
-                                                      udid=udid_obj,action=0,number=1)
+        IosDeveloperPublicPoolBill.objects.update_or_create(user_id=self.user_obj,
+                                                            app_info=BillAppInfoSerializer(self.app_obj).data,
+                                                            developer_info=BillDeveloperInfoSerializer(
+                                                                self.developer_obj).data,
+                                                            udid_info=BillUdidInfoSerializer(udid_obj).data, action=0,
+                                                            number=1)
+
     @staticmethod
-    def update_sign_data(user_obj, app_obj, developer_obj,random_file_name, release_obj,udid):
+    def update_sign_data(user_obj, app_obj, developer_obj, random_file_name, release_obj, udid):
         # 更新新签名的ipa包
         if IosUtils.update_sign_file_name(user_obj, app_obj, developer_obj, release_obj,
                                           random_file_name):
@@ -502,7 +462,8 @@ class IosUtils(object):
             logger.info(f"app_id {app_obj} download profile success. time:{start_time - d_time}")
             random_file_name = make_from_user_uuid(developer_obj.user_id)
             release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
-            status, e_result = IosUtils.exec_sign(developer_obj.user_id, app_obj, developer_obj, random_file_name, release_obj)
+            status, e_result = IosUtils.exec_sign(developer_obj.user_id, app_obj, developer_obj, random_file_name,
+                                                  release_obj)
             if status:
                 s_time1 = time.time()
                 logger.info(f"app_id {app_obj} exec sign ipa success. time:{s_time1 - start_time}")
@@ -513,7 +474,8 @@ class IosUtils(object):
                         d_result['msg'] = '数据更新失败，请稍后重试'
                         return status, d_result
                 else:
-                    if not IosUtils.update_sign_data(user_obj, app_obj, developer_obj,random_file_name, release_obj,udid):
+                    if not IosUtils.update_sign_data(user_obj, app_obj, developer_obj, random_file_name, release_obj,
+                                                     udid):
                         d_result['code'] = 1004
                         d_result['msg'] = '数据更新失败，请稍后重试'
                         return status, d_result
@@ -532,7 +494,7 @@ class IosUtils(object):
         d_result['msg'] = msg
         return True, d_result
 
-    def sign(self, sign_try_attempts=3):
+    def sign(self, client_ip, sign_try_attempts=3):
         """
         :param sign_try_attempts:
         :return:  status, result
@@ -571,7 +533,8 @@ class IosUtils(object):
                 with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id),
                                 timeout=60 * 10):
                     logger.info("start run_sign ...")
-                    return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, 1, self.udid_info.get('udid'), time.time(),
+                    return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, 1,
+                                             self.udid_info.get('udid'), time.time(),
                                              None)
 
         logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
@@ -629,7 +592,7 @@ class IosUtils(object):
                                                           developerid=self.developer_obj,
                                                           app_id=self.app_obj)
 
-            self.update_developer_used_data()
+            self.update_developer_used_data(client_ip)
 
         if not self.developer_obj:
             d_result['code'] = 1005
@@ -638,7 +601,8 @@ class IosUtils(object):
             return False, d_result
         with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id), timeout=60 * 10):
             logger.info("start run_sign ...")
-            return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, download_flag, self.udid_info.get('udid'), start_time,
+            return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, download_flag,
+                                     self.udid_info.get('udid'), start_time,
                                      result)
 
     @staticmethod
@@ -689,6 +653,10 @@ class IosUtils(object):
             IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj, auth)
             SuperSignUsed_obj.delete()
 
+            app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,
+                                                            udid=udid_obj.udid).first()
+            DeveloperDevicesID.objects.filter(udid=app_udid_obj, developerid=developer_obj, app_id=app_obj).delete()
+
     @staticmethod
     def clean_app_by_user_obj(app_obj):
         """
@@ -701,7 +669,7 @@ class IosUtils(object):
 
         for developer_id in developer_id_lists:
             developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_id[0]).first()
-            if developer_obj:
+            if developer_obj and developer_obj.user_id == app_obj.user_id:
                 IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
                 delete_app_to_dev_and_file(developer_obj, app_obj.id)
                 IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)

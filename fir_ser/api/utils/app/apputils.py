@@ -3,11 +3,10 @@
 # project: 3月 
 # author: liuyu
 # date: 2020/3/6
-from api.utils.app.randomstrings import make_app_uuid
 from api.models import AppReleaseInfo, Apps
 import random
-
-from api.utils.baseutils import get_user_domain_name
+from api.utils.baseutils import make_app_uuid
+from api.utils.modelutils import get_user_domain_name
 from api.utils.storage.storage import Storage
 from api.utils.storage.caches import del_cache_response_by_short
 import logging

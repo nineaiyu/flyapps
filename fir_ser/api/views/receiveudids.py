@@ -3,9 +3,8 @@
 # project: 3月
 # author: liuyu
 # date: 2020/3/6
-from api.utils.app.randomstrings import make_random_uuid
-from api.utils.app.supersignutils import udid_bytes_to_dict, get_redirect_server_domain, make_sign_udid_mobile_config, \
-    get_post_udid_url, get_http_server_domain, get_server_domain_from_request
+from api.utils.app.supersignutils import udid_bytes_to_dict, make_sign_udid_mobile_config, IosUtils
+
 from api.models import Apps
 from django.views import View
 from django.http import HttpResponsePermanentRedirect, FileResponse, HttpResponse
@@ -18,7 +17,8 @@ from fir_ser.celery import app
 import logging
 from rest_framework.views import APIView
 
-from api.utils.baseutils import get_app_domain_name
+from api.utils.baseutils import get_real_ip_address, get_http_server_domain, make_random_uuid
+from api.utils.modelutils import get_app_domain_name, get_redirect_server_domain
 from celery.exceptions import TimeoutError
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,9 @@ class IosUDIDView(View):
                     if res.code != 1000:
                         msg = "&msg=%s" % res.msg
                     else:
-                        c_task = run_sign_task.apply_async((format_udid_info, short))
+                        client_ip = get_real_ip_address(request)
+                        logger.info(f"client_ip {client_ip} short {short} app_info {app_info}")
+                        c_task = run_sign_task.apply_async((format_udid_info, short, client_ip))
                         task_id = c_task.id
                         logger.info(f"sign app {app_info} task_id:{task_id}")
                         try:

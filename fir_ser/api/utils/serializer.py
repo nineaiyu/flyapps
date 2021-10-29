@@ -2,8 +2,7 @@ from rest_framework import serializers
 from api import models
 from api.utils.TokenManager import make_token
 from api.utils.app.apputils import bytes2human
-from api.utils.app.supersignutils import get_redirect_server_domain
-from api.utils.baseutils import get_user_domain_name, get_app_domain_name
+from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_redirect_server_domain
 from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided, get_choices_dict, get_choices_name_from_key
 from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
@@ -467,13 +466,14 @@ class AdminDeveloperSerializer(DeveloperSerializer):
 class SuperSignUsedSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.APPSuperSignUsedInfo
-        fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name"]
+        fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name", "other_uid"]
 
     device_udid = serializers.SerializerMethodField()
     device_name = serializers.SerializerMethodField()
     developer_id = serializers.SerializerMethodField()
     bundle_id = serializers.SerializerMethodField()
     bundle_name = serializers.SerializerMethodField()
+    other_uid = serializers.SerializerMethodField()
 
     def get_device_udid(self, obj):
         return obj.udid.udid
@@ -492,6 +492,15 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
 
     def get_bundle_name(self, obj):
         return obj.app_id.name
+
+    def get_other_uid(self, obj):
+        user_obj = self.context.get('user_obj')
+        role = 0
+        if user_obj:
+            role = user_obj.role
+        if role == 3:
+            if obj.user_id != obj.developerid.user_id:
+                return obj.user_id.uid
 
 
 class AdminSuperSignUsedSerializer(SuperSignUsedSerializer):
@@ -530,6 +539,17 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
     bundle_id = serializers.SerializerMethodField()
     bundle_name = serializers.SerializerMethodField()
     is_mine = serializers.SerializerMethodField()
+    other_uid = serializers.SerializerMethodField()
+
+    def get_other_uid(self, obj):
+        user_obj = self.context.get('user_obj')
+        role = 0
+        if user_obj:
+            role = user_obj.role
+        if role == 3:
+            super_user_obj = models.APPSuperSignUsedInfo.objects.filter(udid=obj, app_id=obj.app_id).first()
+            if super_user_obj.developerid.user_id != obj.app_id.user_id:
+                return obj.app_id.user_id.uid
 
     def get_is_mine(self, obj):
         return self.context.get('mine')
@@ -682,3 +702,21 @@ class AppAdInfoSerializer(UserAdInfoSerializer):
 
     def get_ad_pic(self, obj):
         return get_download_url_from_context(self, obj, '', obj.ad_pic, True)
+
+
+class BillAppInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Apps
+        fields = ["pk", "app_id", "user_id", "name", "type", "bundle_id", "updated_time"]
+
+
+class BillDeveloperInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.AppIOSDeveloperInfo
+        fields = ["pk", "issuer_id", "user_id", "certid"]
+
+
+class BillUdidInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.AppUDID
+        fields = ["pk", "app_id", "udid", "product", "serial", "version", "imei", "iccid"]

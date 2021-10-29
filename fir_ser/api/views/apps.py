@@ -19,7 +19,7 @@ from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListS
 from rest_framework.pagination import PageNumberPagination
 import logging
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
-from api.utils.baseutils import get_user_domain_name, get_app_domain_name
+from api.utils.modelutils import get_user_domain_name, get_app_domain_name
 from api.base_views import app_delete
 
 logger = logging.getLogger(__name__)
@@ -113,7 +113,7 @@ class AppInfoView(APIView):
             if app_obj:
                 app_serializer = AppsSerializer(app_obj, context={"storage": Storage(request.user)})
                 res.data = app_serializer.data
-                count = APPToDeveloper.objects.filter(app_id=app_obj).count()
+                count = APPToDeveloper.objects.filter(app_id=app_obj, developerid__user_id=request.user).count()
                 res.data["count"] = count
             else:
                 logger.error(f"app_id:{app_id} is not found in user:{request.user}")
@@ -226,7 +226,7 @@ class AppInfoView(APIView):
                         if developer_count == 0 and not get_ios_developer_public_num(request.user):
                             logger.error(f"app_id:{app_id} can't open super_sign,owner has no ios developer")
                             res.code = 1008
-                            res.msg = "超级签开发者不存在，无法开启"
+                            res.msg = "超级签余额不足，无法开启"
                             return Response(res.dict)
                         app_obj.issupersign = data.get("issupersign", app_obj.issupersign)
                         update_fields.append("issupersign")

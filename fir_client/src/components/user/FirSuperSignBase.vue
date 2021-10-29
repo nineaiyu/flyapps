@@ -342,6 +342,11 @@
                             width="200">
                     </el-table-column>
                     <el-table-column
+                            v-if="$store.state.userinfo&&$store.state.userinfo.role == 3"
+                            prop="other_uid"
+                            label="被使用户uid">
+                    </el-table-column>
+                    <el-table-column
                             :formatter="deviceformatter"
                             prop="created_time"
                             label="授权时间"
@@ -410,6 +415,11 @@
                             prop="serial"
                             label="设备序列号"
                             width="150">
+                    </el-table-column>
+                    <el-table-column
+                            v-if="$store.state.userinfo&&$store.state.userinfo.role == 3"
+                            prop="other_uid"
+                            label="被使用户uid">
                     </el-table-column>
                     <el-table-column
                             :formatter="deviceformatter"
