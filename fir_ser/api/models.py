@@ -237,7 +237,8 @@ class AppStorage(models.Model):
 
 class AppUDID(models.Model):
     app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
-    udid = models.CharField(max_length=64, verbose_name="udid唯一标识", db_index=True)
+    # udid = models.CharField(max_length=64, verbose_name="udid唯一标识", db_index=True)
+    udid = models.ForeignKey(to="UDIDsyncDeveloper", verbose_name="udid唯一标识", on_delete=models.CASCADE)
     product = models.CharField(max_length=64, verbose_name="产品", blank=True, null=True, )
     serial = models.CharField(max_length=64, verbose_name="序列号", blank=True, null=True, )
     version = models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
@@ -535,7 +536,7 @@ class IosDeveloperPublicPoolBill(models.Model):
     app_info = models.JSONField(max_length=256, verbose_name="属于哪个APP", null=True, blank=True)
     udid_info = models.JSONField(max_length=256, verbose_name="设备id信息", null=True, blank=True)
     developer_info = models.JSONField(max_length=256, verbose_name="开发者信息", null=True, blank=True)
-    udid_sync_info = models.ForeignKey(to="UDIDsyncDeveloper", on_delete=models.SET_NULL, validators="关联同步设备信息",
+    udid_sync_info = models.ForeignKey(to="UDIDsyncDeveloper", on_delete=models.SET_NULL, verbose_name="关联同步设备信息",
                                        null=True, blank=True)
     # app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP",null=True,blank=True)
     # udid = models.ForeignKey(to="AppUDID", on_delete=models.CASCADE, verbose_name="所消耗的udid",null=True,blank=True)

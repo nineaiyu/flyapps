@@ -213,7 +213,7 @@ def get_ios_developer_public_num(user_obj):
 
 
 def get_developer_user_by_app_udid(user_obj, udid):
-    use_device_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=udid,
+    use_device_obj = APPSuperSignUsedInfo.objects.filter(udid__udid__udid=udid,
                                                          user_id=user_obj, developerid__is_actived=True,
                                                          developerid__certid__isnull=False).first()
     # 只要账户下面存在udid,就可以使用该苹果开发者账户，避免多个开发者账户下面出现同一个udid
@@ -256,12 +256,13 @@ class IosUtils(object):
         self.developer_obj = None
         self.auth = None
         self.udid_info = udid_info
+        self.udid = udid_info.get('udid')
         self.app_obj = app_obj
         self.user_obj = user_obj
         self.get_developer_auth()
 
     def get_developer_auth(self):
-        self.developer_obj = self.get_developer_user_by_app_udid()
+        self.developer_obj = get_developer_obj_by_others(self.user_obj, self.udid)
         if self.developer_obj:
             self.auth = get_auth_form_developer(self.developer_obj)
         else:
@@ -274,9 +275,6 @@ class IosUtils(object):
                                                          self.user_obj.first_name, self.app_obj.name))
                 else:
                     logger.error(f"user {self.user_obj} send msg failed. over limit")
-
-    def get_developer_user_by_app_udid(self):
-        return get_developer_obj_by_others(self.user_obj, self.udid_info.get('udid'))
 
     # def download_profile(self, developer_app_id, device_id_list):
     #     return get_api_obj(self.auth).get_profile(self.app_obj, self.udid_info,
@@ -428,7 +426,8 @@ class IosUtils(object):
         return storage_obj.upload_file(os.path.join(MEDIA_ROOT, random_file_name + ".ipa"))
 
     def update_developer_used_data(self, client_ip):
-        udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
+        udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid__udid=self.udid,
+                                          udid__developerid=self.developer_obj).first()
         udid_obj.is_download = True
         udid_obj.save(update_fields=['is_download'])
         APPSuperSignUsedInfo.objects.update_or_create(app_id=self.app_obj,
@@ -436,7 +435,7 @@ class IosUtils(object):
                                                       developerid=self.developer_obj,
                                                       udid=udid_obj)
         udid_sync_info = UDIDsyncDeveloper.objects.filter(developerid=self.developer_obj,
-                                                          uuid=self.udid_info.get('udid')).first()
+                                                          udid=self.udid).first()
         IosDeveloperPublicPoolBill.objects.update_or_create(user_id=self.user_obj,
                                                             app_info=BillAppInfoSerializer(self.app_obj).data,
                                                             developer_info=BillDeveloperInfoSerializer(
@@ -455,7 +454,8 @@ class IosUtils(object):
                 "binary_file": random_file_name
             }
             # 更新已经完成签名状态，设备消耗记录，和开发者已消耗数量
-            AppUDID.objects.filter(app_id=app_obj, udid=udid).update(**newdata)
+            udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj, udid=udid).first()
+            AppUDID.objects.filter(app_id=app_obj, udid=udid_obj).update(**newdata)
             del_cache_response_by_short(app_obj.app_id, udid=udid)
             return True
 
@@ -501,6 +501,7 @@ class IosUtils(object):
 
     def sign(self, client_ip, sign_try_attempts=3):
         """
+        :param client_ip:
         :param sign_try_attempts:
         :return:  status, result
         :des:  仅用于苹果设备发送设备udid签名使用
@@ -519,18 +520,20 @@ class IosUtils(object):
             return False, {'code': res.code, 'msg': res.msg}
 
         if not self.developer_obj:
-            msg = "udid %s app %s not exists apple developer" % (self.udid_info.get('udid'), self.app_obj)
+            msg = "udid %s app %s not exists apple developer" % (self.udid, self.app_obj)
             d_result['code'] = 1005
             d_result['msg'] = msg
             logger.error(d_result)
             return False, d_result
-        app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid')).first()
+
+        app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid__udid=self.udid,
+                                              udid__developerid=self.developer_obj).first()
         if app_udid_obj and app_udid_obj.is_download:
             if app_udid_obj.is_signed:
                 release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
                 for apptodev_obj in APPToDeveloper.objects.filter(app_id=self.app_obj).all():
                     if release_obj.release_id == apptodev_obj.release_file:
-                        msg = "udid %s exists app_id %s" % (self.udid_info.get('udid'), self.app_obj)
+                        msg = "udid %s exists app_id %s" % (self.udid, self.app_obj)
                         d_result['msg'] = msg
                         logger.info(d_result)
                         return True, d_result
@@ -539,10 +542,10 @@ class IosUtils(object):
                                 timeout=60 * 10):
                     logger.info("start run_sign ...")
                     return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, 1,
-                                             self.udid_info.get('udid'), time.time(),
+                                             self.udid, time.time(),
                                              None)
 
-        logger.info("udid %s not exists app_id %s ,need sign" % (self.udid_info.get('udid'), self.app_obj))
+        logger.info("udid %s not exists app_id %s ,need sign" % (self.udid, self.app_obj))
 
         if consume_user_download_times_by_app_obj(self.app_obj):
             d_result['code'] = 1009
@@ -571,22 +574,26 @@ class IosUtils(object):
                 call_flag = False
             count += 1
         if download_flag:
-            AppUDID.objects.update_or_create(app_id=self.app_obj, udid=self.udid_info.get('udid'),
-                                             defaults=self.udid_info)
+            app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=self.developer_obj,
+                                                            udid=self.udid)
+            udid_info = self.udid_info
+            del udid_info['udid']
+            AppUDID.objects.update_or_create(app_id=self.app_obj, udid=app_udid_obj.first(),
+                                             defaults=udid_info)
             if not result.get("did_exists", None):
-                app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=self.developer_obj,
-                                                                udid=self.udid_info.get('udid'), status=True).first()
+                app_udid_obj = app_udid_obj.filter(status=True).first()
                 if not app_udid_obj:
-                    appudid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid=self.udid_info.get('udid'))
+                    appudid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid__udid=self.udid,
+                                                         udid__developerid=self.developer_obj)
                     device = appudid_obj.values("serial",
                                                 'product',
-                                                'udid',
+                                                'udid__udid',
                                                 'version').first()
                     if result.get("did", None):
                         device['serial'] = result["did"]
                         device['status'] = True
                         app_udid_obj, _ = UDIDsyncDeveloper.objects.update_or_create(developerid=self.developer_obj,
-                                                                                     udid=device['udid'],
+                                                                                     udid=device['udid__udid'],
                                                                                      defaults=device)
                         DeveloperDevicesID.objects.create(did=result["did"], udid=app_udid_obj,
                                                           developerid=self.developer_obj,
@@ -607,7 +614,7 @@ class IosUtils(object):
         with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id), timeout=60 * 10):
             logger.info("start run_sign ...")
             return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj, download_flag,
-                                     self.udid_info.get('udid'), start_time,
+                                     self.udid, start_time,
                                      result)
 
     @staticmethod
@@ -619,8 +626,12 @@ class IosUtils(object):
             auth = get_auth_form_developer(developer_obj)
 
             # 需要判断该设备在同一个账户下 的多个应用，若存在，则不操作
-            udid_lists = list(APPSuperSignUsedInfo.objects.values_list("udid__udid").filter(developerid=developer_obj))
+            udid_lists = list(
+                APPSuperSignUsedInfo.objects.values_list("udid__udid__udid").filter(developerid=developer_obj))
             IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj, auth)
+            DeveloperDevicesID.objects.filter(udid__appudid=udid_obj, developerid=developer_obj,
+                                              app_id_id=app_id).delete()
+            udid_obj.delete()
             # 通过开发者id判断 app_id 是否多个，否则删除profile 文件
             if APPSuperSignUsedInfo.objects.filter(developerid=developer_obj, app_id_id=app_id).count() == 0:
                 app_api_obj = get_api_obj(auth)
@@ -632,18 +643,12 @@ class IosUtils(object):
                 delete_app_to_dev_and_file(developer_obj, app_id)
                 delete_app_profile_file(developer_obj, app_obj)
 
-            app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,
-                                                            udid=udid_obj.udid).first()
-            DeveloperDevicesID.objects.filter(udid=app_udid_obj, developerid=developer_obj, app_id_id=app_id).delete()
-
     @staticmethod
     def do_disable_device(developer_obj, udid_lists, udid_obj, auth):
-        if udid_lists.count((udid_obj.udid,)) == 1:
+        if udid_lists.count((udid_obj.udid.udid,)) == 1:
             app_api_obj = get_api_obj(auth)
-            app_api_obj.set_device_status("disable", udid_obj.udid)
-            UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid, developerid=developer_obj).update(status=False)
-
-        udid_obj.delete()
+            app_api_obj.set_device_status("disable", udid_obj.udid.udid)
+            UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid.udid, developerid=developer_obj).update(status=False)
 
     @staticmethod
     def clean_udid_by_app_obj(app_obj, developer_obj):
@@ -651,16 +656,16 @@ class IosUtils(object):
         auth = get_auth_form_developer(developer_obj)
 
         # 需要判断该设备在同一个账户下 的多个应用，若存在，则不操作
-        udid_lists = list(APPSuperSignUsedInfo.objects.values_list("udid__udid").filter(developerid=developer_obj))
+        udid_lists = list(
+            APPSuperSignUsedInfo.objects.values_list("udid__udid__udid").filter(developerid=developer_obj))
 
         for SuperSignUsed_obj in APPSuperSignUsedInfo.objects.filter(app_id=app_obj, developerid=developer_obj):
             udid_obj = SuperSignUsed_obj.udid
             IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj, auth)
             SuperSignUsed_obj.delete()
-
-            app_udid_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,
-                                                            udid=udid_obj.udid).first()
-            DeveloperDevicesID.objects.filter(udid=app_udid_obj, developerid=developer_obj, app_id=app_obj).delete()
+            DeveloperDevicesID.objects.filter(udid__appudid=udid_obj, developerid=developer_obj,
+                                              app_id=app_obj).delete()
+            udid_obj.delete()
 
     @staticmethod
     def clean_app_by_user_obj(app_obj):
@@ -833,11 +838,23 @@ class IosUtils(object):
                 if not create:
                     DeveloperDevicesID.objects.filter(udid=obj, developerid=developer_obj).update(
                         **{'did': device_obj.id})
-            AppUDID.objects.filter(udid__in=will_del_disabled_udid_list,
+            AppUDID.objects.filter(udid__udid__in=will_del_disabled_udid_list,
                                    app_id__developerdevicesid__udid__in=UDIDsyncDeveloper.objects.filter(
                                        udid__in=will_del_disabled_udid_list)).delete()
+            developer_device_list = DeveloperDevicesID.objects.filter(udid__udid__in=will_del_disabled_udid_list,
+                                                                      developerid=developer_obj).all()
+            for developer_device_obj in developer_device_list:
+                app_obj = developer_device_obj.app_id
+                if APPSuperSignUsedInfo.objects.filter(developerid=developer_obj, app_id=app_obj).count() == 0:
+                    app_api_obj = get_api_obj(auth)
+                    app_api_obj.del_profile(app_obj.app_id)
+                    app_api_obj2 = get_api_obj(auth)
+                    app_api_obj2.del_app(app_obj.bundle_id, app_obj.app_id)
+                    DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
+                    delete_app_to_dev_and_file(developer_obj, app_obj.pk)
+                    delete_app_profile_file(developer_obj, app_obj)
+                developer_device_obj.delete()
+
             UDIDsyncDeveloper.objects.filter(udid__in=will_del_udid_list, developerid=developer_obj).delete()
-            DeveloperDevicesID.objects.filter(udid__udid__in=will_del_disabled_udid_list,
-                                              developerid=developer_obj).delete()
 
         return status, result

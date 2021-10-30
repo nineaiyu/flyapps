@@ -476,7 +476,7 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
     other_uid = serializers.SerializerMethodField()
 
     def get_device_udid(self, obj):
-        return obj.udid.udid
+        return obj.udid.udid.udid
 
     def get_device_name(self, obj):
         return obj.udid.product
@@ -540,6 +540,7 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
     bundle_name = serializers.SerializerMethodField()
     is_mine = serializers.SerializerMethodField()
     other_uid = serializers.SerializerMethodField()
+    udid = serializers.SerializerMethodField()
 
     def get_other_uid(self, obj):
         user_obj = self.context.get('user_obj')
@@ -550,6 +551,9 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
             super_user_obj = models.APPSuperSignUsedInfo.objects.filter(udid=obj, app_id=obj.app_id).first()
             if super_user_obj.developerid.user_id != obj.app_id.user_id:
                 return obj.app_id.user_id.uid
+
+    def get_udid(self, obj):
+        return obj.udid.udid
 
     def get_is_mine(self, obj):
         return self.context.get('mine')

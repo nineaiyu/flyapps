@@ -81,7 +81,7 @@ class DevicesInfoView(APIView):
         sort = request.query_params.get("sort", "-created_time")
         page_obj = AppsPageNumber()
         if 'udid' in filter_data:
-            filter_data["udid__udid"] = filter_data['udid']
+            filter_data["udid__udid__udid"] = filter_data['udid']
             del filter_data['udid']
 
         if 'name' in filter_data:

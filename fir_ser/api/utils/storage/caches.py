@@ -42,9 +42,9 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
             if app_obj.get('issupersign', None):
                 download_url_type = 'mobileconifg'
         else:
-            appudid_obj = AppUDID.objects.filter(app_id_id=app_obj.get("pk"), udid=udid, is_signed=True).first()
+            appudid_obj = AppUDID.objects.filter(app_id_id=app_obj.get("pk"), udid__udid=udid, is_signed=True).first()
             if appudid_obj:
-                super_sign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid=udid,
+                super_sign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid__udid=udid,
                                                                      app_id_id=app_obj.get("pk")).first()
                 if super_sign_obj and super_sign_obj.user_id.supersign_active:
                     app_to_developer_obj = APPToDeveloper.objects.filter(app_id_id=app_obj.get("pk"),

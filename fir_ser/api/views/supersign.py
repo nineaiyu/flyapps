@@ -198,7 +198,7 @@ def base_super_sign_used_info(request):
     if developer_id:
         super_sign_used_objs = super_sign_used_objs.filter(developerid__issuer_id=developer_id)
     if udid:
-        super_sign_used_objs = super_sign_used_objs.filter(udid__udid=udid)
+        super_sign_used_objs = super_sign_used_objs.filter(udid__udid__udid=udid)
     if bundle_id:
         super_sign_used_objs = super_sign_used_objs.filter(app_id__bundle_id=bundle_id)
     return super_sign_used_objs, mine
