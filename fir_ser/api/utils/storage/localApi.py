@@ -6,11 +6,12 @@
 """
 本地存储api
 """
+import logging
+import os
+
 from api.utils.TokenManager import make_token
 from api.utils.storage.aliyunApi import AliYunCdn
 from fir_ser import settings
-import os
-import logging
 
 logger = logging.getLogger(__name__)
 

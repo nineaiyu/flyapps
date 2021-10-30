@@ -3,17 +3,17 @@
 # project: 3月 
 # author: NinEveN
 # date: 2021/3/29
+import logging
+
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.models import UserDomainInfo, Apps
+from api.utils.auth import ExpiringTokenAuthentication, DownloadQrPermission
 from api.utils.baseutils import is_valid_domain, get_cname_from_domain
 from api.utils.modelutils import get_user_domain_name, get_min_default_domain_cname_obj
 from api.utils.response import BaseResponse
-from api.utils.auth import ExpiringTokenAuthentication, DownloadQrPermission
-from rest_framework.response import Response
-from api.models import UserDomainInfo, Apps
-import logging
-
 from api.utils.serializer import DomainNameSerializer
 from api.utils.storage.caches import del_cache_response_by_short, reset_app_wx_easy_type
 from api.utils.utils import get_choices_dict

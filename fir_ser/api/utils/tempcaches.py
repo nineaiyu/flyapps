@@ -4,8 +4,9 @@
 # author: NinEveN
 # date: 2020/9/24
 
-from django.core.cache import cache
 import base64
+
+from django.core.cache import cache
 
 
 class TmpCache(object):

@@ -1,12 +1,12 @@
+from django.contrib.auth.models import AbstractUser
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-# Create your models here.
-
-from django.contrib.contenttypes.models import ContentType
-
-from django.contrib.auth.models import AbstractUser
 from api.utils.TokenManager import generate_alphanumeric_token_of_length, generate_numeric_token_of_length
 from api.utils.baseutils import make_random_uuid
+
+
+# Create your models here.
 
 
 ######################################## 用户表 ########################################

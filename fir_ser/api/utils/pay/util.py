@@ -4,9 +4,9 @@
 # author: NinEveN
 # date: 2021/4/18
 
-from fir_ser.settings import PAY_CONFIG_KEY_INFO
 from api.utils.pay.ali import Alipay
 from api.utils.pay.wx import Weixinpay
+from fir_ser.settings import PAY_CONFIG_KEY_INFO
 
 
 def get_pay_obj_form_name(pay_name):

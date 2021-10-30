@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 import json
-from enum import Enum
-
-import requests
-
-# -*- coding: utf-8 -*-
-
 import time
 import uuid
 from base64 import b64decode, b64encode
-import json
+from enum import Enum
 
+import requests
+from OpenSSL import crypto
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
@@ -18,7 +14,6 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.serialization import (load_pem_private_key,
                                                           load_pem_public_key)
-from OpenSSL import crypto
 
 
 def build_authorization(path,

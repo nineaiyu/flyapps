@@ -7,16 +7,14 @@
 from celery import shared_task
 from django.core.cache import cache
 
-from api.utils.mp.wechat import sync_wx_access_token
-from api.utils.storage.storage import get_local_storage
-
 from api.models import Apps
-from api.utils.app.supersignutils import IosUtils, resign_by_app_id, get_ios_developer_public_num
+from api.utils.app.supersignutils import IosUtils, resign_by_app_id
 from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_delete_ios_mobile_tmp_file, \
     auto_check_ios_developer_active
 from api.utils.geetest.geetest_utils import check_bypass_status
+from api.utils.mp.wechat import sync_wx_access_token
+from api.utils.storage.storage import get_local_storage
 from api.views.login import get_login_type
-
 from fir_ser.celery import app
 from fir_ser.settings import LOGIN, CHANGER, REGISTER
 

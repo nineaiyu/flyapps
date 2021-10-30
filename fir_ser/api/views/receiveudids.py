@@ -3,23 +3,23 @@
 # project: 3月
 # author: liuyu
 # date: 2020/3/6
-from api.utils.app.supersignutils import udid_bytes_to_dict, make_sign_udid_mobile_config, IosUtils
+import logging
+
+from celery.exceptions import TimeoutError
+from django.http import HttpResponsePermanentRedirect, FileResponse, HttpResponse
+from django.views import View
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from api.models import Apps
-from django.views import View
-from django.http import HttpResponsePermanentRedirect, FileResponse, HttpResponse
-from rest_framework.response import Response
 from api.tasks import run_sign_task
+from api.utils.app.supersignutils import udid_bytes_to_dict, make_sign_udid_mobile_config
+from api.utils.baseutils import get_real_ip_address, get_http_server_domain, make_random_uuid
+from api.utils.modelutils import get_app_domain_name, get_redirect_server_domain
 from api.utils.response import BaseResponse
 from api.utils.storage.caches import check_app_permission
 from api.utils.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
 from fir_ser.celery import app
-import logging
-from rest_framework.views import APIView
-
-from api.utils.baseutils import get_real_ip_address, get_http_server_domain, make_random_uuid
-from api.utils.modelutils import get_app_domain_name, get_redirect_server_domain
-from celery.exceptions import TimeoutError
 
 logger = logging.getLogger(__name__)
 

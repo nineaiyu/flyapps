@@ -1,7 +1,9 @@
-import threading
 import signal
+import threading
+
 import daemon
 from daemon import pidfile
+
 from .hands import *
 from .hands import __version__
 from .services.base import BaseService

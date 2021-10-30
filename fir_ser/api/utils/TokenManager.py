@@ -3,13 +3,15 @@
 # project: 3月 
 # author: liuyu
 # date: 2020/3/8
-import uuid
-import string
-import random
-import time
-from django.core.cache import cache
-from fir_ser.settings import CACHE_KEY_TEMPLATE
 import logging
+import random
+import string
+import time
+import uuid
+
+from django.core.cache import cache
+
+from fir_ser.settings import CACHE_KEY_TEMPLATE
 
 logger = logging.getLogger(__name__)
 

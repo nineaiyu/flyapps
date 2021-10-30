@@ -6,12 +6,13 @@
 
 # pip install pyjwt
 import base64
-import os
 import datetime
-import requests
-import jwt
 import logging
+import os
 from collections import namedtuple
+
+import jwt
+import requests
 
 logger = logging.getLogger(__name__)
 

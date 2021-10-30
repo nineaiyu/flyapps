@@ -4,14 +4,17 @@
 # author: liuyu
 # date: 2020/4/7
 
-from api.models import Apps, UserInfo, AppIOSDeveloperInfo
-from api.utils.storage.storage import Storage
-from api.utils.app.supersignutils import IosUtils
-from api.utils.utils import send_ios_developer_active_status
-from django.core.cache import cache
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT, MSGTEMPLATE
-import time, os
 import logging
+import os
+import time
+
+from django.core.cache import cache
+
+from api.models import Apps, UserInfo, AppIOSDeveloperInfo
+from api.utils.app.supersignutils import IosUtils
+from api.utils.storage.storage import Storage
+from api.utils.utils import send_ios_developer_active_status
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT, MSGTEMPLATE
 
 logger = logging.getLogger(__name__)
 

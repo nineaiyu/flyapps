@@ -1,6 +1,6 @@
-from api.utils.auth import ApiTokenAuthentication
 import logging
 
+from api.utils.auth import ApiTokenAuthentication
 from api.views.login import UserInfoView
 
 logger = logging.getLogger(__name__)

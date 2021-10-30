@@ -4,9 +4,10 @@
 # author: liuyu
 # date: 2020/3/4
 
+import logging
+
 from api.utils.auth import ApiTokenAuthentication
 from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView
-import logging
 
 logger = logging.getLogger(__name__)
 

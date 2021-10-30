@@ -1,6 +1,7 @@
-from ..hands import *
-from .base import BaseService
 from django.core.cache import cache
+
+from .base import BaseService
+from ..hands import *
 
 __all__ = ['BeatService']
 

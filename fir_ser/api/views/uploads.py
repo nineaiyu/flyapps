@@ -3,20 +3,24 @@
 # project: 3月
 # author: liuyu
 # date: 2020/3/6
+import json
+import logging
+import os
+
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo, UserAdDisplayInfo
+from api.tasks import run_resign_task
 from api.utils.TokenManager import verify_token
 from api.utils.app.apputils import get_random_short, save_app_infos
-from api.utils.modelutils import get_app_domain_name, get_redirect_server_domain
-from api.utils.storage.storage import Storage
-from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
-from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo, UserAdDisplayInfo
-from api.utils.baseutils import make_app_uuid, make_from_user_uuid
-from rest_framework.views import APIView
-from api.utils.response import BaseResponse
 from api.utils.auth import ExpiringTokenAuthentication
-from rest_framework.response import Response
+from api.utils.baseutils import make_app_uuid, make_from_user_uuid
+from api.utils.modelutils import get_app_domain_name, get_redirect_server_domain
+from api.utils.response import BaseResponse
+from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
+from api.utils.storage.storage import Storage
 from fir_ser import settings
-from api.tasks import run_resign_task
-import os, json, logging
 
 logger = logging.getLogger(__name__)
 

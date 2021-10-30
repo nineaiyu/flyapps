@@ -5,19 +5,20 @@
     ~~~~~~~~~~
 
 """
+import hashlib
 import json
+from base64 import decodebytes, encodebytes
 from datetime import datetime
 from functools import partial
+from urllib.parse import quote_plus
+from urllib.request import urlopen
 
-import hashlib
 import OpenSSL
 from Crypto.Hash import SHA, SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 
-from .compat import decodebytes, encodebytes, quote_plus, urlopen
 from .exceptions import AliPayException, AliPayValidationError
-from .utils import AliPayConfig
 from .loggers import logger
 
 # 常见加密算法
@@ -30,6 +31,11 @@ CryptoAlgSet = (
     b'sha384WithRSAEncryption',
     b'sha512WithRSAEncryption'
 )
+
+
+class AliPayConfig:
+    def __init__(self, timeout=15):
+        self.timeout = timeout
 
 
 class BaseAliPay:

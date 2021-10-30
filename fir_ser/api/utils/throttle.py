@@ -4,8 +4,9 @@
 # author: NinEveN
 # date: 2021/3/25
 
-from rest_framework.throttling import SimpleRateThrottle
 import hashlib
+
+from rest_framework.throttling import SimpleRateThrottle
 
 
 class VisitShortThrottle(SimpleRateThrottle):

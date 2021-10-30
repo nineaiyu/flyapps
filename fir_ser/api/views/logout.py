@@ -1,10 +1,12 @@
-from rest_framework.views import APIView
-from api.utils.auth import ExpiringTokenAuthentication
-from api.models import Token
+import logging
+
+from django.contrib import auth
 from django.core.cache import cache
 from rest_framework.response import Response
-from django.contrib import auth
-import logging
+from rest_framework.views import APIView
+
+from api.models import Token
+from api.utils.auth import ExpiringTokenAuthentication
 
 logger = logging.getLogger(__name__)
 

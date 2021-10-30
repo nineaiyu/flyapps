@@ -4,17 +4,18 @@
 # author: liuyu
 # date: 2021/4/11
 
-from api.models import UserDomainInfo
-from rest_framework.response import Response
-from api.utils.auth import AdminTokenAuthentication
-from api.utils.serializer import AdminDomainNameSerializer
-from rest_framework.views import APIView
-from api.utils.response import BaseResponse
-from api.utils.storage.caches import del_cache_response_by_short, reset_app_wx_easy_type
 import logging
+
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from api.models import UserDomainInfo
+from api.utils.auth import AdminTokenAuthentication
 from api.utils.baseutils import get_dict_from_filter_fields
-from api.base_views import app_delete
+from api.utils.response import BaseResponse
+from api.utils.serializer import AdminDomainNameSerializer
+from api.utils.storage.caches import reset_app_wx_easy_type
 
 logger = logging.getLogger(__name__)
 

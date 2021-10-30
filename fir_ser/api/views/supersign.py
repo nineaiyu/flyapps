@@ -3,18 +3,19 @@
 # project: 3月 
 # author: liuyu
 # date: 2020/3/4
+import logging
+
 from django.http.response import FileResponse
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.utils.response import BaseResponse
-from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
-from rest_framework.response import Response
 from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID
-from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer
-from rest_framework.pagination import PageNumberPagination
 from api.utils.app.supersignutils import IosUtils
+from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
+from api.utils.response import BaseResponse
+from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer
 from api.utils.utils import get_developer_devices, get_choices_dict
-import logging
 
 logger = logging.getLogger(__name__)
 

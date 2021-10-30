@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-from django.http import HttpResponse
 from django.conf import settings
+from django.http import HttpResponse
 from django.utils.translation import ugettext as _
 from proxy.views import proxy_view
 from rest_framework.views import APIView

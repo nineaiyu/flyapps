@@ -5,15 +5,17 @@
 # date: 2021/9/6
 
 import base64
-import logging
-import string
-import random
-import struct
 import hashlib
-from Crypto.Cipher import AES
-import xml.etree.cElementTree as ET
-import time
+import logging
+import random
 import socket
+import string
+import struct
+import time
+import xml.etree.cElementTree as ET
+
+from Crypto.Cipher import AES
+
 from . import ierror
 
 logger = logging.getLogger(__name__)

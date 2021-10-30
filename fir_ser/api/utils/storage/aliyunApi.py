@@ -6,15 +6,16 @@
 
 # pip install aliyun-python-sdk-sts oss2
 
+import hashlib
 import json
+import logging
 import os
+import re
+import time
+
+import oss2
 from aliyunsdkcore import client
 from aliyunsdksts.request.v20150401 import AssumeRoleRequest
-import oss2
-import re
-import hashlib
-import time
-import logging
 from oss2 import SizedFileAdapter, determine_part_size
 from oss2.models import PartInfo
 

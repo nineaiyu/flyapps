@@ -3,16 +3,17 @@
 # project: 3月 
 # author: NinEveN
 # date: 2021/3/29
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
-from django.http.response import HttpResponse
 import logging
 import random
+
+from django.http.response import HttpResponse
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_xml.parsers import XMLParser
+
 from api.models import ThirdWeChatUserInfo, UserInfo, UserCertificationInfo
 from api.utils.auth import ExpiringTokenAuthentication
-
 from api.utils.mp.chat import reply, receive
 from api.utils.mp.wechat import check_signature, WxMsgCrypt, get_userinfo_from_openid, WxTemplateMsg
 from api.utils.response import BaseResponse

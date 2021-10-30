@@ -4,26 +4,19 @@
 # author: liuyu
 # date: 2021/4/11
 
-from django.contrib import auth
+import logging
 
-from api.base_views import storage_change
-from api.models import Token, UserInfo, Order
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from api.models import UserInfo, Order
 from api.utils.auth import AdminTokenAuthentication
 from api.utils.baseutils import get_dict_from_filter_fields
-from api.utils.serializer import AdminStorageSerializer, AdminUserCertificationSerializer, AdminOrdersSerializer
-from django.core.cache import cache
-from rest_framework.views import APIView
-import binascii
-import os, datetime
-from api.utils.utils import get_captcha, valid_captcha, get_choices_dict, get_order_num
 from api.utils.response import BaseResponse
-from fir_ser.settings import CACHE_KEY_TEMPLATE, LOGIN
-from api.utils.storage.caches import login_auth_failed, update_order_info
-import logging
-from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle
-from rest_framework.pagination import PageNumberPagination
-from api.utils.baseutils import format_storage_selection
+from api.utils.serializer import AdminOrdersSerializer
+from api.utils.storage.caches import update_order_info
+from api.utils.utils import get_order_num
 
 logger = logging.getLogger(__name__)
 

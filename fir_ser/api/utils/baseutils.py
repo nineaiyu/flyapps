@@ -4,17 +4,19 @@
 # author: NinEveN
 # date: 2021/4/16
 
-import os, re, time
-
 import datetime
+import logging
+import os
+import re
+import time
+import uuid
+
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.utils import timezone
+from dns.resolver import Resolver
 
 from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
-import logging
-from dns.resolver import Resolver
-import uuid
 
 logger = logging.getLogger(__name__)
 

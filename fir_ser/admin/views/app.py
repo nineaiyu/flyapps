@@ -4,27 +4,20 @@
 # author: liuyu
 # date: 2021/4/11
 
-from django.contrib import auth
-from api.models import Token, AppReleaseInfo, Apps
-from rest_framework.response import Response
+import logging
 
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from api.base_views import app_delete
+from api.models import AppReleaseInfo, Apps
 from api.utils.TokenManager import verify_token
 from api.utils.auth import AdminTokenAuthentication
-from api.utils.serializer import AdminAppsSerializer, AdminAppReleaseSerializer
-from django.core.cache import cache
-from rest_framework.views import APIView
-import binascii
-import os, datetime
-from api.utils.utils import get_captcha, valid_captcha, get_choices_dict
-from api.utils.response import BaseResponse
-from fir_ser.settings import CACHE_KEY_TEMPLATE, LOGIN
-from api.utils.storage.caches import login_auth_failed, del_cache_response_by_short, get_app_instance_by_cache, \
-    get_download_url_by_cache
-import logging
-from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle
-from rest_framework.pagination import PageNumberPagination
 from api.utils.baseutils import get_dict_from_filter_fields
-from api.base_views import app_delete
+from api.utils.response import BaseResponse
+from api.utils.serializer import AdminAppsSerializer, AdminAppReleaseSerializer
+from api.utils.storage.caches import del_cache_response_by_short, get_download_url_by_cache
 
 logger = logging.getLogger(__name__)
 

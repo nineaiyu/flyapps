@@ -3,11 +3,15 @@
 # project: 3月
 # author: liuyu
 # date: 2020/3/6
-import time, re, os, signal
-from subprocess import Popen, PIPE
+import json
 import logging
-import paramiko, json
+import os
+import signal
 import socket
+import time
+from subprocess import Popen, PIPE
+
+import paramiko
 
 logger = logging.getLogger(__name__)
 

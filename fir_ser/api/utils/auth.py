@@ -3,14 +3,16 @@
 # project: 9月
 # author: NinEveN
 # date: 2020/9/24
+import base64
+
 from django.core.cache import cache
+from django.http.cookie import parse_cookie
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
-from api.models import UserInfo
 from rest_framework.permissions import BasePermission
+
+from api.models import UserInfo
 from fir_ser.settings import CACHE_KEY_TEMPLATE
-from django.http.cookie import parse_cookie
-import base64
 
 
 def get_cookie_token(request):

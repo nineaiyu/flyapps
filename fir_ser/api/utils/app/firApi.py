@@ -4,12 +4,16 @@
 # author: NinEveN
 # date: 2019/12/19
 
-import requests
-import zipfile, re, os, random, io
-from androguard.core.bytecodes import apk
+import io
+import os
 import plistlib
+import re
+import zipfile
+
 import qrcode
+import requests
 from PIL import Image
+from androguard.core.bytecodes import apk
 
 
 def bytes2human(n):

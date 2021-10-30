@@ -6,10 +6,12 @@
 """
 主要是调用七牛云存储，处理七牛云存储的逻辑
 """
+import logging
+import os
+
+import requests
 from qiniu import Auth, put_file, etag
 from qiniu import BucketManager
-import os, requests
-import logging
 
 logger = logging.getLogger(__name__)
 

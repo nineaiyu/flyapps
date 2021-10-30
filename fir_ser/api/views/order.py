@@ -4,17 +4,19 @@
 # author: NinEveN
 # date: 2021/3/29
 
-from rest_framework.views import APIView
-from api.utils.response import BaseResponse
-from api.utils.auth import ExpiringTokenAuthentication
-from rest_framework.response import Response
-from api.models import Price, Order
-from api.utils.serializer import PriceSerializer, OrdersSerializer
-from rest_framework.pagination import PageNumberPagination
-from api.utils.utils import get_order_num, get_choices_dict
-from api.utils.storage.caches import update_order_status
 import logging
+
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from api.models import Price, Order
+from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.pay.util import get_pay_obj_form_name, get_enable_pay_choices, get_payment_type
+from api.utils.response import BaseResponse
+from api.utils.serializer import PriceSerializer, OrdersSerializer
+from api.utils.storage.caches import update_order_status
+from api.utils.utils import get_order_num, get_choices_dict
 
 logger = logging.getLogger(__name__)
 

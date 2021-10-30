@@ -5,12 +5,13 @@
 # date: 2021/4/16
 
 
-from django.db.models import Count
-import random
-from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo
 import logging
+import random
 from urllib.parse import urljoin
 
+from django.db.models import Count
+
+from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo
 from api.utils.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name
 

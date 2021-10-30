@@ -4,13 +4,15 @@
 # author: NinEveN
 # date: 2021/3/25
 
-import requests
 import json
 import logging
+
+import requests
 from django.core.cache import cache as redis_connect
+
+from api.utils.geetest.geetest_lib import GeetestLib
 from fir_ser.settings import GEETEST_ID, GEETEST_KEY, GEETEST_BYPASS_URL, \
     GEETEST_BYPASS_STATUS_KEY
-from api.utils.geetest.geetest_lib import GeetestLib
 
 logger = logging.getLogger(__name__)
 

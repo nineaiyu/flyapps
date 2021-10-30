@@ -15,19 +15,19 @@ Including another URLconf
 """
 from django.urls import re_path
 
+from api.views.advert import UserAdInfoView
+from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView
+from api.views.domain import DomainCnameView, DomainInfoView
+from api.views.download import ShortDownloadView
 from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, \
     UserApiTokenView, CertificationView, ChangeInfoView, WeChatLoginView, WeChatLoginCheckView
 from api.views.logout import LogoutView
-from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView
-from api.views.download import ShortDownloadView
-from api.views.uploads import AppAnalyseView, UploadView
-from api.views.storage import StorageView
-from api.views.receiveudids import IosUDIDView, TaskView
 from api.views.order import PriceView, OrderView, PaySuccess
+from api.views.receiveudids import IosUDIDView, TaskView
+from api.views.storage import StorageView
 from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView, SuperSignCertView
-from api.views.domain import DomainCnameView, DomainInfoView
 from api.views.thirdlogin import ValidWxChatToken, ThirdWxAccount
-from api.views.advert import UserAdInfoView
+from api.views.uploads import AppAnalyseView, UploadView
 
 # router=DefaultRouter()
 # router.register("apps", AppsView)

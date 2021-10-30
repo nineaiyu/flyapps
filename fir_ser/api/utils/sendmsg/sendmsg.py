@@ -4,11 +4,12 @@
 # author: liuyu
 # date: 2020/3/23
 
+import logging
+
+from fir_ser.settings import THIRD_PART_CONFIG_KEY_INFO
 from .aliyunApi import AliMsgSender
 from .emailApi import EmailMsgSender
 from .jiguangApi import JiGuangMsgSender
-from fir_ser.settings import THIRD_PART_CONFIG_KEY_INFO
-import logging
 
 logger = logging.getLogger(__name__)
 

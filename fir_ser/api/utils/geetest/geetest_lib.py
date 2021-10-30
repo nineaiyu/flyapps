@@ -1,8 +1,9 @@
-import random
-import json
-import requests
-import hmac
 import hashlib
+import hmac
+import json
+import random
+
+import requests
 
 from .geetest_lib_result import GeetestLibResult
 

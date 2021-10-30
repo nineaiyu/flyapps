@@ -4,17 +4,18 @@
 # author: liuyu
 # date: 2020/3/4
 
+import logging
+
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.base_views import storage_change
-from api.utils.response import BaseResponse
-from api.utils.auth import ExpiringTokenAuthentication, StoragePermission
-from rest_framework.response import Response
 from api.models import AppStorage, UserInfo
+from api.utils.auth import ExpiringTokenAuthentication, StoragePermission
+from api.utils.response import BaseResponse
+from api.utils.serializer import StorageSerializer
 from api.utils.storage.caches import MigrateStorageState
 from api.utils.utils import upload_oss_default_head_img, get_choices_dict
-from api.utils.serializer import StorageSerializer
-import logging
 
 logger = logging.getLogger(__name__)
 

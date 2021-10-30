@@ -5,9 +5,10 @@
 # date: 2020/3/22
 
 
+import json
+
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkcore.request import CommonRequest
-import json
 
 
 class AliMsgSender(object):

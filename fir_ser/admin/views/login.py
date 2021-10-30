@@ -4,17 +4,19 @@
 # author: liuyu
 # date: 2021/4/11
 
+import logging
+
 from django.contrib import auth
 from rest_framework.response import Response
-from api.utils.auth import ExpiringTokenAuthentication
-from api.utils.serializer import UserInfoSerializer
 from rest_framework.views import APIView
-from api.utils.utils import get_captcha, valid_captcha, set_user_token
+
+from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.response import BaseResponse
-from fir_ser.settings import CACHE_KEY_TEMPLATE, LOGIN
+from api.utils.serializer import UserInfoSerializer
 from api.utils.storage.caches import login_auth_failed
-import logging
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle
+from api.utils.utils import get_captcha, valid_captcha, set_user_token
+from fir_ser.settings import LOGIN
 
 logger = logging.getLogger(__name__)
 

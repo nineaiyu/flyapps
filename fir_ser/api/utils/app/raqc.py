@@ -13,9 +13,10 @@ Python生成二维码 v1.0
 
 '''
 
+import os
+
 import qrcode
 from PIL import Image
-import os
 
 
 # 生成二维码图片

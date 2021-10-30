@@ -1,13 +1,14 @@
-import os
-import sys
 import logging
-from django.conf import settings
-from config import BASE_DIR
-import psutil
-
-import time
+import os
 import subprocess
+import sys
+import time
+
+import psutil
+from django.conf import settings
+
 from config import BASECONF
+from config import BASE_DIR
 
 try:
     __version__ = BASECONF.VERSION

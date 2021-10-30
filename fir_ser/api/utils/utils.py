@@ -3,24 +3,27 @@
 # project: 5月
 # author: liuyu
 # date: 2020/5/7
-import os, datetime, random
 import binascii
+import datetime
+import logging
+import os
+import random
 
-from api.utils.modelutils import get_app_d_count_by_app_id
-from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT, CACHE_KEY_TEMPLATE
+from captcha.helpers import captcha_image_url
+from captcha.models import CaptchaStore
+from django.core.cache import cache
+
 from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
     UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, Token, DeveloperDevicesID, UserAdDisplayInfo
+from api.utils.TokenManager import generate_numeric_token_of_length, generate_alphanumeric_token_of_length, make_token, \
+    verify_token
+from api.utils.modelutils import get_app_d_count_by_app_id
+from api.utils.sendmsg.sendmsg import SendMessage
+from api.utils.storage.caches import consume_user_download_times
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
 from api.utils.tempcaches import TmpCache
-from api.utils.TokenManager import generate_numeric_token_of_length, generate_alphanumeric_token_of_length, make_token, \
-    verify_token
-from api.utils.sendmsg.sendmsg import SendMessage
-from captcha.models import CaptchaStore
-from captcha.helpers import captcha_image_url
-from api.utils.storage.caches import consume_user_download_times
-from django.core.cache import cache
-import logging
+from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT, CACHE_KEY_TEMPLATE
 
 logger = logging.getLogger(__name__)
 

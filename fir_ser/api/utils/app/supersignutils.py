@@ -8,9 +8,9 @@ import logging
 import os
 import time
 import uuid
-import xmltodict
 import zipfile
 
+import xmltodict
 from django.core.cache import cache
 from django.db.models import Sum
 

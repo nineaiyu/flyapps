@@ -18,9 +18,9 @@ from django.urls import re_path, include
 from django.views.static import serve
 
 from admin.views.celery_flower import CeleryFlowerView
-from fir_ser import settings
 from api.views.download import DownloadView, InstallView
 from api.views.receiveudids import IosUDIDView, ShowUdidView
+from fir_ser import settings
 
 urlpatterns = [
     re_path('fly.admin/', admin.site.urls),
