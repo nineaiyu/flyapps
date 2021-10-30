@@ -145,7 +145,7 @@ class ResignApp(object):
             for file in [self.app_dev_p12, self.app_dev_p12 + '.pwd', self.my_local_key, self.app_dev_pem]:
                 if os.path.exists(file + '.bak'):
                     os.remove(file + '.bak')
-            result["err_info"] = e
+            result["err_info"] = str(e)
             if 'mac verify failure' in str(e):
                 result["err_info"] = 'p12 导入密码错误，请检查'
             return False, result
