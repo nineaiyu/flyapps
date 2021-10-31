@@ -569,8 +569,19 @@ class IosUtils(object):
             if self.developer_obj:
                 with cache.lock("%s_%s_%s" % ('download_profile', self.app_obj.app_id, self.developer_obj.issuer_id),
                                 timeout=180):
-                    download_flag, result = IosUtils.exec_download_profile(self.app_obj, self.developer_obj,
-                                                                           self.udid_info, sign_try_attempts)
+
+                    sync_device_obj = UDIDsyncDeveloper.objects.filter(udid=self.udid,
+                                                                       developerid=self.developer_obj,
+                                                                       status=True).first()
+                    if sync_device_obj:
+                        download_flag, result = IosUtils.exec_download_profile(self.app_obj, self.developer_obj,
+                                                                               self.udid_info, sign_try_attempts)
+                    else:
+                        with cache.lock("%s_%s_%s" % (
+                                'download_profile_and_add_device', self.developer_obj.issuer_id, self.udid),
+                                        timeout=60):
+                            download_flag, result = IosUtils.exec_download_profile(self.app_obj, self.developer_obj,
+                                                                                   self.udid_info, sign_try_attempts)
                 if download_flag:
                     call_flag = False
                 else:
@@ -691,41 +702,44 @@ class IosUtils(object):
                 delete_app_profile_file(developer_obj, app_obj)
 
     @staticmethod
-    def clean_app_by_developer_obj(app_obj, developer_obj, cert_id=None):
+    def clean_app_by_developer_obj(app_obj, developer_obj):
         auth = get_auth_form_developer(developer_obj)
         DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
         app_api_obj = get_api_obj(auth)
         app_api_obj.del_profile(app_obj.app_id)
-        if not cert_id:
-            app_api_obj2 = get_api_obj(auth)
-            app_api_obj2.del_app(app_obj.bundle_id, app_obj.app_id)
+        app_api_obj2 = get_api_obj(auth)
+        app_api_obj2.del_app(app_obj.bundle_id, app_obj.app_id)
 
     @staticmethod
-    def clean_developer(developer_obj, user_obj, cert_id=None):
+    def clean_developer(developer_obj, user_obj, delete_file=True):
         """
         根据消耗记录 删除该苹果账户下所有信息
+        :param delete_file:
         :param user_obj:
-        :param cert_id:
         :param developer_obj:
         :return:
         """
-        for APPToDeveloper_obj in APPToDeveloper.objects.filter(developerid=developer_obj):
-            app_obj = APPToDeveloper_obj.app_id
-            IosUtils.clean_app_by_developer_obj(app_obj, developer_obj, cert_id)
-            delete_app_to_dev_and_file(developer_obj, app_obj.id)
-            if not cert_id:
-                IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
-        full_path = file_format_path(user_obj, get_auth_form_developer(developer_obj))
         try:
-            # move dirs replace delete
-            new_full_path_dir = os.path.dirname(full_path)
-            new_full_path_name = os.path.basename(full_path)
-            new_full_path = os.path.join(os.path.dirname(new_full_path_dir),
-                                         '%s_%s_%s' % ('remove', new_full_path_name, get_format_time()))
-            os.rename(new_full_path_dir, new_full_path)
+            for APPToDeveloper_obj in APPToDeveloper.objects.filter(developerid=developer_obj):
+                app_obj = APPToDeveloper_obj.app_id
+                IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
+                delete_app_to_dev_and_file(developer_obj, app_obj.id)
+                IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
+            if delete_file:
+                full_path = file_format_path(user_obj, get_auth_form_developer(developer_obj))
+                try:
+                    # move dirs replace delete
+                    new_full_path_dir = os.path.dirname(full_path)
+                    new_full_path_name = os.path.basename(full_path)
+                    new_full_path = os.path.join(os.path.dirname(new_full_path_dir),
+                                                 '%s_%s_%s' % ('remove', new_full_path_name, get_format_time()))
+                    os.rename(new_full_path_dir, new_full_path)
+                except Exception as e:
+                    logger.error("clean_developer developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
+                        developer_obj, user_obj, e))
+            return True, 'success'
         except Exception as e:
-            logger.error("clean_developer developer_obj:%s user_obj:%s delete file failed Exception:%s" % (
-                developer_obj, user_obj, e))
+            return False, {'err_info': str(e)}
 
     @staticmethod
     def active_developer(developer_obj):

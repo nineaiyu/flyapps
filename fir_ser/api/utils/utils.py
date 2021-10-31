@@ -63,7 +63,8 @@ def get_developer_devices(developer_obj_lists):
     all_usable_number = 0
     for use_number_obj in use_number_obj_list:
         all_usable_number += use_number_obj.usable_number
-        all_use_number += DeveloperDevicesID.objects.filter(developerid=use_number_obj).count()
+        all_use_number += DeveloperDevicesID.objects.filter(developerid=use_number_obj).values(
+            'udid').distinct().count()
     use_num = {
         "all_usable_number": all_usable_number,
         "all_use_number": all_use_number,

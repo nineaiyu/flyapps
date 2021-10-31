@@ -772,13 +772,15 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         device_obj_list = BaseInfoObj.filter(self.get_all_devices(), {"udid": udid})
         if not device_obj_list:
             raise Exception('Device obj is None')
-        if len(device_obj_list) != 1:
+        if len(device_obj_list) != 1 and len(set([device_obj.udid for device_obj in device_obj_list])) == 1:
             raise Exception('more than one Device obj')
-        return device_obj_list[0]
+        return device_obj_list
 
     def register_device(self, device_name, dvice_udid, platform="IOS"):
         device_obj_list = BaseInfoObj.filter(self.get_all_devices(), {"udid": dvice_udid})
-        if device_obj_list and len(device_obj_list) == 1:
+        # 发现同一个开发者账户里面有两个一样的udid，奇了怪
+        if device_obj_list and (
+                len(device_obj_list) == 1 or len(set([device_obj.udid for device_obj in device_obj_list])) == 1):
             device_obj = device_obj_list[0]
             req = self.modify_registered_device(device_obj.id, device_name, 'ENABLED')
             return self.__device_store(req)
@@ -787,14 +789,16 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             return self.__device_store(req, 201)
 
     def enabled_device(self, udid, **kwargs):
-        device_obj = self.list_device_by_udid(udid)
-        req = self.modify_registered_device(device_obj.id, device_obj.name, 'ENABLED')
-        return self.__device_store(req)
+        device_obj_list = self.list_device_by_udid(udid)
+        for device_obj in device_obj_list:
+            req = self.modify_registered_device(device_obj.id, device_obj.name, 'ENABLED')
+            return self.__device_store(req)
 
     def disabled_device(self, udid, **kwargs):
-        device_obj = self.list_device_by_udid(udid)
-        req = self.modify_registered_device(device_obj.id, device_obj.name, 'DISABLED')
-        return self.__device_store(req)
+        device_obj_list = self.list_device_by_udid(udid)
+        for device_obj in device_obj_list:
+            req = self.modify_registered_device(device_obj.id, device_obj.name, 'DISABLED')
+            return self.__device_store(req)
 
     def list_bundle_ids_by_identifier(self, identifier):
         req = super().list_bundle_id_by_identifier(identifier)

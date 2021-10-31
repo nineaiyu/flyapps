@@ -63,6 +63,10 @@
                     <el-button v-if="isedit && editdeveloperinfo.is_actived && !editdeveloperinfo.certid" size="small"
                                @click="importcertDeveloperVisible=true">导入p12证书
                     </el-button>
+                    <el-button v-if="isedit && editdeveloperinfo.is_actived && editdeveloperinfo.certid" size="small"
+                               type="danger"
+                               @click="cleandevices">清理签名数据
+                    </el-button>
                     <el-button v-if="isedit && editdeveloperinfo.is_actived" size="small" @click="syncdevices">同步设备信息
                     </el-button>
                     <el-tooltip content="发布证书只能创建两个，请谨慎操作">
@@ -74,11 +78,12 @@
                     <el-tooltip content="清理发布证书，如果发布证书过期时间大于3天，将不会删除开发者发布证书，发布证书只能同时创建两个，请谨慎操作">
                         <el-button v-if="isedit && editdeveloperinfo.is_actived && editdeveloperinfo.certid"
                                    size="small"
+                                   type="danger"
                                    @click="isorenewcert">删除发布证书
                         </el-button>
                     </el-tooltip>
-                    <el-button v-if="isedit && editdeveloperinfo.is_actived" type="danger" size="small"
-                               @click="activedeveloperFun(editdeveloperinfo,'checkauth')">开发者账户激活检测
+                    <el-button v-if="isedit && editdeveloperinfo.is_actived" type="success" size="small"
+                               @click="activedeveloperFun(editdeveloperinfo,'checkauth')">账户激活检测
                     </el-button>
 
                     <el-button @click="updateorcreate">保存</el-button>
@@ -558,7 +563,7 @@
                 }
             },
             udidDeleteFun(scope) {
-                this.iosdevicesudidFun('DELETE', {id: scope.row.id, aid: scope.row.app_id},scope);
+                this.iosdevicesudidFun('DELETE', {id: scope.row.id, aid: scope.row.app_id}, scope);
             },
             handleSizeChange(val) {
                 this.pagination.pagesize = val;
@@ -578,6 +583,12 @@
                 this.iosdeveloperFun({
                     "methods": "PUT",
                     "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "syncdevice"}
+                });
+            },
+            cleandevices() {
+                this.iosdeveloperFun({
+                    "methods": "PUT",
+                    "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "cleandevice"}
                 });
             },
             isocertcert() {
@@ -785,13 +796,13 @@
                         if (action !== "DELETE") {
                             this.app_udid_lists = data.data;
                             this.pagination.total = data.count;
-                        }else {
-                            if(scope){
+                        } else {
+                            if (scope) {
                                 this.app_udid_lists = removeAaary(this.app_udid_lists, scope.row)
                             }
                         }
-                    }else {
-                        this.$message.error("操作失败了 "+data.msg);
+                    } else {
+                        this.$message.error("操作失败了 " + data.msg);
                     }
                     if (action !== 'GET') {
                         this.loadingfun.close()

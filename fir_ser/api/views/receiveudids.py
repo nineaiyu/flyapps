@@ -33,19 +33,23 @@ class IosUDIDView(View):
         logger.info(f"short {short} receive new udid {format_udid_info}")
         server_domain = get_redirect_server_domain(request)
         try:
-            app_info = Apps.objects.filter(short=short).first()
-            if app_info:
-                server_domain = get_redirect_server_domain(request, app_info.user_id, get_app_domain_name(app_info))
-                if app_info.issupersign and app_info.user_id.supersign_active:
-                    res = check_app_permission(app_info, BaseResponse())
+            app_obj = Apps.objects.filter(short=short).first()
+            if app_obj:
+                server_domain = get_redirect_server_domain(request, app_obj.user_id, get_app_domain_name(app_obj))
+                if app_obj.issupersign and app_obj.user_id.supersign_active:
+                    res = check_app_permission(app_obj, BaseResponse())
                     if res.code != 1000:
                         msg = "&msg=%s" % res.msg
                     else:
                         client_ip = get_real_ip_address(request)
-                        logger.info(f"client_ip {client_ip} short {short} app_info {app_info}")
+                        logger.info(f"client_ip {client_ip} short {short} app_info {app_obj}")
+
+                        # ios_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
+                        # ios_obj.sign(client_ip)
+                        # return Response('ok')
                         c_task = run_sign_task.apply_async((format_udid_info, short, client_ip))
                         task_id = c_task.id
-                        logger.info(f"sign app {app_info} task_id:{task_id}")
+                        logger.info(f"sign app {app_obj} task_id:{task_id}")
                         try:
                             result = c_task.get(propagate=False, timeout=2)
                         except TimeoutError:

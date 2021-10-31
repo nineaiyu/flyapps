@@ -110,6 +110,13 @@ class DeveloperView(APIView):
                         res.code = 1008
                         res.msg = result.get("err_info")
                         return Response(res.dict)
+
+                elif act == "cleandevice":
+                    status, result = IosUtils.clean_developer(developer_obj, request.user, False)
+                    if not status:
+                        res.code = 1008
+                        res.msg = result.get("err_info")
+                        return Response(res.dict)
             else:
                 update_fields = []
                 logger.info(f"user {request.user} ios developer {developer_obj} update input data {data}")
@@ -230,8 +237,8 @@ class AppUDIDUsedView(APIView):
     def get(self, request):
         res = BaseResponse()
         super_sign_used_objs, mine = base_super_sign_used_info(request)
-        app_udid_objs = AppUDID.objects.filter(app_id__appsupersignusedinfo__in=super_sign_used_objs).distinct()
         page_obj = PageNumber()
+        app_udid_objs = AppUDID.objects.filter(appsupersignusedinfo__in=super_sign_used_objs)
         app_page_serializer = page_obj.paginate_queryset(queryset=app_udid_objs.order_by("-created_time"),
                                                          request=request,
                                                          view=self)

@@ -451,7 +451,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
         return get_developer_udided(obj)[0]
 
     def get_use_number(self, obj):
-        return models.DeveloperDevicesID.objects.filter(developerid=obj).count()
+        return models.DeveloperDevicesID.objects.filter(developerid=obj).values('udid').distinct().count()
 
 
 class AdminDeveloperSerializer(DeveloperSerializer):
