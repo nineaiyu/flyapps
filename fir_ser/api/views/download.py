@@ -19,7 +19,7 @@ from api.utils.baseutils import get_profile_full_path, make_random_uuid, get_rea
     format_get_uri, get_post_udid_url
 from api.utils.decorators import cache_response  # 本来使用的是 drf-extensions==0.7.0 但是还未支持该版本Django
 from api.utils.modelutils import get_app_domain_name, get_filename_form_file, check_app_domain_name_access, \
-    ad_random_weight, get_redirect_server_domain
+    ad_random_weight, get_redirect_server_domain, add_remote_info_from_request
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
 from api.utils.storage.caches import get_app_instance_by_cache, get_download_url_by_cache, set_app_download_by_cache, \
@@ -245,7 +245,9 @@ class InstallView(APIView):
                 res.data = {"download_url": download_url, "extra_url": extra_url}
                 if download_url != "" and "mobileconifg" not in download_url:
                     ip = get_real_ip_address(request)
-                    logger.info(f"remote ip {ip} short {short} download_url {download_url} app_obj {app_obj}")
+                    msg = f"remote ip {ip} short {short} download_url {download_url} app_obj {app_obj}"
+                    logger.info(msg)
+                    add_remote_info_from_request(request, msg)
                     set_app_download_by_cache(app_id)
                     amount = app_obj.get("d_count")
                     # # 超级签需要多消耗2倍下载次数
