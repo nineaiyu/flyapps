@@ -30,7 +30,7 @@ def request_format_log(req):
 
 
 # 需要和model里面的对应起来
-capability = [
+capability_info = [
     [],
     ["PUSH_NOTIFICATIONS"],
     [
@@ -65,7 +65,7 @@ capability = [
 
 
 def get_capability(s_type):
-    return capability[s_type]
+    return capability_info[s_type]
 
 
 class DevicesAPI(object):
@@ -776,8 +776,8 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             raise Exception('more than one Device obj')
         return device_obj_list
 
-    def register_device(self, device_name, dvice_udid, platform="IOS"):
-        device_obj_list = BaseInfoObj.filter(self.get_all_devices(), {"udid": dvice_udid})
+    def register_device(self, device_name, device_udid, platform="IOS"):
+        device_obj_list = BaseInfoObj.filter(self.get_all_devices(), {"udid": device_udid})
         # 发现同一个开发者账户里面有两个一样的udid，奇了怪
         if device_obj_list and (
                 len(device_obj_list) == 1 or len(set([device_obj.udid for device_obj in device_obj_list])) == 1):
@@ -785,20 +785,30 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             req = self.modify_registered_device(device_obj.id, device_name, 'ENABLED')
             return self.__device_store(req)
         else:
-            req = super().register_device(device_name, dvice_udid, platform)
+            req = super().register_device(device_name, device_udid, platform)
             return self.__device_store(req, 201)
 
-    def enabled_device(self, udid, **kwargs):
-        device_obj_list = self.list_device_by_udid(udid)
-        for device_obj in device_obj_list:
-            req = self.modify_registered_device(device_obj.id, device_obj.name, 'ENABLED')
-            return self.__device_store(req)
+    def enabled_device(self, device_id, device_name, udid):
+        if device_id and device_name:
+            req = super().enabled_device(device_id, device_name)
+            if req.status_code == 200:
+                return self.__device_store(req)
+        if udid:
+            device_obj_list = self.list_device_by_udid(udid)
+            for device_obj in device_obj_list:
+                req = self.modify_registered_device(device_obj.id, device_obj.name, 'ENABLED')
+                return self.__device_store(req)
 
-    def disabled_device(self, udid, **kwargs):
-        device_obj_list = self.list_device_by_udid(udid)
-        for device_obj in device_obj_list:
-            req = self.modify_registered_device(device_obj.id, device_obj.name, 'DISABLED')
-            return self.__device_store(req)
+    def disabled_device(self, device_id, device_name, udid):
+        if device_id and device_name:
+            req = super().disabled_device(device_id, device_name)
+            if req.status_code == 200:
+                return self.__device_store(req)
+        if udid:
+            device_obj_list = self.list_device_by_udid(udid)
+            for device_obj in device_obj_list:
+                req = self.modify_registered_device(device_obj.id, device_obj.name, 'DISABLED')
+                return self.__device_store(req)
 
     def list_bundle_ids_by_identifier(self, identifier):
         req = super().list_bundle_id_by_identifier(identifier)
@@ -820,7 +830,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
                     logger.warning(f"{bundle_id} enable_capability {capability} failed {req.content}")
         return True
 
-    def disable_capability_by_s_type(self, bundle_id, s_type=len(capability) - 1):
+    def disable_capability_by_s_type(self, bundle_id, s_type=len(capability_info) - 1):
         capability_list = get_capability(s_type)
         if capability_list:
             for capability in capability_list:
@@ -863,23 +873,28 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             if self.enable_capability_by_s_type(bundle_ids.id, s_type):
                 return bundle_ids
 
-    def delete_bundle_by_identifier(self, identifier):
-        identifier_obj = self.list_bundle_ids_by_identifier(identifier)
+    def delete_bundle_by_identifier(self, identifier_id, identifier_name):
+        if identifier_id:
+            req = self.delete_bundle_id_by_id(identifier_id)
+            if req.status_code == 204:
+                return True
+        identifier_obj = self.list_bundle_ids_by_identifier(identifier_name)
         if isinstance(identifier_obj, BundleIds):
             req = self.delete_bundle_id_by_id(identifier_obj.id)
             if req.status_code == 204:
                 return True
 
-    def create_profile(self, bundle_id, certificate_id, profile_name, device_id_list=None,
+    def create_profile(self, profile_id, bundle_id, certificate_id, profile_name, device_id_list=None,
                        profile_type='IOS_APP_ADHOC'):
         if device_id_list is None:
             device_id_list = []
         if not device_id_list:
             device_id_list = [device.id for device in self.list_enabled_devices()]
 
-        profile_obj = self.list_profile_by_profile_name(profile_name)
-        if isinstance(profile_obj, Profiles):
-            self.delete_profile_by_id(profile_obj.id)
+        self.delete_profile_by_id(profile_id, profile_name)
+        # profile_obj = self.list_profile_by_profile_name(profile_name)
+        # if isinstance(profile_obj, Profiles):
+        #     self.delete_profile_by_id(profile_obj.id, profile_name)
 
         req = super().create_profile(bundle_id, [certificate_id], profile_name, device_id_list)
         if req.status_code == 201:
@@ -891,10 +906,16 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         req = super().list_profile_by_profile_name(profile_name)
         return self.__profile_store(req)
 
-    def delete_profile_by_id(self, profile_id):
-        req = super().delete_profile(profile_id)
-        if self.__do_success(req):
-            return True
+    def delete_profile_by_id(self, profile_id, profile_name):
+        if profile_id:
+            req = super().delete_profile(profile_id)
+            if self.__do_success(req, 204):
+                return True
+        profile_obj = self.list_profile_by_profile_name(profile_name)
+        if profile_obj:
+            req = super().delete_profile(profile_obj.id)
+            if self.__do_success(req, 204):
+                return True
 
     def create_certificate(self, csr_content, certificate_type='IOS_DISTRIBUTION'):
         req = super().create_certificate(csr_content, certificate_type)

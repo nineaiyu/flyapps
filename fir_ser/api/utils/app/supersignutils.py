@@ -318,12 +318,14 @@ class IosUtils(object):
                                                                developerid=developer_obj).values_list('did')
             device_id_lists = [did[0] for did in device_id_list]
             developer_app_id = None
+            profile_id = None
             add_did_flag = False
             sync_device_obj = None
             developer_app_id_obj = DeveloperAppID.objects.filter(developerid=developer_obj,
                                                                  app_id=app_obj).first()
             if developer_app_id_obj:
                 developer_app_id = developer_app_id_obj.aid
+                profile_id = developer_app_id_obj.profile_id
             if udid_info:
                 sync_device_obj = UDIDsyncDeveloper.objects.filter(udid=udid_info.get('udid'),
                                                                    developerid=developer_obj, status=True).first()
@@ -339,9 +341,11 @@ class IosUtils(object):
 
             status, result = get_api_obj(auth).get_profile(app_obj, udid_info,
                                                            get_profile_full_path(developer_obj, app_obj),
-                                                           auth, developer_app_id, device_id_lists,
+                                                           auth, developer_app_id, device_id_lists, profile_id,
                                                            err_callback(IosUtils.get_device_from_developer,
-                                                                        developer_obj))
+                                                                        developer_obj),
+                                                           err_callback(IosUtils.clean_super_sign_things_by_app_obj,
+                                                                        app_obj, developer_obj))
             if add_did_flag and sync_device_obj:
                 result['did'] = sync_device_obj.serial
                 result['did_exists'] = True
@@ -363,6 +367,9 @@ class IosUtils(object):
 
         if not developer_app_id and result.get("aid", None):
             DeveloperAppID.objects.create(aid=result["aid"], developerid=developer_obj, app_id=app_obj)
+        if result.get("profile_id", None):
+            DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).update(
+                profile_id=result.get("profile_id", None))
 
         return True, result
 
@@ -639,37 +646,30 @@ class IosUtils(object):
         usedeviceobj = APPSuperSignUsedInfo.objects.filter(udid=udid_obj, app_id_id=app_id)
         if usedeviceobj:
             developer_obj = usedeviceobj.first().developerid
-            auth = get_auth_form_developer(developer_obj)
-
             # 需要判断该设备在同一个账户下 的多个应用，若存在，则不操作
             udid_lists = list(
                 APPSuperSignUsedInfo.objects.values_list("udid__udid__udid").filter(developerid=developer_obj))
-            IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj, auth)
+            IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj)
             DeveloperDevicesID.objects.filter(udid__appudid=udid_obj, developerid=developer_obj,
                                               app_id_id=app_id).delete()
             udid_obj.delete()
             # 通过开发者id判断 app_id 是否多个，否则删除profile 文件
             if APPSuperSignUsedInfo.objects.filter(developerid=developer_obj, app_id_id=app_id).count() == 0:
-                app_api_obj = get_api_obj(auth)
                 app_obj = Apps.objects.filter(pk=app_id).first()
-                app_api_obj.del_profile(app_obj.app_id)
-                app_api_obj2 = get_api_obj(auth)
-                app_api_obj2.del_app(app_obj.bundle_id, app_obj.app_id)
-                DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
+                IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
                 delete_app_to_dev_and_file(developer_obj, app_id)
                 delete_app_profile_file(developer_obj, app_obj)
 
     @staticmethod
-    def do_disable_device(developer_obj, udid_lists, udid_obj, auth):
+    def do_disable_device(developer_obj, udid_lists, udid_obj):
         if udid_lists.count((udid_obj.udid.udid,)) == 1:
+            auth = get_auth_form_developer(developer_obj)
             app_api_obj = get_api_obj(auth)
-            app_api_obj.set_device_status("disable", udid_obj.udid.udid)
+            app_api_obj.set_device_status("disable", udid_obj.udid.serial, udid_obj.udid.product, udid_obj.udid.udid)
             UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid.udid, developerid=developer_obj).update(status=False)
 
     @staticmethod
     def clean_udid_by_app_obj(app_obj, developer_obj):
-
-        auth = get_auth_form_developer(developer_obj)
 
         # 需要判断该设备在同一个账户下 的多个应用，若存在，则不操作
         udid_lists = list(
@@ -677,7 +677,7 @@ class IosUtils(object):
 
         for SuperSignUsed_obj in APPSuperSignUsedInfo.objects.filter(app_id=app_obj, developerid=developer_obj):
             udid_obj = SuperSignUsed_obj.udid
-            IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj, auth)
+            IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj)
             SuperSignUsed_obj.delete()
             DeveloperDevicesID.objects.filter(udid__appudid=udid_obj, developerid=developer_obj,
                                               app_id=app_obj).delete()
@@ -696,19 +696,31 @@ class IosUtils(object):
         for developer_id in developer_id_lists:
             developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_id[0]).first()
             if developer_obj and developer_obj.user_id == app_obj.user_id:
-                IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
-                delete_app_to_dev_and_file(developer_obj, app_obj.id)
-                IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
-                delete_app_profile_file(developer_obj, app_obj)
+                IosUtils.clean_super_sign_things_by_app_obj(app_obj, developer_obj)
+
+    @staticmethod
+    def clean_super_sign_things_by_app_obj(app_obj, developer_obj):
+        IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
+        delete_app_to_dev_and_file(developer_obj, app_obj.id)
+        IosUtils.clean_udid_by_app_obj(app_obj, developer_obj)
+        delete_app_profile_file(developer_obj, app_obj)
 
     @staticmethod
     def clean_app_by_developer_obj(app_obj, developer_obj):
         auth = get_auth_form_developer(developer_obj)
-        DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
+        developer_app_id_obj = DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).first()
+        identifier_id = None
+        profile_id = None
+        if developer_app_id_obj:
+            identifier_id = developer_app_id_obj.aid
+            profile_id = developer_app_id_obj.profile_id
+
         app_api_obj = get_api_obj(auth)
-        app_api_obj.del_profile(app_obj.app_id)
+        app_api_obj.del_profile(profile_id, app_obj.app_id)
         app_api_obj2 = get_api_obj(auth)
-        app_api_obj2.del_app(app_obj.bundle_id, app_obj.app_id)
+
+        app_api_obj2.del_app(identifier_id, app_obj.bundle_id, app_obj.app_id)
+        developer_app_id_obj.delete()
 
     @staticmethod
     def clean_developer(developer_obj, user_obj, delete_file=True):
@@ -865,11 +877,7 @@ class IosUtils(object):
             for developer_device_obj in developer_device_list:
                 app_obj = developer_device_obj.app_id
                 if APPSuperSignUsedInfo.objects.filter(developerid=developer_obj, app_id=app_obj).count() == 0:
-                    app_api_obj = get_api_obj(auth)
-                    app_api_obj.del_profile(app_obj.app_id)
-                    app_api_obj2 = get_api_obj(auth)
-                    app_api_obj2.del_app(app_obj.bundle_id, app_obj.app_id)
-                    DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).delete()
+                    IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
                     delete_app_to_dev_and_file(developer_obj, app_obj.pk)
                     delete_app_profile_file(developer_obj, app_obj)
                 developer_device_obj.delete()

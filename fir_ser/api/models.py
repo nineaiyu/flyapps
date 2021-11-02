@@ -341,6 +341,7 @@ class UDIDsyncDeveloper(models.Model):
 
 class DeveloperAppID(models.Model):
     aid = models.CharField(max_length=64, null=False)  # ，apple APP 唯一标识
+    profile_id = models.CharField(max_length=64, null=True, blank=True)  # ，profile_id 唯一标识
     developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
     app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
 

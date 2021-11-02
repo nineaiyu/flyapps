@@ -293,7 +293,7 @@ class AppDeveloperApiV2(object):
         return False, result
 
     def get_profile(self, app_obj, udid_info, provision_name, auth, developer_app_id,
-                    device_id_list, err_callback):
+                    device_id_list, profile_id, device_err_callback, app_id_err_callback):
         result = {}
         bundle_id = app_obj.bundle_id
         app_id = app_obj.app_id
@@ -319,10 +319,11 @@ class AppDeveloperApiV2(object):
                     result['did'] = device_obj.id
                     device_id_list.append(device_obj.id)
 
-            profile_obj = apple_obj.create_profile(developer_app_id, auth.get('cert_id'),
+            profile_obj = apple_obj.create_profile(profile_id, developer_app_id, auth.get('cert_id'),
                                                    provision_name.split("/")[-1],
                                                    device_id_list)
             if profile_obj:
+                result['profile_id'] = profile_obj.id
                 n = base64.b64decode(profile_obj.profileContent)
                 if not os.path.isdir(os.path.dirname(provision_name)):
                     os.makedirs(os.path.dirname(provision_name))
@@ -333,31 +334,31 @@ class AppDeveloperApiV2(object):
             logger.error(f"app_id {app_obj.app_id} ios developer make profile Failed Exception:{e}")
             result['return_info'] = "%s" % e
             if "There are no current ios devices" in str(e):
-                err_callback()
+                device_err_callback()
+            if "There is no App ID with ID" in str(e):
+                app_id_err_callback()
 
             return False, result
 
-    def del_profile(self, app_id):
+    def del_profile(self, profile_id, profile_name):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            profile_obj = apple_obj.list_profile_by_profile_name(app_id)
-            if profile_obj:
-                if apple_obj.delete_profile_by_id(profile_obj.id):
-                    return True, profile_obj
+            if apple_obj.delete_profile_by_id(profile_id, profile_name):
+                return True
         except Exception as e:
             logger.error(f"ios developer delete profile Failed Exception:{e}")
             result['return_info'] = "%s" % e
             return False, result
 
-    def set_device_status(self, status, device_udid):
+    def set_device_status(self, status, device_id, device_name, device_udid):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             if status == "enable":
-                device_obj = apple_obj.enabled_device(device_udid)
+                device_obj = apple_obj.enabled_device(device_id, device_name, device_udid)
             else:
-                device_obj = apple_obj.disabled_device(device_udid)
+                device_obj = apple_obj.disabled_device(device_id, device_name, device_udid)
             logger.info("device_obj %s result:%s" % (device_obj, status))
             if device_obj and device_obj.id:
                 return True, result
@@ -378,11 +379,11 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
             return False, result
 
-    def del_app(self, bundle_id, app_id):
+    def del_app(self, identifier_id, bundle_id, app_id):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            if apple_obj.delete_bundle_by_identifier(f"{bundle_id}.{self.issuer_id}.{app_id}"):
+            if apple_obj.delete_bundle_by_identifier(identifier_id, f"{bundle_id}.{self.issuer_id}.{app_id}"):
                 return True, {}
 
         except Exception as e:
