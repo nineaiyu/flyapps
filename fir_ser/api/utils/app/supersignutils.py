@@ -579,7 +579,7 @@ class IosUtils(object):
                     else:
                         with cache.lock("%s_%s_%s" % (
                                 'download_profile_and_add_device', self.developer_obj.issuer_id, self.udid),
-                                        timeout=60):
+                                        timeout=120):
                             download_flag, result = IosUtils.exec_download_profile(self.app_obj, self.developer_obj,
                                                                                    self.udid_info, sign_try_attempts)
                 if download_flag:

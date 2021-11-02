@@ -772,7 +772,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         device_obj_list = BaseInfoObj.filter(self.get_all_devices(), {"udid": udid})
         if not device_obj_list:
             raise Exception('Device obj is None')
-        if len(device_obj_list) != 1 and len(set([device_obj.udid for device_obj in device_obj_list])) == 1:
+        if len(device_obj_list) != 1 and len(set([device_obj.udid for device_obj in device_obj_list])) != 1:
             raise Exception('more than one Device obj')
         return device_obj_list
 

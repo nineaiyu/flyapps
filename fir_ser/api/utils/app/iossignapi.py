@@ -292,7 +292,7 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
         return False, result
 
-    def get_profile(self, app_obj, udid_info, provisionName, auth, developer_app_id,
+    def get_profile(self, app_obj, udid_info, provision_name, auth, developer_app_id,
                     device_id_list, err_callback):
         result = {}
         bundle_id = app_obj.bundle_id
@@ -304,9 +304,11 @@ class AppDeveloperApiV2(object):
                 pass
             else:
                 if s_type == 0:
-                    bundle_obj = apple_obj.register_bundle_id(app_id, bundle_id + app_id)
+                    bundle_obj = apple_obj.register_bundle_id(app_id, f"{bundle_id}.{self.issuer_id}.{app_id}")
                 else:
-                    bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundle_id + app_id, s_type)
+                    bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id,
+                                                                                f"{bundle_id}.{self.issuer_id}.{app_id}",
+                                                                                s_type)
                 developer_app_id = bundle_obj.id
                 result['aid'] = developer_app_id
             if udid_info:
@@ -318,13 +320,13 @@ class AppDeveloperApiV2(object):
                     device_id_list.append(device_obj.id)
 
             profile_obj = apple_obj.create_profile(developer_app_id, auth.get('cert_id'),
-                                                   provisionName.split("/")[-1],
+                                                   provision_name.split("/")[-1],
                                                    device_id_list)
             if profile_obj:
                 n = base64.b64decode(profile_obj.profileContent)
-                if not os.path.isdir(os.path.dirname(provisionName)):
-                    os.makedirs(os.path.dirname(provisionName))
-                with open(provisionName, 'wb') as f:
+                if not os.path.isdir(os.path.dirname(provision_name)):
+                    os.makedirs(os.path.dirname(provision_name))
+                with open(provision_name, 'wb') as f:
                     f.write(n)
                 return True, result
         except Exception as e:
@@ -376,11 +378,11 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
             return False, result
 
-    def del_app(self, bundleId, app_id):
+    def del_app(self, bundle_id, app_id):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            if apple_obj.delete_bundle_by_identifier(bundleId + app_id):
+            if apple_obj.delete_bundle_by_identifier(f"{bundle_id}.{self.issuer_id}.{app_id}"):
                 return True, {}
 
         except Exception as e:
@@ -389,11 +391,13 @@ class AppDeveloperApiV2(object):
             return False, result
 
     # 该方法未使用
-    def create_app(self, bundleId, app_id, s_type):
+    def create_app(self, bundle_id, app_id, s_type):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundleId + app_id, s_type)
+            bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id,
+                                                                        f"{bundle_id}.{self.issuer_id}.{app_id}",
+                                                                        s_type)
             developer_app_id = bundle_obj.id
             result['aid'] = developer_app_id
             return True, result
@@ -417,9 +421,11 @@ class AppDeveloperApiV2(object):
                     result['code'] = apple_obj.enable_capability_by_s_type(developer_app_id, s_type)
             else:
                 if s_type == 0:
-                    bundle_obj = apple_obj.register_bundle_id(app_id, bundle_id + app_id)
+                    bundle_obj = apple_obj.register_bundle_id(app_id, f"{bundle_id}.{self.issuer_id}.{app_id}")
                 else:
-                    bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id, bundle_id + app_id, s_type)
+                    bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id,
+                                                                                f"{bundle_id}.{self.issuer_id}.{app_id}",
+                                                                                s_type)
                 developer_app_id = bundle_obj.id
                 result['aid'] = developer_app_id
             return True, result

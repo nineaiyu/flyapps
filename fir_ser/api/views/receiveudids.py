@@ -15,7 +15,7 @@ from api.models import Apps
 from api.tasks import run_sign_task
 from api.utils.app.supersignutils import udid_bytes_to_dict, make_sign_udid_mobile_config
 from api.utils.baseutils import get_real_ip_address, get_http_server_domain, make_random_uuid
-from api.utils.modelutils import get_app_domain_name, get_redirect_server_domain
+from api.utils.modelutils import get_app_domain_name, get_redirect_server_domain, add_remote_info_from_request
 from api.utils.response import BaseResponse
 from api.utils.storage.caches import check_app_permission
 from api.utils.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
@@ -48,6 +48,7 @@ class IosUDIDView(View):
                         # ios_obj.sign(client_ip)
                         # return Response('ok')
                         c_task = run_sign_task.apply_async((format_udid_info, short, client_ip))
+                        add_remote_info_from_request(request, f'{app_obj}-{format_udid_info}')
                         task_id = c_task.id
                         logger.info(f"sign app {app_obj} task_id:{task_id}")
                         try:

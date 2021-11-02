@@ -77,13 +77,15 @@ def ad_random_weight(user_obj):
 
 def add_remote_info_from_request(request, description):
     meta_info = request.META
+    if request.user and request.user.id is not None:
+        description = f"{request.user.uid}_{description}"
     remote_info = {
         'user_agent': meta_info.get('HTTP_USER_AGENT'),
         'remote_addr': get_real_ip_address(request),
         'method': meta_info.get('REQUEST_METHOD'),
         'uri_info': urljoin(meta_info.get('PATH_INFO'), meta_info.get('QUERY_STRING')),
         'a_domain': get_origin_domain_name(request),
-        'description': description
+        'description': description[0:255]
     }
     RemoteClientInfo.objects.create(**remote_info)
 

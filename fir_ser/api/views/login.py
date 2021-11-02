@@ -9,7 +9,7 @@ from api.models import Token, UserInfo, UserCertificationInfo, CertificationInfo
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.baseutils import is_valid_phone, is_valid_email, get_real_ip_address
 from api.utils.geetest.geetest_utils import first_register, second_validate
-from api.utils.modelutils import get_min_default_domain_cname_obj
+from api.utils.modelutils import get_min_default_domain_cname_obj, add_remote_info_from_request
 from api.utils.mp.wechat import make_wx_login_qrcode, show_qrcode_url
 from api.utils.response import BaseResponse
 from api.utils.serializer import UserInfoSerializer, CertificationSerializer, UserCertificationSerializer
@@ -256,6 +256,8 @@ class LoginView(APIView):
                                     if a and b:
                                         reset_user_pwd(user_obj, password)
                                         login_auth_failed("del", username)
+                                        msg = f'{user_obj} 找回密码成功，您的新密码为 {password} 请用新密码登录之后，及时修改密码'
+                                        add_remote_info_from_request(request, msg)
                                         logger.warning(f'{user_obj} 找回密码成功，您的新密码为 {password} 请用新密码登录之后，及时修改密码')
                                     else:
                                         response.code = 1007
@@ -289,6 +291,7 @@ class LoginView(APIView):
                         response.msg = "验证成功!"
                         response.userinfo = data
                         response.token = key
+                        add_remote_info_from_request(request, f"登录成功， token: {key}")
                     else:
                         response.msg = "用户被禁用"
                         response.code = 1005
@@ -309,7 +312,7 @@ class LoginView(APIView):
         else:
             response.code = 1001
             response.msg = "验证码有误"
-
+        add_remote_info_from_request(request, response.msg)
         return Response(response.dict)
 
     def get(self, request):
@@ -404,7 +407,7 @@ class RegistView(APIView):
         else:
             response.code = 1001
             response.msg = "邮件或短信验证码有误"
-
+        add_remote_info_from_request(request, response.msg)
         return Response(response.dict)
 
     def get(self, request):
