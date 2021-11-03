@@ -28,7 +28,7 @@ def run_sign_task(format_udid_info, short, client_ip):
         return '签名余额不足'
     with cache.lock("%s_%s_%s" % ('run_sign_task', app_obj.app_id, ios_obj.developer_obj.issuer_id), timeout=60 * 10):
         ios_obj.get_developer_auth()
-        status, msg = ios_obj.sign(client_ip)
+        status, msg = ios_obj.sign_ipa(client_ip)
         if not status:
             code = msg.get("code", -1)
             if code == 0:

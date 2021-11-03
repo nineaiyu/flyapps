@@ -727,3 +727,47 @@ class BillUdidInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppUDID
         fields = ["pk", "app_id", "udid", "product", "serial", "version", "imei", "iccid"]
+
+    udid = serializers.SerializerMethodField()
+
+    def get_udid(self, obj):
+        return obj.udid.udid
+
+
+class BillInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.IosDeveloperPublicPoolBill
+        exclude = ["user_id", "to_user_id", "developer_info", "app_info", "udid_sync_info"]
+
+    app_name = serializers.SerializerMethodField()
+    product = serializers.SerializerMethodField()
+    action = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
+    is_used = serializers.SerializerMethodField()
+
+    def get_is_used(self, obj):
+        if obj.udid_sync_info or obj.to_user_id:
+            return True
+        return False
+
+    def get_action(self, obj):
+        return get_choices_name_from_key(obj.action_choices, obj.action)
+
+    def get_app_name(self, obj):
+        if obj.app_info:
+            return obj.app_info.get('name')
+        elif obj.to_user_id:
+            return obj.user_id.first_name
+
+    def get_product(self, obj):
+        if obj.udid_info:
+            return obj.udid_info.get('product')
+
+    def get_description(self, obj):
+        if obj.udid_info:
+            return f"{self.get_app_name(obj)}-{self.get_action(obj)} -{obj.number} 设备数"
+        if obj.to_user_id:
+            if obj.to_user_id == self.context.get('user_obj'):
+                return f"{obj.user_id.first_name}-{self.get_action(obj)} +{obj.number} 设备数"
+            else:
+                return f"向 {obj.to_user_id.first_name} {self.get_action(obj)} -{obj.number} 设备数"

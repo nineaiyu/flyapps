@@ -692,3 +692,18 @@ export function advertinfo(callBack, params, load = true) {
         true
     );
 }
+
+/**签名账单 */
+export function DeviceBillInfo(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/supersign/bill',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}

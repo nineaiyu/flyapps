@@ -205,16 +205,13 @@ def get_ios_developer_public_num(user_obj):
     used_number = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj, action=0,
                                                             udid_sync_info__isnull=False).aggregate(
         number=Sum('number'))
-    if add_number:
-        add_number = add_number.get("number", 0)
-        if not add_number:
-            return False
-        used_number = used_number.get("number", 0)
-        if not used_number:
-            used_number = 0
-        if add_number - used_number > 0:
-            return True
-    return False
+    add_number = add_number.get("number", 0)
+    if not add_number:
+        add_number = -99
+    used_number = used_number.get("number", 0)
+    if not used_number:
+        used_number = 0
+    return add_number - used_number
 
 
 def get_developer_user_by_app_udid(user_obj, udid):
@@ -234,25 +231,32 @@ def get_developer_user_by_app_udid(user_obj, udid):
             for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id=user_obj, is_actived=True,
                                                                     certid__isnull=False).order_by("created_time"):
                 if get_developer_udided(developer_obj)[1] < developer_obj.usable_number:
-                    return developer_obj
-            return None
-    return developer_obj
+                    return developer_obj, False
+            return None, None
+    return developer_obj, True
 
 
 def get_developer_obj_by_others(user_obj, udid):
-    result = get_developer_user_by_app_udid(user_obj, udid)
+    result, is_exist = get_developer_user_by_app_udid(user_obj, udid)
     if result:
         return result
-    if not get_ios_developer_public_num(user_obj):
-        return None
     receive_user_obj_list = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj).all()
     for receive_user_obj in receive_user_obj_list:
-        result = get_developer_user_by_app_udid(receive_user_obj.user_id, udid)
+        result, is_exist = get_developer_user_by_app_udid(receive_user_obj.user_id, udid)
         if result is None:
             continue
         else:
-            logger.warning(f"user receive_user_obj {receive_user_obj.user_id} developer to sign")
-            return result
+            f_count = get_ios_developer_public_num(user_obj)
+            if not is_exist and f_count > 0:
+                logger.warning(f"user receive_user_obj {receive_user_obj.user_id} developer to sign")
+                return result
+            if is_exist:
+                if f_count > 0:
+                    return result
+                if f_count == 0 and udid in [x.get('udid__udid__udid') for x in
+                                             APPSuperSignUsedInfo.objects.filter(user_id=user_obj).values(
+                                                     'udid__udid__udid').all()]:
+                    return result
     return None
 
 
@@ -453,7 +457,9 @@ class IosUtils(object):
                                                             developer_info=BillDeveloperInfoSerializer(
                                                                 self.developer_obj).data,
                                                             udid_info=BillUdidInfoSerializer(udid_obj).data, action=0,
-                                                            number=1, udid_sync_info=udid_sync_info
+                                                            number=1, udid_sync_info=udid_sync_info,
+                                                            remote_addr=client_ip,
+                                                            udid=self.udid
                                                             )
 
     @staticmethod
@@ -511,13 +517,7 @@ class IosUtils(object):
         d_result['msg'] = msg
         return True, d_result
 
-    def sign(self, client_ip, sign_try_attempts=3):
-        """
-        :param client_ip:
-        :param sign_try_attempts:
-        :return:  status, result
-        :des:  仅用于苹果设备发送设备udid签名使用
-        """
+    def check_sign_permission(self):
         d_result = {'code': 0, 'msg': 'success'}
         state, used_num = check_app_sign_limit(self.app_obj)
         if not state:
@@ -537,7 +537,19 @@ class IosUtils(object):
             d_result['msg'] = msg
             logger.error(d_result)
             return False, d_result
+        return True, d_result
 
+    def sign_ipa(self, client_ip, sign_try_attempts=3):
+        """
+        :param client_ip:
+        :param sign_try_attempts:
+        :return:  status, result
+        :des:  仅用于苹果设备发送设备udid签名使用
+        """
+        status, msg = self.check_sign_permission()
+        if not status:
+            return status, msg
+        d_result = {'code': 0, 'msg': 'success'}
         app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid__udid=self.udid,
                                               udid__developerid=self.developer_obj).first()
         if app_udid_obj and app_udid_obj.is_download:

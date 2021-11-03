@@ -39,6 +39,7 @@ class Migration(migrations.Migration):
                 ('udid_info', models.JSONField(blank=True, max_length=256, null=True, verbose_name='设备id信息')),
                 ('developer_info', models.JSONField(blank=True, max_length=256, null=True, verbose_name='开发者信息')),
                 ('description', models.CharField(blank=True, default='', max_length=128, verbose_name='操作描述')),
+                ('remote_addr', models.GenericIPAddressField(verbose_name='远程IP地址')),
                 ('created_time', models.DateTimeField(auto_now_add=True, verbose_name='添加时间')),
                 ('to_user_id', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE,
                                                  related_name='to_user_id', to=settings.AUTH_USER_MODEL,

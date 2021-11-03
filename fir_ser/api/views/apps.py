@@ -224,7 +224,7 @@ class AppInfoView(APIView):
                         #     res.msg = "超级签余额不足，无法开启"
                         #     return Response(res.dict)
                         developer_count = AppIOSDeveloperInfo.objects.filter(user_id=request.user).count()
-                        if developer_count == 0 and not get_ios_developer_public_num(request.user):
+                        if developer_count == 0 and get_ios_developer_public_num(request.user) < 0:
                             logger.error(f"app_id:{app_id} can't open super_sign,owner has no ios developer")
                             res.code = 1008
                             res.msg = "超级签余额不足，无法开启"

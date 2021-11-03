@@ -536,6 +536,7 @@ class IosDeveloperPublicPoolBill(models.Model):
     number = models.IntegerField(verbose_name="消耗次数", default=1)
     app_info = models.JSONField(max_length=256, verbose_name="属于哪个APP", null=True, blank=True)
     udid_info = models.JSONField(max_length=256, verbose_name="设备id信息", null=True, blank=True)
+    udid = models.CharField(max_length=64, verbose_name="设备udid", null=True, blank=True)
     developer_info = models.JSONField(max_length=256, verbose_name="开发者信息", null=True, blank=True)
     udid_sync_info = models.ForeignKey(to="UDIDsyncDeveloper", on_delete=models.SET_NULL, verbose_name="关联同步设备信息",
                                        null=True, blank=True)
@@ -543,6 +544,7 @@ class IosDeveloperPublicPoolBill(models.Model):
     # udid = models.ForeignKey(to="AppUDID", on_delete=models.CASCADE, verbose_name="所消耗的udid",null=True,blank=True)
     # developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户",null=True,blank=True)
     description = models.CharField(verbose_name="操作描述", max_length=128, default='', blank=True)
+    remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址")
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
 
     class Meta:
@@ -568,3 +570,10 @@ class RemoteClientInfo(models.Model):
 
     def __str__(self):
         return "%s-%s" % (self.remote_addr, self.description)
+
+
+class DeviceQueue(models.Model):
+    app_id = models.ForeignKey(to='Apps', on_delete=models.CASCADE, verbose_name="应用id")
+    udid = models.CharField(max_length=64, verbose_name="udid唯一标识", db_index=True)
+    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="访问时间")

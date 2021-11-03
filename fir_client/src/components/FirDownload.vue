@@ -612,7 +612,7 @@
                         }
                     } else if (data.code === 1002) {
                         window.location.href = location.href.replace(location.search, '');
-                    }else if (data.code === 302 && data.data) {
+                    } else if (data.code === 302 && data.data) {
                         window.location.href = data.data;
                     } else {
                         if (data.msg) {

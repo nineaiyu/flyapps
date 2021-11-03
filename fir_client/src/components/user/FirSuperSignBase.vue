@@ -126,6 +126,7 @@
                     <el-table-column
                             fixed
                             prop="issuer_id"
+                            align="center"
                             label="用户 issuer_id"
                             width="300">
                         <template slot-scope="scope">
@@ -147,6 +148,7 @@
                     </el-table-column>
                     <el-table-column
                             prop="is_actived"
+                            align="center"
                             label="是否激活"
                             width="110">
                         <template slot-scope="scope">
@@ -160,6 +162,7 @@
                     <el-table-column
                             prop="certid"
                             label="账户状态"
+                            align="center"
                             width="100">
                         <template slot-scope="scope">
                             <el-popover trigger="hover" placement="top">
@@ -178,6 +181,7 @@
                     <el-table-column
                             prop="usable_number"
                             label="可用设备"
+                            align="center"
                             width="60">
                         <template slot-scope="scope">
                             <el-popover trigger="hover" placement="top">
@@ -194,6 +198,7 @@
 
                     <el-table-column
                             prop="use_number"
+                            align="center"
                             label="设备消耗"
                             width="60">
                         <template slot-scope="scope">
@@ -211,9 +216,11 @@
                             :formatter="formatter"
                             prop="cert_expire_time"
                             label="证书到期时间"
+                            align="center"
                             width="160">
                     </el-table-column>
                     <el-table-column
+                            align="center"
                             prop="description"
                             label="备注"
                     >
@@ -221,6 +228,7 @@
                     <el-table-column
                             fixed="right"
                             label="操作"
+                            align="center"
                             width="150">
                         <template slot-scope="scope">
 
@@ -322,38 +330,45 @@
                         style="width: 100%">
                     <el-table-column
                             fixed
+                            align="center"
                             prop="device_udid"
                             label="设备ID"
                     >
                     </el-table-column>
                     <el-table-column
                             prop="device_name"
+                            align="center"
                             label="设备名称"
                             width="120">
                     </el-table-column>
                     <el-table-column
                             prop="bundle_id"
+                            align="center"
                             label="应用ID"
                             width="180">
                     </el-table-column>
                     <el-table-column
                             prop="bundle_name"
+                            align="center"
                             label="应用名称"
                             width="160">
                     </el-table-column>
                     <el-table-column
                             prop="developer_id"
                             label="开发者ID"
+                            align="center"
                             width="200">
                     </el-table-column>
                     <el-table-column
                             v-if="$store.state.userinfo&&$store.state.userinfo.role == 3"
                             prop="other_uid"
+                            align="center"
                             label="被使用户uid">
                     </el-table-column>
                     <el-table-column
                             :formatter="deviceformatter"
                             prop="created_time"
+                            align="center"
                             label="授权时间"
                             width="160">
                     </el-table-column>
@@ -386,6 +401,7 @@
 
                     <el-table-column
                             fixed
+                            align="center"
                             prop="udid"
                             label="设备ID"
                     >
@@ -403,33 +419,39 @@
                     <el-table-column
                             prop="imei"
                             label="imei"
-                            width="180">
+                            align="center"
+                            width="160">
 
                     </el-table-column>
                     <el-table-column
                             prop="product"
                             label="设备名称"
+                            align="center"
                             width="100">
                     </el-table-column>
                     <el-table-column
                             prop="version"
                             label="设备型号"
+                            align="center"
                             width="100">
                     </el-table-column>
                     <el-table-column
                             prop="serial"
                             label="设备序列号"
-                            width="150">
+                            align="center"
+                            width="140">
                     </el-table-column>
                     <el-table-column
                             v-if="$store.state.userinfo&&$store.state.userinfo.role == 3"
                             prop="other_uid"
+                            align="center"
                             label="被使用户uid">
                     </el-table-column>
                     <el-table-column
                             :formatter="deviceformatter"
                             prop="created_time"
                             label="添加时间"
+                            align="center"
                             width="160">
                     </el-table-column>
                     <el-table-column
@@ -445,10 +467,91 @@
                                     @click="udidDeleteFun(scope)">删除
                             </el-button>
                             <el-tag v-else>
-                                不允许操作
+                                ...
                             </el-tag>
                         </template>
                     </el-table-column>
+                </el-table>
+
+            </el-tab-pane>
+            <el-tab-pane label="设备消耗账单" name="devicesbill">
+                <el-input
+                        style="width: 30%;margin-right: 30px;margin-bottom: 10px"
+                        v-model="udidsearch"
+                        clearable
+                        placeholder="输入UDID"/>
+
+                <el-button type="primary" icon="el-icon-search" @click="handleCurrentChange(pagination.currentPage)">
+                    搜索
+                </el-button>
+
+
+                <el-table
+                        :data="app_bill_lists"
+                        v-loading="loading"
+                        border
+                        stripe
+                        style="width: 100%">
+
+                    <el-table-column
+                            fixed
+                            prop="udid"
+                            align="center"
+                            label="设备ID"
+                    >
+                    </el-table-column>
+                    <el-table-column
+                            prop="product"
+                            label="设备名称"
+                            align="center"
+                            width="100">
+                    </el-table-column>
+                    <el-table-column
+                            width="100"
+                            prop="app_name"
+                            align="center"
+                            label="消费者"
+                    >
+                    </el-table-column>
+
+                    <el-table-column
+                            prop="remote_addr"
+                            align="center"
+                            label="客户端IP"
+                            width="100">
+                    </el-table-column>
+                    <el-table-column
+                            prop="action"
+                            label="账单类型"
+                            align="center"
+                            width="100">
+                    </el-table-column>
+                    <el-table-column
+                            prop="description"
+                            label="备注"
+                            align="center"
+                            width="200">
+                    </el-table-column>
+                    <el-table-column
+                            :formatter="deviceformatter"
+                            align="center"
+                            prop="created_time"
+                            label="生成日期"
+                            width="160">
+                    </el-table-column>
+
+                    <el-table-column
+                            label="设备状态"
+                            align="center"
+                            width="110">
+                        <template slot-scope="scope">
+                            <el-tag v-if="scope.row.is_used===false" type="info">已经释放</el-tag>
+                            <el-tag v-else>
+                                使用中
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+
                 </el-table>
 
             </el-tab-pane>
@@ -470,7 +573,7 @@
 
 <script>
 
-    import {iosdeveloper, iosdevices, iosdevicesudid, developercert} from "@/restful";
+    import {iosdeveloper, iosdevices, iosdevicesudid, developercert, DeviceBillInfo} from "@/restful";
     import {getUserInfoFun, removeAaary} from "@/utils";
 
     export default {
@@ -480,6 +583,7 @@
                 fileList: [],
                 app_developer_lists: [],
                 app_devices_lists: [],
+                app_bill_lists: [],
                 app_udid_lists: [],
                 activeName: "iosdeveloper",
                 udidsearch: "",
@@ -693,7 +797,10 @@
                     // this.dialogaddDeveloperVisible=true;
                 } else if (tabname === "iosdeveloper") {
                     this.iosdeveloperFun({"methods": "GET", "data": data})
+                } else if (tabname === "devicesbill") {
+                    this.iosdevicebillFun({"methods": "GET", "data": data})
                 }
+
             },
             // eslint-disable-next-line no-unused-vars
             handleClick(tab, event) {
@@ -779,6 +886,19 @@
                         this.loading = false
                     }
                 }, params)
+            },
+            iosdevicebillFun(data) {
+                this.loading = true;
+                DeviceBillInfo(data => {
+                    if (data.code === 1000) {
+                        this.app_bill_lists = data.data;
+                        this.pagination.total = data.count;
+
+                    } else {
+                        this.$message.error("操作失败了 " + data.msg);
+                    }
+                    this.loading = false
+                }, data)
             },
             iosdevicesudidFun(action, data, scope) {
                 if (action !== 'GET') {

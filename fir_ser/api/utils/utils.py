@@ -75,20 +75,21 @@ def get_developer_devices(developer_obj_lists):
 
 
 def get_captcha():
-    cptch_key = CaptchaStore.generate_key()
-    cptch_image = captcha_image_url(cptch_key)
+    captcha_key = CaptchaStore.generate_key()
+    captcha_image = captcha_image_url(captcha_key)
     CaptchaStore.remove_expired()
     local_storage = LocalStorage(**SERVER_DOMAIN.get("IOS_PMFILE_DOWNLOAD_DOMAIN"))
-    return {"cptch_image": "/".join([local_storage.get_base_url(), cptch_image.strip("/"), '']), "cptch_key": cptch_key,
+    return {"captcha_image": "/".join([local_storage.get_base_url(), captcha_image.strip("/"), '']),
+            "captcha_key": captcha_key,
             "length": CAPTCHA_LENGTH}
 
 
-def valid_captcha(cptch_key, code, username):
+def valid_captcha(captcha_key, code, username):
     if username:
-        challenge = CaptchaStore.objects.filter(hashkey=cptch_key).values("challenge").first()
-        logger.info(f"cptch_key:{cptch_key} code:{code}  challenge:{challenge}")
+        challenge = CaptchaStore.objects.filter(hashkey=captcha_key).values("challenge").first()
+        logger.info(f"captcha_key:{captcha_key} code:{code}  challenge:{challenge}")
         if challenge:
-            if cptch_key and code and code.strip(" ").lower() == challenge.get("challenge").lower():
+            if captcha_key and code and code.strip(" ").lower() == challenge.get("challenge").lower():
                 return True
     return False
 

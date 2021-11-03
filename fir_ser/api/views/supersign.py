@@ -5,16 +5,17 @@
 # date: 2020/3/4
 import logging
 
+from django.db.models import Q
 from django.http.response import FileResponse
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID
+from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill
 from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
 from api.utils.response import BaseResponse
-from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer
+from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, BillInfoSerializer
 from api.utils.utils import get_developer_devices, get_choices_dict
 
 logger = logging.getLogger(__name__)
@@ -305,4 +306,24 @@ class SuperSignCertView(APIView):
                     res.code = 1002
                     res.msg = str(result['err_info'])
                     return Response(res.dict)
+        return Response(res.dict)
+
+
+class DeviceUsedBillView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [SuperSignPermission, ]
+
+    def get(self, request):
+        res = BaseResponse()
+        udid = request.query_params.get("udid", None)
+        page_obj = PageNumber()
+        user_used_list = IosDeveloperPublicPoolBill.objects.filter(Q(to_user_id=request.user) | Q(user_id=request.user))
+        if udid:
+            user_used_list = user_used_list.filter(udid=udid)
+        app_page_serializer = page_obj.paginate_queryset(queryset=user_used_list.order_by("-created_time"),
+                                                         request=request,
+                                                         view=self)
+        app_serializer = BillInfoSerializer(app_page_serializer, many=True, context={'user_obj': request.user})
+        res.data = app_serializer.data
+        res.count = user_used_list.count()
         return Response(res.dict)
