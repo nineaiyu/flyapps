@@ -255,7 +255,7 @@ def get_developer_obj_by_others(user_obj, udid):
                     return result
                 if f_count == 0 and udid in [x.get('udid__udid__udid') for x in
                                              APPSuperSignUsedInfo.objects.filter(user_id=user_obj).values(
-                                                     'udid__udid__udid').all()]:
+                                                 'udid__udid__udid').all()]:
                     return result
     return None
 

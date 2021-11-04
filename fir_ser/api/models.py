@@ -4,12 +4,11 @@ from django.db import models
 
 from api.utils.TokenManager import generate_alphanumeric_token_of_length, generate_numeric_token_of_length
 from api.utils.baseutils import make_random_uuid
+######################################## 用户表 ########################################
+from api.utils.daobase import AESCharField
 
 
 # Create your models here.
-
-
-######################################## 用户表 ########################################
 
 
 class UserInfo(AbstractUser):
@@ -197,7 +196,7 @@ class AppStorage(models.Model):
     storage_choices = ((0, '本地存储'), (1, '七牛云存储'), (2, '阿里云存储'), (3, '默认存储'))
     storage_type = models.SmallIntegerField(choices=storage_choices, default=3, verbose_name="存储类型")
     access_key = models.CharField(max_length=128, blank=True, null=True, verbose_name="存储访问key")
-    secret_key = models.CharField(max_length=128, blank=True, null=True, verbose_name="存储访问secret")
+    secret_key = AESCharField(max_length=128, blank=True, null=True, verbose_name="存储访问secret")
     bucket_name = models.CharField(max_length=128, blank=True, null=True, verbose_name="存储空间bucket_name")
     domain_name = models.CharField(max_length=128, blank=True, null=True, verbose_name="下载域名",
                                    help_text='fly-storage.dvcloud.xin,可以自定义端口')
@@ -263,7 +262,8 @@ class AppIOSDeveloperInfo(models.Model):
     user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
     issuer_id = models.CharField(max_length=64, null=False, verbose_name="标识创建认证令牌的发放者")
     private_key_id = models.CharField(max_length=64, null=False, verbose_name="密钥 ID")
-    p8key = models.TextField(max_length=512, null=False, verbose_name="p8key")
+    # p8key = models.TextField(max_length=512, null=False, verbose_name="p8key")
+    p8key = AESCharField(max_length=512, null=False, verbose_name="p8key")
     is_actived = models.BooleanField(default=False, verbose_name="是否已经激活")
     certid = models.CharField(max_length=64, blank=True, verbose_name="超级签名自动创建证书ID", null=True)
     usable_number = models.IntegerField(verbose_name="可使用设备数", default=100)

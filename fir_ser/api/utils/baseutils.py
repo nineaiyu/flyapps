@@ -4,13 +4,17 @@
 # author: NinEveN
 # date: 2021/4/16
 
+import base64
 import datetime
+import hashlib
 import logging
 import os
 import re
 import time
 import uuid
 
+from Crypto import Random
+from Crypto.Cipher import AES
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils import timezone
@@ -19,6 +23,33 @@ from dns.resolver import Resolver
 from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN
 
 logger = logging.getLogger(__name__)
+
+
+class AESCipher(object):
+
+    def __init__(self, key):
+        self.key = hashlib.sha256(key.encode()).digest()
+
+    def encrypt(self, raw):
+        raw = self._pack_data(raw)
+        iv = Random.new().read(AES.block_size)
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return base64.b64encode(iv + cipher.encrypt(raw))
+
+    def decrypt(self, enc):
+        enc = base64.b64decode(enc)
+        iv = enc[:AES.block_size]
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return self._unpack_data(cipher.decrypt(enc[AES.block_size:])).decode('utf-8')
+
+    @staticmethod
+    def _pack_data(s):
+        return s + ((AES.block_size - len(s) % AES.block_size) * chr(AES.block_size - len(s) % AES.block_size)).encode(
+            'utf-8')
+
+    @staticmethod
+    def _unpack_data(s):
+        return s[:-ord(s[len(s) - 1:])]
 
 
 def make_from_user_uuid(userinfo):

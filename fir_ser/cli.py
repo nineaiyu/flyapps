@@ -19,6 +19,7 @@ pip install oss2
 pip install requests-toolbelt
 pip install androguard
 pip install qiniu
+pip install requests
 '''
 
 
@@ -86,7 +87,6 @@ def upload_qiniuyunoss(key, token, file_path):
 
 
 class FLYCliSer(object):
-    import requests
 
     def __init__(self, fly_cli_domain, fly_cli_token):
         self.fly_cli_domain = fly_cli_domain
@@ -97,6 +97,7 @@ class FLYCliSer(object):
         }
 
     def get_upload_token(self, bundleid, type):
+        import requests
         url = '%s/api/v2/fir/server/analyse' % self.fly_cli_domain
         data = {"bundleid": bundleid, "type": type}
         req = requests.post(url, json=data, headers=self._header)
@@ -106,8 +107,8 @@ class FLYCliSer(object):
         raise AssertionError(req.text)
 
     def analyse(self, data):
+        import requests
         url = '%s/api/v2/fir/server/analyse' % self.fly_cli_domain
-
         req = requests.put(url, json=data, headers=self._header)
         if req.status_code == 200:
             if req.json()['code'] == 1000:
@@ -116,6 +117,7 @@ class FLYCliSer(object):
         raise AssertionError(req.text)
 
     def upload_local_storage(self, upload_key, upload_token, app_id, file_path):
+        import requests
         url = '%s/api/v2/fir/server/upload' % self.fly_cli_domain
         from requests_toolbelt.multipart.encoder import MultipartEncoderMonitor
         m = MultipartEncoderMonitor.from_fields(fields={

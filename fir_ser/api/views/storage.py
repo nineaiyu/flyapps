@@ -45,6 +45,7 @@ class StorageView(APIView):
             storage_lists = {}
             for storage_data in storage_data_lists:
                 storage_type = storage_data.get("storage_type")
+                storage_data['secret_key'] = ''
                 if not storage_lists.get(storage_type):
                     storage_lists[storage_type] = []
                 storage_lists[storage_type].append(storage_data)

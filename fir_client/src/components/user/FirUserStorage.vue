@@ -22,7 +22,7 @@
                         <el-input :disabled='disabled' v-model="editstorageinfo.access_key"/>
                     </el-form-item>
                     <el-form-item label-width="110px" label="secret">
-                        <el-input :disabled='disabled' v-model="editstorageinfo.secret_key"/>
+                        <el-input :disabled='disabled' v-model="editstorageinfo.secret_key" placeholder="为空表示不修改该信息"/>
                     </el-form-item>
 
                     <el-form-item label-width="110px" label="bucket_name">
@@ -121,9 +121,9 @@
                         <el-form-item label-width="110px" label="key">
                             <el-input :disabled='Sdisabled' v-model="storageinfo.access_key"/>
                         </el-form-item>
-                        <el-form-item label-width="110px" label="secret">
-                            <el-input :disabled='Sdisabled' v-model="storageinfo.secret_key"/>
-                        </el-form-item>
+<!--                        <el-form-item label-width="110px" label="secret">-->
+<!--                            <el-input :disabled='Sdisabled' v-model="storageinfo.secret_key"/>-->
+<!--                        </el-form-item>-->
 
                         <el-form-item label-width="110px" label="bucket_name">
                             <el-input :disabled='Sdisabled' v-model="storageinfo.bucket_name"/>

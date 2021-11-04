@@ -405,6 +405,14 @@ class StorageSerializer(serializers.ModelSerializer):
 
     download_auth_type_choices = serializers.SerializerMethodField()
 
+    # secret_key = serializers.SerializerMethodField()
+    # 加上此选项，会导致update获取不到值
+    # def get_secret_key(self, obj):
+    #     return ''
+
+    # def validate_secret_key(self, secret_key):
+    #     ...
+
     def get_download_auth_type_choices(self, obj):
         return get_choices_dict(obj.download_auth_type_choices)
 
@@ -415,6 +423,14 @@ class StorageSerializer(serializers.ModelSerializer):
                 storage_obj = models.AppStorage.objects.create(**validated_data, user_id=user_obj)
                 return storage_obj
         return None
+
+    def update(self, instance, validated_data):
+        secret_key = validated_data.get('secret_key', '')
+        if secret_key != "" and secret_key != instance.secret_key:
+            ...
+        else:
+            validated_data['secret_key'] = instance.secret_key
+        return super().update(instance, validated_data)
 
 
 class AdminStorageSerializer(StorageSerializer):
