@@ -40,7 +40,7 @@ class AESCipher(object):
         enc = base64.b64decode(enc)
         iv = enc[:AES.block_size]
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
-        return self._unpack_data(cipher.decrypt(enc[AES.block_size:])).decode('utf-8')
+        return self._unpack_data(cipher.decrypt(enc[AES.block_size:]))
 
     @staticmethod
     def _pack_data(s):
@@ -49,7 +49,10 @@ class AESCipher(object):
 
     @staticmethod
     def _unpack_data(s):
-        return s[:-ord(s[len(s) - 1:])]
+        data = s[:-ord(s[len(s) - 1:])]
+        if isinstance(data, bytes):
+            data = data.decode('utf-8')
+        return data
 
 
 def make_from_user_uuid(userinfo):

@@ -74,6 +74,7 @@ def auto_check_ios_developer_active():
                 status, result = IosUtils.active_developer(ios_developer)
                 msg = f"auto_check_ios_developer_active  user:{userinfo}  ios.developer:{ios_developer}  status:{status}  result:{result}"
                 if status:
+                    IosUtils.get_device_from_developer(ios_developer)
                     logger.info(msg)
                     break
                 else:
