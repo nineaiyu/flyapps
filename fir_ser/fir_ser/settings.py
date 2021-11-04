@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 
+from celery.schedules import crontab
+
 from config import *
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -396,7 +398,8 @@ CELERY_BEAT_SCHEDULE = {
     },
     'auto_check_ios_developer_active_job': {
         'task': 'api.tasks.auto_check_ios_developer_active_job',
-        'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
+        # 'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
+        'schedule': crontab(hour=1, minute=1),
         'args': ()
     },
     # 'start_api_sever_do_clean': {
