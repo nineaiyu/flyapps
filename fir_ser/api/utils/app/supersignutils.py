@@ -20,7 +20,7 @@ from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
     get_format_time, make_app_uuid, make_from_user_uuid
 from api.utils.response import BaseResponse
-from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer, BillUdidInfoSerializer
+from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
     consume_user_download_times_by_app_obj
 from api.utils.storage.storage import Storage
@@ -456,10 +456,9 @@ class IosUtils(object):
                                                             app_info=BillAppInfoSerializer(self.app_obj).data,
                                                             developer_info=BillDeveloperInfoSerializer(
                                                                 self.developer_obj).data,
-                                                            udid_info=BillUdidInfoSerializer(udid_obj).data, action=0,
-                                                            number=1, udid_sync_info=udid_sync_info,
-                                                            remote_addr=client_ip,
-                                                            udid=self.udid
+                                                            action=0, number=1, udid_sync_info=udid_sync_info,
+                                                            remote_addr=client_ip, product=udid_sync_info.product,
+                                                            udid=self.udid, version=udid_sync_info.version
                                                             )
 
     @staticmethod

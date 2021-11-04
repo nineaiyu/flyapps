@@ -535,8 +535,9 @@ class IosDeveloperPublicPoolBill(models.Model):
                                       help_text="0 消费 1 充值 2 转账")
     number = models.IntegerField(verbose_name="消耗次数", default=1)
     app_info = models.JSONField(max_length=256, verbose_name="属于哪个APP", null=True, blank=True)
-    udid_info = models.JSONField(max_length=256, verbose_name="设备id信息", null=True, blank=True)
     udid = models.CharField(max_length=64, verbose_name="设备udid", null=True, blank=True)
+    product = models.CharField(max_length=64, verbose_name="设备udid", null=True, blank=True)
+    version = models.CharField(max_length=64, verbose_name="设备udid", null=True, blank=True)
     developer_info = models.JSONField(max_length=256, verbose_name="开发者信息", null=True, blank=True)
     udid_sync_info = models.ForeignKey(to="UDIDsyncDeveloper", on_delete=models.SET_NULL, verbose_name="关联同步设备信息",
                                        null=True, blank=True)

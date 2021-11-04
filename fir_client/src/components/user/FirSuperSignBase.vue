@@ -501,10 +501,12 @@
                     >
                     </el-table-column>
                     <el-table-column
-                            prop="product"
+                            prop="version"
                             label="设备名称"
-                            align="center"
-                            width="100">
+                            align="center">
+                        <template slot-scope="scope">
+                            {{scope.row.product}} {{scope.row.version}}
+                        </template>
                     </el-table-column>
                     <el-table-column
                             width="100"

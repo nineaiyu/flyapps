@@ -109,6 +109,9 @@ class ResignApp(object):
             result["err_info"] = e
             return False, result
 
+    def check_p12_exists(self):
+        return os.path.exists(self.app_dev_p12)
+
     def write_cert(self):
         for file in [self.app_dev_p12, self.app_dev_p12 + '.pwd', self.my_local_key, self.app_dev_pem]:
             if os.path.exists(file):

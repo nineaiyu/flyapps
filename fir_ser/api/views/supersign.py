@@ -274,8 +274,9 @@ class SuperSignCertView(APIView):
         issuer_id = request.query_params.get('issuer_id', None)
         if issuer_id:
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=issuer_id).first()
-            # resign_app_obj = IosUtils.get_resign_obj(request.user, developer_obj)
-            # resign_app_obj.make_p12_from_cert(developer_obj.certid)
+            resign_app_obj = IosUtils.get_resign_obj(request.user, developer_obj)
+            if not resign_app_obj.check_p12_exists():
+                resign_app_obj.make_p12_from_cert(developer_obj.certid)
             if developer_obj:
                 zip_file_path = IosUtils.zip_cert(request.user, developer_obj)
                 response = FileResponse(open(zip_file_path, 'rb'))
