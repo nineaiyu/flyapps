@@ -197,6 +197,25 @@ export const constantRoutes = [
     ]
   },
   {
+    path: '/report',
+    component: Layout,
+    children: [
+      {
+        path: 'list',
+        name: 'report_info_list',
+        component: () => import('@/views/report/list'),
+        meta: { title: '应用举报信息', icon: 'form' }
+      },
+      {
+        path: 'edit/:id(\\d+)',
+        component: () => import('@/views/report/Detail'),
+        name: 'report_info_edit',
+        meta: { title: '编辑信息', noCache: true, activeMenu: '/report/list' },
+        hidden: true
+      }
+    ]
+  },
+  {
     path: '/wxbind',
     component: Layout,
     children: [

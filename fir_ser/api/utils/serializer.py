@@ -777,3 +777,21 @@ class AppReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppReportInfo
         exclude = ["id"]
+
+
+class AdminAppReportSerializer(AppReportSerializer):
+    class Meta:
+        model = models.AppReportInfo
+        fields = '__all__'
+        read_only_fields = ["id", "app_id", "username", "created_time", "email", "report_reason", "report_type",
+                            "remote_addr", "bundle_id", "app_name"]
+
+    report_type_choices = serializers.SerializerMethodField()
+
+    def get_report_type_choices(self, obj):
+        return get_choices_dict(obj.report_type_choices)
+
+    status_choices = serializers.SerializerMethodField()
+
+    def get_status_choices(self, obj):
+        return get_choices_dict(obj.status_choices)

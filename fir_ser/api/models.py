@@ -584,6 +584,9 @@ class AppReportInfo(models.Model):
     report_reason = models.CharField(max_length=512, verbose_name="举报详情")
     email = models.CharField(max_length=64, verbose_name="联系方式")
     username = models.CharField(max_length=64, verbose_name="姓名")
+    status_choices = ((1, '处理中'), (2, '已经处理'))
+    status = models.SmallIntegerField(choices=status_choices, default=1, verbose_name="处理状态")
+    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="访问时间")
 
     class Meta:

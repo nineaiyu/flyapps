@@ -19,6 +19,7 @@ from admin.views.app import AppInfoView, AppReleaseInfoView
 from admin.views.domain import DomainNameInfoView
 from admin.views.login import LoginView, LoginUserView
 from admin.views.order import OrderInfoView
+from admin.views.report import AdminReportView
 from admin.views.storage import StorageInfoView, StorageChangeView
 from admin.views.supersign import DeveloperInfoView, DevicesInfoView
 from admin.views.user import UserInfoView, UserCertificationInfoView, ThirdWxAccountView
@@ -40,5 +41,6 @@ urlpatterns = [
     re_path("^devices/info", DevicesInfoView.as_view()),
     re_path("^domain/info", DomainNameInfoView.as_view()),
     re_path("^wxbind/info", ThirdWxAccountView.as_view()),
+    re_path("^report/info", AdminReportView.as_view()),
 
 ]
