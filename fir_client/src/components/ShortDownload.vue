@@ -12,7 +12,7 @@
                     <select v-model="report_info.report_type" style="width: 100%" class="report_select">
 
                         <option v-for="item in report_info_list" :key="item.id" :label="item.name"
-                                :value="item.id">
+                                :value="item.id">{{ item.name}}
                         </option>
 
                     </select>
