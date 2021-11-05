@@ -100,7 +100,7 @@
             </el-form-item>
 
 
-            <el-form-item label="手机号码" v-if="cptch.change_type.sms">
+            <el-form-item label="手机号码" v-if="captcha.change_type.sms">
                 <el-row :gutter="36">
                     <el-col :span="18">
                         <el-input v-model="form.mobile" ref="phone" clearable
@@ -108,7 +108,7 @@
                     </el-col>
                 </el-row>
             </el-form-item>
-            <el-form-item label="图片验证码" v-if="cptch.cptch_image">
+            <el-form-item label="图片验证码" v-if="captcha.captcha_image">
                 <el-row :gutter="11">
                     <el-col :span="12">
                         <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6" clearable/>
@@ -116,14 +116,14 @@
                     <el-col :span="6">
                         <el-image
                                 style="border-radius:4px;cursor:pointer;height: 40px"
-                                :src="cptch.cptch_image"
+                                :src="captcha.captcha_image"
                                 fit="contain" @click="get_auth_code">
                         </el-image>
                     </el-col>
                 </el-row>
             </el-form-item>
 
-            <el-form-item label="手机验证码" v-if="cptch.change_type.sms">
+            <el-form-item label="手机验证码" v-if="captcha.change_type.sms">
                 <el-row :gutter="11">
                     <el-col :span="12">
                         <el-input v-model="form.auth_key" prefix-icon="el-icon-mobile" placeholder="请输入您收到的验证码"
@@ -220,16 +220,16 @@
 
 <script>
     import {changeInfoFun, getAuthcTokenFun, user_certification} from "@/restful";
-    import {AvatarUploadUtils, checkphone, geetest, getUserInfoFun} from "@/utils";
+    import {AvatarUploadUtils, getUserInfoFun, checkphone, geetest} from "@/utils";
 
     export default {
         name: "FirUserProfileCertification",
         data() {
             return {
                 form: {},
-                cptch: {
-                    cptch_image: '',
-                    cptch_key: '',
+                captcha: {
+                    captcha_image: '',
+                    captcha_key: '',
                     authcode: '',
                     length: 8,
                     change_type: {email: false, sms: false}
@@ -262,7 +262,7 @@
                     this.$message.error("身份证输入不合法");
                     return false;
                 }
-                if (this.cptch.change_type.sms) {
+                if (this.captcha.change_type.sms) {
                     let checkp = checkphone(this.form.mobile);
                     if (!checkp) {
                         this.$message.error("手机号输入不合法");
@@ -305,18 +305,18 @@
             getsmsemailcode(act, target) {
                 let picode = {
                     "authcode": this.form.authcode,
-                    "cptch_key": this.cptch.cptch_key,
+                    "captcha_key": this.captcha.captcha_key,
                 };
-                if (this.cptch.cptch_image) {
+                if (this.captcha.captcha_image) {
                     if (!this.form.authcode) {
                         this.$message.error("图片验证码输入有误");
                         return;
                     }
-                    let cptch_flag = this.form.authcode.length === this.cptch.length;
-                    if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
-                        cptch_flag = true
+                    let captcha_flag = this.form.authcode.length === this.captcha.length;
+                    if (this.captcha.captcha_key === '' || !this.captcha.captcha_key) {
+                        captcha_flag = true
                     }
-                    if (!cptch_flag) {
+                    if (!captcha_flag) {
                         this.$message.error("图片验证码输入有误");
                         return
                     }
@@ -329,9 +329,8 @@
                 }
 
                 let params = {'act': act, 'target': target, 'ext': picode, 'user_id': target, 'ftype': 'certification'};
-                if (this.cptch.geetest) {
-                    this.form.email = this.form.mobile;
-                    geetest(this, params, (n_params) => {
+                if (this.captcha.geetest) {
+                    geetest(this, this.form.mobile, params, (n_params) => {
                         this.get_phone_code(n_params);
                     })
                 } else {
@@ -363,9 +362,9 @@
                 }
                 changeInfoFun(data => {
                     if (data.code === 1000) {
-                        this.cptch = data.data;
-                        if (this.cptch.cptch_key) {
-                            this.form.cptch_key = this.cptch.cptch_key;
+                        this.captcha = data.data;
+                        if (this.captcha.captcha_key) {
+                            this.form.captcha_key = this.captcha.captcha_key;
                         }
                     } else {
                         this.$message({

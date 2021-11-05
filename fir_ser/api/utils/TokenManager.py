@@ -38,11 +38,13 @@ def make_token(release_id, time_limit=60, key='', force_new=False):
         return token
 
 
-def verify_token(token, release_id):
+def verify_token(token, release_id, success_once=False):
     try:
         values = cache.get(token)
         if values and release_id == values.get("data", None):
             logger.debug(f"verify_token token:{token}  release_id:{release_id} success")
+            if success_once:
+                cache.delete(token)
             return True
     except Exception as e:
         logger.error(f"verify_token token:{token}  release_id:{release_id} failed Exception:{e}")

@@ -48,7 +48,7 @@ const mshort = {
     // 模板来源
     template: 'public/short.html',
     // 在 dist/short.html 的输出
-    filename: 'mshort.html',
+    filename: 'short.html',
     // 当使用 title 选项时，
     // template 中的 title 标签需要是 <title><%= htmlWebpackPlugin.options.title %></title>
     title: '应用下载',
@@ -70,7 +70,7 @@ const short = {
     // 提取出来的通用 chunk 和 vendor chunk。
     chunks: ['chunk-vendors', 'chunk-common', 'short', 'chunk-commons', 'runtime']
 };
-let pages = {index, short};
+let pages = {index, short, mshort};
 const page = argv[3];
 if (page) {
     for (const key of Object.keys(pages)) {

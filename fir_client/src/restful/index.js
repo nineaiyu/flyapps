@@ -707,3 +707,18 @@ export function DeviceBillInfo(callBack, params, load = true) {
         true
     );
 }
+
+/**应用举报 */
+export function appReport(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/report',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}

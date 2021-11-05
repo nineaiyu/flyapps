@@ -29,7 +29,7 @@ class LoginView(APIView):
         receive = request.data
         username = receive.get("username", None)
         if LOGIN.get("captcha"):
-            is_valid = valid_captcha(receive.get("cptch_key", None), receive.get("authcode", None), username)
+            is_valid = valid_captcha(receive.get("captcha_key", None), receive.get("authcode", None), username)
         else:
             is_valid = True
         if is_valid:

@@ -771,3 +771,9 @@ class BillInfoSerializer(serializers.ModelSerializer):
                 return f"{obj.user_id.first_name}-{self.get_action(obj)} +{obj.number} 设备数"
             else:
                 return f"向 {obj.to_user_id.first_name} {self.get_action(obj)} -{obj.number} 设备数"
+
+
+class AppReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.AppReportInfo
+        exclude = ["id"]

@@ -2,6 +2,70 @@
     <div class="container">
         <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
 
+        <div style="margin-top: -60px" v-if="report_flag" class="one-key-report-dialog dialog">
+            <a style="color: #3888fa" @click="report_flag=false">&lt;&nbsp;返回下载页</a>
+            <header style="text-align: center;height: 20px;margin-top: 10px">举报详情</header>
+
+            <div>
+                <div class="content-row">
+                    <span>举报原因</span>
+                    <select v-model="report_info.report_type" style="width: 100%" class="report_select">
+
+                        <option v-for="item in report_info_list" :key="item.id" :label="item.name"
+                                :value="item.id">
+                        </option>
+
+                    </select>
+                </div>
+                <div class="content-row">
+                    <span>详细原因</span>
+                    <textarea v-model="report_info.report_reason" placeholder="请详细说明举报原因"/>
+                </div>
+            </div>
+            <br/>
+            <div>
+                <div class="content-row">
+                    <header style="text-align: center;height: 40px">举报人信息填写</header>
+                    <div>
+                        <span>真实姓名</span>
+                        <label>
+                            <input v-model="report_info.username" placeholder="请输入您的姓名"/>
+                        </label>
+                    </div>
+                </div>
+                <div class="content-row">
+                    <span>联系信息</span>
+                    <div>
+                        <label>
+                            <input v-model="report_info.email" :placeholder="`请输入您的${report_info_title}`"/>
+                        </label>
+                    </div>
+                </div>
+                <div class="content-row">
+                    <div v-if="captcha.captcha_image" class="report_captcha">
+                        <input placeholder="请输入图片验证码" v-model="report_info.authcode" maxlength="6" type="text"/>
+                        <img :src="captcha.captcha_image" fit="contain" @click="get_auth_code"/>
+                    </div>
+
+                    <div class="report_phone">
+                        <input v-model="report_info.seicode"
+                               placeholder="验证码"/>
+                        <button class="btn" @click="getphonecode">
+                            获取验证码
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-row">
+                <div id="captcha" ref="captcha"></div>
+            </div>
+            <div class="content-row" style="text-align: center">
+                <button class="btn-report" @click="report_submit">立即举报</button>
+            </div>
+        </div>
+
+
         <div ref="signhelp" class="signhelp screenshots-section">
             <div class="signhelp-title">
                 iOS安装教程
@@ -40,7 +104,7 @@
             <!--        <span class="pattern right"><img src="@/assets/download_pattern_right.png"></span>-->
         </div>
 
-        <div class="out-container " v-if="wxeasytypeflag">
+        <div class="out-container " v-if="wxeasytypeflag && !report_flag">
 
             <div v-show='mcurrentappinfo.release_id' class="main">
                 <header>
@@ -234,7 +298,8 @@
 
                 <div class="footer" style="margin-top: 30%;margin-bottom: 8px">
                     免责声明：<br>
-                    本网站仅提供下载托管，应用为用户自行上传，请甄别应用风险后进行下载！
+                    本网站仅提供下载托管，应用为用户自行上传，请甄别应用风险后进行下载！<a class="one-key-report"
+                                                         @click="get_auth_code(),report_flag=true">举报</a>
                 </div>
                 <div v-if="agent!==''">
                     <div v-if="ad_info.ad_uri" style="margin-bottom: 80px"/>
@@ -253,7 +318,7 @@
         </div>
 
         <div v-else>
-            <i>
+            <i v-if="!report_flag">
                 {{this.currentappinfo.name | formatName}}
             </i>
         </div>
@@ -273,12 +338,29 @@
 <script>
     import QRCode from 'qrcodejs2'
 
-    import {getdownloadurl, getShortAppinfo, gettask} from '@/restful/download'
+    import {getdownloadurl, getShortAppinfo, gettask, getAuthTokenFun, appReport} from '@/restful/download'
+    import {checkEmail, checkphone, geetest} from "@/restful/download";
 
     export default {
         name: "ShortDownload",
         data() {
             return {
+                captcha: {"captcha_image": '', "captcha_key": '', "length": 8},
+                report_info: {
+                    'username': '',
+                    'report_type': '',
+                    'report_reason': '',
+                    'seicode': '',
+                    'authcode': '',
+                    'email': '',
+                    'auth_token': '',
+                    'act': 'email',
+                },
+                report_info_title: '邮箱',
+                report_info_list: [
+                    {'id': 0, name: '其他'},
+                ],
+                report_flag: false,
                 signhelplist: [
                     {msg: '第一步 允许打开配置描述文件', url: require('@/assets/sign/step1.jpg')},
                     {msg: '第二步 点击右上角安装按钮', url: require('@/assets/sign/step2.jpg')},
@@ -327,6 +409,98 @@
             clearTimeout(this.timer);
         },
         methods: {
+            report_submit() {
+                let data = this.report_info;
+                data['app_id'] = this.currentappinfo.app_id;
+                if (this.report_info.auth_token && this.report_info.email && this.report_info.seicode) {
+                    appReport(res => {
+                        if (res.code === 1000) {
+                            alert("信息提交成功，感谢您的支持,即将返回下载页");
+                            // eslint-disable-next-line no-unused-vars
+                            this.timer = setTimeout(data => {
+                                this.report_flag = false;
+                            }, 3000);
+                        } else {
+                            alert("信息提交失败，请稍后再试 " + res.msg)
+                        }
+                    }, {
+                        'methods': 'POST',
+                        'data': this.report_info
+                    })
+                } else {
+                    alert('请输入完整的信息');
+                }
+            },
+            getphonecode() {
+                if (!this.report_info.username || !this.report_info.report_reason || this.report_info.report_type === '') {
+                    alert('请输入完整的信息');
+                    return 0
+                }
+                if (this.report_info.act === 'email') {
+                    if (!checkEmail(this.report_info.email)) {
+                        alert('请输入正确的邮箱地址');
+                        return 0
+                    }
+                }
+                if (this.report_info.act === 'sms') {
+                    if (!checkphone(this.report_info.email)) {
+                        alert('请输入正确的手机号');
+                        return 0
+                    }
+                }
+
+                let picode = {
+                    "authcode": this.report_info.authcode,
+                    "captcha_key": this.captcha.captcha_key,
+                    "report": this.currentappinfo.app_id
+                };
+                let params = {'act': this.report_info.act, 'target': this.report_info.email, 'ext': picode};
+                if (this.captcha.geetest) {
+                    geetest(this, this.report_info.email, params, (n_params) => {
+                        this.do_get_auth_token(n_params);
+                    })
+                } else {
+                    this.do_get_auth_token(params);
+                }
+            },
+            do_get_auth_token(params) {
+                getAuthTokenFun(data => {
+                    if (data.code === 1000) {
+                        alert('验证码已经发送您');
+                        this.report_info.auth_token = data.data.auth_token;
+                    } else {
+                        alert(data.msg);
+                    }
+                }, {"methods": 'POST', 'data': params})
+            },
+            get_auth_code() {
+                appReport(data => {
+                    if (data.code === 1000) {
+                        let jdata = data.data;
+                        if (jdata.enable) {
+                            this.captcha = data.data;
+                            if (data.data.s_list) {
+                                this.report_info_list = data.data.s_list;
+                            }
+                            if (jdata.report_type && jdata.report_type.sms) {
+                                this.report_info_title = '手机号';
+                                this.report_info.act = 'sms'
+                            } else if (jdata.report_type && jdata.report_type.email) {
+                                this.report_info_title = '邮箱';
+                                this.report_info.act = 'email'
+                            }
+                            this.report_info.seicode = '';
+                            this.report_info.auth_token = '';
+                            return
+                        }
+                    }
+                    alert('暂未开通举报功能');
+                    this.report_flag = false;
+                }, {
+                    "methods": "GET",
+                    "data": {}
+                });
+            },
             show_err_msg(msg) {
                 this.msg = msg;
                 alert(this.msg)
@@ -702,6 +876,178 @@
 </script>
 
 <style scoped>
+    .dialog {
+        position: fixed;
+        width: 390px;
+        background-color: #fff;
+        left: 50%;
+        top: 50%;
+        z-index: 99999;
+        padding: 20px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, .5);
+        transform: translate(-50%, -50%)
+    }
+
+    .one-key-report-dialog .content-row {
+        display: table;
+        padding: 5px;
+        position: relative;
+        width: 100%
+    }
+
+    .one-key-report-dialog .report_select {
+        position: relative;
+        width: 100%;
+        height: 50px;
+        border: 1px solid #D6D6D6;
+        font-size: 14px;
+        line-height: 50px;
+        text-indent: 15px;
+        cursor: pointer
+    }
+
+    .one-key-report-dialog .report_select:hover {
+        background: #F5F5F5
+    }
+
+
+    .one-key-report-dialog .report_select .dropdown-menu > option {
+        line-height: 40px;
+        cursor: pointer
+    }
+
+    .one-key-report-dialog .report_select .dropdown-menu > option:hover {
+        color: #fff;
+        background: #42B191
+    }
+
+
+    .one-key-report-dialog .content-row {
+        display: table;
+        padding: 5px;
+        position: relative;
+        width: 100%
+    }
+
+
+    .one-key-report-dialog .content-row input, .one-key-report-dialog .content-row label {
+        display: block
+    }
+
+    .one-key-report-dialog .content-row label {
+        color: #666;
+        font-size: 18px;
+        line-height: 34px;
+        margin-right: 30px
+    }
+
+    .one-key-report-dialog .content-row input {
+        height: 50px;
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 5px 10px;
+        outline: 0;
+        background: #F5F5F5;
+        font-size: 14px;
+        border: 1px solid #D6D6D6
+    }
+
+    .one-key-report-dialog .content-row input::-moz-placeholder {
+        font-size: 14px;
+        color: #8B8E93
+    }
+
+    .one-key-report-dialog .content-row input:-ms-input-placeholder {
+        font-size: 14px;
+        color: #8B8E93
+    }
+
+    .one-key-report-dialog .content-row input::placeholder {
+        font-size: 14px;
+        color: #8B8E93
+    }
+
+    .one-key-report-dialog .content-row .report_captcha {
+        display: -ms-flexbox;
+        display: flex
+    }
+
+    .one-key-report-dialog .content-row .report_captcha input {
+        display: inline-block;
+        width: 190px;
+        margin-right: 20px
+    }
+
+    .one-key-report-dialog .content-row .report_captcha img {
+        width: 125px;
+        height: 50px;
+        background: #F5F5F5;
+        cursor: pointer
+    }
+
+    .one-key-report-dialog .content-row .report_phone input {
+        display: inline-block;
+        width: 190px;
+        margin-right: 20px
+    }
+
+    .one-key-report-dialog .content-row .report_phone .btn {
+        width: 125px;
+        color: #fff;
+        height: 50px;
+        background-color: #3888fa;
+        padding: 5px 10px;
+        margin-top: -5px;
+        font-size: 14px
+    }
+
+    .one-key-report-dialog .content-row textarea {
+        width: 100%;
+        height: 80px;
+        resize: none;
+        padding: 10px;
+        outline: 0;
+        color: #A9B1B3;
+        font-size: 14px;
+        background: #F5F5F5;
+        border: 1px solid #D6D6D6;
+    }
+
+    .one-key-report-dialog .content-row textarea::-moz-placeholder {
+        font-size: 14px;
+        color: #8B8E93
+    }
+
+    .one-key-report-dialog .content-row textarea:-ms-input-placeholder {
+        font-size: 14px;
+        color: #8B8E93
+    }
+
+    .one-key-report-dialog .content-row textarea::placeholder {
+        font-size: 14px;
+        color: #8B8E93
+    }
+
+    .one-key-report-dialog .content-row .btn-report {
+        color: #fff;
+        background-color: #3888fa;
+        padding: 5px 10px;
+        margin-top: 5px;
+        width: 190px;
+        height: 50px;
+        display: inline-block;
+        line-height: 40px;
+        font-size: 18px
+    }
+
+
+    .one-key-report {
+        color: #fff;
+        background-color: #32B2A7;
+        padding: 1px 5px;
+        border-radius: 15px;
+    }
+
     .el-tag {
         background-color: #ecf5ff;
         border-color: #d9ecff;
@@ -1233,6 +1579,22 @@
 
         .main > header .scan-tips {
             display: none
+        }
+
+        .dialog {
+            height: 100%;
+            margin: 0;
+            left: 0;
+            top: 60px;
+            bottom: 0;
+            border-radius: 0;
+            padding-top: 30px;
+            overflow-y: auto;
+            transform: translate(0, 0)
+        }
+
+        .dialog.animate {
+            transition: left .5s
         }
     }
 

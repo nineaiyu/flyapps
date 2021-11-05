@@ -573,6 +573,27 @@ class RemoteClientInfo(models.Model):
         return "%s-%s" % (self.remote_addr, self.description)
 
 
+class AppReportInfo(models.Model):
+    app_id = models.ForeignKey(to="Apps", on_delete=models.SET_NULL, verbose_name="应用信息",
+                               null=True, blank=True)
+    app_name = models.CharField(max_length=32, blank=True, null=True, verbose_name="应用名称")
+    bundle_id = models.CharField(max_length=64, blank=True, verbose_name="bundle id")
+    remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址")
+    report_type_choices = ((0, '侵权'), (1, '色情'), (2, '赌博'), (3, '欺诈'), (4, '暴力'), (5, '其他'),)
+    report_type = models.SmallIntegerField(choices=report_type_choices, default=5, verbose_name="举报类型")
+    report_reason = models.CharField(max_length=512, verbose_name="举报详情")
+    email = models.CharField(max_length=64, verbose_name="联系方式")
+    username = models.CharField(max_length=64, verbose_name="姓名")
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="访问时间")
+
+    class Meta:
+        verbose_name = '应用举报信息'
+        verbose_name_plural = "应用举报信息"
+
+    def __str__(self):
+        return "%s-%s" % (self.app_name, self.report_reason)
+
+
 class DeviceQueue(models.Model):
     app_id = models.ForeignKey(to='Apps', on_delete=models.CASCADE, verbose_name="应用id")
     udid = models.CharField(max_length=64, verbose_name="udid唯一标识", db_index=True)

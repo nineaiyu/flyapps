@@ -26,7 +26,7 @@
                               clearable/>
                 </el-form-item>
 
-                <el-form-item style="height: 40px" v-if="cptch.cptch_image">
+                <el-form-item style="height: 40px" v-if="captcha.captcha_image">
                     <el-row style="height: 40px">
                         <el-col :span="16">
                             <el-input placeholder="请输入图片验证码" v-model="form.authcode" maxlength="6" clearable/>
@@ -34,7 +34,7 @@
                         <el-col :span="8">
                             <el-image
                                     style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px"
-                                    :src="cptch.cptch_image"
+                                    :src="captcha.captcha_image"
                                     fit="contain" @click="get_auth_code">
                             </el-image>
                         </el-col>
@@ -106,7 +106,7 @@
                     auth_token: '',
 
                 },
-                cptch: {"cptch_image": '', "cptch_key": '', "length": 8},
+                captcha: {"captcha_image": '', "captcha_key": '', "length": 8},
                 allow_r: false,
                 allow_ways: {},
                 rutitle: '',
@@ -134,7 +134,7 @@
                             this.allow_ways = jdata.register_type;
                             this.form.authcode = '';
                             this.set_rtitle();
-                            this.cptch = data.data;
+                            this.captcha = data.data;
                         } else {
                             this.allow_r = false;
                             this.$message({
@@ -182,19 +182,19 @@
                     act = 'email'
                 }
                 let authcode = this.form.authcode;
-                let cptch_flag = authcode.length === this.cptch.length;
-                if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
-                    cptch_flag = true
+                let captcha_flag = authcode.length === this.captcha.length;
+                if (this.captcha.captcha_key === '' || !this.captcha.captcha_key) {
+                    captcha_flag = true
                 }
-                if (cptch_flag) {
+                if (captcha_flag) {
                     let picode = {
                         "authcode": authcode,
-                        "cptch_key": this.cptch.cptch_key,
+                        "captcha_key": this.captcha.captcha_key,
                         "icode": this.form.icode,
                     };
                     let params = {'act': act, 'target': this.form.email, 'ext': picode};
-                    if (this.cptch.geetest) {
-                        geetest(this, params, (n_params) => {
+                    if (this.captcha.geetest) {
+                        geetest(this, this.form.email, params, (n_params) => {
                             this.do_get_auth_token(n_params);
                         })
                     } else {
@@ -278,11 +278,11 @@
                     return
                 }
                 let authcode = this.form.authcode;
-                let cptch_flag = authcode.length === this.cptch.length;
-                if (this.cptch.cptch_key === '' || !this.cptch.cptch_key) {
-                    cptch_flag = true
+                let captcha_flag = authcode.length === this.captcha.length;
+                if (this.captcha.captcha_key === '' || !this.captcha.captcha_key) {
+                    captcha_flag = true
                 }
-                if (cptch_flag) {
+                if (captcha_flag) {
                     if (password === password2 && password.length >= 6) {
                         let params = {
                             "username": email,
@@ -292,8 +292,8 @@
                             "auth_key": this.form.seicode
                         };
                         this.register_disable = true;
-                        if (this.cptch.geetest) {
-                            geetest(this, params, (n_params) => {
+                        if (this.captcha.geetest) {
+                            geetest(this, this.form.email, params, (n_params) => {
                                 this.do_register(n_params);
                             })
                         } else {

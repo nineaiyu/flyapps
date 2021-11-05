@@ -346,7 +346,7 @@ export function ImgToBase64(url, callback) {
     };
 }
 
-export function geetest(self, params, callback) {
+export function geetest(self, uid, params, callback) {
     const loading = self.$loading({
         lock: true,
         text: 'Loading',
@@ -385,7 +385,7 @@ export function geetest(self, params, callback) {
         }
     }, {
         "methods": "PUT",
-        "data": {user_id: self.form.email}
+        "data": {user_id: uid} //self.form.email
     });
 }
 

@@ -2,6 +2,74 @@
     <el-container class="container">
         <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
 
+        <el-main style="margin-top: -60px" v-if="report_flag">
+            <a style="color: #3888fa" @click="report_flag=false">&lt;&nbsp;返回下载页</a>
+            <el-header style="text-align: center;height: 20px;margin-top: 10px">举报详情</el-header>
+
+            <el-form>
+                <el-form-item>
+                    <span>举报原因</span>
+                    <el-select v-model="report_info.report_type" style="width: 100%">
+                        <el-option v-for="item in report_info_list" :key="item.id" :label="item.name"
+                                   :value="item.id">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item style="margin-top: -10px">
+                    <span>详细原因</span>
+                    <el-input type="textarea"
+                              :rows="3"
+                              v-model="report_info.report_reason"
+                              placeholder="请详细说明举报原因"></el-input>
+                </el-form-item>
+            </el-form>
+            <el-divider/>
+            <el-form style="margin-top: -20px">
+                <el-header style="text-align: center;height: 20px">举报人信息填写</el-header>
+                <el-form-item>
+                    <span>真实姓名</span>
+                    <el-input v-model="report_info.username" placeholder="请输入您的姓名" clearable></el-input>
+                </el-form-item>
+                <el-form-item style="margin-top: -10px">
+                    <span>联系信息</span>
+                    <el-row>
+                        <el-input v-model="report_info.email" :placeholder="`请输入您的${report_info_title}`"
+                                  clearable></el-input>
+                    </el-row>
+
+                    <el-row v-if="captcha.captcha_image" style="margin-top: 10px;margin-bottom: -10px">
+                        <el-col :span="16">
+                            <el-input placeholder="请输入图片验证码" v-model="report_info.authcode" maxlength="6" clearable/>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-image
+                                    style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px"
+                                    :src="captcha.captcha_image"
+                                    fit="contain" @click="get_auth_code">
+                            </el-image>
+                        </el-col>
+                    </el-row>
+
+                    <el-row style="margin-top: 10px">
+                        <el-col :span="12">
+                            <el-input v-model="report_info.seicode" prefix-icon="el-icon-mobile"
+                                      placeholder="验证码" clearable/>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-button type="info" @click="getphonecode" plain
+                                       style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px;width: 100%">
+                                获取验证码
+                            </el-button>
+                        </el-col>
+                    </el-row>
+                </el-form-item>
+                <el-form-item>
+                    <div id="captcha" ref="captcha"></div>
+                </el-form-item>
+                <el-button style="width: 100%;height: 60px;" type="primary" plain @click="report_submit">立即举报
+                </el-button>
+            </el-form>
+        </el-main>
 
         <div class="wechat_tip_content" v-if="(agent === 'wxandroid' || agent === 'wxapple') && !wrong">
             <div class="mask">
@@ -19,7 +87,7 @@
             <!--            <span class="pattern right"><img src="@/assets/down_right.png"></span>-->
         </div>
 
-        <el-container class="out-container " v-if="wxeasytypeflag">
+        <el-container class="out-container " v-if="wxeasytypeflag && !report_flag">
 
             <div class="main">
                 <header>
@@ -220,7 +288,9 @@
 
                 <div class="footer" style="margin-top: 30%;margin-bottom: 8px">
                     免责声明：<br>
-                    本网站仅提供下载托管，应用为用户自行上传，请甄别应用风险后进行下载！
+                    本网站仅提供下载托管，应用为用户自行上传，请甄别应用风险后进行下载！<a class="one-key-report"
+                                                         @click="get_auth_code(),report_flag=true">举报</a>
+
                 </div>
                 <div v-if="agent!==''">
                     <div v-if="ad_info.ad_uri" style="margin-bottom: 80px"/>
@@ -239,7 +309,7 @@
         </el-container>
 
         <div v-else>
-            <i>
+            <i v-if="!report_flag">
                 {{this.currentappinfo.name | formatName}}
             </i>
         </div>
@@ -274,12 +344,37 @@
 <script>
     import QRCode from 'qrcodejs2'
 
-    import {getdownloadurl, getShortAppinfo, gettask} from '@/restful'
+    import {
+        getdownloadurl,
+        getShortAppinfo,
+        gettask,
+        getAuthTokenFun,
+        appReport,
+        checkEmail,
+        checkphone,
+        geetest
+    } from '@/restful/download'
 
     export default {
         name: "FirDownload",
         data() {
             return {
+                captcha: {"captcha_image": '', "captcha_key": '', "length": 8},
+                report_info: {
+                    'username': '',
+                    'report_type': '',
+                    'report_reason': '',
+                    'seicode': '',
+                    'authcode': '',
+                    'email': '',
+                    'auth_token': '',
+                    'act': 'email',
+                },
+                report_info_title: '邮箱',
+                report_info_list: [
+                    {'id': 0, name: '其他'},
+                ],
+                report_flag: false,
                 signhelplist: [
                     {msg: '第一步 允许打开配置描述文件', url: require('@/assets/sign/step1.jpg')},
                     {msg: '第二步 点击右上角安装按钮', url: require('@/assets/sign/step2.jpg')},
@@ -326,6 +421,117 @@
             clearTimeout(this.timer);
         },
         methods: {
+            report_submit() {
+                let data = this.report_info;
+                data['app_id'] = this.currentappinfo.app_id;
+                if (this.report_info.auth_token && this.report_info.email && this.report_info.seicode) {
+                    appReport(res => {
+                        if (res.code === 1000) {
+                            this.$message.success("信息提交成功，感谢您的支持,即将返回下载页");
+                            // eslint-disable-next-line no-unused-vars
+                            this.timer = setTimeout(data => {
+                                this.report_flag = false;
+                            }, 3000);
+                        } else {
+                            this.$message.error("信息提交失败，请稍后再试 " + res.msg)
+                        }
+                    }, {
+                        'methods': 'POST',
+                        'data': this.report_info
+                    })
+                } else {
+                    this.$message({
+                        message: '请输入完整的信息',
+                        type: 'warning'
+                    });
+                }
+            },
+            getphonecode() {
+                if (!this.report_info.username || !this.report_info.report_reason || this.report_info.report_type === '') {
+                    this.$message({
+                        message: '请输入完整的信息',
+                        type: 'warning'
+                    });
+                    return 0
+                }
+                if (this.report_info.act === 'email') {
+                    if (!checkEmail(this.report_info.email)) {
+                        this.$message({
+                            message: '请输入正确的邮箱地址',
+                            type: 'warning'
+                        });
+                        return 0
+                    }
+                }
+                if (this.report_info.act === 'sms') {
+                    if (!checkphone(this.report_info.email)) {
+                        this.$message({
+                            message: '请输入正确的手机号',
+                            type: 'warning'
+                        });
+                        return 0
+                    }
+                }
+
+                let picode = {
+                    "authcode": this.report_info.authcode,
+                    "captcha_key": this.captcha.captcha_key,
+                    "report": this.currentappinfo.app_id
+                };
+                let params = {'act': this.report_info.act, 'target': this.report_info.email, 'ext': picode};
+                if (this.captcha.geetest) {
+                    geetest(this, this.report_info.email, params, (n_params) => {
+                        this.do_get_auth_token(n_params);
+                    })
+                } else {
+                    this.do_get_auth_token(params);
+                }
+            },
+            do_get_auth_token(params) {
+                getAuthTokenFun(data => {
+                    if (data.code === 1000) {
+                        this.$notify({
+                            title: '验证码',
+                            message: '验证码已经发送您',
+                            type: 'success'
+                        });
+                        this.report_info.auth_token = data.data.auth_token;
+                    } else {
+                        this.$message({
+                            message: data.msg,
+                            type: 'error'
+                        });
+                    }
+                }, {"methods": 'POST', 'data': params})
+            },
+            get_auth_code() {
+                appReport(data => {
+                    if (data.code === 1000) {
+                        let jdata = data.data;
+                        if (jdata.enable) {
+                            this.captcha = data.data;
+                            if (data.data.s_list) {
+                                this.report_info_list = data.data.s_list;
+                            }
+                            if (jdata.report_type && jdata.report_type.sms) {
+                                this.report_info_title = '手机号';
+                                this.report_info.act = 'sms'
+                            } else if (jdata.report_type && jdata.report_type.email) {
+                                this.report_info_title = '邮箱';
+                                this.report_info.act = 'email'
+                            }
+                            this.report_info.seicode = '';
+                            this.report_info.auth_token = '';
+                            return
+                        }
+                    }
+                    this.$message.warning('暂未开通举报功能');
+                    this.report_flag = false;
+                }, {
+                    "methods": "GET",
+                    "data": {}
+                });
+            },
             show_err_msg(msg) {
                 this.msg = msg;
                 this.$message({
@@ -443,7 +649,6 @@
                                     this.downloadurl = res.data.download_url;
                                 }
                             }
-
                             window.location.href = this.downloadurl;
                         } else if (res.code === 1009) {
                             this.isdownload = false;
@@ -714,6 +919,13 @@
 </script>
 
 <style scoped>
+    .one-key-report {
+        color: #fff;
+        background-color: #32B2A7;
+        padding: 1px 5px;
+        border-radius: 15px;
+    }
+
     .app_bottom_fixed {
         position: fixed;
         bottom: 0;

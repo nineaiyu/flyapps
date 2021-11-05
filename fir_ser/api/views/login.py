@@ -5,7 +5,7 @@ from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import Token, UserInfo, UserCertificationInfo, CertificationInfo
+from api.models import Token, UserInfo, UserCertificationInfo, CertificationInfo, Apps
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.baseutils import is_valid_phone, is_valid_email, get_real_ip_address
 from api.utils.geetest.geetest_utils import first_register, second_validate
@@ -18,7 +18,7 @@ from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle, G
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
     check_username_exists, set_user_token
-from fir_ser.settings import REGISTER, LOGIN, CHANGER
+from fir_ser.settings import REGISTER, LOGIN, CHANGER, REPORT
 
 logger = logging.getLogger(__name__)
 
@@ -203,6 +203,49 @@ def check_change_userinfo(target, act, key, user, ftype=None):
     return res
 
 
+def check_common_info(target, act):
+    res = BaseResponse()
+    res.data = {}
+
+    times_key = "%s_%s_%s" % ('report', act, target)
+    if act == "sms":
+        if is_valid_phone(target):
+            if login_auth_failed("get", times_key):
+                login_auth_failed("set", times_key)
+                token, code = get_sender_sms_token(act, target, 'common')
+                if token:
+                    res.data["auth_token"] = token
+                else:
+                    res.code = 1009
+                    res.msg = "短信服务异常，请联系管理员"
+            else:
+                res.code = 1009
+                res.msg = "该手机号今日使用次数已经达到上限"
+        else:
+            res.code = 1005
+            res.msg = "手机号校验失败"
+    elif act == "email":
+        if is_valid_email(target):
+            if login_auth_failed("get", times_key):
+                login_auth_failed("set", times_key)
+                token, code = get_sender_email_token(act, target, 'common')
+                if token:
+                    res.data["auth_token"] = token
+                else:
+                    res.code = 1009
+                    res.msg = "邮件服务异常，请联系管理员"
+            else:
+                res.code = 1009
+                res.msg = "该邮箱今日使用次数已经达到上限"
+        else:
+            res.code = 1006
+            res.msg = "邮箱校验失败"
+    else:
+        res.code = 1007
+        res.msg = "信息发送失败"
+    return res
+
+
 class LoginView(APIView):
     throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
 
@@ -211,7 +254,7 @@ class LoginView(APIView):
         receive = request.data
         username = receive.get("username", None)
         if LOGIN.get("captcha"):
-            is_valid = valid_captcha(receive.get("cptch_key", None), receive.get("authcode", None), username)
+            is_valid = valid_captcha(receive.get("captcha_key", None), receive.get("authcode", None), username)
         else:
             is_valid = True
         if is_valid:
@@ -466,7 +509,7 @@ class UserInfoView(APIView):
         email = data.get("email", None)
         if mobile or email:
             if CHANGER.get('captcha'):
-                is_valid = valid_captcha(data.get("cptch_key", None), data.get("authcode", None), request)
+                is_valid = valid_captcha(data.get("captcha_key", None), data.get("authcode", None), request)
                 if not is_valid:
                     res.code = 1008
                     res.msg = "图片验证码异常"
@@ -578,8 +621,11 @@ class AuthorizationView(APIView):
                 res.msg = "邀请码已失效"
                 return Response(res.dict)
 
+        if ext and ext.get('report'):
+            REGISTER = REPORT
+
         if REGISTER.get("captcha"):
-            is_valid = valid_captcha(ext.get("cptch_key", None), ext.get("authcode", None), target)
+            is_valid = valid_captcha(ext.get("captcha_key", None), ext.get("authcode", None), target)
             if ext and is_valid:
                 pass
             else:
@@ -595,6 +641,14 @@ class AuthorizationView(APIView):
                 res.code = 1018
                 res.msg = "geetest验证有误"
                 return Response(res.dict)
+        if ext and ext.get('report'):
+            app_obj = Apps.objects.filter(app_id=ext.get('report')).first()
+            if app_obj:
+                res = check_common_info(target, act)
+            else:
+                res.code = 1003
+                res.msg = '未授权，请重新提交'
+            return Response(res.dict)
 
         res = check_register_userinfo(target, act, 'register')
 
@@ -613,7 +667,7 @@ class ChangeAuthorizationView(APIView):
         ext = request.data.get("ext", None)
         f_type = request.data.get("ftype", None)
         if REGISTER.get("captcha"):
-            if ext and valid_captcha(ext.get("cptch_key", None), ext.get("authcode", None), target):
+            if ext and valid_captcha(ext.get("captcha_key", None), ext.get("authcode", None), target):
                 pass
             else:
                 res.code = 1009
@@ -701,8 +755,9 @@ class CertificationView(APIView):
 
         try:
             if CHANGER.get("captcha"):
-                if data and valid_captcha(data.get("cptch_key", None), data.get("authcode", None), data.get("mobile")):
-                    del data["cptch_key"]
+                if data and valid_captcha(data.get("captcha_key", None), data.get("authcode", None),
+                                          data.get("mobile")):
+                    del data["captcha_key"]
                     del data["authcode"]
                 else:
                     res.code = 1009

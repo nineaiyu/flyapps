@@ -109,13 +109,13 @@
                     <el-col :span="16">
                         <el-input v-model="userinfo.mobile" ref="phone" :readonly="editphone !== true"
                                   prefix-icon="el-icon-mobile" placeholder="手机" maxlength="11" clearable
-                                  :disabled="!cptch.change_type.sms"/>
+                                  :disabled="!captcha.change_type.sms"/>
                     </el-col>
                     <el-col :span="1">
                         <el-button icon="el-icon-edit" @click="changePhoneValue">
                         </el-button>
                     </el-col>
-                    <el-col :span="5" v-if="editphone === true && cptch.change_type.sms">
+                    <el-col :span="5" v-if="editphone === true && captcha.change_type.sms">
                         <el-button type="success" @click="savePhone" plain
                                    class="save-button">
                             保存
@@ -125,7 +125,7 @@
             </el-form-item>
 
             <el-form-item label="图片验证码" style="height: 40px"
-                          v-if="editphone === true && cptch.cptch_image && cptch.change_type.sms">
+                          v-if="editphone === true && captcha.captcha_image && captcha.change_type.sms">
                 <el-row style="height: 40px" :gutter="36">
                     <el-col :span="14">
                         <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6" clearable/>
@@ -133,14 +133,14 @@
                     <el-col :span="8">
                         <el-image
                                 style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px"
-                                :src="cptch.cptch_image"
+                                :src="captcha.captcha_image"
                                 fit="contain" @click="get_auth_code">
                         </el-image>
                     </el-col>
                 </el-row>
             </el-form-item>
 
-            <el-form-item label="手机验证码" v-if="editphone === true && cptch.change_type.sms">
+            <el-form-item label="手机验证码" v-if="editphone === true && captcha.change_type.sms">
                 <el-row :gutter="36">
                     <el-col :span="16">
                         <el-input v-model="userinfo.auth_key" prefix-icon="el-icon-mobile" placeholder="验证码"
@@ -162,13 +162,13 @@
                     <el-col :span="16">
                         <el-input v-model="userinfo.email" ref="email" :readonly="editemail !== true"
                                   prefix-icon="el-icon-bank-card" placeholder="邮箱" maxlength="20" clearable
-                                  :disabled="!cptch.change_type.email"/>
+                                  :disabled="!captcha.change_type.email"/>
                     </el-col>
                     <el-col :span="1">
                         <el-button icon="el-icon-edit" @click="changeemailValue">
                         </el-button>
                     </el-col>
-                    <el-col :span="5" v-if="editemail === true && cptch.change_type.email">
+                    <el-col :span="5" v-if="editemail === true && captcha.change_type.email">
                         <el-button type="success" @click="saveemail" plain
                                    class="save-button">
                             保存
@@ -179,7 +179,7 @@
 
 
             <el-form-item label="图片验证码" style="height: 40px"
-                          v-if="editemail === true && cptch.cptch_image && cptch.change_type.email">
+                          v-if="editemail === true && captcha.captcha_image && captcha.change_type.email">
                 <el-row style="height: 40px" :gutter="36">
                     <el-col :span="14">
                         <el-input placeholder="请输入图片验证码" v-model="userinfo.authcode" maxlength="6" clearable/>
@@ -187,14 +187,14 @@
                     <el-col :span="8">
                         <el-image
                                 style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px"
-                                :src="cptch.cptch_image"
+                                :src="captcha.captcha_image"
                                 fit="contain" @click="get_auth_code">
                         </el-image>
                     </el-col>
                 </el-row>
             </el-form-item>
 
-            <el-form-item label="邮箱验证码" v-if="editemail === true && cptch.change_type.email">
+            <el-form-item label="邮箱验证码" v-if="editemail === true && captcha.change_type.email">
                 <el-row :gutter="36">
                     <el-col :span="16">
                         <el-input v-model="userinfo.auth_key" prefix-icon="el-icon-mobile" placeholder="验证码"
@@ -295,7 +295,7 @@
                 editdomain_name: false,
                 edituser_name: false,
                 editposition: false,
-                cptch: {"cptch_image": '', "cptch_key": '', "length": 8, change_type: {email: false, sms: false}},
+                captcha: {"captcha_image": '', "captcha_key": '', "length": 8, change_type: {email: false, sms: false}},
                 form: {},
                 wx_login_qr_url: '',
                 wx_visible: false,
@@ -408,8 +408,8 @@
             get_auth_code() {
                 changeInfoFun(data => {
                     if (data.code === 1000) {
-                        this.cptch = data.data;
-                        this.userinfo.cptch_key = this.cptch.cptch_key;
+                        this.captcha = data.data;
+                        this.userinfo.captcha_key = this.captcha.captcha_key;
                         if (this.userinfo.authcode) {
                             this.userinfo.authcode = '';
                         }
@@ -445,7 +445,7 @@
                 return {
                     auth_token: this.userinfo.auth_token,
                     auth_key: this.userinfo.auth_key,
-                    cptch_key: this.userinfo.cptch_key,
+                    captcha_key: this.userinfo.captcha_key,
                     authcode: this.userinfo.authcode,
                 };
             },
@@ -554,14 +554,13 @@
             getsmsemailcode(act, target) {
                 let picode = {
                     "authcode": this.userinfo.authcode,
-                    "cptch_key": this.cptch.cptch_key,
+                    "captcha_key": this.captcha.captcha_key,
                 };
                 let params = {
                     'act': act, 'target': target, 'ext': picode
                 };
-                if (this.cptch.geetest) {
-                    this.form.email = target;
-                    geetest(this, params, (n_params) => {
+                if (this.captcha.geetest) {
+                    geetest(this, this.form.email, target, params, (n_params) => {
                         this.do_get_auth_token(n_params);
                     })
                 } else {

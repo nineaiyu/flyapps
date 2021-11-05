@@ -107,7 +107,7 @@ def get_sender_token(sender, user_id, target, action, msg=None):
         code = msg
     token = make_token(code, time_limit=300, key=user_id)
     TmpCache.set_tmp_cache(user_id, token, target)
-    if action in ('change', 'password', 'register', 'login'):
+    if action in ('change', 'password', 'register', 'login', 'common'):
         sender.send_msg_by_act(target, code, action)
     elif action == 'msg':
         sender.send_email_msg(target, msg)
@@ -124,8 +124,8 @@ def get_sender_sms_token(key, phone, action, msg=None):
     return False, False
 
 
-def is_valid_sender_code(key, token, code):
-    return verify_token(token, code), TmpCache.get_tmp_cache(key, token)
+def is_valid_sender_code(key, token, code, success_once=False):
+    return verify_token(token, code, success_once), TmpCache.get_tmp_cache(key, token)
 
 
 def get_sender_email_token(key, email, action, msg=None):

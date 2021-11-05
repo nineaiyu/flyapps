@@ -126,6 +126,15 @@ class AUTHCONF(object):
             },
         }
     }
+    REPORT = {
+        "enable": True,
+        "captcha": True,  # 是否开启注册字母验证码
+        "geetest": False,  # 是否开启geetest验证，如要开启请先配置geetest
+        "report_type": {
+            'sms': False,  # 短信举报
+            'email': True,  # 邮件举报
+        }
+    }
 
 
 class STORAGEKEYCONF(object):
@@ -186,13 +195,14 @@ class SENDERCONF(object):
                 'use_ssl': True,
                 'username': 'flyapps@126.com',
                 'password': 'GGHFEUMZBRZIFZGQ',
-                'form': 'FlyApp Validation <flyapps@126.com>',
+                'form': 'fly分发平台 <flyapps@126.com>',
                 'subject': '%(code)s验证',
                 'template_code': {
                     'login': '欢迎使用FLY 应用分发平台。 您的验证码%(code)s ，您正在登录，若非本人操作，请勿泄露。',
                     'change': '欢迎使用FLY 应用分发平台。 您的验证码%(code)s ，您正在尝试变更重要信息，请妥善保管账户信息。',
                     'register': '欢迎使用FLY 应用分发平台。 您的验证码%(code)s ，您正在注册成为新用户，感谢您的支持！',
-                    'password': '欢迎使用FLY 应用分发平台。 您的新密码为%(code)s ， 请用新密码登录之后，及时修改密码，并妥善保管账户信息。'
+                    'password': '欢迎使用FLY 应用分发平台。 您的新密码为%(code)s ， 请用新密码登录之后，及时修改密码，并妥善保管账户信息。',
+                    'common': '欢迎使用FLY 应用分发平台。 您的验证码%(code)s ， 若非本人操作，请忽略。'
                 }
             },
             'active': True
@@ -209,7 +219,8 @@ class SENDERCONF(object):
                     'login': 'SMS_216700569',
                     'change': 'SMS_216700566',
                     'register': 'SMS_216700567',
-                    'password': 'SMS_222341718'
+                    'password': 'SMS_222341718',
+                    'common': 'SMS_227259072'
                 }
             },
             'active': True
@@ -225,7 +236,8 @@ class SENDERCONF(object):
                     'login': '1',
                     'change': '1',
                     'register': '1',
-                    'password': '1'
+                    'password': '1',
+                    'common': '1',
                 }
             },
             'active': False
