@@ -5,7 +5,7 @@
 # date: 2020/3/4
 import logging
 
-from django.db.models import Q
+from django.db.models import Count
 from django.http.response import FileResponse
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -16,6 +16,7 @@ from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
 from api.utils.response import BaseResponse
 from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, BillInfoSerializer
+from api.utils.storage.caches import CleanSignDataState
 from api.utils.utils import get_developer_devices, get_choices_dict
 
 logger = logging.getLogger(__name__)
@@ -113,7 +114,13 @@ class DeveloperView(APIView):
                         return Response(res.dict)
 
                 elif act == "cleandevice":
+                    if CleanSignDataState.get_state(request.user.uid):
+                        res.code = 1008
+                        res.msg = "数据清理中,请耐心等待"
+                        return Response(res.dict)
+                    CleanSignDataState.set_state(request.user.uid, timeout=60 * 10)
                     status, result = IosUtils.clean_developer(developer_obj, request.user, False)
+                    CleanSignDataState.del_state(request.user.uid)
                     if not status:
                         res.code = 1008
                         res.msg = result.get("err_info")
@@ -317,14 +324,29 @@ class DeviceUsedBillView(APIView):
     def get(self, request):
         res = BaseResponse()
         udid = request.query_params.get("udid", None)
+        act = request.query_params.get("act", None)
+        user_used_list = IosDeveloperPublicPoolBill.objects.filter(user_id=request.user)
         page_obj = PageNumber()
-        user_used_list = IosDeveloperPublicPoolBill.objects.filter(Q(to_user_id=request.user) | Q(user_id=request.user))
         if udid:
             user_used_list = user_used_list.filter(udid=udid)
-        app_page_serializer = page_obj.paginate_queryset(queryset=user_used_list.order_by("-created_time"),
+        else:
+            user_used_list = user_used_list.filter(udid__isnull=False)
+        if act and act == 'info':
+            app_page_serializer = page_obj.paginate_queryset(queryset=user_used_list.order_by("-created_time"),
+                                                             request=request,
+                                                             view=self)
+            app_serializer = BillInfoSerializer(app_page_serializer, many=True, context={'user_obj': request.user})
+            res.data = app_serializer.data
+            res.count = user_used_list.count()
+
+        else:
+            user_used_list3 = user_used_list.values('udid', 'product', 'version', 'udid_sync_info_id').annotate(
+                counts=Count('udid')).order_by("-created_time")
+            res.count = user_used_list3.count()
+            user_used_list3 = page_obj.paginate_queryset(queryset=user_used_list3.order_by("-created_time"),
                                                          request=request,
                                                          view=self)
-        app_serializer = BillInfoSerializer(app_page_serializer, many=True, context={'user_obj': request.user})
-        res.data = app_serializer.data
-        res.count = user_used_list.count()
+            for user_used in user_used_list3:
+                user_used['counts'] = user_used_list.filter(udid=user_used.get('udid')).count()
+            res.data = user_used_list3
         return Response(res.dict)

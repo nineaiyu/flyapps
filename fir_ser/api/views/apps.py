@@ -12,11 +12,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.base_views import app_delete
-from api.models import Apps, AppReleaseInfo, APPToDeveloper, AppIOSDeveloperInfo, UserInfo, AppScreenShot
+from api.models import Apps, AppReleaseInfo, APPToDeveloper, UserInfo, AppScreenShot
 from api.tasks import run_resign_task
-from api.utils.app.supersignutils import IosUtils, get_ios_developer_public_num
+from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication
-from api.utils.modelutils import get_user_domain_name, get_app_domain_name
+from api.utils.modelutils import get_user_domain_name, get_app_domain_name, check_super_sign_permission
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
@@ -223,12 +223,12 @@ class AppInfoView(APIView):
                         #     res.code = 1008
                         #     res.msg = "超级签余额不足，无法开启"
                         #     return Response(res.dict)
-                        developer_count = AppIOSDeveloperInfo.objects.filter(user_id=request.user).count()
-                        if developer_count == 0 and get_ios_developer_public_num(request.user) < 0:
+                        if not check_super_sign_permission(request.user):
                             logger.error(f"app_id:{app_id} can't open super_sign,owner has no ios developer")
                             res.code = 1008
                             res.msg = "超级签余额不足，无法开启"
                             return Response(res.dict)
+                        do_sign_flag = 3
                         app_obj.issupersign = data.get("issupersign", app_obj.issupersign)
                         update_fields.append("issupersign")
                     logger.info(f"app_id:{app_id} update new data:{app_obj.__dict__}")
@@ -239,6 +239,8 @@ class AppInfoView(APIView):
                             c_task = run_resign_task.apply_async((app_obj.app_id, True))
                         if do_sign_flag == 2:
                             c_task = run_resign_task.apply_async((app_obj.app_id, False))
+                        if do_sign_flag == 3:
+                            c_task = run_resign_task.apply_async((app_obj.app_id, False, False))
                         if c_task:
                             msg = c_task.get(propagate=False)
                             logger.info(f"app {app_obj} run_resign_task msg:{msg}")

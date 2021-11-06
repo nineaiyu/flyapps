@@ -49,10 +49,10 @@ def run_sign_task(format_udid_info, short, client_ip):
 
 
 @shared_task
-def run_resign_task(app_id, need_download_profile=True):
+def run_resign_task(app_id, need_download_profile=True, force=True):
     app_obj = Apps.objects.filter(app_id=app_id).first()
     with cache.lock("%s_%s" % ('task_resign', app_id), timeout=60 * 60):
-        return resign_by_app_id(app_obj, need_download_profile)
+        return resign_by_app_id(app_obj, need_download_profile, force)
 
 
 @app.task

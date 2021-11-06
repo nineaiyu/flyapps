@@ -140,7 +140,7 @@ function get_file_type(upload_key) {
 function get_filename(app_info, upload_key) {
     if (app_info) {
         let app_type = app_info.type;
-        if (app_type === 'iOS' || app_info === 'Android') {
+        if (app_type === 'iOS' || app_type === 'Android') {
             return app_info.appname + '-' + app_info.version + '-' + app_info.short + '.' + get_file_type(upload_key)
         }
     }
@@ -194,6 +194,10 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
         if (filename) {
             options['headers'] = {
                 'Content-Disposition': 'attachment; filename="' + encodeURIComponent(filename) + '"',
+                'Cache-Control': ''
+            }
+        } else {
+            options['headers'] = {
                 'Cache-Control': ''
             }
         }

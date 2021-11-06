@@ -236,7 +236,6 @@ class AppStorage(models.Model):
 
 class AppUDID(models.Model):
     app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
-    # udid = models.CharField(max_length=64, verbose_name="udid唯一标识", db_index=True)
     udid = models.ForeignKey(to="UDIDsyncDeveloper", verbose_name="udid唯一标识", on_delete=models.CASCADE)
     product = models.CharField(max_length=64, verbose_name="产品", blank=True, null=True, )
     serial = models.CharField(max_length=64, verbose_name="序列号", blank=True, null=True, )
@@ -247,7 +246,6 @@ class AppUDID(models.Model):
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     is_signed = models.BooleanField(verbose_name="是否完成签名打包", default=False)
     is_download = models.BooleanField(verbose_name="描述文件是否已经下载", default=False)
-    binary_file = models.CharField(max_length=128, blank=True, verbose_name="签名包名称", null=True)
 
     class Meta:
         verbose_name = '设备详情'
@@ -541,9 +539,7 @@ class IosDeveloperPublicPoolBill(models.Model):
     developer_info = models.JSONField(max_length=256, verbose_name="开发者信息", null=True, blank=True)
     udid_sync_info = models.ForeignKey(to="UDIDsyncDeveloper", on_delete=models.SET_NULL, verbose_name="关联同步设备信息",
                                        null=True, blank=True)
-    # app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP",null=True,blank=True)
-    # udid = models.ForeignKey(to="AppUDID", on_delete=models.CASCADE, verbose_name="所消耗的udid",null=True,blank=True)
-    # developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户",null=True,blank=True)
+    app_id = models.ForeignKey(to="Apps", on_delete=models.SET_NULL, verbose_name="属于哪个APP", null=True, blank=True)
     description = models.CharField(verbose_name="操作描述", max_length=128, default='', blank=True)
     remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址")
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")

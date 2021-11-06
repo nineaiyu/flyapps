@@ -16,7 +16,7 @@ from api.utils.TokenManager import verify_token
 from api.utils.app.apputils import get_random_short, save_app_infos
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.baseutils import make_app_uuid, make_from_user_uuid
-from api.utils.modelutils import get_app_domain_name, get_redirect_server_domain
+from api.utils.modelutils import get_app_domain_name, get_redirect_server_domain, check_super_sign_permission
 from api.utils.response import BaseResponse
 from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
 from api.utils.storage.storage import Storage
@@ -48,8 +48,10 @@ class AppAnalyseView(APIView):
             png_id = make_from_user_uuid(request.user)
             app_obj = Apps.objects.filter(app_id=app_uuid).first()
             binary_url = ''
+            enable_sign = False
             if app_obj:
                 is_new = False
+                enable_sign = app_obj.issupersign
                 short = app_obj.short
                 app_release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
                 short_domain_name = get_redirect_server_domain(request, request.user, get_app_domain_name(app_obj))
@@ -77,7 +79,11 @@ class AppAnalyseView(APIView):
                         "png_token": png_token,
                         "png_key": png_key,
                         "storage": storage_type,
-                        "is_new": is_new, "binary_url": binary_url}
+                        "is_new": is_new,
+                        "binary_url": binary_url,
+                        "sign": check_super_sign_permission(request.user),
+                        "enable_sign": enable_sign
+                        }
             if storage_type not in [1, 2]:
                 res.data['domain_name'] = settings.SERVER_DOMAIN.get("FILE_UPLOAD_DOMAIN", None)
         else:
@@ -113,15 +119,16 @@ class AppAnalyseView(APIView):
             png_new_filename = data.get("png_key").strip(settings.FILE_UPLOAD_TMP_KEY)
             logger.info(f"user {request.user} create or update app  {data.get('bundleid')}  data:{data}")
             if save_app_infos(app_new_filename, request.user, app_info,
-                              data.get("bundleid"), png_new_filename, data.get("short"), data.get('filesize')):
+                              data.get("bundleid"), png_new_filename, data.get("short"), data.get('filesize'),
+                              data.get('enable_sign')):
                 # 需要将tmp 文件修改为正式文件
                 storage.rename_file(app_tmp_filename, app_new_filename)
                 storage.rename_file(png_tmp_filename, png_new_filename)
 
-                app_obj = Apps.objects.filter(bundle_id=data.get("bundleid")).first()
+                app_obj = Apps.objects.filter(bundle_id=data.get("bundleid"), user_id=request.user).first()
                 if app_obj:
                     if app_obj.issupersign and app_obj.user_id.supersign_active:
-                        c_task = run_resign_task.apply_async((app_obj.app_id, False))
+                        c_task = run_resign_task.apply_async((app_obj.app_id, False, False))
                         msg = c_task.get(propagate=False)
                         logger.info(f"app {app_obj} run_resign_task msg:{msg}")
                         if c_task.successful():

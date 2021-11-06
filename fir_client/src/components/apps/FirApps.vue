@@ -175,6 +175,9 @@
                                             }} UDID
                                         </el-link>
                                     </el-col>
+                                    <el-col :span="6" v-if="analyseappinfo.sign && analyseappinfo.type === 'iOS'">
+                                        <el-checkbox v-model="enable_sign">开启超级签</el-checkbox>
+                                    </el-col>
                                 </el-row>
                                 <el-row :gutter="20" style="margin-top: 18px;">
                                     <el-col :span="18">
@@ -597,6 +600,7 @@
                 pay_choices: [],
                 analyseappinfo: {icon: ''},
                 short: '',
+                enable_sign: '',
                 keysearch: '',
                 searchfromtype: '',
                 applists: [],
@@ -672,6 +676,7 @@
                                 analyseApps(data => {
                                     if (data.code === 1000) {
                                         this.short = data.data.short;
+                                        this.enable_sign = data.data.enable_sign;
                                         for (let name of Object.keys(data.data)) {
                                             analyseappinfo[name] = data.data[name]
                                         }
@@ -773,6 +778,7 @@
                     this.$message.success(file.raw.name + '上传成功');
                     if (!multiFlag) {
                         analyseappinfo.short = this.short;
+                        analyseappinfo.enable_sign = this.enable_sign;
                     }
                     const loading = this.$loading({
                         lock: true,
@@ -817,6 +823,7 @@
                     const pnumber = 20;
                     this.uploadprocess[process_key].process = process;
                     this.uploadprocess[process_key].short = analyseappinfo.short;
+                    this.uploadprocess[process_key].enable_sign = analyseappinfo.enable_sign;
                     this.uploadprocess[process_key].appname = analyseappinfo.appname;
                     if (process > 0) {
                         let percent = this.uploadprocess[process_key].percent;

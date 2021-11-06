@@ -114,7 +114,7 @@ def get_random_short(number=4):
         return short_url
 
 
-def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short, size):
+def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short, size, issupersign):
     app_uuid = make_app_uuid(user_obj, bundle_id + app_file_name.split(".")[1])
     ##判断是否存在该app
     app_obj = Apps.objects.filter(app_id=app_uuid, user_id=user_obj).first()
@@ -129,6 +129,7 @@ def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short,
             "name": app_info["labelname"],
             "new_bundle_name": app_info["labelname"],
             "short": short,
+            "issupersign": issupersign,
             "bundle_id": bundle_id,
             "count_hits": 0,
             "wxeasytype": False if get_user_domain_name(user_obj) else True
@@ -145,14 +146,16 @@ def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short,
             is_new_app = False
             app_obj.short = short
             app_obj.name = app_info["labelname"]
+            app_obj.issupersign = issupersign
             # appmobj.wxeasytype = False if user_obj.domain_name or appmobj.domain_name else True
             app_obj.bundle_id = bundle_id
-            app_obj.save(update_fields=["short", "name", "bundle_id"])
+            app_obj.save(update_fields=["short", "name", "bundle_id", "issupersign"])
         except Exception as e:
             logger.error(f"save app info failed,app_obj:{app_obj}  Exception:{e}")
             app_obj.bundle_id = bundle_id
+            app_obj.issupersign = issupersign
             app_obj.name = app_info["labelname"]
-            app_obj.save(update_fields=["name", "bundle_id"])
+            app_obj.save(update_fields=["name", "bundle_id", "issupersign"])
         del_cache_response_by_short(app_obj.app_id)
 
     AppReleaseInfo.objects.filter(app_id=app_obj).update(is_master=False)

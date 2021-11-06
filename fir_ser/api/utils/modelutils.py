@@ -9,9 +9,10 @@ import logging
 import random
 from urllib.parse import urljoin
 
-from django.db.models import Count
+from django.db.models import Count, Sum
 
-from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo
+from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
+    AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper
 from api.utils.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name
 
@@ -116,10 +117,51 @@ def check_app_domain_name_access(app_obj, access_domain_name, user_obj, extra_do
         if extra_domain:
             domain_list.append(extra_domain)
         app_domain_name = get_app_domain_name(app_obj)
-        if app_domain_name: domain_list.append(app_domain_name)
+        if app_domain_name:
+            domain_list.append(app_domain_name)
         user_domain_name = get_user_domain_name(user_obj)
-        if user_domain_name: domain_list.append(user_domain_name)
+        if user_domain_name:
+            domain_list.append(user_domain_name)
         user_qr_domain_name = get_user_domain_name(user_obj, 0)
-        if user_qr_domain_name: domain_list.append(user_qr_domain_name)
+        if user_qr_domain_name:
+            domain_list.append(user_qr_domain_name)
         if access_domain_name in domain_list:
             return True
+
+
+def get_ios_developer_public_num(user_obj):
+    add_number = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj, action__in=[1, 2]).aggregate(
+        number=Sum('number'))
+    used_number = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj, action=0,
+                                                            udid_sync_info__isnull=False).aggregate(
+        number=Sum('number'))
+    add_number = add_number.get("number", 0)
+    if not add_number:
+        add_number = -99
+    used_number = used_number.get("number", 0)
+    if not used_number:
+        used_number = 0
+    return add_number - used_number
+
+
+def check_super_sign_permission(user_obj):
+    developer_count = AppIOSDeveloperInfo.objects.filter(user_id=user_obj).count()
+    if not user_obj.supersign_active:
+        return False
+    if developer_count == 0 and get_ios_developer_public_num(user_obj) < 0:
+        return False
+    return True
+
+
+def check_ipa_is_latest_sign(app_obj, developer_obj=None):
+    release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
+    all_app_to_dev = APPToDeveloper.objects.filter(app_id=app_obj)
+    if developer_obj:
+        all_app_to_dev = all_app_to_dev.filter(developerid=developer_obj)
+    all_app_to_dev = all_app_to_dev.all()
+    t_count = 0
+    for apptodev_obj in all_app_to_dev:
+        if release_obj.release_id == apptodev_obj.release_file:
+            t_count += 1
+    if t_count == all_app_to_dev.count():
+        return True

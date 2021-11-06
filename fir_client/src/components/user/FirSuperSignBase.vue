@@ -94,6 +94,81 @@
             </el-form>
         </el-dialog>
 
+        <el-dialog title="设备消耗详细信息" :destroy-on-close="true" :visible.sync="dialogShowDeviceBillInfo"
+                   :close-on-click-modal="false" center width="750px">
+
+            <el-table
+                    :data="app_bill_info_lists"
+                    v-loading="loading"
+                    border
+                    stripe
+                    style="width: 100%">
+                <el-table-column
+                        prop="app_name"
+                        align="center"
+                        label="应用名称"
+                >
+                </el-table-column>
+
+                <el-table-column
+                        prop="remote_addr"
+                        align="center"
+                        label="客户端IP">
+                </el-table-column>
+                <el-table-column
+                        prop="action"
+                        label="账单类型"
+                        align="center"
+                        width="100">
+                </el-table-column>
+
+                <el-table-column
+                        :formatter="deviceformatter"
+                        align="center"
+                        prop="created_time"
+                        label="日期"
+                        width="160">
+                </el-table-column>
+                <el-table-column
+                        label="应用状态"
+                        align="center"
+                        width="110">
+                    <template slot-scope="scope">
+                        <el-tag v-if="scope.row.app_status===false" type="info">应用删除</el-tag>
+                        <el-tag v-else>
+                            应用存在
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        label="设备状态"
+                        align="center"
+                        width="110">
+                    <template slot-scope="scope">
+                        <el-tag v-if="scope.row.is_used===false" type="info">已经释放</el-tag>
+                        <el-tag v-else>
+                            使用中
+                        </el-tag>
+                    </template>
+                </el-table-column>
+
+            </el-table>
+            <div style="margin-top: 20px">
+                <el-pagination
+                        @size-change="billhandleSizeChange"
+                        @current-change="billhandleCurrentChange"
+                        :current-page.sync="billpagination.currentPage"
+                        :page-sizes="[10, 20, 50, 100]"
+                        :page-size="billpagination.pagesize"
+                        layout="total,sizes, prev, pager, next"
+                        :total="billpagination.total">
+                </el-pagination>
+            </div>
+            <span slot="footer">
+            <el-button @click="closeDeviceBillInfo">关闭</el-button>
+            </span>
+        </el-dialog>
+
         <el-tabs v-model="activeName" type="border-card" @tab-click="handleClick" tab-position="top">
             <el-tab-pane label="开发者账户" name="iosdeveloper">
                 <el-input
@@ -298,7 +373,7 @@
                     <h1>注意事项：</h1>
                     <p>1.添加后，请勿撤销 API 密钥，否则会导致用户安装的软件闪退或无法安装！</p>
                     <p>2.每个开发者账号最多可创建两本证书，请确保至少还可以创建一本证书！</p>
-                    <p>3.添加后，系统会自动创建证书、设备和描述文件，请勿删除这些文件，否则会导致用户安装的软件闪退或无法安装！</p>
+                    <p>3.添加后，激活开发者账户，然后您就可以上传p12证书或者通过系统自动创建证书、设备和描述文件，请勿删除这些文件，否则会导致用户安装的软件闪退或无法安装！</p>
 
                 </el-card>
             </el-tab-pane>
@@ -499,47 +574,34 @@
                             align="center"
                             label="设备ID"
                     >
-                    </el-table-column>
-                    <el-table-column
-                            prop="version"
-                            label="设备名称"
-                            align="center">
                         <template slot-scope="scope">
-                            {{scope.row.product}} {{scope.row.version}}
+                            <el-tooltip effect="dark" content="点击查看设备安装详细信息" placement="top">
+                                <el-link :underline="false" @click="showDeviceBill(scope.row.udid)">
+                                    {{ scope.row.udid }}
+                                </el-link>
+                            </el-tooltip>
                         </template>
                     </el-table-column>
                     <el-table-column
-                            width="100"
-                            prop="app_name"
+                            prop="product"
+                            label="设备名称"
+                            width="200"
+                            align="center">
+
+                    </el-table-column>
+                    <el-table-column
+                            prop="version"
                             align="center"
-                            label="消费者"
+                            label="设备版本"
                     >
                     </el-table-column>
 
                     <el-table-column
-                            prop="remote_addr"
+                            prop="counts"
                             align="center"
-                            label="客户端IP"
-                            width="100">
-                    </el-table-column>
-                    <el-table-column
-                            prop="action"
-                            label="账单类型"
-                            align="center"
-                            width="100">
-                    </el-table-column>
-                    <el-table-column
-                            prop="description"
-                            label="备注"
-                            align="center"
-                            width="200">
-                    </el-table-column>
-                    <el-table-column
-                            :formatter="deviceformatter"
-                            align="center"
-                            prop="created_time"
-                            label="生成日期"
-                            width="160">
+                            label="设备安装次数"
+                            width="110">
+
                     </el-table-column>
 
                     <el-table-column
@@ -547,7 +609,7 @@
                             align="center"
                             width="110">
                         <template slot-scope="scope">
-                            <el-tag v-if="scope.row.is_used===false" type="info">已经释放</el-tag>
+                            <el-tag v-if="!scope.row.udid_sync_info_id" type="info">已经释放</el-tag>
                             <el-tag v-else>
                                 使用中
                             </el-tag>
@@ -582,10 +644,13 @@
         name: "FirSuperSignBase",
         data() {
             return {
+                dialogShowDeviceBillInfo: false,
+                currentudid: '',
                 fileList: [],
                 app_developer_lists: [],
                 app_devices_lists: [],
                 app_bill_lists: [],
+                app_bill_info_lists: [],
                 app_udid_lists: [],
                 activeName: "iosdeveloper",
                 udidsearch: "",
@@ -598,6 +663,7 @@
                 isedit: false,
                 placeholder: "",
                 pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
+                billpagination: {"currentPage": 1, "total": 0, "pagesize": 10},
                 developer_used_info: {"all_usable_number": 0, "other_used_sum": 0, "all_use_number": 0},
                 percentage: 0,
                 apple_auth_list: [],
@@ -614,6 +680,38 @@
             }
         },
         methods: {
+            closeDeviceBillInfo() {
+                this.dialogShowDeviceBillInfo = false;
+                this.currentudid = '';
+                this.app_bill_info_lists = [];
+            },
+            showDeviceBill(udid) {
+                this.currentudid = udid;
+                this.iosdevicebillFun({"methods": "GET", "data": {'udid': udid, 'act': 'info'}});
+                this.dialogShowDeviceBillInfo = true;
+            },
+            billhandleSizeChange(val) {
+                this.billpagination.pagesize = val;
+                this.iosdevicebillFun({
+                    "methods": "GET", "data": {
+                        "size": this.billpagination.pagesize,
+                        "page": 1,
+                        "act": "info",
+                        'udid': this.currentudid
+                    }
+                })
+            },
+            billhandleCurrentChange(val) {
+                this.billpagination.currentPage = val;
+                this.iosdevicebillFun({
+                    "methods": "GET", "data": {
+                        "size": this.billpagination.pagesize,
+                        "page": this.billpagination.currentPage,
+                        "act": "info",
+                        'udid': this.currentudid
+                    }
+                })
+            },
             beforeAvatarUpload(file) {
                 const isLt2M = file.size / 1024 / 1024 < 2;
                 if (file.type === 'application/x-pkcs12') {
@@ -889,18 +987,22 @@
                     }
                 }, params)
             },
-            iosdevicebillFun(data) {
+            iosdevicebillFun(params) {
                 this.loading = true;
                 DeviceBillInfo(data => {
                     if (data.code === 1000) {
-                        this.app_bill_lists = data.data;
-                        this.pagination.total = data.count;
-
+                        if (params.data.act && params.data.act === 'info') {
+                            this.app_bill_info_lists = data.data;
+                            this.billpagination.total = data.count;
+                        } else {
+                            this.app_bill_lists = data.data;
+                            this.pagination.total = data.count;
+                        }
                     } else {
                         this.$message.error("操作失败了 " + data.msg);
                     }
                     this.loading = false
-                }, data)
+                }, params)
             },
             iosdevicesudidFun(action, data, scope) {
                 if (action !== 'GET') {

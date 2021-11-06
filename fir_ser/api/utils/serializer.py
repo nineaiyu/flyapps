@@ -553,7 +553,7 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppUDID
         # depth = 1
-        exclude = ["binary_file", "updated_time", "is_signed"]
+        exclude = ["updated_time", "is_signed"]
 
     bundle_id = serializers.SerializerMethodField()
     bundle_name = serializers.SerializerMethodField()
@@ -742,12 +742,18 @@ class BillDeveloperInfoSerializer(serializers.ModelSerializer):
 class BillInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.IosDeveloperPublicPoolBill
-        exclude = ["user_id", "to_user_id", "developer_info", "app_info", "udid_sync_info"]
+        exclude = ["user_id", "to_user_id", "developer_info", "app_info", "udid_sync_info", "app_id"]
 
     app_name = serializers.SerializerMethodField()
     action = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     is_used = serializers.SerializerMethodField()
+    app_status = serializers.SerializerMethodField()
+
+    def get_app_status(self, obj):
+        if obj.app_id:
+            return True
+        return False
 
     def get_is_used(self, obj):
         if obj.udid_sync_info or obj.to_user_id:
