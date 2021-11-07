@@ -5,20 +5,20 @@ import router from "@/router/download";
 import 'element-ui/lib/theme-chalk/index.css'
 import {
     Button,
+    Col,
     Container,
     Divider,
+    Form,
+    FormItem,
+    Header,
     Input,
     Link,
     Main,
     Message,
-    Select,
+    Notification,
     Option,
-    Header,
-    Form,
-    FormItem,
     Row,
-    Col,
-    Notification
+    Select
 } from "element-ui";
 import VueLazyload from 'vue-lazyload'
 
