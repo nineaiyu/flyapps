@@ -12,7 +12,8 @@ flower_url = f'{settings.CELERY_FLOWER_HOST}:{settings.CELERY_FLOWER_PORT}'
 
 
 class CeleryFlowerView(APIView):
-    authentication_classes = [AdminTokenAuthentication, ]
+    if not settings.DEBUG:
+        authentication_classes = [AdminTokenAuthentication, ]
 
     def get(self, request, path):
         remote_url = 'http://{}/flower/{}'.format(flower_url, path)

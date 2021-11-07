@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import Count
 
 from api.utils.TokenManager import generate_alphanumeric_token_of_length, generate_numeric_token_of_length
 from api.utils.baseutils import make_random_uuid
@@ -58,6 +59,12 @@ class UserInfo(AbstractUser):
             self.uid = make_random_uuid()
         if len(self.api_token) < 8:
             self.api_token = self.uid + generate_alphanumeric_token_of_length(64)
+        if not self.default_domain_name_id:
+            default_domain_obj = min(
+                DomainCnameInfo.objects.annotate(Count('userinfo')).filter(is_enable=True, is_system=True),
+                key=lambda x: x.userinfo__count)
+            if default_domain_obj:
+                self.default_domain_name_id = default_domain_obj.pk
         super(UserInfo, self).save(*args, **kwargs)
 
 

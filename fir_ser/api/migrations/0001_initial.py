@@ -34,7 +34,7 @@ price_info_list = [
         "is_enable": True,
     },
 ]
-WEB_DOMAIN = settings.WEB_DOMAIN.split('//'[1])
+WEB_DOMAIN = settings.WEB_DOMAIN.split('//')[1]
 domain_cname_info_list = [
     {
         "domain_record": WEB_DOMAIN,
