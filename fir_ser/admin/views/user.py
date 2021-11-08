@@ -15,6 +15,8 @@ from api.utils.auth import AdminTokenAuthentication
 from api.utils.baseutils import get_dict_from_filter_fields
 from api.utils.response import BaseResponse
 from api.utils.serializer import AdminUserInfoSerializer, AdminUserCertificationSerializer, AdminThirdWxSerializer
+from api.utils.storage.caches import auth_user_download_times_gift
+from fir_ser.settings import AUTH_USER_GIVE_DOWNLOAD_TIMES
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +67,12 @@ class UserInfoView(APIView):
                 users_serializer.save()
                 certification = data.get("certification", None)
                 if certification and certification != -1:
-                    UserCertificationInfo.objects.filter(user_id=user_obj).update(status=data["certification"])
+                    user_cert_obj = UserCertificationInfo.objects.filter(user_id=user_obj).first()
+                    if user_cert_obj:
+                        status = user_cert_obj.status
+                        UserCertificationInfo.objects.filter(user_id=user_obj).update(status=data["certification"])
+                        if status != 1 and UserCertificationInfo.objects.filter(user_id=user_obj).first().status == 1:
+                            auth_user_download_times_gift(user_obj, AUTH_USER_GIVE_DOWNLOAD_TIMES)
                 res.data = users_serializer.data
                 return Response(res.dict)
         res.code = 1004
@@ -101,9 +108,12 @@ class UserCertificationInfoView(APIView):
         obj = UserCertificationInfo.objects.filter(id=pk).first()
         if obj:
             data['pk'] = pk
+            status = obj.status
             users_serializer = AdminUserCertificationSerializer(obj, data=data, partial=True)
             if users_serializer.is_valid():
                 users_serializer.save()
+                if status != 1 and users_serializer.data.get('status') == 1:
+                    auth_user_download_times_gift(obj.user_id, AUTH_USER_GIVE_DOWNLOAD_TIMES)
                 res.data = users_serializer.data
                 return Response(res.dict)
         res.code = 1004

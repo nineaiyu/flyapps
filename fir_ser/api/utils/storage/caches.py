@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, APPSuperSignUsedInfo, \
     UserCertificationInfo, Order
-from api.utils.baseutils import check_app_password
+from api.utils.baseutils import check_app_password, get_order_num
 from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name
 from api.utils.storage.storage import Storage, LocalStorage
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
@@ -430,7 +430,7 @@ def update_order_status(out_trade_no, status):
             order_obj.save(update_fields=['status'])
 
 
-def update_order_info(user_id, out_trade_no, payment_number, payment_type):
+def update_order_info(user_id, out_trade_no, payment_number, payment_type, description=None):
     with cache.lock("%s_%s" % ('user_order_', out_trade_no), timeout=10, blocking_timeout=6):
         try:
             user_obj = UserInfo.objects.filter(pk=user_id).first()
@@ -446,7 +446,10 @@ def update_order_info(user_id, out_trade_no, payment_number, payment_type):
                         if not timezone.is_naive(now):
                             now = timezone.make_naive(now, timezone.utc)
                         order_obj.pay_time = now
-                        order_obj.description = "充值成功，充值下载次数 %s ，现共可用次数 %s" % (
+                        default_description = "充值成功，充值下载次数 %s ，现共可用次数 %s"
+                        if description:
+                            default_description = description
+                        order_obj.description = default_description % (
                             download_times, user_obj.download_times + download_times)
                         order_obj.save(
                             update_fields=["status", "payment_type", "payment_number", "pay_time",
@@ -523,3 +526,30 @@ class MigrateStorageState(CacheBaseState):
 
 class CleanSignDataState(CacheBaseState):
     ...
+
+
+def add_download_times_free_base(user_obj, amount, payment_name, description, order_type=1):
+    order_number = get_order_num()
+    order_obj = Order.objects.create(payment_type=2, order_number=order_number, payment_number=order_number,
+                                     user_id=user_obj, status=1, order_type=order_type, actual_amount=0,
+                                     actual_download_times=amount, payment_name=payment_name,
+                                     actual_download_gift_times=0)
+    if update_order_info(user_obj.pk, order_obj.order_number, order_obj.order_number, order_obj.payment_type,
+                         description):
+        return True
+    return False
+
+
+def new_user_download_times_gift(user_obj, amount=200):
+    description = '新用户赠送下载次数 %s ，现共可用次数 %s'
+    return add_download_times_free_base(user_obj, amount, '系统', description, 2)
+
+
+def admin_change_user_download_times(user_obj, amount=200):
+    description = '后台管理员充值下载次数 %s ，现共可用次数 %s'
+    return add_download_times_free_base(user_obj, amount, '后台管理员充值', description)
+
+
+def auth_user_download_times_gift(user_obj, amount=200):
+    description = '实名认证赠送充值下载次数 %s ，现共可用次数 %s'
+    return add_download_times_free_base(user_obj, amount, '系统', description, 2)

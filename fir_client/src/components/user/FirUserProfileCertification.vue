@@ -130,7 +130,9 @@
                       placeholder="请输入您收到的验证码" prefix-icon="el-icon-mobile"/>
           </el-col>
           <el-col :span="6">
-            <el-button plain style="border-radius:4px;cursor:pointer;height: 40px;background-color: #ecf5ff;color: #dd6161" type="info"
+            <el-button plain
+                       style="border-radius:4px;cursor:pointer;height: 40px;background-color: #ecf5ff;color: #dd6161"
+                       type="info"
                        @click="getsmsemailcode('sms',form.mobile)">
               获取验证码
             </el-button>

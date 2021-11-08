@@ -132,6 +132,7 @@
           style="width: 100%">
 
         <el-table-column
+            align="center"
             fixed
             label="系统订单ID"
             prop="order_number">
@@ -172,6 +173,7 @@
 
         <el-table-column
             :formatter="format_actual_amount"
+            align="center"
             label="实付金额"
             prop="actual_amount"
             width="100">
@@ -179,12 +181,14 @@
 
 
         <el-table-column
+            align="center"
             label="购买数量"
             prop="actual_download_times"
             width="120">
         </el-table-column>
 
         <el-table-column
+            align="center"
             label="赠送数量"
             prop="actual_download_gift_times"
             width="90">
@@ -207,6 +211,7 @@
         </el-table-column>
 
         <el-table-column
+            align="center"
             fixed="right"
             label="查看详细"
             width="145">

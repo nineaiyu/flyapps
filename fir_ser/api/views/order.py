@@ -12,11 +12,12 @@ from rest_framework.views import APIView
 
 from api.models import Price, Order
 from api.utils.auth import ExpiringTokenAuthentication
+from api.utils.baseutils import get_order_num
 from api.utils.pay.util import get_pay_obj_form_name, get_enable_pay_choices, get_payment_type
 from api.utils.response import BaseResponse
 from api.utils.serializer import PriceSerializer, OrdersSerializer
 from api.utils.storage.caches import update_order_status
-from api.utils.utils import get_order_num, get_choices_dict
+from api.utils.utils import get_choices_dict
 
 logger = logging.getLogger(__name__)
 

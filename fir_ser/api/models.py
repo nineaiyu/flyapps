@@ -92,6 +92,7 @@ class Token(models.Model):
         UserInfo, related_name='auth_token',
         on_delete=models.CASCADE, verbose_name="关联用户"
     )
+    remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址",null=True,blank=True)
     created = models.DateTimeField(verbose_name="创建时间", auto_now_add=True)
 
     def __str__(self):
@@ -389,7 +390,7 @@ class Order(models.Model):
     actual_download_gift_times = models.BigIntegerField(verbose_name="实际赠送的数量", default=0)
     status_choices = ((0, '交易成功'), (1, '待支付'), (2, '订单已创建'), (3, '退费申请中'), (4, '已退费'), (5, '主动取消'), (6, '超时取消'))
     status = models.SmallIntegerField(choices=status_choices, verbose_name="状态")
-    order_type_choices = ((0, '用户下单'), (1, '后台充值'),)
+    order_type_choices = ((0, '用户下单'), (1, '后台充值'), (2, '系统赠送'))
     order_type = models.SmallIntegerField(choices=order_type_choices, default=0, verbose_name="订单类型")
     pay_time = models.DateTimeField(blank=True, null=True, verbose_name="付款时间")
     cancel_time = models.DateTimeField(blank=True, null=True, verbose_name="订单取消时间")

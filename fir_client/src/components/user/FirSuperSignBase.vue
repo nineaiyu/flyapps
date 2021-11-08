@@ -593,7 +593,7 @@
               align="center"
               label="设备名称"
               prop="product"
-              width="200">
+              width="160">
 
           </el-table-column>
           <el-table-column

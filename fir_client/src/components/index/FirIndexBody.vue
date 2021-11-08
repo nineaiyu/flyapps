@@ -45,9 +45,10 @@
       <el-main class="contactUs-container">
         <div class="content">您身边的应用托管分发专家</div>
         <div class="content">7x24小时提供出色的不间断服务</div>
-        <el-button onmouseenter="this.style.backgroundColor='transparent'; this.style.borderColor='#ffffff'; this.style.color='#ffffff';"
-                   onmouseleave="this.style.borderColor='#ffffff'; this.style.backgroundColor='#ffffff'; this.style.color='#3f3f3f';"
-                   @click="$router.push({name:'FirContact'})"
+        <el-button
+            onmouseenter="this.style.backgroundColor='transparent'; this.style.borderColor='#ffffff'; this.style.color='#ffffff';"
+            onmouseleave="this.style.borderColor='#ffffff'; this.style.backgroundColor='#ffffff'; this.style.color='#3f3f3f';"
+            @click="$router.push({name:'FirContact'})"
         >联系我们
         </el-button>
         <div class="contactUs-contactWay">

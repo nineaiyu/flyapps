@@ -41,7 +41,7 @@ class LoginView(APIView):
                     if user.is_active:
                         if user.role == 3:
                             login_auth_failed("del", username)
-                            key, user_info = set_user_token(user)
+                            key, user_info = set_user_token(user, request)
                             response.data = {
                                 "username": user_info.username,
                                 "token": key

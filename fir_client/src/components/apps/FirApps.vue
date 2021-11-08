@@ -28,7 +28,8 @@
             <div class="package-actions">
               <el-radio v-model="default_price_radio" :label="packages.name" border>
                 <span>此套餐</span>
-                <span v-if="default_price_radio === packages.name" :style="{background:`url(${pay_image.selected}) right bottom/100% no-repeat`}"
+                <span v-if="default_price_radio === packages.name"
+                      :style="{background:`url(${pay_image.selected}) right bottom/100% no-repeat`}"
                       class="pay-current"/>
 
               </el-radio>
@@ -46,7 +47,8 @@
                                           class="pay-icon alipay"/>
                                     <span v-if="pay.type === 'WX'" :style="{backgroundImage:`url(${pay_image.wx})`}"
                                           class="pay-icon"/>
-                                    <span v-if="default_pay_radio === pay.name" :style="{background:`url(${pay_image.selected}) right bottom/100% no-repeat` }"
+                                    <span v-if="default_pay_radio === pay.name"
+                                          :style="{background:`url(${pay_image.selected}) right bottom/100% no-repeat` }"
                                           class="pay-current"/>
                                 </span>
             </el-radio>
@@ -301,12 +303,16 @@
         <span v-if="currentfile&& currentfile.uid" slot="footer" class="dialog-footer">
                     <span v-if="uploadflag === true">
                          {{ uploadprocess[uploadprocessList[multiFileList.indexOf(currentfile)]].speed }}/s
-                            <el-progress :percentage="uploadprocess[uploadprocessList[multiFileList.indexOf(currentfile)]].process" :stroke-width="26"
-                                         :text-inside="true"/>
+                            <el-progress
+                                :percentage="uploadprocess[uploadprocessList[multiFileList.indexOf(currentfile)]].process"
+                                :stroke-width="26"
+                                :text-inside="true"/>
                     </span>
                         <el-button v-else plain
                                    type="primary"
-                                   @click="uploadcloud(analyseappinfo,currentfile,false,getappsFun)">{{ analyseappinfo.is_new|get_upload_text }}</el-button>
+                                   @click="uploadcloud(analyseappinfo,currentfile,false,getappsFun)">{{
+                            analyseappinfo.is_new|get_upload_text
+                          }}</el-button>
                   </span>
       </el-dialog>
 

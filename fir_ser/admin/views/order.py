@@ -15,8 +15,7 @@ from api.utils.auth import AdminTokenAuthentication
 from api.utils.baseutils import get_dict_from_filter_fields
 from api.utils.response import BaseResponse
 from api.utils.serializer import AdminOrdersSerializer
-from api.utils.storage.caches import update_order_info
-from api.utils.utils import get_order_num
+from api.utils.storage.caches import update_order_info, admin_change_user_download_times
 
 logger = logging.getLogger(__name__)
 
@@ -95,12 +94,7 @@ class OrderInfoView(APIView):
         obj = UserInfo.objects.filter(pk=pk).first()
         if obj:
             if amount > 0:
-                order_number = get_order_num()
-                order_obj = Order.objects.create(payment_type=2, order_number=order_number, payment_number=order_number,
-                                                 user_id=obj, status=1, order_type=1, actual_amount=0,
-                                                 actual_download_times=amount, payment_name='后台管理员充值',
-                                                 actual_download_gift_times=0)
-                if update_order_info(obj.pk, order_obj.order_number, order_obj.order_number, order_obj.payment_type):
+                if admin_change_user_download_times(obj, amount):
                     return Response(res.dict)
                 else:
                     res.code = 1005

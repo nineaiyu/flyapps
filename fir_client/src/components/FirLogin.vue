@@ -86,7 +86,8 @@
               <el-image :src="wx_login_qr_url" style="width: 176px;height: 166px"/>
             </div>
             <el-button slot="reference"
-                       size="small" style="color: #1fc939;border: 1px solid rgba(31,201,57,.5); width: 110px" @click="wxLogin">微信
+                       size="small" style="color: #1fc939;border: 1px solid rgba(31,201,57,.5); width: 110px"
+                       @click="wxLogin">微信
             </el-button>
           </el-popover>
 

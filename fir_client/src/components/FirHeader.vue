@@ -91,7 +91,7 @@ export default {
       this.$message.success('复制剪切板成功');
     },
     maketoken() {
-      this.$confirm('确认重新生成新的密钥么?', '警告', {
+      this.$confirm('该操作将导致老秘钥失效，确认重新生成新的密钥么?', '警告', {
         type: 'warning'
       })
           // eslint-disable-next-line no-unused-vars

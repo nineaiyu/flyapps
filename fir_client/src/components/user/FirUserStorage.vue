@@ -175,21 +175,25 @@
             style="width: 100%">
 
           <el-table-column
+              align="center"
               fixed
               label="存储名称"
               prop="name"
               width="180">
           </el-table-column>
           <el-table-column
+              align="center"
               label="存储类型"
               prop="storage_type_display"
               width="100">
           </el-table-column>
           <el-table-column
+              align="center"
               label="下载域名"
               prop="domain_name">
           </el-table-column>
           <el-table-column
+              align="center"
               label="bucket_name"
               prop="bucket_name"
               width="130">
@@ -197,15 +201,18 @@
 
           <el-table-column
               :formatter="formatter"
+              align="center"
               label="修改时间"
               prop="updated_time"
               width="170">
           </el-table-column>
           <el-table-column
+              align="center"
               label="备注"
               prop="description">
           </el-table-column>
           <el-table-column
+              align="center"
               fixed="right"
               label="操作"
               width="120">

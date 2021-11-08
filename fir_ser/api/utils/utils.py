@@ -17,6 +17,7 @@ from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
     UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, Token, DeveloperDevicesID, UserAdDisplayInfo
 from api.utils.TokenManager import generate_numeric_token_of_length, generate_alphanumeric_token_of_length, make_token, \
     verify_token
+from api.utils.baseutils import get_real_ip_address
 from api.utils.modelutils import get_app_d_count_by_app_id
 from api.utils.sendmsg.sendmsg import SendMessage
 from api.utils.storage.caches import consume_user_download_times
@@ -289,14 +290,6 @@ def clean_storage_data(user_obj, storage_obj=None):
     return True
 
 
-def get_order_num(order_type=1):
-    now = datetime.datetime.now()
-    date_str = "{0}{1}{2}{3}{4}{5}{6}".format(order_type, now.year, now.month, now.day, now.hour, now.minute,
-                                              now.second)
-    return date_str + str(random.randint(1000, 9999)) + str(random.randint(1000, 9999)) + str(
-        random.randint(1000, 9999))
-
-
 def get_choices_dict(choices):
     result = []
     choices_org_list = list(choices)
@@ -313,11 +306,23 @@ def get_choices_name_from_key(choices, key):
     return ''
 
 
-def set_user_token(user_obj):
+def set_user_token(user_obj, request):
     key = binascii.hexlify(os.urandom(32)).decode()
     now = datetime.datetime.now()
     user_info = UserInfo.objects.get(pk=user_obj.pk)
     auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'), key])
     cache.set(auth_key, {'uid': user_info.uid, 'username': user_info.username}, 3600 * 24 * 7)
-    Token.objects.create(user=user_obj, **{"access_token": key, "created": now})
+    Token.objects.create(user=user_obj,
+                         **{"access_token": key, "created": now, "remote_addr": get_real_ip_address(request)})
     return key, user_info
+
+
+def clean_user_token_and_cache(user_obj, white_token_list=None):
+    if white_token_list is None:
+        white_token_list = []
+    for token_obj in Token.objects.filter(user=user_obj):
+        if token_obj.access_token in white_token_list:
+            continue
+        auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'), token_obj.access_token])
+        cache.delete(auth_key)
+        token_obj.delete()

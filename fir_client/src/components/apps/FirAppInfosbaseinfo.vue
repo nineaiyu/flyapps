@@ -44,7 +44,8 @@
       <el-form-item>
         <el-row>
           <el-col :span="15">
-            <el-button plain size="medium" style="width: 160px;height: 50px;font-size: large;float: right" type="primary"
+            <el-button plain size="medium" style="width: 160px;height: 50px;font-size: large;float: right"
+                       type="primary"
                        @click="saveappinfo('save')">保存信息
             </el-button>
           </el-col>

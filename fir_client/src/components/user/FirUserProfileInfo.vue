@@ -247,8 +247,9 @@
         </el-row>
       </el-form-item>
 
-      <div v-if="userinfo && userinfo.login_type && userinfo.login_type.third && JSON.stringify(userinfo.login_type.third).indexOf('true')!==-1"
-           class="other-way">
+      <div
+          v-if="userinfo && userinfo.login_type && userinfo.login_type.third && JSON.stringify(userinfo.login_type.third).indexOf('true')!==-1"
+          class="other-way">
         <hr>
         <span class="info">绑定第三方账户</span>
         <el-row v-if="userinfo.login_type.third && userinfo.login_type.third.wxp" :gutter="20">

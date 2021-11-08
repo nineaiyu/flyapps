@@ -12,6 +12,7 @@ import os
 import re
 import time
 import uuid
+import random
 
 from Crypto import Random
 from Crypto.Cipher import AES
@@ -291,3 +292,11 @@ def format_get_uri(domain, short, data):
     if uri:
         uri = '?' + uri[1:]
     return f'{domain}/{short}{uri}'
+
+
+def get_order_num(order_type=1):
+    now = datetime.datetime.now()
+    date_str = "{0}{1}{2}{3}{4}{5}{6}".format(order_type, now.year, now.month, now.day, now.hour, now.minute,
+                                              now.second)
+    return date_str + str(random.randint(1000, 9999)) + str(random.randint(1000, 9999)) + str(
+        random.randint(1000, 9999))

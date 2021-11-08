@@ -13,12 +13,13 @@ from api.utils.modelutils import get_min_default_domain_cname_obj, add_remote_in
 from api.utils.mp.wechat import make_wx_login_qrcode, show_qrcode_url
 from api.utils.response import BaseResponse
 from api.utils.serializer import UserInfoSerializer, CertificationSerializer, UserCertificationSerializer
-from api.utils.storage.caches import login_auth_failed, set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache
+from api.utils.storage.caches import login_auth_failed, set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache, \
+    new_user_download_times_gift
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle, GetAuthC1Throttle, GetAuthC2Throttle
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
-    check_username_exists, set_user_token
-from fir_ser.settings import REGISTER, LOGIN, CHANGER, REPORT
+    check_username_exists, set_user_token, clean_user_token_and_cache
+from fir_ser.settings import REGISTER, LOGIN, CHANGER, REPORT, NEW_USER_GIVE_DOWNLOAD_TIMES
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +37,7 @@ def reset_user_pwd(user, sure_password, old_password=''):
         user.set_password(sure_password)
     user.save(update_fields=["password"])
     logger.info(f"user:{user} change password success,old {old_password} new {sure_password}")
-    for token_obj in Token.objects.filter(user=user):
-        cache.delete(token_obj.access_token)
-        token_obj.delete()
+    clean_user_token_and_cache(user)
 
 
 def get_authenticate(target, password, act, allow_type):
@@ -328,7 +327,7 @@ class LoginView(APIView):
                     if user.is_active:
                         login_auth_failed("del", username)
                         # update the token
-                        key, user_info = set_user_token(user)
+                        key, user_info = set_user_token(user, request)
                         serializer = UserInfoSerializer(user_info, )
                         data = serializer.data
                         response.msg = "验证成功!"
@@ -438,6 +437,10 @@ class RegistView(APIView):
                         response.msg = "注册异常"
                         response.code = 1000
                     if user_obj:
+                        try:
+                            new_user_download_times_gift(user_obj, NEW_USER_GIVE_DOWNLOAD_TIMES)
+                        except Exception as e:
+                            logger.error(f"用户{user_obj}赠送下载次数失败{e}")
                         response.msg = "注册成功"
                         response.code = 1000
                 else:
@@ -524,10 +527,7 @@ class UserInfoView(APIView):
                 logger.info(f"user:{request.user} change password success,old {old_password} new {sure_password}")
 
                 auth_token = request.auth
-                for token_obj in Token.objects.filter(user=user):
-                    if token_obj.access_token != auth_token:
-                        cache.delete(token_obj.access_token)
-                        token_obj.delete()
+                clean_user_token_and_cache(user, [auth_token])
 
                 return Response(res.dict)
             else:
@@ -844,7 +844,7 @@ class WeChatLoginCheckView(APIView):
                 else:
                     user = UserInfo.objects.filter(pk=wx_ticket_data['pk']).first()
                     if user.is_active:
-                        key, user_info = set_user_token(user)
+                        key, user_info = set_user_token(user, request)
                         serializer = UserInfoSerializer(user_info)
                         data = serializer.data
                         ret.msg = "验证成功!"

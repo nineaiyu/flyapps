@@ -56,7 +56,8 @@
                         placeholder="验证码" prefix-icon="el-icon-mobile"/>
             </el-col>
             <el-col :span="12">
-              <el-button plain style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px;width: 100%" type="info"
+              <el-button plain style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px;width: 100%"
+                         type="info"
                          @click="getphonecode">
                 获取验证码
               </el-button>

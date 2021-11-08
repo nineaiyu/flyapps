@@ -44,7 +44,7 @@
         <div class="content-row">
           <div v-if="captcha.captcha_image" class="report_captcha">
             <input v-model="report_info.authcode" maxlength="6" placeholder="请输入图片验证码" type="text"/>
-            <img :src="captcha.captcha_image" @click="get_auth_code" alt="验证码"/>
+            <img :src="captcha.captcha_image" alt="验证码" @click="get_auth_code"/>
           </div>
 
           <div class="report_phone">
@@ -119,7 +119,7 @@
                   <span id="qrcode" class="qrcode"></span>
                 </div>
                 <p v-if="currentappinfo.issupersign" class="scan-tips wrapper icon-warp">超级签</p>
-                <p v-else class="scan-tips wrapper icon-warp">{{mcurrentappinfo.release_type|getiOStype}}</p>
+                <p v-else class="scan-tips wrapper icon-warp">{{ mcurrentappinfo.release_type|getiOStype }}</p>
                 <h1 class="name wrapper">
                                     <span class="icon-warp" style="margin-left:0">
                                         <i v-if="currentappinfo.type === 0 && agent !== ''"
