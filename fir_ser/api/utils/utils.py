@@ -7,7 +7,6 @@ import binascii
 import datetime
 import logging
 import os
-import random
 
 from captcha.helpers import captcha_image_url
 from captcha.models import CaptchaStore

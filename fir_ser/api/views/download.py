@@ -157,7 +157,9 @@ class ShortDownloadView(APIView):
         domain_name = get_redirect_server_domain(request, user_obj, get_app_domain_name(app_obj))
         origin_domain_name = get_origin_domain_name(request)
         if domain_name.split('//')[-1].split('/')[0] != origin_domain_name:
-            res.code = 302
+            res.code = 1000
+            res.domain_name = domain_name
+            res.redirect = True
             res.data = format_get_uri(domain_name, short, {'release_id': release_id, 'udid': udid})
             return Response(res.dict)
 

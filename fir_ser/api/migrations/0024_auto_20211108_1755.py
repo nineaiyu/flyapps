@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('api', '0023_remove_appudid_binary_file'),
     ]
@@ -18,6 +17,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='order',
             name='order_type',
-            field=models.SmallIntegerField(choices=[(0, '用户下单'), (1, '后台充值'), (2, '系统赠送')], default=0, verbose_name='订单类型'),
+            field=models.SmallIntegerField(choices=[(0, '用户下单'), (1, '后台充值'), (2, '系统赠送')], default=0,
+                                           verbose_name='订单类型'),
         ),
     ]

@@ -1,11 +1,10 @@
 import logging
 
 from django.contrib import auth
-from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import Token, UserInfo, UserCertificationInfo, CertificationInfo, Apps
+from api.models import UserInfo, UserCertificationInfo, CertificationInfo, Apps
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.baseutils import is_valid_phone, is_valid_email, get_real_ip_address
 from api.utils.geetest.geetest_utils import first_register, second_validate

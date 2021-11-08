@@ -709,6 +709,10 @@ export default {
       }
       getShortAppinfo(data => {
         if (data.code === 1000) {
+          if (data.redirect && data.data) {
+            window.location.href = data.data;
+            return
+          }
           if (data.ad && data.ad.ad_uri) {
             this.ad_info = data.ad;
           }

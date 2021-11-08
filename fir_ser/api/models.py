@@ -92,7 +92,7 @@ class Token(models.Model):
         UserInfo, related_name='auth_token',
         on_delete=models.CASCADE, verbose_name="关联用户"
     )
-    remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址",null=True,blank=True)
+    remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址", null=True, blank=True)
     created = models.DateTimeField(verbose_name="创建时间", auto_now_add=True)
 
     def __str__(self):
