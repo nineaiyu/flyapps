@@ -317,7 +317,6 @@ export default {
           data: {
             "size": this.pagination.pagesize,
             "page": this.pagination.currentPage,
-            "user_id": wx_user_info.user_id,
             "openid": wx_user_info.openid,
           }
         })

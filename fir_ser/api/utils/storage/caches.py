@@ -546,10 +546,10 @@ def new_user_download_times_gift(user_obj, amount=200):
 
 
 def admin_change_user_download_times(user_obj, amount=200):
-    description = '后台管理员充值下载次数 %s ，现共可用次数 %s'
+    description = '管理员充值下载次数 %s ，现共可用次数 %s'
     return add_download_times_free_base(user_obj, amount, '后台管理员充值', description)
 
 
 def auth_user_download_times_gift(user_obj, amount=200):
-    description = '实名认证赠送充值下载次数 %s ，现共可用次数 %s'
+    description = '实名认证赠送下载次数 %s ，现共可用次数 %s'
     return add_download_times_free_base(user_obj, amount, '系统', description, 2)

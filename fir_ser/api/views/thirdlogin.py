@@ -84,6 +84,30 @@ def update_or_create_wx_userinfo(to_user, user_obj, create=True):
     return wx_user_info
 
 
+def wx_bind_utils(rec_msg, to_user, from_user, content):
+    uid = rec_msg.Eventkey.split('.')[-1]
+    wx_user_obj = ThirdWeChatUserInfo.objects.filter(openid=to_user).first()
+    user_obj = UserInfo.objects.filter(uid=uid).first()
+    if wx_user_obj:
+        if user_obj and user_obj.uid == wx_user_obj.user_id.uid:
+            content = f'账户 {wx_user_obj.user_id.first_name} 已经绑定成功，感谢您的使用'
+            update_or_create_wx_userinfo(to_user, user_obj)
+            WxTemplateMsg().bind_success_msg(to_user, wx_user_obj.nickname, user_obj.first_name)
+        else:
+            content = f'账户已经被 {wx_user_obj.user_id.first_name} 绑定'
+            WxTemplateMsg().bind_failed_msg(to_user, wx_user_obj.nickname, content)
+    else:
+        if user_obj:
+            wx_user_info = update_or_create_wx_userinfo(to_user, user_obj)
+            content = f'账户绑定 {user_obj.first_name} 成功'
+            WxTemplateMsg().bind_success_msg(to_user, wx_user_info.get('nickname', ''),
+                                             user_obj.first_name)
+    if user_obj:
+        set_wx_ticket_login_info_cache(rec_msg.Ticket, {'pk': user_obj.pk})
+    reply_msg = reply.TextMsg(to_user, from_user, content)
+    return reply_msg.send()
+
+
 class ValidWxChatToken(APIView):
     parser_classes = (XMLParser, TextXMLParser)
 
@@ -179,9 +203,11 @@ class ValidWxChatToken(APIView):
                 elif rec_msg.Event in ['subscribe', 'unsubscribe']:  # 订阅
                     reply_msg = reply.TextMsg(to_user, from_user, content)
                     result = reply_msg.send()
-                    if rec_msg.Eventkey == 'qrscene_web.login':  # 首次关注，登录认证操作
-                        if rec_msg.Event == 'subscribe':
-                            result = reply_login_msg(rec_msg, to_user, from_user, )
+                    if rec_msg.Event == 'subscribe':
+                        if rec_msg.Eventkey == 'qrscene_web.login':  # 首次关注，登录认证操作
+                            result = reply_login_msg(rec_msg, to_user, from_user)
+                        elif rec_msg.Eventkey.startswith('qrscene_web.bind.'):
+                            result = wx_bind_utils(rec_msg, to_user, from_user, content)
                     if rec_msg.Event == 'unsubscribe':
                         ThirdWeChatUserInfo.objects.filter(openid=to_user).update(subscribe=False)
 
@@ -189,27 +215,7 @@ class ValidWxChatToken(APIView):
                     if rec_msg.Eventkey == 'web.login':  # 已经关注，然后再次扫码，登录认证操作
                         result = reply_login_msg(rec_msg, to_user, from_user, )
                     elif rec_msg.Eventkey.startswith('web.bind.'):
-                        uid = rec_msg.Eventkey.split('.')[-1]
-                        wx_user_obj = ThirdWeChatUserInfo.objects.filter(openid=to_user).first()
-                        user_obj = UserInfo.objects.filter(uid=uid).first()
-                        if wx_user_obj:
-                            if user_obj and user_obj.uid == wx_user_obj.user_id.uid:
-                                content = f'账户 {wx_user_obj.user_id.first_name} 已经绑定成功，感谢您的使用'
-                                update_or_create_wx_userinfo(to_user, user_obj)
-                                WxTemplateMsg().bind_success_msg(to_user, wx_user_obj.nickname, user_obj.first_name)
-                            else:
-                                content = f'账户已经被 {wx_user_obj.user_id.first_name} 绑定'
-                                WxTemplateMsg().bind_failed_msg(to_user, wx_user_obj.nickname, content)
-                        else:
-                            if user_obj:
-                                wx_user_info = update_or_create_wx_userinfo(to_user, user_obj)
-                                content = f'账户绑定 {user_obj.first_name} 成功'
-                                WxTemplateMsg().bind_success_msg(to_user, wx_user_info.get('nickname', ''),
-                                                                 user_obj.first_name)
-                        if user_obj:
-                            set_wx_ticket_login_info_cache(rec_msg.Ticket, {'pk': user_obj.pk})
-                        reply_msg = reply.TextMsg(to_user, from_user, content)
-                        result = reply_msg.send()
+                        result = wx_bind_utils(rec_msg, to_user, from_user, content)
         else:
             logger.error('密文解密失败')
         logger.info(f"replay msg: {result}")
@@ -246,7 +252,6 @@ class ThirdWxAccount(APIView):
 
     def delete(self, request):
         openid = request.query_params.get("openid")
-        user_id = request.query_params.get("user_id")
-        if get_login_type().get('third', '').get('wxp') and openid and user_id:
-            ThirdWeChatUserInfo.objects.filter(user_id_id=user_id, openid=openid).delete()
+        if get_login_type().get('third', '').get('wxp') and openid:
+            ThirdWeChatUserInfo.objects.filter(user_id=request.user, openid=openid).delete()
         return self.get(request)
