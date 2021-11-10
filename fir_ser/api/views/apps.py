@@ -181,7 +181,7 @@ class AppInfoView(APIView):
                     app_obj.supersign_limit_number = data.get("supersign_limit_number",
                                                               app_obj.supersign_limit_number)
                     app_obj.isshow = data.get("isshow", app_obj.isshow)
-                    update_fields = ["description", "short", "name", "password", "supersign_limit_number"]
+                    update_fields = ["description", "short", "name", "password", "supersign_limit_number", "isshow"]
                     if get_user_domain_name(request.user) or get_app_domain_name(app_obj):
                         app_obj.wxeasytype = data.get("wxeasytype", app_obj.wxeasytype)
                     else:

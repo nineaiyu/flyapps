@@ -18,7 +18,7 @@ from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle, G
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
     check_username_exists, set_user_token, clean_user_token_and_cache
-from fir_ser.settings import REGISTER, LOGIN, CHANGER, REPORT, NEW_USER_GIVE_DOWNLOAD_TIMES
+from fir_ser.settings import LOGIN, CHANGER, REPORT, NEW_USER_GIVE_DOWNLOAD_TIMES, REGISTER
 
 logger = logging.getLogger(__name__)
 
@@ -619,11 +619,12 @@ class AuthorizationView(APIView):
                 res.code = 1008
                 res.msg = "邀请码已失效"
                 return Response(res.dict)
-
         if ext and ext.get('report'):
-            REGISTER = REPORT
+            p_data = REPORT
+        else:
+            p_data = REGISTER
 
-        if REGISTER.get("captcha"):
+        if p_data.get("captcha"):
             is_valid = valid_captcha(ext.get("captcha_key", None), ext.get("authcode", None), target)
             if ext and is_valid:
                 pass
@@ -632,7 +633,7 @@ class AuthorizationView(APIView):
                 res.msg = "图片验证码有误"
                 return Response(res.dict)
 
-        if REGISTER.get("geetest"):
+        if p_data.get("geetest"):
             geetest = request.data.get("geetest", None)
             if geetest and second_validate(geetest).get("result", "") == "success":
                 pass
