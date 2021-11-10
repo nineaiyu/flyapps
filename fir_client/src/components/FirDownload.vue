@@ -2,7 +2,7 @@
   <el-container class="container">
     <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport">
 
-    <el-main v-if="report_flag" style="margin-top: -60px">
+    <el-main v-if="report_flag" class="dialog" style="margin-top: -60px">
       <a style="color: #3888fa" @click="report_flag=false">&lt;&nbsp;返回下载页</a>
       <el-header style="text-align: center;height: 20px;margin-top: 10px">举报详情</el-header>
 
@@ -288,16 +288,15 @@
           <el-link :underline="false" type="warning">若安装异常，请复制UDID，发送给管理员</el-link>
         </div>
 
-        <div class="footer" style="margin-top: 30%;margin-bottom: 8px">
+        <div class="footer" style="margin-top: 30%;padding-bottom: 10px">
           免责声明：<br>
           本网站仅提供下载托管，应用为用户自行上传，请甄别应用风险后进行下载！<a class="one-key-report"
                                                @click="get_auth_code(),report_flag=true">举报</a>
 
         </div>
-        <div v-if="agent!==''">
-          <div v-if="ad_info.ad_uri" style="margin-bottom: 80px"/>
-          <div v-if="ad_info.ad_uri" class="app_bottom_fixed">
-            <div class="signhelp-title">
+        <div v-if="agent!=='' && ad_info.ad_uri" style="padding-bottom: 80px">
+          <div class="app_bottom_fixed" >
+            <div class="ad_title">
               <span><a class="closead" @click="ad_info.ad_uri=undefined">关闭</a></span>
             </div>
             <a :href="ad_info.ad_uri" target="_blank">
@@ -305,6 +304,8 @@
             </a>
           </div>
         </div>
+        <div v-else style="padding-bottom: 10px"></div>
+
 
       </div>
 
@@ -925,6 +926,17 @@ export default {
 </script>
 
 <style scoped>
+.dialog {
+  position: fixed;
+  width: 390px;
+  background-color: #fff;
+  left: 50%;
+  top: 50%;
+  padding: 20px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, .5);
+  transform: translate(-50%, -50%)
+}
+
 .one-key-report {
   color: #fff;
   background-color: #32B2A7;
@@ -1447,6 +1459,18 @@ button:focus {
   .main > header .scan-tips {
     display: none
   }
+  .dialog {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    left: 0;
+    top: 60px;
+    bottom: 0;
+    border-radius: 0;
+    padding-top: 30px;
+    overflow-y: auto;
+    transform: translate(0, 0)
+  }
 }
 
 
@@ -1767,7 +1791,7 @@ body.hidden-overflow {
   cursor: move;
 }
 
-.signhelp-title span a {
+.signhelp-title span a,.ad_title span a {
   text-decoration: none;
   border: 1px solid gray;
   font-size: 12px;
@@ -1784,5 +1808,13 @@ body.hidden-overflow {
 .signhelp-title .closead {
   top: 38px;
   right: -6px;
+}
+
+.ad_title .closead {
+  right: -6px;
+}
+.ad_title span a{
+  line-height: 40px;
+  margin-bottom: 20px;
 }
 </style>

@@ -294,15 +294,14 @@
           <span style="color: #ebb563">若安装异常，请复制UDID，发送给管理员</span>
         </div>
 
-        <div class="footer" style="margin-top: 30%;margin-bottom: 8px">
+        <div class="footer" style="margin-top: 30%;padding-bottom: 10px">
           免责声明：<br>
           本网站仅提供下载托管，应用为用户自行上传，请甄别应用风险后进行下载！<a class="one-key-report"
                                                @click="get_auth_code(),report_flag=true">举报</a>
         </div>
-        <div v-if="agent!==''">
-          <div v-if="ad_info.ad_uri" style="margin-bottom: 80px"/>
-          <div v-if="ad_info.ad_uri" class="app_bottom_fixed">
-            <div class="signhelp-title">
+        <div v-if="agent!=='' && ad_info.ad_uri" style="padding-bottom: 80px">
+          <div class="app_bottom_fixed" >
+            <div class="ad_title">
               <span><a class="closead" @click="ad_info.ad_uri=undefined">关闭</a></span>
             </div>
             <a :href="ad_info.ad_uri" target="_blank">
@@ -310,6 +309,7 @@
             </a>
           </div>
         </div>
+        <div v-else style="padding-bottom: 10px"></div>
 
       </div>
 
@@ -977,7 +977,7 @@ export default {
   color: #8B8E93
 }
 
-.one-key-report-dialog .content-row .report_captcha {
+.one-key-report-dialog .content-row .report_captcha,.report_phone  {
   display: -ms-flexbox;
   display: flex
 }
@@ -992,6 +992,7 @@ export default {
   width: 125px;
   height: 50px;
   background: #F5F5F5;
+  padding: 5px 10px;
   cursor: pointer
 }
 
@@ -1007,7 +1008,6 @@ export default {
   height: 50px;
   background-color: #3888fa;
   padding: 5px 10px;
-  margin-top: -5px;
   font-size: 14px
 }
 
@@ -1593,6 +1593,7 @@ button:focus {
 
   .dialog {
     height: 100%;
+    width: 100%;
     margin: 0;
     left: 0;
     top: 60px;
@@ -1602,6 +1603,15 @@ button:focus {
     overflow-y: auto;
     transform: translate(0, 0)
   }
+
+  .one-key-report-dialog .content-row .report_captcha,.report_phone input {
+    width: 60%;
+  }
+
+  .one-key-report-dialog .content-row .report_captcha,.report_phone img,.btn {
+    width: 35%;
+  }
+
 
   .dialog.animate {
     transition: left .5s
@@ -1926,7 +1936,7 @@ body.hidden-overflow {
   cursor: move;
 }
 
-.signhelp-title span a {
+.signhelp-title span a,.ad_title span a {
   text-decoration: none;
   border: 1px solid gray;
   font-size: 12px;
@@ -1943,5 +1953,12 @@ body.hidden-overflow {
 .signhelp-title .closead {
   top: 38px;
   right: -6px;
+}
+.ad_title .closead {
+  right: -6px;
+}
+.ad_title span a{
+  line-height: 40px;
+  margin-bottom: 20px;
 }
 </style>
