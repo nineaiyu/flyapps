@@ -295,7 +295,7 @@
 
         </div>
         <div v-if="agent!=='' && ad_info.ad_uri" style="padding-bottom: 80px">
-          <div class="app_bottom_fixed" >
+          <div class="app_bottom_fixed">
             <div class="ad_title">
               <span><a class="closead" @click="ad_info.ad_uri=undefined">关闭</a></span>
             </div>
@@ -1459,6 +1459,7 @@ button:focus {
   .main > header .scan-tips {
     display: none
   }
+
   .dialog {
     height: 100%;
     width: 100%;
@@ -1791,7 +1792,7 @@ body.hidden-overflow {
   cursor: move;
 }
 
-.signhelp-title span a,.ad_title span a {
+.signhelp-title span a, .ad_title span a {
   text-decoration: none;
   border: 1px solid gray;
   font-size: 12px;
@@ -1813,7 +1814,8 @@ body.hidden-overflow {
 .ad_title .closead {
   right: -6px;
 }
-.ad_title span a{
+
+.ad_title span a {
   line-height: 40px;
   margin-bottom: 20px;
 }

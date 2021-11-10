@@ -300,7 +300,7 @@
                                                @click="get_auth_code(),report_flag=true">举报</a>
         </div>
         <div v-if="agent!=='' && ad_info.ad_uri" style="padding-bottom: 80px">
-          <div class="app_bottom_fixed" >
+          <div class="app_bottom_fixed">
             <div class="ad_title">
               <span><a class="closead" @click="ad_info.ad_uri=undefined">关闭</a></span>
             </div>
@@ -977,7 +977,7 @@ export default {
   color: #8B8E93
 }
 
-.one-key-report-dialog .content-row .report_captcha,.report_phone  {
+.one-key-report-dialog .content-row .report_captcha, .report_phone {
   display: -ms-flexbox;
   display: flex
 }
@@ -1604,11 +1604,11 @@ button:focus {
     transform: translate(0, 0)
   }
 
-  .one-key-report-dialog .content-row .report_captcha,.report_phone input {
+  .one-key-report-dialog .content-row .report_captcha, .report_phone input {
     width: 60%;
   }
 
-  .one-key-report-dialog .content-row .report_captcha,.report_phone img,.btn {
+  .one-key-report-dialog .content-row .report_captcha, .report_phone img, .btn {
     width: 35%;
   }
 
@@ -1936,7 +1936,7 @@ body.hidden-overflow {
   cursor: move;
 }
 
-.signhelp-title span a,.ad_title span a {
+.signhelp-title span a, .ad_title span a {
   text-decoration: none;
   border: 1px solid gray;
   font-size: 12px;
@@ -1954,10 +1954,12 @@ body.hidden-overflow {
   top: 38px;
   right: -6px;
 }
+
 .ad_title .closead {
   right: -6px;
 }
-.ad_title span a{
+
+.ad_title span a {
   line-height: 40px;
   margin-bottom: 20px;
 }
