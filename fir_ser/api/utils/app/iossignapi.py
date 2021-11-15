@@ -15,6 +15,7 @@ from OpenSSL.crypto import (load_pkcs12, dump_certificate_request, dump_privatek
 from api.utils.app.shellcmds import shell_command, use_user_pass
 from api.utils.apple.appleapiv3 import AppStoreConnectApi
 from api.utils.baseutils import get_format_time, format_apple_date, make_app_uuid
+from api.utils.storage.caches import CleanErrorBundleIdSignDataState
 from fir_ser.settings import SUPER_SIGN_ROOT
 
 logger = logging.getLogger(__name__)
@@ -306,7 +307,8 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
             return False, result
 
-    def set_device_status(self, status, device_id, device_name, device_udid, device_err_callback=None):
+    def set_device_status(self, status, device_id, device_name, device_udid, failed_call_prefix,
+                          device_err_callback=None):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
@@ -321,7 +323,9 @@ class AppDeveloperApiV2(object):
             logger.error("ios developer set devices status Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
             if device_err_callback and ("There are no current ios devices" in str(e) or "Device obj is None" in str(e)):
+                CleanErrorBundleIdSignDataState.set_state(failed_call_prefix)
                 device_err_callback()
+                CleanErrorBundleIdSignDataState.del_state(failed_call_prefix)
         return False, result
 
     def get_device(self):
@@ -372,7 +376,7 @@ class AppDeveloperApiV2(object):
                     call_fun()
             return False, result
 
-    def register_device(self, device_udid, device_name, device_err_callback=None):
+    def register_device(self, device_udid, device_name, failed_call_prefix, device_err_callback=None):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
@@ -381,11 +385,13 @@ class AppDeveloperApiV2(object):
             logger.error("ios developer register device Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
             if device_err_callback and "There are no current ios devices" in str(e):
+                CleanErrorBundleIdSignDataState.set_state(failed_call_prefix)
                 device_err_callback()
+                CleanErrorBundleIdSignDataState.del_state(failed_call_prefix)
             return False, result
 
     def make_and_download_profile(self, app_obj, provision_name, auth, developer_app_id, device_id_list, profile_id,
-                                  app_id_err_callback=None):
+                                  failed_call_prefix, app_id_err_callback=None):
         if app_id_err_callback is None:
             app_id_err_callback = []
         result = {}
@@ -406,8 +412,10 @@ class AppDeveloperApiV2(object):
             logger.error(f"app_id {app_obj.app_id} ios developer make profile Failed Exception:{e}")
             result['return_info'] = "%s" % e
             if app_id_err_callback and "There is no App ID with ID" in str(e):
+                CleanErrorBundleIdSignDataState.set_state(failed_call_prefix)
                 for call_fun in app_id_err_callback:
                     call_fun()
+                CleanErrorBundleIdSignDataState.del_state(failed_call_prefix)
             return False, result
 
     def modify_capability(self, app_obj, developer_app_id):

@@ -138,6 +138,10 @@ class AppInfoView(APIView):
 
             clean = data.get("clean", None)
             if clean:
+                if CleanAppSignDataState.get_state(request.user.uid):
+                    res.code = 1008
+                    res.msg = "数据清理中,请耐心等待"
+                    return Response(res.dict)
                 logger.info(f"app_id:{app_id} clean:{clean} ,close super_sign should clean_app_by_user_obj")
                 CleanAppSignDataState.set_state(request.user.uid, timeout=60 * 10)
                 app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()

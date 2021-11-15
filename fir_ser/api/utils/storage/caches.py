@@ -532,6 +532,10 @@ class CleanAppSignDataState(CacheBaseState):
     ...
 
 
+class CleanErrorBundleIdSignDataState(CacheBaseState):
+    ...
+
+
 def add_download_times_free_base(user_obj, amount, payment_name, description, order_type=1):
     order_number = get_order_num()
     order_obj = Order.objects.create(payment_type=2, order_number=order_number, payment_number=order_number,

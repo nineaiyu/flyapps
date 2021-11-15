@@ -8,6 +8,7 @@ import logging
 from celery.exceptions import TimeoutError
 from django.http import HttpResponsePermanentRedirect, FileResponse, HttpResponse
 from django.views import View
+from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -22,7 +23,6 @@ from api.utils.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
 from fir_ser.celery import app
 
 logger = logging.getLogger(__name__)
-from rest_framework import exceptions
 
 
 class UdidView(View):

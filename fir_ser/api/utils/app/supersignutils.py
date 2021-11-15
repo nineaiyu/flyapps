@@ -23,7 +23,8 @@ from api.utils.modelutils import get_ios_developer_public_num, check_ipa_is_late
 from api.utils.response import BaseResponse
 from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
-    consume_user_download_times_by_app_obj, add_udid_cache_queue, get_and_clean_udid_cache_queue
+    consume_user_download_times_by_app_obj, add_udid_cache_queue, get_and_clean_udid_cache_queue, \
+    CleanErrorBundleIdSignDataState
 from api.utils.storage.storage import Storage
 from api.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status, delete_local_files, \
     download_files_form_oss, get_developer_udided
@@ -51,6 +52,9 @@ def resign_by_app_id(app_obj, need_download_profile=True, force=True):
             developer_obj = developer_app_id_obj.developerid
             if check_ipa_is_latest_sign(app_obj, developer_obj) and not force:
                 continue
+            add_new_bundles_prefix = f"check_or_add_new_bundles_{developer_obj.issuer_id}_{app_obj.app_id}"
+            if CleanErrorBundleIdSignDataState.get_state(add_new_bundles_prefix):
+                return False, '清理执行中，请等待'
             developer_app_id = developer_app_id_obj.aid
             d_time = time.time()
             if need_download_profile:
@@ -59,6 +63,7 @@ def resign_by_app_id(app_obj, need_download_profile=True, force=True):
                     IosUtils.modify_capability(developer_obj, app_obj, developer_app_id)
                     status, download_profile_result = IosUtils.make_and_download_profile(app_obj,
                                                                                          developer_obj,
+                                                                                         add_new_bundles_prefix,
                                                                                          developer_app_id_obj)
             else:
                 status = True
@@ -486,8 +491,9 @@ class IosUtils(object):
 
     @staticmethod
     @call_function_try_attempts()
-    def check_or_register_devices(app_obj, developer_obj, udid_info):
+    def check_or_register_devices(app_obj, developer_obj, udid_info, failed_call_prefix):
         """
+        :param failed_call_prefix:
         :param app_obj:
         :param developer_obj:
         :param udid_info:
@@ -508,6 +514,7 @@ class IosUtils(object):
                 # 库里面存在，并且设备是禁用状态，需要调用api启用
                 status, result = get_api_obj(auth).set_device_status("enable", sync_device_obj.serial,
                                                                      sync_device_obj.product, sync_device_obj.udid,
+                                                                     failed_call_prefix,
                                                                      err_callback(IosUtils.get_device_from_developer,
                                                                                   developer_obj))
                 if not status:  # 已经包含异常操作，暂定
@@ -516,7 +523,7 @@ class IosUtils(object):
                 sync_device_obj.save(update_fields=['status'])
         else:
             # 库里面不存在，注册设备，新设备注册默认就是启用状态
-            status, device_obj = get_api_obj(auth).register_device(device_udid, device_name,
+            status, device_obj = get_api_obj(auth).register_device(device_udid, device_name, failed_call_prefix,
                                                                    err_callback(IosUtils.get_device_from_developer,
                                                                                 developer_obj))
             if not status:
@@ -572,7 +579,8 @@ class IosUtils(object):
 
     @staticmethod
     @call_function_try_attempts()
-    def make_and_download_profile(app_obj, developer_obj, developer_app_id_obj=None, new_device_id_list=None,
+    def make_and_download_profile(app_obj, developer_obj, failed_call_prefix, developer_app_id_obj=None,
+                                  new_device_id_list=None,
                                   failed_callback=None):
         if new_device_id_list is None:
             new_device_id_list = []
@@ -598,7 +606,9 @@ class IosUtils(object):
         status, result = get_api_obj(auth).make_and_download_profile(app_obj,
                                                                      get_profile_full_path(developer_obj, app_obj),
                                                                      auth, developer_app_id,
-                                                                     device_id_lists, profile_id, failed_callback)
+                                                                     device_id_lists, profile_id,
+                                                                     failed_call_prefix, failed_callback,
+                                                                     )
 
         if not status:
             return False, result
@@ -642,19 +652,22 @@ class IosUtils(object):
             logger.warning(
                 "call_loop download_profile appid:%s developer:%s count:%s" % (self.app_obj, self.developer_obj, count))
             if self.developer_obj:
-                with cache.lock("%s_%s_%s" % ('check_or_register_devices', self.developer_obj.issuer_id, self.udid),
-                                timeout=60):
+                register_devices_prefix = f"check_or_register_devices_{self.developer_obj.issuer_id}_{self.udid}"
+                add_new_bundles_prefix = f"check_or_add_new_bundles_{self.developer_obj.issuer_id}_{self.app_obj.app_id}"
+                download_profile_prefix = f"make_and_download_profile_{self.developer_obj.issuer_id}_{self.app_obj.app_id}"
+
+                with cache.lock(register_devices_prefix, timeout=60):
+                    if CleanErrorBundleIdSignDataState.get_state(add_new_bundles_prefix):
+                        return True, True  # 程序错误，进行清理的时候，拦截多余的设备注册
                     status, did_udid_result = IosUtils.check_or_register_devices(self.app_obj, self.developer_obj,
-                                                                                 self.udid_info)
+                                                                                 self.udid_info, add_new_bundles_prefix)
                     if not status:
                         msg = f"app_id {self.app_obj} register devices failed. {did_udid_result}"
                         self.sign_failed_fun(d_result, msg)
                         continue
                     if status and 'continue' in [str(did_udid_result)]:
                         return True, True
-                with cache.lock("%s_%s_%s" % (
-                        'check_or_add_new_bundles', self.developer_obj.issuer_id, self.app_obj.app_id),
-                                timeout=60):
+                with cache.lock(add_new_bundles_prefix, timeout=60):
                     status, bundle_result = IosUtils.check_or_add_new_bundles(self.app_obj, self.developer_obj)
                     if not status:
                         msg = f"app_id {self.app_obj} create bundles failed. {bundle_result}"
@@ -665,9 +678,7 @@ class IosUtils(object):
                     add_udid_cache_queue(prefix_key, did_udid_result)
 
                 time.sleep(5)
-                with cache.lock("%s_%s_%s" % (
-                        'make_and_download_profile', self.developer_obj.issuer_id, self.app_obj.app_id),
-                                timeout=60 * 10):
+                with cache.lock(download_profile_prefix, timeout=60 * 10):
                     did_udid_lists = get_and_clean_udid_cache_queue(prefix_key)
                     if not did_udid_lists:
                         return True, True
@@ -675,6 +686,7 @@ class IosUtils(object):
                         f'app {self.app_obj} receive {len(did_udid_lists)} did_udid_result: {did_udid_lists}')
                     status, download_profile_result = IosUtils.make_and_download_profile(self.app_obj,
                                                                                          self.developer_obj,
+                                                                                         add_new_bundles_prefix,
                                                                                          new_device_id_list=[did_udid[0]
                                                                                                              for
                                                                                                              did_udid in
@@ -754,7 +766,8 @@ class IosUtils(object):
         if udid_lists.count((udid_obj.udid.udid,)) == 1:
             auth = get_auth_form_developer(developer_obj)
             app_api_obj = get_api_obj(auth)
-            app_api_obj.set_device_status("disable", udid_obj.udid.serial, udid_obj.udid.product, udid_obj.udid.udid)
+            app_api_obj.set_device_status("disable", udid_obj.udid.serial, udid_obj.udid.product, udid_obj.udid.udid,
+                                          udid_obj.udid.udid)
             UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid.udid, developerid=developer_obj).update(status=False)
 
     @staticmethod
