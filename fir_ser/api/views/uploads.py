@@ -44,8 +44,9 @@ class AppAnalyseView(APIView):
             if app_type.lower() == 'iOS'.lower():
                 ap = 'ipa'
             app_uuid = make_app_uuid(request.user, bundle_id + ap)
-            release_id = make_from_user_uuid(request.user)
-            png_id = make_from_user_uuid(request.user)
+            uid = request.user.uid
+            release_id = make_from_user_uuid(uid)
+            png_id = make_from_user_uuid(uid)
             app_obj = Apps.objects.filter(app_id=app_uuid).first()
             binary_url = ''
             enable_sign = False
@@ -189,7 +190,7 @@ class UploadView(APIView):
                 else:
                     if f_type and f_type == 'certification':
                         storage = Storage(request.user, None, True)
-                    upload_key = make_from_user_uuid(request.user) + '.' + app_type + settings.FILE_UPLOAD_TMP_KEY
+                    upload_key = make_from_user_uuid(request.user.uid) + '.' + app_type + settings.FILE_UPLOAD_TMP_KEY
                     upload_token = storage.get_upload_token(upload_key)
                     storage_type = storage.get_storage_type()
                     res.data = {
@@ -269,7 +270,7 @@ class UploadView(APIView):
                     res.msg = "错误的类型"
                     return Response(res.dict)
 
-                random_file_name = make_from_user_uuid(request.user)
+                random_file_name = make_from_user_uuid(request.user.uid)
                 local_file = os.path.join(settings.MEDIA_ROOT, cert_info.get("upload_key", random_file_name))
                 # 读取传入的文件
                 logger.info(f"user:{request.user} save file:{local_file}")

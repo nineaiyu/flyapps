@@ -528,6 +528,10 @@ class CleanSignDataState(CacheBaseState):
     ...
 
 
+class CleanAppSignDataState(CacheBaseState):
+    ...
+
+
 def add_download_times_free_base(user_obj, amount, payment_name, description, order_type=1):
     order_number = get_order_num()
     order_obj = Order.objects.create(payment_type=2, order_number=order_number, payment_number=order_number,
@@ -553,3 +557,27 @@ def admin_change_user_download_times(user_obj, amount=200):
 def auth_user_download_times_gift(user_obj, amount=200):
     description = '实名认证赠送下载次数 %s ，现共可用次数 %s'
     return add_download_times_free_base(user_obj, amount, '系统', description, 2)
+
+
+def add_udid_cache_queue(prefix_key, values):
+    prefix_key = f"{CACHE_KEY_TEMPLATE.get('ipa_sign_udid_queue_key')}_{prefix_key}"
+    with cache.lock("%s_%s" % ('add_udid_cache_queue', prefix_key), timeout=10):
+        data = cache.get(prefix_key)
+        if data and isinstance(data, list):
+            data.append(values)
+        else:
+            data = [values]
+        cache.set(prefix_key, list(set(data)), 60 * 60)
+        return data
+
+
+def get_and_clean_udid_cache_queue(prefix_key):
+    prefix_key = f"{CACHE_KEY_TEMPLATE.get('ipa_sign_udid_queue_key')}_{prefix_key}"
+    with cache.lock("%s_%s" % ('add_udid_cache_queue', prefix_key), timeout=10):
+        data = cache.get(prefix_key)
+        if data and isinstance(data, list):
+            ...
+        else:
+            data = []
+        cache.delete(prefix_key)
+        return data

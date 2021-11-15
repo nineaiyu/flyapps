@@ -19,7 +19,8 @@ from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.modelutils import get_user_domain_name, get_app_domain_name, check_super_sign_permission
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer
-from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
+from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app, \
+    CleanAppSignDataState
 from api.utils.storage.storage import Storage
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
 
@@ -138,8 +139,11 @@ class AppInfoView(APIView):
             clean = data.get("clean", None)
             if clean:
                 logger.info(f"app_id:{app_id} clean:{clean} ,close super_sign should clean_app_by_user_obj")
+                CleanAppSignDataState.set_state(request.user.uid, timeout=60 * 10)
                 app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
                 IosUtils.clean_app_by_user_obj(app_obj)
+                CleanAppSignDataState.del_state(request.user.uid)
+
                 return Response(res.dict)
 
             has_combo = data.get("has_combo", None)

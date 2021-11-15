@@ -56,10 +56,9 @@ class AESCipher(object):
         return data
 
 
-def make_from_user_uuid(userinfo):
-    user_id = userinfo.uid
+def make_from_user_uuid(uid):
     random_str = uuid.uuid1().__str__().split("-")[0:-1]
-    user_ran_str = uuid.uuid5(uuid.NAMESPACE_DNS, user_id).__str__().split("-")
+    user_ran_str = uuid.uuid5(uuid.NAMESPACE_DNS, uid).__str__().split("-")
     user_ran_str.extend(random_str)
     new_str = "".join(user_ran_str)
     return new_str

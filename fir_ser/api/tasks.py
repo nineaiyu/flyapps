@@ -26,26 +26,25 @@ def run_sign_task(format_udid_info, short, client_ip):
     ios_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
     if ios_obj.developer_obj is None:
         return '签名余额不足'
-    with cache.lock("%s_%s_%s" % ('run_sign_task', app_obj.app_id, ios_obj.developer_obj.issuer_id), timeout=60 * 10):
-        ios_obj.get_developer_auth()
-        status, msg = ios_obj.sign_ipa(client_ip)
-        if not status:
-            code = msg.get("code", -1)
-            if code == 0:
-                msg = ""
-            elif code == 1005:
-                msg = "签名余额不足"
-            elif code == 1002:
-                msg = "维护中"
-            elif code == 1003:
-                msg = "应用余额不足"
-            elif code in [1004, 1001, 1009]:
-                msg = msg.get('msg', '未知错误')
-            else:
-                msg = '系统内部错误'
-        else:
+    ios_obj.get_developer_auth()
+    status, msg = ios_obj.sign_ipa(client_ip)
+    if not status:
+        code = msg.get("code", -1)
+        if code == 0:
             msg = ""
-        return msg
+        elif code == 1005:
+            msg = "签名余额不足"
+        elif code == 1002:
+            msg = "维护中"
+        elif code == 1003:
+            msg = "应用余额不足"
+        elif code in [1004, 1001, 1009]:
+            msg = msg.get('msg', '未知错误')
+        else:
+            msg = '系统内部错误'
+    else:
+        msg = ""
+    return msg
 
 
 @shared_task

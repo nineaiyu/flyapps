@@ -295,54 +295,6 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
         return False, result
 
-    def get_profile(self, app_obj, udid_info, provision_name, auth, developer_app_id,
-                    device_id_list, profile_id, device_err_callback, app_id_err_callback):
-        result = {}
-        bundle_id = app_obj.bundle_id
-        app_id = app_obj.app_id
-        s_type = app_obj.supersign_type
-        try:
-            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            if developer_app_id:
-                pass
-            else:
-                if s_type == 0:
-                    bundle_obj = apple_obj.register_bundle_id(app_id, f"{bundle_id}.{self.issuer_id}.{app_id}")
-                else:
-                    bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id,
-                                                                                f"{bundle_id}.{self.issuer_id}.{app_id}",
-                                                                                s_type)
-                developer_app_id = bundle_obj.id
-                result['aid'] = developer_app_id
-            if udid_info:
-                device_udid = udid_info.get('udid')
-                device_name = udid_info.get('product')
-                device_obj = apple_obj.register_device(device_name, device_udid)
-                if device_obj:
-                    result['did'] = device_obj.id
-                    device_id_list.append(device_obj.id)
-
-            profile_obj = apple_obj.create_profile(profile_id, developer_app_id, auth.get('cert_id'),
-                                                   provision_name.split("/")[-1],
-                                                   device_id_list)
-            if profile_obj:
-                result['profile_id'] = profile_obj.id
-                n = base64.b64decode(profile_obj.profileContent)
-                if not os.path.isdir(os.path.dirname(provision_name)):
-                    os.makedirs(os.path.dirname(provision_name))
-                with open(provision_name, 'wb') as f:
-                    f.write(n)
-                return True, result
-        except Exception as e:
-            logger.error(f"app_id {app_obj.app_id} ios developer make profile Failed Exception:{e}")
-            result['return_info'] = "%s" % e
-            if "There are no current ios devices" in str(e):
-                device_err_callback()
-            if "There is no App ID with ID" in str(e):
-                app_id_err_callback()
-
-            return False, result
-
     def del_profile(self, profile_id, profile_name):
         result = {}
         try:
@@ -354,7 +306,7 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
             return False, result
 
-    def set_device_status(self, status, device_id, device_name, device_udid):
+    def set_device_status(self, status, device_id, device_name, device_udid, device_err_callback=None):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
@@ -368,6 +320,8 @@ class AppDeveloperApiV2(object):
         except Exception as e:
             logger.error("ios developer set devices status Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
+            if device_err_callback and ("There are no current ios devices" in str(e) or "Device obj is None" in str(e)):
+                device_err_callback()
         return False, result
 
     def get_device(self):
@@ -394,21 +348,66 @@ class AppDeveloperApiV2(object):
             result['return_info'] = "%s" % e
             return False, result
 
-    # 该方法未使用
-    def create_app(self, bundle_id, app_id, s_type):
+    def create_app(self, bundle_id, app_id, s_type, app_id_err_callback=None):
+        if app_id_err_callback is None:
+            app_id_err_callback = []
         result = {}
         try:
+            result = {}
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id,
-                                                                        f"{bundle_id}.{self.issuer_id}.{app_id}",
-                                                                        s_type)
-            developer_app_id = bundle_obj.id
-            result['aid'] = developer_app_id
+            if s_type == 0:
+                bundle_obj = apple_obj.register_bundle_id(app_id, f"{bundle_id}.{self.issuer_id}.{app_id}")
+            else:
+                bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id,
+                                                                            f"{bundle_id}.{self.issuer_id}.{app_id}",
+                                                                            s_type)
+            result['aid'] = bundle_obj.id
             return True, result
 
         except Exception as e:
             logger.error("ios developer create app Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
+            if app_id_err_callback and "There is no App ID with ID" in str(e):
+                for call_fun in app_id_err_callback:
+                    call_fun()
+            return False, result
+
+    def register_device(self, device_udid, device_name, device_err_callback=None):
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            return True, apple_obj.register_device(device_name, device_udid)
+        except Exception as e:
+            logger.error("ios developer register device Failed Exception:%s" % e)
+            result['return_info'] = "%s" % e
+            if device_err_callback and "There are no current ios devices" in str(e):
+                device_err_callback()
+            return False, result
+
+    def make_and_download_profile(self, app_obj, provision_name, auth, developer_app_id, device_id_list, profile_id,
+                                  app_id_err_callback=None):
+        if app_id_err_callback is None:
+            app_id_err_callback = []
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            profile_obj = apple_obj.create_profile(profile_id, developer_app_id, auth.get('cert_id'),
+                                                   provision_name.split("/")[-1],
+                                                   device_id_list)
+            if profile_obj:
+                result['profile_id'] = profile_obj.id
+                n = base64.b64decode(profile_obj.profileContent)
+                if not os.path.isdir(os.path.dirname(provision_name)):
+                    os.makedirs(os.path.dirname(provision_name))
+                with open(provision_name, 'wb') as f:
+                    f.write(n)
+                return True, result
+        except Exception as e:
+            logger.error(f"app_id {app_obj.app_id} ios developer make profile Failed Exception:{e}")
+            result['return_info'] = "%s" % e
+            if app_id_err_callback and "There is no App ID with ID" in str(e):
+                for call_fun in app_id_err_callback:
+                    call_fun()
             return False, result
 
     def modify_capability(self, app_obj, developer_app_id):

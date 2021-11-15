@@ -215,6 +215,7 @@ CACHE_KEY_TEMPLATE = {
     'super_sign_failed_send_msg_times_key': 'super_sign_failed_send_msg_times',
     'wx_access_token_key': 'wx_basic_access_token',
     'wx_ticket_info_key': 'wx_ticket_info',
+    'ipa_sign_udid_queue_key': 'ipa_sign_udid_queue',
 }
 
 DATA_DOWNLOAD_KEY = "d_token"
@@ -359,16 +360,14 @@ CELERY_BROKER_URL = 'redis://:%s@%s/2' % (
 #: Only add pickle to this list if your broker is secured
 
 
-CELERYD_CONCURRENCY = 10  # worker并发数
+CELERY_WORKER_CONCURRENCY = 30  # worker并发数
 CELERYD_FORCE_EXECV = True  # 非常重要,有些情况下可以防止死
-CELERY_TASK_RESULT_EXPIRES = 3600  # 任务结果过期时间
+CELERY_RESULT_EXPIRES = 3600  # 任务结果过期时间
 
-CELERY_DISABLE_RATE_LIMITS = True  # 任务发出后，经过一段时间还未收到acknowledge , 就将任务重新交给其他worker执行
-CELERYD_PREFETCH_MULTIPLIER = 3  # celery worker 每次去redis取任务的数量
+CELERY_WORKER_DISABLE_RATE_LIMITS = True  # 任务发出后，经过一段时间还未收到acknowledge , 就将任务重新交给其他worker执行
+CELERY_WORKER_PREFETCH_MULTIPLIER = 60  # celery worker 每次去redis取任务的数量
 
-CELERYD_MAX_TASKS_PER_CHILD = 200  # 每个worker执行了多少任务就会死掉，我建议数量可以大一些，比如200
-
-# CELERYD_WORKER_PREFETCH_MULTIPLIER  =1
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000  # 每个worker执行了多少任务就会死掉，我建议数量可以大一些，比如200
 
 CELERY_ENABLE_UTC = False
 DJANGO_CELERY_BEAT_TZ_AWARE = False
