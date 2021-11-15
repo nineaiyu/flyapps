@@ -132,9 +132,11 @@ def check_app_domain_name_access(app_obj, access_domain_name, user_obj, extra_do
 def get_ios_developer_public_num(user_obj):
     add_number = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj, action__in=[1, 2]).aggregate(
         number=Sum('number'))
+
     used_number = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj, action=0,
-                                                            udid_sync_info__isnull=False).aggregate(
-        number=Sum('number'))
+                                                            udid_sync_info__isnull=False).values('number',
+                                                                                                 'udid_sync_info_id').annotate(
+        counts=Count('udid_sync_info_id')).aggregate(number=Sum('number'))
     add_number = add_number.get("number", 0)
     if not add_number:
         add_number = -99
@@ -145,9 +147,9 @@ def get_ios_developer_public_num(user_obj):
 
 
 def check_super_sign_permission(user_obj):
-    developer_count = AppIOSDeveloperInfo.objects.filter(user_id=user_obj).count()
     if not user_obj.supersign_active:
         return False
+    developer_count = AppIOSDeveloperInfo.objects.filter(user_id=user_obj).count()
     if developer_count == 0 and get_ios_developer_public_num(user_obj) < 0:
         return False
     return True

@@ -69,7 +69,7 @@ def resign_by_app_id(app_obj, need_download_profile=True, force=True):
                 status = True
             with cache.lock("%s_%s_%s" % ('run_sign', app_obj.app_id, developer_obj.issuer_id), timeout=60 * 10):
                 if status:
-                    status, result = IosUtils.run_sign(user_obj, app_obj, developer_obj, d_time, None, [])
+                    status, result = IosUtils.run_sign(user_obj, app_obj, developer_obj, d_time, [])
                     info_list.append({'developer_id': developer_obj.issuer_id, 'result': (status, result)})
     return info_list
 
@@ -409,28 +409,6 @@ class IosUtils(object):
         return storage_obj.upload_file(os.path.join(MEDIA_ROOT, random_file_name + ".ipa"))
 
     @staticmethod
-    def update_developer_used_data(user_obj, app_obj, developer_obj, udid, client_ip):
-        udid_obj = AppUDID.objects.filter(app_id=app_obj, udid__udid=udid,
-                                          udid__developerid=developer_obj).first()
-        udid_obj.is_download = True
-        udid_obj.save(update_fields=['is_download'])
-        APPSuperSignUsedInfo.objects.update_or_create(app_id=app_obj,
-                                                      user_id=user_obj,
-                                                      developerid=developer_obj,
-                                                      udid=udid_obj)
-        udid_sync_info = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,
-                                                          udid=udid).first()
-        IosDeveloperPublicPoolBill.objects.update_or_create(user_id=user_obj,
-                                                            app_info=BillAppInfoSerializer(app_obj).data,
-                                                            developer_info=BillDeveloperInfoSerializer(
-                                                                developer_obj).data,
-                                                            action=0, number=1, udid_sync_info=udid_sync_info,
-                                                            remote_addr=client_ip, product=udid_sync_info.product,
-                                                            udid=udid, version=udid_sync_info.version,
-                                                            app_id=app_obj
-                                                            )
-
-    @staticmethod
     def update_sign_data(user_obj, app_obj, developer_obj_id, random_file_name, release_obj, udid_list):
         # 更新新签名的ipa包
         if IosUtils.update_sign_file_name(user_obj, app_obj, developer_obj_id, release_obj,
@@ -487,12 +465,14 @@ class IosUtils(object):
                                 timeout=60 * 10):
                     logger.info("start run_sign ...")
                     return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
-                                             time.time(), client_ip, [self.udid])
+                                             time.time(), [self.udid])
 
     @staticmethod
     @call_function_try_attempts()
-    def check_or_register_devices(app_obj, developer_obj, udid_info, failed_call_prefix):
+    def check_or_register_devices(app_obj, user_obj, developer_obj, udid_info, client_ip, failed_call_prefix):
         """
+        :param user_obj:
+        :param client_ip:
         :param failed_call_prefix:
         :param app_obj:
         :param developer_obj:
@@ -546,12 +526,29 @@ class IosUtils(object):
         del udid_info['udid']
         udid_info['is_signed'] = False
         udid_info['is_download'] = False
-        AppUDID.objects.update_or_create(app_id=app_obj, udid=sync_device_obj,
-                                         defaults=udid_info)
+        udid_obj, _ = AppUDID.objects.update_or_create(app_id=app_obj, udid=sync_device_obj,
+                                                       defaults=udid_info)
 
         DeveloperDevicesID.objects.update_or_create(did=sync_device_obj.serial, udid=sync_device_obj,
                                                     developerid=developer_obj,
                                                     app_id=app_obj)
+
+        APPSuperSignUsedInfo.objects.update_or_create(app_id=app_obj,
+                                                      user_id=user_obj,
+                                                      developerid=developer_obj,
+                                                      udid=udid_obj)
+        udid_sync_info = UDIDsyncDeveloper.objects.filter(developerid=developer_obj,
+                                                          udid=device_udid).first()
+        IosDeveloperPublicPoolBill.objects.update_or_create(user_id=user_obj,
+                                                            app_info=BillAppInfoSerializer(app_obj).data,
+                                                            developer_info=BillDeveloperInfoSerializer(
+                                                                developer_obj).data,
+                                                            action=0, number=1, udid_sync_info=udid_sync_info,
+                                                            remote_addr=client_ip, product=udid_sync_info.product,
+                                                            udid=device_udid, version=udid_sync_info.version,
+                                                            app_id=app_obj
+                                                            )
+
         return True, (sync_device_obj.serial, sync_device_obj.udid)
 
     @staticmethod
@@ -652,15 +649,21 @@ class IosUtils(object):
             logger.warning(
                 "call_loop download_profile appid:%s developer:%s count:%s" % (self.app_obj, self.developer_obj, count))
             if self.developer_obj:
-                register_devices_prefix = f"check_or_register_devices_{self.developer_obj.issuer_id}_{self.udid}"
+                # register_devices_prefix = f"check_or_register_devices_{self.developer_obj.issuer_id}_{self.udid}"
+                register_devices_prefix = f"check_or_register_devices_{self.developer_obj.issuer_id}"
                 add_new_bundles_prefix = f"check_or_add_new_bundles_{self.developer_obj.issuer_id}_{self.app_obj.app_id}"
                 download_profile_prefix = f"make_and_download_profile_{self.developer_obj.issuer_id}_{self.app_obj.app_id}"
 
                 with cache.lock(register_devices_prefix, timeout=60):
                     if CleanErrorBundleIdSignDataState.get_state(add_new_bundles_prefix):
                         return True, True  # 程序错误，进行清理的时候，拦截多余的设备注册
-                    status, did_udid_result = IosUtils.check_or_register_devices(self.app_obj, self.developer_obj,
-                                                                                 self.udid_info, add_new_bundles_prefix)
+                    if not get_developer_obj_by_others(self.user_obj, self.udid):
+                        d_result['code'] = 1005
+                        return False, d_result
+                    status, did_udid_result = IosUtils.check_or_register_devices(self.app_obj, self.user_obj,
+                                                                                 self.developer_obj,
+                                                                                 self.udid_info, client_ip,
+                                                                                 add_new_bundles_prefix)
                     if not status:
                         msg = f"app_id {self.app_obj} register devices failed. {did_udid_result}"
                         self.sign_failed_fun(d_result, msg)
@@ -699,7 +702,7 @@ class IosUtils(object):
                         if 'continue' in [str(did_udid_result), str(download_profile_result)]:
                             return True, True
                         return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
-                                                 start_time, client_ip,
+                                                 start_time,
                                                  [did_udid[1] for did_udid in did_udid_lists])
 
         if not self.developer_obj:
@@ -710,13 +713,12 @@ class IosUtils(object):
         return True, True
 
     @staticmethod
-    def run_sign(user_obj, app_obj, developer_obj, d_time, client_ip, udid_list=None):
+    def run_sign(user_obj, app_obj, developer_obj, d_time, udid_list=None):
         if udid_list is None:
             udid_list = []
         d_result = {'code': 0, 'msg': 'success'}
-        for udid in udid_list:
-            IosUtils.update_developer_used_data(user_obj, app_obj, developer_obj, udid, client_ip)
-
+        AppUDID.objects.filter(app_id=app_obj, udid__udid__in=udid_list,
+                               udid__developerid=developer_obj).update(is_download=True)
         start_time = time.time()
         logger.info(f"app_id {app_obj} download profile success. time:{start_time - d_time}")
         random_file_name = make_from_user_uuid(developer_obj.user_id.uid)

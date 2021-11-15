@@ -22,11 +22,7 @@ from fir_ser.settings import LOGIN, CHANGER, REGISTER
 @shared_task
 def run_sign_task(format_udid_info, short, client_ip):
     app_obj = Apps.objects.filter(short=short).first()
-    # with cache.lock("%s_%s_%s" % ('task_sign', app_obj.app_id, format_udid_info.get('udid')), timeout=60 * 10):
     ios_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
-    if ios_obj.developer_obj is None:
-        return '签名余额不足'
-    ios_obj.get_developer_auth()
     status, msg = ios_obj.sign_ipa(client_ip)
     if not status:
         code = msg.get("code", -1)

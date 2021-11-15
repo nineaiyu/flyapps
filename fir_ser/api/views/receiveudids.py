@@ -78,7 +78,7 @@ class IosUDIDView(UdidView):
                         logger.info(f"client_ip {client_ip} short {short} app_info {app_obj}")
 
                         # ios_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
-                        # ios_obj.sign(client_ip)
+                        # ios_obj.sign_ipa(client_ip)
                         # return Response('ok')
                         c_task = run_sign_task.apply_async((format_udid_info, short, client_ip))
                         add_remote_info_from_request(request, f'{app_obj}-{format_udid_info}')
