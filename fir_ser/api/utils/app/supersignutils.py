@@ -19,7 +19,8 @@ from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppRe
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
     get_format_time, make_app_uuid, make_from_user_uuid
-from api.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign
+from api.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign, \
+    get_developer_can_used_from_public_sign
 from api.utils.response import BaseResponse
 from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
@@ -264,7 +265,8 @@ def get_developer_user_by_app_udid(user_obj, udid):
         else:
             for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id=user_obj, is_actived=True,
                                                                     certid__isnull=False).order_by("created_time"):
-                if get_developer_udided(developer_obj)[1] < developer_obj.usable_number:
+                if get_developer_udided(developer_obj)[1] + get_developer_can_used_from_public_sign(
+                        user_obj) < developer_obj.usable_number:
                     return developer_obj, False
             return None, None
     return developer_obj, True

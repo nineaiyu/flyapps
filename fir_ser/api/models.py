@@ -599,10 +599,3 @@ class AppReportInfo(models.Model):
 
     def __str__(self):
         return "%s-%s" % (self.app_name, self.report_reason)
-
-
-class DeviceQueue(models.Model):
-    app_id = models.ForeignKey(to='Apps', on_delete=models.CASCADE, verbose_name="应用id")
-    udid = models.CharField(max_length=64, verbose_name="udid唯一标识", db_index=True)
-    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name="访问时间")

@@ -698,10 +698,12 @@
               label="设备状态"
               width="110">
             <template slot-scope="scope">
-              <el-tag v-if="!scope.row.udid_sync_info_id" type="info">已经释放</el-tag>
-              <el-tag v-else>
-                使用中
-              </el-tag>
+              <div v-if="scope.row.udid_sync_info_id!==null">
+                <el-tag v-if="!scope.row.udid_sync_info_id" type="info">已经释放</el-tag>
+                <el-tag v-else>
+                  使用中
+                </el-tag>
+              </div>
             </template>
           </el-table-column>
 
@@ -1120,7 +1122,11 @@ export default {
                   this.bill_percent = 100;
                 }
               } else {
-                this.bill_percent = Number(this.balance_info.used_balance * 100 / this.balance_info.all_balance);
+                if(this.balance_info.all_balance - this.balance_info.used_balance < 0){
+                  this.bill_percent = 100;
+                }else {
+                  this.bill_percent = Number(this.balance_info.used_balance * 100 / this.balance_info.all_balance);
+                }
               }
             }
           }

@@ -153,6 +153,21 @@ def get_user_public_used_sign_num(user_obj):
     return number if number else 0
 
 
+def get_developer_can_used_from_public_sign(user_obj):
+    o_number_info = IosDeveloperPublicPoolBill.objects.filter(to_user_id__isnull=False, user_id=user_obj).values(
+        'number').aggregate(number=Sum('number'))
+    o_number = o_number_info.get("number", 0)
+
+    u_number_info = IosDeveloperPublicPoolBill.objects.filter(
+        user_id_id__in=IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj).values('to_user_id_id')).values(
+        'number',
+        'udid_sync_info_id').annotate(
+        counts=Count('udid_sync_info_id')).aggregate(number=Sum('number'))
+    u_number = u_number_info.get("number", 0)
+
+    return o_number - u_number
+
+
 def check_super_sign_permission(user_obj):
     if not user_obj.supersign_active:
         return False
