@@ -132,23 +132,27 @@
         <el-table-column
             align="center"
             label="应用状态"
-            width="110">
+        >
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.app_status===false" type="info">应用删除</el-tag>
-            <el-tag v-else>
-              应用存在
-            </el-tag>
+            <div v-if="scope.row.action==='消费'">
+              <el-tag v-if="scope.row.app_status===false" type="info">应用删除</el-tag>
+              <el-tag v-else>
+                应用存在
+              </el-tag>
+            </div>
+            <span v-else>{{ scope.row.description }}</span>
           </template>
         </el-table-column>
         <el-table-column
             align="center"
-            label="设备状态"
-            width="110">
+            label="设备状态">
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.is_used===false" type="info">已经释放</el-tag>
-            <el-tag v-else>
-              使用中
-            </el-tag>
+            <div v-if="scope.row.action==='消费'">
+              <el-tag v-if="scope.row.is_used===false" type="info">已经释放</el-tag>
+              <el-tag v-else>
+                使用中
+              </el-tag>
+            </div>
           </template>
         </el-table-column>
 
@@ -174,15 +178,15 @@
         <el-input
             v-model="appidseach"
             clearable
-            placeholder="输入用户ID"
+            placeholder="输入开发者用户ID"
             style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
         <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(pagination.currentPage)">
           搜索
         </el-button>
-        <div style="width: 40%;margin-right: 30px;float:right">
-          <el-link :underline="false">总设备量：{{ developer_used_info.all_usable_number }} 已经使用：【平台：{{
+        <div style="width: 43%;margin-right: 30px;float:right">
+          <el-link :underline="false">私有总设备量：{{ developer_used_info.all_usable_number }} 已经使用：【平台：{{
               developer_used_info.all_use_number
-            }} 】【其他：{{ developer_used_info.other_used_sum }} 】
+            }} 】【其他：{{ developer_used_info.other_used_sum }}】
             还剩：{{ developer_used_info.all_usable_number - developer_used_info.flyapp_used_sum }} 可用
           </el-link>
           <el-progress
@@ -230,7 +234,9 @@
               prop="is_actived"
               width="110">
             <template slot-scope="scope">
-              <el-button v-if="scope.row.is_actived === true" size="small" type="success">已激活</el-button>
+              <el-tooltip v-if="scope.row.is_actived === true" content="点击禁用">
+                <el-button size="small" type="success" @click="disabledeveloperFun(scope.row,'disable')">已激活</el-button>
+              </el-tooltip>
               <el-button v-else size="small" type="danger"
                          @click="activedeveloperFun(scope.row,'checkauth')">点击激活
               </el-button>
@@ -383,6 +389,71 @@
           <p>3.添加后，激活开发者账户，然后您就可以上传p12证书或者通过系统自动创建证书、设备和描述文件，请勿删除这些文件，否则会导致用户安装的软件闪退或无法安装！</p>
 
         </el-card>
+      </el-tab-pane>
+      <el-tab-pane label="UDID管理" name="iosudevices">
+        <el-input
+            v-model="udidsearch"
+            clearable
+            placeholder="输入UDID"
+            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+        <el-input
+            v-model="appidseach"
+            clearable
+            placeholder="输入开发者用户ID"
+            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(pagination.currentPage)">
+          搜索
+        </el-button>
+        <el-button @click="syncalldevices">
+          同步设备信息
+        </el-button>
+        <el-table
+            v-loading="loading"
+            :data="developer_udevices_lists"
+            border
+            stripe
+            style="width: 100%">
+          <el-table-column
+              align="center"
+              fixed
+              label="设备序列号"
+              prop="serial"
+              width="120"
+          >
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="设备名称"
+              prop="product"
+              width="120">
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="设备UDID"
+              prop="udid">
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="设备产品"
+              prop="product"
+              width="160">
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="设备版本"
+              prop="version"
+              width="200">
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="开发者ID"
+              prop="developer_id"
+              width="200">
+          </el-table-column>
+
+        </el-table>
+
+
       </el-tab-pane>
       <el-tab-pane label="设备消耗" name="useddevices">
         <el-input
@@ -549,7 +620,7 @@
                   @click="udidDeleteFun(scope)">删除
               </el-button>
               <el-tag v-else>
-                ...
+                ☺
               </el-tag>
             </template>
           </el-table-column>
@@ -566,7 +637,18 @@
         <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(pagination.currentPage)">
           搜索
         </el-button>
-
+        <div style="width: 40%;margin-right: 30px;float:right">
+          <el-link :underline="false">公共签名池设备数量：{{ balance_info.all_balance }} 已经使用：【 {{
+              balance_info.used_balance
+            }} 】
+            还剩：【 {{ balance_info.all_balance - balance_info.used_balance }} 】 可用
+          </el-link>
+          <el-progress
+              :color="developer_usedColor"
+              :percentage="bill_percent"
+              :stroke-width="18" :text-inside="true" status="success"
+              type="line"/>
+        </div>
 
         <el-table
             v-loading="loading"
@@ -605,9 +687,9 @@
 
           <el-table-column
               align="center"
-              label="设备安装次数"
+              label="次数"
               prop="counts"
-              width="110">
+              width="100">
 
           </el-table-column>
 
@@ -644,7 +726,7 @@
 
 <script>
 
-import {developercert, DeviceBillInfo, iosdeveloper, iosdevices, iosdevicesudid} from "@/restful";
+import {developercert, DeviceBillInfo, iosdeveloper, iosdevices, iosdevicesudid, iosudevices} from "@/restful";
 import {getUserInfoFun, removeAaary} from "@/utils";
 
 export default {
@@ -653,7 +735,10 @@ export default {
     return {
       dialogShowDeviceBillInfo: false,
       currentudid: '',
+      balance_info: {all_balance: 0, used_balance: 0},
+      bill_percent: 0,
       fileList: [],
+      developer_udevices_lists: [],
       app_developer_lists: [],
       app_devices_lists: [],
       app_bill_lists: [],
@@ -687,6 +772,20 @@ export default {
     }
   },
   methods: {
+    disabledeveloperFun(developer, act) {
+      this.$confirm('如您不再使用该开发账户进行签名，可以点击进行禁用，是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.iosdeveloperFun({"methods": "PUT", "data": {"issuer_id": developer.issuer_id, "act": act}});
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消禁用操作'
+        });
+      });
+    },
     closeDeviceBillInfo() {
       this.dialogShowDeviceBillInfo = false;
       this.currentudid = '';
@@ -794,6 +893,12 @@ export default {
       this.iosdeveloperFun({
         "methods": "PUT",
         "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "syncdevice"}
+      });
+    },
+    syncalldevices() {
+      this.iosdeveloperFun({
+        "methods": "PUT",
+        "data": {"issuer_id": this.appidseach, "act": "syncalldevice"}
       });
     },
     cleandevices() {
@@ -906,6 +1011,8 @@ export default {
         this.iosdeveloperFun({"methods": "GET", "data": data})
       } else if (tabname === "devicesbill") {
         this.iosdevicebillFun({"methods": "GET", "data": data})
+      } else if (tabname === "iosudevices") {
+        this.iosudevicesFun("GET", data, null)
       }
 
     },
@@ -1004,6 +1111,18 @@ export default {
           } else {
             this.app_bill_lists = data.data;
             this.pagination.total = data.count;
+            if (data.balance_info) {
+              this.balance_info = data.balance_info;
+              if (this.balance_info.all_balance - this.balance_info.used_balance === 0) {
+                if (this.balance_info.all_balance === 0) {
+                  this.bill_percent = 0;
+                } else {
+                  this.bill_percent = 100;
+                }
+              } else {
+                this.bill_percent = Number(this.balance_info.used_balance * 100 / this.balance_info.all_balance);
+              }
+            }
           }
         } else {
           this.$message.error("操作失败了 " + data.msg);
@@ -1026,6 +1145,39 @@ export default {
         if (data.code === 1000) {
           if (action !== "DELETE") {
             this.app_udid_lists = data.data;
+            this.pagination.total = data.count;
+          } else {
+            if (scope) {
+              this.app_udid_lists = removeAaary(this.app_udid_lists, scope.row)
+            }
+          }
+        } else {
+          this.$message.error("操作失败了 " + data.msg);
+        }
+        if (action !== 'GET') {
+          this.loadingfun.close()
+        } else {
+          this.loading = false
+        }
+      }, {
+        "methods": action, "data": data
+      })
+    },
+    iosudevicesFun(action, data, scope) {
+      if (action !== 'GET') {
+        this.loadingfun = this.$loading({
+          lock: true,
+          text: '执行中,请耐心等待...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        });
+      } else {
+        this.loading = true
+      }
+      iosudevices(data => {
+        if (data.code === 1000) {
+          if (action !== "DELETE") {
+            this.developer_udevices_lists = data.data;
             this.pagination.total = data.count;
           } else {
             if (scope) {

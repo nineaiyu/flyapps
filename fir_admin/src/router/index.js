@@ -278,6 +278,27 @@ export const constantRoutes = [
             meta: { title: '设备消耗', icon: 'form' }
           }
         ]
+      },
+      {
+        path: 'bill',
+        name: 'bill',
+        redirect: '/supersign/bill/list',
+        component: () => import('@/views/supersign/index'),
+        meta: { title: '设备账单', icon: 'form' },
+        children: [
+          {
+            path: 'list',
+            name: 'bill_info_list',
+            component: () => import('@/views/supersign/bill/list'),
+            meta: { title: '消耗账单', icon: 'form' }
+          },
+          {
+            path: 'add',
+            name: 'bill_info_add',
+            component: () => import('@/views/supersign/bill/add'),
+            meta: { title: '设备充值', icon: 'form' }
+          }
+        ]
       }
     ]
   },

@@ -5,17 +5,19 @@
 # date: 2020/3/4
 import logging
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http.response import FileResponse
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill
+from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, UDIDsyncDeveloper
 from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
+from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num
 from api.utils.response import BaseResponse
-from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, BillInfoSerializer
+from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, BillInfoSerializer, \
+    DeveloperDeviceSerializer
 from api.utils.storage.caches import CleanSignDataState
 from api.utils.utils import get_developer_devices, get_choices_dict
 
@@ -57,14 +59,25 @@ class DeveloperView(APIView):
 
     def put(self, request):
         data = request.data
-        issuer_id = data.get("issuer_id", None)
+        issuer_id = data.get("issuer_id", "").strip()
         if issuer_id:
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=issuer_id).first()
         else:
+            act = data.get("act", '').strip()
+            if act == "syncalldevice":
+                res = BaseResponse()
+                result_list = []
+                for developer_s_obj in AppIOSDeveloperInfo.objects.filter(user_id=request.user, is_actived=True).all():
+                    status, result = IosUtils.get_device_from_developer(developer_s_obj)
+                    if not status:
+                        result_list.append(result.get("err_info"))
+                if len(result_list):
+                    logger.warning(result_list)
+                return Response(res.dict)
             return self.get(request)
 
         if developer_obj:
-            act = data.get("act", None)
+            act = data.get("act", "").strip()
             if act:
                 res = BaseResponse()
                 logger.info(f"user {request.user} ios developer {developer_obj} act {act}")
@@ -106,13 +119,12 @@ class DeveloperView(APIView):
                             res.code = 1008
                             res.msg = result.get("err_info", '')
                             return Response(res.dict)
-                elif act == "syncdevice":
+                elif act in ["syncdevice", "syncalldevice"]:
                     status, result = IosUtils.get_device_from_developer(developer_obj)
                     if not status:
                         res.code = 1008
                         res.msg = result.get("err_info")
                         return Response(res.dict)
-
                 elif act == "cleandevice":
                     if CleanSignDataState.get_state(request.user.uid):
                         res.code = 1008
@@ -125,6 +137,10 @@ class DeveloperView(APIView):
                         res.code = 1008
                         res.msg = result.get("err_info")
                         return Response(res.dict)
+                elif act == 'disable':
+                    developer_obj.is_actived = False
+                    developer_obj.save(update_fields=['is_actived'])
+                    return self.get(request)
             else:
                 update_fields = []
                 logger.info(f"user {request.user} ios developer {developer_obj} update input data {data}")
@@ -273,6 +289,47 @@ class AppUDIDUsedView(APIView):
         return Response(res.dict)
 
 
+class DeveloperDeviceView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [SuperSignPermission, ]
+
+    def get(self, request):
+        res = BaseResponse()
+
+        udid = request.query_params.get("udid", None)
+        developer_id = request.query_params.get("appid", None)
+        super_sign_used_objs = UDIDsyncDeveloper.objects.filter(developerid__user_id=request.user, )
+        if developer_id:
+            super_sign_used_objs = super_sign_used_objs.filter(developerid__issuer_id=developer_id)
+        if udid:
+            super_sign_used_objs = super_sign_used_objs.filter(udid=udid)
+
+        page_obj = PageNumber()
+        app_page_serializer = page_obj.paginate_queryset(queryset=super_sign_used_objs.order_by('-id'),
+                                                         request=request,
+                                                         view=self)
+        app_serializer = DeveloperDeviceSerializer(app_page_serializer, many=True)
+        res.data = app_serializer.data
+        res.count = super_sign_used_objs.count()
+        return Response(res.dict)
+
+    def delete(self, request):
+        res = BaseResponse()
+        pk = request.query_params.get("id", None)
+        app_id = request.query_params.get("aid", None)
+        app_udid_obj = AppUDID.objects.filter(pk=pk)
+        if app_udid_obj:
+            super_sign_used_obj = APPSuperSignUsedInfo.objects.filter(udid=app_udid_obj.first()).first()
+            if super_sign_used_obj and super_sign_used_obj.developerid.user_id.pk == request.user.pk:
+                logger.error(f"user {request.user} delete devices {app_udid_obj}")
+                IosUtils.disable_udid(app_udid_obj.first(), app_id)
+                app_udid_obj.delete()
+            else:
+                res.code = 10002
+                res.msg = '公共账号池不允许删除'
+        return Response(res.dict)
+
+
 class SuperSignCertView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
     permission_classes = [SuperSignPermission, ]
@@ -325,7 +382,8 @@ class DeviceUsedBillView(APIView):
         res = BaseResponse()
         udid = request.query_params.get("udid", None)
         act = request.query_params.get("act", None)
-        user_used_list = IosDeveloperPublicPoolBill.objects.filter(user_id=request.user)
+        user_used_list = IosDeveloperPublicPoolBill.objects.filter(
+            Q(to_user_id=request.user) | Q(user_id=request.user))
         page_obj = PageNumber()
         if udid:
             user_used_list = user_used_list.filter(udid=udid)
@@ -340,13 +398,19 @@ class DeviceUsedBillView(APIView):
             res.count = user_used_list.count()
 
         else:
+
+            if udid:
+                user_used_list = user_used_list.filter(udid=udid)
             user_used_list3 = user_used_list.values('udid', 'product', 'version', 'udid_sync_info_id').annotate(
-                counts=Count('udid')).order_by("-created_time")
+                counts=Count('udid'))
             res.count = user_used_list3.count()
-            user_used_list3 = page_obj.paginate_queryset(queryset=user_used_list3.order_by("-created_time"),
-                                                         request=request,
-                                                         view=self)
+            user_used_list3 = page_obj.paginate_queryset(queryset=user_used_list3.order_by('-udid_sync_info_id'),
+                                                         request=request, view=self)
             for user_used in user_used_list3:
                 user_used['counts'] = user_used_list.filter(udid=user_used.get('udid')).count()
             res.data = user_used_list3
+            res.balance_info = {
+                'used_balance': get_user_public_used_sign_num(request.user),
+                'all_balance': get_user_public_sign_num(request.user)
+            }
         return Response(res.dict)

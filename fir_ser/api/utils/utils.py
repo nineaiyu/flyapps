@@ -41,22 +41,24 @@ def delete_app_to_dev_and_file(developer_obj, app_id):
 def get_developer_udided(developer_obj):
     super_sing_used_obj = APPSuperSignUsedInfo.objects.filter(developerid=developer_obj).all()
     udid_sync_developer_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).all()
-    develoer_udid_lists = []
-    supersign_udid_lists = []
+    developer_udid_lists = []
+    super_sign_udid_lists = []
     if udid_sync_developer_obj:
-        develoer_udid_lists = list(udid_sync_developer_obj.values_list("udid"))
+        developer_udid_lists = list(udid_sync_developer_obj.values_list("udid"))
     if super_sing_used_obj:
-        supersign_udid_lists = list(super_sing_used_obj.values_list("udid__udid"))
-    return len(set(develoer_udid_lists) - set(supersign_udid_lists)), len(develoer_udid_lists)
+        super_sign_udid_lists = list(super_sing_used_obj.values_list("udid__udid__udid"))
+    return len(set(developer_udid_lists) - set(super_sign_udid_lists)), len(set(super_sign_udid_lists))
 
 
 def get_developer_devices(developer_obj_lists):
     other_used_sum = 0
     flyapp_used_sum = 0
+    max_total = 0
     for dev_obj in developer_obj_lists:
         other_used, flyapp_used = get_developer_udided(dev_obj)
         other_used_sum += other_used
         flyapp_used_sum += flyapp_used
+        max_total += 100
 
     use_number_obj_list = developer_obj_lists.filter(is_actived=True)
     all_use_number = 0
@@ -70,6 +72,7 @@ def get_developer_devices(developer_obj_lists):
         "all_use_number": all_use_number,
         "other_used_sum": other_used_sum,
         "flyapp_used_sum": flyapp_used_sum,
+        "max_total": max_total
     }
     return use_num
 

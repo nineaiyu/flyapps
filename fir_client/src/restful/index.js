@@ -541,6 +541,22 @@ export function iosdevicesudid(callBack, params, load = true) {
     );
 }
 
+/**超级签名 苹果开发设备udid信息 */
+export function iosudevices(callBack, params, load = true) {
+    // eslint-disable-next-line no-console
+    getData(
+        params.methods,
+        USERSEVER + '/supersign/udevices',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 /**获取充值价格信息 */
 export function get_package_prices(callBack, params, load = true) {
     getData(

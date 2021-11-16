@@ -9,12 +9,12 @@ import logging
 import random
 from urllib.parse import urljoin
 
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
-    AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper
+    AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper, UserInfo
 from api.utils.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
-    get_origin_domain_name
+    get_origin_domain_name, is_valid_phone
 
 logger = logging.getLogger(__name__)
 
@@ -130,20 +130,27 @@ def check_app_domain_name_access(app_obj, access_domain_name, user_obj, extra_do
 
 
 def get_ios_developer_public_num(user_obj):
+    add_number = get_user_public_sign_num(user_obj)
+    if not add_number:
+        add_number = -99
+    used_number = get_user_public_used_sign_num(user_obj)
+    return add_number - used_number
+
+
+def get_user_public_sign_num(user_obj):
     add_number = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj, action__in=[1, 2]).aggregate(
         number=Sum('number'))
+    number = add_number.get("number", 0)
+    return number if number else 0
 
+
+def get_user_public_used_sign_num(user_obj):
     used_number = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj, action=0,
                                                             udid_sync_info__isnull=False).values('number',
                                                                                                  'udid_sync_info_id').annotate(
         counts=Count('udid_sync_info_id')).aggregate(number=Sum('number'))
-    add_number = add_number.get("number", 0)
-    if not add_number:
-        add_number = -99
-    used_number = used_number.get("number", 0)
-    if not used_number:
-        used_number = 0
-    return add_number - used_number
+    number = used_number.get("number", 0)
+    return number if number else 0
 
 
 def check_super_sign_permission(user_obj):
@@ -167,3 +174,11 @@ def check_ipa_is_latest_sign(app_obj, developer_obj=None):
             t_count += 1
     if t_count == all_app_to_dev.count():
         return True
+
+
+def get_user_obj_from_epu(user_id):
+    if is_valid_phone(user_id):
+        user_obj = UserInfo.objects.filter(mobile=user_id).first()
+    else:
+        user_obj = UserInfo.objects.filter(Q(email=user_id) | Q(uid=user_id)).first()
+    return user_obj

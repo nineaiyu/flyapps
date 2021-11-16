@@ -549,6 +549,17 @@ class AdminSuperSignUsedSerializer(SuperSignUsedSerializer):
         return obj.developerid.pk
 
 
+class DeveloperDeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UDIDsyncDeveloper
+        exclude = ["id", "developerid"]
+
+    developer_id = serializers.SerializerMethodField()
+
+    def get_developer_id(self, obj):
+        return obj.developerid.issuer_id
+
+
 class DeviceUDIDSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppUDID
@@ -749,6 +760,12 @@ class BillInfoSerializer(serializers.ModelSerializer):
     description = serializers.SerializerMethodField()
     is_used = serializers.SerializerMethodField()
     app_status = serializers.SerializerMethodField()
+    remote_addr = serializers.SerializerMethodField()
+
+    def get_remote_addr(self, obj):
+        if obj.to_user_id == self.context.get('user_obj'):
+            return ''
+        return obj.remote_addr
 
     def get_app_status(self, obj):
         if obj.app_id:
@@ -777,6 +794,19 @@ class BillInfoSerializer(serializers.ModelSerializer):
                 return f"{obj.user_id.first_name}-{self.get_action(obj)} +{obj.number} 设备数"
             else:
                 return f"向 {obj.to_user_id.first_name} {self.get_action(obj)} -{obj.number} 设备数"
+
+
+class AdminBillInfoSerializer(BillInfoSerializer):
+    class Meta:
+        model = models.IosDeveloperPublicPoolBill
+        fields = '__all__'
+        read_only_fields = ["id", "user_id", "to_user_id", "action", "number", "app_info", "udid",
+                            "udid_sync_info", "app_id", "remote_addr"]
+
+    action_choices = serializers.SerializerMethodField()
+
+    def get_action_choices(self, obj):
+        return get_choices_dict(obj.action_choices)
 
 
 class AppReportSerializer(serializers.ModelSerializer):
