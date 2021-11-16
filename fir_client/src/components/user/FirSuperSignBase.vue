@@ -1122,9 +1122,9 @@ export default {
                   this.bill_percent = 100;
                 }
               } else {
-                if(this.balance_info.all_balance - this.balance_info.used_balance < 0){
+                if (this.balance_info.all_balance - this.balance_info.used_balance < 0) {
                   this.bill_percent = 100;
-                }else {
+                } else {
                   this.bill_percent = Number(this.balance_info.used_balance * 100 / this.balance_info.all_balance);
                 }
               }
