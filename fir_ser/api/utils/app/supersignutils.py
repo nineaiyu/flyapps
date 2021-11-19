@@ -15,7 +15,7 @@ import xmltodict
 from django.core.cache import cache
 
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
-    UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill
+    UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
     get_format_time, make_app_uuid, make_from_user_uuid
@@ -45,34 +45,28 @@ def check_org_file(user_obj, org_file):
     return download_files_form_oss(storage_obj, org_file)
 
 
-def resign_by_app_id(app_obj, need_download_profile=True, force=True):
-    user_obj = app_obj.user_id
-    info_list = []
-    if app_obj.issupersign and user_obj.supersign_active:
-        for developer_app_id_obj in DeveloperAppID.objects.filter(app_id=app_obj).all():
-            developer_obj = developer_app_id_obj.developerid
-            if check_ipa_is_latest_sign(app_obj, developer_obj) and not force:
-                continue
-            add_new_bundles_prefix = f"check_or_add_new_bundles_{developer_obj.issuer_id}_{app_obj.app_id}"
-            if CleanErrorBundleIdSignDataState.get_state(add_new_bundles_prefix):
-                return False, '清理执行中，请等待'
-            developer_app_id = developer_app_id_obj.aid
-            d_time = time.time()
-            if need_download_profile:
-                with cache.lock("%s_%s_%s" % ('make_and_download_profile', developer_obj.issuer_id, app_obj.app_id),
-                                timeout=60):
-                    IosUtils.modify_capability(developer_obj, app_obj, developer_app_id)
-                    status, download_profile_result = IosUtils.make_and_download_profile(app_obj,
-                                                                                         developer_obj,
-                                                                                         add_new_bundles_prefix,
-                                                                                         developer_app_id_obj)
-            else:
-                status = True
-            with cache.lock("%s_%s_%s" % ('run_sign', app_obj.app_id, developer_obj.issuer_id), timeout=60 * 10):
-                if status:
-                    status, result = IosUtils.run_sign(user_obj, app_obj, developer_obj, d_time, [])
-                    info_list.append({'developer_id': developer_obj.issuer_id, 'result': (status, result)})
-    return info_list
+def resign_by_app_id_and_developer(app_id, developer_id, developer_app_id, need_download_profile=True, force=True):
+    app_obj = Apps.objects.filter(pk=app_id).first()
+    developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_id).first()
+    if check_ipa_is_latest_sign(app_obj, developer_obj) and not force:
+        return
+    add_new_bundles_prefix = f"check_or_add_new_bundles_{developer_obj.issuer_id}_{app_obj.app_id}"
+    if CleanErrorBundleIdSignDataState.get_state(add_new_bundles_prefix):
+        return False, '清理执行中，请等待'
+    d_time = time.time()
+    if need_download_profile:
+        with cache.lock("%s_%s_%s" % ('make_and_download_profile', developer_obj.issuer_id, app_obj.app_id),
+                        timeout=60):
+            IosUtils.modify_capability(developer_obj, app_obj, developer_app_id)
+            status, download_profile_result = IosUtils.make_and_download_profile(app_obj,
+                                                                                 developer_obj,
+                                                                                 add_new_bundles_prefix)
+    else:
+        status = True
+    with cache.lock("%s_%s_%s" % ('run_sign', app_obj.app_id, developer_obj.issuer_id), timeout=60 * 10):
+        if status:
+            status, result = IosUtils.run_sign(app_obj.user_id, app_obj, developer_obj, d_time, [])
+            return status, {'developer_id': developer_obj.issuer_id, 'result': (status, result)}
 
 
 def check_app_sign_limit(app_obj):
@@ -249,51 +243,54 @@ def call_function_try_attempts(try_attempts=3, sleep_time=2, failed_callback=Non
     return decorator
 
 
-def get_developer_user_by_app_udid(user_obj, udid):
-    use_device_obj = APPSuperSignUsedInfo.objects.filter(udid__udid__udid=udid,
-                                                         user_id=user_obj, developerid__is_actived=True,
-                                                         developerid__certid__isnull=False).first()
-    # 只要账户下面存在udid,就可以使用该苹果开发者账户，避免多个开发者账户下面出现同一个udid
-    if use_device_obj:
-        developer_obj = use_device_obj.developerid
-    else:
-        developer_udid_obj = UDIDsyncDeveloper.objects.filter(udid=udid,
-                                                              developerid__is_actived=True,
-                                                              developerid__certid__isnull=False).first()
-        if developer_udid_obj and developer_udid_obj.developerid.user_id.pk == user_obj.pk:
-            developer_obj = developer_udid_obj.developerid
-        else:
-            for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id=user_obj, is_actived=True,
-                                                                    certid__isnull=False).order_by("created_time"):
-                if get_developer_udided(developer_obj)[1] + get_developer_can_used_from_public_sign(
-                        user_obj) < developer_obj.usable_number:
-                    return developer_obj, False
-            return None, None
-    return developer_obj, True
+def get_developer_user_by_app_udid(user_objs, udid, app_obj):
+    developer_udid_obj_list = UDIDsyncDeveloper.objects.filter(developerid__user_id__in=user_objs,
+                                                               developerid__is_actived=True,
+                                                               developerid__certid__isnull=False).values(
+        'developerid').distinct()
+
+    # 根据udid和应用查找该用户开发者账户【主要可能是开发者未激活】
+    developer_obj = AppIOSDeveloperInfo.objects.filter(
+        pk__in=developer_udid_obj_list.filter(udid=udid, developerid__apptodeveloper__app_id=app_obj)).first()
+    if developer_obj:
+        logger.info(f'udid:{udid} app_obj:{app_obj} return')
+        return developer_obj, True
+
+    # 根据udid查找开发者账户
+    developer_obj = AppIOSDeveloperInfo.objects.filter(pk__in=developer_udid_obj_list.filter(udid=udid)).first()
+    if developer_obj:
+        logger.info(f'udid:{udid} only and return')
+        return developer_obj, True
+
+    # 根据app查找开发者账户
+    for developer_obj in AppIOSDeveloperInfo.objects.filter(
+            pk__in=developer_udid_obj_list.filter(developerid__apptodeveloper__app_id=app_obj)):
+        if get_developer_udided(developer_obj)[1] + get_developer_can_used_from_public_sign(
+                developer_obj.user_id) < developer_obj.usable_number:
+            logger.info(f'app_obj:{app_obj} only and return')
+            return developer_obj, False
+
+    for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id__in=user_objs, is_actived=True,
+                                                            certid__isnull=False).order_by("created_time"):
+        if get_developer_udided(developer_obj)[1] + get_developer_can_used_from_public_sign(
+                developer_obj.user_id) < developer_obj.usable_number:
+            logger.info(f'get suitable developer and return')
+            return developer_obj, False
+    return None, None
 
 
-def get_developer_obj_by_others(user_obj, udid):
-    result, is_exist = get_developer_user_by_app_udid(user_obj, udid)
+def get_developer_obj_by_others(user_obj, udid, app_obj):
+    result, is_exist = get_developer_user_by_app_udid([user_obj], udid, app_obj)
     if result:
         return result
-    receive_user_obj_list = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj).all()
-    for receive_user_obj in receive_user_obj_list:
-        result, is_exist = get_developer_user_by_app_udid(receive_user_obj.user_id, udid)
-        if result is None:
-            continue
-        else:
-            f_count = get_ios_developer_public_num(user_obj)
-            if not is_exist and f_count > 0:
-                logger.warning(f"user receive_user_obj {receive_user_obj.user_id} developer to sign")
-                return result
-            if is_exist:
-                if f_count > 0:
-                    return result
-                if f_count == 0 and udid in [x.get('udid__udid__udid') for x in
-                                             APPSuperSignUsedInfo.objects.filter(user_id=user_obj).values(
-                                                 'udid__udid__udid').all()]:
-                    return result
-    return None
+    receive_user_id_list = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj).values('user_id').distinct()
+
+    result, is_exist = get_developer_user_by_app_udid(UserInfo.objects.filter(pk__in=receive_user_id_list), udid,
+                                                      app_obj)
+    f_count = get_ios_developer_public_num(user_obj)
+
+    if (f_count == 0 and is_exist) or f_count > 0:
+        return result
 
 
 class IosUtils(object):
@@ -307,7 +304,7 @@ class IosUtils(object):
         self.get_developer_auth()
 
     def get_developer_auth(self):
-        self.developer_obj = get_developer_obj_by_others(self.user_obj, self.udid)
+        self.developer_obj = get_developer_obj_by_others(self.user_obj, self.udid, self.app_obj)
         if self.developer_obj:
             self.auth = get_auth_form_developer(self.developer_obj)
         else:
@@ -659,7 +656,7 @@ class IosUtils(object):
                 with cache.lock(register_devices_prefix, timeout=60):
                     if CleanErrorBundleIdSignDataState.get_state(add_new_bundles_prefix):
                         return True, True  # 程序错误，进行清理的时候，拦截多余的设备注册
-                    if not get_developer_obj_by_others(self.user_obj, self.udid):
+                    if not get_developer_obj_by_others(self.user_obj, self.udid, self.app_obj):
                         d_result['code'] = 1005
                         return False, d_result
                     status, did_udid_result = IosUtils.check_or_register_devices(self.app_obj, self.user_obj,

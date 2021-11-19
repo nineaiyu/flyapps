@@ -9,7 +9,9 @@ import base64
 import datetime
 import logging
 import os
+import time
 from collections import namedtuple
+from functools import wraps
 
 import jwt
 import requests
@@ -648,6 +650,33 @@ class Certificates(namedtuple("Certificates",
         return filepath
 
 
+def call_function_try_attempts(try_attempts=3, sleep_time=1):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            res = False, {}
+            start_time = time.time()
+            flag = False
+            for i in range(try_attempts):
+                try:
+                    res = func(*args, **kwargs)
+                    flag = True
+                    break
+                except Exception as e:
+                    logger.warning(
+                        f'exec {func} failed. Failed:{e} {try_attempts} times in total. now {sleep_time} later try '
+                        f'again...{i}')
+                    time.sleep(sleep_time)
+            if not flag:
+                logger.error(f'exec {func} failed after the maximum number of attempts. Failed:{res}')
+            logger.info(f"exec {func} finished. time:{time.time() - start_time}")
+            return res
+
+        return wrapper
+
+    return decorator
+
+
 class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, ProfilesAPI, CertificatesAPI):
     BASE_URI = 'https://api.appstoreconnect.apple.com/v1'
     JWT_AUD = 'appstoreconnect-v1'
@@ -744,6 +773,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
     def __bundle_ids_store(self, req, success_code=200):
         return self.__base_format('bundleIds', req, success_code)
 
+    @call_function_try_attempts()
     def get_all_devices(self):
         req = self.list_devices()
         return self.__device_store(req)
@@ -760,10 +790,12 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         req = self.list_profiles()
         return self.__profile_store(req)
 
+    @call_function_try_attempts()
     def get_all_certificates(self):
         req = self.list_certificate()
         return self.__certificates_store(req)
 
+    @call_function_try_attempts()
     def get_certificate_by_cid(self, certificate_id):
         req = self.list_certificate_by_certificate_id(certificate_id)
         return self.__certificates_store(req)
@@ -776,6 +808,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             raise Exception('more than one Device obj')
         return device_obj_list
 
+    @call_function_try_attempts()
     def register_device(self, device_name, device_udid, platform="IOS"):
         device_obj_list = BaseInfoObj.filter(self.get_all_devices(), {"udid": device_udid})
         # 发现同一个开发者账户里面有两个一样的udid，奇了怪
@@ -788,6 +821,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             req = super().register_device(device_name, device_udid, platform)
             return self.__device_store(req, 201)
 
+    @call_function_try_attempts()
     def enabled_device(self, device_id, device_name, udid):
         if device_id and device_name:
             req = super().enabled_device(device_id, device_name)
@@ -799,6 +833,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
                 req = self.modify_registered_device(device_obj.id, device_obj.name, 'ENABLED')
                 return self.__device_store(req)
 
+    @call_function_try_attempts()
     def disabled_device(self, device_id, device_name, udid):
         if device_id and device_name:
             req = super().disabled_device(device_id, device_name)
@@ -819,6 +854,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             return True
         return False
 
+    @call_function_try_attempts()
     def enable_capability_by_s_type(self, bundle_id, s_type):
         capability_list = get_capability(s_type)
         if capability_list:
@@ -830,6 +866,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
                     logger.warning(f"{bundle_id} enable_capability {capability} failed {req.content}")
         return True
 
+    @call_function_try_attempts()
     def disable_capability_by_s_type(self, bundle_id, s_type=len(capability_info) - 1):
         capability_list = get_capability(s_type)
         if capability_list:
@@ -857,6 +894,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
                 return True
         return False
 
+    @call_function_try_attempts()
     def register_bundle_id(self, bundle_id_name, bundle_id_identifier, platform="IOS", seed_id=''):
         identifier_obj = self.list_bundle_ids_by_identifier(bundle_id_identifier)
         if isinstance(identifier_obj, BundleIds):
@@ -866,6 +904,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             req = super().register_bundle_id(bundle_id_name, bundle_id_identifier, platform, seed_id)
             return self.__bundle_ids_store(req, 201)
 
+    @call_function_try_attempts()
     def register_bundle_id_enable_capability(self, bundle_id_name, bundle_id_identifier, s_type, platform="IOS",
                                              seed_id=''):
         bundle_ids = self.register_bundle_id(bundle_id_name, bundle_id_identifier, platform, seed_id)
@@ -873,6 +912,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             if self.enable_capability_by_s_type(bundle_ids.id, s_type):
                 return bundle_ids
 
+    @call_function_try_attempts()
     def delete_bundle_by_identifier(self, identifier_id, identifier_name):
         if identifier_id:
             req = self.delete_bundle_id_by_id(identifier_id)
@@ -884,6 +924,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             if req.status_code == 204:
                 return True
 
+    @call_function_try_attempts()
     def create_profile(self, profile_id, bundle_id, certificate_id, profile_name, device_id_list=None,
                        profile_type='IOS_APP_ADHOC'):
         if device_id_list is None:
@@ -906,6 +947,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         req = super().list_profile_by_profile_name(profile_name)
         return self.__profile_store(req)
 
+    @call_function_try_attempts()
     def delete_profile_by_id(self, profile_id, profile_name):
         if profile_id:
             req = super().delete_profile(profile_id)
@@ -917,12 +959,14 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             if self.__do_success(req, 204):
                 return True
 
+    @call_function_try_attempts()
     def create_certificate(self, csr_content, certificate_type='IOS_DISTRIBUTION'):
         req = super().create_certificate(csr_content, certificate_type)
         if req.status_code == 201:
             return self.__certificates_store(req, 201)
         raise KeyError(req.text)
 
+    @call_function_try_attempts()
     def revoke_certificate(self, certificate_id):
         req = super().revoke_certificate(certificate_id)
         if req.status_code == 204:

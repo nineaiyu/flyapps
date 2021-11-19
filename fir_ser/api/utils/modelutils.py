@@ -146,8 +146,9 @@ def get_user_public_sign_num(user_obj):
 
 def get_user_public_used_sign_num(user_obj):
     used_number = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj, action=0,
-                                                            udid_sync_info__isnull=False).values('number',
-                                                                                                 'udid_sync_info_id').annotate(
+                                                            udid_sync_info__isnull=False).exclude(
+        udid_sync_info__developerid__user_id=user_obj).values('number',
+                                                              'udid_sync_info_id').annotate(
         counts=Count('udid_sync_info_id')).aggregate(number=Sum('number'))
     number = used_number.get("number", 0)
     return number if number else 0

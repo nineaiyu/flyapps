@@ -207,16 +207,16 @@ class AppInfoView(APIView):
                             if new_bundle_id != app_obj.new_bundle_id:
                                 do_sign_flag = 2
                             app_obj.new_bundle_id = new_bundle_id
-                        if new_bundle_id == '':
-                            if new_bundle_id != app_obj.new_bundle_id:
+                        if new_bundle_id == '' or (app_obj.new_bundle_id != new_bundle_id):
+                            if app_obj.bundle_id != app_obj.new_bundle_id:
                                 do_sign_flag = 2
-                            app_obj.new_bundle_id = None
+                            app_obj.new_bundle_id = app_obj.bundle_id
 
                         if new_bundle_name and new_bundle_name != app_obj.name and len(new_bundle_name) > 0:
                             if new_bundle_name != app_obj.new_bundle_name:
                                 do_sign_flag = 2
                             app_obj.new_bundle_name = new_bundle_name
-                        if new_bundle_name == '':
+                        if new_bundle_name == '' or (app_obj.new_bundle_name != new_bundle_name):
                             if app_obj.name != app_obj.new_bundle_name:
                                 do_sign_flag = 2
                             app_obj.new_bundle_name = app_obj.name
@@ -244,16 +244,13 @@ class AppInfoView(APIView):
                     if app_obj.issupersign:
                         c_task = None
                         if do_sign_flag == 1:
-                            c_task = run_resign_task.apply_async((app_obj.app_id, True))
+                            c_task = run_resign_task(app_obj.pk, True)
                         if do_sign_flag == 2:
-                            c_task = run_resign_task.apply_async((app_obj.app_id, False))
+                            c_task = run_resign_task(app_obj.pk, False)
                         if do_sign_flag == 3:
-                            c_task = run_resign_task.apply_async((app_obj.app_id, False, False))
+                            c_task = run_resign_task(app_obj.pk, False, False)
                         if c_task:
-                            msg = c_task.get(propagate=False)
-                            logger.info(f"app {app_obj} run_resign_task msg:{msg}")
-                            if c_task.successful():
-                                c_task.forget()
+                            logger.info(f"app {app_obj} run_resign_task msg:{c_task}")
                     del_cache_response_by_short(app_obj.app_id)
                 except Exception as e:
                     logger.error(f"app_id:{app_id} update Exception:{e}")

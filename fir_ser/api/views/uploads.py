@@ -128,12 +128,8 @@ class AppAnalyseView(APIView):
 
                 app_obj = Apps.objects.filter(bundle_id=data.get("bundleid"), user_id=request.user).first()
                 if app_obj:
-                    if app_obj.issupersign and app_obj.user_id.supersign_active:
-                        c_task = run_resign_task.apply_async((app_obj.app_id, False, False))
-                        msg = c_task.get(propagate=False)
-                        logger.info(f"app {app_obj} run_resign_task msg:{msg}")
-                        if c_task.successful():
-                            c_task.forget()
+                    c_task = run_resign_task(app_obj.pk, False, False)
+                    logger.info(f"app {app_obj} run_resign_task msg:{c_task}")
             else:
                 storage.delete_file(app_tmp_filename)
                 storage.delete_file(png_tmp_filename)

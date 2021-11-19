@@ -303,7 +303,6 @@ class DeveloperDeviceView(APIView):
             super_sign_used_objs = super_sign_used_objs.filter(developerid__issuer_id=developer_id)
         if udid:
             super_sign_used_objs = super_sign_used_objs.filter(udid=udid)
-
         page_obj = PageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=super_sign_used_objs.order_by('-id'),
                                                          request=request,

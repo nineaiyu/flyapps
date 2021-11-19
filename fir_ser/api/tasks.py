@@ -4,11 +4,13 @@
 # author: NinEveN
 # date: 2021/5/27
 
+import logging
+
 from celery import shared_task
 from django.core.cache import cache
 
-from api.models import Apps
-from api.utils.app.supersignutils import IosUtils, resign_by_app_id
+from api.models import Apps, DeveloperAppID
+from api.utils.app.supersignutils import IosUtils, resign_by_app_id_and_developer
 from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_delete_ios_mobile_tmp_file, \
     auto_check_ios_developer_active
 from api.utils.geetest.geetest_utils import check_bypass_status
@@ -17,6 +19,8 @@ from api.utils.storage.storage import get_local_storage
 from api.views.login import get_login_type
 from fir_ser.celery import app
 from fir_ser.settings import LOGIN, CHANGER, REGISTER
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -43,11 +47,26 @@ def run_sign_task(format_udid_info, short, client_ip):
     return msg
 
 
-@shared_task
 def run_resign_task(app_id, need_download_profile=True, force=True):
-    app_obj = Apps.objects.filter(app_id=app_id).first()
-    with cache.lock("%s_%s" % ('task_resign', app_id), timeout=60 * 60):
-        return resign_by_app_id(app_obj, need_download_profile, force)
+    app_obj = Apps.objects.filter(pk=app_id).first()
+    if app_obj.issupersign and app_obj.user_id.supersign_active:
+        with cache.lock("%s_%s" % ('task_resign', app_obj.app_id), timeout=60 * 60):
+            task_list = []
+            for developer_app_id_obj in DeveloperAppID.objects.filter(app_id=app_obj).all():
+                c_task = run_resign_task_do.apply_async((app_id, developer_app_id_obj.developerid.pk,
+                                                         developer_app_id_obj.aid, need_download_profile, force))
+                task_list.append(c_task)
+            for c_task in task_list:
+                msg = c_task.get(propagate=False)
+                logger.info(f"app {app_obj} run_resign_task msg:{msg}")
+                if c_task.successful():
+                    c_task.forget()
+    return True
+
+
+@shared_task
+def run_resign_task_do(app_id, developer_id, developer_app_id, need_download_profile=True, force=True):
+    return resign_by_app_id_and_developer(app_id, developer_id, developer_app_id, need_download_profile, force)
 
 
 @app.task

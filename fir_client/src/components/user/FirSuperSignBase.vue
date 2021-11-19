@@ -180,7 +180,7 @@
             clearable
             placeholder="输入开发者用户ID"
             style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
-        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(pagination.currentPage)">
+        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
         <div style="width: 43%;margin-right: 30px;float:right">
@@ -401,7 +401,7 @@
             clearable
             placeholder="输入开发者用户ID"
             style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
-        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(pagination.currentPage)">
+        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
         <el-button @click="syncalldevices">
@@ -446,6 +446,17 @@
           </el-table-column>
           <el-table-column
               align="center"
+              label="设备状态"
+              width="110">
+            <template slot-scope="scope">
+              <el-tag v-if="!scope.row.status" type="info">禁用</el-tag>
+              <el-tag v-else>
+                启用
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
               label="开发者ID"
               prop="developer_id"
               width="200">
@@ -471,7 +482,7 @@
             clearable
             placeholder="输入用户ID"
             style="width: 23%;margin-right: 30px;margin-bottom: 10px"/>
-        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(pagination.currentPage)">
+        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
 
@@ -540,7 +551,7 @@
             clearable
             placeholder="输入BundleID"
             style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
-        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(pagination.currentPage)">
+        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
 
@@ -634,7 +645,7 @@
             placeholder="输入UDID"
             style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
 
-        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(pagination.currentPage)">
+        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
         <div style="width: 40%;margin-right: 30px;float:right">
@@ -1125,7 +1136,7 @@ export default {
                 if (this.balance_info.all_balance - this.balance_info.used_balance < 0) {
                   this.bill_percent = 100;
                 } else {
-                  this.bill_percent = Number(this.balance_info.used_balance * 100 / this.balance_info.all_balance);
+                  this.bill_percent = parseInt(this.balance_info.used_balance * 100 / this.balance_info.all_balance);
                 }
               }
             }
