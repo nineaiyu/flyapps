@@ -19,8 +19,6 @@ class FlowerService(BaseService):
             'celery', '-A',
             'fir_ser', 'flower',
             '-l', 'INFO',
-            '--uid', self.uid,
-            '--gid', self.gid,
             '--url_prefix=/flower',
             '--auto_refresh=False',
             '--max_tasks=1000',
@@ -29,6 +27,10 @@ class FlowerService(BaseService):
             # '--basic_auth=flower:ninevenxxx'
             # '--tasks_columns=uuid,name,args,state,received,started,runtime,worker'
         ]
+        if self.uid:
+            cmd.extend(['--uid', self.uid])
+        if self.gid:
+            cmd.extend(['--gid', self.gid])
         return cmd
 
     @property

@@ -20,11 +20,14 @@ class BeatService(BaseService):
             'celery', '-A',
             'fir_ser', 'beat',
             '-l', 'INFO',
-            '--uid', self.uid,
-            '--gid', self.gid,
             '--scheduler', scheduler,
             '--max-interval', '60'
         ]
+        if self.uid:
+            cmd.extend(['--uid', self.uid])
+        if self.gid:
+            cmd.extend(['--gid', self.gid])
+
         return cmd
 
     @property

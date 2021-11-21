@@ -26,12 +26,14 @@ class CeleryBaseService(BaseService):
             'celery', '-A',
             'fir_ser', 'worker',
             '-l', 'INFO',
-            '--uid', self.uid,
-            '--gid', self.gid,
             '-c', str(self.num),
             '-Q', self.queue,
             '-n', f'{self.queue}@{server_hostname}'
         ]
+        if self.uid:
+            cmd.extend(['--uid', self.uid])
+        if self.gid:
+            cmd.extend(['--gid', self.gid])
         return cmd
 
     @property

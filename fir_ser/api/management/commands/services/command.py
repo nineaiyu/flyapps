@@ -105,8 +105,8 @@ class BaseActionCommand(BaseCommand):
         parser.add_argument('-usm', '--uwsgi_socket_mode', nargs="?", const=True,
                             help='run to bind socket mode, default http mode, only uwsgi service')
         parser.add_argument('-f', '--force', nargs="?", const=True)
-        parser.add_argument('-u', '--uid', nargs="?", default='root', type=str)
-        parser.add_argument('-g', '--gid', nargs="?", default='root', type=str)
+        parser.add_argument('-u', '--uid', nargs="?", default='', type=str)
+        parser.add_argument('-g', '--gid', nargs="?", default='', type=str)
 
     def initial_util(self, *args, **options):
         service_names = options.get('services')

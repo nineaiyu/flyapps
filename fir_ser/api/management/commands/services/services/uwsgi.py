@@ -20,8 +20,6 @@ class UwsgiService(BaseService):
         bind = f'{SOCKET_HOST}:{SOCKET_PORT}'
         cmd = [
             'uwsgi',
-            '--uid', self.uid,
-            '--gid', self.gid,
             '--processes', f'{self.processes}',
             '--threads', f'{self.threads}',
             '--wsgi-file', f"{BASE_DIR}/fir_ser/wsgi.py",
@@ -32,7 +30,10 @@ class UwsgiService(BaseService):
             '--enable-threads',
             '--master',
         ]
-
+        if self.uid:
+            cmd.extend(['--uid', self.uid])
+        if self.gid:
+            cmd.extend(['--gid', self.gid])
         if self.uwsgi_socket_mode:
             cmd.extend(['--socket', bind])
         else:
