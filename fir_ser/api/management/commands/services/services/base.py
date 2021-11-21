@@ -120,7 +120,8 @@ class BaseService(object):
 
     # -- action --
     def open_subprocess(self):
-        self.set_work_dir_owner()
+        if os.getuid() == 0:
+            self.set_work_dir_owner()
         kwargs = {'cwd': self.cwd, 'stderr': self.log_file, 'stdout': self.log_file}
         self._process = subprocess.Popen(self.cmd, **kwargs)
 
