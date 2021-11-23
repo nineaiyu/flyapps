@@ -72,10 +72,11 @@ class DownloadView(APIView):
                 else:
                     release_obj = AppReleaseInfo.objects.filter(release_id=release_id).first()
                 if release_obj:
-                    storage = Storage(release_obj.app_id.user_id)
-                    bundle_id = release_obj.app_id.bundle_id
+                    app_obj = release_obj.app_id
+                    storage = Storage(app_obj.user_id)
+                    bundle_id = app_obj.bundle_id
                     app_version = release_obj.app_version
-                    name = release_obj.app_id.name
+                    name = app_obj.name
                     ios_plist_bytes = make_resigned(storage.get_download_url(filename.split('.')[0] + ".ipa"),
                                                     storage.get_download_url(release_obj.icon_url), bundle_id,
                                                     app_version, name)
