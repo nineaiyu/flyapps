@@ -265,14 +265,14 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj):
     # 根据app查找开发者账户
     for developer_obj in AppIOSDeveloperInfo.objects.filter(
             pk__in=developer_udid_obj_list.filter(developerid__apptodeveloper__app_id=app_obj)):
-        if get_developer_udided(developer_obj)[1] + get_developer_can_used_from_public_sign(
+        if get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
                 developer_obj.user_id) < developer_obj.usable_number:
             logger.info(f'app_obj:{app_obj} only and return')
             return developer_obj, False
 
     for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id__in=user_objs, is_actived=True,
                                                             certid__isnull=False).order_by("created_time"):
-        if get_developer_udided(developer_obj)[1] + get_developer_can_used_from_public_sign(
+        if get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
                 developer_obj.user_id) < developer_obj.usable_number:
             logger.info(f'get suitable developer and return')
             return developer_obj, False

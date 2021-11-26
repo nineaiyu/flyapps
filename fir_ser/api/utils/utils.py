@@ -47,7 +47,8 @@ def get_developer_udided(developer_obj):
         developer_udid_lists = list(udid_sync_developer_obj.values_list("udid"))
     if super_sing_used_obj:
         super_sign_udid_lists = list(super_sing_used_obj.values_list("udid__udid__udid"))
-    return len(set(developer_udid_lists) - set(super_sign_udid_lists)), len(set(super_sign_udid_lists))
+    return len(set(developer_udid_lists) - set(super_sign_udid_lists)), len(set(super_sign_udid_lists)), len(
+        set(developer_udid_lists))
 
 
 def get_developer_devices(developer_obj_lists):
@@ -55,7 +56,7 @@ def get_developer_devices(developer_obj_lists):
     flyapp_used_sum = 0
     max_total = 0
     for dev_obj in developer_obj_lists:
-        other_used, flyapp_used = get_developer_udided(dev_obj)
+        other_used, flyapp_used, _ = get_developer_udided(dev_obj)
         other_used_sum += other_used
         flyapp_used_sum += flyapp_used
         max_total += 100
