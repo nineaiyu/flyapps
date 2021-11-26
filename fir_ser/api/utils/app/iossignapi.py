@@ -209,7 +209,7 @@ class AppDeveloperApiV2(object):
             certificates = apple_obj.get_all_certificates()
             result['data'] = certificates
             logger.info(f"ios developer active result:{certificates}")
-            if len(certificates) > 0:
+            if len(certificates) >= 0:
                 return True, result
         except Exception as e:
             logger.error(f"ios developer active Failed Exception:{e}")

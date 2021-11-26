@@ -155,6 +155,12 @@ def del_short_cache(short):
         cache.delete(app_download_key)
 
 
+def del_make_token_key_cache(release_id):
+    key = "_".join(['', CACHE_KEY_TEMPLATE.get("make_token_key"), f"{release_id}*"])
+    for make_token_key in cache.iter_keys(key):
+        cache.delete(make_token_key)
+
+
 def del_cache_response_by_short_util(short, app_id, udid):
     logger.info(f"del_cache_response_by_short short:{short} app_id:{app_id} udid:{udid}")
     del_short_cache(short)
@@ -170,6 +176,7 @@ def del_cache_response_by_short_util(short, app_id, udid):
         cache.delete("_".join([key, download_val, master_release_dict.get('release_id'), udid]))
         cache.delete(
             "_".join([key, CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id'), udid]))
+        del_make_token_key_cache(master_release_dict.get('release_id'))
 
 
 def del_cache_by_delete_app(app_id):

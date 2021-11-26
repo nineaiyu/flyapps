@@ -251,13 +251,13 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj):
 
     # 根据udid和应用查找该用户开发者账户【主要可能是开发者未激活】
     developer_obj = AppIOSDeveloperInfo.objects.filter(
-        pk__in=developer_udid_obj_list.filter(udid=udid, developerid__apptodeveloper__app_id=app_obj)).first()
+        pk__in=developer_udid_obj_list.filter(udid=udid, developerid__apptodeveloper__app_id=app_obj)).last()
     if developer_obj:
         logger.info(f'udid:{udid} app_obj:{app_obj} return')
         return developer_obj, True
 
     # 根据udid查找开发者账户
-    developer_obj = AppIOSDeveloperInfo.objects.filter(pk__in=developer_udid_obj_list.filter(udid=udid)).first()
+    developer_obj = AppIOSDeveloperInfo.objects.filter(pk__in=developer_udid_obj_list.filter(udid=udid)).last()
     if developer_obj:
         logger.info(f'udid:{udid} only and return')
         return developer_obj, True

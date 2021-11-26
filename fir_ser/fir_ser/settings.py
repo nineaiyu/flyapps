@@ -179,6 +179,8 @@ REST_FRAMEWORK_EXTENSIONS = {
     # 缓存存储
     'DEFAULT_USE_CACHE': 'default',
 }
+# 取消自动加斜杠
+APPEND_SLASH = False
 
 # geetest 配置信息
 GEETEST_ID = BASECONF.GEETEST_ID

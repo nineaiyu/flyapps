@@ -158,14 +158,16 @@ def get_developer_can_used_from_public_sign(user_obj):
     o_number_info = IosDeveloperPublicPoolBill.objects.filter(to_user_id__isnull=False, user_id=user_obj).values(
         'number').aggregate(number=Sum('number'))
     o_number = o_number_info.get("number", 0)
-
+    if o_number is None:
+        o_number = 0
     u_number_info = IosDeveloperPublicPoolBill.objects.filter(
         user_id_id__in=IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj).values('to_user_id_id')).values(
         'number',
         'udid_sync_info_id').annotate(
         counts=Count('udid_sync_info_id')).aggregate(number=Sum('number'))
     u_number = u_number_info.get("number", 0)
-
+    if u_number is None:
+        u_number = 0
     return o_number - u_number
 
 
