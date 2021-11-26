@@ -187,7 +187,9 @@
           <el-link :underline="false">私有总设备量：{{ developer_used_info.all_usable_number }} 已经使用：【平台：{{
               developer_used_info.all_use_number
             }} 】【其他：{{ developer_used_info.other_used_sum }}】
-            还剩：{{ developer_used_info.all_usable_number - developer_used_info.flyapp_used_sum }} 可用
+            还剩：{{
+              developer_used_info.all_usable_number - developer_used_info.flyapp_used_sum - developer_used_info.other_used_sum
+            }} 可用
           </el-link>
           <el-progress
               :color="developer_usedColor"
@@ -1083,7 +1085,7 @@ export default {
           if (data.use_num) {
             this.developer_used_info = data.use_num;
             if (this.developer_used_info.all_usable_number !== 0) {
-              let p = parseInt(this.developer_used_info.flyapp_used_sum * 100 / this.developer_used_info.all_usable_number);
+              let p = parseInt((this.developer_used_info.flyapp_used_sum + this.developer_used_info.other_used_sum) * 100 / this.developer_used_info.all_usable_number);
               if (p < 0 || p >= 100) {
                 p = 100
               }
