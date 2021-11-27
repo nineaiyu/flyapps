@@ -51,6 +51,12 @@ def get_developer_udided(developer_obj):
         set(developer_udid_lists))
 
 
+def usable_number(developer_obj):
+    d_count = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).count()
+    u_count = developer_obj.usable_number
+    return d_count if d_count > u_count else u_count
+
+
 def get_developer_devices(developer_obj_lists):
     other_used_sum = 0
     flyapp_used_sum = 0
@@ -65,7 +71,7 @@ def get_developer_devices(developer_obj_lists):
     all_use_number = 0
     all_usable_number = 0
     for use_number_obj in use_number_obj_list:
-        all_usable_number += use_number_obj.usable_number
+        all_usable_number += usable_number(use_number_obj)
         all_use_number += DeveloperDevicesID.objects.filter(developerid=use_number_obj).values(
             'udid').distinct().count()
     use_num = {
