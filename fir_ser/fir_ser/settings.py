@@ -94,6 +94,7 @@ DATABASES = {
         'HOST': DBCONF.host,
         'PORT': DBCONF.port,
         'CONN_MAX_AGE': 3600,
+        'CONN_MAX_AGE': 600,
         # 设置MySQL的驱动
         # 'OPTIONS': {'init_command': 'SET storage_engine=INNODB'},
         'OPTIONS': {'init_command': 'SET sql_mode="STRICT_TRANS_TABLES"', 'charset': 'utf8mb4'}

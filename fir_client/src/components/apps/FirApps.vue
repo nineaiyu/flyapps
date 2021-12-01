@@ -703,6 +703,7 @@ export default {
 
                 } else {
                   this.$message.error("应用 " + analyseappinfo.appname + " 上传token获取失败，请刷新重试")
+                  this.multiFileList.splice(this.multiFileList.indexOf(file), 1)
                 }
                 loading.close();
               }, {
@@ -712,10 +713,12 @@ export default {
 
             } else {
               this.$message.error("文件 " + file.raw.name + " 解析失败,请检查是否为APP应用")
+              this.multiFileList.splice(this.multiFileList.indexOf(file), 1)
             }
           }, err => {
             loading.close();
             this.$message.error("应用解析失败,请检查是否为APP应用");
+            this.multiFileList.splice(this.multiFileList.indexOf(file), 1)
             // eslint-disable-next-line no-console
             console.log('Error ', err);
           });
