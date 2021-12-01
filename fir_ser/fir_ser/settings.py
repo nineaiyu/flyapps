@@ -93,12 +93,29 @@ DATABASES = {
         'PASSWORD': DBCONF.password,
         'HOST': DBCONF.host,
         'PORT': DBCONF.port,
-        'CONN_MAX_AGE': 3600,
         'CONN_MAX_AGE': 600,
         # 设置MySQL的驱动
         # 'OPTIONS': {'init_command': 'SET storage_engine=INNODB'},
         'OPTIONS': {'init_command': 'SET sql_mode="STRICT_TRANS_TABLES"', 'charset': 'utf8mb4'}
     }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': DBCONF.name,
+    #     'USER': DBCONF.user,
+    #     'PASSWORD': DBCONF.password,
+    #     'HOST': DBCONF.host,
+    #     'PORT': DBCONF.port,
+    #     'CONN_MAX_AGE': 3600,
+    #     'OPTIONS': {
+    #         'client_encoding': 'UTF8',
+    #         # 'default_transaction_isolation': 'read committed'
+    #
+    #     },
+    # }
+    # https://www.postgresql.org/download/linux/redhat/
+    # psql -U postgres
+    # CREATE USER flyuser WITH PASSWORD 'KGzKjZpWBp4R4RSa';
+    # create database flyapp with owner=flyuser;
 
 }
 
