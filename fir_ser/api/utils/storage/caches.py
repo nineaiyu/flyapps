@@ -117,7 +117,8 @@ def get_app_instance_by_cache(app_id, password, limit, udid):
         if app_obj_cache:
             app_obj_cache['d_count'] = get_app_d_count_by_app_id(app_id)
             cache.set(app_key, app_obj_cache, limit)
-
+    if not app_obj_cache:
+        return None
     app_password = app_obj_cache.get("password")
 
     if not check_app_password(app_password, password):

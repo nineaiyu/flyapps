@@ -224,7 +224,7 @@ class InstallView(APIView):
         password = query_params.get("password", None)
         udid = query_params.get("udid", None)
 
-        if not downtoken or not short or not release_id:
+        if not downtoken or not short or not release_id or not app_id:
             res.code = 1004
             res.msg = "参数丢失"
             return Response(res.dict)

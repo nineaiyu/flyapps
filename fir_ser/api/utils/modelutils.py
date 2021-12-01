@@ -88,7 +88,10 @@ def add_remote_info_from_request(request, description):
         'a_domain': get_origin_domain_name(request)[0:127],
         'description': description[0:255]
     }
-    RemoteClientInfo.objects.create(**remote_info)
+    try:
+        RemoteClientInfo.objects.create(**remote_info)
+    except Exception as e:
+        logger.error(e)
 
 
 def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
