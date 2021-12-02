@@ -207,6 +207,8 @@ class AppDeveloperApiV2(object):
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             certificates = apple_obj.get_all_certificates()
+            if not isinstance(certificates, list):
+                certificates = [certificates]
             result['data'] = certificates
             logger.info(f"ios developer active result:{certificates}")
             if len(certificates) >= 0:
@@ -285,6 +287,8 @@ class AppDeveloperApiV2(object):
             not_after = datetime.datetime.strptime(cer.get_notAfter().decode('utf-8'), "%Y%m%d%H%M%SZ")
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             certificates = apple_obj.get_all_certificates()
+            if not isinstance(certificates, list):
+                certificates = [certificates]
             for cert_obj in certificates:
                 f_date = format_apple_date(cert_obj.expirationDate)
                 logger.info(f"{cert_obj.id}-{not_after.timestamp()} - {f_date.timestamp()} ")
