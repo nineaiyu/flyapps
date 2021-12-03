@@ -789,12 +789,15 @@ class IosUtils(object):
             APPSuperSignUsedInfo.objects.values_list("udid__udid__udid").filter(developerid=developer_obj))
 
         for SuperSignUsed_obj in APPSuperSignUsedInfo.objects.filter(app_id=app_obj, developerid=developer_obj):
-            udid_obj = SuperSignUsed_obj.udid
-            IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj)
-            SuperSignUsed_obj.delete()
-            DeveloperDevicesID.objects.filter(udid__appudid=udid_obj, developerid=developer_obj,
-                                              app_id=app_obj).delete()
-            udid_obj.delete()
+            try:
+                udid_obj = SuperSignUsed_obj.udid
+                IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj)
+                SuperSignUsed_obj.delete()
+                DeveloperDevicesID.objects.filter(udid__appudid=udid_obj, developerid=developer_obj,
+                                                  app_id=app_obj).delete()
+                udid_obj.delete()
+            except Exception as e:
+                logger.error(f"clean_udid_by_app_obj e {e}")
 
     @staticmethod
     def clean_app_by_user_obj(app_obj):
