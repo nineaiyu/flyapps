@@ -203,24 +203,26 @@ class AppInfoView(APIView):
                             update_fields.append("supersign_type")
                         new_bundle_id = data.get("new_bundle_id", None)
                         new_bundle_name = data.get("new_bundle_name", None)
-                        if new_bundle_id and new_bundle_id != app_obj.bundle_id and len(new_bundle_id) > 3:
-                            if new_bundle_id != app_obj.new_bundle_id:
-                                do_sign_flag = 2
-                            app_obj.new_bundle_id = new_bundle_id
-                        if new_bundle_id == '' or (app_obj.new_bundle_id != new_bundle_id):
-                            if app_obj.bundle_id != app_obj.new_bundle_id:
-                                do_sign_flag = 2
-                            app_obj.new_bundle_id = app_obj.bundle_id
-
-                        if new_bundle_name and new_bundle_name != app_obj.name and len(new_bundle_name) > 0:
-                            if new_bundle_name != app_obj.new_bundle_name:
-                                do_sign_flag = 2
-                            app_obj.new_bundle_name = new_bundle_name
-                        if new_bundle_name == '' or (app_obj.new_bundle_name != new_bundle_name):
-                            if app_obj.name != app_obj.new_bundle_name:
-                                do_sign_flag = 2
-                            app_obj.new_bundle_name = app_obj.name
-                        update_fields.extend(["new_bundle_name", "new_bundle_id"])
+                        if new_bundle_id is not None:
+                            if new_bundle_id and new_bundle_id != app_obj.bundle_id and len(new_bundle_id) > 3:
+                                if new_bundle_id != app_obj.new_bundle_id:
+                                    do_sign_flag = 2
+                                app_obj.new_bundle_id = new_bundle_id
+                            if new_bundle_id == '' or (app_obj.new_bundle_id != new_bundle_id):
+                                if app_obj.bundle_id != app_obj.new_bundle_id:
+                                    do_sign_flag = 2
+                                app_obj.new_bundle_id = app_obj.bundle_id
+                            update_fields.append('new_bundle_id')
+                        if new_bundle_name is not None:
+                            if new_bundle_name and new_bundle_name != app_obj.name and len(new_bundle_name) > 0:
+                                if new_bundle_name != app_obj.new_bundle_name:
+                                    do_sign_flag = 2
+                                app_obj.new_bundle_name = new_bundle_name
+                            if new_bundle_name == '' or (app_obj.new_bundle_name != new_bundle_name):
+                                if app_obj.name != app_obj.new_bundle_name:
+                                    do_sign_flag = 2
+                                app_obj.new_bundle_name = app_obj.name
+                            update_fields.append('new_bundle_name')
                     app_obj.wxredirect = data.get("wxredirect", app_obj.wxredirect)
                     update_fields.append("wxredirect")
                     if app_obj.type == 1 and data.get('issupersign', -1) != -1:
