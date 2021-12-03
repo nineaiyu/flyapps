@@ -374,9 +374,9 @@ class IosUtils(object):
         new_file = os.path.join(MEDIA_ROOT, random_file_name + ".ipa")
         properties_info = {}
         if app_obj.new_bundle_id:
-            properties_info = {'-b': app_obj.new_bundle_id}
+            properties_info.update({'-b': app_obj.new_bundle_id})
         if app_obj.new_bundle_name:
-            properties_info = {'-n': app_obj.new_bundle_name}
+            properties_info.update({'-n': app_obj.new_bundle_name})
         status, result = resign_app_obj.sign(get_profile_full_path(developer_obj, app_obj), org_file, new_file,
                                              properties_info)
         if status:

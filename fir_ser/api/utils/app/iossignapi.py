@@ -337,6 +337,8 @@ class AppDeveloperApiV2(object):
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             devices_obj_list = apple_obj.get_all_devices()
+            if not isinstance(devices_obj_list, list):
+                devices_obj_list = [devices_obj_list]
             if devices_obj_list is not None:
                 return True, devices_obj_list
         except Exception as e:
