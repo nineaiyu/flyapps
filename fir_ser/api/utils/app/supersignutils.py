@@ -13,6 +13,7 @@ from functools import wraps
 
 import xmltodict
 from django.core.cache import cache
+from django.db.models import Count
 
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
     UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo
@@ -269,12 +270,21 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj):
                 developer_obj.user_id) < developer_obj.usable_number:
             logger.info(f'app_obj:{app_obj} only and return')
             return developer_obj, False
-
+    can_used_developer_pk_list = []
     for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id__in=user_objs, is_actived=True,
                                                             certid__isnull=False).order_by("created_time"):
         if get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
                 developer_obj.user_id) < developer_obj.usable_number:
-            logger.info(f'get suitable developer and return')
+            can_used_developer_pk_list.append(developer_obj.pk)
+
+    # 查询开发者策略 按照最小注册设备数进行查找，这样可以分散，进而使应用趋向于一个开发者，为后期更新提供方便
+    if can_used_developer_pk_list:
+        developer_obj_dict = AppIOSDeveloperInfo.objects.filter(pk__in=can_used_developer_pk_list).values(
+            'udidsyncdeveloper', 'pk').annotate(
+            count=Count('pk')).order_by('created_time').order_by('count').first()
+        if developer_obj_dict:
+            developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_obj_dict.get('pk')).first()
+            logger.info(f'get suitable developer {developer_obj} and return')
             return developer_obj, False
     return None, None
 
