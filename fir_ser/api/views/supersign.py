@@ -439,10 +439,10 @@ class DeviceUsedRankInfoView(APIView):
                 app_used_sign_objs = app_used_sign_objs.filter(created_time__range=[start_time, end_time])
             except Exception as e:
                 logger.error(f"get time range failed {e}")
-        res.count = app_used_sign_objs.count()
 
         app_used_sign_objs = app_used_sign_objs.values('app_id__app_id', 'app_id__name', 'app_id__bundle_id').annotate(
             count=Count('app_id__app_id')).order_by('-count')
+        res.count = app_used_sign_objs.count()
 
         app_used_sign_infos = page_obj.paginate_queryset(queryset=app_used_sign_objs,
                                                          request=request, view=self)
