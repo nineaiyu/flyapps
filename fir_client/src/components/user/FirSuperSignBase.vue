@@ -723,6 +723,65 @@
         </el-table>
 
       </el-tab-pane>
+      <el-tab-pane label="设备消耗统计" name="devicesrank">
+        <el-input
+            v-model="appnamesearch"
+            clearable
+            placeholder="输入应用名称或BundleID"
+            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+        <el-date-picker
+            v-model="timerangesearch"
+            :picker-options="pickerOptions"
+            align="right"
+            end-placeholder="结束日期"
+            range-separator="至"
+            start-placeholder="开始日期"
+            style="width: 30%;margin-right: 30px;margin-bottom: 10px"
+            type="daterange"
+            unlink-panels
+            value-format="timestamp">
+        </el-date-picker>
+        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
+          搜索
+        </el-button>
+
+        <el-table
+            v-loading="loading"
+            :data="app_rank_lists"
+            border
+            stripe
+            style="width: 100%">
+
+          <el-table-column
+              align="center"
+              fixed
+              label="应用名称"
+              prop="name"
+          >
+            <template slot-scope="scope">
+              <el-tooltip content="点击查看设备安装详细信息" effect="dark" placement="top">
+                <el-link :underline="false" @click="show_device_uinfo(scope.row.bundle_id)">
+                  {{ scope.row.name }}
+                </el-link>
+              </el-tooltip>
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="应用ID"
+              prop="bundle_id">
+
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="消耗设备数"
+              prop="count"
+              width="100"
+          >
+          </el-table-column>
+        </el-table>
+
+      </el-tab-pane>
       <div v-if="activeName!== 'adddeveloper'" style="margin-top: 20px">
         <el-pagination
             :current-page.sync="pagination.currentPage"
@@ -741,7 +800,15 @@
 
 <script>
 
-import {developercert, DeviceBillInfo, iosdeveloper, iosdevices, iosdevicesudid, iosudevices} from "@/restful";
+import {
+  developercert,
+  DeviceBillInfo,
+  DeviceRankInfo,
+  iosdeveloper,
+  iosdevices,
+  iosdevicesudid,
+  iosudevices
+} from "@/restful";
 import {getUserInfoFun, removeAaary} from "@/utils";
 
 export default {
@@ -757,12 +824,15 @@ export default {
       app_developer_lists: [],
       app_devices_lists: [],
       app_bill_lists: [],
+      app_rank_lists: [],
       app_bill_info_lists: [],
       app_udid_lists: [],
       activeName: "iosdeveloper",
       udidsearch: "",
       Bundleidsearch: "",
       appidseach: "",
+      appnamesearch: "",
+      timerangesearch: [],
       dialogaddDeveloperVisible: false,
       importcertDeveloperVisible: false,
       title: "",
@@ -778,6 +848,40 @@ export default {
       loadingfun: {},
       loading: false,
       cert_pwd: '',
+      pickerOptions: {
+        shortcuts: [{
+          text: '今天',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            picker.$emit('pick', [start, end]);
+          }
+        }, {
+          text: '最近一周',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+            picker.$emit('pick', [start, end]);
+          }
+        }, {
+          text: '最近一个月',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+            picker.$emit('pick', [start, end]);
+          }
+        }, {
+          text: '最近三个月',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+            picker.$emit('pick', [start, end]);
+          }
+        }]
+      },
     }
   }, watch: {
     'dialogaddDeveloperVisible': function () {
@@ -1009,6 +1113,11 @@ export default {
         });
       });
     },
+    show_device_uinfo(bundle_id) {
+      this.Bundleidsearch = bundle_id;
+      this.activeName = 'useddevices'
+      this.get_data_from_tabname(this.activeName);
+    },
     get_data_from_tabname(tabname, data = {}) {
       data.udid = this.udidsearch.replace(/^\s+|\s+$/g, "");
       data.bundleid = this.Bundleidsearch.replace(/^\s+|\s+$/g, "");
@@ -1026,6 +1135,13 @@ export default {
         this.iosdeveloperFun({"methods": "GET", "data": data})
       } else if (tabname === "devicesbill") {
         this.iosdevicebillFun({"methods": "GET", "data": data})
+      } else if (tabname === "devicesrank") {
+        if (this.timerangesearch && this.timerangesearch.length === 2) {
+          data.start_time = this.timerangesearch[0];
+          data.end_time = this.timerangesearch[1];
+        }
+        data.appnamesearch = this.appnamesearch.replace(/^\s+|\s+$/g, "");
+        this.iosdevicerankFun({"methods": "GET", "data": data})
       } else if (tabname === "iosudevices") {
         this.iosudevicesFun("GET", data, null)
       }
@@ -1145,6 +1261,18 @@ export default {
           }
         } else {
           this.$message.error("操作失败了 " + data.msg);
+        }
+        this.loading = false
+      }, params)
+    },
+    iosdevicerankFun(params) {
+      this.loading = true;
+      DeviceRankInfo(data => {
+        if (data.code === 1000) {
+          this.app_rank_lists = data.data;
+          this.pagination.total = data.count;
+        } else {
+          this.$message.error("信息获取失败了 " + data.msg);
         }
         this.loading = false
       }, params)

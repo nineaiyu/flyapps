@@ -724,6 +724,21 @@ export function DeviceBillInfo(callBack, params, load = true) {
     );
 }
 
+/**签名下载排行 */
+export function DeviceRankInfo(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/supersign/rank',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 /**应用举报 */
 export function appReport(callBack, params, load = true) {
     getData(

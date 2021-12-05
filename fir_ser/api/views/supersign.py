@@ -3,6 +3,7 @@
 # project: 3月 
 # author: liuyu
 # date: 2020/3/4
+import datetime
 import logging
 
 from django.db.models import Count, Q
@@ -11,7 +12,8 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, UDIDsyncDeveloper
+from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, \
+    UDIDsyncDeveloper
 from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
 from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num
@@ -211,8 +213,9 @@ class DeveloperView(APIView):
 
         if developer_obj:
             logger.error(f"user {request.user} delete developer {developer_obj}")
-            IosUtils.clean_developer(developer_obj, request.user)
-            IosUtils.revoke_developer_cert(developer_obj, request.user)
+            if developer_obj.certid:
+                IosUtils.clean_developer(developer_obj, request.user)
+                IosUtils.revoke_developer_cert(developer_obj, request.user)
             developer_obj.delete()
 
         return self.get(request)
@@ -412,4 +415,43 @@ class DeviceUsedBillView(APIView):
                 'used_balance': get_user_public_used_sign_num(request.user),
                 'all_balance': get_user_public_sign_num(request.user)
             }
+        return Response(res.dict)
+
+
+class DeviceUsedRankInfoView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [SuperSignPermission, ]
+
+    def get(self, request):
+        res = BaseResponse()
+        page_obj = PageNumber()
+        appnamesearch = request.query_params.get("appnamesearch")
+        start_time = request.query_params.get("start_time")
+        end_time = request.query_params.get("end_time")
+        app_used_sign_objs = APPSuperSignUsedInfo.objects.filter(user_id=request.user)
+        if appnamesearch:
+            app_used_sign_objs = app_used_sign_objs.filter(
+                Q(app_id__name=appnamesearch) | Q(app_id__bundle_id=appnamesearch))
+        if end_time and start_time:
+            try:
+                start_time = datetime.date.fromtimestamp(int(start_time) / 1000)
+                end_time = datetime.date.fromtimestamp(int(end_time) / 1000 + 24 * 60 * 60 - 1)
+                app_used_sign_objs = app_used_sign_objs.filter(created_time__range=[start_time, end_time])
+            except Exception as e:
+                logger.error(f"get time range failed {e}")
+        res.count = app_used_sign_objs.count()
+
+        app_used_sign_objs = app_used_sign_objs.values('app_id__app_id', 'app_id__name', 'app_id__bundle_id').annotate(
+            count=Count('app_id__app_id')).order_by('-count')
+
+        app_used_sign_infos = page_obj.paginate_queryset(queryset=app_used_sign_objs,
+                                                         request=request, view=self)
+        new_app_used_sign_infos = []
+        for app_used_info in app_used_sign_infos:
+            new_app_used_info = {}
+            for key, value in app_used_info.items():
+                new_key = key.replace('app_id__', '')
+                new_app_used_info[new_key] = value
+            new_app_used_sign_infos.append(new_app_used_info)
+        res.data = new_app_used_sign_infos
         return Response(res.dict)

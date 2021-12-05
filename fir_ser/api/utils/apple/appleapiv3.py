@@ -654,9 +654,9 @@ def call_function_try_attempts(try_attempts=3, sleep_time=1):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            res = False, {}
             start_time = time.time()
             flag = False
+            res = ''
             for i in range(try_attempts):
                 try:
                     res = func(*args, **kwargs)
@@ -666,10 +666,14 @@ def call_function_try_attempts(try_attempts=3, sleep_time=1):
                     logger.warning(
                         f'exec {func} failed. Failed:{e} {try_attempts} times in total. now {sleep_time} later try '
                         f'again...{i}')
+                    res = str(e)
+                    if 'Authentication credentials are missing or invalid' in str(e):
+                        res = '认证失败，请检查开发者信息填写是否正确'
                     time.sleep(sleep_time)
+            logger.info(f"exec {func} finished. time:{time.time() - start_time}")
             if not flag:
                 logger.error(f'exec {func} failed after the maximum number of attempts. Failed:{res}')
-            logger.info(f"exec {func} finished. time:{time.time() - start_time}")
+                raise Exception(res)
             return res
 
         return wrapper
