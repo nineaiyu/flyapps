@@ -165,6 +165,12 @@ const router = new VueRouter({
                     component: () => import("@/components/user/FirUserAdvert"),
                 },
                 {
+                    path: 'qrcode',
+                    name: 'FirUserQrcode',
+                    meta: {label: '下载码'},
+                    component: () => import("@/components/user/FirUserQrcode"),
+                },
+                {
                     path: 'supersign-help',
                     name: 'FirSuperSignHelp',
                     meta: {label: '密钥获取帮助'},
@@ -194,6 +200,7 @@ const router = new VueRouter({
             path: '/:short',
             name: 'FirDownload',
             component: () => import("@/components/FirDownload"),
+            // component: () => import("@/components/ShortDownload"),
 
         },
     ]

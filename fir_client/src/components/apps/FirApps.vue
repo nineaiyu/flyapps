@@ -1063,9 +1063,6 @@ export default {
 
     },
     onUploadChange(file, fileList) {
-      if (fileList && fileList.length > 1) {
-        this.multiupload = true;
-      }
       this.multiFileList = fileList;
       // eslint-disable-next-line no-unused-vars
       this.timer = setTimeout(data => {
@@ -1075,6 +1072,9 @@ export default {
         }
         clearTimeout(this.timer);
       }, 300);
+      if (fileList && fileList.length > 1) {
+        this.multiupload = true;
+      }
     },
     delApp() {
       let loadingobj = this.$loading({

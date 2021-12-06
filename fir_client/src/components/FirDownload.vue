@@ -1672,6 +1672,24 @@ button:focus {
   }
 }
 
+@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: landscape) {
+  #actions {
+    display: block
+  }
+}
+
+@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: portrait) {
+  #actions {
+    display: block
+  }
+}
+
+@media only screen and (min-device-width: 1024px) and (max-device-width: 1366px) and (orientation: landscape) {
+  #actions {
+    display: block
+  }
+}
+
 #actions.type-android {
   display: block
 }

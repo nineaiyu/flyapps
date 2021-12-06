@@ -709,6 +709,21 @@ export function advertinfo(callBack, params, load = true) {
     );
 }
 
+/**下载码大屏 */
+export function qrcodeinfo(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/qrcode',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 /**签名账单 */
 export function DeviceBillInfo(callBack, params, load = true) {
     getData(

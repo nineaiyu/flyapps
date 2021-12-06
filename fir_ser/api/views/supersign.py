@@ -6,7 +6,7 @@
 import datetime
 import logging
 
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.http.response import FileResponse
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -443,6 +443,7 @@ class DeviceUsedRankInfoView(APIView):
         app_used_sign_objs = app_used_sign_objs.values('app_id__app_id', 'app_id__name', 'app_id__bundle_id').annotate(
             count=Count('app_id__app_id')).order_by('-count')
         res.count = app_used_sign_objs.count()
+        res.number = app_used_sign_objs.aggregate(Sum('count')).get('count__sum')
 
         app_used_sign_infos = page_obj.paginate_queryset(queryset=app_used_sign_objs,
                                                          request=request, view=self)

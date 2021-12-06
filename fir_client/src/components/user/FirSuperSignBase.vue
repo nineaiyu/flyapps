@@ -744,7 +744,9 @@
         <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
-
+        <el-link :underline="false" style="margin-top:10px;text-align: center;float: right"> 总消耗设备数 【
+          {{ app_rank_number }} 】
+        </el-link>
         <el-table
             v-loading="loading"
             :data="app_rank_lists"
@@ -825,6 +827,7 @@ export default {
       app_devices_lists: [],
       app_bill_lists: [],
       app_rank_lists: [],
+      app_rank_number: 0,
       app_bill_info_lists: [],
       app_udid_lists: [],
       activeName: "iosdeveloper",
@@ -992,7 +995,18 @@ export default {
       }
     },
     udidDeleteFun(scope) {
-      this.iosdevicesudidFun('DELETE', {id: scope.row.id, aid: scope.row.app_id}, scope);
+      this.$confirm('此操作会禁用该苹果开发者账户下面的该设备,可能会导致超级签包的闪退, 是否继续?', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.iosdevicesudidFun('DELETE', {id: scope.row.id, aid: scope.row.app_id}, scope);
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        });
+      });
     },
     handleSizeChange(val) {
       this.pagination.pagesize = val;
@@ -1271,6 +1285,7 @@ export default {
         if (data.code === 1000) {
           this.app_rank_lists = data.data;
           this.pagination.total = data.count;
+          this.app_rank_number = data.number
         } else {
           this.$message.error("信息获取失败了 " + data.msg);
         }

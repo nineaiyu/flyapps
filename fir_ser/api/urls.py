@@ -16,7 +16,7 @@ Including another URLconf
 from django.urls import re_path
 
 from api.views.advert import UserAdInfoView
-from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView
+from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView, AppsQrcodeShowView
 from api.views.domain import DomainCnameView, DomainInfoView
 from api.views.download import ShortDownloadView
 from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, \
@@ -55,6 +55,7 @@ urlpatterns = [
     re_path("^analyse$", AppAnalyseView.as_view()),
     re_path("^advert$", UserAdInfoView.as_view()),
     re_path("^report$", ReportView.as_view()),
+    re_path("^qrcode$", AppsQrcodeShowView.as_view()),
     re_path("^supersign/developer$", DeveloperView.as_view()),
     re_path("^supersign/devices$", SuperSignUsedView.as_view()),
     re_path("^supersign/udid$", AppUDIDUsedView.as_view()),

@@ -13,20 +13,6 @@
                                    class="bundleid short"
                              >&nbsp;{{ short_full_url }}</span>
             </el-tooltip>
-            <span>{{ master_release.release_type |getapptype }}</span>
-            <el-tooltip content="下载量" placement="top">
-              <span><i class="el-icon-cloudy"/><b class="short">{{ appinfos.count_hits }}</b></span>
-            </el-tooltip>
-            <span class="bundleid ng-binding">BundleID<b class="ng-binding">
-                          <el-tooltip content="复制到剪切板" placement="top">
-                             <span v-clipboard:copy="appinfos.bundle_id"
-                                   v-clipboard:success="copy_success"
-                                   class="bundleid short"
-                             >&nbsp;{{ appinfos.bundle_id }}</span>
-                        </el-tooltip>
-                        </b></span>
-            <span class="version ng-scope">{{ master_release.minimum_os_version }}&nbsp; 或者高版本</span>
-            <span v-if="appinfos.issupersign" class="short ng-scope">超级签</span>
 
             <el-popover
                 v-if="$store.state.userinfo&&$store.state.userinfo.role >1 &&$store.state.userinfo.qrcode_domain_name.length>3 "
@@ -46,6 +32,21 @@
               <span slot="reference" class="short ng-scope">下载码</span>
             </el-popover>
 
+
+            <span>{{ master_release.release_type |getapptype }}</span>
+            <el-tooltip content="下载量" placement="top">
+              <span><i class="el-icon-cloudy"/><b class="short">{{ appinfos.count_hits }}</b></span>
+            </el-tooltip>
+            <span class="bundleid ng-binding">BundleID<b class="ng-binding">
+                          <el-tooltip content="复制到剪切板" placement="top">
+                             <span v-clipboard:copy="appinfos.bundle_id"
+                                   v-clipboard:success="copy_success"
+                                   class="bundleid short"
+                             >&nbsp;{{ appinfos.bundle_id }}</span>
+                        </el-tooltip>
+                        </b></span>
+            <span class="version ng-scope">{{ master_release.minimum_os_version }}&nbsp; 或者高版本</span>
+            <span v-if="appinfos.issupersign" class="short ng-scope">超级签</span>
 
           </div>
           <div class="actions">

@@ -59,6 +59,7 @@
               </el-dropdown-item>
               <el-dropdown-item command="myorder">订单信息</el-dropdown-item>
               <el-dropdown-item command="contact">联系我们</el-dropdown-item>
+              <el-dropdown-item command="qrcode">下载码</el-dropdown-item>
               <el-dropdown-item command="exit">退出</el-dropdown-item>
 
             </el-dropdown-menu>
@@ -137,6 +138,8 @@ export default {
         this.$router.push({"name": 'FirUserAdvert'})
       } else if (command === 'myorder') {
         this.$router.push({"name": 'FirUserOrders'})
+      } else if (command === 'qrcode') {
+        this.$router.push({"name": 'FirUserQrcode'})
       } else if (command === 'contact') {
         this.$router.push({"name": 'FirContact'})
       } else if (command === 'exit') {
