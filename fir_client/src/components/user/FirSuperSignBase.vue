@@ -744,7 +744,7 @@
         <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
-        <el-link :underline="false" style="margin-top:10px;text-align: center;float: right"> 总消耗设备数 【
+        <el-link :underline="false" style="margin-top:10px;text-align: center;float: right"> 当前总消耗设备数 【
           {{ app_rank_number }} 】
         </el-link>
         <el-table
