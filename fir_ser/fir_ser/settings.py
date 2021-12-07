@@ -305,7 +305,7 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'filters': ['require_debug_true'],  # 只有在Django debug为True时才在屏幕打印日志
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
@@ -347,6 +347,15 @@ LOGGING = {
             'formatter': 'standard',
             'encoding': 'utf-8',
         },
+        'sql': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
+            'filename': os.path.join(BASE_LOG_DIR, "flyapp_sql.log"),  # 日志文件
+            'maxBytes': 1024 * 1024 * 5,  # 日志大小 50M
+            'backupCount': 10,
+            'formatter': 'standard',
+            'encoding': 'utf-8',
+        },
     },
     'loggers': {
         '': {  # 默认的logger应用如下配置
@@ -358,6 +367,11 @@ LOGGING = {
             'handlers': ['pay'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'django.db.backends': {
+            'handlers': ['console', 'sql'],
+            'propagate': True,
+            'level': 'DEBUG',
         },
     },
 }

@@ -435,7 +435,7 @@ class DeviceUsedRankInfoView(APIView):
         if end_time and start_time:
             try:
                 start_time = datetime.date.fromtimestamp(int(start_time) / 1000)
-                end_time = datetime.date.fromtimestamp(int(end_time) / 1000 + 24 * 60 * 60 - 1)
+                end_time = datetime.date.fromtimestamp(int(end_time) / 1000) + datetime.timedelta(days=1)
                 app_used_sign_objs = app_used_sign_objs.filter(created_time__range=[start_time, end_time])
             except Exception as e:
                 logger.error(f"get time range failed {e}")
