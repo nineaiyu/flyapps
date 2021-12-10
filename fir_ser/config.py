@@ -246,10 +246,9 @@ class SENDERCONF(object):
 
 
 class IPACONF(object):
+    APPLE_DEVELOPER_API_PROXY_LIST = []
     APPLE_DEVELOPER_API_PROXY = {
         # 代理的作用，主要是为了加快苹果api的访问，在国内会出现卡死，访问超时等问题，怀疑是被苹果服务器拦截了
-        # 'http': '47.243.172.202:17897',
-        # 'https': '47.243.172.202:17897'
     }
     APPLE_DEVELOPER_API_TIMEOUT = 120  # 访问苹果api超时时间，默认3分钟
     MOBILE_CONFIG_SIGN_SSL = {

@@ -17,15 +17,18 @@ import jwt
 import requests
 from django.conf import settings
 
+from api.utils.crontab.iproxy import get_proxy_ip_from_cache
+
 logger = logging.getLogger(__name__)
+
 
 # https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api
 #  https://appstoreconnect.apple.com/access/api 去申请秘钥
 #
 
-proxies = settings.APPLE_DEVELOPER_API_PROXY if settings.APPLE_DEVELOPER_API_PROXY else {}
+# proxies = settings.APPLE_DEVELOPER_API_PROXY if settings.APPLE_DEVELOPER_API_PROXY else {}
 
-timeout = settings.APPLE_DEVELOPER_API_TIMEOUT if settings.APPLE_DEVELOPER_API_TIMEOUT else 120
+# timeout = settings.APPLE_DEVELOPER_API_TIMEOUT if settings.APPLE_DEVELOPER_API_TIMEOUT else 120
 
 
 def request_format_log(req):
@@ -99,7 +102,8 @@ class DevicesAPI(object):
             for k, v in query_parameters.items():
                 params[k] = v
         return request_format_log(
-            requests.get(self.devices_url, params=params, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.get(self.devices_url, params=params, headers=self.headers, proxies=self.proxies,
+                         timeout=self.timeout))
 
     def list_enabled_devices(self):
         return self.list_devices({"filter[status]": "ENABLED"})
@@ -133,7 +137,8 @@ class DevicesAPI(object):
             }
         }
         return request_format_log(
-            requests.post(self.devices_url, json=json, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.post(self.devices_url, json=json, headers=self.headers, proxies=self.proxies,
+                          timeout=self.timeout))
 
     def read_device_information(self, device_id):
         """
@@ -149,7 +154,7 @@ class DevicesAPI(object):
             "fields[devices]": "addedDate, deviceClass, model, name, platform, status, udid",
         }
         return request_format_log(
-            requests.get(base_url, params=params, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.get(base_url, params=params, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
 
     def enabled_device(self, device_id, device_name):
         return self.modify_registered_device(device_id, device_name, 'ENABLED')
@@ -181,7 +186,7 @@ class DevicesAPI(object):
             }
         }
         return request_format_log(
-            requests.patch(base_url, json=json, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.patch(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
 
 
 class BundleIDsAPI(object):
@@ -214,7 +219,8 @@ class BundleIDsAPI(object):
             }
         }
         return request_format_log(
-            requests.post(self.bundle_ids_url, json=json, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.post(self.bundle_ids_url, json=json, headers=self.headers, proxies=self.proxies,
+                          timeout=self.timeout))
 
     def delete_bundle_id_by_id(self, bundle_id):
         """
@@ -229,7 +235,7 @@ class BundleIDsAPI(object):
         base_url = '%s/%s' % (self.bundle_ids_url, bundle_id)
         json = {}
         return request_format_log(
-            requests.delete(base_url, json=json, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
 
     def list_bundle_ids(self, query_parameters=None):
         """
@@ -248,7 +254,8 @@ class BundleIDsAPI(object):
             for k, v in query_parameters.items():
                 params[k] = v
         return request_format_log(
-            requests.get(self.bundle_ids_url, params=params, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.get(self.bundle_ids_url, params=params, headers=self.headers, proxies=self.proxies,
+                         timeout=self.timeout))
 
     def list_bundle_id_by_identifier(self, identifier):
         return self.list_bundle_ids({"filter[identifier]": identifier})
@@ -278,7 +285,7 @@ class BundleIDsAPI(object):
             }
         }
         return request_format_log(
-            requests.patch(base_url, json=json, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.patch(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
 
 
 class BundleIDsCapabilityAPI(object):
@@ -301,7 +308,7 @@ class BundleIDsCapabilityAPI(object):
         base_url = '%s/%s_%s' % (self.bundle_ids_capability_url, bundle_id, capability_type)
         json = {}
         return request_format_log(
-            requests.delete(base_url, json=json, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
 
     def enable_capability(self, bundle_id, capability_type):
         """
@@ -331,8 +338,8 @@ class BundleIDsCapabilityAPI(object):
             }
         }
         return request_format_log(
-            requests.post(self.bundle_ids_capability_url, json=json, headers=self.headers, proxies=proxies,
-                          timeout=timeout))
+            requests.post(self.bundle_ids_capability_url, json=json, headers=self.headers, proxies=self.proxies,
+                          timeout=self.timeout))
 
 
 class ProfilesAPI(object):
@@ -385,7 +392,8 @@ class ProfilesAPI(object):
             }
         }
         return request_format_log(
-            requests.post(self.profiles_url, json=json, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.post(self.profiles_url, json=json, headers=self.headers, proxies=self.proxies,
+                          timeout=self.timeout))
 
     def delete_profile(self, profile_id):
         """
@@ -400,7 +408,7 @@ class ProfilesAPI(object):
         base_url = '%s/%s' % (self.profiles_url, profile_id)
         json = {}
         return request_format_log(
-            requests.delete(base_url, json=json, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
 
     def download_profile(self, profile_id):
         # n=base64.b64decode(profileContent)
@@ -426,7 +434,8 @@ class ProfilesAPI(object):
             for k, v in query_parameters.items():
                 params[k] = v
         return request_format_log(
-            requests.get(self.profiles_url, params=params, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.get(self.profiles_url, params=params, headers=self.headers, proxies=self.proxies,
+                         timeout=self.timeout))
 
     def list_profile_by_profile_id(self, profile_id):
         return self.list_profiles({"filter[id]": profile_id, "include": ""})
@@ -462,7 +471,8 @@ class CertificatesAPI(object):
             }
         }
         return request_format_log(
-            requests.post(self.certificates_url, json=json, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.post(self.certificates_url, json=json, headers=self.headers, proxies=self.proxies,
+                          timeout=self.timeout))
 
     def download_certificate(self, certificate_id):
         # req.json()['data'][0]['attributes']['certificateContent']
@@ -488,7 +498,8 @@ class CertificatesAPI(object):
             for k, v in query_parameters.items():
                 params[k] = v
         return request_format_log(
-            requests.get(self.certificates_url, params=params, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.get(self.certificates_url, params=params, headers=self.headers, proxies=self.proxies,
+                         timeout=self.timeout))
 
     def list_certificate_by_certificate_id(self, certificate_id):
         return self.list_certificate({"filter[id]": certificate_id, })
@@ -506,7 +517,7 @@ class CertificatesAPI(object):
         base_url = '%s/%s' % (self.certificates_url, certificate_id)
         json = {}
         return request_format_log(
-            requests.delete(base_url, json=json, headers=self.headers, proxies=proxies, timeout=timeout))
+            requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
 
 
 class BaseInfoObj(object):
@@ -672,7 +683,7 @@ class Certificates(namedtuple("Certificates",
         return filepath
 
 
-def call_function_try_attempts(try_attempts=3, sleep_time=1):
+def call_function_try_attempts(try_attempts=5, sleep_time=3):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -685,6 +696,10 @@ def call_function_try_attempts(try_attempts=3, sleep_time=1):
                     flag = True
                     break
                 except Exception as e:
+                    if 'Cannot connect to proxy' in str(e) or 'Read timed out' in str(
+                            e) or 'Max retries exceeded with' in str(e):
+                        logger.error('access apple api failed . change proxy ip again')
+                        get_proxy_ip_from_cache(True)
                     logger.warning(
                         f'exec {func} failed. Failed:{e} {try_attempts} times in total. now {sleep_time} later try '
                         f'again...{i}')
@@ -720,6 +735,8 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         self.private_key_id = private_key_id
         self.p8_private_key = p8_private_key
         self.exp_seconds = exp_seconds
+        self.proxies = get_proxy_ip_from_cache()
+        self.timeout = settings.APPLE_DEVELOPER_API_TIMEOUT if settings.APPLE_DEVELOPER_API_TIMEOUT else 120
         self.__make_jwt_headers()
         DevicesAPI.__init__(self, self.BASE_URI, self.headers)
         BundleIDsAPI.__init__(self, self.BASE_URI, self.headers)
@@ -753,6 +770,8 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         }
         jwt_encoded = jwt.encode(data, self.p8_private_key, algorithm=self.JWT_ALG, headers=jwt_headers)
         headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.39 (KHTML, like Gecko) '
+                          'Chrome/72.0.3626.109 Safari/537.39',
             'Authorization': 'Bearer %s' % jwt_encoded
         }
         self.headers = headers

@@ -195,6 +195,12 @@ def make_pem(cer_content, pem_path):
         f.write(dump_certificate(FILETYPE_PEM, cert))
 
 
+def check_error_call_back(error):
+    logger.error(error)
+    if 'Cannot connect to proxy' in error or 'Read timed out' in error or 'Max retries exceeded with' in error:
+        logger.error('access apple api failed . change proxy ip again')
+
+
 class AppDeveloperApiV2(object):
     def __init__(self, issuer_id, private_key_id, p8key, cert_id):
         self.issuer_id = issuer_id
@@ -215,6 +221,7 @@ class AppDeveloperApiV2(object):
                 return True, result
         except Exception as e:
             logger.error(f"ios developer active Failed Exception:{e}")
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
         return False, result
 
@@ -243,6 +250,7 @@ class AppDeveloperApiV2(object):
                 return True, certificates
         except Exception as e:
             logger.error(f"ios developer create cert Failed Exception:{e}")
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
         return False, result
 
@@ -258,6 +266,7 @@ class AppDeveloperApiV2(object):
                 return False, result
         except Exception as e:
             logger.error(f"ios developer get cert {self.cert_id} Failed Exception:{e}")
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
         return False, result
 
@@ -277,6 +286,7 @@ class AppDeveloperApiV2(object):
                     return True, result
         except Exception as e:
             logger.error(f"ios developer cert {self.cert_id} revoke Failed Exception:{e}")
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
         return False, result
 
@@ -297,6 +307,7 @@ class AppDeveloperApiV2(object):
             return False, result
         except Exception as e:
             logger.error(f"ios developer cert {app_dev_pem} auto get Failed Exception:{e}")
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
         return False, result
 
@@ -308,6 +319,7 @@ class AppDeveloperApiV2(object):
                 return True
         except Exception as e:
             logger.error(f"ios developer delete profile Failed Exception:{e}")
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
             return False, result
 
@@ -325,6 +337,7 @@ class AppDeveloperApiV2(object):
                 return True, result
         except Exception as e:
             logger.error("ios developer set devices status Failed Exception:%s" % e)
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
             if device_err_callback and ("There are no current ios devices" in str(e) or "Device obj is None" in str(e)):
                 with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
@@ -345,6 +358,7 @@ class AppDeveloperApiV2(object):
                 return True, devices_obj_list
         except Exception as e:
             logger.error("ios developer get device Failed Exception:%s" % e)
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
             return False, result
 
@@ -357,6 +371,7 @@ class AppDeveloperApiV2(object):
 
         except Exception as e:
             logger.error("ios developer delete app Failed Exception:%s" % e)
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
             return False, result
 
@@ -378,6 +393,7 @@ class AppDeveloperApiV2(object):
 
         except Exception as e:
             logger.error("ios developer create app Failed Exception:%s" % e)
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
             if app_id_err_callback and "There is no App ID with ID" in str(e):
                 for call_fun in app_id_err_callback:
@@ -391,6 +407,7 @@ class AppDeveloperApiV2(object):
             return True, apple_obj.register_device(device_name, device_udid)
         except Exception as e:
             logger.error("ios developer register device Failed Exception:%s" % e)
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
             if device_err_callback and "There are no current ios devices" in str(e):
 
@@ -422,6 +439,7 @@ class AppDeveloperApiV2(object):
                 return True, result
         except Exception as e:
             logger.error(f"app_id {app_obj.app_id} ios developer make profile Failed Exception:{e}")
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
             if app_id_err_callback and "There is no App ID with ID" in str(e):
                 with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
@@ -456,5 +474,6 @@ class AppDeveloperApiV2(object):
             return True, result
         except Exception as e:
             logger.error("ios developer modify_capability Failed Exception:%s" % e)
+            check_error_call_back(str(e))
             result['return_info'] = "%s" % e
             return False, result

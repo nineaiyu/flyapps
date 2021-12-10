@@ -237,6 +237,8 @@ CACHE_KEY_TEMPLATE = {
     'wx_access_token_key': 'wx_basic_access_token',
     'wx_ticket_info_key': 'wx_ticket_info',
     'ipa_sign_udid_queue_key': 'ipa_sign_udid_queue',
+    'ip_proxy_store_list_key': 'ip_proxy_store_list',
+    'ip_proxy_store_active_key': 'ip_proxy_store_active',
 }
 
 DATA_DOWNLOAD_KEY = "d_token"
@@ -248,6 +250,7 @@ AUTH_USER_GIVE_DOWNLOAD_TIMES = 200
 
 SYNC_CACHE_TO_DATABASE = {
     'download_times': 10,  # 下载次数同步时间
+    'best_proxy_ips_times': 60 * 60,  # 代理ip 自动获取时间
     'wx_get_access_token_times': 60 * 10,  # 微信access_token 自动获取时间
     'try_login_times': (10, 12 * 60 * 60),  # 当天登录失败次数，超过该失败次数，锁定24小时
     'auto_clean_tmp_file_times': 60 * 30,  # 定时清理上传失误生成的临时文件
@@ -264,6 +267,8 @@ MOBILE_CONFIG_SIGN_SSL = IPACONF.MOBILE_CONFIG_SIGN_SSL
 APPLE_DEVELOPER_API_PROXY = IPACONF.APPLE_DEVELOPER_API_PROXY
 
 APPLE_DEVELOPER_API_TIMEOUT = IPACONF.APPLE_DEVELOPER_API_TIMEOUT
+
+APPLE_DEVELOPER_API_PROXY_LIST = IPACONF.APPLE_DEVELOPER_API_PROXY_LIST
 
 DEFAULT_MOBILEPROVISION = IPACONF.DEFAULT_MOBILEPROVISION
 # DEFAULT_MOBILEPROVISION = {
@@ -452,6 +457,11 @@ CELERY_BEAT_SCHEDULE = {
     'sync_wx_access_token_job': {
         'task': 'api.tasks.sync_wx_access_token_job',
         'schedule': SYNC_CACHE_TO_DATABASE.get("wx_get_access_token_times"),
+        'args': (),
+    },
+    'get_best_proxy_ips_job': {
+        'task': 'api.tasks.get_best_proxy_ips_job',
+        'schedule': SYNC_CACHE_TO_DATABASE.get("best_proxy_ips_times"),
         'args': (),
     },
 }

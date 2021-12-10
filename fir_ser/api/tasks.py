@@ -13,6 +13,7 @@ from api.models import Apps, DeveloperAppID
 from api.utils.app.supersignutils import IosUtils, resign_by_app_id_and_developer
 from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_delete_ios_mobile_tmp_file, \
     auto_check_ios_developer_active
+from api.utils.crontab.iproxy import get_best_proxy_ips
 from api.utils.geetest.geetest_utils import check_bypass_status
 from api.utils.mp.wechat import sync_wx_access_token
 from api.utils.storage.caches import MigrateStorageState
@@ -112,3 +113,8 @@ def auto_check_ios_developer_active_job():
 def sync_wx_access_token_job():
     if get_login_type().get('third', '').get('wxp'):
         sync_wx_access_token()
+
+
+@app.task
+def get_best_proxy_ips_job():
+    get_best_proxy_ips()
