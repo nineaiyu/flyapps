@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 proxies = settings.APPLE_DEVELOPER_API_PROXY if settings.APPLE_DEVELOPER_API_PROXY else {}
 
-timeout = settings.APPLE_DEVELOPER_API_TIMEOUT if settings.APPLE_DEVELOPER_API_TIMEOUT else 180
+timeout = settings.APPLE_DEVELOPER_API_TIMEOUT if settings.APPLE_DEVELOPER_API_TIMEOUT else 120
 
 
 def request_format_log(req):
@@ -783,6 +783,9 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         elif req.status_code == 401:  # 授权问题
             raise Exception(req.text)
         elif req.status_code == 429:  # 请求超过每小时限制 {'user-hour-lim': '3600', 'user-hour-rem': '3586'}
+            raise Exception(req.text)
+        elif req.status_code == 500:
+            time.sleep(60)
             raise Exception(req.text)
         else:
             raise Exception('unknown error: %s  code:%s' % (req.text, req.status_code))

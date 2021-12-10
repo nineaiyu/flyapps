@@ -251,7 +251,7 @@ class IPACONF(object):
         # 'http': '47.243.172.202:17897',
         # 'https': '47.243.172.202:17897'
     }
-    APPLE_DEVELOPER_API_TIMEOUT = 180  # 访问苹果api超时时间，默认3分钟
+    APPLE_DEVELOPER_API_TIMEOUT = 120  # 访问苹果api超时时间，默认3分钟
     MOBILE_CONFIG_SIGN_SSL = {
         # 描述文件是否签名，默认是关闭状态；如果开启，并且ssl_key_path 和 ssl_pem_path 正常，则使用填写的ssl进行签名,否则默认不签名
         'open': True,

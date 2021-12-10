@@ -47,7 +47,7 @@ def run_sign_task(format_udid_info, short, client_ip):
         elif code in [1004, 1001, 1009]:
             msg = msg.get('msg', '未知错误')
         else:
-            msg = '系统内部错误'
+            msg = '系统内部错误,请稍后再试或联系管理员'
     else:
         msg = ""
     return msg

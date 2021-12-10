@@ -663,7 +663,7 @@ class IosUtils(object):
                 add_new_bundles_prefix = f"check_or_add_new_bundles_{self.developer_obj.issuer_id}_{self.app_obj.app_id}"
                 download_profile_prefix = f"make_and_download_profile_{self.developer_obj.issuer_id}_{self.app_obj.app_id}"
 
-                with cache.lock(register_devices_prefix, timeout=60):
+                with cache.lock(register_devices_prefix, timeout=360):
                     if CleanErrorBundleIdSignDataState(add_new_bundles_prefix).get_state():
                         return True, True  # 程序错误，进行清理的时候，拦截多余的设备注册
                     if not get_developer_obj_by_others(self.user_obj, self.udid, self.app_obj):
@@ -674,14 +674,18 @@ class IosUtils(object):
                                                                                  self.udid_info, client_ip,
                                                                                  add_new_bundles_prefix)
                     if not status:
+                        if 'UNEXPECTED_ERROR' in str(did_udid_result):
+                            return False, {}
                         msg = f"app_id {self.app_obj} register devices failed. {did_udid_result}"
                         self.sign_failed_fun(d_result, msg)
                         continue
                     if status and 'continue' in [str(did_udid_result)]:
                         return True, True
-                with cache.lock(add_new_bundles_prefix, timeout=60):
+                with cache.lock(add_new_bundles_prefix, timeout=360):
                     status, bundle_result = IosUtils.check_or_add_new_bundles(self.app_obj, self.developer_obj)
                     if not status:
+                        if 'UNEXPECTED_ERROR' in str(bundle_result):
+                            return False, {}
                         msg = f"app_id {self.app_obj} create bundles failed. {bundle_result}"
                         self.sign_failed_fun(d_result, msg)
                         continue
@@ -704,6 +708,8 @@ class IosUtils(object):
                                                                                                              did_udid in
                                                                                                              did_udid_lists])
                     if not status:
+                        if 'UNEXPECTED_ERROR' in str(download_profile_result):
+                            return False, {}
                         msg = f"app_id {self.app_obj} download profile failed. {download_profile_result}"
                         self.sign_failed_fun(d_result, msg)
                         continue
