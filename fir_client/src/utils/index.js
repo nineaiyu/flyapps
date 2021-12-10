@@ -217,7 +217,10 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
                 retryCount++;
                 // eslint-disable-next-line no-console
                 console.error("retryCount : " + retryCount);
-                uploadFile('')
+                // eslint-disable-next-line no-unused-vars
+                setTimeout(_ => {
+                    uploadFile('')
+                }, 1000);
             } else {
                 app.$message({
                     message: file.name + ' 重试了' + retryCount + '次，还是上传失败了，请刷新页面重试',

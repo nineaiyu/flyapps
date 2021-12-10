@@ -144,7 +144,7 @@
         </el-table>
 
         <span slot="footer" class="dialog-footer">
-                        <el-button plain @click="closeUpload">取 消</el-button>
+                        <el-button :disabled="multiuploaddisable" plain @click="closeUpload">取 消</el-button>
                         <el-button :disabled="multiuploaddisable" plain type="primary"
                                    @click="multiuploadFun">开始上传</el-button>
                     </span>
@@ -609,6 +609,7 @@ export default {
       multiupload: false,
       multiuploaddisable: false,
       multiFileList: [],
+      trymultiFileList: [],
       default_pay_radio: '',
       default_price_radio: '',
       pay_choices: [],
@@ -657,7 +658,7 @@ export default {
         "app_id": short
       })
     },
-    multirun(process, keylist, func) {
+    multirun(process, keylist, func, failback) {
       let thr = [];
       for (let i = 0; i < process; i++) {
         thr.push(Promise.resolve())
@@ -671,7 +672,10 @@ export default {
         }
 
       }
-
+      if (failback) {
+        // eslint-disable-next-line no-unused-vars
+        thr[process - 1].then(_ => failback())
+      }
     },
     uploadasync(file) {
       return new Promise((resolve, reject) => {
@@ -703,7 +707,9 @@ export default {
 
                 } else {
                   this.$message.error("应用 " + analyseappinfo.appname + " 上传token获取失败，请刷新重试")
-                  this.multiFileList.splice(this.multiFileList.indexOf(file), 1)
+                  resolve()
+                  this.trymultiFileList.push(file);
+                  // this.multiFileList.splice(this.multiFileList.indexOf(file), 1)
                 }
                 loading.close();
               }, {
@@ -713,12 +719,16 @@ export default {
 
             } else {
               this.$message.error("文件 " + file.raw.name + " 解析失败,请检查是否为APP应用")
-              this.multiFileList.splice(this.multiFileList.indexOf(file), 1)
+              resolve()
+              this.trymultiFileList.push(file);
+              // this.multiFileList.splice(this.multiFileList.indexOf(file), 1)
             }
           }, err => {
             loading.close();
             this.$message.error("应用解析失败,请检查是否为APP应用");
-            this.multiFileList.splice(this.multiFileList.indexOf(file), 1)
+            resolve()
+            this.trymultiFileList.push(file);
+            // this.multiFileList.splice(this.multiFileList.indexOf(file), 1)
             // eslint-disable-next-line no-console
             console.log('Error ', err);
           });
@@ -731,8 +741,16 @@ export default {
     multiuploadFun() {
       this.multiuploaddisable = true;
       if (this.multiFileList && this.multiFileList.length > 0) {
-        this.multirun(3, this.multiFileList, this.uploadasync)
+        // eslint-disable-next-line no-unused-vars
+        this.multirun(3, this.multiFileList, this.uploadasync, _ => {
+          // eslint-disable-next-line no-console
+          console.log('upload file ' + this.trymultiFileList.length + ' failed. try again')
+          if (this.trymultiFileList && this.trymultiFileList.length > 0) {
+            this.multirun(3, this.trymultiFileList, this.uploadasync, null)
+          }
+        })
       }
+
     },
     show_package_prices() {
       get_package_prices(res => {

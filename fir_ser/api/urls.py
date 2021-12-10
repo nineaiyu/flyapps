@@ -25,7 +25,7 @@ from api.views.logout import LogoutView
 from api.views.order import PriceView, OrderView, PaySuccess
 from api.views.receiveudids import IosUDIDView, TaskView
 from api.views.report import ReportView
-from api.views.storage import StorageView
+from api.views.storage import StorageView, CleanStorageView
 from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView, SuperSignCertView, \
     DeviceUsedBillView, DeveloperDeviceView, DeviceUsedRankInfoView
 from api.views.thirdlogin import ValidWxChatToken, ThirdWxAccount
@@ -44,6 +44,7 @@ urlpatterns = [
     re_path("^logout", LogoutView.as_view()),
     re_path("^apps$", AppsView.as_view()),
     re_path("^storage$", StorageView.as_view()),
+    re_path("^storage/clean$", CleanStorageView.as_view()),
     re_path(r"^apps/(?P<app_id>\w+)", AppInfoView.as_view()),
     re_path(r"^appinfos/(?P<app_id>\w+)/(?P<act>\w+)", AppReleaseInfoView.as_view()),
     re_path("^upload$", UploadView.as_view()),

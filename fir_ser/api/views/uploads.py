@@ -18,7 +18,7 @@ from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.baseutils import make_app_uuid, make_from_user_uuid
 from api.utils.modelutils import get_app_domain_name, get_redirect_server_domain, check_super_sign_permission
 from api.utils.response import BaseResponse
-from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
+from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short, MigrateStorageState
 from api.utils.storage.storage import Storage
 from fir_ser import settings
 
@@ -38,6 +38,11 @@ class AppAnalyseView(APIView):
         # 1.接收 bundelid ，返回随机应用名称和短连接
         bundle_id = request.data.get("bundleid", None)
         app_type = request.data.get("type", None)
+
+        if MigrateStorageState(request.user.uid).get_state():
+            res.code = 1008
+            res.msg = "数据迁移中，无法处理该操作"
+            return Response(res.dict)
 
         if bundle_id and app_type:
             ap = 'apk'
@@ -99,6 +104,12 @@ class AppAnalyseView(APIView):
         :return:
         """
         res = BaseResponse()
+
+        if MigrateStorageState(request.user.uid).get_state():
+            res.code = 1008
+            res.msg = "数据迁移中，无法处理该操作"
+            return Response(res.dict)
+
         data = request.data
         app_info = {
             "labelname": data.get("appname"),
@@ -129,7 +140,7 @@ class AppAnalyseView(APIView):
                 app_obj = Apps.objects.filter(bundle_id=data.get("bundleid"), user_id=request.user).first()
                 if app_obj:
                     c_task = run_resign_task(app_obj.pk, False, False)
-                    logger.info(f"app {app_obj} run_resign_task msg:{c_task}")
+                    logger.info(f"app {app_obj} run_resign_task end msg:{c_task}")
             else:
                 storage.delete_file(app_tmp_filename)
                 storage.delete_file(png_tmp_filename)
@@ -211,6 +222,11 @@ class UploadView(APIView):
         :return:
         """
         res = BaseResponse()
+
+        if MigrateStorageState(request.user.uid).get_state():
+            res.code = 1008
+            res.msg = "数据迁移中，无法处理该操作"
+            return Response(res.dict)
 
         # 获取多个file
         files = request.FILES.getlist('file', None)
@@ -299,6 +315,12 @@ class UploadView(APIView):
         :return:
         """
         res = BaseResponse()
+
+        if MigrateStorageState(request.user.uid).get_state():
+            res.code = 1008
+            res.msg = "数据迁移中，无法处理该操作"
+            return Response(res.dict)
+
         cert_info = request.data.get('certinfo', None)
         if cert_info:
             app_id = cert_info.get("app_id", None)

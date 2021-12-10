@@ -9,8 +9,9 @@ import logging
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.base_views import storage_change
-from api.models import AppStorage, UserInfo
+from api.base_views import storage_change, app_delete
+from api.models import AppStorage, UserInfo, Apps
+from api.utils.app.apputils import clean_history_apps
 from api.utils.auth import ExpiringTokenAuthentication, StoragePermission
 from api.utils.response import BaseResponse
 from api.utils.serializer import StorageSerializer
@@ -96,14 +97,15 @@ class StorageView(APIView):
         use_storage_id = data.get("use_storage_id", None)
         force = data.get("force", None)
         if use_storage_id:
-            if MigrateStorageState.get_state(request.user.uid):
-                res.code = 1007
-                res.msg = "数据迁移中,请耐心等待"
-                return Response(res.dict)
-            MigrateStorageState.set_state(request.user.uid)
-            if not storage_change(use_storage_id, request.user, force):
-                res.code = 1006
-                res.msg = '修改失败'
+            with MigrateStorageState(request.user.uid) as state:
+                if state:
+                    if not storage_change(use_storage_id, request.user, force):
+                        res.code = 1006
+                        res.msg = '修改失败'
+                else:
+                    res.code = 1007
+                    res.msg = "数据迁移中,请耐心等待"
+
             return Response(res.dict)
 
         storage_id = data.get("id", None)
@@ -151,4 +153,30 @@ class StorageView(APIView):
         else:
             res.code = 1004
             res.msg = '该存储不存在'
+        return Response(res.dict)
+
+
+class CleanStorageView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [StoragePermission, ]
+
+    def post(self, request):
+        res = BaseResponse()
+        data = request.data
+        logger.info(f"user {request.user} clean storage data:{data}")
+        act = data.get('act', '')
+        if act in ['history', 'all']:
+            if request.user.check_password(data.get('confirm_pwd', '')):
+                app_obj_lists = Apps.objects.filter(user_id=request.user).all()
+                for app_obj in app_obj_lists:
+                    if act == 'all':
+                        res = app_delete(app_obj)
+                    elif act == 'history':
+                        clean_history_apps(app_obj, request.user, 1)
+            else:
+                res.code = 1007
+                res.msg = "密码有误，请检查"
+        else:
+            res.code = 1007
+            res.msg = "参数不合法，清理失败"
         return Response(res.dict)

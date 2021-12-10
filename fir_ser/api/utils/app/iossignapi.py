@@ -327,9 +327,11 @@ class AppDeveloperApiV2(object):
             logger.error("ios developer set devices status Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
             if device_err_callback and ("There are no current ios devices" in str(e) or "Device obj is None" in str(e)):
-                CleanErrorBundleIdSignDataState.set_state(failed_call_prefix)
-                device_err_callback()
-                CleanErrorBundleIdSignDataState.del_state(failed_call_prefix)
+                with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
+                    if state:
+                        device_err_callback()
+                    else:
+                        logger.warning(f'{device_err_callback}-{failed_call_prefix} is running')
         return False, result
 
     def get_device(self):
@@ -391,9 +393,13 @@ class AppDeveloperApiV2(object):
             logger.error("ios developer register device Failed Exception:%s" % e)
             result['return_info'] = "%s" % e
             if device_err_callback and "There are no current ios devices" in str(e):
-                CleanErrorBundleIdSignDataState.set_state(failed_call_prefix)
-                device_err_callback()
-                CleanErrorBundleIdSignDataState.del_state(failed_call_prefix)
+
+                with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
+                    if state:
+                        device_err_callback()
+                    else:
+                        logger.warning(f'{device_err_callback}-{failed_call_prefix} is running')
+
             return False, result
 
     def make_and_download_profile(self, app_obj, provision_name, auth, developer_app_id, device_id_list, profile_id,
@@ -418,10 +424,12 @@ class AppDeveloperApiV2(object):
             logger.error(f"app_id {app_obj.app_id} ios developer make profile Failed Exception:{e}")
             result['return_info'] = "%s" % e
             if app_id_err_callback and "There is no App ID with ID" in str(e):
-                CleanErrorBundleIdSignDataState.set_state(failed_call_prefix)
-                for call_fun in app_id_err_callback:
-                    call_fun()
-                CleanErrorBundleIdSignDataState.del_state(failed_call_prefix)
+                with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
+                    if state:
+                        for call_fun in app_id_err_callback:
+                            call_fun()
+                    else:
+                        logger.warning(f'{app_id_err_callback}-{failed_call_prefix} is running')
             return False, result
 
     def modify_capability(self, app_obj, developer_app_id):

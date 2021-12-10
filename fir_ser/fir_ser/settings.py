@@ -261,6 +261,10 @@ SERVER_DOMAIN = BASECONF.SERVER_DOMAIN
 
 MOBILE_CONFIG_SIGN_SSL = IPACONF.MOBILE_CONFIG_SIGN_SSL
 
+APPLE_DEVELOPER_API_PROXY = IPACONF.APPLE_DEVELOPER_API_PROXY
+
+APPLE_DEVELOPER_API_TIMEOUT = IPACONF.APPLE_DEVELOPER_API_TIMEOUT
+
 DEFAULT_MOBILEPROVISION = IPACONF.DEFAULT_MOBILEPROVISION
 # DEFAULT_MOBILEPROVISION = {
 #     # 默认描述文件路径或者下载路径，用户企业签名或者超级签名 跳转 [设置 - 通用 - 描述文件|设备管理] 页面
@@ -305,7 +309,7 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'filters': ['require_debug_true'],  # 只有在Django debug为True时才在屏幕打印日志
             'class': 'logging.StreamHandler',
             'formatter': 'simple'

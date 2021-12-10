@@ -388,6 +388,20 @@ export function getStorageinfo(callBack, params, load = true) {
     );
 }
 
+/**用户app清理操作 */
+export function cleanStorageData(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/storage/clean',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
 
 /**用户个人信息 */
 export function userinfos(callBack, params, load = true) {

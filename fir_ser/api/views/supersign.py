@@ -128,17 +128,16 @@ class DeveloperView(APIView):
                         res.msg = result.get("err_info")
                         return Response(res.dict)
                 elif act == "cleandevice":
-                    if CleanSignDataState.get_state(request.user.uid):
-                        res.code = 1008
-                        res.msg = "数据清理中,请耐心等待"
-                        return Response(res.dict)
-                    CleanSignDataState.set_state(request.user.uid, timeout=60 * 10)
-                    status, result = IosUtils.clean_developer(developer_obj, request.user, False)
-                    CleanSignDataState.del_state(request.user.uid)
-                    if not status:
-                        res.code = 1008
-                        res.msg = result.get("err_info")
-                        return Response(res.dict)
+                    with CleanSignDataState(request.user.uid) as state:
+                        if state:
+                            status, result = IosUtils.clean_developer(developer_obj, request.user, False)
+                            if not status:
+                                res.code = 1008
+                                res.msg = result.get("err_info")
+                        else:
+                            res.code = 1008
+                            res.msg = "数据清理中,请耐心等待"
+                    return Response(res.dict)
                 elif act == 'disable':
                     developer_obj.is_actived = False
                     developer_obj.save(update_fields=['is_actived'])

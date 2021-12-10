@@ -52,7 +52,7 @@ def resign_by_app_id_and_developer(app_id, developer_id, developer_app_id, need_
     if check_ipa_is_latest_sign(app_obj, developer_obj) and not force:
         return
     add_new_bundles_prefix = f"check_or_add_new_bundles_{developer_obj.issuer_id}_{app_obj.app_id}"
-    if CleanErrorBundleIdSignDataState.get_state(add_new_bundles_prefix):
+    if CleanErrorBundleIdSignDataState(add_new_bundles_prefix).get_state():
         return False, '清理执行中，请等待'
     d_time = time.time()
     if need_download_profile:
@@ -664,7 +664,7 @@ class IosUtils(object):
                 download_profile_prefix = f"make_and_download_profile_{self.developer_obj.issuer_id}_{self.app_obj.app_id}"
 
                 with cache.lock(register_devices_prefix, timeout=60):
-                    if CleanErrorBundleIdSignDataState.get_state(add_new_bundles_prefix):
+                    if CleanErrorBundleIdSignDataState(add_new_bundles_prefix).get_state():
                         return True, True  # 程序错误，进行清理的时候，拦截多余的设备注册
                     if not get_developer_obj_by_others(self.user_obj, self.udid, self.app_obj):
                         d_result['code'] = 1005

@@ -514,18 +514,27 @@ def get_wx_ticket_login_info_cache(ticket):
 
 class CacheBaseState(object):
 
-    @classmethod
-    def get_state(cls, key):
-        return cache.get(f"{cls.__name__}_{key}")
+    def __init__(self, key, value=time.time(), timeout=3600 * 24):
+        self.key = f"CacheBaseState_{self.__class__.__name__}_{key}"
+        self.value = value
+        self.timeout = timeout
+        self.active = False
 
-    @classmethod
-    def set_state(cls, key, value=time.time(), timeout=3600 * 24):
-        cls.del_state(f"{cls.__name__}_{key}")
-        cache.set(f"{cls.__name__}_{key}", value, timeout)
+    def get_state(self):
+        return cache.get(self.key)
 
-    @classmethod
-    def del_state(cls, key):
-        cache.delete(f"{cls.__name__}_{key}")
+    def __enter__(self):
+        if cache.get(self.key):
+            return False
+        else:
+            cache.set(self.key, self.value, self.timeout)
+            self.active = True
+        return True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.active:
+            cache.delete(self.key)
+        logger.info(f"cache base state __exit__ {exc_type}, {exc_val}, {exc_tb}")
 
 
 class MigrateStorageState(CacheBaseState):

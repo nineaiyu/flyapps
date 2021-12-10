@@ -9,7 +9,7 @@ import random
 from api.models import AppReleaseInfo, Apps
 from api.utils.baseutils import make_app_uuid
 from api.utils.modelutils import get_user_domain_name
-from api.utils.storage.caches import del_cache_response_by_short
+from api.utils.storage.caches import del_cache_response_by_short, MigrateStorageState
 from api.utils.storage.storage import Storage
 
 logger = logging.getLogger(__name__)
@@ -114,6 +114,22 @@ def get_random_short(number=4):
         return short_url
 
 
+def clean_history_apps(app_obj, user_obj, history_release_limit=20):
+    storage_obj = Storage(user_obj)
+    if not MigrateStorageState(user_obj.uid).get_state():
+        release_queryset = AppReleaseInfo.objects.filter(app_id=app_obj).order_by("-created_time")
+        if release_queryset.count() > history_release_limit:
+            flag = 0
+            for release_obj in release_queryset:
+                flag += 1
+                if flag > history_release_limit:
+                    logger.info(
+                        f"history_release_limit:{history_release_limit} this release is to more,so delete it release_id:{release_obj.release_id}")
+                    storage_obj.delete_file(release_obj.release_id, app_obj.type)
+                    storage_obj.delete_file(release_obj.icon_url)
+                    release_obj.delete()
+
+
 def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short, size, issupersign):
     app_uuid = make_app_uuid(user_obj, bundle_id + app_file_name.split(".")[1])
     ##判断是否存在该app
@@ -193,15 +209,5 @@ def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short,
         return True
 
     if history_release_limit != 0:
-        release_queryset = AppReleaseInfo.objects.filter(app_id=app_obj).order_by("-created_time")
-        if release_queryset.count() > history_release_limit:
-            flag = 0
-            for release_obj in release_queryset:
-                flag += 1
-                if flag > history_release_limit:
-                    logger.info(
-                        f"history_release_limit:{history_release_limit} this release is to more,so delete it release_id:{release_obj.release_id}")
-                    storage.delete_file(release_obj.release_id, app_obj.type)
-                    storage.delete_file(release_obj.icon_url)
-                    release_obj.delete()
+        clean_history_apps(app_obj, user_obj, history_release_limit)
     return True

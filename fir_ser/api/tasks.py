@@ -15,6 +15,7 @@ from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_
     auto_check_ios_developer_active
 from api.utils.geetest.geetest_utils import check_bypass_status
 from api.utils.mp.wechat import sync_wx_access_token
+from api.utils.storage.caches import MigrateStorageState
 from api.utils.storage.storage import get_local_storage
 from api.views.login import get_login_type
 from fir_ser.celery import app
@@ -26,6 +27,11 @@ logger = logging.getLogger(__name__)
 @shared_task
 def run_sign_task(format_udid_info, short, client_ip):
     app_obj = Apps.objects.filter(short=short).first()
+
+    if MigrateStorageState(app_obj.user_id.uid).get_state():
+        msg = "数据迁移中，无法处理该操作"
+        return msg
+
     ios_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
     status, msg = ios_obj.sign_ipa(client_ip)
     if not status:

@@ -101,6 +101,18 @@
             强制迁移，忽略数据迁移失败错误，可能会导致数据丢失
           </el-button>
         </div>
+        <div v-else style="margin-top: 20px">
+          <el-button round style="margin-left: 10px"
+                     type="danger"
+                     @click="clean_storage_data('all')">
+            清理所有app数据
+          </el-button>
+          <el-button round style="margin-left: 10px"
+                     type="danger"
+                     @click="clean_storage_data('history')">
+            清理app历史版本数据，只保留最新数据
+          </el-button>
+        </div>
         <el-divider/>
         <el-form v-if="storageinfo.id && storageinfo.id !==-1" ref="storageinfoform" :model="storageinfo"
                  label-width="80px" style="width: 39%;margin:0 auto;">
@@ -308,7 +320,7 @@
 </template>
 
 <script>
-import {getStorageinfo} from "@/restful";
+import {cleanStorageData, getStorageinfo} from "@/restful";
 import {deepCopy, getUserInfoFun} from "@/utils";
 
 export default {
@@ -393,6 +405,42 @@ export default {
         });
       });
 
+    },
+    validFun(val) {
+      if (val && val.length > 6) {
+        return true
+      }
+      return false
+    },
+    clean_storage_data(act) {
+
+      this.$prompt('此操作属于危险操作，请悉知你操作将导致的影响，输入登录密码进行确认该操作', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPlaceholder: '该用户的登录密码',
+        inputValidator: this.validFun
+      }).then(({value}) => {
+        const loading = this.$loading({
+          lock: true,
+          text: '执行中,请耐心等待...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        });
+        cleanStorageData(data => {
+          loading.close();
+          if (data.code === 1000) {
+            this.$message.success('清理成功');
+          } else {
+            this.$message.error(data.msg)
+          }
+        }, {"methods": 'POST', 'data': {'act': act, 'confirm_pwd': value}});
+
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消操作'
+        });
+      });
     },
     change_storage_info(force) {
       this.$confirm('此操作将导致应用，图片，显示下载异常, 是否继续?', '警告', {

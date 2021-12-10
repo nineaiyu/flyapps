@@ -20,7 +20,7 @@ from api.utils.modelutils import get_user_domain_name, get_app_domain_name, chec
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app, \
-    CleanAppSignDataState
+    CleanAppSignDataState, MigrateStorageState
 from api.utils.storage.storage import Storage
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
 
@@ -133,19 +133,21 @@ class AppInfoView(APIView):
         res = BaseResponse()
         if app_id:
             data = request.data
+            if MigrateStorageState(request.user.uid).get_state():
+                res.code = 1008
+                res.msg = "数据迁移中，无法处理该操作"
+                return Response(res.dict)
 
             clean = data.get("clean", None)
             if clean:
-                if CleanAppSignDataState.get_state(request.user.uid):
-                    res.code = 1008
-                    res.msg = "数据清理中,请耐心等待"
-                    return Response(res.dict)
-                logger.info(f"app_id:{app_id} clean:{clean} ,close super_sign should clean_app_by_user_obj")
-                CleanAppSignDataState.set_state(request.user.uid, timeout=60 * 10)
-                app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
-                IosUtils.clean_app_by_user_obj(app_obj)
-                CleanAppSignDataState.del_state(request.user.uid)
-
+                with CleanAppSignDataState(request.user.uid) as state:
+                    if state:
+                        logger.info(f"app_id:{app_id} clean:{clean} ,close super_sign should clean_app_by_user_obj")
+                        app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
+                        IosUtils.clean_app_by_user_obj(app_obj)
+                    else:
+                        res.code = 1008
+                        res.msg = "数据清理中,请耐心等待"
                 return Response(res.dict)
 
             has_combo = data.get("has_combo", None)
@@ -285,6 +287,12 @@ class AppReleaseInfoView(APIView):
     def delete(self, request, app_id, act):
         res = BaseResponse()
         if app_id:
+
+            if MigrateStorageState(request.user.uid).get_state():
+                res.code = 1008
+                res.msg = "数据迁移中，无法处理该操作"
+                return Response(res.dict)
+
             app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
             if app_obj:
                 storage = Storage(request.user)
@@ -338,6 +346,12 @@ class AppReleaseInfoView(APIView):
         res = BaseResponse()
         res.data = {}
         if app_id:
+
+            if MigrateStorageState(request.user.uid).get_state():
+                res.code = 1008
+                res.msg = "数据迁移中，无法处理该操作"
+                return Response(res.dict)
+
             app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
             if app_obj:
                 app_release_objs = AppReleaseInfo.objects.filter(app_id=app_obj, release_id=act)

@@ -25,6 +25,11 @@ def app_delete(app_obj):
         res.msg = "应用不存在"
         return res
     user_obj = app_obj.user_id
+    if MigrateStorageState(user_obj.uid).get_state():
+        res.code = 1001
+        res.msg = "数据迁移中"
+        return res
+
     count = APPToDeveloper.objects.filter(app_id=app_obj).count()
     if app_obj.issupersign or count > 0:
         logger.info(f"app_id:{app_obj.app_id} is supersign ,delete this app need clean IOS developer")
@@ -127,5 +132,4 @@ def storage_change(use_storage_id, user_obj, force):
         else:
             return False
     del_cache_storage(user_obj)
-    MigrateStorageState.del_state(user_obj.uid)
     return True
