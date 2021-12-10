@@ -56,7 +56,7 @@ def get_proxy_ip_from_cache(change_ip=False):
     if not ip_proxy_result:
         ip_proxy_result = get_best_proxy_ips()
 
-    if change_ip:
+    if change_ip and ip_proxy_result:
         try:
             ip_proxy_result.remove(active_ip_proxy)
         except Exception as e:
@@ -65,7 +65,7 @@ def get_proxy_ip_from_cache(change_ip=False):
         cache.delete(ip_proxy_store_active_key)
         cache.set(ip_proxy_store_key, ip_proxy_result, 24 * 60 * 60)
 
-    if len(ip_proxy_result) > 0:
+    if ip_proxy_result and len(ip_proxy_result) > 0:
         proxy_ip = ip_proxy_result[random.randint(0, 2 if len(ip_proxy_result) > 2 else len(ip_proxy_result) - 1)]
         proxy_info = {
             'http': proxy_ip,
@@ -76,3 +76,11 @@ def get_proxy_ip_from_cache(change_ip=False):
     logger.info(f"make ip proxy cache {proxy_info}")
     cache.set(ip_proxy_store_active_key, proxy_info, 24 * 60 * 60)
     return proxy_info
+
+
+def clean_ip_proxy_infos():
+    logger.info("clean ip proxy infos")
+    ip_proxy_store_key = CACHE_KEY_TEMPLATE.get("ip_proxy_store_list_key")
+    ip_proxy_store_active_key = CACHE_KEY_TEMPLATE.get("ip_proxy_store_active_key")
+    cache.delete(ip_proxy_store_key)
+    cache.delete(ip_proxy_store_active_key)

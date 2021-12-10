@@ -13,7 +13,7 @@ from api.models import Apps, DeveloperAppID
 from api.utils.app.supersignutils import IosUtils, resign_by_app_id_and_developer
 from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_delete_ios_mobile_tmp_file, \
     auto_check_ios_developer_active
-from api.utils.crontab.iproxy import get_best_proxy_ips
+from api.utils.crontab.iproxy import get_best_proxy_ips, clean_ip_proxy_infos
 from api.utils.geetest.geetest_utils import check_bypass_status
 from api.utils.mp.wechat import sync_wx_access_token
 from api.utils.storage.caches import MigrateStorageState
@@ -79,8 +79,10 @@ def run_resign_task_do(app_id, developer_id, developer_app_id, need_download_pro
 @app.task
 def start_api_sever_do_clean():
     # 启动服务的时候，同时执行下面操作,主要是修改配置存储的时候，需要执行清理，否则会出问题，如果不修改，则无需执行
+    logger.info("clean local storage cache")
     get_local_storage(clean_cache=True)
     check_bypass_status()
+    clean_ip_proxy_infos()
 
 
 @app.task
