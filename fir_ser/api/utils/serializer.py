@@ -335,8 +335,8 @@ class AppReleaseSerializer(serializers.ModelSerializer):
                   "is_master", 'download_token', 'binary_url', 'udid', 'distribution_name']
 
     download_token = serializers.SerializerMethodField()
-    size = serializers.SerializerMethodField()
-    type = serializers.SerializerMethodField()
+    size = serializers.CharField(default='large')
+    type = serializers.CharField(default='primary')
     editing = serializers.SerializerMethodField()
     master_color = serializers.SerializerMethodField()
     icon_url = serializers.SerializerMethodField()
@@ -365,12 +365,6 @@ class AppReleaseSerializer(serializers.ModelSerializer):
     def get_master_color(self, obj):
         if obj.is_master:
             return '#0bbd87'
-
-    def get_size(self, obj):
-        return "large"
-
-    def get_type(self, obj):
-        return "primary"
 
     def get_editing(self, obj):
         return {"changelog": False, "binary_url": False}
@@ -444,10 +438,7 @@ class AdminStorageSerializer(StorageSerializer):
     def get_storage_choices(self, obj):
         return get_choices_dict(obj.storage_choices[1:])
 
-    used_id = serializers.SerializerMethodField()
-
-    def get_used_id(self, obj):
-        return obj.user_id_id
+    used_id = serializers.IntegerField(source="user_id.pk")
 
 
 class DeveloperSerializer(serializers.ModelSerializer):
@@ -487,30 +478,18 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
         model = models.APPSuperSignUsedInfo
         fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name", "other_uid"]
 
-    device_udid = serializers.SerializerMethodField()
-    device_name = serializers.SerializerMethodField()
-    developer_id = serializers.SerializerMethodField()
-    bundle_id = serializers.SerializerMethodField()
-    bundle_name = serializers.SerializerMethodField()
+    device_udid = serializers.CharField(source="udid.udid.udid")
+    device_name = serializers.CharField(source="udid.product")
+    bundle_id = serializers.CharField(source="app_id.bundle_id")
+    bundle_name = serializers.CharField(source="app_id.name")
     other_uid = serializers.SerializerMethodField()
-
-    def get_device_udid(self, obj):
-        return obj.udid.udid.udid
-
-    def get_device_name(self, obj):
-        return obj.udid.product
+    developer_id = serializers.SerializerMethodField()
 
     def get_developer_id(self, obj):
         if self.context.get('mine'):
             return obj.developerid.issuer_id
         else:
             return '公共账号池'
-
-    def get_bundle_id(self, obj):
-        return obj.app_id.bundle_id
-
-    def get_bundle_name(self, obj):
-        return obj.app_id.name
 
     def get_other_uid(self, obj):
         user_obj = self.context.get('user_obj')
@@ -528,25 +507,13 @@ class AdminSuperSignUsedSerializer(SuperSignUsedSerializer):
         fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name", "app_id",
                   "id", "user_id", "short", "developer_pk"]
 
-    app_id = serializers.SerializerMethodField()
+    app_id = serializers.IntegerField(source="app_id.pk")
 
-    def get_app_id(self, obj):
-        return obj.app_id.pk
+    user_id = serializers.IntegerField(source="user_id.pk")
 
-    user_id = serializers.SerializerMethodField()
+    short = serializers.CharField(source="app_id.short")
 
-    def get_user_id(self, obj):
-        return obj.user_id.pk
-
-    short = serializers.SerializerMethodField()
-
-    def get_short(self, obj):
-        return obj.app_id.short
-
-    developer_pk = serializers.SerializerMethodField()
-
-    def get_developer_pk(self, obj):
-        return obj.developerid.pk
+    developer_pk = serializers.IntegerField(source="developerid.pk")
 
 
 class DeveloperDeviceSerializer(serializers.ModelSerializer):
@@ -554,10 +521,7 @@ class DeveloperDeviceSerializer(serializers.ModelSerializer):
         model = models.UDIDsyncDeveloper
         exclude = ["id", "developerid"]
 
-    developer_id = serializers.SerializerMethodField()
-
-    def get_developer_id(self, obj):
-        return obj.developerid.issuer_id
+    developer_id = serializers.CharField(source="developerid.issuer_id")
 
 
 class DeviceUDIDSerializer(serializers.ModelSerializer):
@@ -566,11 +530,11 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
         # depth = 1
         exclude = ["updated_time", "is_signed"]
 
-    bundle_id = serializers.SerializerMethodField()
-    bundle_name = serializers.SerializerMethodField()
+    bundle_name = serializers.CharField(source="app_id.name")
+    bundle_id = serializers.CharField(source="app_id.bundle_id")
+    udid = serializers.CharField(source="udid.udid")
     is_mine = serializers.SerializerMethodField()
     other_uid = serializers.SerializerMethodField()
-    udid = serializers.SerializerMethodField()
 
     def get_other_uid(self, obj):
         user_obj = self.context.get('user_obj')
@@ -582,17 +546,8 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
             if super_user_obj.developerid.user_id != obj.app_id.user_id:
                 return obj.app_id.user_id.uid
 
-    def get_udid(self, obj):
-        return obj.udid.udid
-
     def get_is_mine(self, obj):
         return self.context.get('mine')
-
-    def get_bundle_id(self, obj):
-        return obj.app_id.bundle_id
-
-    def get_bundle_name(self, obj):
-        return obj.app_id.name
 
 
 class PriceSerializer(serializers.ModelSerializer):
