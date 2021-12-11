@@ -8,7 +8,6 @@ import logging
 from celery.exceptions import TimeoutError
 from django.http import HttpResponsePermanentRedirect, FileResponse, HttpResponse
 from django.views import View
-from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -25,39 +24,7 @@ from fir_ser.celery import app
 logger = logging.getLogger(__name__)
 
 
-class UdidView(View):
-    throttle_classes = []
-
-    def check_throttles(self, request):
-        """
-        Check if request should be throttled.
-        Raises an appropriate exception if the request is throttled.
-        """
-        throttle_durations = []
-        for throttle in [throttle() for throttle in self.throttle_classes]:
-            if not throttle.allow_request(request, self):
-                throttle_durations.append(throttle.wait())
-
-        if throttle_durations:
-            durations = [
-                duration for duration in throttle_durations
-                if duration is not None
-            ]
-
-            duration = max(durations, default=None)
-            raise exceptions.Throttled(duration)
-
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            self.check_throttles(request)
-        except Exception as e:
-            r_url = f"{get_redirect_server_domain(request)}/{kwargs.get('short')}?udid={str(e)}&msg=访问受限制，请稍后再试"
-            logger.error(f"ip:{get_real_ip_address(request)} short:{kwargs.get('short')} {str(e)}")
-            return HttpResponsePermanentRedirect(r_url)
-        return super().dispatch(request, *args, **kwargs)
-
-
-class IosUDIDView(UdidView):
+class IosUDIDView(APIView):
     throttle_classes = [ReceiveUdidThrottle1, ReceiveUdidThrottle2]
 
     def post(self, request, short):
