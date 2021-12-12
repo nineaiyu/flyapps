@@ -64,7 +64,7 @@ def resign_by_app_id_and_developer(app_id, developer_id, developer_app_id, need_
                                                                                  add_new_bundles_prefix)
     else:
         status = True
-    with cache.lock("%s_%s_%s" % ('run_sign', app_obj.app_id, developer_obj.issuer_id), timeout=60 * 10):
+    with cache.lock("%s_%s_%s" % ('run_sign', app_obj.app_id, developer_obj.issuer_id), timeout=60 * 5):
         if status:
             status, result = IosUtils.run_sign(app_obj.user_id, app_obj, developer_obj, d_time, [])
             return status, {'developer_id': developer_obj.issuer_id, 'result': (status, result)}
@@ -471,7 +471,7 @@ class IosUtils(object):
                     return True, d_result
             else:
                 with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id),
-                                timeout=60 * 10):
+                                timeout=60 * 5):
                     logger.info("start run_sign ...")
                     return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
                                              time.time(), [self.udid])
@@ -716,9 +716,11 @@ class IosUtils(object):
                     else:
                         if 'continue' in [str(did_udid_result), str(download_profile_result)]:
                             return True, True
-                        return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
-                                                 start_time,
-                                                 [did_udid[1] for did_udid in did_udid_lists])
+                        with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id),
+                                        timeout=60 * 5):
+                            return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
+                                                     start_time,
+                                                     [did_udid[1] for did_udid in did_udid_lists])
 
         if not self.developer_obj:
             d_result['code'] = 1005
