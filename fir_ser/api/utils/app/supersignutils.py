@@ -64,10 +64,12 @@ def resign_by_app_id_and_developer(app_id, developer_id, developer_app_id, need_
                                                                                  add_new_bundles_prefix)
     else:
         status = True
-    with cache.lock("%s_%s_%s" % ('run_sign', app_obj.app_id, developer_obj.issuer_id), timeout=60 * 5):
-        if status:
-            status, result = IosUtils.run_sign(app_obj.user_id, app_obj, developer_obj, d_time, [])
-            return status, {'developer_id': developer_obj.issuer_id, 'result': (status, result)}
+    if status:
+        locker = {
+            'locker_key': "%s_%s_%s" % ('run_sign', app_obj.app_id, developer_obj.issuer_id),
+            "timeout": 60 * 5}
+        status, result = IosUtils.run_sign(app_obj.user_id, app_obj, developer_obj, d_time, [], locker=locker)
+        return status, {'developer_id': developer_obj.issuer_id, 'result': (status, result)}
 
 
 def check_app_sign_limit(app_obj):
@@ -236,6 +238,30 @@ def call_function_try_attempts(try_attempts=3, sleep_time=2, failed_callback=Non
                 logger.error(f'exec {func} failed after the maximum number of attempts. Failed:{res[1]}')
                 if failed_callback:
                     failed_callback()
+            logger.info(f"exec {func} finished. time:{time.time() - start_time}")
+            return res
+
+        return wrapper
+
+    return decorator
+
+
+def run_function_by_lock(lock_key='', timeout=60 * 5):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            locker = kwargs.get('locker', {})
+            if locker:
+                kwargs.pop('locker')
+            new_lock_key = locker.get('lock_key', lock_key)
+            new_timeout = locker.get('timeout', timeout)
+            if locker and new_timeout and new_lock_key:
+                with cache.lock(new_lock_key, timeout=new_timeout):
+                    logger.info(f"exec {func} start. time:{time.time()}")
+                    res = func(*args, **kwargs)
+            else:
+                res = func(*args, **kwargs)
             logger.info(f"exec {func} finished. time:{time.time() - start_time}")
             return res
 
@@ -458,6 +484,7 @@ class IosUtils(object):
         app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid__udid=self.udid,
                                               udid__developerid=self.developer_obj).first()
         if app_udid_obj and app_udid_obj.is_download:
+            sign_flag = False
             if app_udid_obj.is_signed:
                 # release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
 
@@ -469,12 +496,17 @@ class IosUtils(object):
                     d_result['msg'] = msg
                     logger.info(d_result)
                     return True, d_result
+                else:
+                    sign_flag = True
             else:
-                with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id),
-                                timeout=60 * 5):
-                    logger.info("start run_sign ...")
-                    return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
-                                             time.time(), [self.udid])
+                sign_flag = True
+            if sign_flag:
+                locker = {
+                    'locker_key': "%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id),
+                    "timeout": 60 * 5}
+                logger.info("start run_sign ...")
+                return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
+                                         time.time(), [self.udid], locker=locker)
 
     @staticmethod
     @call_function_try_attempts()
@@ -716,11 +748,12 @@ class IosUtils(object):
                     else:
                         if 'continue' in [str(did_udid_result), str(download_profile_result)]:
                             return True, True
-                        with cache.lock("%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id),
-                                        timeout=60 * 5):
-                            return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
-                                                     start_time,
-                                                     [did_udid[1] for did_udid in did_udid_lists])
+                        locker = {
+                            'locker_key': "%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id),
+                            "timeout": 60 * 5}
+                        return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
+                                                 start_time,
+                                                 [did_udid[1] for did_udid in did_udid_lists], locker=locker)
 
         if not self.developer_obj:
             d_result['code'] = 1005
@@ -730,6 +763,7 @@ class IosUtils(object):
         return True, True
 
     @staticmethod
+    @run_function_by_lock()
     def run_sign(user_obj, app_obj, developer_obj, d_time, udid_list=None):
         if udid_list is None:
             udid_list = []
