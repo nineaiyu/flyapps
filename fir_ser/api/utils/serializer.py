@@ -532,7 +532,8 @@ class AdminDeveloperSerializer(DeveloperSerializer):
 class SuperSignUsedSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.APPSuperSignUsedInfo
-        fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name", "other_uid", "developer_description"]
+        fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name", "other_uid",
+                  "developer_description"]
 
     device_udid = serializers.CharField(source="udid.udid.udid")
     device_name = serializers.CharField(source="udid.product")

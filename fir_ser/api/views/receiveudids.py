@@ -44,6 +44,7 @@ class IosUDIDView(APIView):
                         client_ip = get_real_ip_address(request)
                         logger.info(f"client_ip {client_ip} short {short} app_info {app_obj}")
 
+                        # from api.utils.app.supersignutils import IosUtils
                         # ios_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
                         # ios_obj.sign_ipa(client_ip)
                         # return Response('ok')
