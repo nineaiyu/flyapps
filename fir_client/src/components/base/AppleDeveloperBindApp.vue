@@ -61,7 +61,8 @@
               <p>使用数量: {{ option.app_used_number }}</p>
               <p>描述: {{ option.description }}</p>
               <div slot="reference" class="name-wrapper">
-                <div><span v-if="option.app_usable_number>0">{{ option.app_usable_number }}</span> -{{ option.name }} -
+                <div><span v-if="option.app_usable_number>0">{{ option.app_usable_number }} - </span> {{ option.name }}
+                  -
                   {{ option.bundle_id }} - {{ option.app_id }}
                 </div>
               </div>
