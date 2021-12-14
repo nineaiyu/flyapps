@@ -67,6 +67,7 @@ import {
     Timeline,
     TimelineItem,
     Tooltip,
+    Transfer,
     Upload
 } from "element-ui";
 import VueLazyload from 'vue-lazyload'
@@ -156,6 +157,7 @@ Vue.use(Footer);
 Vue.use(InputNumber);
 Vue.use(Radio);
 Vue.use(Backtop);
+Vue.use(Transfer);
 Vue.prototype.$message = Message;
 Vue.prototype.$notify = Notification;
 Vue.prototype.$loading = Loading.service;

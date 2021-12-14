@@ -16,7 +16,7 @@ from django.core.cache import cache
 from django.db.models import Count
 
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
-    UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo
+    UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo, AppleDeveloperToAppUse
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
     get_format_time, make_app_uuid, make_from_user_uuid
@@ -270,6 +270,31 @@ def run_function_by_lock(lock_key='', timeout=60 * 5):
     return decorator
 
 
+def get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app=False):
+    can_used_developer_pk_list = []
+    obj_base_filter = AppIOSDeveloperInfo.objects.filter(user_id__in=user_objs, is_actived=True, certid__isnull=False)
+    if apple_to_app:
+        # 存在指定开发者，则新设备优先注册到指定开发者
+        developer_obj_lists = obj_base_filter.filter(appledevelopertoappuse__app_id=app_obj)
+    else:
+        developer_obj_lists = obj_base_filter.exclude(appledevelopertoappuse__developerid__isnull=False)
+    developer_obj_lists = developer_obj_lists.distinct().order_by("created_time")
+    for developer_obj in developer_obj_lists:
+        # 通过开发者数限制进行过滤
+        used_number = get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
+            developer_obj.user_id)
+        if used_number < developer_obj.usable_number:
+            if apple_to_app:
+                apple_to_app_obj = AppleDeveloperToAppUse.objects.filter(app_id=app_obj,
+                                                                         developerid=developer_obj).first()
+                if apple_to_app_obj:
+                    if used_number < apple_to_app_obj.usable_number:
+                        can_used_developer_pk_list.append(developer_obj.pk)
+            else:
+                can_used_developer_pk_list.append(developer_obj.pk)
+    return can_used_developer_pk_list
+
+
 def get_developer_user_by_app_udid(user_objs, udid, app_obj):
     developer_udid_obj_list = UDIDsyncDeveloper.objects.filter(developerid__user_id__in=user_objs,
                                                                developerid__is_actived=True,
@@ -296,12 +321,11 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj):
                 developer_obj.user_id) < developer_obj.usable_number:
             logger.info(f'app_obj:{app_obj} only and return')
             return developer_obj, False
-    can_used_developer_pk_list = []
-    for developer_obj in AppIOSDeveloperInfo.objects.filter(user_id__in=user_objs, is_actived=True,
-                                                            certid__isnull=False).order_by("created_time"):
-        if get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
-                developer_obj.user_id) < developer_obj.usable_number:
-            can_used_developer_pk_list.append(developer_obj.pk)
+
+    apple_to_app = AppleDeveloperToAppUse.objects.filter(app_id=app_obj).first()
+    can_used_developer_pk_list = get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app)
+    if not can_used_developer_pk_list:
+        can_used_developer_pk_list = get_new_developer_by_app_obj(user_objs, app_obj)
 
     # 查询开发者策略 按照最小注册设备数进行查找，这样可以分散，进而使应用趋向于一个开发者，为后期更新提供方便
     if can_used_developer_pk_list:

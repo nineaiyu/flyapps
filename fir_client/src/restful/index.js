@@ -768,6 +768,21 @@ export function DeviceRankInfo(callBack, params, load = true) {
     );
 }
 
+/**开发绑定应用*/
+export function developerBindAppFun(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/supersign/bind',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 /**应用举报 */
 export function appReport(callBack, params, load = true) {
     getData(

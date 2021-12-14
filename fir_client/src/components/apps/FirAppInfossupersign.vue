@@ -2,6 +2,15 @@
 
 
   <div style="margin-top: 20px;width: 66%;margin-left: 8%">
+    <el-dialog
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        :title="appletoapp_title"
+        :visible.sync="bind_appletoapp_sure"
+        width="1166px">
+      <apple-developer-bind-app v-if="bind_appletoapp_sure" :app_id="currentapp.app_id"
+                                transitionName="bind_appletoapp_app"/>
+    </el-dialog>
     <el-form v-if="currentapp.type === 1 && $store.state.userinfo.supersign_active" label-width="80px">
 
 
@@ -24,7 +33,12 @@
         <el-link v-else :underline="false" style="margin-left: 20px">超级签名，iOS专用，需要配置好苹果开发者账户，方可开启</el-link>
 
       </el-form-item>
-
+      <el-form-item label="专属配置" label-width="200px">
+        <el-button :disabled="supersign_disable" @click="bindAppletoapp">配置专属苹果开发账户</el-button>
+        <el-link :underline="false" style="margin-left: 20px" @click="bindAppletoapp"> 拥有
+          {{ currentapp.private_developer_number }} 个专属苹果开发者
+        </el-link>
+      </el-form-item>
       <el-form-item label="签名限额" label-width="200px">
 
 
@@ -91,9 +105,11 @@
 <script>
 import {apputils,} from "@/restful"
 import {deepCopy} from "@/utils";
+import AppleDeveloperBindApp from "@/components/base/AppleDeveloperBindApp";
 
 export default {
   name: "FirAppInfossupersign",
+  components: {AppleDeveloperBindApp},
   data() {
     return {
       currentapp: {},
@@ -104,11 +120,16 @@ export default {
       sign_type_list: [],
       sign_type: 0,
       defualt_dtitle: '',
-      defualt_dtitle_name: ''
+      defualt_dtitle_name: '',
+      bind_appletoapp_sure: false,
+      appletoapp_title: ''
     }
   },
   methods: {
-
+    bindAppletoapp() {
+      this.appletoapp_title = "专属签名开发者信息 " + this.currentapp.name + "-" + this.currentapp.bundle_id;
+      this.bind_appletoapp_sure = true;
+    },
     set_default_flag() {
       this.showsupersignflag = false;
     },

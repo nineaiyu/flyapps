@@ -1,6 +1,14 @@
 <template>
   <el-main>
-
+    <el-dialog
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        :title="appletoapp_title"
+        :visible.sync="bind_appletoapp_sure"
+        width="1166px">
+      <apple-developer-bind-app v-if="bind_appletoapp_sure" :issuer_id="editdeveloperinfo.issuer_id"
+                                transitionName="bind_appletoapp"/>
+    </el-dialog>
     <el-dialog :close-on-click-modal="false" :destroy-on-close="true" :visible.sync="importcertDeveloperVisible"
                style="text-align:center" title="发布证书导入" width="700px">
       <el-form label-width="30%">
@@ -85,7 +93,7 @@
           <el-button v-if="isedit && editdeveloperinfo.is_actived" size="small" type="success"
                      @click="activedeveloperFun(editdeveloperinfo,'checkauth')">账户激活检测
           </el-button>
-
+          <!--          <el-button v-if="isedit && editdeveloperinfo.is_actived" size="small" @click="bindAppletoapp(editdeveloperinfo)">专属应用</el-button>-->
           <el-button @click="updateorcreate">保存</el-button>
           <el-button @click="canceledit">取消</el-button>
         </div>
@@ -178,12 +186,22 @@
         <el-input
             v-model="appidseach"
             clearable
-            placeholder="输入开发者用户ID"
-            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+            placeholder="输入开发者ID"
+            style="width: 27%;margin-right: 10px;margin-bottom: 10px"/>
+
+        <el-select v-model="developer_choice" clearable placeholder="账户类型"
+                   style="width: 12%;margin-right: 10px;margin-bottom: 10px">
+          <el-option
+              v-for="item in developer_options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+          </el-option>
+        </el-select>
         <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
-        <div style="width: 43%;margin-right: 30px;float:right">
+        <div style="width: 45%;margin-right: 30px;float:right">
           <el-link :underline="false">私有总设备量：{{ developer_used_info.all_usable_number }} 已经使用：【平台：{{
               developer_used_info.all_use_number
             }} 】【其他：{{ developer_used_info.other_used_sum }}】
@@ -208,11 +226,18 @@
           <el-table-column
               align="center"
               fixed
-              label="用户 issuer_id"
+              label="开发者ID issuer_id"
               prop="issuer_id"
-              width="300">
+              width="200">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
+                <el-tooltip content="点击复制到剪贴板">
+
+                  <el-link v-clipboard:copy="scope.row.issuer_id"
+                           v-clipboard:success="copy_success"
+                           :underline="false">开发者账户ID: {{ scope.row.issuer_id }}
+                  </el-link>
+                </el-tooltip>
                 <p>开发者账户已使用设备数: {{ scope.row.developer_used_number }}</p>
                 <p>开发者账户可用设备数: {{ 100 - scope.row.developer_used_number }}</p>
                 <p>由于您设置可用设备数: {{ scope.row.usable_number }} ,所以现在可用设备数: {{
@@ -302,6 +327,46 @@
             </template>
           </el-table-column>
 
+          <el-table-column
+              align="center"
+              label="应用签名"
+              prop="app_used_number"
+              width="60">
+            <template slot-scope="scope">
+
+              <el-popover placement="top" trigger="hover">
+                <p>签名了 {{ scope.row.app_used_number }} 个应用</p>
+                <div slot="reference" class="name-wrapper">
+                  <el-link v-if="scope.row.app_used_number > 0" :underline="false"
+                           @click="show_device_ubill(scope.row.issuer_id)">
+                    <el-tag size="medium">{{ scope.row.app_used_number }}</el-tag>
+                  </el-link>
+                  <el-tag v-else size="medium">{{ scope.row.app_used_number }}</el-tag>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="专属账户"
+              prop="is_private"
+              width="60">
+            <template slot-scope="scope">
+              <el-popover placement="top"
+                          trigger="hover">
+                <p>专属开发者被分配给了 {{ scope.row.app_private_number }} 个应用</p>
+                <p>专属开发者一共分配了 {{ scope.row.app_private_usable_number }} 个设备名额</p>
+                <p>专属开发者已经被专属应用使用了 {{ scope.row.app_private_used_number }} 个设备名额</p>
+                <div slot="reference" class="name-wrapper">
+                  <el-link v-if="scope.row.app_private_number > 0" :underline="false"
+                           @click="bindAppletoapp(scope.row)">
+                    <el-tag size="medium">是</el-tag>
+                  </el-link>
+                  <el-tag v-else size="medium" type="info" @click="bindAppletoapp(scope.row)">否</el-tag>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
           <el-table-column
               :formatter="formatter"
               align="center"
@@ -727,7 +792,7 @@
         <el-input
             v-model="appnamesearch"
             clearable
-            placeholder="输入应用名称或BundleID"
+            placeholder="输入应用名称或应用BundleID或开发者ID"
             style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
         <el-date-picker
             v-model="timerangesearch"
@@ -812,9 +877,11 @@ import {
   iosudevices
 } from "@/restful";
 import {getUserInfoFun, removeAaary} from "@/utils";
+import AppleDeveloperBindApp from "@/components/base/AppleDeveloperBindApp";
 
 export default {
   name: "FirSuperSignBase",
+  components: {AppleDeveloperBindApp},
   data() {
     return {
       dialogShowDeviceBillInfo: false,
@@ -885,6 +952,18 @@ export default {
           }
         }]
       },
+      developer_options: [
+        {
+          value: 'private',
+          label: '专属应用账户'
+        }, {
+          value: 'public',
+          label: '公共应用账户'
+        }
+      ],
+      developer_choice: '',
+      bind_appletoapp_sure: false,
+      appletoapp_title: ''
     }
   }, watch: {
     'dialogaddDeveloperVisible': function () {
@@ -894,6 +973,16 @@ export default {
     }
   },
   methods: {
+    copy_success() {
+      this.$message.success('复制剪切板成功');
+    },
+    bindAppletoapp(developinfo) {
+      if (developinfo) {
+        this.editdeveloperinfo = developinfo
+      }
+      this.appletoapp_title = "开发者ID " + this.editdeveloperinfo.issuer_id + " 【专属账户分配之后，其他应用将无法使用该专属开发者的设备余额】";
+      this.bind_appletoapp_sure = true;
+    },
     disabledeveloperFun(developer, act) {
       this.$confirm('如您不再使用该开发账户进行签名，可以点击进行禁用，是否继续?', '提示', {
         confirmButtonText: '确定',
@@ -1132,10 +1221,15 @@ export default {
       this.activeName = 'useddevices'
       this.get_data_from_tabname(this.activeName);
     },
+    show_device_ubill(issuer_id) {
+      this.appnamesearch = issuer_id;
+      this.activeName = 'devicesrank'
+      this.get_data_from_tabname(this.activeName);
+    },
     get_data_from_tabname(tabname, data = {}) {
       data.udid = this.udidsearch.replace(/^\s+|\s+$/g, "");
       data.bundleid = this.Bundleidsearch.replace(/^\s+|\s+$/g, "");
-      data.appid = this.appidseach.replace(/^\s+|\s+$/g, "");
+      data.issuer_id = this.appidseach.replace(/^\s+|\s+$/g, "");
       this.$router.push({"name": 'FirSuperSignBase', params: {act: tabname}});
       if (tabname === "useddevices") {
         this.iosdevicesFun('GET', data)
@@ -1146,6 +1240,7 @@ export default {
         // this.title='新增私有开发者账户';
         // this.dialogaddDeveloperVisible=true;
       } else if (tabname === "iosdeveloper") {
+        data.developer_choice = this.developer_choice;
         this.iosdeveloperFun({"methods": "GET", "data": data})
       } else if (tabname === "devicesbill") {
         this.iosdevicebillFun({"methods": "GET", "data": data})

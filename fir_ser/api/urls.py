@@ -27,7 +27,7 @@ from api.views.receiveudids import IosUDIDView, TaskView
 from api.views.report import ReportView
 from api.views.storage import StorageView, CleanStorageView
 from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView, SuperSignCertView, \
-    DeviceUsedBillView, DeveloperDeviceView, DeviceUsedRankInfoView
+    DeviceUsedBillView, DeveloperDeviceView, DeviceUsedRankInfoView, AppleDeveloperBindAppsView
 from api.views.thirdlogin import ValidWxChatToken, ThirdWxAccount
 from api.views.uploads import AppAnalyseView, UploadView
 
@@ -64,6 +64,7 @@ urlpatterns = [
     re_path("^supersign/cert$", SuperSignCertView.as_view()),
     re_path("^supersign/bill$", DeviceUsedBillView.as_view()),
     re_path("^supersign/rank$", DeviceUsedRankInfoView.as_view()),
+    re_path("^supersign/bind$", AppleDeveloperBindAppsView.as_view()),
     re_path("^package_prices$", PriceView.as_view()),
     re_path("^orders$", OrderView.as_view()),
     re_path("^certification$", CertificationView.as_view()),

@@ -599,3 +599,19 @@ class AppReportInfo(models.Model):
 
     def __str__(self):
         return "%s-%s" % (self.app_name, self.report_reason)
+
+
+class AppleDeveloperToAppUse(models.Model):
+    app_id = models.ForeignKey(to='Apps', on_delete=models.CASCADE)
+    developerid = models.ForeignKey(to='AppIOSDeveloperInfo', on_delete=models.CASCADE)
+    usable_number = models.IntegerField(verbose_name="可使用设备数", default=100)
+    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+
+    class Meta:
+        verbose_name = '开发者专属于应用'
+        verbose_name_plural = "开发者专属于应用"
+        unique_together = ('app_id', 'developerid')
+
+    def __str__(self):
+        return "%s-%s" % (self.app_id.name, self.developerid.issuer_id)
