@@ -201,7 +201,7 @@ export default {
             this.loadingfun.close()
           }
           ,
-          {"methods": 'GET', "data": {app_id: this.app_id, issuer_id: this.issuer_id}})
+          {"methods": 'GET', "data": {app_id: this.app_id, issuer_id: this.issuer_id, size: 1000}})
     },
     getBindInfo(params) {
       if (this.issuer_id) {
