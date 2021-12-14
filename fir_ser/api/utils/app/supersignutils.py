@@ -721,7 +721,6 @@ class IosUtils(object):
             logger.warning(
                 "call_loop download_profile appid:%s developer:%s count:%s" % (self.app_obj, self.developer_obj, count))
             if self.developer_obj:
-                return 11111
                 # register_devices_prefix = f"check_or_register_devices_{self.developer_obj.issuer_id}_{self.udid}"
                 register_devices_prefix = f"check_or_register_devices_{self.developer_obj.issuer_id}"
                 add_new_bundles_prefix = f"check_or_add_new_bundles_{self.developer_obj.issuer_id}_{self.app_obj.app_id}"
