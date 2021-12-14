@@ -36,7 +36,7 @@
       <el-form-item label="专属配置" label-width="200px">
         <el-button :disabled="supersign_disable" @click="bindAppletoapp">配置专属苹果开发账户</el-button>
         <el-link :underline="false" style="margin-left: 20px" @click="bindAppletoapp"> 拥有
-          {{ currentapp.private_developer_number }} 个专属苹果开发者
+          {{ currentapp.private_developer_number }} 个专属苹果开发者，使用了 {{ currentapp.private_developer_used_number }} 个设备数
         </el-link>
       </el-form-item>
       <el-form-item label="签名限额" label-width="200px">

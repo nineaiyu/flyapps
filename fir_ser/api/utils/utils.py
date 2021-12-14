@@ -61,7 +61,7 @@ def get_developer_devices(developer_obj_lists):
     other_used_sum = 0
     flyapp_used_sum = 0
     max_total = 0
-    for dev_obj in developer_obj_lists:
+    for dev_obj in developer_obj_lists.filter(is_actived=True):
         other_used, flyapp_used, _ = get_developer_udided(dev_obj)
         other_used_sum += other_used
         flyapp_used_sum += flyapp_used

@@ -330,18 +330,18 @@
           <el-table-column
               align="center"
               label="应用签名"
-              prop="app_used_number"
+              prop="app_used_count"
               width="60">
             <template slot-scope="scope">
 
               <el-popover placement="top" trigger="hover">
-                <p>签名了 {{ scope.row.app_used_number }} 个应用</p>
+                <p>签名了 {{ scope.row.app_used_count }} 个应用</p>
                 <div slot="reference" class="name-wrapper">
-                  <el-link v-if="scope.row.app_used_number > 0" :underline="false"
+                  <el-link v-if="scope.row.app_used_count > 0" :underline="false"
                            @click="show_device_ubill(scope.row.issuer_id)">
-                    <el-tag size="medium">{{ scope.row.app_used_number }}</el-tag>
+                    <el-tag size="medium">{{ scope.row.app_used_count }}</el-tag>
                   </el-link>
-                  <el-tag v-else size="medium">{{ scope.row.app_used_number }}</el-tag>
+                  <el-tag v-else size="medium">{{ scope.row.app_used_count }}</el-tag>
                 </div>
               </el-popover>
             </template>
@@ -355,7 +355,7 @@
               <el-popover placement="top"
                           trigger="hover">
                 <p>专属开发者被分配给了 {{ scope.row.app_private_number }} 个应用</p>
-                <p>专属开发者一共分配了 {{ scope.row.app_private_usable_number }} 个设备名额</p>
+                <p>专属开发者一共分配了 {{ scope.row.private_usable_number }} 个设备名额</p>
                 <p>专属开发者已经被专属应用使用了 {{ scope.row.app_private_used_number }} 个设备名额</p>
                 <div slot="reference" class="name-wrapper">
                   <el-link v-if="scope.row.app_private_number > 0" :underline="false"

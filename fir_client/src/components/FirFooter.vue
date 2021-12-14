@@ -18,7 +18,7 @@
     </div>
 
     <div>
-      <div :underline="false" style="width: 200px; margin: 0 auto; padding: 5px 0;">
+      <div style="width: 200px; margin: 0 auto; padding: 5px 0;">
         <el-link :href="footer.ipcBeiAn.url" :underline="false" rel="nofollow noopener"
                  target="_blank">{{ footer.ipcBeiAn.text }}
         </el-link>

@@ -22,7 +22,7 @@
               <el-tag v-if="option.app_private_number > 0">专属应用账户，存在其他应用单独使用该开发者</el-tag>
               <el-tag v-else type="info">公共应用账户，所有应用公用此开发者</el-tag>
               <p>开发者ID: {{ option.issuer_id }} </p>
-              <p>应用签名数: {{ option.app_used_number }} </p>
+              <p>应用签名数: {{ option.app_used_count }} </p>
               <p>已分配专属应用数: {{ option.app_private_number }} </p>
               <p>开发者账户已使用设备数: {{ option.developer_used_number }}</p>
               <p>开发者账户可用设备数: {{ 100 - option.developer_used_number }}</p>
@@ -37,6 +37,7 @@
                                  label="分配数量" size="small"/>
                 <el-button size="small" style="margin-left: 10px" @click="saveNumber(option)">保存修改</el-button>
               </p>
+              <p>该应用已经消耗 {{ option.app_used_number }} 个设备数</p>
               <p>描述: {{ option.description }}</p>
 
               <div slot="reference" class="name-wrapper">

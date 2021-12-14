@@ -314,18 +314,25 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj):
         logger.info(f'udid:{udid} only and return')
         return developer_obj, True
 
+    # 新设备查找策略
     # 根据app查找开发者账户
+    exist_app_developer_pk_list = []
     for developer_obj in AppIOSDeveloperInfo.objects.filter(
             pk__in=developer_udid_obj_list.filter(developerid__apptodeveloper__app_id=app_obj)):
         if get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
                 developer_obj.user_id) < developer_obj.usable_number:
             logger.info(f'app_obj:{app_obj} only and return')
-            return developer_obj, False
+            exist_app_developer_pk_list.append(developer_obj.pk)
+            # return developer_obj, False
 
-    apple_to_app = AppleDeveloperToAppUse.objects.filter(app_id=app_obj).first()
+    apple_to_app = AppleDeveloperToAppUse.objects.filter(app_id=app_obj, developerid__is_actived=True,
+                                                         developerid__certid__isnull=False).first()
     can_used_developer_pk_list = get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app)
-    if not can_used_developer_pk_list:
+    if not can_used_developer_pk_list and apple_to_app:
         can_used_developer_pk_list = get_new_developer_by_app_obj(user_objs, app_obj)
+
+    if can_used_developer_pk_list and exist_app_developer_pk_list:
+        can_used_developer_pk_list = list(set(can_used_developer_pk_list) & set(exist_app_developer_pk_list))
 
     # 查询开发者策略 按照最小注册设备数进行查找，这样可以分散，进而使应用趋向于一个开发者，为后期更新提供方便
     if can_used_developer_pk_list:
@@ -344,9 +351,9 @@ def get_developer_obj_by_others(user_obj, udid, app_obj):
     if result:
         return result
     receive_user_id_list = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj).values('user_id').distinct()
-
-    result, is_exist = get_developer_user_by_app_udid(UserInfo.objects.filter(pk__in=receive_user_id_list), udid,
-                                                      app_obj)
+    if receive_user_id_list:
+        result, is_exist = get_developer_user_by_app_udid(UserInfo.objects.filter(pk__in=receive_user_id_list), udid,
+                                                          app_obj)
     f_count = get_ios_developer_public_num(user_obj)
 
     if (f_count == 0 and is_exist) or f_count > 0:
@@ -714,6 +721,7 @@ class IosUtils(object):
             logger.warning(
                 "call_loop download_profile appid:%s developer:%s count:%s" % (self.app_obj, self.developer_obj, count))
             if self.developer_obj:
+                return 11111
                 # register_devices_prefix = f"check_or_register_devices_{self.developer_obj.issuer_id}_{self.udid}"
                 register_devices_prefix = f"check_or_register_devices_{self.developer_obj.issuer_id}"
                 add_new_bundles_prefix = f"check_or_add_new_bundles_{self.developer_obj.issuer_id}_{self.app_obj.app_id}"

@@ -159,6 +159,12 @@ class AppsSerializer(serializers.ModelSerializer):
     def get_private_developer_number(self, obj):
         return models.AppleDeveloperToAppUse.objects.filter(app_id=obj).count()
 
+    private_developer_used_number = serializers.SerializerMethodField()
+
+    def get_private_developer_used_number(self, obj):
+        return models.DeveloperDevicesID.objects.filter(app_id=obj,
+                                                        developerid__appledevelopertoappuse__app_id=obj).distinct().count()
+
     domain_name = serializers.SerializerMethodField()
 
     def get_domain_name(self, obj):
@@ -456,12 +462,13 @@ class DeveloperSerializer(serializers.ModelSerializer):
     developer_used_number = serializers.SerializerMethodField()
     developer_used_other_number = serializers.SerializerMethodField()
     use_number = serializers.SerializerMethodField()
-    app_used_number = serializers.SerializerMethodField()
+    app_used_count = serializers.SerializerMethodField()
     is_disabled = serializers.SerializerMethodField()
     app_private_number = serializers.SerializerMethodField()
     app_private_used_number = serializers.SerializerMethodField()
     app_usable_number = serializers.SerializerMethodField()
-    app_private_usable_number = serializers.SerializerMethodField()
+    app_used_number = serializers.SerializerMethodField()
+    private_usable_number = serializers.SerializerMethodField()
 
     def get_app_usable_number(self, obj):
         app_id = self.context.get('app_id')
@@ -470,6 +477,13 @@ class DeveloperSerializer(serializers.ModelSerializer):
                                                                             app_id__app_id=app_id).first()
             if apple_to_app_obj:
                 return apple_to_app_obj.usable_number
+        return 0
+
+    def get_app_used_number(self, obj):
+        app_id = self.context.get('app_id', '')
+        if app_id:
+            return models.DeveloperDevicesID.objects.filter(developerid=obj,
+                                                            app_id__app_id=app_id).distinct().count()
         return 0
 
     def get_developer_used_number(self, obj):
@@ -484,7 +498,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
     def get_app_private_number(self, obj):
         return models.AppleDeveloperToAppUse.objects.filter(developerid=obj).count()
 
-    def get_app_private_usable_number(self, obj):
+    def get_private_usable_number(self, obj):
         used_number = models.AppleDeveloperToAppUse.objects.filter(developerid=obj).values('usable_number').aggregate(
             Sum('usable_number')).get('usable_number__sum')
         if not used_number:
@@ -492,12 +506,14 @@ class DeveloperSerializer(serializers.ModelSerializer):
         return used_number
 
     def get_app_private_used_number(self, obj):
-        return models.DeveloperDevicesID.objects.filter(developerid=obj, app_id__appledevelopertoappuse__developerid=obj).values('udid').distinct().count()
+        return models.DeveloperDevicesID.objects.filter(developerid=obj,
+                                                        app_id__appledevelopertoappuse__developerid=obj).values(
+            'udid').distinct().count()
 
     def get_use_number(self, obj):
         return models.DeveloperDevicesID.objects.filter(developerid=obj).values('udid').distinct().count()
 
-    def get_app_used_number(self, obj):
+    def get_app_used_count(self, obj):
         return models.DeveloperAppID.objects.filter(developerid=obj).count()
 
 
@@ -858,5 +874,5 @@ class AppleDeveloperToAppUseAppsSerializer(serializers.ModelSerializer):
     def get_app_used_number(self, obj):
         issuer_id = self.context.get('issuer_id')
         if issuer_id:
-            return models.DeveloperDevicesID.objects.filter(app_id=obj,developerid__issuer_id=issuer_id).count()
+            return models.DeveloperDevicesID.objects.filter(app_id=obj, developerid__issuer_id=issuer_id).count()
         return 0
