@@ -527,6 +527,15 @@
               label="开发者ID"
               prop="developer_id"
               width="200">
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <p>开发者ID: {{ scope.row.developer_id }}</p>
+                <p>开发者备注: {{ scope.row.developer_description }}</p>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.developer_id }}</span>
+                </div>
+              </el-popover>
+            </template>
           </el-table-column>
 
         </el-table>
@@ -589,9 +598,18 @@
               label="开发者ID"
               prop="developer_id"
               width="200">
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <p>开发者ID: {{ scope.row.developer_id }}</p>
+                <p>开发者备注: {{ scope.row.developer_description }}</p>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.developer_id }}</span>
+                </div>
+              </el-popover>
+            </template>
           </el-table-column>
           <el-table-column
-              v-if="$store.state.userinfo&&$store.state.userinfo.role == 3"
+              v-if="$store.state.userinfo&&$store.state.userinfo.role === 3"
               align="center"
               label="被使用户uid"
               prop="other_uid">
@@ -612,12 +630,17 @@
             v-model="udidsearch"
             clearable
             placeholder="输入UDID"
-            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+            style="width: 27%;margin-right: 10px;margin-bottom: 10px"/>
         <el-input
             v-model="Bundleidsearch"
             clearable
             placeholder="输入BundleID"
-            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+            style="width: 27%;margin-right: 10px;margin-bottom: 10px"/>
+        <el-input
+            v-model="appidseach"
+            clearable
+            placeholder="输入开发者ID"
+            style="width: 27%;margin-right: 10px;margin-bottom: 10px"/>
         <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
@@ -641,6 +664,7 @@
                 <p>Bundle_ID: {{ scope.row.bundle_id }}</p>
                 <p>应用名称: {{ scope.row.bundle_name }}</p>
                 <p>UDID: {{ scope.row.udid }}</p>
+                <p>开发者ID: {{ scope.row.issuer_id }}</p>
                 <div slot="reference" class="name-wrapper">
                   <el-tag size="medium">{{ scope.row.udid }}</el-tag>
                 </div>
@@ -651,7 +675,7 @@
               align="center"
               label="imei"
               prop="imei"
-              width="160">
+              width="100">
 
           </el-table-column>
           <el-table-column
@@ -665,15 +689,34 @@
               label="设备型号"
               prop="version"
               width="100">
+
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <p>设备型号: {{ scope.row.version }}</p>
+                <p>设备序列号: {{ scope.row.serial }}</p>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.version }}</span>
+                </div>
+              </el-popover>
+            </template>
+
           </el-table-column>
           <el-table-column
               align="center"
-              label="设备序列号"
-              prop="serial"
-              width="140">
+              label="开发者ID"
+              prop="issuer_id">
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <p>开发者ID: {{ scope.row.issuer_id }}</p>
+                <p>开发者备注: {{ scope.row.developer_description }}</p>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.issuer_id }}</span>
+                </div>
+              </el-popover>
+            </template>
           </el-table-column>
           <el-table-column
-              v-if="$store.state.userinfo&&$store.state.userinfo.role == 3"
+              v-if="$store.state.userinfo&&$store.state.userinfo.role === 3"
               align="center"
               label="被使用户uid"
               prop="other_uid">
@@ -689,7 +732,7 @@
               align="center"
               fixed="right"
               label="操作"
-              width="110">
+              width="100">
             <template slot-scope="scope">
               <el-button
                   v-if="scope.row.is_mine"

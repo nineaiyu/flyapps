@@ -532,7 +532,7 @@ class AdminDeveloperSerializer(DeveloperSerializer):
 class SuperSignUsedSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.APPSuperSignUsedInfo
-        fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name", "other_uid"]
+        fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name", "other_uid", "developer_description"]
 
     device_udid = serializers.CharField(source="udid.udid.udid")
     device_name = serializers.CharField(source="udid.product")
@@ -540,10 +540,17 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
     bundle_name = serializers.CharField(source="app_id.name")
     other_uid = serializers.SerializerMethodField()
     developer_id = serializers.SerializerMethodField()
+    developer_description = serializers.SerializerMethodField()
 
     def get_developer_id(self, obj):
         if self.context.get('mine'):
             return obj.developerid.issuer_id
+        else:
+            return '公共账号池'
+
+    def get_developer_description(self, obj):
+        if self.context.get('mine'):
+            return obj.developerid.description
         else:
             return '公共账号池'
 
@@ -578,6 +585,7 @@ class DeveloperDeviceSerializer(serializers.ModelSerializer):
         exclude = ["id", "developerid"]
 
     developer_id = serializers.CharField(source="developerid.issuer_id")
+    developer_description = serializers.CharField(source="developerid.description")
 
 
 class DeviceUDIDSerializer(serializers.ModelSerializer):
@@ -588,9 +596,23 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
 
     bundle_name = serializers.CharField(source="app_id.name")
     bundle_id = serializers.CharField(source="app_id.bundle_id")
+    issuer_id = serializers.SerializerMethodField()
+    developer_description = serializers.SerializerMethodField()
     udid = serializers.CharField(source="udid.udid")
     is_mine = serializers.SerializerMethodField()
     other_uid = serializers.SerializerMethodField()
+
+    def get_issuer_id(self, obj):
+        if self.context.get('mine'):
+            return obj.udid.developerid.issuer_id
+        else:
+            return '公共账号池'
+
+    def get_developer_description(self, obj):
+        if self.context.get('mine'):
+            return obj.udid.developerid.description
+        else:
+            return '公共账号池'
 
     def get_other_uid(self, obj):
         user_obj = self.context.get('user_obj')
