@@ -75,7 +75,8 @@
                      type="danger"
                      @click="cleandevices">清理签名数据
           </el-button>
-          <el-button v-if="isedit && editdeveloperinfo.is_actived || editdeveloperinfo.certid" size="small" @click="syncdevices">同步设备信息
+          <el-button v-if="isedit && editdeveloperinfo.is_actived || editdeveloperinfo.certid" size="small"
+                     @click="syncdevices">同步设备信息
           </el-button>
           <el-tooltip content="发布证书只能创建两个，请谨慎操作">
             <el-button v-if="isedit &&  !editdeveloperinfo.certid"

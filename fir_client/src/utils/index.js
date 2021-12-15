@@ -673,3 +673,18 @@ export function upspeed(start_time, file_size, percent) {
     const now_time = Date.now();
     return diskSize(file_size * percent * 10 / (now_time - start_time))
 }
+
+export function sort_compare(propertyName) {
+    return function (object1, object2) {
+        let value1 = object1[propertyName];
+        let value2 = object2[propertyName];
+        if (value2 < value1) {
+            return 1;
+        } else if (value2 > value1) {
+            return -1;
+        } else {
+            return 0;
+        }
+    }
+}
+

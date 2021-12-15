@@ -38,14 +38,10 @@ class DeveloperView(APIView):
     permission_classes = [SuperSignPermission, ]
 
     def get(self, request):
-
         res = BaseResponse()
-
         issuer_id = request.query_params.get("issuer_id", '')
-        app_id = request.query_params.get("app_id", '')
         developer_choice = request.query_params.get("developer_choice", None)
         developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
-
         if developer_choice and developer_choice in ['private', 'public']:
             if developer_choice == 'public':
                 developer_obj = developer_obj.exclude(appledevelopertoappuse__developerid__isnull=False)
@@ -60,7 +56,7 @@ class DeveloperView(APIView):
         app_page_serializer = page_obj.paginate_queryset(queryset=developer_obj.order_by("-updated_time"),
                                                          request=request,
                                                          view=self)
-        developer_serializer = DeveloperSerializer(app_page_serializer, many=True, context={'app_id': app_id})
+        developer_serializer = DeveloperSerializer(app_page_serializer, many=True)
 
         res.data = developer_serializer.data
         res.count = developer_obj.count()
@@ -433,14 +429,14 @@ class DeviceUsedRankInfoView(APIView):
     def get(self, request):
         res = BaseResponse()
         page_obj = PageNumber()
-        appnamesearch = request.query_params.get("appnamesearch")
+        search_key = request.query_params.get("appnamesearch")
         start_time = request.query_params.get("start_time")
         end_time = request.query_params.get("end_time")
         app_used_sign_objs = APPSuperSignUsedInfo.objects.filter(user_id=request.user)
-        if appnamesearch:
+        if search_key:
             app_used_sign_objs = app_used_sign_objs.filter(
-                Q(app_id__name=appnamesearch) | Q(app_id__bundle_id=appnamesearch) | Q(
-                    developerid__issuer_id=appnamesearch))
+                Q(app_id__name=search_key) | Q(app_id__bundle_id=search_key) | Q(
+                    developerid__issuer_id=search_key))
         if end_time and start_time:
             try:
                 start_time = datetime.date.fromtimestamp(int(start_time) / 1000)
@@ -480,6 +476,9 @@ class AppleDeveloperBindAppsView(APIView):
             apps_obj_list = Apps.objects.filter(user_id=request.user, type=1).all()
             app_serializer = AppleDeveloperToAppUseAppsSerializer(apps_obj_list, many=True,
                                                                   context={'issuer_id': issuer_id})
+        elif act == 'developer':
+            developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user).all()
+            app_serializer = DeveloperSerializer(developer_obj, many=True, context={'app_id': app_id})
         else:
             apple_to_app_obj = AppleDeveloperToAppUse.objects.filter(app_id__user_id=request.user)
             if issuer_id:

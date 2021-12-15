@@ -4,6 +4,7 @@
       <div style="text-align: center">
         <el-transfer
             v-model="choices_data"
+            v-loading="loadings"
             :button-texts="['', '']"
             :data="app_developer_lists"
             :format="{
@@ -83,7 +84,8 @@
 </template>
 
 <script>
-import {developerBindAppFun, iosdeveloper} from "@/restful";
+import {developerBindAppFun} from "@/restful";
+import {sort_compare} from "@/utils";
 
 export default {
   name: 'AppleDeveloperBindApp',
@@ -110,7 +112,8 @@ export default {
       choices_data_list: [],
       s_props: {},
       s_titles: [],
-      app_private_used_number: 100
+      app_private_used_number: 100,
+      loadings: false
     };
   },
   mounted() {
@@ -169,7 +172,7 @@ export default {
           disabled: 'is_disabled'
         }
         this.s_titles = ['可分配签名开发者账户', '已分配签名开发者账户']
-        this.iosdeveloperFun()
+        this.getBindInfo({act: 'developer'})
       }
       this.getBindInfo({})
     },
@@ -187,23 +190,8 @@ export default {
         data: {'app_id': this.app_id, 'issuer_id': this.issuer_id, 'choices_data': this.choices_data}
       })
     },
-    iosdeveloperFun() {
-      this.loadingfun = this.$loading({
-        lock: true,
-        text: '执行中,请耐心等待...',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      });
-      iosdeveloper(data => {
-            if (data.code === 1000) {
-              this.app_developer_lists = data.data;
-            }
-            this.loadingfun.close()
-          }
-          ,
-          {"methods": 'GET', "data": {app_id: this.app_id, issuer_id: this.issuer_id, size: 1000}})
-    },
     getBindInfo(params) {
+      this.loadings = true
       if (this.issuer_id) {
         params.issuer_id = this.issuer_id
       }
@@ -212,18 +200,21 @@ export default {
       }
       developerBindAppFun(data => {
         if (data.code === 1000) {
-          if (params.act === 'apps') {
+          if (params.act === 'apps' || params.act === 'developer') {
             this.app_developer_lists = data.data
+            if (params.act === 'developer') {
+              this.app_developer_lists.sort(sort_compare('developer_used_number'))
+            }
             this.get_choice_data_from_key(this.choices_data)
           } else {
             this.choices_data_list = data.data;
             this.choices_data = this.format_data(data.data)
             this.get_choice_data_from_key(this.choices_data)
-            this.$message.success("数据获取成功")
           }
         } else {
           this.$message.error("数据获取失败" + data.msg)
         }
+        this.loadings = false
       }, {methods: 'GET', data: params})
     },
     format_data(data) {
