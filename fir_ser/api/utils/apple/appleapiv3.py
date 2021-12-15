@@ -705,7 +705,7 @@ def call_function_try_attempts(try_attempts=5, sleep_time=3):
                         f'again...{i}')
                     res = str(e)
                     if 'Authentication credentials are missing or invalid' in str(e):
-                        res = '认证失败，请检查开发者信息填写是否正确'
+                        raise Exception(res)
                     time.sleep(sleep_time)
             logger.info(f"exec {func} finished. time:{time.time() - start_time}")
             if not flag:

@@ -65,26 +65,26 @@
           <el-input v-model="editdeveloperinfo.description"/>
         </el-form-item>
         <div style="">
-          <el-button v-if="isedit && editdeveloperinfo.is_actived && editdeveloperinfo.certid" size="small"
+          <el-button v-if="isedit && editdeveloperinfo.certid" size="small"
                      @click="exportcert">导出证书
           </el-button>
-          <el-button v-if="isedit && editdeveloperinfo.is_actived && !editdeveloperinfo.certid" size="small"
+          <el-button v-if="isedit && !editdeveloperinfo.certid" size="small"
                      @click="importcertDeveloperVisible=true">导入p12证书
           </el-button>
-          <el-button v-if="isedit && editdeveloperinfo.is_actived && editdeveloperinfo.certid" size="small"
+          <el-button v-if="isedit && editdeveloperinfo.certid" size="small"
                      type="danger"
                      @click="cleandevices">清理签名数据
           </el-button>
-          <el-button v-if="isedit && editdeveloperinfo.is_actived" size="small" @click="syncdevices">同步设备信息
+          <el-button v-if="isedit && editdeveloperinfo.is_actived || editdeveloperinfo.certid" size="small" @click="syncdevices">同步设备信息
           </el-button>
           <el-tooltip content="发布证书只能创建两个，请谨慎操作">
-            <el-button v-if="isedit && editdeveloperinfo.is_actived && !editdeveloperinfo.certid"
+            <el-button v-if="isedit &&  !editdeveloperinfo.certid"
                        size="small"
                        @click="isocertcert">手动创建发布证书
             </el-button>
           </el-tooltip>
           <el-tooltip content="清理发布证书，如果发布证书过期时间大于3天，将不会删除开发者发布证书，发布证书只能同时创建两个，请谨慎操作">
-            <el-button v-if="isedit && editdeveloperinfo.is_actived && editdeveloperinfo.certid"
+            <el-button v-if="isedit &&  editdeveloperinfo.certid"
                        size="small"
                        type="danger"
                        @click="isorenewcert">删除发布证书

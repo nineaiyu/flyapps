@@ -407,10 +407,7 @@ export default {
 
     },
     validFun(val) {
-      if (val && val.length > 6) {
-        return true
-      }
-      return false
+      return val && val.length > 6;
     },
     clean_storage_data(act) {
 

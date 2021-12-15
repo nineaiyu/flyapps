@@ -307,17 +307,19 @@ export default {
     }
   }, methods: {
     delete_wx_u(wx_user_info) {
-      this.$confirm(`此操作将导致微信用户 “${wx_user_info.nickname}” 无法通过扫码登录, 是否继续删除?`, '提示', {
+      this.$prompt(`此操作将导致微信用户 “${wx_user_info.nickname}” 无法通过扫码登录, 是否继续删除?`, '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
+        inputPlaceholder: '该用户的登录密码',
+        inputValidator: this.validFun
+      }).then(({value}) => {
         this.wxUtilsFun({
-          methods: 'DELETE',
+          methods: 'POST',
           data: {
             "size": this.pagination.pagesize,
             "page": this.pagination.currentPage,
             "openid": wx_user_info.openid,
+            "confirm_pwd": value
           }
         })
       }).catch(() => {
@@ -332,6 +334,8 @@ export default {
         if (data.code === 1000) {
           this.wx_user_list = data.data;
           this.show_wx_visible = true
+        } else if (data.code === 1001) {
+          this.$message.error(data.msg)
         } else {
           this.$message.error("获取授权列表失败")
         }

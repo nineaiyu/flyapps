@@ -110,7 +110,7 @@ class DeveloperView(APIView):
                             IosUtils.get_device_from_developer(developer_obj)
                         else:
                             res.code = 1008
-                            res.msg = result.get("err_info")
+                            res.msg = result.get("return_info")
                             return Response(res.dict)
                 elif act == "renewcert":
                     if developer_obj.certid:

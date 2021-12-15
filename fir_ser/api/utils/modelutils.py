@@ -12,7 +12,7 @@ from urllib.parse import urljoin
 from django.db.models import Count, Sum, Q
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
-    AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper, UserInfo
+    AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper, UserInfo, UDIDsyncDeveloper
 from api.utils.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name, is_valid_phone
 
@@ -203,3 +203,14 @@ def get_user_obj_from_epu(user_id):
     else:
         user_obj = UserInfo.objects.filter(Q(email=user_id) | Q(uid=user_id)).first()
     return user_obj
+
+
+def update_or_create_developer_udid_info(device_obj, developer_obj):
+    device = {
+        "serial": device_obj.id,
+        "product": device_obj.name,
+        "udid": device_obj.udid,
+        "version": device_obj.model,
+        "status": True if device_obj.status == 'ENABLED' else False
+    }
+    return UDIDsyncDeveloper.objects.update_or_create(developerid=developer_obj, udid=device_obj.udid, defaults=device)

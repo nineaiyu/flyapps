@@ -21,7 +21,7 @@ from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
     get_format_time, make_app_uuid, make_from_user_uuid
 from api.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign, \
-    get_developer_can_used_from_public_sign
+    get_developer_can_used_from_public_sign, update_or_create_developer_udid_info
 from api.utils.response import BaseResponse
 from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
@@ -278,7 +278,7 @@ def get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app=False):
         developer_obj_lists = obj_base_filter.filter(appledevelopertoappuse__app_id=app_obj)
     else:
         developer_obj_lists = obj_base_filter.exclude(appledevelopertoappuse__developerid__isnull=False)
-    developer_obj_lists = developer_obj_lists.distinct().order_by("created_time")
+    developer_obj_lists = developer_obj_lists.all().distinct().order_by("created_time")
     for developer_obj in developer_obj_lists:
         # 通过开发者数限制进行过滤
         used_number = get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
@@ -288,60 +288,97 @@ def get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app=False):
                 apple_to_app_obj = AppleDeveloperToAppUse.objects.filter(app_id=app_obj,
                                                                          developerid=developer_obj).first()
                 if apple_to_app_obj:
-                    if used_number < apple_to_app_obj.usable_number:
+                    # 通过配置的专属分配数量进行过滤
+                    app_used_number = DeveloperDevicesID.objects.filter(developerid=developer_obj,
+                                                                        app_id=app_obj).distinct().count()
+                    if app_used_number < apple_to_app_obj.usable_number:
                         can_used_developer_pk_list.append(developer_obj.pk)
             else:
                 can_used_developer_pk_list.append(developer_obj.pk)
     return can_used_developer_pk_list
 
 
-def get_developer_user_by_app_udid(user_objs, udid, app_obj):
-    developer_udid_obj_list = UDIDsyncDeveloper.objects.filter(developerid__user_id__in=user_objs,
+def get_developer_by_pk_list(developer_pk_list, f_key):
+    developer_obj_dict = AppIOSDeveloperInfo.objects.filter(pk__in=developer_pk_list,
+                                                            is_actived=True,
+                                                            certid__isnull=False).values(
+        f_key, 'pk').annotate(
+        count=Count('pk')).order_by('created_time').order_by('count').first()
+    if developer_obj_dict:
+        developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_obj_dict.get('pk')).first()
+        logger.info(f'get {f_key} suitable developer {developer_obj} and return')
+        return developer_obj
+
+
+def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True):
+    """
+    :param user_objs: [user_obj]
+    :param udid: udid
+    :param app_obj: app_obj
+    :param private_first: 专属应用优先使用专属开发者，而不是公共开发者
+    :return:  (developer_obj, is_exist_devices)
+    """
+    developer_udid_queryset = UDIDsyncDeveloper.objects.filter(developerid__user_id__in=user_objs,
                                                                developerid__is_actived=True,
                                                                developerid__certid__isnull=False).values(
-        'developerid').distinct()
+        'developerid').all().distinct()
 
     # 根据udid和应用查找该用户开发者账户【主要可能是开发者未激活】
-    developer_obj = AppIOSDeveloperInfo.objects.filter(
-        pk__in=developer_udid_obj_list.filter(udid=udid, developerid__apptodeveloper__app_id=app_obj)).last()
-    if developer_obj:
-        logger.info(f'udid:{udid} app_obj:{app_obj} return')
-        return developer_obj, True
+    developer_pk_list = developer_udid_queryset.filter(udid=udid, developerid__apptodeveloper__app_id=app_obj)
+    app_search_flag = True
 
-    # 根据udid查找开发者账户
-    developer_obj = AppIOSDeveloperInfo.objects.filter(pk__in=developer_udid_obj_list.filter(udid=udid)).last()
-    if developer_obj:
-        logger.info(f'udid:{udid} only and return')
-        return developer_obj, True
+    # 联合udid和应用查询不到数据，那么，仅根据udid查找开发者账户
+    if not developer_pk_list:
+        app_search_flag = False
+        developer_pk_list = developer_udid_queryset.filter(udid=udid)
+
+    if developer_pk_list:
+        developer_obj = get_developer_by_pk_list(developer_pk_list, 'developerappid')
+        if developer_obj:
+            if app_search_flag:
+                logger.info(f'udid:{udid} and app_obj:{app_obj} exist and return. developer_obj: {developer_obj}')
+            else:
+                logger.info(f'udid:{udid} exist and return. app_obj:{app_obj} developer_obj: {developer_obj}')
+            return developer_obj, True
+    else:
+        logger.info(f"udid:{udid} is a new device. app_obj:{app_obj} will find a suitable developer and register it")
 
     # 新设备查找策略
     # 根据app查找开发者账户
     exist_app_developer_pk_list = []
-    for developer_obj in AppIOSDeveloperInfo.objects.filter(
-            pk__in=developer_udid_obj_list.filter(developerid__apptodeveloper__app_id=app_obj)):
-        if get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
-                developer_obj.user_id) < developer_obj.usable_number:
-            logger.info(f'app_obj:{app_obj} only and return')
-            exist_app_developer_pk_list.append(developer_obj.pk)
-            # return developer_obj, False
+    developer_pk_list = developer_udid_queryset.filter(developerid__apptodeveloper__app_id=app_obj)
+    if developer_pk_list:
+        for developer_obj in AppIOSDeveloperInfo.objects.filter(pk__in=developer_pk_list):
+            if get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
+                    developer_obj.user_id) < developer_obj.usable_number:
+                exist_app_developer_pk_list.append(developer_obj.pk)
 
+    # 查询状态正常的专属开发者信息，判断是否为专属应用
     apple_to_app = AppleDeveloperToAppUse.objects.filter(app_id=app_obj, developerid__is_actived=True,
                                                          developerid__certid__isnull=False).first()
+
+    # 存在专属开发者账户，但是也同时存在已经安装的设备，优先选择已经安装设备的开发者账户？是or否
+    # 是：使应用趋向于一个开发者，为后期更新提供方便
+    # 否：优先使用专属开发者进行签名
+    if not private_first and apple_to_app and exist_app_developer_pk_list:
+        return AppIOSDeveloperInfo.objects.filter(pk=exist_app_developer_pk_list[0]).first(), False
+
     can_used_developer_pk_list = get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app)
+
+    # 存在指定开发者账户，但是获取可用的开发者账户为空，那么开始匹配全部开发者
     if not can_used_developer_pk_list and apple_to_app:
+        logger.info(f"udid:{udid} app_obj:{app_obj} private developer is null. start find all developer")
         can_used_developer_pk_list = get_new_developer_by_app_obj(user_objs, app_obj)
 
     if can_used_developer_pk_list and exist_app_developer_pk_list:
         can_used_developer_pk_list = list(set(can_used_developer_pk_list) & set(exist_app_developer_pk_list))
+        logger.info(f"udid:{udid} app_obj:{app_obj} find private and can use developer {can_used_developer_pk_list}")
 
     # 查询开发者策略 按照最小注册设备数进行查找，这样可以分散，进而使应用趋向于一个开发者，为后期更新提供方便
     if can_used_developer_pk_list:
-        developer_obj_dict = AppIOSDeveloperInfo.objects.filter(pk__in=can_used_developer_pk_list).values(
-            'udidsyncdeveloper', 'pk').annotate(
-            count=Count('pk')).order_by('created_time').order_by('count').first()
-        if developer_obj_dict:
-            developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_obj_dict.get('pk')).first()
-            logger.info(f'get suitable developer {developer_obj} and return')
+        developer_obj = get_developer_by_pk_list(can_used_developer_pk_list, 'udidsyncdeveloper')
+        if developer_obj:
+            logger.info(f"udid:{udid} is a new device. app_obj:{app_obj} find {developer_obj} and return")
             return developer_obj, False
     return None, None
 
@@ -517,12 +554,7 @@ class IosUtils(object):
         if app_udid_obj and app_udid_obj.is_download:
             sign_flag = False
             if app_udid_obj.is_signed:
-                # release_obj = AppReleaseInfo.objects.filter(app_id=self.app_obj, is_master=True).first()
-
                 if check_ipa_is_latest_sign(self.app_obj, self.developer_obj):
-                    #
-                    # for apptodev_obj in APPToDeveloper.objects.filter(app_id=self.app_obj).all():
-                    #     if release_obj.release_id == apptodev_obj.release_file:
                     msg = "udid %s exists app_id %s" % (self.udid, self.app_obj)
                     d_result['msg'] = msg
                     logger.info(d_result)
@@ -581,15 +613,7 @@ class IosUtils(object):
             if not status:
                 return status, device_obj
 
-            device = {
-                "serial": device_obj.id,
-                "product": device_obj.name,
-                "udid": device_obj.udid,
-                "version": device_obj.model,
-                "status": True if device_obj.status == 'ENABLED' else False
-            }
-            sync_device_obj, _ = UDIDsyncDeveloper.objects.update_or_create(developerid=developer_obj,
-                                                                            udid=device_obj.udid, defaults=device)
+            sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
 
         # 更新设备状态
         # 1. UDIDsyncDeveloper 库，通过udid 更新或创建设备信息
@@ -1040,15 +1064,7 @@ class IosUtils(object):
             will_del_disabled_udid_list = list(set(udid_developer_list) - set(udid_enabled_result_list))
 
             for device_obj in result:
-                device = {
-                    "serial": device_obj.id,
-                    "product": device_obj.name,
-                    "udid": device_obj.udid,
-                    "version": device_obj.model,
-                    "status": True if device_obj.status == 'ENABLED' else False
-                }
-                obj, create = UDIDsyncDeveloper.objects.update_or_create(developerid=developer_obj,
-                                                                         udid=device_obj.udid, defaults=device)
+                obj, create = update_or_create_developer_udid_info(device_obj, developer_obj)
                 if not create:
                     DeveloperDevicesID.objects.filter(udid=obj, developerid=developer_obj).update(
                         **{'did': device_obj.id})

@@ -183,7 +183,6 @@ class ValidWxChatToken(APIView):
                                 WxTemplateMsg().query_bind_info_failed_msg(to_user, wx_user_info.get('nickname'),
                                                                            "查询登录绑定", content)
 
-
                         elif rec_msg.Eventkey == 'unbind':
                             if wx_user_obj:
                                 content = f'解绑用户 {wx_user_obj.user_id.first_name} 成功'
@@ -234,12 +233,8 @@ class ThirdWxAccount(APIView):
 
     def get(self, request):
         res = BaseResponse()
-
         if get_login_type().get('third', '').get('wxp'):
-            # wx_open_id = request.query_params.get("openid", None)
             wx_obj_lists = ThirdWeChatUserInfo.objects.filter(user_id=request.user)
-            # if wx_open_id:
-            #     wx_obj_lists = wx_obj_lists.filter(openid=wx_open_id)
             page_obj = PageNumber()
             info_serializer = page_obj.paginate_queryset(queryset=wx_obj_lists.order_by("-subscribe_time"),
                                                          request=request,
@@ -247,11 +242,17 @@ class ThirdWxAccount(APIView):
             wx_user_info = ThirdWxSerializer(info_serializer, many=True, )
             res.data = wx_user_info.data
             res.count = wx_obj_lists.count()
-
         return Response(res.dict)
 
-    def delete(self, request):
-        openid = request.query_params.get("openid")
+    def post(self, request):
+        data = request.data
+        openid = data.get("openid")
         if get_login_type().get('third', '').get('wxp') and openid:
-            ThirdWeChatUserInfo.objects.filter(user_id=request.user, openid=openid).delete()
+            if request.user.check_password(data.get('confirm_pwd', '')):
+                ThirdWeChatUserInfo.objects.filter(user_id=request.user, openid=openid).delete()
+            else:
+                res = BaseResponse()
+                res.code = 1001
+                res.msg = "密码有误，请检查"
+                return Response(res.dict)
         return self.get(request)
