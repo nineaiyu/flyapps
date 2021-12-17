@@ -78,7 +78,8 @@
 
             </el-tooltip>
 
-            <el-button class="tooltip-top" @click="previewRelase(app)"><i class="el-icon-view"/> <span
+            <el-button v-if="!currentapp.issupersign" class="tooltip-top" @click="previewRelase(app)"><i
+                class="el-icon-view"/> <span
                 class="ng-binding">预览</span>
             </el-button>
 

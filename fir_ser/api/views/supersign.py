@@ -13,14 +13,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, \
-    UDIDsyncDeveloper, AppleDeveloperToAppUse, Apps
+    UDIDsyncDeveloper, AppleDeveloperToAppUse, Apps, DeveloperAppID, APPToDeveloper
 from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
 from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num
 from api.utils.response import BaseResponse
 from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, BillInfoSerializer, \
     DeveloperDeviceSerializer, AppleDeveloperToAppUseSerializer, AppleDeveloperToAppUseAppsSerializer
-from api.utils.storage.caches import CleanSignDataState
+from api.utils.storage.caches import CleanSignDataState, get_app_download_url
 from api.utils.utils import get_developer_devices, get_choices_dict
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,9 @@ class DeveloperView(APIView):
         developer_obj = developer_obj.distinct()
         res.use_num = get_developer_devices(developer_obj)
         if issuer_id:
-            developer_obj = developer_obj.filter(issuer_id=issuer_id)
+            developer_obj = developer_obj.filter(
+                Q(developerappid__app_id__bundle_id=issuer_id, developerappid__app_id__user_id=request.user) | Q(
+                    issuer_id=issuer_id))
 
         page_obj = PageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=developer_obj.order_by("-updated_time"),
@@ -154,12 +156,17 @@ class DeveloperView(APIView):
                     f"user {request.user} ios developer {developer_obj} update old data {developer_obj.__dict__}")
                 try:
                     usable_number = int(data.get("usable_number", developer_obj.usable_number))
+                    app_limit_number = int(data.get("app_limit_number", developer_obj.app_limit_number))
                     if 0 <= usable_number <= 100:
                         developer_obj.usable_number = usable_number
                         update_fields.append("usable_number")
+                    if 0 <= app_limit_number <= 160:
+                        developer_obj.app_limit_number = app_limit_number
+                        update_fields.append("app_limit_number")
                 except Exception as e:
                     logger.error(
                         f"developer {developer_obj} usable_number {data.get('usable_number', developer_obj.usable_number)} get failed Exception:{e}")
+
                 developer_obj.description = data.get("description", developer_obj.description)
                 update_fields.append("description")
                 private_key_id = data.get("private_key_id", developer_obj.private_key_id)
@@ -258,6 +265,21 @@ class SuperSignUsedView(APIView):
                                                  context={'mine': mine, 'user_obj': request.user})
         res.data = app_serializer.data
         res.count = super_sign_used_objs.count()
+        return Response(res.dict)
+
+    def post(self, request):
+        res = BaseResponse()
+        data = request.data
+        device_udid = data.get('device_udid', '')
+        developer_id = data.get('developer_id', '')
+        bundle_id = data.get('bundle_id', '')
+        if device_udid and developer_id and bundle_id:
+            app_obj = Apps.objects.filter(user_id=request.user, bundle_id=bundle_id).first()
+            app_to_dev_obj = APPToDeveloper.objects.filter(app_id=app_obj, developerid__issuer_id=developer_id).first()
+            if app_obj and app_to_dev_obj:
+                res = get_app_download_url(request, res, app_obj.app_id, app_obj.short, app_obj.password,
+                                           app_to_dev_obj.binary_file, True, device_udid)
+
         return Response(res.dict)
 
 
@@ -473,9 +495,14 @@ class AppleDeveloperBindAppsView(APIView):
         issuer_id = request.query_params.get("issuer_id", '')
         app_id = request.query_params.get("app_id", '')
         if act == 'apps':
+            res.app_limit_number = 0
             apps_obj_list = Apps.objects.filter(user_id=request.user, type=1).all()
             app_serializer = AppleDeveloperToAppUseAppsSerializer(apps_obj_list, many=True,
                                                                   context={'issuer_id': issuer_id})
+            if issuer_id:
+                developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=issuer_id).first()
+                if developer_obj:
+                    res.app_limit_number = developer_obj.app_limit_number
         elif act == 'developer':
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user).all()
             app_serializer = DeveloperSerializer(developer_obj, many=True, context={'app_id': app_id})
@@ -508,9 +535,19 @@ class AppleDeveloperBindAppsView(APIView):
             remove_issuer_ids = list(set(issuer_id_list) - set(choices_data))
 
             for item in add_issuer_ids:
-                developer_obj = AppIOSDeveloperInfo.objects.filter(issuer_id=item, user_id=request.user).first()
+                developer_obj = AppIOSDeveloperInfo.objects.filter(issuer_id=item, user_id=request.user,
+                                                                   is_actived=True, certid__isnull=False).first()
+                developer_aid_obj = DeveloperAppID.objects.filter(developerid=developer_obj)
+                is_exist = developer_aid_obj.filter(app_id=app_obj).count()
                 if developer_obj:
-                    many_obj.append(AppleDeveloperToAppUse(developerid=developer_obj, app_id=app_obj))
+                    app_flag = False
+                    if is_exist:
+                        app_flag = True
+                    else:
+                        if developer_aid_obj.count() < developer_obj.app_limit_number:
+                            app_flag = True
+                    if app_flag:
+                        many_obj.append(AppleDeveloperToAppUse(developerid=developer_obj, app_id=app_obj))
             AppleDeveloperToAppUse.objects.filter(developerid__issuer_id__in=remove_issuer_ids, app_id=app_obj).delete()
 
         if issuer_id:
@@ -522,10 +559,23 @@ class AppleDeveloperBindAppsView(APIView):
             add_app_ids = list(set(choices_data) - set(app_id_list))
             remove_app_ids = list(set(app_id_list) - set(choices_data))
 
+            exist_app_id_queryset = DeveloperAppID.objects.filter(developerid=developer_obj).values(
+                'app_id__app_id').all()
+            exist_app_ids = [exist_app_id_obj.get('app_id__app_id') for exist_app_id_obj in exist_app_id_queryset]
+            can_add_number = developer_obj.app_limit_number - len(exist_app_ids)
             for item in add_app_ids:
                 app_obj = Apps.objects.filter(app_id=item, type=1, user_id=request.user).first()
                 if app_obj:
-                    many_obj.append(AppleDeveloperToAppUse(developerid=developer_obj, app_id=app_obj))
+                    app_flag = False
+                    if item in exist_app_ids:
+                        app_flag = True
+                    else:
+                        if can_add_number > 0:
+                            can_add_number -= 1
+                            app_flag = True
+                    if app_flag:
+                        many_obj.append(AppleDeveloperToAppUse(developerid=developer_obj, app_id=app_obj))
+
             AppleDeveloperToAppUse.objects.filter(developerid=developer_obj, app_id__app_id__in=remove_app_ids,
                                                   app_id__user_id=request.user).delete()
 

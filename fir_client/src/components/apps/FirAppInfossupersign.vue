@@ -1,7 +1,7 @@
 <template>
 
 
-  <div style="margin-top: 20px;width: 66%;margin-left: 8%">
+  <div style="margin-top: 20px;width: 72%;margin-left: 8%">
     <el-dialog
         :close-on-click-modal="false"
         :close-on-press-escape="false"
@@ -30,12 +30,17 @@
         <el-button v-if="!currentapp.issupersign && currentapp.count !== 0" plain
                    size="small" style="margin-left: 20px" type="info" @click="clean_app">清理该应用脏数据
         </el-button>
-        <el-link v-else :underline="false" style="margin-left: 20px">超级签名，iOS专用，需要配置好苹果开发者账户，方可开启</el-link>
-
+        <!--        <el-link v-else :underline="false" style="margin-left: 20px">超级签名，iOS专用，需要配置好苹果开发者账户，方可开启</el-link>-->
+        <el-tooltip content="点击查看所使用开发者信息" placement="top">
+          <el-link :disabled="supersign_disable" :underline="false" style="margin-left: 20px;color: #3875cc;"
+                   @click="$router.push({name:'FirSuperSignBase',params:{act:'iosdeveloper'},query:{appidseach: currentapp.bundle_id}})">
+            使用了 {{ currentapp.developer_used_count }} 开发者
+          </el-link>
+        </el-tooltip>
       </el-form-item>
       <el-form-item label="专属配置" label-width="200px">
         <el-button :disabled="supersign_disable" @click="bindAppletoapp">配置专属苹果开发账户</el-button>
-        <el-link :underline="false" style="margin-left: 20px" @click="bindAppletoapp"> 拥有
+        <el-link :disabled="supersign_disable" :underline="false" style="margin-left: 20px" @click="bindAppletoapp"> 拥有
           {{ currentapp.private_developer_number }} 个专属苹果开发者，使用了 {{ currentapp.private_developer_used_number }} 个设备数
         </el-link>
       </el-form-item>
@@ -52,7 +57,7 @@
         >保存
         </el-button>
         <el-tooltip content="点击查看使用详情" placement="top">
-          <el-link :underline="false" style="margin-left: 20px" type="primary"
+          <el-link :disabled="supersign_disable" :underline="false" style="margin-left: 20px" type="primary"
                    @click="$router.push({name:'FirSuperSignBase',params:{act:'useddevices'},query:{bundleid: currentapp.bundle_id}})">
             已经使用 <a style="color: #dd6161;font-size: larger">{{ currentapp.supersign_used_number }}</a>
             个设备额度

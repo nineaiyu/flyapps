@@ -13,7 +13,7 @@ from functools import wraps
 
 import xmltodict
 from django.core.cache import cache
-from django.db.models import Count
+from django.db.models import Count, F
 
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
     UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo, AppleDeveloperToAppUse
@@ -284,26 +284,33 @@ def get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app=False):
         used_number = get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
             developer_obj.user_id)
         if used_number < developer_obj.usable_number:
+            app_used_number = DeveloperDevicesID.objects.filter(developerid=developer_obj)
             if apple_to_app:
                 apple_to_app_obj = AppleDeveloperToAppUse.objects.filter(app_id=app_obj,
                                                                          developerid=developer_obj).first()
                 if apple_to_app_obj:
                     # 通过配置的专属分配数量进行过滤
-                    app_used_number = DeveloperDevicesID.objects.filter(developerid=developer_obj,
-                                                                        app_id=app_obj).distinct().count()
-                    if app_used_number < apple_to_app_obj.usable_number:
+                    if app_used_number.filter(app_id=app_obj).distinct().count() < apple_to_app_obj.usable_number:
                         can_used_developer_pk_list.append(developer_obj.pk)
             else:
-                can_used_developer_pk_list.append(developer_obj.pk)
+                if app_used_number.distinct().count() < developer_obj.app_limit_number:
+                    can_used_developer_pk_list.append(developer_obj.pk)
     return can_used_developer_pk_list
 
 
-def get_developer_by_pk_list(developer_pk_list, f_key):
+def filter_developer_by_pk_list(developer_pk_list, f_key, app_search_flag=True):
     developer_obj_dict = AppIOSDeveloperInfo.objects.filter(pk__in=developer_pk_list,
                                                             is_actived=True,
                                                             certid__isnull=False).values(
-        f_key, 'pk').annotate(
-        count=Count('pk')).order_by('created_time').order_by('count').first()
+        f_key, 'pk').annotate(count=Count('pk'))
+    if not app_search_flag:
+        developer_obj_dict = developer_obj_dict.filter(count__lt=F('app_limit_number'))
+    return developer_obj_dict
+
+
+def get_developer_by_pk_list(developer_pk_list, f_key, app_search_flag=True):
+    developer_obj_dict = filter_developer_by_pk_list(developer_pk_list, f_key, app_search_flag)
+    developer_obj_dict = developer_obj_dict.order_by('created_time').order_by('count').first()
     if developer_obj_dict:
         developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_obj_dict.get('pk')).first()
         logger.info(f'get {f_key} suitable developer {developer_obj} and return')
@@ -332,8 +339,11 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True)
         app_search_flag = False
         developer_pk_list = developer_udid_queryset.filter(udid=udid)
 
+    # 若根据udid查找开发者账户，则通过应用签名数量进行过滤开发者账户，对应用已经存在开发者，则无需过滤
+    # 即使udid已经存在某个开发者，但是签名数量限制，也会将该udid注册到新的开发者，虽然会浪费设备数，但是也许是为了安全？？？！！！
+    # 苹果开发者的 bundleId 具体多大限制是未知的，因此定义了 app_limit_number 字段，最大值为160（该数值是理论估计值，具体可修改）
     if developer_pk_list:
-        developer_obj = get_developer_by_pk_list(developer_pk_list, 'developerappid')
+        developer_obj = get_developer_by_pk_list(developer_pk_list, 'developerappid', app_search_flag)
         if developer_obj:
             if app_search_flag:
                 logger.info(f'udid:{udid} and app_obj:{app_obj} exist and return. developer_obj: {developer_obj}')
@@ -348,6 +358,8 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True)
     exist_app_developer_pk_list = []
     developer_pk_list = developer_udid_queryset.filter(developerid__apptodeveloper__app_id=app_obj)
     if developer_pk_list:
+        # developer_obj_dict_queryset = filter_developer_by_pk_list(developer_pk_list, 'developerappid')
+        # developer_pk_list = [developer_obj_dict.get('pk') for developer_obj_dict in developer_obj_dict_queryset]
         for developer_obj in AppIOSDeveloperInfo.objects.filter(pk__in=developer_pk_list):
             if get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
                     developer_obj.user_id) < developer_obj.usable_number:
@@ -359,7 +371,7 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True)
 
     # 存在专属开发者账户，但是也同时存在已经安装的设备，优先选择已经安装设备的开发者账户？是or否
     # 是：使应用趋向于一个开发者，为后期更新提供方便
-    # 否：优先使用专属开发者进行签名
+    # 否：优先使用专属开发者进行签名，默认值为否，则专属优先
     if not private_first and apple_to_app and exist_app_developer_pk_list:
         return AppIOSDeveloperInfo.objects.filter(pk=exist_app_developer_pk_list[0]).first(), False
 

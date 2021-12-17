@@ -180,6 +180,11 @@ class AppsSerializer(serializers.ModelSerializer):
     def get_supersign_used_number(self, obj):
         return models.APPSuperSignUsedInfo.objects.filter(app_id=obj).all().count()
 
+    developer_used_count = serializers.SerializerMethodField()
+
+    def get_developer_used_count(self, obj):
+        return models.DeveloperAppID.objects.filter(app_id=obj).all().count()
+
     screenshots = serializers.SerializerMethodField()
 
     def get_screenshots(self, obj):
@@ -493,7 +498,17 @@ class DeveloperSerializer(serializers.ModelSerializer):
         return get_developer_udided(obj)[0]
 
     def get_is_disabled(self, obj):
-        return bool(1 - obj.is_actived)
+        app_id = self.context.get('app_id', '')
+        if app_id:
+            developer_app_obj = models.DeveloperAppID.objects.filter(developerid=obj, developerid__is_actived=True,
+                                                                     developerid__certid__isnull=False)
+            if developer_app_obj.filter(app_id__app_id=app_id).distinct().count():
+                return False
+            else:
+                if developer_app_obj and developer_app_obj.distinct().count() < obj.app_limit_number:
+                    return False
+            return True
+        return True
 
     def get_app_private_number(self, obj):
         return models.AppleDeveloperToAppUse.objects.filter(developerid=obj).count()

@@ -273,6 +273,7 @@ class AppIOSDeveloperInfo(models.Model):
     is_actived = models.BooleanField(default=False, verbose_name="是否已经激活")
     certid = models.CharField(max_length=64, blank=True, verbose_name="超级签名自动创建证书ID", null=True)
     usable_number = models.IntegerField(verbose_name="可使用设备数", default=100)
+    app_limit_number = models.IntegerField(verbose_name="可分配应用数，最大160", default=100)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     cert_expire_time = models.DateTimeField(blank=True, null=True, verbose_name="证书过期时间")
@@ -290,6 +291,12 @@ class AppIOSDeveloperInfo(models.Model):
             self.usable_number = 100
         elif self.usable_number < 0:
             self.usable_number = 0
+
+        if self.app_limit_number > 160:
+            self.app_limit_number = 160
+        elif self.app_limit_number < 0:
+            self.app_limit_number = 0
+
         return super(AppIOSDeveloperInfo, self).save(*args, **kwargs)
 
     def __str__(self):

@@ -24,6 +24,7 @@
               <el-tag v-else type="info">公共应用账户，所有应用公用此开发者</el-tag>
               <p>开发者ID: {{ option.issuer_id }} </p>
               <p>应用签名数: {{ option.app_used_count }} </p>
+              <p>应用签名数限额: {{ option.app_limit_number }} </p>
               <p>已分配专属应用数: {{ option.app_private_number }} </p>
               <p>开发者账户已使用设备数: {{ option.developer_used_number }}</p>
               <p>开发者账户可用设备数: {{ 100 - option.developer_used_number }}</p>
@@ -42,7 +43,11 @@
               <p>描述: {{ option.description }}</p>
 
               <div slot="reference" class="name-wrapper">
-                <div>{{ option.issuer_id }} - {{
+                <div>
+                  <el-tag v-if="option.app_used_number>0 && choices_data.indexOf(option.issuer_id)===-1 " size="mini"
+                          type="warning"> Del
+                  </el-tag>
+                  {{ option.issuer_id }} - {{
                     option.usable_number - option.developer_used_number > 0
                         ? option.usable_number - option.developer_used_number : 0
                   }} - {{ option.description }}
@@ -63,9 +68,10 @@
               <p>使用数量: {{ option.app_used_number }}</p>
               <p>描述: {{ option.description }}</p>
               <div slot="reference" class="name-wrapper">
-                <div><span v-if="option.app_usable_number>0">{{ option.app_usable_number }} - </span> {{ option.name }}
-                  -
-                  {{ option.bundle_id }} - {{ option.app_id }}
+                <div>
+                  <span v-if="option.app_usable_number>0">{{ option.app_usable_number }} - </span>
+                  <el-tag v-else-if="option.app_used_number>0" size="mini" type="warning"> Del</el-tag>
+                  {{ option.name }} - {{ option.bundle_id }} - {{ option.app_id }}
                 </div>
               </div>
             </el-popover>
@@ -113,7 +119,8 @@ export default {
       s_props: {},
       s_titles: [],
       app_private_used_number: 100,
-      loadings: false
+      loadings: false,
+      app_limit_number: 0
     };
   },
   mounted() {
@@ -137,16 +144,36 @@ export default {
       }
       return [n_data, this.app_private_used_number]
     },
-    handleChange(value,) {
+    handleChange(value, direction, movedKeys) {
+      if (this.issuer_id && direction === 'right') {
+        // if(value.length > this.app_limit_number){
+        //   this.$message.warning('超出开发者可签名应用数量限制,最大可分配'+this.app_limit_number+'个应用')
+        for (let i = 0; i < movedKeys.length; i++) {
+          let app_info = this.get_choice_data_from_key([movedKeys[i]])[0][0]
+          if (!(app_info && app_info.app_used_number > 0)) {
+            this.choices_data.splice(this.choices_data.indexOf(movedKeys[i]), 1)
+          }
+        }
+        // }
+      }
+      if (this.app_id && direction === 'right') {
+        for (let i = 0; i < movedKeys.length; i++) {
+          let developer_info = this.get_choice_data_from_key([movedKeys[i]])[0][0]
+          if (!(developer_info && developer_info.app_used_count)) {
+            this.choices_data.splice(this.choices_data.indexOf(movedKeys[i]), 1)
+          }
+        }
+      }
       this.get_choice_data_from_key(value)
     },
-    saveNumber(infos) {
+    check_used_number() {
       if (this.get_choice_data_from_key(this.choices_data)[1] > 100) {
         this.$message.warning("超出最大分配额度，请注意，尽量保证所有应用分配额度总和为 100")
       }
+    },
+    saveNumber(infos) {
       developerBindAppFun(data => {
         if (data.code === 1000) {
-          // this.$message.success("数据保存成功")
           // this.choices_data = this.format_data(data.data)
         } else {
           this.$message.error("数据更新失败" + data.msg)
@@ -163,8 +190,11 @@ export default {
           key: 'app_id',
           label: 'name',
         }
-        this.s_titles = ['可分配苹果应用', '已分配苹果应用']
         this.getBindInfo({act: 'apps'})
+        // eslint-disable-next-line no-unused-vars
+        setTimeout(_ => {
+          this.check_used_number()
+        }, 1000)
       } else {
         this.s_props = {
           key: 'issuer_id',
@@ -179,8 +209,7 @@ export default {
     saveAppleApps() {
       developerBindAppFun(data => {
         if (data.code === 1000) {
-          // this.$message.success("数据保存成功")
-          // this.choices_data = this.format_data(data.data)
+          this.$message.success("数据保存成功")
         } else {
           this.$message.error("数据更新失败" + data.msg)
         }
@@ -204,6 +233,12 @@ export default {
             this.app_developer_lists = data.data
             if (params.act === 'developer') {
               this.app_developer_lists.sort(sort_compare('developer_used_number'))
+            }
+            if (params.act === 'apps') {
+              if (data.app_limit_number) {
+                this.app_limit_number = data.app_limit_number
+              }
+              this.s_titles = ['可分配苹果应用', '已分配苹果应用,最多可以分配' + this.app_limit_number + '个应用']
             }
             this.get_choice_data_from_key(this.choices_data)
           } else {
@@ -230,9 +265,6 @@ export default {
         }
       }
       return n_data
-    },
-    format_data_number() {
-
     },
   }
 }

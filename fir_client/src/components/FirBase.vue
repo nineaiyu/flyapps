@@ -19,7 +19,7 @@
             type="error">
           <div slot="title">
             <span class="domian-tip-bar">应用分发请绑定您自己的域名，平台分发域名可能因不可违因素更换，将导致您的应用无法访问</span>
-            <el-button size="medium" @click="bind_domain_type=1,bind_domain_sure=true">立即绑定</el-button>
+            <el-button size="small" @click="bind_domain_type=1,bind_domain_sure=true">立即绑定</el-button>
           </div>
         </el-alert>
       </div>
@@ -124,5 +124,8 @@ export default {
   font-weight: 500;
   font-size: medium;
   margin-right: 20px;
+}
+/deep/ .el-alert{
+  padding: 2px 16px;
 }
 </style>

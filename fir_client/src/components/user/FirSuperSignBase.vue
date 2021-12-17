@@ -56,7 +56,16 @@
         </div>
 
         <el-form-item label="设备数量" label-width="110px" style="text-align: left">
-          <el-input-number v-model="editdeveloperinfo.usable_number" :max="100" :min="0" label="设备数量"/>
+          <el-input-number v-model="editdeveloperinfo.usable_number" :max="100" :min="0" label="设备数量" size="small"/>
+          <el-tag style="margin-left: 10px" type="warning">可消耗设备数量，超过该数量，将无法进行新设备签名。已经消耗
+            {{ editdeveloperinfo.developer_used_number }} 个设备
+          </el-tag>
+        </el-form-item>
+        <el-form-item label="应用数量" label-width="110px" style="text-align: left">
+          <el-input-number v-model="editdeveloperinfo.app_limit_number" :max="160" :min="0" label="应用数量" size="small"/>
+          <el-tag style="margin-left: 10px" type="warning">可签名应用数量，超过该数量，将无法进行新应用签名。已经分配
+            {{ editdeveloperinfo.app_used_count }} 个应用
+          </el-tag>
         </el-form-item>
         <el-form-item label="证书id" label-width="110px">
           <el-input v-model="editdeveloperinfo.certid" :disabled='isedit'/>
@@ -187,7 +196,7 @@
         <el-input
             v-model="appidseach"
             clearable
-            placeholder="输入开发者ID"
+            placeholder="输入开发者ID或应用BundleID"
             style="width: 27%;margin-right: 10px;margin-bottom: 10px"/>
 
         <el-select v-model="developer_choice" clearable placeholder="账户类型"
@@ -337,6 +346,8 @@
 
               <el-popover placement="top" trigger="hover">
                 <p>签名了 {{ scope.row.app_used_count }} 个应用</p>
+                <p>应用限额 {{ scope.row.app_limit_number }} 个应用</p>
+                <p>还可以签名 {{ scope.row.app_limit_number - scope.row.app_used_count }} 个新应用</p>
                 <div slot="reference" class="name-wrapper">
                   <el-link v-if="scope.row.app_used_count > 0" :underline="false"
                            @click="show_device_ubill(scope.row.issuer_id)">
@@ -363,7 +374,9 @@
                            @click="bindAppletoapp(scope.row)">
                     <el-tag size="medium">是</el-tag>
                   </el-link>
-                  <el-tag v-else size="medium" type="info" @click="bindAppletoapp(scope.row)">否</el-tag>
+                  <el-link v-else :underline="false" @click="bindAppletoapp(scope.row)">
+                    <el-tag size="medium" type="info">否</el-tag>
+                  </el-link>
                 </div>
               </el-popover>
             </template>
@@ -432,6 +445,11 @@
 
           <el-form-item label="设备数量" label-width="110px" style="text-align: left">
             <el-input-number v-model="editdeveloperinfo.usable_number" :max="100" :min="0" label="设备数量"/>
+            <el-tag style="margin-left: 10px" type="warning">该开发者可以可消耗设备数量，超过该数量，将无法进行新设备签名</el-tag>
+          </el-form-item>
+          <el-form-item label="应用数量" label-width="110px" style="text-align: left">
+            <el-input-number v-model="editdeveloperinfo.app_limit_number" :max="160" :min="0" label="应用数量"/>
+            <el-tag style="margin-left: 10px" type="warning">该开发者可以签名应用数量，超过该数量，将无法进行新应用签名</el-tag>
           </el-form-item>
 
           <el-form-item label="备注" label-width="110px">
@@ -593,6 +611,14 @@
               label="应用名称"
               prop="bundle_name"
               width="160">
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <p>点击下载签名后的应用包</p>
+                <div slot="reference" class="name-wrapper">
+                  <el-link :underline="false" @click="downloadipa(scope.row)">{{ scope.row.bundle_name }}</el-link>
+                </div>
+              </el-popover>
+            </template>
           </el-table-column>
           <el-table-column
               align="center"
@@ -950,7 +976,7 @@ export default {
       dialogaddDeveloperVisible: false,
       importcertDeveloperVisible: false,
       title: "",
-      editdeveloperinfo: {auth_type: 0, usable_number: 100},
+      editdeveloperinfo: {auth_type: 0, usable_number: 100, app_limit_number: 100},
       isedit: false,
       placeholder: "",
       pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
@@ -1017,6 +1043,19 @@ export default {
     }
   },
   methods: {
+    downloadipa(info) {
+      this.loading = true;
+      iosdevices(data => {
+        if (data.code === 1000 && data.data && data.data.download_url) {
+          window.location.href = data.data.download_url;
+        } else {
+          this.$message.error(data.msg);
+        }
+        this.loading = false;
+      }, {
+        "methods": "POST", "data": info
+      })
+    },
     copy_success() {
       this.$message.success('复制剪切板成功');
     },
@@ -1219,7 +1258,7 @@ export default {
     },
     canceledit() {
       this.dialogaddDeveloperVisible = false;
-      this.editdeveloperinfo = {auth_type: 0, usable_number: 100};
+      this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100};
       this.isedit = false;
       this.placeholder = ""
     },
@@ -1366,12 +1405,12 @@ export default {
             this.canceledit();
             this.$message.success("操作成功");
             this.activeName = "iosdeveloper";
-            this.editdeveloperinfo = {auth_type: 0, usable_number: 100};
+            this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100};
           }
           if (!this.edit && this.editdeveloperinfo.issuer_id) {
             this.$message.success("添加成功");
             this.activeName = "iosdeveloper";
-            this.editdeveloperinfo = {auth_type: 0, usable_number: 100};
+            this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100};
           }
         } else if (data.code === 1008) {
           this.$message.error(data.msg);
@@ -1506,8 +1545,12 @@ export default {
         if (activeName_list[index] === activeName) {
           this.activeName = activeName;
           let bundleid = this.$route.query.bundleid;
+          let appidseach = this.$route.query.appidseach;
           if (bundleid) {
             this.Bundleidsearch = bundleid;
+          }
+          if (appidseach) {
+            this.appidseach = appidseach;
           }
           this.get_data_from_tabname(activeName);
           return

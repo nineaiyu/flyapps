@@ -14,8 +14,9 @@ from django.utils import timezone
 
 from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, APPSuperSignUsedInfo, \
     UserCertificationInfo, Order
-from api.utils.baseutils import check_app_password, get_order_num
-from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name
+from api.utils.baseutils import check_app_password, get_order_num, get_real_ip_address
+from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name, \
+    add_remote_info_from_request
 from api.utils.storage.storage import Storage, LocalStorage
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
     USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
@@ -602,3 +603,45 @@ def get_and_clean_udid_cache_queue(prefix_key):
             data = []
         cache.delete(prefix_key)
         return data
+
+
+def get_app_download_url(request, res, app_id, short, password, release_id, isdownload, udid):
+    app_obj = get_app_instance_by_cache(app_id, password, 900, udid)
+    if app_obj:
+        if app_obj.get("type") == 0:
+            app_type = '.apk'
+            download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600)
+        else:
+            app_type = '.ipa'
+            if isdownload:
+                download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600,
+                                                                    udid=udid)
+            else:
+                download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600,
+                                                                    isdownload,
+                                                                    udid=udid)
+
+        res.data = {"download_url": download_url, "extra_url": extra_url}
+        if download_url != "" and "mobileconifg" not in download_url:
+            ip = get_real_ip_address(request)
+            msg = f"remote ip {ip} short {short} download_url {download_url} app_obj {app_obj}"
+            logger.info(msg)
+            add_remote_info_from_request(request, msg)
+            set_app_download_by_cache(app_id)
+            amount = app_obj.get("d_count")
+            # # 超级签需要多消耗2倍下载次数
+            # if app_obj.get("issupersign"):
+            #     amount *= 2
+            auth_status = False
+            status = app_obj.get('user_id__certification__status', None)
+            if status and status == 1:
+                auth_status = True
+            if not consume_user_download_times(app_obj.get("user_id"), app_id, amount, auth_status):
+                res.code = 1009
+                res.msg = "可用下载额度不足"
+                del res.data
+                return res
+        return res
+    res.code = 1006
+    res.msg = "该应用不存在"
+    return res
