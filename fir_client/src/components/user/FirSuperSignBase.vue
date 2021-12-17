@@ -211,8 +211,8 @@
         <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
-        <div style="width: 45%;margin-right: 30px;float:right">
-          <el-link :underline="false">私有总设备量：{{ developer_used_info.all_usable_number }} 已经使用：【平台：{{
+        <div style="width: 45%;margin-right: 20px;float:right">
+          <el-link :underline="false">总设备量：{{ developer_used_info.all_usable_number }} 已使用：【平台：{{
               developer_used_info.all_use_number
             }} 】【其他：{{ developer_used_info.other_used_sum }}】
             还剩：{{
