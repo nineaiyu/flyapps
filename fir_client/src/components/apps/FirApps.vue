@@ -80,6 +80,16 @@
                         <el-button type="danger" @click="delApp">确 定</el-button>
                     </span>
       </el-dialog>
+      <el-dialog
+          :title="showudidTitle"
+          :visible.sync="showudidSync"
+          width="406px">
+        <p v-for="udid in showudidList" :key="udid">{{ udid }}</p>
+        <span slot="footer" class="dialog-footer">
+            <el-button @click="showudidSync = false">取消</el-button>
+            <el-button v-clipboard:copy="showudidList" v-clipboard:success="copy_success">复制到剪切板</el-button>
+        </span>
+      </el-dialog>
 
       <el-dialog
           :center="true"
@@ -606,6 +616,9 @@ export default {
   data() {
     return {
       timer: '',
+      showudidTitle: '',
+      showudidSync: false,
+      showudidList: [],
       multiupload: false,
       multiuploaddisable: false,
       multiFileList: [],
@@ -646,6 +659,9 @@ export default {
       PaymentQuestionMsg: '',
     }
   }, methods: {
+    copy_success() {
+      this.$message.success('复制剪切板成功');
+    },
     check_short(short, callback) {
       apputils(data => {
         if (data.code === 1000 && data.data === 0) {
@@ -798,14 +814,9 @@ export default {
       })
     },
     showUDID(appinfo) {
-      let udidstr = '';
-      for (let i = 0; i < appinfo.udid.length; i++) {
-        udidstr = udidstr + "<p>" + appinfo.udid[i] + "</p>"
-      }
-      this.$alert(udidstr, appinfo.appname + ' UDID', {
-        confirmButtonText: '确定',
-        dangerouslyUseHTMLString: true,
-      });
+      this.showudidTitle = appinfo.appname + ' UDID';
+      this.showudidSync = true
+      this.showudidList = appinfo.udid
     },
     updateappinfo(file, analyseappinfo, multiFlag, binaryFlag, resolve) {
       if (binaryFlag) {
