@@ -284,16 +284,17 @@ def get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app=False):
         used_number = get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
             developer_obj.user_id)
         if used_number < developer_obj.usable_number:
-            app_used_number = DeveloperDevicesID.objects.filter(developerid=developer_obj)
             if apple_to_app:
                 apple_to_app_obj = AppleDeveloperToAppUse.objects.filter(app_id=app_obj,
                                                                          developerid=developer_obj).first()
                 if apple_to_app_obj:
                     # 通过配置的专属分配数量进行过滤
+                    app_used_number = DeveloperDevicesID.objects.filter(developerid=developer_obj)
                     if app_used_number.filter(app_id=app_obj).distinct().count() < apple_to_app_obj.usable_number:
                         can_used_developer_pk_list.append(developer_obj.pk)
             else:
-                if app_used_number.distinct().count() < developer_obj.app_limit_number:
+                app_used_count = DeveloperAppID.objects.filter(developerid=developer_obj).distinct().count()
+                if app_used_count < developer_obj.app_limit_number:
                     can_used_developer_pk_list.append(developer_obj.pk)
     return can_used_developer_pk_list
 
