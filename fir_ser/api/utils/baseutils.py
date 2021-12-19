@@ -249,7 +249,11 @@ def get_post_udid_url(request, short):
 
 
 def format_apple_date(s_date):
-    f_date = datetime.datetime.strptime(s_date, '%Y-%m-%dT%H:%M:%S.000+0000')
+    try:
+        f_date = datetime.datetime.strptime(s_date, '%Y-%m-%dT%H:%M:%S.000+0000')
+    except Exception as e:
+        f_date = datetime.datetime.strptime(s_date, '%Y-%m-%dT%H:%M:%S.000+00:00')
+
     if not timezone.is_naive(f_date):
         f_date = timezone.make_naive(f_date, timezone.utc)
     return f_date
