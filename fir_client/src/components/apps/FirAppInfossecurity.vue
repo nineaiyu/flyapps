@@ -7,7 +7,7 @@
         title="绑定应用专属下载页域名"
         width="666px">
       <bind-domain v-if="bind_domain_sure" :app_id="this.currentapp.app_id" :domain_type="2"
-                   transitionName="bind-app-domain"/>
+                   :c_domain_name="this.currentapp.domain_name" transitionName="bind-app-domain"/>
     </el-dialog>
     <el-form label-width="80px">
       <el-form-item label="访问密码" label-width="200px">

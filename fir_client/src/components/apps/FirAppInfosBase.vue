@@ -15,7 +15,6 @@
             </el-tooltip>
 
             <el-popover
-                v-if="$store.state.userinfo&&$store.state.userinfo.role >1 &&$store.state.userinfo.qrcode_domain_name.length>3 "
                 placement="right"
                 width="288">
               <div style="text-align: center; margin: 0">
@@ -24,7 +23,7 @@
                         :logoScale="qrinfo.logoScale"
                         :logoSrc="icon_url"
                         :margin="qrinfo.margin" :size="266"
-                        :text="short_url()">
+                        :text="short_url(appinfos)">
                 </vue-qr>
                 <el-button size="small" type="primary" @click="save_qr()">保存本地</el-button>
               </div>
@@ -51,7 +50,7 @@
           </div>
           <div class="actions">
             <el-button v-if="appinfos.status!==1" type="danger">该应用被封禁,请联系管理员</el-button>
-            <el-button v-else class="download" icon="el-icon-view" @click="appDownload">
+            <el-button v-else class="download" icon="el-icon-view" @click="appDownload(appinfos)">
               预览
             </el-button>
           </div>
@@ -150,11 +149,8 @@ export default {
       //合成函数，执行下载
       a.dispatchEvent(new MouseEvent('click'))
     },
-    short_url() {
-      const userinfo = this.$store.state.userinfo;
-      if (userinfo && userinfo.role > 1 && userinfo.qrcode_domain_name.length > 3) {
-        return 'http://' + userinfo.qrcode_domain_name + '/' + this.appinfos.short;
-      }
+    short_url(appinfo) {
+      return appinfo.preview_url+ '/' + appinfo.short;
     },
     setfunactive(item, index) {
       for (let key in this.$refs) {
@@ -171,15 +167,8 @@ export default {
         }
       }
     },
-    appDownload() {
-      let routeData = this.$router.resolve({name: 'FirDownload', params: {short: this.appinfos.short}});
-      // window.open(routeData.href, '_blank');
-      let p_url = routeData.href;
-      // let p_url = location.origin + '/' + this.appinfos.short;
-      if (this.appinfos.preview_url && this.appinfos.preview_url.length > 6) {
-        p_url = this.appinfos.preview_url + p_url
-      }
-      window.open(p_url, '_blank', '');
+    appDownload(appinfo) {
+      window.open(this.short_url(appinfo), '_blank', '');
     },
     defaulttimeline() {
       this.setfunactive('timeline', 5);

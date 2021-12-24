@@ -170,14 +170,18 @@ export default {
       type: Boolean,
       default: false
     },
+    c_domain_name: {
+      type: String,
+      default: ''
+    },
   },
   data() {
     return {
       active: 1,
       bind_status: false,
       bind_domain_sure: true,
-      domain_name: '',
       domain_tData: [{'type': 'CNAME', 'host': 'xxx', 'dns': 'demo.xxx.cn'}],
+      domain_name:'',
       force_bind: false,
       b_t_msg: '您的账户',
     }
@@ -185,6 +189,9 @@ export default {
   mounted() {
     if (this.domain_type === 2) {
       this.b_t_msg = '您的应用'
+    }
+    if(this.c_domain_name){
+      this.domain_name = this.c_domain_name
     }
     this.bind_click();
   },
@@ -218,7 +225,7 @@ export default {
           this.bind_status = false;
           this.$message.error("绑定失败 " + data.msg)
         }
-      }, {methods: 'PUT', data: {app_id: this.app_id, domain_type: this.domain_type}})
+      }, {methods: 'PUT', data: {app_id: this.app_id, domain_type: this.domain_type, domain_name:this.domain_name}})
     },
     remove_domain() {
       domainFun(data => {
@@ -237,7 +244,7 @@ export default {
         } else {
           this.$message.error("解除绑定失败 " + data.msg)
         }
-      }, {methods: 'DELETE', data: {app_id: this.app_id, domain_type: this.domain_type}});
+      }, {methods: 'DELETE', data: {app_id: this.app_id, domain_type: this.domain_type, domain_name:this.domain_name}});
     },
     bind_click() {
       this.$store.dispatch("dosetdomainstate", false);
@@ -260,7 +267,7 @@ export default {
         } else {
           this.$message.error("绑定失败 " + data.msg)
         }
-      }, {methods: 'GET', data: {app_id: this.app_id, domain_type: this.domain_type}});
+      }, {methods: 'GET', data: {app_id: this.app_id, domain_type: this.domain_type, domain_name:this.domain_name}});
     },
     format_domain_tData(cname_domain) {
       let domain_name_list = this.domain_name.split('.');

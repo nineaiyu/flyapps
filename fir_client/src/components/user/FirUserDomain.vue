@@ -7,7 +7,7 @@
         :visible.sync="bind_domain_sure"
         width="666px">
       <bind-domain v-if="bind_domain_sure" :app_id="current_domain_info.app_id" :domain_state="true"
-                   :domain_type="current_domain_info.domain_type" transitionName="bind-app-domain"/>
+                   :domain_type="current_domain_info.domain_type" :c_domain_name="current_domain_info.domain_name" transitionName="bind-app-domain"/>
     </el-dialog>
     <div>
       <el-input
@@ -19,13 +19,17 @@
         搜索
       </el-button>
       <div style="float: right">
-        <el-button plain type="primary" @click="$store.dispatch('dodomainaction', 1)">
-          设置下载页域名
-        </el-button>
-        <el-button v-if="$store.state.userinfo&&$store.state.userinfo.role >1" plain type="primary"
-                   @click="$store.dispatch('dodomainaction', 2)">
-          设置下载码域名
-        </el-button>
+        <el-tooltip content="应用安装下载页，多个下载页域名可以避免域名被封导致其他应用也无法访问">
+          <el-button plain type="primary" @click="$store.dispatch('dodomainaction', 1)">
+            添加下载页域名
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="用与生成预览和下载码的域名">
+          <el-button  plain type="primary" @click="$store.dispatch('dodomainaction', 2)">
+            设置下载码域名
+          </el-button>
+        </el-tooltip>
+
       </div>
 
 
@@ -97,6 +101,30 @@
         </el-table-column>
 
         <el-table-column
+            align="center"
+            label="跳转权重"
+            prop="weight"
+            width="110">
+          <template slot-scope="scope">
+            <el-popover placement="top" trigger="hover" v-if="scope.row.domain_type === 1">
+              <p>绑定域名：{{ scope.row.domain_name }}</p>
+              <p>域名类型：{{format_domain_type(scope.row)}}</p>
+              <p>权重越大，下载域名使用频率越高</p>
+              <p >
+                跳转权重:
+                <el-input-number v-model="scope.row.weight" :max="100" :min="1"
+                                 label="跳转权重" size="small"/>
+                <el-button size="small" style="margin-left: 10px" @click="saveWeight(scope.row)">保存修改</el-button>
+              </p>
+              <div slot="reference" class="name-wrapper">
+                <el-link :underline="false" plain size="small">{{ scope.row.weight}}
+                </el-link>
+              </div>
+
+            </el-popover>
+          </template>
+        </el-table-column>
+        <el-table-column
             :formatter="format_create_time"
             align="center"
             label="域名绑定时间"
@@ -144,6 +172,16 @@ export default {
     }
   },
   methods: {
+    saveWeight(domain_info){
+      domaininfo(data => {
+        if (data.code === 1000) {
+          this.$message.success("权重修改成功")
+
+        } else {
+          this.$message.error("权重修改失败 "+data.msg)
+        }
+      }, {methods: 'PUT', data: domain_info})
+    },
     show_bind_domain_info(domain_info) {
       this.bind_domain_sure = true;
       let app_id = null;
@@ -152,6 +190,7 @@ export default {
       }
       this.current_domain_info.app_id = app_id;
       this.current_domain_info.domain_type = domain_info.domain_type;
+      this.current_domain_info.domain_name = domain_info.domain_name;
       this.domain_title = this.format_domain_type(domain_info) + ' 绑定详情';
     },
     appInfos(app_info) {
@@ -226,8 +265,8 @@ export default {
     getUserInfoFun(this);
     this.get_data_from_tabname();
   }, watch: {
-    '$store.state.domian_show_state': function () {
-      if (this.$store.state.domian_show_state) {
+    '$store.state.domain_show_state': function () {
+      if (this.$store.state.domain_show_state) {
         this.bind_domain_sure = false;
         this.get_data_from_tabname();
       }

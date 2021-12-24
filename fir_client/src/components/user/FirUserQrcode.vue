@@ -64,8 +64,15 @@
                 &nbsp;
                 <span>{{ appinfo.name }}</span>
                 <div class="bottom clearfix">
-                  <el-button plain size="small" type="primary" @click="go_download(appinfo)">预览</el-button>
-                  <el-button plain size="small" type="primary" @click="save_qr(appinfo)">保存本地</el-button>
+                  <el-popover placement="top" trigger="hover" >
+                       <span v-clipboard:copy="short_url(appinfo)"
+                             v-clipboard:success="copy_success"
+                       >{{ short_url(appinfo) }}</span>
+                    <div slot="reference" class="name-wrapper">
+                      <el-button plain size="small" type="primary" @click="go_download(appinfo)">预览</el-button>
+                      <el-button plain size="small" type="primary" @click="save_qr(appinfo)">保存本地</el-button>
+                    </div>
+                  </el-popover>
                 </div>
               </div>
             </el-card>
@@ -113,6 +120,9 @@ export default {
     }
   },
   methods: {
+    copy_success() {
+      this.$message.success('复制剪切板成功');
+    },
     auto_load() {
       if (getScrollTop() + getWindowHeight() >= getScrollHeight()) {
         if (this.has_next) {      //先判断下一页是否有数据
@@ -203,23 +213,14 @@ export default {
       this.isIndeterminate = checkedCount > 0 && checkedCount < this.allQrcodeAppid.length;
     },
     go_download(appinfo) {
-      let routeData = this.$router.resolve({name: 'FirDownload', params: {short: appinfo.short}});
-      let p_url = routeData.href;
-      if (appinfo.preview_url && appinfo.preview_url.length > 6) {
-        p_url = appinfo.preview_url + p_url
-      }
-      window.open(p_url, '_blank', '');
+      window.open(this.short_url(appinfo), '_blank', '');
     },
     qrback(dataUrl, id) {
       this.qrcode_img_info[id] = dataUrl;
       this.allQrcodeAppid.push(id);
     },
     short_url(appinfo) {
-      const userinfo = this.$store.state.userinfo;
-      if (userinfo.qrcode_domain_name && userinfo.qrcode_domain_name.length > 3) {
-        return 'http://' + userinfo.qrcode_domain_name + '/' + appinfo.short;
-      }
-      return appinfo.preview_url;
+      return appinfo.preview_url+ '/' + appinfo.short;
     },
     save_qr(appinfo) {
       let dtype = "I";

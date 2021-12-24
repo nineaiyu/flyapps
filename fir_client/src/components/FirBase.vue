@@ -18,7 +18,7 @@
             effect="dark"
             type="error">
           <div slot="title">
-            <span class="domian-tip-bar">应用分发请绑定您自己的域名，平台分发域名可能因不可违因素更换，将导致您的应用无法访问</span>
+            <span class="domain-tip-bar">应用分发请绑定您自己的域名，平台分发域名可能因不可违因素更换，将导致您的应用无法访问</span>
             <el-button size="small" @click="bind_domain_type=1,bind_domain_sure=true">立即绑定</el-button>
           </div>
         </el-alert>
@@ -118,7 +118,7 @@ export default {
   padding-top: 30px;
 }
 
-.domian-tip-bar {
+.domain-tip-bar {
   line-height: 43px;
   color: #fff;
   font-weight: 500;

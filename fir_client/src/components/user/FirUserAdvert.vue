@@ -54,7 +54,7 @@
               action="#"
               drag
               style="max-height: 200px">
-            <img v-if="upload_pic_b" :src="upload_pic_b" class="avatar">
+            <img v-if="upload_pic_b" :src="upload_pic_b" class="avatar" alt="">
             <i v-else class="el-icon-plus avatar-uploader-icon"></i>
           </el-upload>
         </el-form-item>
@@ -64,6 +64,7 @@
         <el-form-item label="展示权重">
           <el-input-number v-model="editadvertinfo.weight" :max="100" :min="0"
                            label="展示权重"/>
+          <el-tag style="margin-left: 10px">权重越大，广告展示频率越高</el-tag>
         </el-form-item>
         <el-form-item label="是否发布">
           <el-switch

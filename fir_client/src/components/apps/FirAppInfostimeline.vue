@@ -78,7 +78,7 @@
 
             </el-tooltip>
 
-            <el-button v-if="!currentapp.issupersign" class="tooltip-top" @click="previewRelase(app)"><i
+            <el-button v-if="!currentapp.issupersign" class="tooltip-top" @click="previewRelease(app)"><i
                 class="el-icon-view"/> <span
                 class="ng-binding">预览</span>
             </el-button>
@@ -98,7 +98,7 @@
         </div>
       </el-card>
     </el-timeline-item>
-    <el-button v-if="has_next" class="time-line-more" @click="getapptimelineFun('more')">显示更多版本</el-button>
+    <el-button v-if="has_next" class="time-line-more" @click="getAppTimelineFun('more')">显示更多版本</el-button>
   </el-timeline>
 </template>
 
@@ -143,20 +143,15 @@ export default {
         'app_id': this.currentapp.app_id
       })
     },
-    previewRelase(app) {
+    previewRelease(app) {
       let routeData = this.$router.resolve({
         name: 'FirDownload',
         params: {short: this.currentapp.short},
         query: {release_id: app.release_id}
       });
-      let p_url = routeData.href;
-      if (this.currentapp.preview_url && this.currentapp.preview_url.length > 6) {
-        p_url = this.currentapp.preview_url + p_url
-      }
-      window.open(p_url, 'target', '');
-
+      window.open(this.currentapp.preview_url + routeData.href, 'target', '');
     },
-    getapptimelineFun(act = '') {
+    getAppTimelineFun(act = '') {
       const loading = this.$loading({
         lock: true,
         text: '加载中',
@@ -207,7 +202,7 @@ export default {
                   message: '删除成功',
                   type: 'success'
                 });
-                this.getapptimelineFun();
+                this.getAppTimelineFun();
 
               } else {
                 this.$message({
@@ -232,10 +227,6 @@ export default {
               });
               this.release_apps = data.data.release_apps;
               this.currentapp = data.data.currentapp;
-              // this.getapptimelineFun();
-              // this.currentapp["icon_url"] = this.currentapp.master_release.icon_url;
-              // this.$store.dispatch('doucurrentapp', this.currentapp);
-
             } else {
               this.$message({
                 message: '更新失败，请联系管理员',
@@ -294,7 +285,7 @@ export default {
   }, watch: {},
   computed: {}, mounted() {
     this.$store.dispatch('doappInfoIndex', [[5, 5], [5, 5]]);
-    this.getapptimelineFun();
+    this.getAppTimelineFun();
   }, filters: {
     downcontent(content) {
       if (content) {

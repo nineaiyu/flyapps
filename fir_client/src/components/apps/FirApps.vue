@@ -1140,13 +1140,7 @@ export default {
       this.$router.push({name: 'FirAppInfostimeline', params: {id: app.app_id}})
     },
     appDownload(app) {
-      // this.$router.push({name: 'FirDownload', params: {short: app.short}});
-      let routeData = this.$router.resolve({name: 'FirDownload', params: {short: app.short}});
-      let p_url = routeData.href;
-      if (app.preview_url && app.preview_url.length > 6) {
-        p_url = app.preview_url + p_url
-      }
-      window.open(p_url, '_blank', '');
+      window.open(app.preview_url+ '/' + app.short, '_blank', '');
     }
   }, computed: {
     getDelappTitle() {

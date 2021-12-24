@@ -17,7 +17,7 @@ const store = new Vuex.Store({
         userInfoIndex: 0,
         show_domain_msg: false,
         domain_action: false,
-        domian_show_state: false,
+        domain_show_state: false,
     },
     mutations: {
         setuserinfo(state, data) {
@@ -39,7 +39,7 @@ const store = new Vuex.Store({
             state.domain_action = val
         },
         setdomainstate(state, val) {
-            state.domian_show_state = val
+            state.domain_show_state = val
         }
     },
     actions: {
