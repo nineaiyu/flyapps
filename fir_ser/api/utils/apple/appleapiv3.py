@@ -6,7 +6,6 @@
 
 # pip install pyjwt
 import base64
-import datetime
 import logging
 import os
 import time
@@ -760,8 +759,9 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
     def __make_jwt_headers(self):
         data = {
             "iss": self.issuer_id,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=self.exp_seconds),
-            "aud": self.JWT_AUD
+            "iat": int(time.time()),
+            "exp": int(time.time())+self.exp_seconds,
+            "aud": self.JWT_AUD,
         }
         jwt_headers = {
             "alg": self.JWT_ALG,
