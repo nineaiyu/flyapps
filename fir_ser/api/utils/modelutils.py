@@ -43,6 +43,48 @@ def get_app_domain_name(obj):
     return ''
 
 
+def get_app_download_domain(user_obj, request=None, app_obj=None, preview=False):
+    # 如果有专属域名，则返回专属域名
+    # 如果只配置了下载码域名，则返回下载码域名
+    # 如果配置下载页域名，则返回下载页域名
+    # 最后返回该用户系统默认域名
+    base_user_domain = UserDomainInfo.objects.filter(is_enable=True, user_id=user_obj).all()
+    if app_obj:
+        app_domain_name = base_user_domain.filter(app_id=app_obj, domain_type=2).first()
+        if app_domain_name:
+            return app_domain_name.is_https, app_domain_name.domain_name
+
+    qr_domain_name = base_user_domain.filter(app_id=None, domain_type=0).values_list('is_https', 'domain_name').first()
+    download_domain_name = base_user_domain.filter(app_id=None, domain_type=1).all()
+    if request:
+        origin_domain_name = get_origin_domain_name(request)
+        exist_download_obj = download_domain_name.filter(domain_name=origin_domain_name).first()
+        if exist_download_obj:
+            return exist_download_obj.is_https, exist_download_obj.domain_name
+
+    download_domain_name = base_random_weight(download_domain_name, 'weight')
+    if preview:
+        if qr_domain_name:
+            return qr_domain_name
+    else:
+        if qr_domain_name and not download_domain_name:
+            return qr_domain_name
+    if download_domain_name:
+        return download_domain_name.is_https, download_domain_name.domain_name
+    return get_user_default_domain_name(user_obj.default_domain_name)
+
+
+def get_app_download_uri(request, user_obj, app_obj=None, preview=True):
+    is_https, domain_name = get_app_download_domain(user_obj, request, app_obj, preview)
+    if not (domain_name and len(domain_name) > 3):
+        is_https, domain_name = get_user_default_domain_name(get_min_default_domain_cname_obj(True))
+    server_domain = ''
+    if domain_name and len(domain_name) > 3:
+        protocol = 'https' if is_https else 'http'
+        server_domain = f"{protocol}://{domain_name}"
+    return get_server_domain_from_request(request, server_domain)
+
+
 def get_min_default_domain_cname_obj(is_system=True):
     return min(DomainCnameInfo.objects.annotate(Count('userinfo')).filter(is_enable=True, is_system=is_system),
                key=lambda x: x.userinfo__count)
@@ -62,18 +104,22 @@ def get_filename_form_file(filename):
     return filename
 
 
-def ad_random_weight(user_obj):
-    ad_info_list = UserAdDisplayInfo.objects.filter(user_id=user_obj, is_enable=True).order_by('-created_time')
-    total = sum([ad_info.weight for ad_info in ad_info_list])  # 权重求和
+def base_random_weight(obj, key):
+    total = sum([getattr(ad_info, key) for ad_info in obj])  # 权重求和
     ra = random.uniform(0, total)  # 在0与权重和之前获取一个随机数
     curr_sum = 0
-    ret = ad_info_list.first()
-    for ad_info in ad_info_list:
-        curr_sum += ad_info.weight  # 在遍历中，累加当前权重值
+    ret = obj.first()
+    for ad_info in obj:
+        curr_sum += getattr(ad_info, key)  # 在遍历中，累加当前权重值
         if ra <= curr_sum:  # 当随机数<=当前权重和时，返回权重key
             ret = ad_info
             break
     return ret
+
+
+def ad_random_weight(user_obj):
+    ad_info_list = UserAdDisplayInfo.objects.filter(user_id=user_obj, is_enable=True).order_by('-created_time')
+    return base_random_weight(ad_info_list, 'weight')
 
 
 def add_remote_info_from_request(request, description):
@@ -94,23 +140,16 @@ def add_remote_info_from_request(request, description):
         logger.error(e)
 
 
-def get_redirect_server_domain(request, user_obj=None, app_domain_name=None):
+def get_redirect_server_domain(request, user_obj=None):
     is_https = False
     if user_obj:
-        if app_domain_name and len(app_domain_name) > 3:
-            domain_name = app_domain_name
-        else:
-            domain_name = get_user_domain_name(user_obj)
-            if not domain_name:
-                is_https, domain_name = get_user_default_domain_name(user_obj.default_domain_name)
-    elif app_domain_name and len(app_domain_name) > 3:
-        domain_name = app_domain_name
+        domain_name = get_user_domain_name(user_obj)
+        if not domain_name:
+            is_https, domain_name = get_user_default_domain_name(user_obj.default_domain_name)
     else:
         is_https, domain_name = get_user_default_domain_name(get_min_default_domain_cname_obj(True))
-    protocol = 'http'
-    if is_https:
-        protocol = 'https'
-    server_domain = "%s://%s" % (protocol, domain_name)
+    protocol = 'https' if is_https else 'http'
+    server_domain = f"{protocol}://{domain_name}"
     return get_server_domain_from_request(request, server_domain)
 
 

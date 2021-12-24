@@ -199,11 +199,11 @@ def format_storage_selection(storage_info_list, storage_choice_list):
     return storage_choice_list
 
 
-def get_cname_from_domain(domain):
+def get_cname_from_domain(domain, resolve_cname):
     dns_list = [
-        ["8.8.8.8", "8.8.4.4"],
         ["119.29.29.29", "114.114.114.114"],
         ["223.5.5.5", "223.6.6.6"],
+        ["8.8.8.8", "8.8.4.4"],
     ]
     dns_resolver = Resolver()
     domain = domain.lower().strip()
@@ -211,13 +211,14 @@ def get_cname_from_domain(domain):
     while count:
         try:
             dns_resolver.nameservers = dns_list[len(dns_list) - count]
-            return dns_resolver.resolve(domain, 'CNAME')[0].to_text()
+            if dns_resolver.resolve(domain, 'CNAME')[0].to_text() == resolve_cname:
+                return True
         except Exception as e:
             logger.error(f"dns {dns_resolver.nameservers} resolve {domain} failed Exception:{e}")
         count -= 1
         time.sleep(0.3)
     if count <= 0:
-        return str(None)
+        return None
 
 
 def get_user_default_domain_name(domain_cname_obj):
@@ -227,7 +228,7 @@ def get_user_default_domain_name(domain_cname_obj):
 
 
 def get_server_domain_from_request(request, server_domain):
-    if not server_domain or not server_domain.startswith("http"):
+    if not (server_domain and len(server_domain) > 8):  # len('https://')
         http_host = request.META.get('HTTP_HOST')
         server_protocol = request.META.get('SERVER_PROTOCOL')
         protocol = 'https'

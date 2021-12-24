@@ -7,7 +7,7 @@ from rest_framework import serializers
 from api import models
 from api.utils.TokenManager import make_token
 from api.utils.app.apputils import bytes2human
-from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_redirect_server_domain
+from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_app_download_uri
 from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
 from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided, get_choices_dict, get_choices_name_from_key
@@ -152,7 +152,7 @@ class AppsSerializer(serializers.ModelSerializer):
     preview_url = serializers.SerializerMethodField()
 
     def get_preview_url(self, obj):
-        return get_redirect_server_domain(None, obj.user_id, get_app_domain_name(obj))
+        return get_app_download_uri(None, obj.user_id, obj)
 
     private_developer_number = serializers.SerializerMethodField()
 
@@ -255,6 +255,28 @@ class AppsListSerializer(AppsSerializer):
             return AppsListSerializer(obj.has_combo, context=self.context).data
 
 
+class AppsQrListSerializer(AppsListSerializer):
+    class Meta:
+        model = models.Apps
+        fields = ["app_id", "bundle_id", "name", "preview_url", "short", "type", "master_release"]
+
+    def get_master_release(self, obj):
+        master_release_obj = get_app_master_obj_from_context(self, obj)
+        if master_release_obj:
+            key = ''
+            icon_url = get_download_url_from_context(self, obj, key, master_release_obj.icon_url)
+            datainfo = {
+                "app_version": master_release_obj.app_version,
+                "icon_url": icon_url,
+                "build_version": master_release_obj.build_version,
+                "binary_url": master_release_obj.binary_url,
+                "release_type": master_release_obj.release_type,
+            }
+            return datainfo
+        else:
+            return {}
+
+
 class AdminAppsSerializer(AppsSerializer):
     class Meta:
         model = models.Apps
@@ -322,6 +344,8 @@ class AppsShortSerializer(serializers.ModelSerializer):
         master_release_obj = get_app_master_obj_from_context(self, obj)
         if master_release_obj:
             key = ''
+            if self.context.get("key", None) and self.context.get("key") != "undefined":
+                key = self.context.get("key", '')
             icon_url = get_download_url_from_context(self, obj, key, os.path.basename(master_release_obj.icon_url),
                                                      True)
             datainfo = {

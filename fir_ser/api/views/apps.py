@@ -18,7 +18,7 @@ from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.modelutils import get_user_domain_name, get_app_domain_name, check_super_sign_permission
 from api.utils.response import BaseResponse
-from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer
+from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer, AppsQrListSerializer
 from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app, \
     CleanAppSignDataState, MigrateStorageState
 from api.utils.storage.storage import Storage
@@ -39,6 +39,22 @@ def get_release_apps(request, res, app_serializer, apps_obj, storage):
     return res
 
 
+def apps_filter(request):
+    app_type = request.query_params.get("type", None)
+    act_type = request.query_params.get("act", None)
+    if app_type == "android":
+        filter_data = {"user_id": request.user, "type": 0}
+
+    elif app_type == "ios":
+        filter_data = {"user_id": request.user, "type": 1}
+    else:
+        filter_data = {"user_id": request.user}
+
+    if act_type == "combo":
+        filter_data["has_combo"] = None
+    return Apps.objects.filter(**filter_data).all()
+
+
 class AppsPageNumber(PageNumberPagination):
     page_size = 20  # 每页显示多少条
     page_size_query_param = 'size'  # URL中每页显示条数的参数
@@ -50,9 +66,6 @@ class AppsView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
 
     def get(self, request):
-
-        app_type = request.query_params.get("type", None)
-        act_type = request.query_params.get("act", None)
         res = BaseResponse()
         res.hdata = {"all_hits_count": 0,
                      "ios_count": Apps.objects.filter(type=1, user_id=request.user).values('app_id').count(),
@@ -79,19 +92,7 @@ class AppsView(APIView):
         else:
             res.hdata["all_hits_count"] = 0
 
-        if app_type == "android":
-            filter_data = {"user_id": request.user, "type": 0}
-
-        elif app_type == "ios":
-            filter_data = {"user_id": request.user, "type": 1}
-        else:
-            filter_data = {"user_id": request.user}
-
-        if act_type == "combo":
-            filter_data["has_combo"] = None
-
-        apps_obj = Apps.objects.filter(**filter_data)
-        logger.info(filter_data)
+        apps_obj = apps_filter(request)
         page_obj = AppsPageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=apps_obj.order_by("-updated_time"), request=request,
                                                          view=self)
@@ -390,27 +391,14 @@ class AppsQrcodeShowView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
 
     def get(self, request):
-
-        app_type = request.query_params.get("type", None)
-        act_type = request.query_params.get("act", None)
         res = BaseResponse()
-        if app_type == "android":
-            filter_data = {"user_id": request.user, "type": 0}
-
-        elif app_type == "ios":
-            filter_data = {"user_id": request.user, "type": 1}
-        else:
-            filter_data = {"user_id": request.user}
-
-        if act_type == "combo":
-            filter_data["has_combo"] = None
-
-        apps_obj = Apps.objects.filter(**filter_data)
+        apps_obj = apps_filter(request)
         page_obj = AppsPageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=apps_obj.order_by("-updated_time"), request=request,
                                                          view=self)
 
-        app_serializer = AppsListSerializer(app_page_serializer, many=True, context={"storage": Storage(request.user)})
+        app_serializer = AppsQrListSerializer(app_page_serializer, many=True,
+                                              context={"storage": Storage(request.user)})
 
         res.data = app_serializer.data
         res.has_next = page_obj.page.has_next()

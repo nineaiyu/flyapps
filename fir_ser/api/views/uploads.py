@@ -16,7 +16,7 @@ from api.utils.TokenManager import verify_token
 from api.utils.app.apputils import get_random_short, save_app_infos
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.baseutils import make_app_uuid, make_from_user_uuid
-from api.utils.modelutils import get_app_domain_name, get_redirect_server_domain, check_super_sign_permission
+from api.utils.modelutils import check_super_sign_permission, get_app_download_uri
 from api.utils.response import BaseResponse
 from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short, MigrateStorageState
 from api.utils.storage.storage import Storage
@@ -60,12 +60,12 @@ class AppAnalyseView(APIView):
                 enable_sign = app_obj.issupersign
                 short = app_obj.short
                 app_release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
-                short_domain_name = get_redirect_server_domain(request, request.user, get_app_domain_name(app_obj))
+                short_domain_name = get_app_download_uri(request, request.user, app_obj)
                 if app_release_obj:
                     binary_url = app_release_obj.binary_url
             else:
                 is_new = True
-                short_domain_name = get_redirect_server_domain(request, request.user)
+                short_domain_name = get_app_download_uri(request, request.user)
                 short = get_random_short()
             if app_type == 'iOS':
                 upload_key = release_id + '.ipa' + settings.FILE_UPLOAD_TMP_KEY

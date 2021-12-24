@@ -18,8 +18,8 @@ from api.utils.app.supersignutils import make_sign_udid_mobile_config
 from api.utils.baseutils import get_profile_full_path, make_random_uuid, get_origin_domain_name, \
     format_get_uri, get_post_udid_url
 from api.utils.decorators import cache_response  # 本来使用的是 drf-extensions==0.7.0 但是还未支持该版本Django
-from api.utils.modelutils import get_app_domain_name, get_filename_form_file, check_app_domain_name_access, \
-    ad_random_weight, get_redirect_server_domain
+from api.utils.modelutils import get_filename_form_file, check_app_domain_name_access, \
+    ad_random_weight, get_app_download_uri
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
 from api.utils.storage.caches import del_cache_response_by_short, check_app_permission, get_app_download_url
@@ -154,9 +154,9 @@ class ShortDownloadView(APIView):
         res = check_app_permission(app_obj, res, user_obj)
         if res.code != 1000:
             return Response(res.dict)
-        domain_name = get_redirect_server_domain(request, user_obj, get_app_domain_name(app_obj))
+        domain_name = get_app_download_uri(request, user_obj, app_obj, False)
         origin_domain_name = get_origin_domain_name(request)
-
+        logger.info(f"app_obj:{app_obj.__dict__} domain_name:{domain_name}  origin_domain_name:{origin_domain_name}")
         if user_obj and user_obj.role and user_obj.role == 3:
             ...
         else:
@@ -184,7 +184,9 @@ class ShortDownloadView(APIView):
         res.udid = udid
         res.domain_name = domain_name
         if user_obj and user_obj.role and user_obj.role > 1:
-            res.ad = AppAdInfoSerializer(ad_random_weight(user_obj), context={"key": "ShortDownloadView"}).data
+            ad_obj = ad_random_weight(user_obj)
+            if ad_obj:
+                res.ad = AppAdInfoSerializer(ad_obj, context={"key": "ShortDownloadView", "short": short}).data
         return Response(res.dict)
 
     # key的设置
@@ -193,6 +195,7 @@ class ShortDownloadView(APIView):
         release_id = request.query_params.get("release_id", '')
         udid = request.query_params.get("udid", None)
         time = request.query_params.get("time", None)
+        short = kwargs.get("short", '')
         origin_domain_name = get_origin_domain_name(request)
         if not origin_domain_name:
             origin_domain_name = 'default.site'
@@ -201,9 +204,9 @@ class ShortDownloadView(APIView):
         if not udid:
             udid = ""
         logging.info(
-            f"get or make cache_response short:{kwargs.get('short', '')} origin_domain_name:{origin_domain_name} release_id:{release_id} udid:{udid}")
+            f"get or make cache_response short:{short} origin_domain_name:{origin_domain_name} release_id:{release_id} udid:{udid}")
         return "_".join(
-            [settings.CACHE_KEY_TEMPLATE.get("download_short_key"), kwargs.get("short", ''), origin_domain_name,
+            [settings.CACHE_KEY_TEMPLATE.get("download_short_key"), short, origin_domain_name,
              release_id, udid])
 
 

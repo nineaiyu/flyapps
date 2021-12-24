@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('ad_uri', models.CharField(max_length=256, verbose_name='广告跳转地址')),
                 ('ad_pic', models.CharField(help_text='像素最高80px', max_length=256, verbose_name='广告图片地址')),
-                ('weight', models.IntegerField(default=1, verbose_name='广告展示权重')),
+                ('weight', models.IntegerField(default=10, verbose_name='广告展示权重')),
                 ('description', models.TextField(blank=True, default='', null=True, verbose_name='描述信息')),
                 ('is_enable', models.BooleanField(default=False, verbose_name='广告开启状态')),
                 ('created_time', models.DateTimeField(auto_now_add=True, verbose_name='广告创建时间')),
