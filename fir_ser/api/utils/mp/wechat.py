@@ -12,7 +12,7 @@ import requests
 from api.utils.mp.utils import WxMsgCryptBase
 from common.base.baseutils import get_format_time
 from common.cache.storage import WxTokenCache
-from fir_ser.settings import THIRDLOGINCONF, CACHE_KEY_TEMPLATE
+from fir_ser.settings import THIRDLOGINCONF
 
 logger = logging.getLogger(__name__)
 wx_login_info = THIRDLOGINCONF.wx_official
@@ -44,7 +44,6 @@ def sync_wx_access_token(force=False):
 def get_wx_access_token_cache(c_count=1, ):
     if c_count > 5:
         return ''
-    wx_access_token_key = CACHE_KEY_TEMPLATE.get("wx_access_token_key")
     access_token = WxTokenCache().get_storage_cache()
     if access_token:
         return access_token.get('access_token')
