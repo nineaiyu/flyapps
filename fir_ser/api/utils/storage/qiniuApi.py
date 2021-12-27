@@ -40,9 +40,7 @@ class QiNiuOss(object):
 
     def get_download_url(self, name, expires=1800, force_new=False):
         # 有两种方式构造base_url的形式
-        uri = 'http://'
-        if self.is_https:
-            uri = 'https://'
+        uri = 'https://' if self.is_https else 'http://'
         base_url = f'{uri}{self.domain_name}/{name}'
         # 或者直接输入url的方式下载
         # 可以设置token过期时间

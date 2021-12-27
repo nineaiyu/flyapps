@@ -13,7 +13,7 @@ from django.db.models import Count, Sum, Q
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
     AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper, UserInfo, UDIDsyncDeveloper
-from api.utils.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
+from common.base.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name, is_valid_phone
 
 logger = logging.getLogger(__name__)

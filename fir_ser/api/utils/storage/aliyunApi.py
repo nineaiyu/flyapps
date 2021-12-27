@@ -49,9 +49,7 @@ def md5sum(src):
 
 class AliYunCdn(object):
     def __init__(self, key, is_https, domain_name):
-        uri = 'http://'
-        if is_https:
-            uri = 'https://'
+        uri = 'https://' if is_https else 'http://'
         self.domain = uri + domain_name
         self.key = key
 
@@ -172,9 +170,7 @@ class AliYunOss(object):
         return self.fetch_sts_token(name, expires, only_put=True).__dict__
 
     def make_auth_bucket(self, name, expires, only_get=False):
-        uri = 'http://'
-        if self.is_https:
-            uri = 'https://'
+        uri = 'https://' if self.is_https else 'http://'
         url = self.endpoint
         is_cname = False
         if self.domain_name and self.download_auth_type == 1:

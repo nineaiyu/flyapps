@@ -28,9 +28,7 @@ class LocalStorage(object):
         return make_token(name, expires)
 
     def get_base_url(self):
-        uri = 'http://'
-        if self.is_https:
-            uri = 'https://'
+        uri = 'https://' if self.is_https else 'http://'
         return f"{uri}{self.domain_name}"
 
     def get_download_url(self, name, expires=600, force_new=False):

@@ -13,10 +13,10 @@ from rest_framework.views import APIView
 from api.base_views import storage_change
 from api.models import UserInfo, AppStorage
 from api.utils.auth import AdminTokenAuthentication
-from api.utils.baseutils import format_storage_selection
-from api.utils.baseutils import get_dict_from_filter_fields
 from api.utils.response import BaseResponse
 from api.utils.serializer import AdminStorageSerializer
+from common.base.baseutils import format_storage_selection
+from common.base.baseutils import get_dict_from_filter_fields
 
 logger = logging.getLogger(__name__)
 

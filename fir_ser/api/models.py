@@ -4,9 +4,9 @@ from django.db import models
 from django.db.models import Count
 
 from api.utils.TokenManager import generate_alphanumeric_token_of_length, generate_numeric_token_of_length
-from api.utils.baseutils import make_random_uuid
 ######################################## 用户表 ########################################
 from api.utils.daobase import AESCharField
+from common.base.baseutils import make_random_uuid
 
 
 # Create your models here.

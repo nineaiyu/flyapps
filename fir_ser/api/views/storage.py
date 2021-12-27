@@ -15,8 +15,9 @@ from api.utils.app.apputils import clean_history_apps
 from api.utils.auth import ExpiringTokenAuthentication, StoragePermission
 from api.utils.response import BaseResponse
 from api.utils.serializer import StorageSerializer
-from api.utils.storage.caches import MigrateStorageState
-from api.utils.utils import upload_oss_default_head_img, get_choices_dict
+from api.utils.utils import upload_oss_default_head_img
+from common.base.baseutils import get_choices_dict
+from common.cache.state import MigrateStorageState
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,7 @@
 from django.conf import settings
 from django.db import models
 
-from api.utils.baseutils import AESCipher
+from common.base.baseutils import AESCipher
 
 
 class AESCharField(models.CharField):

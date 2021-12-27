@@ -9,16 +9,14 @@ import string
 import time
 import uuid
 
-from django.core.cache import cache
-
-from fir_ser.settings import CACHE_KEY_TEMPLATE
+from common.cache.storage import TokenManagerCache, RedisCacheBase
 
 logger = logging.getLogger(__name__)
 
 
 def make_token(release_id, time_limit=60, key='', force_new=False):
-    token_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get("make_token_key"), release_id])
-    token = cache.get(token_key)
+    token_cache = TokenManagerCache(key, release_id)
+    token_key, token = token_cache.get_storage_key_and_cache()
     if token and not force_new:
         logger.debug(
             f"make_token  cache exists get token:{token}  release_id:{release_id} force_new:{force_new} token_key:{token_key}")
@@ -28,11 +26,15 @@ def make_token(release_id, time_limit=60, key='', force_new=False):
         user_ran_str = uuid.uuid5(uuid.NAMESPACE_DNS, release_id).__str__().split("-")
         user_ran_str.extend(random_str)
         token = "".join(user_ran_str)
-        cache.set(token, {
+        token_cache.set_storage_cache({
             "atime": time.time() + time_limit,
             "data": release_id
         }, time_limit)
-        cache.set(token_key, token, time_limit - 1)
+        RedisCacheBase(token).set_storage_cache({
+            "atime": time.time() + time_limit,
+            "data": release_id
+        }, time_limit)
+        token_cache.set_storage_cache(token, time_limit - 1)
         logger.debug(
             f"make_token  cache not exists get token:{token}  release_id:{release_id} force_new:{force_new} token_key:{token_key}")
         return token
@@ -40,11 +42,12 @@ def make_token(release_id, time_limit=60, key='', force_new=False):
 
 def verify_token(token, release_id, success_once=False):
     try:
-        values = cache.get(token)
+        token_cache = RedisCacheBase(token)
+        token, values = token_cache.get_storage_key_and_cache()
         if values and release_id == values.get("data", None):
             logger.debug(f"verify_token token:{token}  release_id:{release_id} success")
             if success_once:
-                cache.delete(token)
+                token_cache.del_storage_cache()
             return True
     except Exception as e:
         logger.error(f"verify_token token:{token}  release_id:{release_id} failed Exception:{e}")

@@ -5,14 +5,13 @@
 # date: 2020/9/24
 import base64
 
-from django.core.cache import cache
 from django.http.cookie import parse_cookie
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import BasePermission
 
 from api.models import UserInfo
-from fir_ser.settings import CACHE_KEY_TEMPLATE
+from common.cache.storage import UserTokenCache
 
 
 def get_cookie_token(request):
@@ -52,20 +51,19 @@ def get_user_from_request_auth(request):
         if not auth_token:
             raise AuthenticationFailed({"code": 1001, "error": "缺少token"})
 
-        auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'), auth_token])
-
-        cacheuserinfo = cache.get(auth_key)
-        if not cacheuserinfo:
+        auth_cache = UserTokenCache(auth_token)
+        userinfo = auth_cache.get_storage_cache()
+        if not userinfo:
             raise AuthenticationFailed({"code": 1001, "error": "无效的token"})
-        if user_name != cacheuserinfo.get('username', None):
+        if user_name != userinfo.get('username', None):
             raise AuthenticationFailed({"code": 1001, "error": "token校验失败"})
 
-        user_obj = UserInfo.objects.filter(uid=cacheuserinfo.get('uid', None),
-                                           username=cacheuserinfo.get("username")).first()
+        user_obj = UserInfo.objects.filter(uid=userinfo.get('uid', None),
+                                           username=userinfo.get("username")).first()
         if not user_obj:
             raise AuthenticationFailed({"code": 1001, "error": "无效的token"})
         if user_obj.is_active:
-            cache.set(auth_key, cacheuserinfo, 3600 * 24 * 7)
+            auth_cache.set_storage_cache(userinfo, 3600 * 24 * 7)
             return user_obj, auth_token
         else:
             raise AuthenticationFailed({"code": 1001, "error": "用户被禁用"})

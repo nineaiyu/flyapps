@@ -760,7 +760,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         data = {
             "iss": self.issuer_id,
             "iat": int(time.time()),
-            "exp": int(time.time())+self.exp_seconds,
+            "exp": int(time.time()) + self.exp_seconds,
             "aud": self.JWT_AUD,
         }
         jwt_headers = {

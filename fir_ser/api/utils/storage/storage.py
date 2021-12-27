@@ -4,16 +4,13 @@
 # author: liuyu
 # date: 2020/3/23
 
-import base64
-import json
 import logging
 import time
 
-from django.core.cache import cache
-
-from api.models import UserInfo
-from api.utils.baseutils import get_dict_from_filter_fields
-from fir_ser.settings import THIRD_PART_CONFIG_KEY_INFO, CACHE_KEY_TEMPLATE
+from common.base.baseutils import get_dict_from_filter_fields
+from common.base.magic import run_function_by_locker
+from common.cache.storage import CloudStorageCache, LocalStorageCache, DownloadUrlCache
+from fir_ser.settings import THIRD_PART_CONFIG_KEY_INFO
 from .aliyunApi import AliYunOss, AliYunCdn
 from .localApi import LocalStorage
 from .qiniuApi import QiNiuOss
@@ -27,6 +24,7 @@ def get_storage_auth(storage_obj):
     return get_dict_from_filter_fields(filter_fields, storage_obj.__dict__)
 
 
+@run_function_by_locker()
 def get_storage(user, assigned_storage_obj, use_default_storage):
     if use_default_storage:
         return get_storage_form_conf(user)
@@ -37,10 +35,10 @@ def get_storage(user, assigned_storage_obj, use_default_storage):
 
     if storage_obj:
         auth = get_storage_auth(storage_obj)
-        storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'), user.uid,
-                                base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
         storage_type = storage_obj.storage_type
-        new_storage_obj = cache.get(storage_key)
+        storage_cache = CloudStorageCache(auth, user.uid)
+        storage_key, new_storage_obj = storage_cache.get_storage_key_and_cache()
+
         if new_storage_obj and not assigned_storage_obj:
             logger.info(f"user {user} get storage obj {storage_key} cache {new_storage_obj}")
             return new_storage_obj
@@ -53,29 +51,21 @@ def get_storage(user, assigned_storage_obj, use_default_storage):
                 new_storage_obj = LocalStorage(**auth)
             logger.warning(f"user {user} make storage obj key:{storage_key} obj: {new_storage_obj}")
             new_storage_obj.storage_type = storage_type
-            cache.set(storage_key, new_storage_obj, 600)
+            storage_cache.set_storage_cache(new_storage_obj, 600)
             return new_storage_obj
     else:
         logger.info(f"user {user} has not storage obj, so get default")
-        # return self.get_default_storage(user, storage_obj, False)
         # 不需要管理存储，直接从配置文件获取默认存储
-        return get_storage_form_conf(user)
-
-
-def get_default_storage(user, storage_obj, use_default_storage):
-    admin_obj = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
-    if admin_obj and admin_obj.storage and admin_obj.pk != user.pk:
-        logger.info(f"user {user} has not storage obj, from admin get default storage")
-        return get_storage(admin_obj, storage_obj, use_default_storage)
-    else:
         return get_storage_form_conf(user)
 
 
 class Storage(object):
     def __init__(self, user, assigned_storage_obj=None, use_default_storage=False):
         try:
-            with cache.lock("%s_%s" % ('make_storage_cache', user.uid), timeout=10, blocking_timeout=6):
-                self.storage = get_storage(user, assigned_storage_obj, use_default_storage)
+            locker = {
+                'locker_key': f"make_storage_cache_{user.uid}",
+                "timeout": 60 * 5, "blocking_timeout": 6}
+            self.storage = get_storage(user, assigned_storage_obj, use_default_storage, locker=locker)
         except Exception as e:
             logger.error(f"get {user} storage failed Exception:{e}")
             self.storage = None
@@ -87,8 +77,8 @@ class Storage(object):
     def get_download_url(self, filename, expires=900, key='', force_new=False):
         if self.storage:
             now = time.time()
-            down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
-            download_val = cache.get(down_key)
+            download_cache = DownloadUrlCache(key, filename)
+            download_val = download_cache.get_storage_cache()
             if download_val and not force_new:
                 if download_val.get("time") > now - 60:
                     return download_val.get("download_url")
@@ -97,7 +87,7 @@ class Storage(object):
                 download_url = cdn_obj.get_cdn_download_token(filename, expires)
             else:
                 download_url = self.storage.get_download_url(filename, expires, force_new=True)
-            cache.set(down_key, {"download_url": download_url, "time": now + expires}, expires)
+            download_cache.set_storage_cache({"download_url": download_url, "time": now + expires}, expires)
             return download_url
 
     def delete_file(self, filename, app_type=None):
@@ -155,19 +145,18 @@ def get_local_storage(clean_cache=False):
         storage_type = storage.get('type', None)
         if storage_type == 0:
             auth = storage.get('auth', {})
-            storage_key = "_".join(['local_storage_', CACHE_KEY_TEMPLATE.get('user_storage_key'), "_system_",
-                                    base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
+            storage_cache = LocalStorageCache(auth, "_system_")
+            storage_key, new_storage_obj = storage_cache.get_storage_key_and_cache()
             if clean_cache:
                 logger.info(f"system clean local storage obj cache storage_key {storage_key}")
-                cache.delete(storage_key)
-            new_storage_obj = cache.get(storage_key)
+                storage_cache.del_storage_cache()
             if new_storage_obj:
                 logger.info(f"system get local storage obj cache {new_storage_obj}")
                 return new_storage_obj
             else:
                 new_storage_obj = LocalStorage(**auth)
                 new_storage_obj.storage_type = 3
-                cache.set(storage_key, new_storage_obj, 600)
+                storage_cache.set_storage_cache(new_storage_obj, 600)
                 logger.info(f"system get local storage obj, from settings  storage {new_storage_obj}")
                 return new_storage_obj
 
@@ -178,9 +167,8 @@ def get_storage_form_conf(user):
         if storage.get("active", None):
             storage_type = storage.get('type', None)
             auth = storage.get('auth', {})
-            storage_key = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'), 'default',
-                                    base64.b64encode(json.dumps(auth).encode("utf-8")).decode("utf-8")[0:64]])
-            new_storage_obj = cache.get(storage_key)
+            storage_cache = CloudStorageCache(auth, 'default')
+            storage_key, new_storage_obj = storage_cache.get_storage_key_and_cache()
             if new_storage_obj:
                 logger.info(f"user {user} get default storage {storage_key} obj cache {new_storage_obj} ")
                 return new_storage_obj
@@ -194,7 +182,7 @@ def get_storage_form_conf(user):
                 else:
                     new_storage_obj = LocalStorage(**auth)
                     new_storage_obj.storage_type = 3
-                cache.set(storage_key, new_storage_obj, 600)
+                storage_cache.set_storage_cache(new_storage_obj, 600)
                 logger.warning(
                     f"user {user} has not storage obj, from settings  get default storage key:{storage_key} obj:{new_storage_obj}")
                 return new_storage_obj

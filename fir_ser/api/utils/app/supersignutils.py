@@ -18,18 +18,19 @@ from django.db.models import Count, F
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
     UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo, AppleDeveloperToAppUse
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
-from api.utils.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
-    get_format_time, make_app_uuid, make_from_user_uuid
 from api.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign, \
     get_developer_can_used_from_public_sign, update_or_create_developer_udid_info
 from api.utils.response import BaseResponse
 from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
-    consume_user_download_times_by_app_obj, add_udid_cache_queue, get_and_clean_udid_cache_queue, \
-    CleanErrorBundleIdSignDataState
+    consume_user_download_times_by_app_obj, add_udid_cache_queue, get_and_clean_udid_cache_queue
 from api.utils.storage.storage import Storage
 from api.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status, delete_local_files, \
     download_files_form_oss, get_developer_udided
+from common.base.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
+    get_format_time, make_app_uuid, make_from_user_uuid
+from common.base.magic import run_function_by_locker, call_function_try_attempts
+from common.cache.state import CleanErrorBundleIdSignDataState
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, MOBILE_CONFIG_SIGN_SSL, MSGTEMPLATE
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ def resign_by_app_id_and_developer(app_id, developer_id, developer_app_id, need_
         status = True
     if status:
         locker = {
-            'locker_key': "%s_%s_%s" % ('run_sign', app_obj.app_id, developer_obj.issuer_id),
+            'locker_key': f"run_sign_{app_obj.app_id}_{developer_obj.issuer_id}",
             "timeout": 60 * 5}
         status, result = IosUtils.run_sign(app_obj.user_id, app_obj, developer_obj, d_time, [], locker=locker)
         return status, {'developer_id': developer_obj.issuer_id, 'result': (status, result)}
@@ -217,57 +218,6 @@ def disable_developer_and_send_email(app_obj, developer_obj):
                                      MSGTEMPLATE.get('ERROR_DEVELOPER') % (
                                          developer_obj.user_id.first_name, app_obj.name,
                                          developer_obj.issuer_id))
-
-
-def call_function_try_attempts(try_attempts=3, sleep_time=2, failed_callback=None):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            res = False, {}
-            start_time = time.time()
-            for i in range(try_attempts):
-                res = func(*args, **kwargs)
-                status, result = res
-                if status:
-                    return res
-                else:
-                    logger.warning(f'exec {func} failed. {try_attempts} times in total. now {sleep_time} later try '
-                                   f'again...{i}')
-                time.sleep(sleep_time)
-            if not res[0]:
-                logger.error(f'exec {func} failed after the maximum number of attempts. Failed:{res[1]}')
-                if failed_callback:
-                    failed_callback()
-            logger.info(f"exec {func} finished. time:{time.time() - start_time}")
-            return res
-
-        return wrapper
-
-    return decorator
-
-
-def run_function_by_lock(lock_key='', timeout=60 * 5):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            start_time = time.time()
-            locker = kwargs.get('locker', {})
-            if locker:
-                kwargs.pop('locker')
-            new_lock_key = locker.get('lock_key', lock_key)
-            new_timeout = locker.get('timeout', timeout)
-            if locker and new_timeout and new_lock_key:
-                with cache.lock(new_lock_key, timeout=new_timeout):
-                    logger.info(f"exec {func} start. time:{time.time()}")
-                    res = func(*args, **kwargs)
-            else:
-                res = func(*args, **kwargs)
-            logger.info(f"exec {func} finished. time:{time.time() - start_time}")
-            return res
-
-        return wrapper
-
-    return decorator
 
 
 def get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app=False):
@@ -578,7 +528,7 @@ class IosUtils(object):
                 sign_flag = True
             if sign_flag:
                 locker = {
-                    'locker_key': "%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id),
+                    'locker_key': f"run_sign_{self.app_obj.app_id}_{self.developer_obj.issuer_id}",
                     "timeout": 60 * 5}
                 logger.info("start run_sign ...")
                 return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
@@ -817,7 +767,7 @@ class IosUtils(object):
                         if 'continue' in [str(did_udid_result), str(download_profile_result)]:
                             return True, True
                         locker = {
-                            'locker_key': "%s_%s_%s" % ('run_sign', self.app_obj.app_id, self.developer_obj.issuer_id),
+                            'locker_key': f"run_sign_{self.app_obj.app_id}_{self.developer_obj.issuer_id}",
                             "timeout": 60 * 5}
                         return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
                                                  start_time,
@@ -831,7 +781,7 @@ class IosUtils(object):
         return True, True
 
     @staticmethod
-    @run_function_by_lock()
+    @run_function_by_locker()
     def run_sign(user_obj, app_obj, developer_obj, d_time, udid_list=None):
         if udid_list is None:
             udid_list = []

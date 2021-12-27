@@ -16,14 +16,14 @@ from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
     UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, Token, DeveloperDevicesID, UserAdDisplayInfo
 from api.utils.TokenManager import generate_numeric_token_of_length, generate_alphanumeric_token_of_length, make_token, \
     verify_token
-from api.utils.baseutils import get_real_ip_address
 from api.utils.modelutils import get_app_d_count_by_app_id
 from api.utils.sendmsg.sendmsg import SendMessage
 from api.utils.storage.caches import consume_user_download_times
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
-from api.utils.tempcaches import TmpCache
-from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT, CACHE_KEY_TEMPLATE
+from common.base.baseutils import get_real_ip_address
+from common.cache.storage import UserTokenCache, TempCache
+from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ def get_sender_token(sender, user_id, target, action, msg=None):
     if msg:
         code = msg
     token = make_token(code, time_limit=300, key=user_id)
-    TmpCache.set_tmp_cache(user_id, token, target)
+    TempCache(user_id, token).set_storage_cache(target, 60 * 5)
     if action in ('change', 'password', 'register', 'login', 'common'):
         sender.send_msg_by_act(target, code, action)
     elif action == 'msg':
@@ -135,7 +135,7 @@ def get_sender_sms_token(key, phone, action, msg=None):
 
 
 def is_valid_sender_code(key, token, code, success_once=False):
-    return verify_token(token, code, success_once), TmpCache.get_tmp_cache(key, token)
+    return verify_token(token, code, success_once), TempCache(key, token).get_storage_cache()
 
 
 def get_sender_email_token(key, email, action, msg=None):
@@ -299,28 +299,11 @@ def clean_storage_data(user_obj, storage_obj=None):
     return True
 
 
-def get_choices_dict(choices):
-    result = []
-    choices_org_list = list(choices)
-    for choice in choices_org_list:
-        result.append({'id': choice[0], 'name': choice[1]})
-    return result
-
-
-def get_choices_name_from_key(choices, key):
-    choices_org_list = list(choices)
-    for choice in choices_org_list:
-        if choice[0] == key:
-            return choice[1]
-    return ''
-
-
 def set_user_token(user_obj, request):
     key = binascii.hexlify(os.urandom(32)).decode()
     now = datetime.datetime.now()
     user_info = UserInfo.objects.get(pk=user_obj.pk)
-    auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'), key])
-    cache.set(auth_key, {'uid': user_info.uid, 'username': user_info.username}, 3600 * 24 * 7)
+    UserTokenCache(key).set_storage_cache({'uid': user_info.uid, 'username': user_info.username}, 3600 * 24 * 7)
     Token.objects.create(user=user_obj,
                          **{"access_token": key, "created": now, "remote_addr": get_real_ip_address(request)})
     return key, user_info
@@ -332,6 +315,5 @@ def clean_user_token_and_cache(user_obj, white_token_list=None):
     for token_obj in Token.objects.filter(user=user_obj):
         if token_obj.access_token in white_token_list:
             continue
-        auth_key = "_".join([CACHE_KEY_TEMPLATE.get('user_auth_token_key'), token_obj.access_token])
-        cache.delete(auth_key)
+        UserTokenCache(token_obj.access_token).del_storage_cache()
         token_obj.delete()

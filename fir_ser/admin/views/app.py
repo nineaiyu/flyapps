@@ -14,10 +14,10 @@ from api.base_views import app_delete
 from api.models import AppReleaseInfo, Apps
 from api.utils.TokenManager import verify_token
 from api.utils.auth import AdminTokenAuthentication
-from api.utils.baseutils import get_dict_from_filter_fields
 from api.utils.response import BaseResponse
 from api.utils.serializer import AdminAppsSerializer, AdminAppReleaseSerializer
 from api.utils.storage.caches import del_cache_response_by_short, get_download_url_by_cache
+from common.base.baseutils import get_dict_from_filter_fields
 
 logger = logging.getLogger(__name__)
 

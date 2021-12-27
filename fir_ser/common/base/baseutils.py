@@ -285,7 +285,7 @@ def get_real_ip_address(request):
 
 def get_origin_domain_name(request):
     meta = request.META
-    return request.META.get('HTTP_ORIGIN', meta.get('HTTP_REFERER', 'http://xxx/xxx')).split('//')[-1].split('/')[0]
+    return request.META.get('HTTP_ORIGIN', meta.get('HTTP_REFERER', 'https://xxx/xxx')).split('//')[-1].split('/')[0]
 
 
 def format_get_uri(domain, short, data):
@@ -304,3 +304,19 @@ def get_order_num(order_type=1):
                                               now.second)
     return date_str + str(random.randint(1000, 9999)) + str(random.randint(1000, 9999)) + str(
         random.randint(1000, 9999))
+
+
+def get_choices_dict(choices):
+    result = []
+    choices_org_list = list(choices)
+    for choice in choices_org_list:
+        result.append({'id': choice[0], 'name': choice[1]})
+    return result
+
+
+def get_choices_name_from_key(choices, key):
+    choices_org_list = list(choices)
+    for choice in choices_org_list:
+        if choice[0] == key:
+            return choice[1]
+    return ''

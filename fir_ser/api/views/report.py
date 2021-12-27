@@ -9,13 +9,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import Apps, AppReportInfo
-from api.utils.baseutils import get_real_ip_address
 from api.utils.modelutils import add_remote_info_from_request
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppReportSerializer
 from api.utils.storage.caches import login_auth_failed
 from api.utils.throttle import InstallThrottle2
-from api.utils.utils import is_valid_sender_code, get_captcha, get_choices_dict
+from api.utils.utils import is_valid_sender_code, get_captcha
+from common.base.baseutils import get_real_ip_address, get_choices_dict
 from fir_ser.settings import REPORT
 
 logger = logging.getLogger(__name__)

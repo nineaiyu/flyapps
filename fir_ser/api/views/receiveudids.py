@@ -14,12 +14,12 @@ from rest_framework.views import APIView
 from api.models import Apps
 from api.tasks import run_sign_task
 from api.utils.app.supersignutils import udid_bytes_to_dict, make_sign_udid_mobile_config
-from api.utils.baseutils import get_real_ip_address, get_http_server_domain, make_random_uuid
 from api.utils.modelutils import get_redirect_server_domain, add_remote_info_from_request, \
     get_app_download_uri
 from api.utils.response import BaseResponse
 from api.utils.storage.caches import check_app_permission
 from api.utils.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
+from common.base.baseutils import get_real_ip_address, get_http_server_domain, make_random_uuid
 from fir_ser.celery import app
 
 logger = logging.getLogger(__name__)

@@ -10,7 +10,9 @@ from api.utils.app.apputils import bytes2human
 from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_app_download_uri
 from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
 from api.utils.storage.storage import Storage
-from api.utils.utils import get_developer_udided, get_choices_dict, get_choices_name_from_key
+from api.utils.utils import get_developer_udided
+from common.base.baseutils import get_choices_dict, get_choices_name_from_key
+from common.cache.storage import AdPicShowCache
 
 logger = logging.getLogger(__name__)
 
@@ -808,6 +810,7 @@ class AppAdInfoSerializer(UserAdInfoSerializer):
     ad_pic = serializers.SerializerMethodField()
 
     def get_ad_pic(self, obj):
+        AdPicShowCache(self.context.get("key", ''), self.context.get("short", '')).set_storage_cache(obj.ad_pic)
         return get_download_url_from_context(self, obj, '', obj.ad_pic, True)
 
 

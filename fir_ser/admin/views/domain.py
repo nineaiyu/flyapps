@@ -12,10 +12,10 @@ from rest_framework.views import APIView
 
 from api.models import UserDomainInfo
 from api.utils.auth import AdminTokenAuthentication
-from api.utils.baseutils import get_dict_from_filter_fields
 from api.utils.response import BaseResponse
 from api.utils.serializer import AdminDomainNameSerializer
 from api.utils.storage.caches import reset_app_wx_easy_type
+from common.base.baseutils import get_dict_from_filter_fields
 
 logger = logging.getLogger(__name__)
 

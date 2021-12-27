@@ -6,7 +6,6 @@ from rest_framework.views import APIView
 
 from api.models import UserInfo, UserCertificationInfo, CertificationInfo, Apps
 from api.utils.auth import ExpiringTokenAuthentication
-from api.utils.baseutils import is_valid_phone, is_valid_email, get_real_ip_address
 from api.utils.geetest.geetest_utils import first_register, second_validate
 from api.utils.modelutils import get_min_default_domain_cname_obj, add_remote_info_from_request
 from api.utils.mp.wechat import make_wx_login_qrcode, show_qrcode_url
@@ -18,6 +17,7 @@ from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle, G
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
     check_username_exists, set_user_token, clean_user_token_and_cache
+from common.base.baseutils import is_valid_phone, is_valid_email, get_real_ip_address
 from fir_ser.settings import LOGIN, CHANGER, REPORT, NEW_USER_GIVE_DOWNLOAD_TIMES, REGISTER
 
 logger = logging.getLogger(__name__)

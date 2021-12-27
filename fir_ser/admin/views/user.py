@@ -12,10 +12,10 @@ from rest_framework.views import APIView
 
 from api.models import UserInfo, UserCertificationInfo, ThirdWeChatUserInfo
 from api.utils.auth import AdminTokenAuthentication
-from api.utils.baseutils import get_dict_from_filter_fields
 from api.utils.response import BaseResponse
 from api.utils.serializer import AdminUserInfoSerializer, AdminUserCertificationSerializer, AdminThirdWxSerializer
 from api.utils.storage.caches import auth_user_download_times_gift
+from common.base.baseutils import get_dict_from_filter_fields
 from fir_ser.settings import AUTH_USER_GIVE_DOWNLOAD_TIMES
 
 logger = logging.getLogger(__name__)

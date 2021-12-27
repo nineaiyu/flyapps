@@ -2,10 +2,24 @@ from functools import wraps, WRAPPER_ASSIGNMENTS
 
 from django.http.response import HttpResponse
 
+from common.cache.storage import AppDownloadShortShowCache
+
 
 def get_cache(alias):
     from django.core.cache import caches
     return caches[alias]
+
+
+def set_short_show_cache(short, cache_key):
+    short_show_cache = AppDownloadShortShowCache("ShortDownloadView".lower(), short)
+    key_list = short_show_cache.get_storage_cache()
+
+    if key_list and isinstance(key_list, list):
+        key_list.append(cache_key)
+        key_list = list(set(key_list))
+    else:
+        key_list = [cache_key]
+    short_show_cache.set_storage_cache(key_list, 600)
 
 
 class CacheResponse:
@@ -91,6 +105,8 @@ class CacheResponse:
                     response.status_code,
                     headers
                 )
+                short = kwargs.get("short", '')
+                set_short_show_cache(short, key)
                 self.cache.set(key, response_triple, timeout)
         else:
             # build smaller Django HttpResponse

@@ -8,10 +8,10 @@ import logging
 from hashlib import sha1
 
 import requests
-from django.core.cache import cache
 
-from api.utils.baseutils import get_format_time
 from api.utils.mp.utils import WxMsgCryptBase
+from common.base.baseutils import get_format_time
+from common.cache.storage import WxTokenCache
 from fir_ser.settings import THIRDLOGINCONF, CACHE_KEY_TEMPLATE
 
 logger = logging.getLogger(__name__)
@@ -29,15 +29,15 @@ def format_req_json(j_data, func, *args, **kwargs):
 
 
 def sync_wx_access_token(force=False):
-    wx_access_token_key = CACHE_KEY_TEMPLATE.get("wx_access_token_key")
-    access_token_info = cache.get(wx_access_token_key)
+    wx_cache = WxTokenCache()
+    access_token_info = wx_cache.get_storage_cache()
     if not access_token_info or force:
         access_token_info = WxOfficialBase.make_wx_auth_obj().get_access_token()
         if access_token_info.get('errcode', -1) in [40013] or 'invalid appid' in access_token_info.get('errmsg', ''):
             return False, access_token_info
         expires_in = access_token_info.get('expires_in')
         if expires_in:
-            cache.set(wx_access_token_key, access_token_info, expires_in - 60)
+            wx_cache.set_storage_cache(access_token_info, expires_in - 60)
     return True, access_token_info
 
 
@@ -45,7 +45,7 @@ def get_wx_access_token_cache(c_count=1, ):
     if c_count > 5:
         return ''
     wx_access_token_key = CACHE_KEY_TEMPLATE.get("wx_access_token_key")
-    access_token = cache.get(wx_access_token_key)
+    access_token = WxTokenCache().get_storage_cache()
     if access_token:
         return access_token.get('access_token')
     status, result = sync_wx_access_token(True)

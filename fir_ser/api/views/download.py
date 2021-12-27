@@ -15,8 +15,6 @@ from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInf
 from api.utils.TokenManager import verify_token
 from api.utils.app.apputils import make_resigned
 from api.utils.app.supersignutils import make_sign_udid_mobile_config
-from api.utils.baseutils import get_profile_full_path, make_random_uuid, get_origin_domain_name, \
-    format_get_uri, get_post_udid_url
 from api.utils.decorators import cache_response  # 本来使用的是 drf-extensions==0.7.0 但是还未支持该版本Django
 from api.utils.modelutils import get_filename_form_file, check_app_domain_name_access, \
     ad_random_weight, get_app_download_uri
@@ -25,6 +23,8 @@ from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
 from api.utils.storage.caches import del_cache_response_by_short, check_app_permission, get_app_download_url
 from api.utils.storage.storage import Storage, get_local_storage
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
+from common.base.baseutils import get_profile_full_path, make_random_uuid, get_origin_domain_name, \
+    format_get_uri, get_post_udid_url
 from fir_ser import settings
 
 logger = logging.getLogger(__name__)

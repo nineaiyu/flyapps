@@ -14,10 +14,15 @@ from django.utils import timezone
 
 from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, APPSuperSignUsedInfo, \
     UserCertificationInfo, Order
-from api.utils.baseutils import check_app_password, get_order_num, get_real_ip_address
 from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name, \
     add_remote_info_from_request
 from api.utils.storage.storage import Storage, LocalStorage
+from common.base.baseutils import check_app_password, get_order_num, get_real_ip_address
+from common.cache.invalid import invalid_app_cache, invalid_short_cache, invalid_app_download_times_cache, \
+    invalid_head_img_cache
+from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCache, DownloadUrlCache, AppInstanceCache, \
+    UploadTmpFileNameCache, RedisCacheBase, UserCanDownloadCache, UserFreeDownloadTimesCache, WxTicketCache, \
+    SignUdidQueueCache, CloudStorageCache
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
     USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
 
@@ -25,12 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def sync_download_times_by_app_id(app_ids):
-    app_id_lists = []
-    for app_id in app_ids:
-        down_tem_key = "_".join([CACHE_KEY_TEMPLATE.get("download_times_key"), app_id.get("app_id")])
-        app_id_lists.append(down_tem_key)
-    down_times_lists = cache.get_many(app_id_lists)
-    for k, v in down_times_lists.items():
+    for k, v in AppDownloadTimesCache(app_ids).get_many().items():
         app_id = k.split(CACHE_KEY_TEMPLATE.get("download_times_key"))[1].strip('_')
         Apps.objects.filter(app_id=app_id).update(count_hits=v)
         logger.info(f"sync_download_times_by_app_id app_id:{app_id} count_hits:{v}")
@@ -88,8 +88,7 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
             mobileconifg = local_storage.get_download_url(filename.split(".")[0] + "." + "mobileprovision", limit)
 
         return local_storage.get_download_url(filename.split(".")[0] + "." + download_url_type, limit), mobileconifg
-    down_key = "_".join([key.lower(), CACHE_KEY_TEMPLATE.get('download_url_key'), filename])
-    download_val = cache.get(down_key)
+    download_val = DownloadUrlCache(key, filename).get_storage_cache()
     if download_val:
         if download_val.get("time") > now - 60:
             return download_val.get("download_url"), ""
@@ -109,15 +108,15 @@ def get_app_instance_by_cache(app_id, password, limit, udid):
             if not check_app_password(app_password, password):
                 return None
         return app_info
-    app_key = "_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"), app_id])
-    app_obj_cache = cache.get(app_key)
+    app_instance_cache = AppInstanceCache(app_id)
+    app_obj_cache = app_instance_cache.get_storage_cache()
     if not app_obj_cache:
         app_obj_cache = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type', 'password',
                                                                   'issupersign',
                                                                   'user_id__certification__status').first()
         if app_obj_cache:
             app_obj_cache['d_count'] = get_app_d_count_by_app_id(app_id)
-            cache.set(app_key, app_obj_cache, limit)
+            app_instance_cache.set_storage_cache(app_obj_cache, limit)
     if not app_obj_cache:
         return None
     app_password = app_obj_cache.get("password")
@@ -129,79 +128,71 @@ def get_app_instance_by_cache(app_id, password, limit, udid):
 
 
 def set_app_download_by_cache(app_id, limit=900):
-    down_tem_key = "_".join([CACHE_KEY_TEMPLATE.get("download_times_key"), app_id])
-    download_times = cache.get(down_tem_key)
+    app_download_cache = AppDownloadTimesCache(app_id)
+    download_times = app_download_cache.get_storage_cache()
     if not download_times:
         download_times = Apps.objects.filter(app_id=app_id).values("count_hits").first().get('count_hits')
-        cache.set(down_tem_key, download_times + 1, limit)
+        app_download_cache.set_storage_cache(download_times + 1, limit)
     else:
-        cache.incr(down_tem_key)
-        cache.expire(down_tem_key, timeout=limit)
+        app_download_cache.incr()
+        app_download_cache.expire(limit)
     set_app_today_download_times(app_id)
     return download_times + 1
 
 
 def del_cache_response_by_short(app_id, udid=''):
-    apps_dict = Apps.objects.filter(app_id=app_id).values("id", "short", "app_id", "has_combo").first()
-    if apps_dict:
-        del_cache_response_by_short_util(apps_dict.get("short"), apps_dict.get("app_id"), udid)
-        if apps_dict.get("has_combo"):
-            combo_dict = Apps.objects.filter(pk=apps_dict.get("has_combo")).values("id", "short", "app_id").first()
-            if combo_dict:
-                del_cache_response_by_short_util(combo_dict.get("short"), combo_dict.get("app_id"), udid)
+    app_obj = Apps.objects.filter(app_id=app_id).first()
+    invalid_app_cache(app_obj)
+    invalid_app_cache(app_obj.has_combo)
+    # apps_dict = Apps.objects.filter(app_id=app_id).values("id", "short", "app_id", "has_combo").first()
+    # if apps_dict:
+    #     del_cache_response_by_short_util(apps_dict.get("short"), apps_dict.get("app_id"), udid)
+    #     if apps_dict.get("has_combo"):
+    #         combo_dict = Apps.objects.filter(pk=apps_dict.get("has_combo")).values("id", "short", "app_id").first()
+    #         if combo_dict:
+    #             del_cache_response_by_short_util(combo_dict.get("short"), combo_dict.get("app_id"), udid)
 
 
-def del_short_cache(short):
-    key = "_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short, '*'])
-    for app_download_key in cache.iter_keys(key):
-        cache.delete(app_download_key)
+# def del_short_cache(short):
+#     key = "_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short, '*'])
+#     for app_download_key in cache.iter_keys(key):
+#         cache.delete(app_download_key)
 
 
-def del_make_token_key_cache(release_id):
-    key = "_".join(['', CACHE_KEY_TEMPLATE.get("make_token_key"), f"{release_id}*"])
-    for make_token_key in cache.iter_keys(key):
-        cache.delete(make_token_key)
+# def del_make_token_key_cache(release_id):
+#     key = "_".join(['', CACHE_KEY_TEMPLATE.get("make_token_key"), f"{release_id}*"])
+#     for make_token_key in cache.iter_keys(key):
+#         cache.delete(make_token_key)
 
 
-def del_cache_response_by_short_util(short, app_id, udid):
-    logger.info(f"del_cache_response_by_short short:{short} app_id:{app_id} udid:{udid}")
-    del_short_cache(short)
-
-    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"), app_id]))
-
-    key = 'ShortDownloadView'.lower()
-    master_release_dict = AppReleaseInfo.objects.filter(app_id__app_id=app_id, is_master=True).values('icon_url',
-                                                                                                      'release_id').first()
-    if master_release_dict:
-        download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
-        cache.delete("_".join([key, download_val, os.path.basename(master_release_dict.get("icon_url")), udid]))
-        cache.delete("_".join([key, download_val, master_release_dict.get('release_id'), udid]))
-        cache.delete(
-            "_".join([key, CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id'), udid]))
-        del_make_token_key_cache(master_release_dict.get('release_id'))
+# def del_cache_response_by_short_util(short, app_id, udid):
+#     logger.info(f"del_cache_response_by_short short:{short} app_id:{app_id} udid:{udid}")
+#     del_short_cache(short)
+#
+#     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"), app_id]))
+#
+#     key = 'ShortDownloadView'.lower()
+#     master_release_dict = AppReleaseInfo.objects.filter(app_id__app_id=app_id, is_master=True).values('icon_url',
+#                                                                                                       'release_id').first()
+#     if master_release_dict:
+#         download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
+#         cache.delete("_".join([key, download_val, os.path.basename(master_release_dict.get("icon_url")), udid]))
+#         cache.delete("_".join([key, download_val, master_release_dict.get('release_id'), udid]))
+#         cache.delete(
+#             "_".join([key, CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id'), udid]))
+#         del_make_token_key_cache(master_release_dict.get('release_id'))
 
 
 def del_cache_by_delete_app(app_id):
-    now = timezone.now()
-    down_tem_key = "_".join([CACHE_KEY_TEMPLATE.get("download_today_times_key"),
-                             str(now.year), str(now.month), str(now.day), app_id])
-    cache.delete(down_tem_key)
-
-    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("download_times_key"), app_id]))
-
-    cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"), app_id]))
+    invalid_app_download_times_cache(app_id)
+    app_obj = Apps.objects.filter(app_id=app_id).first()
+    invalid_app_cache(app_obj)
+    invalid_app_cache(app_obj.has_combo)
 
 
 def del_cache_by_app_id(app_id, user_obj):
-    key = ''
-    master_release_dict = AppReleaseInfo.objects.filter(app_id__app_id=app_id, is_master=True).values('icon_url',
-                                                                                                      'release_id').first()
-    download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
-    cache.delete("_".join([key, download_val, os.path.basename(master_release_dict.get("icon_url"))]))
-    cache.delete("_".join([key, download_val, master_release_dict.get('release_id')]))
-    cache.delete(
-        "_".join([key.lower(), CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id')]))
-    cache.delete("_".join([key, download_val, user_obj.head_img]))
+    del_cache_by_delete_app(app_id)
+    invalid_head_img_cache(user_obj)
 
 
 def del_cache_storage(user_obj):
@@ -209,74 +200,60 @@ def del_cache_storage(user_obj):
     for app_obj in Apps.objects.filter(user_id=user_obj):
         del_cache_response_by_short(app_obj.app_id)
         del_cache_by_app_id(app_obj.app_id, user_obj)
-
-    storage_keys = "_".join([CACHE_KEY_TEMPLATE.get('user_storage_key'), user_obj.uid, '*'])
-    for storage_key in cache.iter_keys(storage_keys):
-        cache.delete(storage_key)
-
-    download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
-    cache.delete("_".join(['', download_val, os.path.basename(user_obj.head_img)]))
+    CloudStorageCache('*', user_obj.uid).del_many()
+    invalid_head_img_cache(user_obj)
 
 
 def set_app_today_download_times(app_id):
-    now = timezone.now()
-    down_tem_key = "_".join([CACHE_KEY_TEMPLATE.get("download_today_times_key"),
-                             str(now.year), str(now.month), str(now.day), app_id])
-    if cache.get(down_tem_key):
-        cache.incr(down_tem_key)
+    cache_obj = AppDownloadTodayTimesCache(app_id)
+    if cache_obj.get_storage_cache():
+        cache_obj.incr()
     else:
-        cache.set(down_tem_key, 1, 3600 * 24)
+        cache_obj.set_storage_cache(1, 3600 * 24)
 
 
 def get_app_today_download_times(app_ids):
     sync_download_times_by_app_id(app_ids)
-
-    now = timezone.now()
-    app_id_lists = []
     download_times_count = 0
-    for app_id in app_ids:
-        down_tem_key = "_".join([CACHE_KEY_TEMPLATE.get("download_today_times_key"),
-                                 str(now.year), str(now.month), str(now.day), app_id.get("app_id")])
-        app_id_lists.append(down_tem_key)
-    down_times_lists = cache.get_many(app_id_lists)
-    for k, v in down_times_lists.items():
+    for k, v in AppDownloadTodayTimesCache(app_ids).get_many().items():
         download_times_count += v
     return download_times_count
 
 
 def upload_file_tmp_name(act, filename, user_obj_id):
-    tmp_key = "_".join([CACHE_KEY_TEMPLATE.get("upload_file_tmp_name_key"), filename])
+    cache_obj = UploadTmpFileNameCache(filename)
     if act == "set":
-        cache.delete(tmp_key)
-        cache.set(tmp_key, {'u_time': time.time(), 'id': user_obj_id, "filename": filename}, 2 * 60 * 60)
+        cache_obj.del_storage_cache()
+        cache_obj.set_storage_cache({'u_time': time.time(), 'id': user_obj_id, "filename": filename}, 2 * 60 * 60)
     elif act == "get":
-        return cache.get(tmp_key)
+        return cache_obj.get_storage_cache()
     elif act == "del":
-        cache.delete(tmp_key)
+        cache_obj.del_storage_cache()
 
 
 def limit_cache_util(act, cache_key, cache_limit_times):
     (limit_times, cache_times) = cache_limit_times
+    cache_obj = RedisCacheBase(cache_key)
     if act == "set":
         data = {
             "count": 1,
             "time": time.time()
         }
-        cdata = cache.get(cache_key)
+        cdata = cache_obj.get_storage_cache()
         if cdata:
             data["count"] = cdata["count"] + 1
             data["time"] = time.time()
         logger.info(f"limit_cache_util  cache_key:{cache_key}  data:{data}")
-        cache.set(cache_key, data, cache_times)
+        cache_obj.set_storage_cache(data, cache_times)
     elif act == "get":
-        cdata = cache.get(cache_key)
+        cdata = cache_obj.get_storage_cache()
         if cdata:
             if cdata["count"] > limit_times:
                 logger.error(f"limit_cache_util cache_key {cache_key}  over limit ,is locked . cdata:{cdata}")
                 return False
         return True
     elif act == "del":
-        cache.delete(cache_key)
+        cache_obj.del_storage_cache()
 
 
 def login_auth_failed(act, email):
@@ -292,11 +269,11 @@ def send_msg_over_limit(act, email):
 
 def reset_short_response_cache(user_obj, app_obj=None):
     if app_obj is None:
-        app_obj_short_list = [x[0] for x in Apps.objects.filter(user_id=user_obj).values_list('short').all() if x]
+        app_obj_short_list = Apps.objects.filter(user_id=user_obj).all()
     else:
-        app_obj_short_list = [app_obj.short]
-    for short in app_obj_short_list:
-        del_short_cache(short)
+        app_obj_short_list = [app_obj]
+    for app_obj in app_obj_short_list:
+        invalid_short_cache(app_obj)
 
 
 def reset_app_wx_easy_type(user_obj, app_obj=None):
@@ -310,7 +287,7 @@ def reset_app_wx_easy_type(user_obj, app_obj=None):
         if not get_app_domain_name(app_obj):
             app_obj.wxeasytype = True
             app_obj.save(update_fields=['wxeasytype'])
-        del_short_cache(app_obj.short)
+        invalid_short_cache(app_obj)
 
 
 def enable_user_download_times_flag(user_id):
@@ -326,34 +303,30 @@ def check_user_can_download(user_id):
 
 
 def set_user_download_times_flag(user_id, act):
-    user_can_download_key = "_".join(
-        [CACHE_KEY_TEMPLATE.get("user_can_download_key"), str(user_id)])
+    cache_obj = UserCanDownloadCache(user_id)
     if act == 2:
-        result = cache.get(user_can_download_key)
+        result = cache_obj.get_storage_cache()
         if result is None:
             return True
         return result
-    return cache.set(user_can_download_key, act, 3600 * 24)
+    return cache_obj.set_storage_cache(act, 3600 * 24)
 
 
 def get_user_free_download_times(user_id, act='get', amount=1, auth_status=False):
     free_download_times = USER_FREE_DOWNLOAD_TIMES
     if auth_status:
         free_download_times = AUTH_USER_FREE_DOWNLOAD_TIMES
-    now = timezone.now()
-    user_free_download_times_key = "_".join(
-        [CACHE_KEY_TEMPLATE.get("user_free_download_times_key"), str(now.year), str(now.month), str(now.day),
-         str(user_id)])
-    user_free_download_times = cache.get(user_free_download_times_key)
+    cache_obj = UserFreeDownloadTimesCache(user_id)
+    user_free_download_times = cache_obj.get_storage_cache()
     if user_free_download_times is not None:
         if act == 'set':
-            return cache.incr(user_free_download_times_key, -amount)
+            return cache_obj.incr(-amount)
         else:
             return user_free_download_times
     else:
-        cache.set(user_free_download_times_key, free_download_times, 3600 * 24)
+        cache_obj.set_storage_cache(free_download_times, 3600 * 24)
         if act == 'set':
-            return cache.incr(user_free_download_times_key, -amount)
+            return cache_obj.incr(-amount)
         else:
             return free_download_times
 
@@ -500,58 +473,15 @@ def check_app_permission(app_obj, res, user_obj=None):
 def set_wx_ticket_login_info_cache(ticket, data=None, expire_seconds=600):
     if data is None:
         data = {}
-    wx_ticket_info_key = CACHE_KEY_TEMPLATE.get("wx_ticket_info_key")
-    cache.set("_".join([wx_ticket_info_key, ticket]), data, expire_seconds)
+    WxTicketCache(ticket).set_storage_cache(data, expire_seconds)
 
 
 def get_wx_ticket_login_info_cache(ticket):
-    wx_ticket_info_key = CACHE_KEY_TEMPLATE.get("wx_ticket_info_key")
-    wx_t_key = "_".join([wx_ticket_info_key, ticket])
-    wx_ticket_info = cache.get(wx_t_key)
+    cache_obj = WxTicketCache(ticket)
+    wx_ticket_info = cache_obj.get_storage_cache()
     if wx_ticket_info:
-        cache.delete(wx_t_key)
+        cache_obj.del_storage_cache()
     return wx_ticket_info
-
-
-class CacheBaseState(object):
-
-    def __init__(self, key, value=time.time(), timeout=3600 * 24):
-        self.key = f"CacheBaseState_{self.__class__.__name__}_{key}"
-        self.value = value
-        self.timeout = timeout
-        self.active = False
-
-    def get_state(self):
-        return cache.get(self.key)
-
-    def __enter__(self):
-        if cache.get(self.key):
-            return False
-        else:
-            cache.set(self.key, self.value, self.timeout)
-            self.active = True
-        return True
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.active:
-            cache.delete(self.key)
-        logger.info(f"cache base state __exit__ {exc_type}, {exc_val}, {exc_tb}")
-
-
-class MigrateStorageState(CacheBaseState):
-    ...
-
-
-class CleanSignDataState(CacheBaseState):
-    ...
-
-
-class CleanAppSignDataState(CacheBaseState):
-    ...
-
-
-class CleanErrorBundleIdSignDataState(CacheBaseState):
-    ...
 
 
 def add_download_times_free_base(user_obj, amount, payment_name, description, order_type=1):
@@ -584,24 +514,26 @@ def auth_user_download_times_gift(user_obj, amount=200):
 def add_udid_cache_queue(prefix_key, values):
     prefix_key = f"{CACHE_KEY_TEMPLATE.get('ipa_sign_udid_queue_key')}_{prefix_key}"
     with cache.lock("%s_%s" % ('add_udid_cache_queue', prefix_key), timeout=10):
-        data = cache.get(prefix_key)
+        cache_obj = SignUdidQueueCache(prefix_key)
+        data = cache_obj.get_storage_cache()
         if data and isinstance(data, list):
             data.append(values)
         else:
             data = [values]
-        cache.set(prefix_key, list(set(data)), 60 * 60)
+        cache_obj.set_storage_cache(list(set(data)), 60 * 60)
         return data
 
 
 def get_and_clean_udid_cache_queue(prefix_key):
     prefix_key = f"{CACHE_KEY_TEMPLATE.get('ipa_sign_udid_queue_key')}_{prefix_key}"
     with cache.lock("%s_%s" % ('add_udid_cache_queue', prefix_key), timeout=10):
-        data = cache.get(prefix_key)
+        cache_obj = SignUdidQueueCache(prefix_key)
+        data = cache_obj.get_storage_cache()
         if data and isinstance(data, list):
             ...
         else:
             data = []
-        cache.delete(prefix_key)
+        cache_obj.del_storage_cache()
         return data
 
 
