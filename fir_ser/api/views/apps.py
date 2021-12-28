@@ -72,9 +72,11 @@ class AppsView(APIView):
                      "android_count": Apps.objects.filter(type=0, user_id=request.user).values('app_id').count()}
 
         android_app_ids = Apps.objects.filter(**{"user_id": request.user, "type": 0}).values('app_id')
+        android_app_ids = [app_dict.get('app_id') for app_dict in android_app_ids]
         res.hdata["android_today_hits_count"] = get_app_today_download_times(android_app_ids)
 
         ios_app_ids = Apps.objects.filter(**{"user_id": request.user, "type": 1}).values('app_id')
+        ios_app_ids = [app_dict.get('app_id') for app_dict in ios_app_ids]
         res.hdata["ios_today_hits_count"] = get_app_today_download_times(ios_app_ids)
 
         all_hits_obj = Apps.objects.filter(user_id=request.user).aggregate(count_hits=Sum('count_hits'))

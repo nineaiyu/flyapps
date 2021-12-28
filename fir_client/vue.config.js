@@ -82,7 +82,7 @@ if (page) {
     }
 }
 
-const version='1.3.9';
+const version='1.4.0';
 
 const pro_base_env = {
     baseUrl: 'https://flyapps.cn',

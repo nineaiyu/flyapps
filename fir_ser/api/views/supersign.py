@@ -54,7 +54,7 @@ class DeveloperView(APIView):
         if issuer_id:
             developer_obj = developer_obj.filter(
                 Q(developerappid__app_id__bundle_id=issuer_id, developerappid__app_id__user_id=request.user) | Q(
-                    issuer_id=issuer_id))
+                    issuer_id=issuer_id) | Q(description=issuer_id))
 
         page_obj = PageNumber()
         app_page_serializer = page_obj.paginate_queryset(queryset=developer_obj.order_by("-updated_time"),
