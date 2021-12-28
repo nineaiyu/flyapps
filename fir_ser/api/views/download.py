@@ -20,7 +20,7 @@ from api.utils.modelutils import get_filename_form_file, check_app_domain_name_a
     ad_random_weight, get_app_download_uri
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
-from api.utils.storage.caches import del_cache_response_by_short, check_app_permission, get_app_download_url
+from api.utils.storage.caches import check_app_permission, get_app_download_url
 from api.utils.storage.storage import Storage, get_local_storage
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 from common.base.baseutils import get_profile_full_path, make_random_uuid, get_origin_domain_name, \
@@ -176,7 +176,7 @@ class ShortDownloadView(APIView):
                 res.code = 1002
                 res.msg = "参数有误"
                 return Response(res.dict)
-            del_cache_response_by_short(app_obj.app_id, udid=udid)
+            # del_cache_response_by_short(app_obj.app_id, udid=udid)
 
         app_serializer = AppsShortSerializer(app_obj, context={"key": "ShortDownloadView", "release_id": release_id,
                                                                "storage": Storage(user_obj)})

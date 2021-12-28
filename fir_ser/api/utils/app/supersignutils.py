@@ -252,8 +252,17 @@ def get_new_developer_by_app_obj(app_obj, obj_base_filter, apple_to_app=False):
 def filter_developer_by_pk_list(developer_pk_list, f_key, app_search_flag=True):
     developer_obj_dict = AppIOSDeveloperInfo.objects.filter(pk__in=developer_pk_list).values(
         f_key, 'pk').annotate(count=Count('pk'))
-    if not app_search_flag:
-        developer_obj_dict = developer_obj_dict.filter(count__lt=F('app_limit_number'))
+    if app_search_flag:
+        return developer_obj_dict
+    else:
+        apple_filter = {f'{f_key}__isnull': False, 'pk__in': developer_pk_list}
+        developer_obj_dict = AppIOSDeveloperInfo.objects.filter(**apple_filter).values(f_key, 'pk').annotate(
+            count=Count('pk')).filter(count__lt=F('app_limit_number'))
+        if not developer_obj_dict:
+            apple_filter = {f'{f_key}__isnull': True, 'pk__in': developer_pk_list}
+            developer_obj_dict = AppIOSDeveloperInfo.objects.filter(**apple_filter).values(f_key, 'pk').annotate(
+                count=Count('pk'))
+
     return developer_obj_dict
 
 
@@ -727,7 +736,7 @@ class IosUtils(object):
                 with cache.lock(register_devices_prefix, timeout=360):
                     if CleanErrorBundleIdSignDataState(add_new_bundles_prefix).get_state():
                         return True, True  # 程序错误，进行清理的时候，拦截多余的设备注册
-                    if not get_developer_obj_by_others(self.user_obj, self.udid, self.app_obj):
+                    if not get_developer_obj_by_others(self.user_obj, self.udid, self.app_obj, False):
                         d_result['code'] = 1005
                         return False, d_result
                     status, did_udid_result = IosUtils.check_or_register_devices(self.app_obj, self.user_obj,
@@ -971,7 +980,7 @@ class IosUtils(object):
         status, result = app_api_obj.create_cert(user_obj)
         if status:
             cert_id = result.id
-            AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
+            AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=developer_obj.issuer_id).update(
                 status=1,
                 certid=cert_id, cert_expire_time=format_apple_date(result.expirationDate))
             resign_app_obj = IosUtils.get_resign_obj(user_obj, developer_obj)
@@ -995,7 +1004,7 @@ class IosUtils(object):
         app_api_obj = get_api_obj(developer_obj)
         status, result = app_api_obj.get_cert_obj_by_cid()
         if not status:
-            AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
+            AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=developer_obj.issuer_id).update(
                 certid=None, cert_expire_time=None)
         return status, result
 

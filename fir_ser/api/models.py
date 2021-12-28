@@ -280,8 +280,9 @@ class AppIOSDeveloperInfo(models.Model):
     description = models.TextField('备注', blank=True, null=True, default='')
     auth_type_choices = ((0, 'p8key认证'),)
     auth_type = models.SmallIntegerField(choices=auth_type_choices, default=0, verbose_name="认证类型")
-    status_choices = (
-    (0, '未激活'), (1, '已激活'), (2, '协议待同意'), (3, '维护中'), (4, '证书过期'), (5, '状态异常'))  # 协议待同意和维护中：代表只读，不可创建和注册新设备号
+
+    # 协议待同意和维护中：代表只读，不可创建和注册新设备号
+    status_choices = ((0, '未激活'), (1, '已激活'), (2, '协议待同意'), (3, '维护中'), (4, '证书过期'), (5, '状态异常'))
     status = models.SmallIntegerField(choices=status_choices, verbose_name="账户状态", default=0)
 
     class Meta:
