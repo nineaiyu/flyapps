@@ -85,4 +85,4 @@ def auto_check_ios_developer_active():
                     ios_developer.save(update_fields=['is_actived'])
                     logger.error(msg)
                     send_ios_developer_active_status(userinfo, MSGTEMPLATE.get('AUTO_CHECK_DEVELOPER') % (
-                        userinfo.first_name, ios_developer.name))
+                        userinfo.first_name, ios_developer.issuer_id))

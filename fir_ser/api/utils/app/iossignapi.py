@@ -204,7 +204,8 @@ def check_error_call_back(error):
         msg = "数据校验失败，请检查p8key内容是否正常"
     if 'Authentication credentials are missing or invalid' in error:
         msg = '认证失败，请检查开发者信息填写是否正确'
-
+    if 'FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED' in error:
+        msg = '请登录 https://developer.apple.com/account/ 并同意最新协议'
     logger.error(f"{msg} {error}")
     return msg if msg else error
 

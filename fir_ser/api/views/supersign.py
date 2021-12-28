@@ -134,7 +134,7 @@ class DeveloperView(APIView):
                     status, result = IosUtils.get_device_from_developer(developer_obj)
                     if not status:
                         res.code = 1008
-                        res.msg = result.get("err_info")
+                        res.msg = result.get("return_info")
                         return Response(res.dict)
                 elif act == "cleandevice":
                     with CleanSignDataState(request.user.uid) as state:
