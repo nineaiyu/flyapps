@@ -64,7 +64,7 @@
                 &nbsp;
                 <span>{{ appinfo.name }}</span>
                 <div class="bottom clearfix">
-                  <el-popover placement="top" trigger="hover" >
+                  <el-popover placement="top" trigger="hover">
                        <span v-clipboard:copy="short_url(appinfo)"
                              v-clipboard:success="copy_success"
                        >{{ short_url(appinfo) }}</span>
@@ -220,7 +220,7 @@ export default {
       this.allQrcodeAppid.push(id);
     },
     short_url(appinfo) {
-      return appinfo.preview_url+ '/' + appinfo.short;
+      return appinfo.preview_url + '/' + appinfo.short;
     },
     save_qr(appinfo) {
       let dtype = "I";

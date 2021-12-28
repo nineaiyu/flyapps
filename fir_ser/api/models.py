@@ -270,7 +270,7 @@ class AppIOSDeveloperInfo(models.Model):
     private_key_id = models.CharField(max_length=64, null=False, verbose_name="密钥 ID")
     # p8key = models.TextField(max_length=512, null=False, verbose_name="p8key")
     p8key = AESCharField(max_length=512, null=False, verbose_name="p8key")
-    is_actived = models.BooleanField(default=False, verbose_name="是否已经激活")
+    # is_actived = models.BooleanField(default=False, verbose_name="是否已经激活")
     certid = models.CharField(max_length=64, blank=True, verbose_name="超级签名自动创建证书ID", null=True)
     usable_number = models.IntegerField(verbose_name="可使用设备数", default=100)
     app_limit_number = models.IntegerField(verbose_name="可分配应用数，最大160", default=100)
@@ -280,6 +280,9 @@ class AppIOSDeveloperInfo(models.Model):
     description = models.TextField('备注', blank=True, null=True, default='')
     auth_type_choices = ((0, 'p8key认证'),)
     auth_type = models.SmallIntegerField(choices=auth_type_choices, default=0, verbose_name="认证类型")
+    status_choices = (
+    (0, '未激活'), (1, '已激活'), (2, '协议待同意'), (3, '维护中'), (4, '证书过期'), (5, '状态异常'))  # 协议待同意和维护中：代表只读，不可创建和注册新设备号
+    status = models.SmallIntegerField(choices=status_choices, verbose_name="账户状态", default=0)
 
     class Meta:
         verbose_name = '苹果开发者账户'

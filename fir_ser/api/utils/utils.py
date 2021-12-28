@@ -61,13 +61,13 @@ def get_developer_devices(developer_obj_lists):
     other_used_sum = 0
     flyapp_used_sum = 0
     max_total = 0
-    for dev_obj in developer_obj_lists.filter(is_actived=True):
+    for dev_obj in developer_obj_lists.filter(status__in=[1, 2, 3, 4, 5]):
         other_used, flyapp_used, _ = get_developer_udided(dev_obj)
         other_used_sum += other_used
         flyapp_used_sum += flyapp_used
         max_total += 100
 
-    use_number_obj_list = developer_obj_lists.filter(is_actived=True)
+    use_number_obj_list = developer_obj_lists.filter(status__in=[1, 2, 3, 4, 5])
     all_use_number = 0
     all_usable_number = 0
     for use_number_obj in use_number_obj_list:

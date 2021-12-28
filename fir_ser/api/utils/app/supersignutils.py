@@ -187,9 +187,10 @@ def get_auth_form_developer(developer_obj):
     return auth
 
 
-def get_api_obj(auth):
+def get_api_obj(developer_obj):
+    auth = get_auth_form_developer(developer_obj)
     if auth.get("issuer_id"):
-        app_api_obj = AppDeveloperApiV2(**auth)
+        app_api_obj = AppDeveloperApiV2(**auth, developer_pk=developer_obj.pk)
     else:
         app_api_obj = None
     return app_api_obj
@@ -212,17 +213,16 @@ def err_callback(func, *args, **kwargs):
 
 def disable_developer_and_send_email(app_obj, developer_obj):
     logger.error(f"app {app_obj} developer {developer_obj} sign failed. so disabled")
-    developer_obj.is_actived = False
-    developer_obj.save(update_fields=['is_actived'])
+    developer_obj.status = 5
+    developer_obj.save(update_fields=['status'])
     send_ios_developer_active_status(developer_obj.user_id,
                                      MSGTEMPLATE.get('ERROR_DEVELOPER') % (
                                          developer_obj.user_id.first_name, app_obj.name,
                                          developer_obj.issuer_id))
 
 
-def get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app=False):
+def get_new_developer_by_app_obj(app_obj, obj_base_filter, apple_to_app=False):
     can_used_developer_pk_list = []
-    obj_base_filter = AppIOSDeveloperInfo.objects.filter(user_id__in=user_objs, is_actived=True, certid__isnull=False)
     if apple_to_app:
         # 存在指定开发者，则新设备优先注册到指定开发者
         developer_obj_lists = obj_base_filter.filter(appledevelopertoappuse__app_id=app_obj)
@@ -250,9 +250,7 @@ def get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app=False):
 
 
 def filter_developer_by_pk_list(developer_pk_list, f_key, app_search_flag=True):
-    developer_obj_dict = AppIOSDeveloperInfo.objects.filter(pk__in=developer_pk_list,
-                                                            is_actived=True,
-                                                            certid__isnull=False).values(
+    developer_obj_dict = AppIOSDeveloperInfo.objects.filter(pk__in=developer_pk_list).values(
         f_key, 'pk').annotate(count=Count('pk'))
     if not app_search_flag:
         developer_obj_dict = developer_obj_dict.filter(count__lt=F('app_limit_number'))
@@ -268,18 +266,24 @@ def get_developer_by_pk_list(developer_pk_list, f_key, app_search_flag=True):
         return developer_obj
 
 
-def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True):
+def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True, read_only=True):
     """
+    :param read_only:
     :param user_objs: [user_obj]
     :param udid: udid
     :param app_obj: app_obj
     :param private_first: 专属应用优先使用专属开发者，而不是公共开发者
     :return:  (developer_obj, is_exist_devices)
     """
+
+    if read_only:
+        status_choice = [1, 2, 3, 4, 5]
+    else:
+        status_choice = [1]
+    status_filter = {'developerid__certid__isnull': False, 'developerid__status__in': status_choice}
+
     developer_udid_queryset = UDIDsyncDeveloper.objects.filter(developerid__user_id__in=user_objs,
-                                                               developerid__is_actived=True,
-                                                               developerid__certid__isnull=False).values(
-        'developerid').all().distinct()
+                                                               **status_filter).values('developerid').all().distinct()
 
     # 根据udid和应用查找该用户开发者账户【主要可能是开发者未激活】
     developer_pk_list = developer_udid_queryset.filter(udid=udid, developerid__apptodeveloper__app_id=app_obj)
@@ -317,8 +321,7 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True)
                 exist_app_developer_pk_list.append(developer_obj.pk)
 
     # 查询状态正常的专属开发者信息，判断是否为专属应用
-    apple_to_app = AppleDeveloperToAppUse.objects.filter(app_id=app_obj, developerid__is_actived=True,
-                                                         developerid__certid__isnull=False).first()
+    apple_to_app = AppleDeveloperToAppUse.objects.filter(app_id=app_obj, **status_filter).first()
 
     # 存在专属开发者账户，但是也同时存在已经安装的设备，优先选择已经安装设备的开发者账户？是or否
     # 是：使应用趋向于一个开发者，为后期更新提供方便
@@ -326,12 +329,15 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True)
     if not private_first and apple_to_app and exist_app_developer_pk_list:
         return AppIOSDeveloperInfo.objects.filter(pk=exist_app_developer_pk_list[0]).first(), False
 
-    can_used_developer_pk_list = get_new_developer_by_app_obj(user_objs, app_obj, apple_to_app)
+    status_filter = {'certid__isnull': False, 'status__in': status_choice}
+    obj_base_filter = AppIOSDeveloperInfo.objects.filter(user_id__in=user_objs, **status_filter)
+
+    can_used_developer_pk_list = get_new_developer_by_app_obj(app_obj, obj_base_filter, apple_to_app)
 
     # 存在指定开发者账户，但是获取可用的开发者账户为空，那么开始匹配全部开发者
     if not can_used_developer_pk_list and apple_to_app:
         logger.info(f"udid:{udid} app_obj:{app_obj} private developer is null. start find all developer")
-        can_used_developer_pk_list = get_new_developer_by_app_obj(user_objs, app_obj)
+        can_used_developer_pk_list = get_new_developer_by_app_obj(app_obj, obj_base_filter)
 
     if can_used_developer_pk_list and exist_app_developer_pk_list:
         can_used_developer_pk_list = list(set(can_used_developer_pk_list) & set(exist_app_developer_pk_list))
@@ -346,14 +352,14 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True)
     return None, None
 
 
-def get_developer_obj_by_others(user_obj, udid, app_obj):
-    result, is_exist = get_developer_user_by_app_udid([user_obj], udid, app_obj)
+def get_developer_obj_by_others(user_obj, udid, app_obj, read_only):
+    result, is_exist = get_developer_user_by_app_udid([user_obj], udid, app_obj, read_only=read_only)
     if result:
         return result
     receive_user_id_list = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj).values('user_id').distinct()
     if receive_user_id_list:
         result, is_exist = get_developer_user_by_app_udid(UserInfo.objects.filter(pk__in=receive_user_id_list), udid,
-                                                          app_obj)
+                                                          app_obj, read_only=read_only)
     f_count = get_ios_developer_public_num(user_obj)
 
     if (f_count == 0 and is_exist) or f_count > 0:
@@ -370,8 +376,8 @@ class IosUtils(object):
         self.user_obj = user_obj
         self.get_developer_auth()
 
-    def get_developer_auth(self):
-        self.developer_obj = get_developer_obj_by_others(self.user_obj, self.udid, self.app_obj)
+    def get_developer_auth(self, read_only=True):
+        self.developer_obj = get_developer_obj_by_others(self.user_obj, self.udid, self.app_obj, read_only)
         if self.developer_obj:
             self.auth = get_auth_form_developer(self.developer_obj)
         else:
@@ -399,8 +405,7 @@ class IosUtils(object):
 
     @staticmethod
     def modify_capability(developer_obj, app_obj, developer_app_id):
-        auth = get_auth_form_developer(developer_obj)
-        return get_api_obj(auth).modify_capability(app_obj, developer_app_id)
+        return get_api_obj(developer_obj).modify_capability(app_obj, developer_app_id)
 
     def get_profile_full_path(self):
         cert_dir_name = make_app_uuid(self.user_obj, get_apple_udid_key(self.auth))
@@ -553,16 +558,18 @@ class IosUtils(object):
             return True, 'continue'
         sync_device_obj = UDIDsyncDeveloper.objects.filter(udid=device_udid,
                                                            developerid=developer_obj).first()
-        auth = get_auth_form_developer(developer_obj)
+        # auth = get_auth_form_developer(developer_obj)
         # 库里面存在，并且设备是可用状态，因此无需api注册
         if sync_device_obj:
             logger.info(f"app {app_obj} device {sync_device_obj.serial} already in developer {developer_obj}")
             if not sync_device_obj.status:
                 # 库里面存在，并且设备是禁用状态，需要调用api启用
-                status, result = get_api_obj(auth).set_device_status("enable", sync_device_obj.serial,
-                                                                     sync_device_obj.product, sync_device_obj.udid,
-                                                                     failed_call_prefix,
-                                                                     err_callback(IosUtils.get_device_from_developer,
+                status, result = get_api_obj(developer_obj).set_device_status("enable", sync_device_obj.serial,
+                                                                              sync_device_obj.product,
+                                                                              sync_device_obj.udid,
+                                                                              failed_call_prefix,
+                                                                              err_callback(
+                                                                                  IosUtils.get_device_from_developer,
                                                                                   developer_obj))
                 if not status:  # 已经包含异常操作，暂定
                     return status, result
@@ -570,8 +577,10 @@ class IosUtils(object):
                 sync_device_obj.save(update_fields=['status'])
         else:
             # 库里面不存在，注册设备，新设备注册默认就是启用状态
-            status, device_obj = get_api_obj(auth).register_device(device_udid, device_name, failed_call_prefix,
-                                                                   err_callback(IosUtils.get_device_from_developer,
+            status, device_obj = get_api_obj(developer_obj).register_device(device_udid, device_name,
+                                                                            failed_call_prefix,
+                                                                            err_callback(
+                                                                                IosUtils.get_device_from_developer,
                                                                                 developer_obj))
             if not status:
                 return status, device_obj
@@ -620,11 +629,10 @@ class IosUtils(object):
         developer_app_id_obj = DeveloperAppID.objects.filter(developerid=developer_obj,
                                                              app_id=app_obj).first()
         if not developer_app_id_obj:
-            auth = get_auth_form_developer(developer_obj)
             bundle_id = app_obj.bundle_id
             app_id = app_obj.app_id
             s_type = app_obj.supersign_type
-            status, result = get_api_obj(auth).create_app(bundle_id, app_id, s_type, failed_callback)
+            status, result = get_api_obj(developer_obj).create_app(bundle_id, app_id, s_type, failed_callback)
             if status and result.get('aid'):
                 developer_app_id_obj = DeveloperAppID.objects.create(aid=result.get('aid'), developerid=developer_obj,
                                                                      app_id=app_obj)
@@ -659,12 +667,13 @@ class IosUtils(object):
         developer_app_id = developer_app_id_obj.aid
         profile_id = developer_app_id_obj.profile_id
         auth = get_auth_form_developer(developer_obj)
-        status, result = get_api_obj(auth).make_and_download_profile(app_obj,
-                                                                     get_profile_full_path(developer_obj, app_obj),
-                                                                     auth, developer_app_id,
-                                                                     device_id_lists, profile_id,
-                                                                     failed_call_prefix, failed_callback,
-                                                                     )
+        status, result = get_api_obj(developer_obj).make_and_download_profile(app_obj,
+                                                                              get_profile_full_path(developer_obj,
+                                                                                                    app_obj),
+                                                                              auth, developer_app_id,
+                                                                              device_id_lists, profile_id,
+                                                                              failed_call_prefix, failed_callback,
+                                                                              )
 
         if not status:
             return False, result
@@ -689,6 +698,8 @@ class IosUtils(object):
         result = self.check_sign_is_exists(client_ip)
         if result:
             return result
+
+        self.get_developer_auth(read_only=False)
 
         logger.info("udid %s not exists app_id %s ,need sign" % (self.udid, self.app_obj))
 
@@ -835,8 +846,7 @@ class IosUtils(object):
     @staticmethod
     def do_disable_device(developer_obj, udid_lists, udid_obj):
         if udid_lists.count((udid_obj.udid.udid,)) == 1:
-            auth = get_auth_form_developer(developer_obj)
-            app_api_obj = get_api_obj(auth)
+            app_api_obj = get_api_obj(developer_obj)
             app_api_obj.set_device_status("disable", udid_obj.udid.serial, udid_obj.udid.product, udid_obj.udid.udid,
                                           udid_obj.udid.udid)
             UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid.udid, developerid=developer_obj).update(status=False)
@@ -883,12 +893,11 @@ class IosUtils(object):
 
     @staticmethod
     def clean_app_by_developer_obj(app_obj, developer_obj):
-        auth = get_auth_form_developer(developer_obj)
         developer_app_id_obj = DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).first()
         if developer_app_id_obj:
-            app_api_obj = get_api_obj(auth)
+            app_api_obj = get_api_obj(developer_obj)
             app_api_obj.del_profile(developer_app_id_obj.profile_id, app_obj.app_id)
-            app_api_obj2 = get_api_obj(auth)
+            app_api_obj2 = get_api_obj(developer_obj)
             app_api_obj2.del_app(developer_app_id_obj.aid, app_obj.bundle_id, app_obj.app_id)
             developer_app_id_obj.delete()
 
@@ -930,8 +939,7 @@ class IosUtils(object):
         :param developer_obj:
         :return:
         """
-        auth = get_auth_form_developer(developer_obj)
-        app_api_obj = get_api_obj(auth)
+        app_api_obj = get_api_obj(developer_obj)
         status, result = app_api_obj.active()
         if status:
             cert_is_exists = True
@@ -946,10 +954,8 @@ class IosUtils(object):
                 IosUtils.clean_developer(developer_obj, developer_obj.user_id)
                 developer_obj.certid = None
                 developer_obj.cert_expire_time = None
-            developer_obj.is_actived = True
-        else:
-            developer_obj.is_actived = False
-        developer_obj.save(update_fields=['certid', 'cert_expire_time', 'is_actived'])
+            developer_obj.status = 1
+            developer_obj.save(update_fields=['certid', 'cert_expire_time', 'status'])
         return status, result
 
     @staticmethod
@@ -961,36 +967,32 @@ class IosUtils(object):
 
     @staticmethod
     def create_developer_cert(developer_obj, user_obj):
-        auth = get_auth_form_developer(developer_obj)
-        app_api_obj = get_api_obj(auth)
+        app_api_obj = get_api_obj(developer_obj)
         status, result = app_api_obj.create_cert(user_obj)
         if status:
-            if auth.get("issuer_id"):
-                cert_id = result.id
-                AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
-                    is_actived=True,
-                    certid=cert_id, cert_expire_time=format_apple_date(result.expirationDate))
-                resign_app_obj = IosUtils.get_resign_obj(user_obj, developer_obj)
-                resign_app_obj.make_p12_from_cert(cert_id)
+            cert_id = result.id
+            AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
+                status=1,
+                certid=cert_id, cert_expire_time=format_apple_date(result.expirationDate))
+            resign_app_obj = IosUtils.get_resign_obj(user_obj, developer_obj)
+            resign_app_obj.make_p12_from_cert(cert_id)
         return status, result
 
     @staticmethod
     def revoke_developer_cert(developer_obj, user_obj):
-        auth = get_auth_form_developer(developer_obj)
-        app_api_obj = get_api_obj(auth)
+        app_api_obj = get_api_obj(developer_obj)
         status, result = app_api_obj.revoke_cert()
         if not status:
             logger.warning('%s revoke cert failed,but i need clean cert_id %s' % (developer_obj.issuer_id, result))
-        AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
-            is_actived=True,
+        AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=developer_obj.issuer_id).update(
+            status=4,
             certid=None, cert_expire_time=None)
         return status, result
 
     @staticmethod
     def check_developer_cert(developer_obj, user_obj):
         # 暂时无用
-        auth = get_auth_form_developer(developer_obj)
-        app_api_obj = get_api_obj(auth)
+        app_api_obj = get_api_obj(developer_obj)
         status, result = app_api_obj.get_cert_obj_by_cid()
         if not status:
             AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
@@ -1000,22 +1002,21 @@ class IosUtils(object):
     @staticmethod
     def auto_get_cert_id_by_p12(developer_obj, user_obj):
         auth = get_auth_form_developer(developer_obj)
-        app_api_obj = get_api_obj(auth)
+        app_api_obj = get_api_obj(developer_obj)
         file_format_path_name = file_format_path(user_obj, auth)
         app_dev_pem = file_format_path_name + ".pem.bak"
         status, result = app_api_obj.auto_set_certid_by_p12(app_dev_pem)
         if status:
             AppIOSDeveloperInfo.objects.filter(user_id=user_obj, issuer_id=auth.get("issuer_id")).update(
-                is_actived=True,
+                status=1,
                 certid=result.id, cert_expire_time=format_apple_date(result.expirationDate))
         return status, result
 
     @staticmethod
     def get_device_from_developer(developer_obj):
-        auth = get_auth_form_developer(developer_obj)
-        app_api_obj = get_api_obj(auth)
+        app_api_obj = get_api_obj(developer_obj)
         status, result = app_api_obj.get_device()
-        if status and auth.get("issuer_id"):
+        if status and developer_obj.issuer_id:
 
             udid_developer_obj_list = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).values_list('udid')
             udid_developer_list = [x[0] for x in udid_developer_obj_list if len(x) > 0]

@@ -64,12 +64,13 @@ class DeveloperView(APIView):
 
         res.data = developer_serializer.data
         res.count = developer_obj.count()
-
+        res.status_choices = get_choices_dict(AppIOSDeveloperInfo.status_choices)
         res.apple_auth_list = get_choices_dict(AppIOSDeveloperInfo.auth_type_choices)
         return Response(res.dict)
 
     def put(self, request):
         data = request.data
+        res = BaseResponse()
         issuer_id = data.get("issuer_id", "").strip()
         if issuer_id:
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=issuer_id).first()
@@ -78,26 +79,26 @@ class DeveloperView(APIView):
             if act == "syncalldevice":
                 res = BaseResponse()
                 result_list = []
-                for developer_s_obj in AppIOSDeveloperInfo.objects.filter(user_id=request.user, is_actived=True).all():
+                for developer_s_obj in AppIOSDeveloperInfo.objects.filter(user_id=request.user,
+                                                                          status__in=[1, 2, 3, 4, 5]).all():
                     status, result = IosUtils.get_device_from_developer(developer_s_obj)
                     if not status:
                         result_list.append(result.get("err_info"))
                 if len(result_list):
                     logger.warning(result_list)
                 return Response(res.dict)
-            return self.get(request)
+            return Response(res.dict)
 
         if developer_obj:
             act = data.get("act", "").strip()
             if act:
-                res = BaseResponse()
                 logger.info(f"user {request.user} ios developer {developer_obj} act {act}")
                 if act == "checkauth":
                     status, result = IosUtils.active_developer(developer_obj)
                     if status:
                         if not developer_obj.certid:
                             IosUtils.get_device_from_developer(developer_obj)
-                        return self.get(request)
+                        return Response(res.dict)
                     else:
                         res.code = 1008
                         res.msg = result.get("return_info", "未知错误")
@@ -148,9 +149,9 @@ class DeveloperView(APIView):
                             res.msg = "数据清理中,请耐心等待"
                     return Response(res.dict)
                 elif act == 'disable':
-                    developer_obj.is_actived = False
-                    developer_obj.save(update_fields=['is_actived'])
-                    return self.get(request)
+                    developer_obj.status = 0
+                    developer_obj.save(update_fields=['status'])
+                    return Response(res.dict)
             else:
                 update_fields = []
                 logger.info(f"user {request.user} ios developer {developer_obj} update input data {data}")
@@ -175,14 +176,20 @@ class DeveloperView(APIView):
                 p8key = data.get("p8key", developer_obj.p8key)
                 if private_key_id != "" and private_key_id != developer_obj.private_key_id:
                     developer_obj.private_key_id = private_key_id
-                    developer_obj.is_actived = False
+                    developer_obj.status = 0
                     update_fields.append("private_key_id")
                 if p8key != "" and p8key != developer_obj.p8key:
                     developer_obj.p8key = p8key
-                    developer_obj.is_actived = False
+                    developer_obj.status = 0
                     update_fields.append("p8key")
+
+                read_only_mode = data.get("read_only_mode", '')
+                if developer_obj.status == 1 and read_only_mode == 'on':
+                    developer_obj.status = 3
+                    update_fields.append("status")
+
                 try:
-                    update_fields.append("is_actived")
+                    update_fields.append("status")
                     developer_obj.save(update_fields=update_fields)
                     logger.info(
                         f"user {request.user} ios developer {developer_obj} update now data {developer_obj.__dict__}")
@@ -190,7 +197,7 @@ class DeveloperView(APIView):
                     logger.error(
                         f"user {request.user} ios developer {developer_obj} update error data {data} Exception {e}")
 
-        return self.get(request)
+        return Response(res.dict)
 
     def post(self, request):
         data = request.data
@@ -538,7 +545,8 @@ class AppleDeveloperBindAppsView(APIView):
 
             for item in add_issuer_ids:
                 developer_obj = AppIOSDeveloperInfo.objects.filter(issuer_id=item, user_id=request.user,
-                                                                   is_actived=True, certid__isnull=False).first()
+                                                                   status__in=[1, 2, 3, 4, 5],
+                                                                   certid__isnull=False).first()
                 developer_aid_obj = DeveloperAppID.objects.filter(developerid=developer_obj)
                 is_exist = developer_aid_obj.filter(app_id=app_obj).count()
                 if developer_obj:

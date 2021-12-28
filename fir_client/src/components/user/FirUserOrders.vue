@@ -248,7 +248,7 @@
 <script>
 
 import {my_order} from "@/restful";
-import {getUserInfoFun} from '@/utils'
+import {format_choices, getUserInfoFun} from '@/utils'
 import VueQr from 'vue-qr';
 
 export default {
@@ -364,25 +364,16 @@ export default {
       this.MyOrderFun(data)
     },
 
-    format_choices(key, obj) {
-      for (let i = 0; i < obj.length; i++) {
-        if (key === obj[i].id) {
-          return obj[i].name
-        }
-      }
-      return "未知"
-    },
-
     format_payment_type(row) {
-      return this.format_choices(row.payment_type, this.payment_type_choices)
+      return format_choices(row.payment_type, this.payment_type_choices)
     },
 
     format_status_type(row) {
-      return this.format_choices(row.status, this.status_choices)
+      return format_choices(row.status, this.status_choices)
     },
 
     format_order_type(row) {
-      return this.format_choices(row.order_type, this.order_type_choices)
+      return format_choices(row.order_type, this.order_type_choices)
     },
 
     format_actual_amount(row) {

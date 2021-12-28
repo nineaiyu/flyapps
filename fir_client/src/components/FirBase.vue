@@ -125,7 +125,8 @@ export default {
   font-size: medium;
   margin-right: 20px;
 }
-/deep/ .el-alert{
+
+/deep/ .el-alert {
   padding: 2px 16px;
 }
 </style>

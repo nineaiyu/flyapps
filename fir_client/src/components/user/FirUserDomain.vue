@@ -6,8 +6,10 @@
         :title="domain_title"
         :visible.sync="bind_domain_sure"
         width="666px">
-      <bind-domain v-if="bind_domain_sure" :app_id="current_domain_info.app_id" :domain_state="true"
-                   :domain_type="current_domain_info.domain_type" :c_domain_name="current_domain_info.domain_name" transitionName="bind-app-domain"/>
+      <bind-domain v-if="bind_domain_sure" :app_id="current_domain_info.app_id"
+                   :c_domain_name="current_domain_info.domain_name"
+                   :domain_state="true" :domain_type="current_domain_info.domain_type"
+                   transitionName="bind-app-domain"/>
     </el-dialog>
     <div>
       <el-input
@@ -25,7 +27,7 @@
           </el-button>
         </el-tooltip>
         <el-tooltip content="用与生成预览和下载码的域名">
-          <el-button  plain type="primary" @click="$store.dispatch('dodomainaction', 2)">
+          <el-button plain type="primary" @click="$store.dispatch('dodomainaction', 2)">
             设置下载码域名
           </el-button>
         </el-tooltip>
@@ -106,18 +108,18 @@
             prop="weight"
             width="110">
           <template slot-scope="scope">
-            <el-popover placement="top" trigger="hover" v-if="scope.row.domain_type === 1">
+            <el-popover v-if="scope.row.domain_type === 1" placement="top" trigger="hover">
               <p>绑定域名：{{ scope.row.domain_name }}</p>
-              <p>域名类型：{{format_domain_type(scope.row)}}</p>
+              <p>域名类型：{{ format_domain_type(scope.row) }}</p>
               <p>权重越大，下载域名使用频率越高</p>
-              <p >
+              <p>
                 跳转权重:
                 <el-input-number v-model="scope.row.weight" :max="100" :min="1"
                                  label="跳转权重" size="small"/>
                 <el-button size="small" style="margin-left: 10px" @click="saveWeight(scope.row)">保存修改</el-button>
               </p>
               <div slot="reference" class="name-wrapper">
-                <el-link :underline="false" plain size="small">{{ scope.row.weight}}
+                <el-link :underline="false" plain size="small">{{ scope.row.weight }}
                 </el-link>
               </div>
 
@@ -154,7 +156,7 @@
 
 import {domaininfo} from "@/restful";
 import BindDomain from "@/components/base/BindDomain";
-import {getUserInfoFun} from '@/utils'
+import {format_choices, getUserInfoFun} from '@/utils'
 
 export default {
   name: "FirUserDomain",
@@ -172,13 +174,13 @@ export default {
     }
   },
   methods: {
-    saveWeight(domain_info){
+    saveWeight(domain_info) {
       domaininfo(data => {
         if (data.code === 1000) {
           this.$message.success("权重修改成功")
 
         } else {
-          this.$message.error("权重修改失败 "+data.msg)
+          this.$message.error("权重修改失败 " + data.msg)
         }
       }, {methods: 'PUT', data: domain_info})
     },
@@ -234,20 +236,12 @@ export default {
         this.loading = false;
       }, {methods: 'GET', data: params})
     },
-    format_choices(key, obj) {
-      for (let i = 0; i < obj.length; i++) {
-        if (key === obj[i].id) {
-          return obj[i].name
-        }
-      }
-      return "未知"
-    },
 
     format_domain_type(row) {
       if (row.domain_type === 2) {
         return "应用" + row.app_info.name + "域名"
       }
-      return this.format_choices(row.domain_type, this.domain_type_choices)
+      return format_choices(row.domain_type, this.domain_type_choices)
     },
 
     format_create_time(row) {

@@ -67,6 +67,18 @@
             {{ editdeveloperinfo.app_used_count }} 个应用
           </el-tag>
         </el-form-item>
+        <el-form-item label="维护模式" label-width="110px" style="text-align: left">
+          <el-switch
+              v-model="read_only_mode"
+              :disabled="read_only_mode==='on'"
+              active-color="#13ce66"
+              active-value="on"
+              inactive-color="#ff4949"
+              inactive-value="off">
+          </el-switch>
+          <el-tag style="margin-left: 10px" type="warning"> 该模式下，新设备，新应用无法进行注册安装，但是已经安装的不影响</el-tag>
+          <el-tag v-if="read_only_mode==='on'" style="margin-left: 50px" type="warning"> 通过账户激活进行关闭维护模式</el-tag>
+        </el-form-item>
         <el-form-item label="证书id" label-width="110px">
           <el-input v-model="editdeveloperinfo.certid" :disabled='isedit'/>
         </el-form-item>
@@ -84,7 +96,7 @@
                      type="danger"
                      @click="cleandevices">清理签名数据
           </el-button>
-          <el-button v-if="isedit && editdeveloperinfo.is_actived || editdeveloperinfo.certid" size="small"
+          <el-button v-if="isedit && editdeveloperinfo.status!==0 || editdeveloperinfo.certid" size="small"
                      @click="syncdevices">同步设备信息
           </el-button>
           <el-tooltip content="发布证书只能创建两个，请谨慎操作">
@@ -100,7 +112,7 @@
                        @click="isorenewcert">删除发布证书
             </el-button>
           </el-tooltip>
-          <el-button v-if="isedit && editdeveloperinfo.is_actived" size="small" type="success"
+          <el-button v-if="isedit && editdeveloperinfo.status!==0" size="small" type="success"
                      @click="activedeveloperFun(editdeveloperinfo,'checkauth')">账户激活检测
           </el-button>
           <!--          <el-button v-if="isedit && editdeveloperinfo.is_actived" size="small" @click="bindAppletoapp(editdeveloperinfo)">专属应用</el-button>-->
@@ -268,10 +280,10 @@
           <el-table-column
               align="center"
               label="是否激活"
-              prop="is_actived"
+              prop="status"
               width="110">
             <template slot-scope="scope">
-              <el-tooltip v-if="scope.row.is_actived === true" content="点击禁用">
+              <el-tooltip v-if="scope.row.status!==0" content="点击禁用">
                 <el-button size="small" type="success" @click="disabledeveloperFun(scope.row,'disable')">已激活</el-button>
               </el-tooltip>
               <el-button v-else size="small" type="danger"
@@ -284,15 +296,24 @@
               align="center"
               label="账户状态"
               prop="certid"
-              width="100">
+              sortable
+              width="110">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
-                <p v-if="!scope.row.certid && scope.row.is_actived === true">
+                <p v-if="!scope.row.certid && scope.row.status!==0">
                   开发证书不可用，请在编辑中导入或手动创建发布证书</p>
-                <p v-if="!scope.row.certid && scope.row.is_actived !== true">请先激活开发者账户</p>
-                <p v-if="scope.row.certid && scope.row.is_actived === true">账户已经启用</p>
+                <p v-if="!scope.row.certid && scope.row.status=== 0">请先激活开发者账户</p>
+                <p v-if="scope.row.certid && scope.row.status!==0">{{ format_status(scope.row) }}</p>
                 <div slot="reference" class="name-wrapper">
-                  <el-button v-if="scope.row.certid " size="small" type="success">可用</el-button>
+                  <div v-if="scope.row.certid">
+                    <el-button v-if="scope.row.status === 1" size="small" type="success">
+                      {{ format_status(scope.row) }}
+                    </el-button>
+                    <el-button v-else size="small" type="warning" @click="activedeveloperFun(scope.row,'checkauth')">
+                      {{ format_status(scope.row) }}
+                    </el-button>
+                  </div>
+
                   <el-button v-else size="small" type="danger">不可用</el-button>
                 </div>
               </el-popover>
@@ -300,22 +321,17 @@
             </template>
           </el-table-column>
           <el-table-column
+              :formatter="formatter_usable_number"
               align="center"
               label="可用设备"
               prop="usable_number"
-              width="60">
+              sortable
+              width="70">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
-                <p>可用设备数: {{
-                    scope.row.usable_number - scope.row.developer_used_number > 0
-                        ? scope.row.usable_number - scope.row.developer_used_number : 0
-                  }}</p>
+                <p>可用设备数: {{ formatter_usable_number(scope.row) }}</p>
                 <div slot="reference" class="name-wrapper">
-                  <el-tag size="medium"> {{
-                      scope.row.usable_number - scope.row.developer_used_number >
-                      0 ? scope.row.usable_number - scope.row.developer_used_number : 0
-                    }}
-                  </el-tag>
+                  <el-tag size="medium"> {{ formatter_usable_number(scope.row) }}</el-tag>
                 </div>
               </el-popover>
             </template>
@@ -946,7 +962,7 @@ import {
   iosdevicesudid,
   iosudevices
 } from "@/restful";
-import {getUserInfoFun, removeAaary} from "@/utils";
+import {format_choices, getUserInfoFun, removeAaary} from "@/utils";
 import AppleDeveloperBindApp from "@/components/base/AppleDeveloperBindApp";
 
 export default {
@@ -1033,7 +1049,9 @@ export default {
       ],
       developer_choice: '',
       bind_appletoapp_sure: false,
-      appletoapp_title: ''
+      appletoapp_title: '',
+      status_choices: [],
+      read_only_mode: 'off'
     }
   }, watch: {
     'dialogaddDeveloperVisible': function () {
@@ -1043,6 +1061,12 @@ export default {
     }
   },
   methods: {
+    formatter_usable_number(row) {
+      return row.usable_number - row.developer_used_number > 0 ? row.usable_number - row.developer_used_number : 0
+    },
+    format_status(row) {
+      return format_choices(row.status, this.status_choices)
+    },
     downloadipa(info) {
       this.loading = true;
       iosdevices(data => {
@@ -1268,9 +1292,15 @@ export default {
       this.dialogaddDeveloperVisible = true;
       this.isedit = true;
       this.placeholder = "为空表示不修改该信息"
+      if (this.editdeveloperinfo.status === 3) {
+        this.read_only_mode = 'on'
+      } else {
+        this.read_only_mode = 'off'
+      }
     },
     updateorcreate() {
       if (this.isedit) {
+        this.editdeveloperinfo.read_only_mode = this.read_only_mode
         this.iosdeveloperFun({"methods": "PUT", "data": this.editdeveloperinfo})
       } else {
         if (this.editdeveloperinfo.auth_type === 0) {
@@ -1385,19 +1415,26 @@ export default {
       } else {
         this.loading = true
       }
+      if (params.methods === 'PUT') {
+        params.data.size = this.pagination.pagesize
+        params.data.page = this.pagination.currentPage
+      }
       iosdeveloper(data => {
         if (data.code === 1000) {
-          this.app_developer_lists = data.data;
-          this.pagination.total = data.count;
-          this.apple_auth_list = data.apple_auth_list;
-          if (data.use_num) {
-            this.developer_used_info = data.use_num;
-            if (this.developer_used_info.all_usable_number !== 0) {
-              let p = parseInt((this.developer_used_info.flyapp_used_sum + this.developer_used_info.other_used_sum) * 100 / this.developer_used_info.all_usable_number);
-              if (p < 0 || p >= 100) {
-                p = 100
+          if (params.methods !== 'PUT') {
+            this.app_developer_lists = data.data;
+            this.pagination.total = data.count;
+            this.apple_auth_list = data.apple_auth_list;
+            this.status_choices = data.status_choices;
+            if (data.use_num) {
+              this.developer_used_info = data.use_num;
+              if (this.developer_used_info.all_usable_number !== 0) {
+                let p = parseInt((this.developer_used_info.flyapp_used_sum + this.developer_used_info.other_used_sum) * 100 / this.developer_used_info.all_usable_number);
+                if (p < 0 || p >= 100) {
+                  p = 100
+                }
+                this.percentage = p;
               }
-              this.percentage = p;
             }
           }
 
@@ -1407,7 +1444,7 @@ export default {
             this.activeName = "iosdeveloper";
             this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100};
           }
-          if (!this.edit && this.editdeveloperinfo.issuer_id) {
+          if (params.methods === 'POST') {
             this.$message.success("添加成功");
             this.activeName = "iosdeveloper";
             this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100};
@@ -1416,6 +1453,12 @@ export default {
           this.$message.error(data.msg);
         } else {
           this.$message.error("操作失败")
+        }
+        if (params.methods === 'PUT') {
+          this.get_data_from_tabname(this.activeName, {
+            "size": this.pagination.pagesize,
+            "page": this.pagination.currentPage
+          })
         }
         if (params.methods !== 'GET') {
           this.loadingfun.close();

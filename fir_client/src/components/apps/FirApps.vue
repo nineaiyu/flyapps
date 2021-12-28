@@ -1140,7 +1140,7 @@ export default {
       this.$router.push({name: 'FirAppInfostimeline', params: {id: app.app_id}})
     },
     appDownload(app) {
-      window.open(app.preview_url+ '/' + app.short, '_blank', '');
+      window.open(app.preview_url + '/' + app.short, '_blank', '');
     }
   }, computed: {
     getDelappTitle() {

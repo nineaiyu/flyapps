@@ -54,7 +54,7 @@
               action="#"
               drag
               style="max-height: 200px">
-            <img v-if="upload_pic_b" :src="upload_pic_b" class="avatar" alt="">
+            <img v-if="upload_pic_b" :src="upload_pic_b" alt="" class="avatar">
             <i v-else class="el-icon-plus avatar-uploader-icon"></i>
           </el-upload>
         </el-form-item>

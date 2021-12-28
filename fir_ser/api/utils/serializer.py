@@ -526,7 +526,8 @@ class DeveloperSerializer(serializers.ModelSerializer):
     def get_is_disabled(self, obj):
         app_id = self.context.get('app_id', '')
         if app_id:
-            developer_app_obj = models.DeveloperAppID.objects.filter(developerid=obj, developerid__is_actived=True,
+            developer_app_obj = models.DeveloperAppID.objects.filter(developerid=obj,
+                                                                     developerid__status__in=[1, 2, 3, 4, 5],
                                                                      developerid__certid__isnull=False)
             if developer_app_obj.filter(app_id__app_id=app_id).distinct().count():
                 return False

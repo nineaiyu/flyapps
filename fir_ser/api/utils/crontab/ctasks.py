@@ -65,9 +65,11 @@ def auto_delete_ios_mobile_tmp_file():
 
 
 def auto_check_ios_developer_active():
-    all_ios_developer = AppIOSDeveloperInfo.objects.filter(is_actived=True)
+    all_ios_developer = AppIOSDeveloperInfo.objects.filter(status=1)
+    error_issuer_id = {}
     for ios_developer in all_ios_developer:
         userinfo = ios_developer.user_id
+        err_issuer_id = error_issuer_id.get(userinfo.uid, [])
         if userinfo.supersign_active:
             count = 3
             while count > 0:
@@ -81,8 +83,10 @@ def auto_check_ios_developer_active():
                     count -= 1
                     time.sleep(5)
                 if count == 0:
-                    ios_developer.is_actived = False
-                    ios_developer.save(update_fields=['is_actived'])
+                    err_issuer_id.append(ios_developer.issuer_id)
                     logger.error(msg)
-                    send_ios_developer_active_status(userinfo, MSGTEMPLATE.get('AUTO_CHECK_DEVELOPER') % (
-                        userinfo.first_name, ios_developer.issuer_id))
+                    error_issuer_id[userinfo.uid] = list(set(err_issuer_id))
+    for uid, val in error_issuer_id.items():
+        userinfo = UserInfo.objects.filter(uid=uid).first()
+        send_ios_developer_active_status(userinfo, MSGTEMPLATE.get('AUTO_CHECK_DEVELOPER') % (
+            userinfo.first_name, ",".join(val)))

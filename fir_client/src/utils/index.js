@@ -688,3 +688,11 @@ export function sort_compare(propertyName) {
     }
 }
 
+export function format_choices(key, obj) {
+    for (let i = 0; i < obj.length; i++) {
+        if (key === obj[i].id) {
+            return obj[i].name
+        }
+    }
+    return "未知"
+}

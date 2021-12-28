@@ -150,7 +150,7 @@ export default {
       a.dispatchEvent(new MouseEvent('click'))
     },
     short_url(appinfo) {
-      return appinfo.preview_url+ '/' + appinfo.short;
+      return appinfo.preview_url + '/' + appinfo.short;
     },
     setfunactive(item, index) {
       for (let key in this.$refs) {
