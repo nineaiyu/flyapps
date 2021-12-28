@@ -682,7 +682,7 @@ class Certificates(namedtuple("Certificates",
         return filepath
 
 
-def call_function_try_attempts(try_attempts=5, sleep_time=3):
+def call_function_try_attempts(try_attempts=3, sleep_time=3):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):

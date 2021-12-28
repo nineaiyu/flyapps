@@ -696,7 +696,7 @@ class IosUtils(object):
         d_result['msg'] = msg
         logger.error(d_result)
         disable_developer_and_send_email(self.app_obj, self.developer_obj)
-        self.get_developer_auth()
+        self.get_developer_auth(False)
 
     def sign_ipa(self, client_ip):
         status, msg = self.check_sign_permission()
@@ -708,7 +708,7 @@ class IosUtils(object):
         if result:
             return result
 
-        self.get_developer_auth(read_only=False)
+        self.get_developer_auth(False)
 
         logger.info("udid %s not exists app_id %s ,need sign" % (self.udid, self.app_obj))
 
@@ -729,9 +729,10 @@ class IosUtils(object):
                 "call_loop download_profile appid:%s developer:%s count:%s" % (self.app_obj, self.developer_obj, count))
             if self.developer_obj:
                 # register_devices_prefix = f"check_or_register_devices_{self.developer_obj.issuer_id}_{self.udid}"
-                register_devices_prefix = f"check_or_register_devices_{self.developer_obj.issuer_id}"
-                add_new_bundles_prefix = f"check_or_add_new_bundles_{self.developer_obj.issuer_id}_{self.app_obj.app_id}"
-                download_profile_prefix = f"make_and_download_profile_{self.developer_obj.issuer_id}_{self.app_obj.app_id}"
+                issuer_id = self.developer_obj.issuer_id
+                register_devices_prefix = f"check_or_register_devices_{issuer_id}"
+                add_new_bundles_prefix = f"check_or_add_new_bundles_{issuer_id}_{self.app_obj.app_id}"
+                download_profile_prefix = f"make_and_download_profile_{issuer_id}_{self.app_obj.app_id}"
 
                 with cache.lock(register_devices_prefix, timeout=360):
                     if CleanErrorBundleIdSignDataState(add_new_bundles_prefix).get_state():
@@ -759,7 +760,7 @@ class IosUtils(object):
                         msg = f"app_id {self.app_obj} create bundles failed. {bundle_result}"
                         self.sign_failed_fun(d_result, msg)
                         continue
-                prefix_key = f"{self.developer_obj.issuer_id}-{self.app_obj.app_id}"
+                prefix_key = f"{issuer_id}-{self.app_obj.app_id}"
                 if 'continue' not in [str(did_udid_result)]:
                     add_udid_cache_queue(prefix_key, did_udid_result)
 
