@@ -54,8 +54,9 @@ class IosUDIDView(APIView):
                         task_id = c_task.id
                         logger.info(f"sign app {app_obj} task_id:{task_id}")
                         try:
-                            result = c_task.get(propagate=False, timeout=0.5)
+                            result = c_task.get(propagate=False, timeout=3)
                         except TimeoutError:
+                            logger.error(f"get task task_id:{task_id} result timeout")
                             result = ''
                         if c_task.successful():
                             c_task.forget()

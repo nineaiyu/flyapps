@@ -193,21 +193,13 @@ class ShortDownloadView(APIView):
     def calculate_cache_key(self, view_instance, view_method,
                             request, args, kwargs):
         release_id = request.query_params.get("release_id", '')
-        udid = request.query_params.get("udid", None)
-        time = request.query_params.get("time", None)
+        udid = request.query_params.get("udid", '')
         short = kwargs.get("short", '')
-        origin_domain_name = get_origin_domain_name(request)
-        if not origin_domain_name:
-            origin_domain_name = 'default.site'
-        if udid and time:
-            udid = time
-        if not udid:
-            udid = ""
-        logging.info(
-            f"get or make cache_response short:{short} origin_domain_name:{origin_domain_name} release_id:{release_id} udid:{udid}")
-        return "_".join(
-            [settings.CACHE_KEY_TEMPLATE.get("download_short_key"), short, origin_domain_name,
-             release_id, udid])
+        origin_name = get_origin_domain_name(request)
+        if not origin_name:
+            origin_name = 'default.site'
+        logging.info(f"cache_response short:{short} origin_domain_name:{origin_name} release_id:{release_id}")
+        return "_".join([settings.CACHE_KEY_TEMPLATE.get("download_short_key"), short, origin_name, release_id, udid])
 
 
 class InstallView(APIView):

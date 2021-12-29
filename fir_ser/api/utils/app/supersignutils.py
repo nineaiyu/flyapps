@@ -69,7 +69,7 @@ def resign_by_app_id_and_developer(app_id, developer_id, developer_app_id, need_
         locker = {
             'locker_key': f"run_sign_{app_obj.app_id}_{developer_obj.issuer_id}",
             "timeout": 60 * 5}
-        status, result = IosUtils.run_sign(app_obj.user_id, app_obj, developer_obj, d_time, [], locker=locker)
+        status, result = IosUtils.run_sign(app_obj.user_id, app_obj, developer_obj, d_time, locker=locker)
         return status, {'developer_id': developer_obj.issuer_id, 'result': (status, result)}
 
 
@@ -375,6 +375,29 @@ def get_developer_obj_by_others(user_obj, udid, app_obj, read_only):
         return result
 
 
+def check_sign_is_exists(user_obj, app_obj, udid, developer_obj):
+    d_result = {'code': 0, 'msg': 'success'}
+    app_udid_obj = AppUDID.objects.filter(app_id=app_obj, udid__udid=udid, udid__developerid=developer_obj).first()
+    if app_udid_obj and app_udid_obj.is_download:
+        if app_udid_obj.is_signed:
+            if check_ipa_is_latest_sign(app_obj, developer_obj):
+                d_result['msg'] = f'udid {udid} exists app_id {app_obj}'
+                logger.warning(d_result)
+                return True, d_result
+            else:
+                sign_flag = True
+        else:
+            sign_flag = True
+        if sign_flag:
+            locker = {
+                'locker_key': f"run_sign_{app_obj.app_id}_{developer_obj.issuer_id}",
+                "timeout": 60 * 5
+            }
+            logger.warning(f"udid {udid} is exist but app_id {app_obj} not sign. start run_sign ...")
+            return IosUtils.run_sign(user_obj, app_obj, developer_obj, time.time(), [udid], locker=locker)
+    logger.warning(f"udid {udid} not exist app_id {app_obj} . start find developer and sign")
+
+
 class IosUtils(object):
     def __init__(self, udid_info, user_obj, app_obj=None):
         self.developer_obj = None
@@ -471,22 +494,23 @@ class IosUtils(object):
     def update_sign_file_name(user_obj, app_obj, developer_obj_id, release_obj, random_file_name):
         apptodev_obj = APPToDeveloper.objects.filter(developerid_id=developer_obj_id, app_id=app_obj).first()
         storage_obj = Storage(user_obj)
-        if apptodev_obj:
-            delete_local_files(apptodev_obj.binary_file + ".ipa")
-            storage_obj.delete_file(apptodev_obj.binary_file + ".ipa")
-            apptodev_obj.binary_file = random_file_name
-            old_release_file = apptodev_obj.release_file
-            apptodev_obj.release_file = release_obj.release_id
-            apptodev_obj.save(update_fields=['binary_file', 'release_file'])
-            if storage_obj.get_storage_type() in [1, 2] and old_release_file != release_obj.release_id:
-                logger.warning(f"update sign file , now clean ole {old_release_file}.ipa file")
-                delete_local_files(old_release_file + ".ipa")
-        else:
-            APPToDeveloper.objects.create(developerid_id=developer_obj_id, app_id=app_obj,
-                                          binary_file=random_file_name, release_file=release_obj.release_id)
 
         logger.info(f"update sign file end, now upload {storage_obj.storage} {random_file_name}.ipa file")
-        return storage_obj.upload_file(os.path.join(MEDIA_ROOT, random_file_name + ".ipa"))
+        if storage_obj.upload_file(os.path.join(MEDIA_ROOT, random_file_name + ".ipa")):
+            if apptodev_obj:
+                delete_local_files(apptodev_obj.binary_file + ".ipa")
+                storage_obj.delete_file(apptodev_obj.binary_file + ".ipa")
+                apptodev_obj.binary_file = random_file_name
+                old_release_file = apptodev_obj.release_file
+                apptodev_obj.release_file = release_obj.release_id
+                apptodev_obj.save(update_fields=['binary_file', 'release_file'])
+                if storage_obj.get_storage_type() in [1, 2] and old_release_file != release_obj.release_id:
+                    logger.warning(f"update sign file , now clean ole {old_release_file}.ipa file")
+                    delete_local_files(old_release_file + ".ipa")
+            else:
+                APPToDeveloper.objects.create(developerid_id=developer_obj_id, app_id=app_obj,
+                                              binary_file=random_file_name, release_file=release_obj.release_id)
+            return True
 
     @staticmethod
     def update_sign_data(user_obj, app_obj, developer_obj_id, random_file_name, release_obj, udid_list):
@@ -497,9 +521,7 @@ class IosUtils(object):
                 for udid in udid_list:
                     udid_obj = UDIDsyncDeveloper.objects.filter(developerid_id=developer_obj_id, udid=udid).first()
                     AppUDID.objects.filter(app_id=app_obj, udid=udid_obj).update(**{"is_signed": True})
-                    del_cache_response_by_short(app_obj.app_id, udid=udid)
-            else:
-                del_cache_response_by_short(app_obj.app_id)
+            del_cache_response_by_short(app_obj.app_id)
             return True
 
     def check_sign_permission(self):
@@ -523,30 +545,6 @@ class IosUtils(object):
             logger.error(d_result)
             return False, d_result
         return True, d_result
-
-    def check_sign_is_exists(self, client_ip):
-        d_result = {'code': 0, 'msg': 'success'}
-        app_udid_obj = AppUDID.objects.filter(app_id=self.app_obj, udid__udid=self.udid,
-                                              udid__developerid=self.developer_obj).first()
-        if app_udid_obj and app_udid_obj.is_download:
-            sign_flag = False
-            if app_udid_obj.is_signed:
-                if check_ipa_is_latest_sign(self.app_obj, self.developer_obj):
-                    msg = "udid %s exists app_id %s" % (self.udid, self.app_obj)
-                    d_result['msg'] = msg
-                    logger.info(d_result)
-                    return True, d_result
-                else:
-                    sign_flag = True
-            else:
-                sign_flag = True
-            if sign_flag:
-                locker = {
-                    'locker_key': f"run_sign_{self.app_obj.app_id}_{self.developer_obj.issuer_id}",
-                    "timeout": 60 * 5}
-                logger.info("start run_sign ...")
-                return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
-                                         time.time(), [self.udid], locker=locker)
 
     @staticmethod
     @call_function_try_attempts()
@@ -653,10 +651,10 @@ class IosUtils(object):
     @staticmethod
     @call_function_try_attempts()
     def make_and_download_profile(app_obj, developer_obj, failed_call_prefix, developer_app_id_obj=None,
-                                  new_device_id_list=None,
+                                  new_did_list=None,
                                   failed_callback=None):
-        if new_device_id_list is None:
-            new_device_id_list = []
+        if new_did_list is None:
+            new_did_list = []
 
         if failed_callback is None:
             failed_callback = []
@@ -665,8 +663,8 @@ class IosUtils(object):
         device_id_list = DeveloperDevicesID.objects.filter(app_id=app_obj,
                                                            developerid=developer_obj).values_list('did')
         device_id_lists = [did[0] for did in device_id_list]
-        if new_device_id_list:
-            device_id_lists.extend(new_device_id_list)
+        if new_did_list:
+            device_id_lists.extend(new_did_list)
             device_id_lists = list(set(device_id_lists))
         if not developer_app_id_obj:
             developer_app_id_obj = DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).first()
@@ -704,7 +702,7 @@ class IosUtils(object):
             return status, msg
         d_result = {'code': 0, 'msg': 'success'}
 
-        result = self.check_sign_is_exists(client_ip)
+        result = check_sign_is_exists(self.user_obj, self.app_obj, self.udid, self.developer_obj)
         if result:
             return result
 
@@ -767,17 +765,20 @@ class IosUtils(object):
                 time.sleep(5)
                 with cache.lock(download_profile_prefix, timeout=60 * 10):
                     did_udid_lists = get_and_clean_udid_cache_queue(prefix_key)
-                    if not did_udid_lists:
+                    new_did_list = []
+                    new_udid_list = []
+                    for did_udid in did_udid_lists:
+                        if not check_sign_is_exists(self.user_obj, self.app_obj, did_udid[1], self.developer_obj):
+                            new_did_list.append(did_udid[0])
+                            new_udid_list.append(did_udid[1])
+                    if not new_did_list:
                         return True, True
                     logger.warning(
-                        f'app {self.app_obj} receive {len(did_udid_lists)} did_udid_result: {did_udid_lists}')
+                        f'app {self.app_obj} receive {len(new_did_list)} did_udid_result: {new_did_list}')
                     status, download_profile_result = IosUtils.make_and_download_profile(self.app_obj,
                                                                                          self.developer_obj,
                                                                                          add_new_bundles_prefix,
-                                                                                         new_device_id_list=[did_udid[0]
-                                                                                                             for
-                                                                                                             did_udid in
-                                                                                                             did_udid_lists])
+                                                                                         new_did_list=new_did_list)
                     if not status:
                         if 'UNEXPECTED_ERROR' in str(download_profile_result):
                             return False, {}
@@ -789,10 +790,10 @@ class IosUtils(object):
                             return True, True
                         locker = {
                             'locker_key': f"run_sign_{self.app_obj.app_id}_{self.developer_obj.issuer_id}",
-                            "timeout": 60 * 5}
+                            "timeout": 60 * 5
+                        }
                         return IosUtils.run_sign(self.user_obj, self.app_obj, self.developer_obj,
-                                                 start_time,
-                                                 [did_udid[1] for did_udid in did_udid_lists], locker=locker)
+                                                 start_time, new_udid_list, locker=locker)
 
         if not self.developer_obj:
             d_result['code'] = 1005
@@ -806,6 +807,16 @@ class IosUtils(object):
     def run_sign(user_obj, app_obj, developer_obj, d_time, udid_list=None):
         if udid_list is None:
             udid_list = []
+        else:
+            new_did_list = []
+            for did_udid in udid_list:
+                if not check_sign_is_exists(user_obj, app_obj, did_udid, developer_obj):
+                    new_did_list.append(did_udid)
+            if not new_did_list:
+                return True, True
+            else:
+                udid_list = new_did_list
+
         d_result = {'code': 0, 'msg': 'success'}
         AppUDID.objects.filter(app_id=app_obj, udid__udid__in=udid_list,
                                udid__developerid=developer_obj).update(is_download=True)
@@ -829,7 +840,7 @@ class IosUtils(object):
             return status, d_result
 
         msg = f"app_id {app_obj} developer {developer_obj} sign end... time:{time.time() - start_time}"
-        logger.info(msg)
+        logger.warning(msg)
         d_result['msg'] = msg
         return True, d_result
 
