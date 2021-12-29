@@ -208,11 +208,11 @@
         <el-input
             v-model="appidseach"
             clearable
-            placeholder="输入开发者ID或应用BundleID"
-            style="width: 27%;margin-right: 10px;margin-bottom: 10px"/>
+            placeholder="输入开发者ID或者备注或应用BundleID"
+            style="width: 30%;margin-right: 10px;margin-bottom: 10px"/>
 
         <el-select v-model="developer_choice" clearable placeholder="账户类型"
-                   style="width: 12%;margin-right: 10px;margin-bottom: 10px">
+                   style="width: 18%;margin-right: 10px;margin-bottom: 10px">
           <el-option
               v-for="item in developer_options"
               :key="item.value"
@@ -220,10 +220,8 @@
               :value="item.value">
           </el-option>
         </el-select>
-        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
-          搜索
-        </el-button>
-        <div style="width: 45%;margin-right: 20px;float:right">
+
+        <div style="width: 45%;margin-right: 20px;float:right;margin-bottom: 10px">
           <el-link :underline="false">总设备量：{{ developer_used_info.all_usable_number }} 已使用：【平台：{{
               developer_used_info.all_use_number
             }} 】【其他：{{ developer_used_info.other_used_sum }}】
@@ -237,6 +235,26 @@
               :stroke-width="18" :text-inside="true" status="success"
               type="line"/>
         </div>
+
+        <el-row>
+          <el-col :span="24"><div>
+            <el-select v-model="developer_status_choice" clearable multiple
+                       placeholder="账户状态" style="width: 49%;margin-right: 45px;margin-bottom: 10px">
+              <el-option
+                  v-for="item in status_choices"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id">
+              </el-option>
+            </el-select>
+            <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
+              搜索
+            </el-button>
+          </div>
+          </el-col>
+        </el-row>
+
+
 
         <el-table
             v-loading="loading"
@@ -322,6 +340,7 @@
           </el-table-column>
           <el-table-column
               :formatter="formatter_usable_number"
+              :sort-method="sort_method_usable_number"
               align="center"
               label="可用设备"
               prop="usable_number"
@@ -1051,7 +1070,8 @@ export default {
       bind_appletoapp_sure: false,
       appletoapp_title: '',
       status_choices: [],
-      read_only_mode: 'off'
+      read_only_mode: 'off',
+      developer_status_choice: []
     }
   }, watch: {
     'dialogaddDeveloperVisible': function () {
@@ -1061,6 +1081,9 @@ export default {
     }
   },
   methods: {
+    sort_method_usable_number(a, b) {
+      return this.formatter_usable_number(a) - this.formatter_usable_number(b)
+    },
     formatter_usable_number(row) {
       return row.usable_number - row.developer_used_number > 0 ? row.usable_number - row.developer_used_number : 0
     },
@@ -1354,6 +1377,7 @@ export default {
         // this.dialogaddDeveloperVisible=true;
       } else if (tabname === "iosdeveloper") {
         data.developer_choice = this.developer_choice;
+        data.developer_status_choice = JSON.stringify(this.developer_status_choice);
         this.iosdeveloperFun({"methods": "GET", "data": data})
       } else if (tabname === "devicesbill") {
         this.iosdevicebillFun({"methods": "GET", "data": data})

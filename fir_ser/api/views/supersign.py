@@ -4,6 +4,7 @@
 # author: liuyu
 # date: 2020/3/4
 import datetime
+import json
 import logging
 
 from django.db.models import Count, Q, Sum
@@ -43,12 +44,19 @@ class DeveloperView(APIView):
         res = BaseResponse()
         issuer_id = request.query_params.get("issuer_id", '')
         developer_choice = request.query_params.get("developer_choice", None)
+        developer_status_choice = request.query_params.get("developer_status_choice", None)
         developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
         if developer_choice and developer_choice in ['private', 'public']:
             if developer_choice == 'public':
                 developer_obj = developer_obj.exclude(appledevelopertoappuse__developerid__isnull=False)
             else:
                 developer_obj = developer_obj.filter(appledevelopertoappuse__developerid__isnull=False)
+        try:
+            status_choice = json.loads(developer_status_choice)
+        except Exception as e:
+            status_choice = None
+        if status_choice is not None and isinstance(status_choice, list) and status_choice:
+            developer_obj = developer_obj.filter(status__in=status_choice)
         developer_obj = developer_obj.distinct()
         res.use_num = get_developer_devices(developer_obj)
         if issuer_id:
