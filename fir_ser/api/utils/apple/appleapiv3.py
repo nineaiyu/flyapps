@@ -703,8 +703,8 @@ def call_function_try_attempts(try_attempts=3, sleep_time=3):
                         f'exec {func} failed. Failed:{e} {try_attempts} times in total. now {sleep_time} later try '
                         f'again...{i}')
                     res = str(e)
-                    if 'Authentication credentials are missing or invalid' in str(
-                            e) or 'FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED' in str(e):
+                    # 'Authentication credentials are missing or invalid' in str(e) or
+                    if 'FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED' in str(e):
                         raise Exception(res)
                     time.sleep(sleep_time)
             logger.info(f"exec {func} finished. time:{time.time() - start_time}")
@@ -839,7 +839,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         req = self.list_profiles()
         return self.__profile_store(req)
 
-    @call_function_try_attempts()
+    @call_function_try_attempts(try_attempts=2)
     def get_all_certificates(self):
         req = self.list_certificate()
         return self.__certificates_store(req)
