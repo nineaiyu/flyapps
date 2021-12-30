@@ -198,16 +198,21 @@ def make_pem(cer_content, pem_path):
 
 def check_error_call_back(error, developer_pk):
     msg = ''
+    status = None
     if 'Cannot connect to proxy' in error or 'Read timed out' in error or 'Max retries exceeded with' in error:
         logger.error('access apple api failed . change proxy ip again')
         msg = "代理网络错误，请稍后重试或联系管理员处理"
     if 'it may be encrypted with an unsupported algorithm' in error:
         msg = "数据校验失败，请检查p8key内容是否正常"
+        status = 5
     if 'Authentication credentials are missing or invalid' in error:
         msg = '认证失败，请检查开发者信息填写是否正确'
+        status = 5
     if 'FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED' in error:
         msg = '请登录 https://developer.apple.com/account/ 并同意最新协议'
-        AppIOSDeveloperInfo.objects.filter(pk=developer_pk).update(status=2)
+        status = 2
+    if status is not None:
+        AppIOSDeveloperInfo.objects.filter(pk=developer_pk).update(status=status)
     logger.error(f"{msg} {error}")
     return msg if msg else error
 
