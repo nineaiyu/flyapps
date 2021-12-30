@@ -31,7 +31,7 @@ from common.base.baseutils import file_format_path, delete_app_profile_file, get
     get_format_time, make_app_uuid, make_from_user_uuid
 from common.base.magic import run_function_by_locker, call_function_try_attempts
 from common.cache.state import CleanErrorBundleIdSignDataState
-from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, MOBILE_CONFIG_SIGN_SSL, MSGTEMPLATE
+from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, MOBILE_CONFIG_SIGN_SSL, MSGTEMPLATE, DEVELOPER_USE_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -286,7 +286,7 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True,
     """
 
     if read_only:
-        status_choice = [1, 2, 3, 4, 5]
+        status_choice = DEVELOPER_USE_STATUS
     else:
         status_choice = [1]
     status_filter = {'developerid__certid__isnull': False, 'developerid__status__in': status_choice}

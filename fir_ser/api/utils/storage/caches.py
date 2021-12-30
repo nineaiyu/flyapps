@@ -24,7 +24,7 @@ from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCac
     UploadTmpFileNameCache, RedisCacheBase, UserCanDownloadCache, UserFreeDownloadTimesCache, WxTicketCache, \
     SignUdidQueueCache, CloudStorageCache
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
-    USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES
+    USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES, DEVELOPER_USE_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -45,15 +45,16 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
             if app_obj.get('issupersign', None):
                 download_url_type = 'mobileconifg'
         else:
-            appudid_obj = AppUDID.objects.filter(app_id_id=app_obj.get("pk"), udid__udid=udid, is_signed=True).first()
+            appudid_obj = AppUDID.objects.filter(app_id_id=app_obj.get("pk"), udid__udid=udid, is_signed=True).last()
             if appudid_obj:
                 super_sign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid__udid=udid,
-                                                                     app_id_id=app_obj.get("pk")).first()
+                                                                     app_id_id=app_obj.get("pk"),
+                                                                     developerid__status__in=DEVELOPER_USE_STATUS).last()
                 if super_sign_obj and super_sign_obj.user_id.supersign_active:
                     app_to_developer_obj = APPToDeveloper.objects.filter(app_id_id=app_obj.get("pk"),
-                                                                         developerid=super_sign_obj.developerid).first()
+                                                                         developerid=super_sign_obj.developerid).last()
                     if app_to_developer_obj:
-                        release_obj = AppReleaseInfo.objects.filter(app_id_id=app_obj.get("pk"), is_master=True).first()
+                        release_obj = AppReleaseInfo.objects.filter(app_id_id=app_obj.get("pk"), is_master=True).last()
                         if release_obj.release_id == app_to_developer_obj.release_file:
                             binary_file = app_to_developer_obj.binary_file
                         else:
@@ -546,11 +547,9 @@ def get_app_download_url(request, res, app_id, short, password, release_id, isdo
         else:
             app_type = '.ipa'
             if isdownload:
-                download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600,
-                                                                    udid=udid)
+                download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600, udid=udid)
             else:
-                download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600,
-                                                                    isdownload,
+                download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600, isdownload,
                                                                     udid=udid)
 
         res.data = {"download_url": download_url, "extra_url": extra_url}

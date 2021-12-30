@@ -41,6 +41,7 @@
               </p>
               <p>该应用已经消耗 {{ option.app_used_number }} 个设备数</p>
               <p>描述: {{ option.description }}</p>
+              <p>账户状态: {{ option.status_display }}</p>
 
               <div slot="reference" class="name-wrapper">
                 <div>

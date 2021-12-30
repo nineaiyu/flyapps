@@ -13,6 +13,7 @@ from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided
 from common.base.baseutils import get_choices_dict, get_choices_name_from_key
 from common.cache.storage import AdPicShowCache
+from fir_ser.settings import DEVELOPER_USE_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -500,6 +501,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
     app_usable_number = serializers.SerializerMethodField()
     app_used_number = serializers.SerializerMethodField()
     private_usable_number = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source="get_status_display")
 
     def get_app_usable_number(self, obj):
         app_id = self.context.get('app_id')
@@ -527,7 +529,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
         app_id = self.context.get('app_id', '')
         if app_id:
             developer_app_obj = models.DeveloperAppID.objects.filter(developerid=obj,
-                                                                     developerid__status__in=[1, 2, 3, 4, 5],
+                                                                     developerid__status__in=DEVELOPER_USE_STATUS,
                                                                      developerid__certid__isnull=False)
             if developer_app_obj.filter(app_id__app_id=app_id).distinct().count():
                 return False
@@ -575,7 +577,7 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.APPSuperSignUsedInfo
         fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name", "other_uid",
-                  "developer_description"]
+                  "developer_description", "developer_status"]
 
     device_udid = serializers.CharField(source="udid.udid.udid")
     device_name = serializers.CharField(source="udid.product")
@@ -584,6 +586,13 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
     other_uid = serializers.SerializerMethodField()
     developer_id = serializers.SerializerMethodField()
     developer_description = serializers.SerializerMethodField()
+    developer_status = serializers.SerializerMethodField()
+
+    def get_developer_status(self, obj):
+        if self.context.get('mine'):
+            return obj.developerid.get_status_display()
+        else:
+            return '公共账号池'
 
     def get_developer_id(self, obj):
         if self.context.get('mine'):
@@ -629,6 +638,7 @@ class DeveloperDeviceSerializer(serializers.ModelSerializer):
 
     developer_id = serializers.CharField(source="developerid.issuer_id")
     developer_description = serializers.CharField(source="developerid.description")
+    developer_status = serializers.CharField(source="developerid.get_status_display")
 
 
 class DeviceUDIDSerializer(serializers.ModelSerializer):
@@ -641,6 +651,7 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
     bundle_id = serializers.CharField(source="app_id.bundle_id")
     issuer_id = serializers.SerializerMethodField()
     developer_description = serializers.SerializerMethodField()
+    developer_status = serializers.SerializerMethodField()
     udid = serializers.CharField(source="udid.udid")
     is_mine = serializers.SerializerMethodField()
     other_uid = serializers.SerializerMethodField()
@@ -648,6 +659,12 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
     def get_issuer_id(self, obj):
         if self.context.get('mine'):
             return obj.udid.developerid.issuer_id
+        else:
+            return '公共账号池'
+
+    def get_developer_status(self, obj):
+        if self.context.get('mine'):
+            return obj.udid.developerid.get_status_display()
         else:
             return '公共账号池'
 

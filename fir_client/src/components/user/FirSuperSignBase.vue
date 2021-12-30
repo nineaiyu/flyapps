@@ -203,6 +203,31 @@
             </span>
     </el-dialog>
 
+    <el-dialog :close-on-click-modal="false" :destroy-on-close="true" :visible.sync="setdeveloperstatusVisible"
+               style="text-align:center" title="批量修改账户状态" width="700px">
+      <el-select v-model="change_developer_status" clearable
+                 placeholder="账户状态" style="width: 49%;margin-right: 45px;margin-bottom: 10px">
+        <el-option
+            v-for="item in status_choices"
+            :key="item.id"
+            :disabled="item.disabled"
+            :label="item.name"
+            :value="item.id">
+        </el-option>
+      </el-select>
+
+      <el-button @click="setdeveloperstatus">确定</el-button>
+      <el-button @click="setdeveloperstatusVisible=false">取消</el-button>
+      <div style="text-align: left">
+        <p>受影响的开发者ID</p>
+        <el-row v-for="isid in multipleSelection" :key="isid.issuer_id">
+          <el-col :span="16">账户ID：{{ isid.issuer_id }}</el-col>
+          <el-col :span="8">当前状态：{{ format_status(isid.status) }}</el-col>
+        </el-row>
+      </div>
+    </el-dialog>
+
+
     <el-tabs v-model="activeName" tab-position="top" type="border-card" @tab-click="handleClick">
       <el-tab-pane label="开发者账户" name="iosdeveloper">
         <el-input
@@ -237,32 +262,41 @@
         </div>
 
         <el-row>
-          <el-col :span="24"><div>
-            <el-select v-model="developer_status_choice" clearable multiple
-                       placeholder="账户状态" style="width: 49%;margin-right: 45px;margin-bottom: 10px">
-              <el-option
-                  v-for="item in status_choices"
-                  :key="item.id"
-                  :label="item.name"
-                  :value="item.id">
-              </el-option>
-            </el-select>
-            <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
-              搜索
-            </el-button>
-          </div>
+          <el-col :span="24">
+            <div>
+              <el-select v-model="developer_status_choice" clearable multiple
+                         placeholder="账户状态" style="width: 49%;margin-right: 45px;margin-bottom: 10px">
+                <el-option
+                    v-for="item in status_choices"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id">
+                </el-option>
+              </el-select>
+              <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
+                搜索
+              </el-button>
+              <el-button type="plain" @click="activemanydeveloperFun">
+                账户状态检测
+              </el-button>
+              <el-button type="plain" @click="setdeveloperstatusFun">
+                批量设置账户状态
+              </el-button>
+            </div>
           </el-col>
         </el-row>
-
-
 
         <el-table
             v-loading="loading"
             :data="app_developer_lists"
             border
             stripe
-            style="width: 100%">
-
+            style="width: 100%"
+            @selection-change="handleSelectionChange">
+          <el-table-column
+              type="selection"
+              width="39">
+          </el-table-column>
           <el-table-column
               align="center"
               fixed
@@ -321,14 +355,14 @@
                 <p v-if="!scope.row.certid && scope.row.status!==0">
                   开发证书不可用，请在编辑中导入或手动创建发布证书</p>
                 <p v-if="!scope.row.certid && scope.row.status=== 0">请先激活开发者账户</p>
-                <p v-if="scope.row.certid && scope.row.status!==0">{{ format_status(scope.row) }}</p>
+                <p v-if="scope.row.certid && scope.row.status!==0">{{ format_status(scope.row.status) }}</p>
                 <div slot="reference" class="name-wrapper">
                   <div v-if="scope.row.certid">
                     <el-button v-if="scope.row.status === 1" size="small" type="success">
-                      {{ format_status(scope.row) }}
+                      {{ format_status(scope.row.status) }}
                     </el-button>
                     <el-button v-else size="small" type="warning" @click="activedeveloperFun(scope.row,'checkauth')">
-                      {{ format_status(scope.row) }}
+                      {{ format_status(scope.row.status) }}
                     </el-button>
                   </div>
 
@@ -585,6 +619,7 @@
               <el-popover placement="top" trigger="hover">
                 <p>开发者ID: {{ scope.row.developer_id }}</p>
                 <p>开发者备注: {{ scope.row.developer_description }}</p>
+                <p>开发者状态: {{ scope.row.developer_status }}</p>
                 <div slot="reference" class="name-wrapper">
                   <span>{{ scope.row.developer_id }}</span>
                 </div>
@@ -664,6 +699,7 @@
               <el-popover placement="top" trigger="hover">
                 <p>开发者ID: {{ scope.row.developer_id }}</p>
                 <p>开发者备注: {{ scope.row.developer_description }}</p>
+                <p>开发者状态: {{ scope.row.developer_status }}</p>
                 <div slot="reference" class="name-wrapper">
                   <span>{{ scope.row.developer_id }}</span>
                 </div>
@@ -771,6 +807,7 @@
               <el-popover placement="top" trigger="hover">
                 <p>开发者ID: {{ scope.row.issuer_id }}</p>
                 <p>开发者备注: {{ scope.row.developer_description }}</p>
+                <p>开发者状态: {{ scope.row.developer_status }}</p>
                 <div slot="reference" class="name-wrapper">
                   <span>{{ scope.row.issuer_id }}</span>
                 </div>
@@ -1071,7 +1108,10 @@ export default {
       appletoapp_title: '',
       status_choices: [],
       read_only_mode: 'off',
-      developer_status_choice: []
+      developer_status_choice: [],
+      multipleSelection: [],
+      setdeveloperstatusVisible: false,
+      change_developer_status: ''
     }
   }, watch: {
     'dialogaddDeveloperVisible': function () {
@@ -1081,14 +1121,34 @@ export default {
     }
   },
   methods: {
+    setdeveloperstatusFun() {
+      if (this.multipleSelection && this.multipleSelection.length > 0) {
+        this.setdeveloperstatusVisible = true
+      } else {
+        this.$message.warning("开发者账户未选择")
+      }
+    },
+    setdeveloperstatus() {
+      if (this.change_developer_status === '') {
+        this.$message.warning("账户状态未选择")
+      } else {
+        this.iosdeveloperFun({
+          "methods": "PUT",
+          "data": {"issuer_ids": this.getIssuerIds(), "act": 'setstatus', "status": this.change_developer_status}
+        });
+      }
+    },
+    handleSelectionChange(val) {
+      this.multipleSelection = val;
+    },
     sort_method_usable_number(a, b) {
       return this.formatter_usable_number(a) - this.formatter_usable_number(b)
     },
     formatter_usable_number(row) {
       return row.usable_number - row.developer_used_number > 0 ? row.usable_number - row.developer_used_number : 0
     },
-    format_status(row) {
-      return format_choices(row.status, this.status_choices)
+    format_status(status) {
+      return format_choices(status, this.status_choices)
     },
     downloadipa(info) {
       this.loading = true;
@@ -1303,6 +1363,21 @@ export default {
     activedeveloperFun(developer, act) {
       this.iosdeveloperFun({"methods": "PUT", "data": {"issuer_id": developer.issuer_id, "act": act}});
     },
+    activemanydeveloperFun() {
+      let issuer_ids = this.getIssuerIds()
+      if (issuer_ids.length === 0) {
+        this.$message.warning("开发者账户未选择")
+      } else {
+        this.iosdeveloperFun({"methods": "PUT", "data": {"issuer_ids": issuer_ids, "act": 'checkauth'}});
+      }
+    },
+    getIssuerIds() {
+      let issuer_ids = []
+      for (let i = 0; i < this.multipleSelection.length; i++) {
+        issuer_ids.push(this.multipleSelection[i]['issuer_id'])
+      }
+      return issuer_ids
+    },
     canceledit() {
       this.dialogaddDeveloperVisible = false;
       this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100};
@@ -1461,7 +1536,13 @@ export default {
               }
             }
           }
-
+          if (params.methods === 'PUT') {
+            this.$message.success("操作成功");
+          }
+          if (params.data.act === 'setstatus') {
+            this.setdeveloperstatusVisible = false
+            this.change_developer_status = ''
+          }
           if (this.dialogaddDeveloperVisible) {
             this.canceledit();
             this.$message.success("操作成功");
@@ -1632,7 +1713,7 @@ export default {
 <style scoped>
 .el-main {
   margin: 20px auto 100px;
-  width: 1166px;
+  width: 1188px;
   position: relative;
   padding-bottom: 1px;
   color: #9b9b9b;

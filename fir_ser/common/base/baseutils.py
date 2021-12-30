@@ -306,11 +306,14 @@ def get_order_num(order_type=1):
         random.randint(1000, 9999))
 
 
-def get_choices_dict(choices):
+def get_choices_dict(choices, disabled_choices=None):
     result = []
     choices_org_list = list(choices)
     for choice in choices_org_list:
-        result.append({'id': choice[0], 'name': choice[1]})
+        val = {'id': choice[0], 'name': choice[1], 'disabled': False}
+        if disabled_choices and isinstance(disabled_choices, list) and choice[0] in disabled_choices:
+            val['disabled'] = True
+        result.append(val)
     return result
 
 

@@ -23,7 +23,7 @@ from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
 from common.base.baseutils import get_real_ip_address
 from common.cache.storage import UserTokenCache, TempCache
-from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT
+from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT, DEVELOPER_USE_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -61,13 +61,13 @@ def get_developer_devices(developer_obj_lists):
     other_used_sum = 0
     flyapp_used_sum = 0
     max_total = 0
-    for dev_obj in developer_obj_lists.filter(status__in=[1, 2, 3, 4, 5]):
+    for dev_obj in developer_obj_lists.filter(status__in=DEVELOPER_USE_STATUS):
         other_used, flyapp_used, _ = get_developer_udided(dev_obj)
         other_used_sum += other_used
         flyapp_used_sum += flyapp_used
         max_total += 100
 
-    use_number_obj_list = developer_obj_lists.filter(status__in=[1, 2, 3, 4, 5])
+    use_number_obj_list = developer_obj_lists.filter(status__in=DEVELOPER_USE_STATUS)
     all_use_number = 0
     all_usable_number = 0
     for use_number_obj in use_number_obj_list:
