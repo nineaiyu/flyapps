@@ -8,6 +8,7 @@ import datetime
 import logging
 import os
 import re
+import time
 
 from OpenSSL.crypto import (load_pkcs12, dump_certificate_request, dump_privatekey, PKey, TYPE_RSA, X509Req,
                             dump_certificate, load_privatekey, load_certificate, PKCS12, FILETYPE_PEM, FILETYPE_ASN1)
@@ -212,6 +213,10 @@ def check_error_call_back(error, developer_pk):
         msg = '请登录 https://developer.apple.com/account/ 并同意最新协议'
         status = 2
     if status is not None:
+        developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_pk).first()
+        if developer_obj:
+            if developer_obj.status == -1 and status == 5:
+                status = -1
         AppIOSDeveloperInfo.objects.filter(pk=developer_pk).update(status=status)
     logger.error(f"{msg} {error}")
     return msg if msg else error
@@ -224,6 +229,28 @@ class AppDeveloperApiV2(object):
         self.p8key = p8key
         self.cert_id = cert_id
         self.developer_pk = developer_pk
+
+    def __getattribute__(self, name):
+        attr = object.__getattribute__(self, name)
+        if hasattr(attr, '__call__'):
+            def func(*args, **kwargs):
+                if attr.__name__ in ['active', 'get_device']:
+                    return attr(*args, **kwargs)
+                else:
+                    if AppIOSDeveloperInfo.objects.filter(pk=self.developer_pk, status__in=[1, 3, 4]).first():
+                        start_time = time.time()
+                        logger.info(f'{self.issuer_id} calling {attr.__name__} time:{start_time}')
+                        result = attr(*args, **kwargs)
+                        logger.info(f'{self.issuer_id} done {attr.__name__} used time:{time.time() - start_time}')
+                        return result
+                    else:
+                        result = False, {'return_info': '开发者状态异常'}
+                        logger.warning(f'{self.issuer_id} can not calling {attr.__name__} {result}')
+                        return result
+
+            return func
+        else:
+            return attr
 
     def active(self):
         result = {'data': []}

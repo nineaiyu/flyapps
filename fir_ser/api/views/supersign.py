@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, \
-    UDIDsyncDeveloper, AppleDeveloperToAppUse, Apps, DeveloperAppID, APPToDeveloper
+    UDIDsyncDeveloper, AppleDeveloperToAppUse, Apps, DeveloperAppID, APPToDeveloper, DeveloperDevicesID
 from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
 from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num
@@ -198,6 +198,10 @@ class DeveloperView(APIView):
 
                 developer_obj.description = data.get("description", developer_obj.description)
                 update_fields.append("description")
+
+                developer_obj.clean_status = data.get("clean_status", developer_obj.clean_status)
+                update_fields.append("clean_status")
+
                 private_key_id = data.get("private_key_id", developer_obj.private_key_id)
                 p8key = data.get("p8key", developer_obj.p8key)
                 if private_key_id != "" and private_key_id != developer_obj.private_key_id:
@@ -215,7 +219,7 @@ class DeveloperView(APIView):
                     update_fields.append("status")
 
                 try:
-                    update_fields.append("status")
+                    # update_fields.append("status")
                     developer_obj.save(update_fields=update_fields)
                     logger.info(
                         f"user {request.user} ios developer {developer_obj} update now data {developer_obj.__dict__}")
@@ -340,12 +344,17 @@ class AppUDIDUsedView(APIView):
         res = BaseResponse()
         pk = request.query_params.get("id", None)
         app_id = request.query_params.get("aid", None)
-        app_udid_obj = AppUDID.objects.filter(pk=pk)
+        disabled = request.query_params.get("disabled", None)
+        if disabled is not None and disabled == '1':
+            disabled = True
+        else:
+            disabled = False
+        app_udid_obj = AppUDID.objects.filter(pk=pk, app_id__user_id=request.user)
         if app_udid_obj:
             super_sign_used_obj = APPSuperSignUsedInfo.objects.filter(udid=app_udid_obj.first()).first()
             if super_sign_used_obj and super_sign_used_obj.developerid.user_id.pk == request.user.pk:
                 logger.error(f"user {request.user} delete devices {app_udid_obj}")
-                IosUtils.disable_udid(app_udid_obj.first(), app_id)
+                IosUtils.disable_udid(app_udid_obj.first(), app_id, disabled)
                 app_udid_obj.delete()
             else:
                 res.code = 10002
@@ -376,20 +385,31 @@ class DeveloperDeviceView(APIView):
         res.count = super_sign_used_objs.count()
         return Response(res.dict)
 
-    def delete(self, request):
+    def put(self, request):
         res = BaseResponse()
-        pk = request.query_params.get("id", None)
-        app_id = request.query_params.get("aid", None)
-        app_udid_obj = AppUDID.objects.filter(pk=pk, app_id__user_id=request.user)
-        if app_udid_obj:
-            super_sign_used_obj = APPSuperSignUsedInfo.objects.filter(udid=app_udid_obj.first()).first()
-            if super_sign_used_obj and super_sign_used_obj.developerid.user_id.pk == request.user.pk:
-                logger.error(f"user {request.user} delete devices {app_udid_obj}")
-                IosUtils.disable_udid(app_udid_obj.first(), app_id)
-                app_udid_obj.delete()
+        developer_id = request.data.get("developer_id", None)
+        udid = request.data.get("udid", None)
+        disabled = request.data.get("disabled", None)
+        if developer_id and udid and disabled is not None and disabled in [0, 1]:
+            developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=developer_id).first()
+            udid_sync_obj_queryset = UDIDsyncDeveloper.objects.filter(udid=udid, developerid=developer_obj).all()
+
+            if disabled == 1:
+                for udid_sync_obj in udid_sync_obj_queryset:
+                    IosUtils.do_enable_device_by_sync(developer_obj, udid_sync_obj)
             else:
-                res.code = 10002
-                res.msg = '公共账号池不允许删除'
+                app_udid_obj_list = AppUDID.objects.filter(udid__udid=udid, app_id__user_id=request.user,
+                                                           udid__developerid=developer_obj).all()
+                for app_udid_obj in app_udid_obj_list:
+                    for app_id_info in DeveloperDevicesID.objects.filter(udid=app_udid_obj.udid,
+                                                                         developerid=developer_obj).values(
+                        'app_id').all().distinct():
+                        logger.error(f"user {request.user} delete devices {app_udid_obj}")
+                        IosUtils.disable_udid(app_udid_obj, app_id_info.get('app_id'), True)
+                        AppUDID.objects.filter(pk=app_udid_obj.pk).delete()
+
+                for udid_sync_obj in udid_sync_obj_queryset:
+                    IosUtils.do_disable_device_by_sync(developer_obj, udid_sync_obj)
         return Response(res.dict)
 
 

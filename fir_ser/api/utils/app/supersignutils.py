@@ -845,7 +845,7 @@ class IosUtils(object):
         return True, d_result
 
     @staticmethod
-    def disable_udid(udid_obj, app_id):
+    def disable_udid(udid_obj, app_id, disabled=False):
 
         usedeviceobj = APPSuperSignUsedInfo.objects.filter(udid=udid_obj, app_id_id=app_id)
         if usedeviceobj:
@@ -853,7 +853,7 @@ class IosUtils(object):
             # 需要判断该设备在同一个账户下 的多个应用，若存在，则不操作
             udid_lists = list(
                 APPSuperSignUsedInfo.objects.values_list("udid__udid__udid").filter(developerid=developer_obj))
-            IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj)
+            IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj, disabled)
             DeveloperDevicesID.objects.filter(udid__appudid=udid_obj, developerid=developer_obj,
                                               app_id_id=app_id).delete()
             udid_obj.delete()
@@ -865,12 +865,26 @@ class IosUtils(object):
                 delete_app_profile_file(developer_obj, app_obj)
 
     @staticmethod
-    def do_disable_device(developer_obj, udid_lists, udid_obj):
-        if udid_lists.count((udid_obj.udid.udid,)) == 1:
+    def do_disable_device(developer_obj, udid_lists, udid_obj, disabled):
+        if udid_lists.count((udid_obj.udid.udid,)) == 1 and disabled:
             app_api_obj = get_api_obj(developer_obj)
             app_api_obj.set_device_status("disable", udid_obj.udid.serial, udid_obj.udid.product, udid_obj.udid.udid,
                                           udid_obj.udid.udid)
             UDIDsyncDeveloper.objects.filter(udid=udid_obj.udid.udid, developerid=developer_obj).update(status=False)
+
+    @staticmethod
+    def do_enable_device_by_sync(developer_obj, udid_sync_obj):
+        app_api_obj = get_api_obj(developer_obj)
+        app_api_obj.set_device_status("enable", udid_sync_obj.serial, udid_sync_obj.product, udid_sync_obj.udid,
+                                      udid_sync_obj.udid)
+        UDIDsyncDeveloper.objects.filter(pk=udid_sync_obj.pk, developerid=developer_obj).update(status=True)
+
+    @staticmethod
+    def do_disable_device_by_sync(developer_obj, udid_sync_obj):
+        app_api_obj = get_api_obj(developer_obj)
+        app_api_obj.set_device_status("disable", udid_sync_obj.serial, udid_sync_obj.product, udid_sync_obj.udid,
+                                      udid_sync_obj.udid)
+        UDIDsyncDeveloper.objects.filter(pk=udid_sync_obj.pk, developerid=developer_obj).update(status=False)
 
     @staticmethod
     def clean_udid_by_app_obj(app_obj, developer_obj):
@@ -882,7 +896,7 @@ class IosUtils(object):
         for SuperSignUsed_obj in APPSuperSignUsedInfo.objects.filter(app_id=app_obj, developerid=developer_obj):
             try:
                 udid_obj = SuperSignUsed_obj.udid
-                IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj)
+                IosUtils.do_disable_device(developer_obj, udid_lists, udid_obj, developer_obj.clean_status)
                 SuperSignUsed_obj.delete()
                 DeveloperDevicesID.objects.filter(udid__appudid=udid_obj, developerid=developer_obj,
                                                   app_id=app_obj).delete()

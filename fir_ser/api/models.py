@@ -282,8 +282,10 @@ class AppIOSDeveloperInfo(models.Model):
     auth_type = models.SmallIntegerField(choices=auth_type_choices, default=0, verbose_name="认证类型")
 
     # 协议待同意和维护中：代表只读，不可创建和注册新设备号
-    status_choices = ((0, '未激活'), (1, '已激活'), (2, '协议待同意'), (3, '维护中'), (4, '证书过期'), (5, '状态异常'))
+    status_choices = ((-1, '疑似被封'), (0, '未激活'), (1, '已激活'), (2, '协议待同意'), (3, '维护中'), (4, '证书过期'), (5, '状态异常'))
     status = models.SmallIntegerField(choices=status_choices, verbose_name="账户状态", default=0)
+
+    clean_status = models.BooleanField(verbose_name="清理是否同时禁用设备ID", default=False)
 
     class Meta:
         verbose_name = '苹果开发者账户'

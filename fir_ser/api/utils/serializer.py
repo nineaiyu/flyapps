@@ -640,6 +640,12 @@ class DeveloperDeviceSerializer(serializers.ModelSerializer):
     developer_description = serializers.CharField(source="developerid.description")
     developer_status = serializers.CharField(source="developerid.get_status_display")
 
+    app_used_count = serializers.SerializerMethodField()
+
+    def get_app_used_count(self, obj):
+        return models.DeveloperDevicesID.objects.filter(udid=obj, developerid=obj.developerid).values(
+            'app_id').distinct().count()
+
 
 class DeviceUDIDSerializer(serializers.ModelSerializer):
     class Meta:

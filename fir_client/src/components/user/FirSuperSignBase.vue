@@ -79,6 +79,16 @@
           <el-tag style="margin-left: 10px" type="warning"> 该模式下，新设备，新应用无法进行注册安装，但是已经安装的不影响</el-tag>
           <el-tag v-if="read_only_mode==='on'" style="margin-left: 50px" type="warning"> 通过账户激活进行关闭维护模式</el-tag>
         </el-form-item>
+        <el-form-item label="清理禁用设备" label-width="110px" style="text-align: left">
+          <el-switch
+              v-model="editdeveloperinfo.clean_status"
+              :active-value="true"
+              :inactive-value="false"
+              active-color="#13ce66"
+              inactive-color="#ff4949">
+          </el-switch>
+          <el-tag style="margin-left: 10px" type="warning"> 清理数据的时候，是否同时将开发者设备禁用，默认不禁用</el-tag>
+        </el-form-item>
         <el-form-item label="证书id" label-width="110px">
           <el-input v-model="editdeveloperinfo.certid" :disabled='isedit'/>
         </el-form-item>
@@ -200,6 +210,44 @@
       </div>
       <span slot="footer">
             <el-button @click="closeDeviceBillInfo">关闭</el-button>
+            </span>
+    </el-dialog>
+    <el-dialog :close-on-click-modal="false" :destroy-on-close="true" :visible.sync="udeviceappinfoVisible"
+               center title="设备消耗应用详细信息" width="750px">
+
+      <el-table
+          v-loading="loading"
+          :data="app_used_info_list"
+          border
+          stripe
+          style="width: 100%">
+        <el-table-column
+            align="center"
+            label="应用名称"
+            prop="bundle_name"
+        >
+        </el-table-column>
+
+
+        <el-table-column
+            align="center"
+            label="应用ID"
+            prop="bundle_id"
+        >
+        </el-table-column>
+
+
+        <el-table-column
+            :formatter="deviceformatter"
+            align="center"
+            label="日期"
+            prop="created_time"
+            width="160">
+        </el-table-column>
+
+      </el-table>
+      <span slot="footer">
+            <el-button @click="udeviceappinfoVisible=false">关闭</el-button>
             </span>
     </el-dialog>
 
@@ -586,6 +634,17 @@
               align="center"
               label="设备UDID"
               prop="udid">
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <p>该设备UDID 被分配到了 {{ scope.row.app_used_count }} 个应用</p>
+                <el-button v-if="scope.row.app_used_count > 0" size="mini" @click="show_app_used_info(scope.row)">
+                  点击查看分配信息
+                </el-button>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.udid }}</span>
+                </div>
+              </el-popover>
+            </template>
           </el-table-column>
           <el-table-column
               align="center"
@@ -604,10 +663,16 @@
               label="设备状态"
               width="110">
             <template slot-scope="scope">
-              <el-tag v-if="!scope.row.status" type="info">禁用</el-tag>
-              <el-tag v-else>
-                启用
-              </el-tag>
+              <el-tooltip v-if="!scope.row.status" content="点击启用">
+                <el-link :underline="false" type="info" @click="changeDevice(scope.row,1)">
+                  <el-tag type="info">禁用</el-tag>
+                </el-link>
+              </el-tooltip>
+              <el-tooltip v-else content="点击禁用，禁用会自动清理已经安装的数据">
+                <el-link :underline="false" @click="changeDevice(scope.row,0)">
+                  <el-tag>启用</el-tag>
+                </el-link>
+              </el-tooltip>
             </template>
           </el-table-column>
           <el-table-column
@@ -706,12 +771,12 @@
               </el-popover>
             </template>
           </el-table-column>
-          <el-table-column
-              v-if="$store.state.userinfo&&$store.state.userinfo.role === 3"
-              align="center"
-              label="被使用户uid"
-              prop="other_uid">
-          </el-table-column>
+          <!--          <el-table-column-->
+          <!--              v-if="$store.state.userinfo&&$store.state.userinfo.role === 3"-->
+          <!--              align="center"-->
+          <!--              label="被使用户uid"-->
+          <!--              prop="other_uid">-->
+          <!--          </el-table-column>-->
           <el-table-column
               :formatter="deviceformatter"
               align="center"
@@ -814,12 +879,12 @@
               </el-popover>
             </template>
           </el-table-column>
-          <el-table-column
-              v-if="$store.state.userinfo&&$store.state.userinfo.role === 3"
-              align="center"
-              label="被使用户uid"
-              prop="other_uid">
-          </el-table-column>
+          <!--          <el-table-column-->
+          <!--              v-if="$store.state.userinfo&&$store.state.userinfo.role === 3"-->
+          <!--              align="center"-->
+          <!--              label="被使用户uid"-->
+          <!--              prop="other_uid">-->
+          <!--          </el-table-column>-->
           <el-table-column
               :formatter="deviceformatter"
               align="center"
@@ -831,17 +896,26 @@
               align="center"
               fixed="right"
               label="操作"
-              width="100">
+              width="150">
             <template slot-scope="scope">
-              <el-button
-                  v-if="scope.row.is_mine"
-                  size="mini"
-                  type="danger"
-                  @click="udidDeleteFun(scope)">删除
-              </el-button>
-              <el-tag v-else>
-                ☺
-              </el-tag>
+              <div>
+                <el-tooltip content="仅仅删除数据库数据，不操作苹果开发者设备" placement="top">
+                  <el-button
+                      size="mini"
+                      type="danger"
+                      @click="udidDeleteFun(scope,0)">仅删除
+                  </el-button>
+                </el-tooltip>
+              </div>
+              <div style="margin-top: 5px">
+                <el-tooltip content="删除的同时，会检测并同时禁用苹果开发者设备" placement="bottom">
+                  <el-button
+                      size="mini"
+                      type="danger"
+                      @click="udidDeleteFun(scope,1)">删除并禁用设备
+                  </el-button>
+                </el-tooltip>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -1111,7 +1185,9 @@ export default {
       developer_status_choice: [],
       multipleSelection: [],
       setdeveloperstatusVisible: false,
-      change_developer_status: ''
+      change_developer_status: '',
+      udeviceappinfoVisible: false,
+      app_used_info_list: []
     }
   }, watch: {
     'dialogaddDeveloperVisible': function () {
@@ -1121,6 +1197,24 @@ export default {
     }
   },
   methods: {
+    changeDevice(info, disabled) {
+      this.iosudevicesFun("PUT", {developer_id: info.developer_id, udid: info.udid, disabled: disabled})
+    },
+    show_app_used_info(info) {
+      this.loading = true;
+      iosdevices(data => {
+        if (data.code === 1000) {
+          this.app_used_info_list = data.data;
+          this.udeviceappinfoVisible = true
+        } else {
+          this.$message.error("数据获取失败" + data.msg)
+          this.app_used_info_list = [];
+        }
+        this.loading = false;
+      }, {
+        "methods": 'GET', "data": {udid: info.udid, issuer_id: info.developer_id, page: 1, size: 200}
+      })
+    },
     setdeveloperstatusFun() {
       if (this.multipleSelection && this.multipleSelection.length > 0) {
         this.setdeveloperstatusVisible = true
@@ -1273,13 +1367,13 @@ export default {
         return '#F50346';
       }
     },
-    udidDeleteFun(scope) {
+    udidDeleteFun(scope, disabled) {
       this.$confirm('此操作会禁用该苹果开发者账户下面的该设备,可能会导致超级签包的闪退, 是否继续?', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.iosdevicesudidFun('DELETE', {id: scope.row.id, aid: scope.row.app_id}, scope);
+        this.iosdevicesudidFun('DELETE', {id: scope.row.id, aid: scope.row.app_id, disabled: disabled}, scope);
       }).catch(() => {
         this.$message({
           type: 'info',
@@ -1464,7 +1558,7 @@ export default {
         data.appnamesearch = this.appnamesearch.replace(/^\s+|\s+$/g, "");
         this.iosdevicerankFun({"methods": "GET", "data": data})
       } else if (tabname === "iosudevices") {
-        this.iosudevicesFun("GET", data, null)
+        this.iosudevicesFun("GET", data)
       }
 
     },
@@ -1559,7 +1653,7 @@ export default {
         } else {
           this.$message.error("操作失败")
         }
-        if (params.methods === 'PUT') {
+        if (params.methods === 'PUT' || params.methods === 'DELETE') {
           this.get_data_from_tabname(this.activeName, {
             "size": this.pagination.pagesize,
             "page": this.pagination.currentPage
@@ -1651,7 +1745,7 @@ export default {
         "methods": action, "data": data
       })
     },
-    iosudevicesFun(action, data, scope) {
+    iosudevicesFun(action, data) {
       if (action !== 'GET') {
         this.loadingfun = this.$loading({
           lock: true,
@@ -1664,13 +1758,14 @@ export default {
       }
       iosudevices(data => {
         if (data.code === 1000) {
-          if (action !== "DELETE") {
+          if (action !== "PUT") {
             this.developer_udevices_lists = data.data;
             this.pagination.total = data.count;
           } else {
-            if (scope) {
-              this.app_udid_lists = removeAaary(this.app_udid_lists, scope.row)
-            }
+            this.get_data_from_tabname(this.activeName, {
+              "size": this.pagination.pagesize,
+              "page": this.pagination.currentPage
+            })
           }
         } else {
           this.$message.error("操作失败了 " + data.msg);
