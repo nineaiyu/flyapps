@@ -25,7 +25,7 @@ from api.utils.storage.caches import get_app_download_url
 from api.utils.utils import get_developer_devices
 from common.base.baseutils import get_choices_dict, get_choices_name_from_key
 from common.cache.state import CleanSignDataState
-from fir_ser.settings import DEVELOPER_USE_STATUS
+from fir_ser.settings import DEVELOPER_USE_STATUS, DEVELOPER_DISABLED_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class DeveloperView(APIView):
 
         res.data = developer_serializer.data
         res.count = developer_obj.count()
-        res.status_choices = get_choices_dict(AppIOSDeveloperInfo.status_choices, [2, 4, 5])
+        res.status_choices = get_choices_dict(AppIOSDeveloperInfo.status_choices, DEVELOPER_DISABLED_STATUS)
         res.apple_auth_list = get_choices_dict(AppIOSDeveloperInfo.auth_type_choices)
         return Response(res.dict)
 

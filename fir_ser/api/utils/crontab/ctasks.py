@@ -14,7 +14,8 @@ from api.models import Apps, UserInfo, AppIOSDeveloperInfo
 from api.utils.app.supersignutils import IosUtils
 from api.utils.storage.storage import Storage
 from api.utils.utils import send_ios_developer_active_status
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT, MSGTEMPLATE
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT, MSGTEMPLATE, \
+    DEVELOPER_AUTO_CHECK_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ def auto_delete_ios_mobile_tmp_file():
 
 
 def auto_check_ios_developer_active():
-    all_ios_developer = AppIOSDeveloperInfo.objects.filter(status__in=[1, 2])
+    all_ios_developer = AppIOSDeveloperInfo.objects.filter(status__in=DEVELOPER_AUTO_CHECK_STATUS)
     error_issuer_id = {}
     for ios_developer in all_ios_developer:
         userinfo = ios_developer.user_id

@@ -18,7 +18,7 @@ from api.utils.app.shellcmds import shell_command, use_user_pass
 from api.utils.apple.appleapiv3 import AppStoreConnectApi
 from common.base.baseutils import get_format_time, format_apple_date, make_app_uuid
 from common.cache.state import CleanErrorBundleIdSignDataState
-from fir_ser.settings import SUPER_SIGN_ROOT
+from fir_ser.settings import SUPER_SIGN_ROOT, DEVELOPER_WRITE_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +237,8 @@ class AppDeveloperApiV2(object):
                 if attr.__name__ in ['active', 'get_device']:
                     return attr(*args, **kwargs)
                 else:
-                    if AppIOSDeveloperInfo.objects.filter(pk=self.developer_pk, status__in=[1, 3, 4]).first():
+                    if AppIOSDeveloperInfo.objects.filter(pk=self.developer_pk,
+                                                          status__in=DEVELOPER_WRITE_STATUS).first():
                         start_time = time.time()
                         logger.info(f'{self.issuer_id} calling {attr.__name__} time:{start_time}')
                         result = attr(*args, **kwargs)
