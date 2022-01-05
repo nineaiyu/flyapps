@@ -80,7 +80,7 @@ class DomainCnameView(APIView):
         res.data = {'domain_name': '', 'domain_record': '', 'is_enable': False}
         user_domain_obj = UserDomainInfo.objects.filter(**get_domain_filter(request)).first()
         domain_name = request.query_params.get("domain_name", '')
-        if (user_domain_obj and domain_name) or (user_domain_obj and user_domain_obj.domain_type == 0):
+        if (user_domain_obj and domain_name) or (user_domain_obj and user_domain_obj.domain_type in [0, 2]):
             res.data['domain_name'] = user_domain_obj.domain_name
             res.data['is_enable'] = user_domain_obj.is_enable
             if user_domain_obj.cname_id:
