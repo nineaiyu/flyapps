@@ -44,17 +44,18 @@ INSTALLED_APPS = [
     'captcha',
     'django_celery_beat',
     'django_celery_results',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'api.utils.middlewares.CorsMiddleWare'
 ]
 
 ROOT_URLCONF = 'fir_ser.urls'
@@ -200,6 +201,33 @@ REST_FRAMEWORK_EXTENSIONS = {
 }
 # 取消自动加斜杠
 APPEND_SLASH = False
+
+# https://pypi.org/project/django-cors-headers/
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_METHODS = (
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'POST',
+    'PUT',
+)
+
+CORS_ALLOW_HEADERS = (
+    'XMLHttpRequest',
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "x-token"
+)
 
 # geetest 配置信息
 GEETEST_ID = BASECONF.GEETEST_ID

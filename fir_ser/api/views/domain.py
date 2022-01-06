@@ -5,13 +5,12 @@
 # date: 2021/3/29
 import logging
 
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import UserDomainInfo, Apps
 from api.utils.auth import ExpiringTokenAuthentication
-from api.utils.modelutils import get_user_domain_name, get_min_default_domain_cname_obj
+from api.utils.modelutils import get_user_domain_name, get_min_default_domain_cname_obj, PageNumber
 from api.utils.response import BaseResponse
 from api.utils.serializer import DomainNameSerializer
 from api.utils.storage.caches import del_cache_response_by_short, reset_app_wx_easy_type
@@ -122,6 +121,7 @@ class DomainCnameView(APIView):
                     if user_domain_obj:
                         res.data = {'cname_domain': user_domain_obj.cname_id.domain_record}
                     else:
+                        kwargs.pop('domain_name')
                         UserDomainInfo.objects.filter(**kwargs, is_enable=False).delete()
                         add_new_domain_info(res, request, domain_name, domain_type)
             else:
@@ -195,13 +195,6 @@ class DomainCnameView(APIView):
             auto_clean_download_cache(request.user, user_domain_obj, app_obj)
             user_domain_obj.delete()
         return Response(res.dict)
-
-
-class PageNumber(PageNumberPagination):
-    page_size = 10  # 每页显示多少条
-    page_size_query_param = 'size'  # URL中每页显示条数的参数
-    page_query_param = 'page'  # URL中页码的参数
-    max_page_size = None  # 最大页码数限制
 
 
 class DomainInfoView(APIView):

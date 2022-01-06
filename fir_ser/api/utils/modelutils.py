@@ -10,6 +10,7 @@ import random
 from urllib.parse import urljoin
 
 from django.db.models import Count, Sum, Q
+from rest_framework.pagination import PageNumberPagination
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
     AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper, UserInfo, UDIDsyncDeveloper
@@ -253,3 +254,10 @@ def update_or_create_developer_udid_info(device_obj, developer_obj):
         "status": True if device_obj.status == 'ENABLED' else False
     }
     return UDIDsyncDeveloper.objects.update_or_create(developerid=developer_obj, udid=device_obj.udid, defaults=device)
+
+
+class PageNumber(PageNumberPagination):
+    page_size = 10  # 每页显示多少条
+    page_size_query_param = 'size'  # URL中每页显示条数的参数
+    page_query_param = 'page'  # URL中页码的参数
+    max_page_size = None  # 最大页码数限制

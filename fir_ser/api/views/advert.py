@@ -5,25 +5,18 @@
 # date: 2021/10/14
 import logging
 
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import UserAdDisplayInfo
 from api.utils.auth import ExpiringTokenAuthentication, UserAdInfoPermission
+from api.utils.modelutils import PageNumber
 from api.utils.response import BaseResponse
 from api.utils.serializer import UserAdInfoSerializer
 from api.utils.storage.caches import reset_short_response_cache
 from api.utils.storage.storage import Storage
 
 logger = logging.getLogger(__name__)
-
-
-class PageNumber(PageNumberPagination):
-    page_size = 10  # 每页显示多少条
-    page_size_query_param = 'size'  # URL中每页显示条数的参数
-    page_query_param = 'page'  # URL中页码的参数
-    max_page_size = None  # 最大页码数限制
 
 
 class UserAdInfoView(APIView):

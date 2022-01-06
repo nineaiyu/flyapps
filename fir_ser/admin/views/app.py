@@ -6,10 +6,10 @@
 
 import logging
 
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from admin.utils import AppsPageNumber
 from api.base_views import app_delete
 from api.models import AppReleaseInfo, Apps
 from api.utils.TokenManager import verify_token
@@ -20,13 +20,6 @@ from api.utils.storage.caches import del_cache_response_by_short, get_download_u
 from common.base.baseutils import get_dict_from_filter_fields
 
 logger = logging.getLogger(__name__)
-
-
-class AppsPageNumber(PageNumberPagination):
-    page_size = 20  # 每页显示多少条
-    page_size_query_param = 'limit'  # URL中每页显示条数的参数
-    page_query_param = 'page'  # URL中页码的参数
-    max_page_size = None  # 最大页码数限制
 
 
 class AppInfoView(APIView):

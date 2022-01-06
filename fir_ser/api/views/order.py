@@ -6,12 +6,12 @@
 
 import logging
 
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import Price, Order
 from api.utils.auth import ExpiringTokenAuthentication
+from api.utils.modelutils import PageNumber
 from api.utils.pay.util import get_pay_obj_form_name, get_enable_pay_choices, get_payment_type
 from api.utils.response import BaseResponse
 from api.utils.serializer import PriceSerializer, OrdersSerializer
@@ -19,13 +19,6 @@ from api.utils.storage.caches import update_order_status
 from common.base.baseutils import get_order_num, get_choices_dict
 
 logger = logging.getLogger(__name__)
-
-
-class PageNumber(PageNumberPagination):
-    page_size = 10  # 每页显示多少条
-    page_size_query_param = 'size'  # URL中每页显示条数的参数
-    page_query_param = 'page'  # URL中页码的参数
-    max_page_size = None  # 最大页码数限制
 
 
 class OrderView(APIView):
@@ -132,14 +125,6 @@ class PriceView(APIView):
         price_obj_lists = Price.objects.filter(is_enable=True).all().order_by("updated_time").order_by("price")
         res.data = PriceSerializer(price_obj_lists, many=True).data
         res.pay_choices = get_enable_pay_choices()
-        return Response(res.dict)
-
-    def delete(self, request):
-        res = BaseResponse()
-        return Response(res.dict)
-
-    def put(self, request):
-        res = BaseResponse()
         return Response(res.dict)
 
 

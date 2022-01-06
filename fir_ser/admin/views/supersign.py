@@ -10,6 +10,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from admin.utils import AppsPageNumber
 from api.models import APPSuperSignUsedInfo, AppIOSDeveloperInfo, IosDeveloperPublicPoolBill
 from api.utils.auth import AdminTokenAuthentication
 from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, get_user_obj_from_epu
@@ -19,13 +20,6 @@ from api.utils.utils import get_developer_devices
 from common.base.baseutils import get_dict_from_filter_fields, get_real_ip_address, get_order_num
 
 logger = logging.getLogger(__name__)
-
-
-class AppsPageNumber(PageNumberPagination):
-    page_size = 20  # 每页显示多少条
-    page_size_query_param = 'limit'  # URL中每页显示条数的参数
-    page_query_param = 'page'  # URL中页码的参数
-    max_page_size = None  # 最大页码数限制
 
 
 class DeveloperInfoView(APIView):

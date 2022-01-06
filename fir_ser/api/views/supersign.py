@@ -9,7 +9,6 @@ import logging
 
 from django.db.models import Count, Q, Sum
 from django.http.response import FileResponse
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -17,7 +16,7 @@ from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDe
     UDIDsyncDeveloper, AppleDeveloperToAppUse, Apps, DeveloperAppID, APPToDeveloper, DeveloperDevicesID
 from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
-from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num
+from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, PageNumber
 from api.utils.response import BaseResponse
 from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, BillInfoSerializer, \
     DeveloperDeviceSerializer, AppleDeveloperToAppUseSerializer, AppleDeveloperToAppUseAppsSerializer
@@ -28,13 +27,6 @@ from common.cache.state import CleanSignDataState
 from fir_ser.settings import DEVELOPER_USE_STATUS, DEVELOPER_DISABLED_STATUS
 
 logger = logging.getLogger(__name__)
-
-
-class PageNumber(PageNumberPagination):
-    page_size = 10  # 每页显示多少条
-    page_size_query_param = 'size'  # URL中每页显示条数的参数
-    page_query_param = 'page'  # URL中页码的参数
-    max_page_size = None  # 最大页码数限制
 
 
 class DeveloperView(APIView):

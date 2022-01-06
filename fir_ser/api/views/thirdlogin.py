@@ -7,13 +7,13 @@ import logging
 import random
 
 from django.http.response import HttpResponse
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_xml.parsers import XMLParser
 
 from api.models import ThirdWeChatUserInfo, UserInfo, UserCertificationInfo
 from api.utils.auth import ExpiringTokenAuthentication
+from api.utils.modelutils import PageNumber
 from api.utils.mp.chat import reply, receive
 from api.utils.mp.wechat import check_signature, WxMsgCrypt, get_userinfo_from_openid, WxTemplateMsg
 from api.utils.response import BaseResponse
@@ -219,13 +219,6 @@ class ValidWxChatToken(APIView):
             logger.error('密文解密失败')
         logger.info(f"replay msg: {result}")
         return HttpResponse("success")
-
-
-class PageNumber(PageNumberPagination):
-    page_size = 10  # 每页显示多少条
-    page_size_query_param = 'size'  # URL中每页显示条数的参数
-    page_query_param = 'page'  # URL中页码的参数
-    max_page_size = None  # 最大页码数限制
 
 
 class ThirdWxAccount(APIView):
