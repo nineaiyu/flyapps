@@ -300,7 +300,7 @@ SESSION_CACHE_ALIAS = "default"
 CAPTCHA_TIMEOUT = 5  # Minutes
 CAPTCHA_LENGTH = 6  # Chars
 
-BASE_LOG_DIR = os.path.join(BASE_DIR, "logs", "flyapp")
+BASE_LOG_DIR = os.path.join(BASE_DIR, "logs", "api")
 if not os.path.isdir(BASE_LOG_DIR):
     os.makedirs(BASE_LOG_DIR)
 LOGGING = {
@@ -331,7 +331,7 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，根据时间自动切
             'filename': os.path.join(BASE_LOG_DIR, "flyapp_info.log"),  # 日志文件
-            'maxBytes': 1024 * 1024 * 5,  # 日志大小 50M
+            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
             'backupCount': 10,  # 备份数为3  xx.log --> xx.log.2018-08-23_00-00-00 --> xx.log.2018-08-24_00-00-00 --> ...
             # 'when': 'W6',  # 每天一切， 可选值有S/秒 M/分 H/小时 D/天 W0-W6/周(0=周一) midnight/如果没指定时间就默认在午夜
             'formatter': 'standard',
@@ -341,7 +341,7 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
             'filename': os.path.join(BASE_LOG_DIR, "flyapp_err.log"),  # 日志文件
-            'maxBytes': 1024 * 1024 * 5,  # 日志大小 50M
+            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
             'backupCount': 10,
             'formatter': 'standard',
             'encoding': 'utf-8',
@@ -350,7 +350,7 @@ LOGGING = {
             'level': 'WARNING',
             'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
             'filename': os.path.join(BASE_LOG_DIR, "flyapp_warning.log"),  # 日志文件
-            'maxBytes': 1024 * 1024 * 5,  # 日志大小 50M
+            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
             'backupCount': 10,
             'formatter': 'standard',
             'encoding': 'utf-8',
@@ -359,7 +359,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
             'filename': os.path.join(BASE_LOG_DIR, "flyapp_pay.log"),  # 日志文件
-            'maxBytes': 1024 * 1024 * 5,  # 日志大小 50M
+            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
             'backupCount': 10,
             'formatter': 'standard',
             'encoding': 'utf-8',
@@ -368,7 +368,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
             'filename': os.path.join(BASE_LOG_DIR, "flyapp_sql.log"),  # 日志文件
-            'maxBytes': 1024 * 1024 * 5,  # 日志大小 50M
+            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
             'backupCount': 10,
             'formatter': 'standard',
             'encoding': 'utf-8',

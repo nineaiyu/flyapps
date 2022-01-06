@@ -125,7 +125,7 @@ class ServicesUtil(object):
 
     @property
     def daemon_log_filepath(self):
-        return os.path.join(LOG_DIR, 'flyApps.log')
+        return os.path.join(LOG_DIR, 'flyapps.log')
 
     @property
     def daemon_context(self):
