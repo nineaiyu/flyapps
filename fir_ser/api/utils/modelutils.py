@@ -87,8 +87,10 @@ def get_app_download_uri(request, user_obj, app_obj=None, preview=True):
 
 
 def get_min_default_domain_cname_obj(is_system=True):
-    return min(DomainCnameInfo.objects.annotate(Count('userinfo')).filter(is_enable=True, is_system=is_system),
-               key=lambda x: x.userinfo__count)
+    domain_queryset = DomainCnameInfo.objects.annotate(Count('userinfo')).filter(is_enable=True, is_system=is_system)
+    if not domain_queryset:
+        return DomainCnameInfo.objects.filter(is_enable=True, is_system=True).first()
+    return min(domain_queryset, key=lambda x: x.userinfo__count)
 
 
 def get_filename_form_file(filename):
