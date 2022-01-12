@@ -58,11 +58,6 @@ class StorageView(APIView):
             res.storage = use_storage_obj.id
         else:
             res.storage = -1  # 默认存储
-
-        admin_storage = UserInfo.objects.filter(is_superuser=True).order_by('pk').first()
-        res.is_admin_storage = False
-        if admin_storage and admin_storage.uid == request.user.uid:
-            res.is_admin_storage = True
         return Response(res.dict)
 
     def post(self, request):

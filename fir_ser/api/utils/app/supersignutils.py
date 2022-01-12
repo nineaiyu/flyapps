@@ -503,13 +503,15 @@ class IosUtils(object):
                 apptodev_obj.binary_file = random_file_name
                 old_release_file = apptodev_obj.release_file
                 apptodev_obj.release_file = release_obj.release_id
-                apptodev_obj.save(update_fields=['binary_file', 'release_file'])
+                apptodev_obj.save(update_fields=['binary_file', 'release_file', 'updated_time'])
                 if storage_obj.get_storage_type() in [1, 2] and old_release_file != release_obj.release_id:
                     logger.warning(f"update sign file , now clean ole {old_release_file}.ipa file")
                     delete_local_files(old_release_file + ".ipa")
             else:
                 APPToDeveloper.objects.create(developerid_id=developer_obj_id, app_id=app_obj,
                                               binary_file=random_file_name, release_file=release_obj.release_id)
+            if storage_obj.get_storage_type() in [1, 2]:
+                delete_local_files(random_file_name + ".ipa")
             return True
 
     @staticmethod
