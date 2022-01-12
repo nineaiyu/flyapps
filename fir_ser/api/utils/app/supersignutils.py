@@ -375,7 +375,7 @@ def get_developer_obj_by_others(user_obj, udid, app_obj, read_only):
         return result
 
 
-def check_sign_is_exists(user_obj, app_obj, udid, developer_obj):
+def check_sign_is_exists(user_obj, app_obj, udid, developer_obj, sign=True):
     d_result = {'code': 0, 'msg': 'success'}
     app_udid_obj = AppUDID.objects.filter(app_id=app_obj, udid__udid=udid, udid__developerid=developer_obj).first()
     if app_udid_obj and app_udid_obj.is_download:
@@ -388,7 +388,7 @@ def check_sign_is_exists(user_obj, app_obj, udid, developer_obj):
                 sign_flag = True
         else:
             sign_flag = True
-        if sign_flag:
+        if sign_flag and sign:
             locker = {
                 'locker_key': f"run_sign_{app_obj.app_id}_{developer_obj.issuer_id}",
                 "timeout": 60 * 5
@@ -810,7 +810,7 @@ class IosUtils(object):
         else:
             new_did_list = []
             for did_udid in udid_list:
-                if not check_sign_is_exists(user_obj, app_obj, did_udid, developer_obj):
+                if not check_sign_is_exists(user_obj, app_obj, did_udid, developer_obj, False):
                     new_did_list.append(did_udid)
             if not new_did_list:
                 return True, True
