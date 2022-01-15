@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-export function getAppReportIfo(query) {
+export function getAppReportList(query) {
   return request({
     url: '/report/info',
     method: 'get',
@@ -8,18 +8,24 @@ export function getAppReportIfo(query) {
   })
 }
 
-export function updateAppReportIfo(data) {
+export function getAppReportIfo(pk) {
   return request({
-    url: '/report/info',
+    url: '/report/info/' + pk,
+    method: 'get'
+  })
+}
+
+export function updateAppReportIfo(pk, data) {
+  return request({
+    url: '/report/info/' + pk,
     method: 'put',
     data
   })
 }
 
-export function deleteAppReportIfo(data) {
+export function deleteAppReportIfo(pk) {
   return request({
-    url: '/report/info',
-    method: 'delete',
-    data
+    url: '/report/info/' + pk,
+    method: 'delete'
   })
 }

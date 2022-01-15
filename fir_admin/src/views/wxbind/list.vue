@@ -7,7 +7,7 @@
       <el-select v-model="listQuery.subscribe" placeholder="玩家是否订阅" clearable class="filter-item" style="width: 140px" @change="handleFilter">
         <el-option v-for="item in wxbind_state_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+      <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -92,7 +92,7 @@
 </template>
 
 <script>
-import { getWxBindInfos, deleteWxBind } from '@/api/wxbind'
+import { getWxBindInfos, deleteWxBind, getWxBindList } from '@/api/wxbind'
 import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
@@ -159,7 +159,7 @@ export default {
         page: 1,
         limit: 10,
         user_id: undefined,
-        sort: '-created_time',
+        ordering: '-created_time',
         openid: undefined,
         nickname: undefined,
         subscribe: undefined
@@ -178,7 +178,7 @@ export default {
   },
   methods: {
     remove_wxbind(wxbind_id) {
-      deleteWxBind({ id: wxbind_id }).then(response => {
+      deleteWxBind(wxbind_id).then(response => {
         this.list = response.data
         this.total = response.total
         this.listLoading = false
@@ -190,9 +190,9 @@ export default {
     },
     fetchData() {
       this.listLoading = true
-      getWxBindInfos(this.listQuery).then(response => {
-        this.list = response.data
-        this.total = response.total
+      getWxBindList(this.listQuery).then(response => {
+        this.list = response.data.results
+        this.total = response.data.count
         this.listLoading = false
       })
     }

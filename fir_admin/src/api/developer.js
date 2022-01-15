@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-export function getDeveloperInfo(query) {
+export function getDeveloperList(query) {
   return request({
     url: '/developer/info',
     method: 'get',
@@ -8,15 +8,22 @@ export function getDeveloperInfo(query) {
   })
 }
 
-export function updatedeveloperInfo(data) {
+export function getDeveloperInfo(pk) {
   return request({
-    url: '/developer/info',
+    url: '/developer/info/' + pk,
+    method: 'get'
+  })
+}
+
+export function updatedeveloperInfo(pk, data) {
+  return request({
+    url: '/developer/info/' + pk,
     method: 'put',
     data
   })
 }
 
-export function getBillInfo(query) {
+export function getBillList(query) {
   return request({
     url: '/bill/info',
     method: 'get',
@@ -31,11 +38,10 @@ export function addBillInfo(data) {
     data
   })
 }
-export function delBillInfo(data) {
+export function delBillInfo(pk) {
   return request({
-    url: '/bill/info',
-    method: 'delete',
-    data
+    url: '/bill/info/' + pk,
+    method: 'delete'
   })
 }
 

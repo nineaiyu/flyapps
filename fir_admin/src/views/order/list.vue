@@ -14,7 +14,7 @@
       <el-select v-model="listQuery.order_type" placeholder="订单类型" clearable class="filter-item" style="width: 140px" @change="handleFilter">
         <el-option v-for="item in order_type_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+      <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -117,7 +117,7 @@
 </template>
 
 <script>
-import { getOrderInfo, deleteOrderInfo } from '@/api/order'
+import { deleteOrderInfo, getOrderList } from '@/api/order'
 import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
@@ -126,7 +126,9 @@ const sortOptions = [
   { label: '创建时间 Ascending', key: 'created_time' },
   { label: '创建时间 Descending', key: '-created_time' },
   { label: '付款时间 Ascending', key: 'pay_time' },
-  { label: '付款时间 Descending', key: '-pay_time' }
+  { label: '付款时间 Descending', key: '-pay_time' },
+  { label: '付款金额 Ascending', key: 'actual_amount' },
+  { label: '付款金额 Descending', key: '-actual_amount' }
 ]
 
 export default {
@@ -190,7 +192,7 @@ export default {
         page: 1,
         limit: 10,
         user_id: undefined,
-        sort: '-created_time',
+        ordering: '-created_time',
         payment_type: undefined,
         payment_name: undefined,
         payment_number: undefined,
@@ -213,7 +215,7 @@ export default {
   },
   methods: {
     remove_order_info(order_info) {
-      deleteOrderInfo({ id: order_info.id }).then(response => {
+      deleteOrderInfo(order_info.id).then(response => {
         this.list = response.data
         if (response.code === 1000) {
           this.fetchData()
@@ -228,14 +230,14 @@ export default {
     },
     fetchData() {
       this.listLoading = true
-      getOrderInfo(this.listQuery).then(response => {
-        this.list = response.data
+      getOrderList(this.listQuery).then(response => {
+        this.list = response.data.results
         if (this.list && this.list.length > 0) {
           this.payment_type_choices = this.list[0].payment_type_choices
           this.status_choices = this.list[0].status_choices
           this.order_type_choices = this.list[0].order_type_choices
         }
-        this.total = response.total
+        this.total = response.data.count
         this.listLoading = false
       })
     }

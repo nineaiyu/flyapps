@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
     'corsheaders',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -137,15 +138,17 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
     ),
     'DEFAULT_THROTTLE_CLASSES': [
         'api.utils.throttle.LoginUserThrottle',
     ],
-    'DEFAULT_THROTTLE_RATES': BASECONF.DEFAULT_THROTTLE_RATES
+    'DEFAULT_THROTTLE_RATES': BASECONF.DEFAULT_THROTTLE_RATES,
+    'EXCEPTION_HANDLER': 'admin.utils.exception.common_exception_handler',
+
 }
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
@@ -165,9 +168,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = '/statics/'
+
+# python manage.py collectstatic 收集到的静态文件
+STATIC_ROOT = os.path.join(BASE_DIR, "api-static")
+
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static")
+    os.path.join(BASE_DIR, "statics")
 ]
 
 # Media配置

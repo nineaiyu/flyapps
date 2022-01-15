@@ -10,7 +10,7 @@
       <el-select v-model="listQuery.is_enable" placeholder="域名绑定状态" clearable class="filter-item" style="width: 140px" @change="handleFilter">
         <el-option v-for="item in domain_state_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+      <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -85,7 +85,7 @@
 </template>
 
 <script>
-import { getDomainInfos, deleteDomain } from '@/api/domain'
+import { deleteDomain, getDomainList } from '@/api/domain'
 import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
@@ -143,7 +143,7 @@ export default {
         page: 1,
         limit: 10,
         user_id: undefined,
-        sort: '-created_time',
+        ordering: '-created_time',
         domain_name: undefined,
         app_name: undefined,
         domain_type: undefined,
@@ -164,13 +164,8 @@ export default {
   },
   methods: {
     remove_domain(domain_id) {
-      deleteDomain({ id: domain_id }).then(response => {
-        this.list = response.data
-        if (this.list && this.list.length > 0) {
-          this.domain_type_choices = this.list[0].domain_type_choices
-        }
-        this.total = response.total
-        this.listLoading = false
+      deleteDomain(domain_id).then(response => {
+        this.fetchData()
       })
     },
     handleFilter() {
@@ -179,12 +174,12 @@ export default {
     },
     fetchData() {
       this.listLoading = true
-      getDomainInfos(this.listQuery).then(response => {
-        this.list = response.data
+      getDomainList(this.listQuery).then(response => {
+        this.list = response.data.results
         if (this.list && this.list.length > 0) {
           this.domain_type_choices = this.list[0].domain_type_choices
         }
-        this.total = response.total
+        this.total = response.data.count
         this.listLoading = false
       })
     }

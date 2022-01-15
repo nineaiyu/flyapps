@@ -4,7 +4,7 @@
       <el-input v-model="listQuery.bundle_id" placeholder="Bundle_Id" style="width: 250px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.name" placeholder="应用名称" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.short" placeholder="短连接" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.domain_name" placeholder="应用专属访问域名" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+<!--      <el-input v-model="listQuery.domain_name" placeholder="应用专属访问域名" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />-->
       <el-select v-if="type_choices" v-model="listQuery.type" placeholder="应用类型" clearable class="filter-item" style="width: 120px" @change="handleFilter">
         <el-option v-for="item in type_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
@@ -12,7 +12,7 @@
         <el-option v-for="item in status_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <el-input v-model="listQuery.user_id" placeholder="用户ID" style="width: 140px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+      <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -126,13 +126,13 @@
         </template>
       </el-table-column>
     </el-table>
-    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="fetchData" />
+    <pagination v-show="count>0" :total="count" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="fetchData" />
 
   </div>
 </template>
 
 <script>
-import { getAppInfos, deleteApp } from '@/api/app'
+import { deleteApp, getAppList } from '@/api/app'
 import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
@@ -180,13 +180,13 @@ export default {
     return {
       list: null,
       listLoading: true,
-      total: 0,
+      count: 0,
       listQuery: {
         page: 1,
         limit: 10,
         name: undefined,
         bundle_id: undefined,
-        sort: '-count_hits',
+        ordering: '-count_hits',
         type: undefined,
         domain_name: undefined,
         user_id: undefined
@@ -209,7 +209,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.listLoading = true
-        deleteApp({ id: app_id }).then(response => {
+        deleteApp(app_id).then(response => {
           this.$message.success('删除成功')
           this.fetchData()
           this.listLoading = false
@@ -227,13 +227,13 @@ export default {
     },
     fetchData() {
       this.listLoading = true
-      getAppInfos(this.listQuery).then(response => {
-        this.list = response.data
+      getAppList(this.listQuery).then(response => {
+        this.list = response.data.results
         if (this.list && this.list.length > 0) {
           this.type_choices = this.list[0].type_choices
           this.status_choices = this.list[0].status_choices
         }
-        this.total = response.total
+        this.count = response.data.count
         this.listLoading = false
       })
     }

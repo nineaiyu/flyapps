@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-export function getOrderInfo(query) {
+export function getOrderList(query) {
   return request({
     url: '/order/info',
     method: 'get',
@@ -8,18 +8,24 @@ export function getOrderInfo(query) {
   })
 }
 
-export function updateOrderInfo(data) {
+export function getOrderInfo(pk) {
   return request({
-    url: '/order/info',
+    url: '/order/info/' + pk,
+    method: 'get'
+  })
+}
+
+export function updateOrderInfo(pk, data) {
+  return request({
+    url: '/order/info/' + pk,
     method: 'put',
     data
   })
 }
-export function deleteOrderInfo(data) {
+export function deleteOrderInfo(pk) {
   return request({
-    url: '/order/info',
-    method: 'delete',
-    data
+    url: '/order/info/' + pk,
+    method: 'delete'
   })
 }
 export function createOrderInfo(data) {

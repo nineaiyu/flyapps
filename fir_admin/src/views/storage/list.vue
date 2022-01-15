@@ -9,7 +9,7 @@
       <el-select v-model="listQuery.storage_type" placeholder="存储类型" clearable class="filter-item" style="width: 140px" @change="handleFilter">
         <el-option v-for="item in storage_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+      <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -93,7 +93,7 @@
 </template>
 
 <script>
-import { getStorageInfo } from '@/api/storage'
+import { getStorageList } from '@/api/storage'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
 
@@ -160,12 +160,12 @@ export default {
         page: 1,
         limit: 10,
         name: undefined,
-        sort: '-created_time',
         bucket_name: undefined,
         access_key: undefined,
         storage_type: undefined,
         domain_name: undefined,
-        used_id: undefined
+        user_id: undefined,
+        ordering: '-created_time'
       },
       sortOptions,
       storage_choices: []
@@ -186,12 +186,13 @@ export default {
     },
     fetchData() {
       this.listLoading = true
-      getStorageInfo(this.listQuery).then(response => {
-        this.list = response.data
+      getStorageList(this.listQuery).then(response => {
+        this.list = response.data.results
+        console.log(this.list)
         if (this.list && this.list.length > 0) {
           this.storage_choices = this.list[0].storage_choices
         }
-        this.total = response.total
+        this.total = response.data.count
         this.listLoading = false
       })
     }

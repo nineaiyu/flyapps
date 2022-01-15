@@ -2,7 +2,7 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input v-model="listQuery.release_id" placeholder="release_id" style="width: 250px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+      <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -86,7 +86,7 @@
 </template>
 
 <script>
-import { getAppReleaseInfos, downloadAppReleaseInfos } from '@/api/app'
+import { downloadAppReleaseInfos, getAppReleaseList } from '@/api/app'
 import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
@@ -135,11 +135,9 @@ export default {
         app_id: undefined,
         download_token: undefined,
         release_id: undefined,
-        sort: '-created_time'
+        ordering: '-created_time'
       },
-      sortOptions,
-      type_choices: [],
-      status_choices: []
+      sortOptions
     }
   },
   created() {
@@ -168,13 +166,9 @@ export default {
     },
     fetchData() {
       this.listLoading = true
-      getAppReleaseInfos(this.listQuery).then(response => {
-        this.list = response.data
-        if (this.list && this.list.length > 0) {
-          this.type_choices = this.list[0].type_choices
-          this.status_choices = this.list[0].status_choices
-        }
-        this.total = response.total
+      getAppReleaseList(this.listQuery).then(response => {
+        this.list = response.data.results
+        this.total = response.data.count
         this.listLoading = false
       })
     }

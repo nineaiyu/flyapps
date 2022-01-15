@@ -8,7 +8,7 @@
       <el-select v-model="listQuery.action" placeholder="充值类型" clearable class="filter-item" style="width: 140px" @change="handleFilter">
         <el-option v-for="item in action_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+      <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -96,7 +96,7 @@
 <script>
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves'
-import { getBillInfo, delBillInfo } from '@/api/developer'
+import { delBillInfo, getBillList } from '@/api/developer'
 
 const sortOptions = [
   { label: '创建时间 Ascending', key: 'created_time' },
@@ -158,7 +158,7 @@ export default {
       listQuery: {
         page: 1,
         limit: 10,
-        sort: '-created_time',
+        ordering: '-created_time',
         action: undefined,
         app_id: undefined,
         to_user_id: undefined,
@@ -179,22 +179,21 @@ export default {
       this.listQuery.page = 1
       this.fetchData()
     },
-    delbill(app_id) {
-      delBillInfo({ id: app_id }).then(response => {
+    delbill(id) {
+      delBillInfo(id).then(response => {
         this.$message.success('删除成功')
         this.fetchData()
         this.listLoading = false
       })
     },
     fetchData() {
-      console.log(this.listQuery)
       this.listLoading = true
-      getBillInfo(this.listQuery).then(response => {
-        this.list = response.data
+      getBillList(this.listQuery).then(response => {
+        this.list = response.data.results
         if (this.list && this.list.length > 0) {
           this.action_choices = this.list[0].action_choices
         }
-        this.total = response.total
+        this.total = response.data.count
         this.listLoading = false
       })
     }

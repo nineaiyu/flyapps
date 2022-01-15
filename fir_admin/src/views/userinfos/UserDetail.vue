@@ -247,7 +247,7 @@
 import { validURL } from '@/utils/validate'
 import { getUserInfos, updateUserInfo } from '@/api/user'
 import { createOrderInfo } from '@/api/order'
-import { getStorageInfo, changeStorageInfo } from '@/api/storage'
+import { changeStorageInfo, getStorageList } from '@/api/storage'
 
 const defaultForm = {
   email: undefined,
@@ -378,9 +378,9 @@ export default {
       })
     },
     fetchStorageData(user_id) {
-      getStorageInfo({ user_id: user_id }).then(response => {
-        if (response.storage_selection) {
-          this.storage_selection = response.storage_selection
+      getStorageList({ user_id: user_id }).then(response => {
+        if (response.data.storage_selection) {
+          this.storage_selection = response.data.storage_selection
         }
       }).catch(err => {
         console.log(err)

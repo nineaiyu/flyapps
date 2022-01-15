@@ -117,26 +117,27 @@ export default {
       loading: false,
       is_edit: false,
       wxbind_state_choices,
-      wxbind_sex_choices
+      wxbind_sex_choices,
+      id: ''
     }
   },
   computed: {},
   created() {
-    const id = this.$route.params && this.$route.params.id
-    this.fetchData(id)
+    this.id = this.$route.params && this.$route.params.id
+    this.fetchData(this.id)
   },
   methods: {
     fetchData(id) {
-      getWxBindInfos({ id: id }).then(response => {
-        if (response.data.length === 1) {
-          this.postForm = response.data[0]
+      getWxBindInfos(id).then(response => {
+        if (response.data) {
+          this.postForm = response.data
         }
       }).catch(err => {
         console.log(err)
       })
     },
     updateData() {
-      updateWxBindInfo(this.postForm).then(response => {
+      updateWxBindInfo(this.id, this.postForm).then(response => {
         this.$message.success('更新成功')
         this.postForm = response.data
       }).catch(err => {

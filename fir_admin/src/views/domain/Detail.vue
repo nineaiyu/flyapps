@@ -107,26 +107,27 @@ export default {
       postForm: Object.assign({}, defaultForm),
       loading: false,
       is_edit: false,
-      domain_state_choices
+      domain_state_choices,
+      id: ''
     }
   },
   computed: {},
   created() {
-    const id = this.$route.params && this.$route.params.id
-    this.fetchData(id)
+    this.id = this.$route.params && this.$route.params.id
+    this.fetchData(this.id)
   },
   methods: {
     fetchData(id) {
-      getDomainInfos({ id: id }).then(response => {
-        if (response.data.length === 1) {
-          this.postForm = response.data[0]
+      getDomainInfos(id).then(response => {
+        if (response.data) {
+          this.postForm = response.data
         }
       }).catch(err => {
         console.log(err)
       })
     },
     updateData() {
-      updateDomainInfo(this.postForm).then(response => {
+      updateDomainInfo(this.id, this.postForm).then(response => {
         this.$message.success('更新成功')
         this.postForm = response.data
       }).catch(err => {

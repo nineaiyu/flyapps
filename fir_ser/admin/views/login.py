@@ -7,11 +7,10 @@
 import logging
 
 from django.contrib import auth
-from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from admin.utils.utils import ApiResponse
 from api.utils.auth import ExpiringTokenAuthentication
-from api.utils.response import BaseResponse
 from api.utils.serializer import UserInfoSerializer
 from api.utils.storage.caches import login_auth_failed
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle
@@ -25,9 +24,11 @@ class LoginView(APIView):
     throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
 
     def post(self, request):
-        response = BaseResponse()
         receive = request.data
         username = receive.get("username", None)
+        code = 1000
+        msg = 'success'
+        data = None
         if LOGIN.get("captcha"):
             is_valid = valid_captcha(receive.get("captcha_key", None), receive.get("authcode", None), username)
         else:
@@ -42,36 +43,35 @@ class LoginView(APIView):
                         if user.role == 3:
                             login_auth_failed("del", username)
                             key, user_info = set_user_token(user, request)
-                            response.data = {
+                            data = {
                                 "username": user_info.username,
                                 "token": key
                             }
                         else:
-                            response.msg = "权限拒绝"
-                            response.code = 1003
+                            msg = "权限拒绝"
+                            code = 1003
                     else:
-                        response.msg = "用户被禁用"
-                        response.code = 1005
+                        msg = "用户被禁用"
+                        code = 1005
                 else:
                     login_auth_failed("set", username)
-                    response.msg = "密码或者账户有误"
-                    response.code = 1002
+                    msg = "密码或者账户有误"
+                    code = 1002
             else:
-                response.code = 1006
+                code = 1006
                 logger.error(f"username:{username} failed too try , locked")
-                response.msg = "用户登录失败次数过多，已被锁定，请1小时之后再次尝试"
+                msg = "用户登录失败次数过多，已被锁定，请1小时之后再次尝试"
         else:
-            response.code = 1001
-            response.msg = "验证码有误"
+            code = 1001
+            msg = "验证码有误"
 
-        return Response(response.dict)
+        return ApiResponse(code=code, msg=msg, data=data)
 
     def get(self, request):
-        response = BaseResponse()
-        response.data = {}
+        data = {}
         if LOGIN.get("captcha"):
-            response.data = get_captcha()
-        return Response(response.dict)
+            data = get_captcha()
+        return ApiResponse(data=data)
 
 
 class LoginUserView(APIView):
@@ -79,8 +79,5 @@ class LoginUserView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
 
     def get(self, request):
-        response = BaseResponse()
         serializer = UserInfoSerializer(request.user, )
-        data = serializer.data
-        response.data = data
-        return Response(response.dict)
+        return ApiResponse(data=serializer.data)

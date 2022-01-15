@@ -13,7 +13,7 @@
         <el-option v-for="item in status_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
 
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+      <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -103,7 +103,7 @@
 </template>
 
 <script>
-import { getAppReportIfo, deleteAppReportIfo } from '@/api/report'
+import { deleteAppReportIfo, getAppReportList } from '@/api/report'
 import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
@@ -174,7 +174,7 @@ export default {
         page: 1,
         limit: 10,
         app_id: undefined,
-        sort: '-created_time',
+        ordering: '-created_time',
         report_type: undefined,
         app_name: undefined,
         bundle_id: undefined,
@@ -197,7 +197,7 @@ export default {
   },
   methods: {
     remove_order_info(order_info) {
-      deleteAppReportIfo({ id: order_info.id }).then(response => {
+      deleteAppReportIfo(order_info.id).then(response => {
         this.list = response.data
         if (response.code === 1000) {
           this.fetchData()
@@ -212,13 +212,13 @@ export default {
     },
     fetchData() {
       this.listLoading = true
-      getAppReportIfo(this.listQuery).then(response => {
-        this.list = response.data
+      getAppReportList(this.listQuery).then(response => {
+        this.list = response.data.results
         if (this.list && this.list.length > 0) {
           this.report_type_choices = this.list[0].report_type_choices
           this.status_choices = this.list[0].status_choices
         }
-        this.total = response.total
+        this.total = response.data.count
         this.listLoading = false
       })
     }

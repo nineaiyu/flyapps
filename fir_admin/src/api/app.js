@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-export function getAppInfos(query) {
+export function getAppList(query) {
   return request({
     url: '/app/info',
     method: 'get',
@@ -8,23 +8,29 @@ export function getAppInfos(query) {
   })
 }
 
-export function updateAppInfo(data) {
+export function getAppInfos(pk) {
   return request({
-    url: '/app/info',
+    url: '/app/info/' + pk,
+    method: 'get'
+  })
+}
+
+export function updateAppInfo(pk, data) {
+  return request({
+    url: '/app/info/' + pk,
     method: 'put',
     data
   })
 }
 
-export function deleteApp(data) {
+export function deleteApp(pk) {
   return request({
-    url: '/app/info',
-    method: 'delete',
-    data
+    url: '/app/info/' + pk,
+    method: 'delete'
   })
 }
 
-export function getAppReleaseInfos(query) {
+export function getAppReleaseList(query) {
   return request({
     url: '/app/release/info',
     method: 'get',
@@ -32,9 +38,16 @@ export function getAppReleaseInfos(query) {
   })
 }
 
-export function updateReleaseAppInfo(data) {
+export function getAppReleaseInfos(pk) {
   return request({
-    url: '/app/release/info',
+    url: '/app/release/info/' + pk,
+    method: 'get'
+  })
+}
+
+export function updateReleaseAppInfo(pk, data) {
+  return request({
+    url: '/app/release/info/' + pk,
     method: 'put',
     data
   })

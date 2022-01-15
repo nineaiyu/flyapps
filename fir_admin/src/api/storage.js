@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-export function getStorageInfo(query) {
+export function getStorageList(query) {
   return request({
     url: '/storage/info',
     method: 'get',
@@ -8,9 +8,16 @@ export function getStorageInfo(query) {
   })
 }
 
-export function updateStorageInfo(data) {
+export function getStorageInfo(pk) {
   return request({
-    url: '/storage/info',
+    url: '/storage/info/' + pk,
+    method: 'get'
+  })
+}
+
+export function updateStorageInfo(pk, data) {
+  return request({
+    url: '/storage/info/' + pk,
     method: 'put',
     data
   })

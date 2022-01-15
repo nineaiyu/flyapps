@@ -22,3 +22,4 @@ flower==1.0.0
 django-proxy==1.2.1
 uWSGI==2.0.20
 django-cors-headers==3.10.1
+django-filter==21.1

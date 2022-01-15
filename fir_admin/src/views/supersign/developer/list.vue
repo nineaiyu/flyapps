@@ -9,7 +9,7 @@
       <el-select v-model="listQuery.auth_type" placeholder="账户类型" clearable class="filter-item" style="width: 140px" @change="handleFilter">
         <el-option v-for="item in auth_type_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+      <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -73,7 +73,7 @@
 
       <el-table-column class-name="status-col" label="是否激活" width="80" align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.is_actived | statusFilter">{{ scope.row.is_actived }}</el-tag>
+          <el-tag :type="scope.row.is_actived | statusFilter">{{ scope.row |StatusNameFilter }}</el-tag>
         </template>
       </el-table-column>
 
@@ -100,9 +100,9 @@
               查看编辑
             </el-button>
           </router-link>
-          <el-button type="danger" size="mini" @click="deleteApp(scope.row.id)">
-            删除
-          </el-button>
+<!--          <el-button type="danger" size="mini" @click="deleteApp(scope.row.id)">-->
+<!--            删除-->
+<!--          </el-button>-->
         </template>
       </el-table-column>
     </el-table>
@@ -112,7 +112,7 @@
 </template>
 
 <script>
-import { getDeveloperInfo } from '@/api/developer'
+import { getDeveloperList } from '@/api/developer'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
 
@@ -156,7 +156,7 @@ export default {
       }
       return statusMap[status]
     },
-    appStatusNameFilter(row) {
+    StatusNameFilter(row) {
       for (const r of row.status_choices) {
         if (r.id === row.status) {
           return r.name
@@ -180,7 +180,7 @@ export default {
       listQuery: {
         page: 1,
         limit: 10,
-        sort: '-created_time',
+        ordering: '-created_time',
         issuer_id: undefined,
         private_key_id: undefined,
         certid: undefined,
@@ -189,7 +189,8 @@ export default {
         auth_type: undefined
       },
       sortOptions,
-      auth_type_choices: []
+      auth_type_choices: [],
+      status_choices: []
     }
   },
   created() {
@@ -202,12 +203,13 @@ export default {
     },
     fetchData() {
       this.listLoading = true
-      getDeveloperInfo(this.listQuery).then(response => {
-        this.list = response.data
+      getDeveloperList(this.listQuery).then(response => {
+        this.list = response.data.results
         if (this.list && this.list.length > 0) {
           this.auth_type_choices = this.list[0].auth_type_choices
+          this.status_choices = this.list[0].status_choices
         }
-        this.total = response.total
+        this.total = response.data.count
         this.listLoading = false
       })
     }

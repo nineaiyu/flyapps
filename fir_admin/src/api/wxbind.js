@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-export function getWxBindInfos(query) {
+export function getWxBindList(query) {
   return request({
     url: '/wxbind/info',
     method: 'get',
@@ -8,18 +8,24 @@ export function getWxBindInfos(query) {
   })
 }
 
-export function updateWxBindInfo(data) {
+export function getWxBindInfos(pk) {
   return request({
-    url: '/wxbind/info',
+    url: '/wxbind/info/' + pk,
+    method: 'get'
+  })
+}
+
+export function updateWxBindInfo(pk,data) {
+  return request({
+    url: '/wxbind/info/' + pk,
     method: 'put',
     data
   })
 }
 
-export function deleteWxBind(data) {
+export function deleteWxBind(pk) {
   return request({
-    url: '/wxbind/info',
-    method: 'delete',
-    data
+    url: '/wxbind/info/' + pk,
+    method: 'delete'
   })
 }

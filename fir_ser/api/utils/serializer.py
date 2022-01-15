@@ -97,49 +97,6 @@ class UserInfoSerializer(serializers.ModelSerializer):
             return get_user_domain_name(obj, 0)
 
 
-class AdminUserInfoSerializer(UserInfoSerializer):
-    class Meta:
-        model = models.UserInfo
-        exclude = ["password", "api_token"]
-        read_only_fields = ["id", "head_img", "free_download_times", "last_login",
-                            "is_superuser", "last_name", "is_staff", "uid",
-                            "date_joined", "download_times", "all_download_times", "storage", "groups",
-                            "user_permissions", "certification_id", " app_count"]
-
-    gender_choices = serializers.SerializerMethodField()
-
-    def get_gender_choices(self, obj):
-        return get_choices_dict(obj.gender_choices)
-
-    role_choices = serializers.SerializerMethodField()
-
-    def get_role_choices(self, obj):
-        return get_choices_dict(obj.role_choices)
-
-    storage_choices = serializers.SerializerMethodField()
-
-    def get_storage_choices(self, obj):
-        return get_choices_dict(models.AppStorage.storage_choices[1:])
-
-    certification_status_choices = serializers.SerializerMethodField()
-
-    def get_certification_status_choices(self, obj):
-        return get_choices_dict(models.UserCertificationInfo.status_choices)
-
-    certification_id = serializers.SerializerMethodField()
-
-    def get_certification_id(self, obj):
-        return models.UserCertificationInfo.objects.filter(user_id=obj).values('id').first()
-
-    app_count = serializers.SerializerMethodField()
-
-    def get_app_count(self, obj):
-        return models.Apps.objects.filter(user_id=obj).count()
-
-    def update(self, instance, validated_data):
-        return super(AdminUserInfoSerializer, self).update(instance, validated_data)
-
-
 class AppsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Apps
@@ -280,36 +237,6 @@ class AppsQrListSerializer(AppsListSerializer):
             return {}
 
 
-class AdminAppsSerializer(AppsSerializer):
-    class Meta:
-        model = models.Apps
-        fields = "__all__"
-        read_only_fields = ["id", "app_id", "user_id", "bundle_id", "count_hits", "updated_time", "created_time"]
-
-    status_choices = serializers.SerializerMethodField()
-
-    def get_status_choices(self, obj):
-        return get_choices_dict(obj.status_choices)
-
-    type_choices = serializers.SerializerMethodField()
-
-    def get_type_choices(self, obj):
-        return get_choices_dict(obj.type_choices)
-
-    supersign_type_choices = serializers.SerializerMethodField()
-
-    def get_supersign_type_choices(self, obj):
-        return get_choices_dict(obj.supersign_type_choices)
-
-    release_count = serializers.SerializerMethodField()
-
-    def get_release_count(self, obj):
-        return models.AppReleaseInfo.objects.filter(app_id=obj).count()
-
-    def update(self, instance, validated_data):
-        return super(AdminAppsSerializer, self).update(instance, validated_data)
-
-
 class AppsShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Apps
@@ -414,26 +341,6 @@ class AppReleaseSerializer(serializers.ModelSerializer):
         return {"changelog": False, "binary_url": False}
 
 
-class AdminAppReleaseSerializer(AppReleaseSerializer):
-    class Meta:
-        model = models.AppReleaseInfo
-        fields = "__all__"
-        read_only_fields = ["id", "app_id", "release_id", "binary_size"]
-
-    release_choices = serializers.SerializerMethodField()
-
-    def get_release_choices(self, obj):
-        return get_choices_dict(obj.release_choices)
-
-    def update(self, instance, validated_data):
-        if validated_data.get("is_master", False):
-            models.AppReleaseInfo.objects.filter(app_id=instance.app_id).update(**{"is_master": False})
-        else:
-            if "is_master" in validated_data and validated_data.get("is_master") != True:
-                del validated_data["is_master"]
-        return super(AdminAppReleaseSerializer, self).update(instance, validated_data)
-
-
 class StorageSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppStorage
@@ -469,20 +376,6 @@ class StorageSerializer(serializers.ModelSerializer):
         else:
             validated_data['secret_key'] = instance.secret_key
         return super().update(instance, validated_data)
-
-
-class AdminStorageSerializer(StorageSerializer):
-    class Meta:
-        model = models.AppStorage
-        fields = "__all__"
-        read_only_fields = ["id", "user_id", "updated_time", "created_time", "storage_type"]
-
-    storage_choices = serializers.SerializerMethodField()
-
-    def get_storage_choices(self, obj):
-        return get_choices_dict(obj.storage_choices[1:])
-
-    used_id = serializers.IntegerField(source="user_id.pk")
 
 
 class DeveloperSerializer(serializers.ModelSerializer):
@@ -561,18 +454,6 @@ class DeveloperSerializer(serializers.ModelSerializer):
         return models.DeveloperAppID.objects.filter(developerid=obj).count()
 
 
-class AdminDeveloperSerializer(DeveloperSerializer):
-    class Meta:
-        model = models.AppIOSDeveloperInfo
-        # depth = 1
-        exclude = ["p8key", ]
-
-    auth_type_choices = serializers.SerializerMethodField()
-
-    def get_auth_type_choices(self, obj):
-        return get_choices_dict(obj.auth_type_choices)
-
-
 class SuperSignUsedSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.APPSuperSignUsedInfo
@@ -614,21 +495,6 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
         if role == 3:
             if obj.user_id != obj.developerid.user_id:
                 return obj.user_id.uid
-
-
-class AdminSuperSignUsedSerializer(SuperSignUsedSerializer):
-    class Meta:
-        model = models.APPSuperSignUsedInfo
-        fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name", "app_id",
-                  "id", "user_id", "short", "developer_pk"]
-
-    app_id = serializers.IntegerField(source="app_id.pk")
-
-    user_id = serializers.IntegerField(source="user_id.pk")
-
-    short = serializers.CharField(source="app_id.short")
-
-    developer_pk = serializers.IntegerField(source="developerid.pk")
 
 
 class DeveloperDeviceSerializer(serializers.ModelSerializer):
@@ -706,29 +572,6 @@ class OrdersSerializer(serializers.ModelSerializer):
         exclude = ["id"]
 
 
-class AdminOrdersSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Order
-        fields = "__all__"
-        read_only_fields = ["id", "user_id", "updated_time", "created_time", "payment_number", "order_number",
-                            "payment_name", "actual_amount", "actual_download_times", "actual_download_gift_times"]
-
-    payment_type_choices = serializers.SerializerMethodField()
-
-    def get_payment_type_choices(self, obj):
-        return get_choices_dict(obj.payment_type_choices)
-
-    status_choices = serializers.SerializerMethodField()
-
-    def get_status_choices(self, obj):
-        return get_choices_dict(obj.status_choices)
-
-    order_type_choices = serializers.SerializerMethodField()
-
-    def get_order_type_choices(self, obj):
-        return get_choices_dict(obj.order_type_choices)
-
-
 class CertificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CertificationInfo
@@ -746,43 +589,10 @@ class UserCertificationSerializer(serializers.ModelSerializer):
         exclude = ["id", "user_id", "created_time"]
 
 
-class AdminUserCertificationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.UserCertificationInfo
-        fields = "__all__"
-        read_only_fields = ["id", "user_id", "reviewed_time", "created_time"]
-
-    certification_status_choices = serializers.SerializerMethodField()
-
-    def get_certification_status_choices(self, obj):
-        return get_choices_dict(obj.status_choices)
-
-    certification_infos = serializers.SerializerMethodField()
-
-    def get_certification_infos(self, obj):
-        result = []
-        for c_info in models.CertificationInfo.objects.filter(user_id=obj.user_id).all():
-            result.append({
-                'name': get_choices_name_from_key(models.CertificationInfo.type_choices, c_info.type),
-                'certification_url': get_download_url_from_context(self, obj, '', c_info.certification_url)
-            })
-        return result
-
-    def update(self, instance, validated_data):
-        return super(AdminUserCertificationSerializer, self).update(instance, validated_data)
-
-
 class ThirdWxSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ThirdWeChatUserInfo
         exclude = ["id", "sex", "address", "user_id"]
-
-
-class AdminThirdWxSerializer(ThirdWxSerializer):
-    class Meta:
-        model = models.ThirdWeChatUserInfo
-        fields = "__all__"
-        read_only_fields = ["id", "openid", "user_id", "head_img_url"]
 
 
 class DomainNameSerializer(serializers.ModelSerializer):
@@ -801,18 +611,6 @@ class DomainNameSerializer(serializers.ModelSerializer):
             }
             return app_info
         return {}
-
-
-class AdminDomainNameSerializer(DomainNameSerializer):
-    class Meta:
-        model = models.UserDomainInfo
-        fields = "__all__"
-        read_only_fields = ["id", "app_id", "domain_type", "created_time", "cname_id"]
-
-    domain_type_choices = serializers.SerializerMethodField()
-
-    def get_domain_type_choices(self, obj):
-        return get_choices_dict(obj.domain_type_choices)
 
 
 class UserAdInfoSerializer(serializers.ModelSerializer):
@@ -896,41 +694,10 @@ class BillInfoSerializer(serializers.ModelSerializer):
                 return f"向 {obj.to_user_id.first_name} {self.get_action(obj)} -{obj.number} 设备数"
 
 
-class AdminBillInfoSerializer(BillInfoSerializer):
-    class Meta:
-        model = models.IosDeveloperPublicPoolBill
-        fields = '__all__'
-        read_only_fields = ["id", "user_id", "to_user_id", "action", "number", "app_info", "udid",
-                            "udid_sync_info", "app_id", "remote_addr"]
-
-    action_choices = serializers.SerializerMethodField()
-
-    def get_action_choices(self, obj):
-        return get_choices_dict(obj.action_choices)
-
-
 class AppReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppReportInfo
         exclude = ["id"]
-
-
-class AdminAppReportSerializer(AppReportSerializer):
-    class Meta:
-        model = models.AppReportInfo
-        fields = '__all__'
-        read_only_fields = ["id", "app_id", "username", "created_time", "email", "report_reason", "report_type",
-                            "remote_addr", "bundle_id", "app_name"]
-
-    report_type_choices = serializers.SerializerMethodField()
-
-    def get_report_type_choices(self, obj):
-        return get_choices_dict(obj.report_type_choices)
-
-    status_choices = serializers.SerializerMethodField()
-
-    def get_status_choices(self, obj):
-        return get_choices_dict(obj.status_choices)
 
 
 class AppleDeveloperToAppUseSerializer(serializers.ModelSerializer):

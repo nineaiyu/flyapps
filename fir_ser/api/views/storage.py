@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.base_views import storage_change, app_delete
-from api.models import AppStorage, UserInfo, Apps
+from api.models import AppStorage, Apps
 from api.utils.app.apputils import clean_history_apps
 from api.utils.auth import ExpiringTokenAuthentication, StoragePermission
 from api.utils.response import BaseResponse

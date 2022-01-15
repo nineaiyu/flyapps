@@ -8,7 +8,7 @@
       <el-input v-model="listQuery.bundle_id" placeholder="BundleID" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.short" placeholder="短连接" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
 
-      <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+      <el-select v-model="listQuery.ordering" style="width: 140px" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -94,7 +94,7 @@
 </template>
 
 <script>
-import { getDevicesInfo } from '@/api/devices'
+import { getDevicesList } from '@/api/devices'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
 
@@ -158,7 +158,7 @@ export default {
       listQuery: {
         page: 1,
         limit: 10,
-        sort: '-created_time',
+        ordering: '-created_time',
         issuer_id: undefined,
         short: undefined,
         bundle_id: undefined,
@@ -180,14 +180,13 @@ export default {
       this.fetchData()
     },
     fetchData() {
-      console.log(this.listQuery)
       this.listLoading = true
-      getDevicesInfo(this.listQuery).then(response => {
-        this.list = response.data
+      getDevicesList(this.listQuery).then(response => {
+        this.list = response.data.results
         if (this.list && this.list.length > 0) {
           this.auth_type_choices = this.list[0].auth_type_choices
         }
-        this.total = response.total
+        this.total = response.data.count
         this.listLoading = false
       })
     }

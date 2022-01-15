@@ -13,7 +13,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import re_path
+from django.urls import re_path, include
+from rest_framework.routers import SimpleRouter
 
 from admin.views.app import AppInfoView, AppReleaseInfoView
 from admin.views.domain import DomainNameInfoView
@@ -24,25 +25,23 @@ from admin.views.storage import StorageInfoView, StorageChangeView
 from admin.views.supersign import DeveloperInfoView, DevicesInfoView, SuperSignBillView, SuperSignBillUserInfoView
 from admin.views.user import UserInfoView, UserCertificationInfoView, ThirdWxAccountView
 
+router = SimpleRouter(False)
+router.register('app/info', AppInfoView)
+router.register('app/release/info', AppReleaseInfoView)
+router.register('domain/info', DomainNameInfoView)
+router.register('order/info', OrderInfoView)
+router.register('report/info', AdminReportView)
+router.register('storage/info', StorageInfoView)
+router.register('developer/info', DeveloperInfoView)
+router.register('devices/info', DevicesInfoView)
+router.register('bill/info', SuperSignBillView)
+router.register('wxbind/info', ThirdWxAccountView)
 urlpatterns = [
-    # path("",include(router.urls)),
-    # re_path("^users$", CertificationView.as_view()),
-    # re_path("^apps$", CertificationView.as_view()),
     re_path("^login", LoginView.as_view()),
     re_path("^user/info", LoginUserView.as_view()),
     re_path("^userinfo", UserInfoView.as_view()),
-    re_path("^app/info", AppInfoView.as_view()),
-    re_path("^app/release/info", AppReleaseInfoView.as_view()),
     re_path("^certification/info", UserCertificationInfoView.as_view()),
-    re_path("^storage/info", StorageInfoView.as_view()),
     re_path("^storage/change", StorageChangeView.as_view()),
-    re_path("^order/info", OrderInfoView.as_view()),
-    re_path("^developer/info", DeveloperInfoView.as_view()),
-    re_path("^devices/info", DevicesInfoView.as_view()),
-    re_path("^bill/info", SuperSignBillView.as_view()),
     re_path("^bill/userinfo", SuperSignBillUserInfoView.as_view()),
-    re_path("^domain/info", DomainNameInfoView.as_view()),
-    re_path("^wxbind/info", ThirdWxAccountView.as_view()),
-    re_path("^report/info", AdminReportView.as_view()),
-
+    re_path('', include(router.urls))
 ]
