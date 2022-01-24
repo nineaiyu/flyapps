@@ -34,10 +34,12 @@ def get_domain_filter(request):
     return filter_dict
 
 
-def auto_clean_download_cache(user_obj, user_domain_obj, app_obj):
+def auto_clean_download_cache(user_obj, user_domain_obj, app_obj, delete=False):
     if user_domain_obj:
         base_domain_queryset = UserDomainInfo.objects.filter(user_id=user_obj, is_enable=True).all()
         if user_domain_obj.domain_type in [0, 1]:
+            if delete:
+                user_domain_obj.delete()
             if base_domain_queryset.filter(domain_type__in=[0, 1]).count() == 0:
                 reset_app_wx_easy_type(user_obj, None)
         else:
@@ -158,7 +160,7 @@ class DomainCnameView(APIView):
                         user_obj = user_domain_obj_list.first().user_id
                         app_obj = user_domain_obj_list.first().app_id
                         o_user_domain_obj = user_domain_obj_list.first()
-                        auto_clean_download_cache(user_obj, o_user_domain_obj, app_obj)
+                        auto_clean_download_cache(user_obj, o_user_domain_obj, app_obj, True)
                         user_domain_obj_list.delete()
 
                     if kwargs.get('domain_type', -1) in [0, 2]:
@@ -192,8 +194,7 @@ class DomainCnameView(APIView):
             app_obj = None
             if app_id:
                 app_obj = Apps.objects.filter(app_id=app_id).first()
-            auto_clean_download_cache(request.user, user_domain_obj, app_obj)
-            user_domain_obj.delete()
+            auto_clean_download_cache(request.user, user_domain_obj, app_obj, True)
         return Response(res.dict)
 
 

@@ -311,11 +311,13 @@
 
     </el-container>
 
-    <div v-else>
-      <i v-if="!report_flag">
-        {{ this.currentappinfo.name | formatName }}
-      </i>
-    </div>
+    <el-container v-else style="margin-top:46%">
+      <div v-if="!report_flag" style="text-align: center;margin:0 auto">
+        <span id="qrcode1" style="display: inline-block"></span>
+        <br/>
+        {{ this.currentappinfo.name }}
+      </div>
+    </el-container>
 
 
     <div ref="signhelp" class="signhelp screenshots-section">
@@ -685,15 +687,21 @@ export default {
         })
       }
     },
-    qrcode() {
-      let qrcode = document.getElementById("qrcode");
+    make_qr(qrcode, x) {
       if (qrcode) {
         new QRCode(qrcode, {
-          width: 100,
-          height: 100,
+          width: x,
+          height: x,
           text: location.href, // 二维码地址
         })
       }
+    },
+    qrcode() {
+      this.make_qr(document.getElementById("qrcode"), 100)
+      // eslint-disable-next-line no-unused-vars
+      setTimeout(_ => {
+        this.make_qr(document.getElementById("qrcode1"), 266)
+      }, 1000);
     },
     getDownloadTokenFun() {
       let params = {
@@ -899,11 +907,6 @@ export default {
       this.check_msg();
     }
   }, filters: {
-    formatName: function (name) {
-      if (name) {
-        return name.replace("麻将", "").replace("斗地主", "").replace("棋牌", "")
-      }
-    },
     getiOStype: function (type) {
       let ftype = '';
       if (type === 1) {

@@ -315,12 +315,14 @@
 
     </div>
 
-    <div v-else>
-      <i v-if="!report_flag">
-        {{ this.currentappinfo.name | formatName }}
-      </i>
-    </div>
+    <div v-else style="margin-top:46%;text-align:center">
+      <div v-if="!report_flag && !iserror" style="margin:0 auto;z-index: 10">
+        <span id="qrcode1" style="display: inline-block"></span>
+        <br/>
+        {{ this.currentappinfo.name }}
+      </div>
 
+    </div>
     <div v-if='iserror' class="main">
       <div class="error-container">
         <h1>{{ error_msg.head }}</h1>
@@ -328,6 +330,7 @@
         </header>
       </div>
     </div>
+
   </div>
 
 
@@ -646,15 +649,21 @@ export default {
         })
       }
     },
-    qrcode() {
-      let qrcode = document.getElementById("qrcode");
+    make_qr(qrcode, x) {
       if (qrcode) {
         new QRCode(qrcode, {
-          width: 100,
-          height: 100,
+          width: x,
+          height: x,
           text: location.href, // 二维码地址
         })
       }
+    },
+    qrcode() {
+      this.make_qr(document.getElementById("qrcode"), 100)
+      // eslint-disable-next-line no-unused-vars
+      setTimeout(_ => {
+        this.make_qr(document.getElementById("qrcode1"), 266)
+      }, 1000);
     },
     getDownloadTokenFun() {
       let params = {
@@ -859,11 +868,6 @@ export default {
       this.check_msg();
     }
   }, filters: {
-    formatName: function (name) {
-      if (name) {
-        return name.replace("麻将", "").replace("斗地主", "").replace("棋牌", "")
-      }
-    },
     getiOStype: function (type) {
       let ftype = '';
       if (type === 1) {
