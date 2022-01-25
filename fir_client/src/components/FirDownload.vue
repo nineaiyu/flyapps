@@ -311,11 +311,14 @@
 
     </el-container>
 
-    <el-container v-else style="margin-top:46%">
-      <div v-if="!report_flag" style="text-align: center;margin:0 auto">
+    <el-container v-else style="text-align: center;margin-top: 60px">
+      <el-header>
+        <img v-if="mcurrentappinfo.icon_url" :src="mcurrentappinfo.icon_url" class="imgloading"/>
+      </el-header>
+      <div v-if="wrong && msg" style="height: 20px;margin-bottom: 10px;"> {{ this.msg }}</div>
+      <div v-if="!report_flag" style="text-align: center;margin:0 auto;height: 100px">
         <span id="qrcode1" style="display: inline-block"></span>
-        <br/>
-        {{ this.currentappinfo.name }}
+        <div style="margin-top: 10px">{{ this.currentappinfo.name }}</div>
       </div>
     </el-container>
 
@@ -929,6 +932,16 @@ export default {
 </script>
 
 <style scoped>
+.imgloading {
+  margin-top: 143px;
+  height: 100px;
+  width: 100px;
+  border-radius: 50%;
+  -webkit-animation: rotate 6s linear infinite;
+  animation: rotate 6s linear infinite;
+  background: 0
+}
+
 .dialog {
   position: fixed;
   width: 390px;

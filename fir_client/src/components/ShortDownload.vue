@@ -315,13 +315,13 @@
 
     </div>
 
-    <div v-else style="margin-top:46%;text-align:center">
+    <div v-else style="text-align:center">
+      <img v-if="mcurrentappinfo.icon_url" :src="mcurrentappinfo.icon_url" alt="" class="imgloading">
+      <div v-if="wrong && msg" style="height: 20px;margin-bottom: 10px;"> {{ this.msg }}</div>
       <div v-if="!report_flag && !iserror" style="margin:0 auto;z-index: 10">
         <span id="qrcode1" style="display: inline-block"></span>
-        <br/>
-        {{ this.currentappinfo.name }}
+        <div style="margin-top: 10px">{{ this.currentappinfo.name }}</div>
       </div>
-
     </div>
     <div v-if='iserror' class="main">
       <div class="error-container">
@@ -890,6 +890,17 @@ export default {
 </script>
 
 <style scoped>
+
+.imgloading {
+  height: 100px;
+  width: 100px;
+  border-radius: 50%;
+  margin: 10px 0 20px;
+  -webkit-animation: rotate 6s linear infinite;
+  animation: rotate 6s linear infinite;
+  background: 0
+}
+
 .dialog {
   position: fixed;
   width: 390px;
