@@ -205,13 +205,14 @@ def change_storage_and_change_advert_img(user_obj, new_storage_obj, clean_old_da
 
 
 def download_files_form_oss(storage_obj, org_file):
-    if storage_obj.download_file(os.path.basename(org_file), org_file + ".check.tmp"):
-        if os.path.isfile(org_file) and os.path.exists(org_file + ".check.tmp"):
-            os.remove(org_file)
-        if os.path.exists(org_file + ".check.tmp"):
-            os.rename(os.path.join(org_file + ".check.tmp"), org_file)
-            return True
-    return False
+    with cache.lock("%s_%s" % ('download_files_form_oss', org_file), timeout=60 * 30):
+        if storage_obj.download_file(os.path.basename(org_file), org_file + ".check.tmp"):
+            if os.path.isfile(org_file) and os.path.exists(org_file + ".check.tmp"):
+                os.remove(org_file)
+            if os.path.exists(org_file + ".check.tmp"):
+                os.rename(os.path.join(org_file + ".check.tmp"), org_file)
+                return True
+        return False
 
 
 def check_storage_is_new_storage(user_obj, new_storage_obj):
