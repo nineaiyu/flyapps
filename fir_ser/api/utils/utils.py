@@ -206,6 +206,8 @@ def change_storage_and_change_advert_img(user_obj, new_storage_obj, clean_old_da
 
 def download_files_form_oss(storage_obj, org_file):
     with cache.lock("%s_%s" % ('download_files_form_oss', org_file), timeout=60 * 30):
+        if os.path.isfile(org_file):
+            return
         if storage_obj.download_file(os.path.basename(org_file), org_file + ".check.tmp"):
             if os.path.isfile(org_file) and os.path.exists(org_file + ".check.tmp"):
                 os.remove(org_file)
