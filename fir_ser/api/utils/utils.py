@@ -204,10 +204,10 @@ def change_storage_and_change_advert_img(user_obj, new_storage_obj, clean_old_da
         migrating_storage_file_data(user_obj, user_advert_obj.ad_pic, new_storage_obj, clean_old_data)
 
 
-def download_files_form_oss(storage_obj, org_file):
+def download_files_form_oss(storage_obj, org_file, force=False):
     with cache.lock("%s_%s" % ('download_files_form_oss', org_file), timeout=60 * 30):
-        if os.path.isfile(org_file):
-            return
+        if os.path.isfile(org_file) and not force:
+            return True
         if storage_obj.download_file(os.path.basename(org_file), org_file + ".check.tmp"):
             if os.path.isfile(org_file) and os.path.exists(org_file + ".check.tmp"):
                 os.remove(org_file)
@@ -252,12 +252,12 @@ def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_d
     else:
         if new_storage_obj.get_storage_type() == 3:
             # 云存储下载 本地，并删除云存储
-            if download_files_form_oss(old_storage_obj, local_file_full_path):
+            if download_files_form_oss(old_storage_obj, local_file_full_path, True):
                 if clean_old_data:
                     old_storage_obj.delete_file(filename)
         else:
             # 云存储互传，先下载本地，然后上传新云存储，删除本地和老云存储
-            if download_files_form_oss(old_storage_obj, local_file_full_path):
+            if download_files_form_oss(old_storage_obj, local_file_full_path, True):
                 new_storage_obj.upload_file(local_file_full_path)
                 delete_local_files(filename)
                 if clean_old_data:

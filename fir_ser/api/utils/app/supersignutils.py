@@ -41,7 +41,7 @@ def check_org_file(user_obj, org_file):
         os.makedirs(os.path.dirname(org_file))
 
     if os.path.isfile(org_file):
-        return
+        return True
 
     storage_obj = Storage(user_obj)
     return download_files_form_oss(storage_obj, org_file)
@@ -474,7 +474,10 @@ class IosUtils(object):
     def exec_sign(user_obj, app_obj, developer_obj, random_file_name, release_obj):
         resign_app_obj = IosUtils.get_resign_obj(user_obj, developer_obj)
         org_file = os.path.join(MEDIA_ROOT, release_obj.release_id + ".ipa")
-        check_org_file(user_obj, org_file)
+        if not check_org_file(user_obj, org_file):
+            msg = f"{user_obj} {developer_obj} {app_obj} sign_ipa failed ERROR:'签名包检测失败，或许文件下载失败'"
+            logger.error(msg)
+            return False, msg
         new_file = os.path.join(MEDIA_ROOT, random_file_name + ".ipa")
         properties_info = {}
         if app_obj.new_bundle_id:
