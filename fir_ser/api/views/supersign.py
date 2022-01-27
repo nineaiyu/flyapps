@@ -222,6 +222,7 @@ class DeveloperView(APIView):
         return Response(res.dict)
 
     def post(self, request):
+        res = BaseResponse()
         data = request.data
         data_info = {}
         if data.get("auth_type") == 0:
@@ -237,9 +238,16 @@ class DeveloperView(APIView):
             logger.error(f"user {request.user} add new developer {data.get('issuer_id', '')} data {data_info}")
             developer_obj = AppIOSDeveloperInfo.objects.create(user_id=request.user, **data_info)
             IosUtils.create_developer_space(developer_obj, request.user)
+            status, result = IosUtils.active_developer(developer_obj)
+            if not status:
+                res.code = 1008
+                res.msg = result.get("return_info", "未知错误")
+                return Response(res.dict)
+            else:
+                IosUtils.get_device_from_developer(developer_obj)
+
         except Exception as e:
             logger.error(f"user {request.user} create developer {data_info} failed Exception:{e}")
-            res = BaseResponse()
             res.code = 1005
             res.msg = "添加失败"
             return Response(res.dict)
