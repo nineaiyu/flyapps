@@ -558,15 +558,15 @@
               <el-row>
                 <el-col :span="18">
                   <el-input v-model="editdeveloperinfo.p8key"
-                            placeholder="请填写或者上传p8key" :rows="6" type="textarea"/>
+                            :rows="6" placeholder="请填写或者上传p8key" type="textarea"/>
                 </el-col>
                 <el-col :span="6">
                   <el-upload
-                      style="margin-top: 50px"
                       :before-upload="beforep8keyUpload"
                       :limit="1"
                       accept=".p8"
                       action="#"
+                      style="margin-top: 50px"
                   >
                     <el-button size="small" type="primary">点击上传p8证书文件</el-button>
                   </el-upload>
@@ -1137,7 +1137,7 @@ export default {
       dialogaddDeveloperVisible: false,
       importcertDeveloperVisible: false,
       title: "",
-      editdeveloperinfo: {auth_type: 0, usable_number: 100, app_limit_number: 100,p8key: ''},
+      editdeveloperinfo: {auth_type: 0, usable_number: 100, app_limit_number: 100, p8key: ''},
       isedit: false,
       placeholder: "",
       pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
@@ -1328,16 +1328,16 @@ export default {
         }
       })
     },
-    beforep8keyUpload(file){
+    beforep8keyUpload(file) {
       let reader = new FileReader(); //这是核心,读取操作就是由它完成.
       reader.readAsText(file); //读取文件的内容,也可以读取文件的URL
       // eslint-disable-next-line no-unused-vars
       reader.onload = res => {
         //当读取完成后回调这个函数,然后此时文件的内容存储到了result中,直接操作即可
         let text = reader.result;
-        if(text.startsWith('-----BEGIN PRIVATE KEY')){
+        if (text.startsWith('-----BEGIN PRIVATE KEY')) {
           this.editdeveloperinfo.p8key = reader.result.toString()
-        }else {
+        } else {
           this.$message.warning("p8key文件不正确")
         }
       }
