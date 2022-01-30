@@ -29,6 +29,15 @@ from fir_ser.settings import DEVELOPER_USE_STATUS, DEVELOPER_DISABLED_STATUS
 logger = logging.getLogger(__name__)
 
 
+def delete_developer_and_clean(developer_obj, user_obj):
+    if developer_obj and user_obj:
+        logger.error(f"user {user_obj} delete developer {developer_obj}")
+        if developer_obj.certid:
+            IosUtils.clean_developer(developer_obj, user_obj)
+            IosUtils.revoke_developer_cert(developer_obj, user_obj)
+        developer_obj.delete()
+
+
 class DeveloperView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
     permission_classes = [SuperSignPermission, ]
@@ -242,6 +251,7 @@ class DeveloperView(APIView):
             if not status:
                 res.code = 1008
                 res.msg = result.get("return_info", "未知错误")
+                delete_developer_and_clean(developer_obj, request.user)
                 return Response(res.dict)
             else:
                 IosUtils.get_device_from_developer(developer_obj)
@@ -260,14 +270,7 @@ class DeveloperView(APIView):
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=issuer_id).first()
         else:
             return self.get(request)
-
-        if developer_obj:
-            logger.error(f"user {request.user} delete developer {developer_obj}")
-            if developer_obj.certid:
-                IosUtils.clean_developer(developer_obj, request.user)
-                IosUtils.revoke_developer_cert(developer_obj, request.user)
-            developer_obj.delete()
-
+        delete_developer_and_clean(developer_obj, request.user)
         return self.get(request)
 
 

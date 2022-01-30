@@ -92,7 +92,7 @@
 </template>
 
 <script>
-import { getWxBindInfos, deleteWxBind, getWxBindList } from '@/api/wxbind'
+import { deleteWxBind, getWxBindList } from '@/api/wxbind'
 import { baseFilter } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 import waves from '@/directive/waves' // waves directive
