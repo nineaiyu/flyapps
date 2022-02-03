@@ -56,6 +56,18 @@ class AESCipher(object):
         return data
 
 
+class AppleDeveloperUid(object):
+
+    def __init__(self):
+        self.cipher = AESCipher(self.__class__.__name__)
+
+    def get_encrypt_uid(self, raw):
+        return self.cipher.encrypt(raw.encode('utf-8')).decode('utf-8')
+
+    def get_decrypt_uid(self, enc):
+        return self.cipher.decrypt(enc)
+
+
 def make_from_user_uuid(uid):
     random_str = uuid.uuid1().__str__().split("-")[0:-1]
     user_ran_str = uuid.uuid5(uuid.NAMESPACE_DNS, uid).__str__().split("-")

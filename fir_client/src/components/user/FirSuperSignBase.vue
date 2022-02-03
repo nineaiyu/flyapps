@@ -777,21 +777,29 @@
               width="200">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
-                <p>开发者ID: {{ scope.row.developer_id }}</p>
+                <p>开发者ID: {{ get_developer_uid(scope.row.developer_id) }}</p>
                 <p>开发者备注: {{ scope.row.developer_description }}</p>
                 <p>开发者状态: {{ scope.row.developer_status }}</p>
                 <div slot="reference" class="name-wrapper">
-                  <span>{{ scope.row.developer_id }}</span>
+                  <span>{{ get_developer_uid(scope.row.developer_id) }}</span>
                 </div>
               </el-popover>
             </template>
           </el-table-column>
-          <!--          <el-table-column-->
-          <!--              v-if="$store.state.userinfo&&$store.state.userinfo.role === 3"-->
-          <!--              align="center"-->
-          <!--              label="被使用户uid"-->
-          <!--              prop="other_uid">-->
-          <!--          </el-table-column>-->
+          <el-table-column
+              align="center"
+              label="已经分配其他用户"
+              prop="other_uid">
+            <template slot-scope="scope">
+              <el-popover v-if="scope.row.other_uid" placement="top" trigger="hover">
+                <p>分配用户uid: {{ scope.row.other_uid.uid }}</p>
+                <p>分配用户昵称: {{ scope.row.other_uid.name }}</p>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.other_uid.uid }}</span>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
           <el-table-column
               :formatter="deviceformatter"
               align="center"
@@ -885,21 +893,29 @@
               prop="issuer_id">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
-                <p>开发者ID: {{ scope.row.issuer_id }}</p>
+                <p>开发者ID: {{ get_developer_uid(scope.row.issuer_id) }}</p>
                 <p>开发者备注: {{ scope.row.developer_description }}</p>
                 <p>开发者状态: {{ scope.row.developer_status }}</p>
                 <div slot="reference" class="name-wrapper">
-                  <span>{{ scope.row.issuer_id }}</span>
+                  <span>{{ get_developer_uid(scope.row.issuer_id) }}</span>
                 </div>
               </el-popover>
             </template>
           </el-table-column>
-          <!--          <el-table-column-->
-          <!--              v-if="$store.state.userinfo&&$store.state.userinfo.role === 3"-->
-          <!--              align="center"-->
-          <!--              label="被使用户uid"-->
-          <!--              prop="other_uid">-->
-          <!--          </el-table-column>-->
+          <el-table-column
+              align="center"
+              label="已经分配其他用户"
+              prop="other_uid">
+            <template slot-scope="scope">
+              <el-popover v-if="scope.row.other_uid" placement="top" trigger="hover">
+                <p>分配用户uid: {{ scope.row.other_uid.uid }}</p>
+                <p>分配用户昵称: {{ scope.row.other_uid.name }}</p>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.other_uid.uid }}</span>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
           <el-table-column
               :formatter="deviceformatter"
               align="center"
@@ -922,7 +938,7 @@
                   </el-button>
                 </el-tooltip>
               </div>
-              <div style="margin-top: 5px">
+              <div v-if="!(scope.row.issuer_id && scope.row.issuer_id.indexOf(':')> -1)" style="margin-top: 5px">
                 <el-tooltip content="删除的同时，会检测并同时禁用苹果开发者设备" placement="bottom">
                   <el-button
                       size="mini"
@@ -1212,6 +1228,12 @@ export default {
     }
   },
   methods: {
+    get_developer_uid(uid) {
+      if (uid && uid.indexOf(':') > -1) {
+        return '公共账号池'
+      } else
+        return uid
+    },
     changeDevice(info, disabled) {
       this.iosudevicesFun("PUT", {developer_id: info.developer_id, udid: info.udid, disabled: disabled})
     },
@@ -1403,7 +1425,17 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.iosdevicesudidFun('DELETE', {id: scope.row.id, aid: scope.row.app_id, disabled: disabled}, scope);
+        let other_uid = scope.row.other_uid
+        let uid = ''
+        if (other_uid && other_uid.uid) {
+          uid = other_uid.uid
+        }
+        this.iosdevicesudidFun('DELETE', {
+          id: scope.row.id,
+          aid: scope.row.app_id,
+          disabled: disabled,
+          uid: uid
+        }, scope);
       }).catch(() => {
         this.$message({
           type: 'info',

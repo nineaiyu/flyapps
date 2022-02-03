@@ -258,6 +258,11 @@ def update_or_create_developer_udid_info(device_obj, developer_obj):
     return UDIDsyncDeveloper.objects.update_or_create(developerid=developer_obj, udid=device_obj.udid, defaults=device)
 
 
+def check_uid_has_relevant(user_uid, to_user_uid):
+    if user_uid and to_user_uid:
+        return IosDeveloperPublicPoolBill.objects.filter(user_id__uid=user_uid, to_user_id__uid=to_user_uid).first()
+
+
 class PageNumber(PageNumberPagination):
     page_size = 10  # 每页显示多少条
     page_size_query_param = 'size'  # URL中每页显示条数的参数

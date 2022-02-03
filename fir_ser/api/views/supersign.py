@@ -16,15 +16,16 @@ from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDe
     UDIDsyncDeveloper, AppleDeveloperToAppUse, Apps, DeveloperAppID, APPToDeveloper, DeveloperDevicesID
 from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
-from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, PageNumber
+from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, PageNumber, \
+    check_uid_has_relevant
 from api.utils.response import BaseResponse
 from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, BillInfoSerializer, \
     DeveloperDeviceSerializer, AppleDeveloperToAppUseSerializer, AppleDeveloperToAppUseAppsSerializer
 from api.utils.storage.caches import get_app_download_url
 from api.utils.utils import get_developer_devices
-from common.base.baseutils import get_choices_dict, get_choices_name_from_key
+from common.base.baseutils import get_choices_dict, get_choices_name_from_key, AppleDeveloperUid
 from common.cache.state import CleanSignDataState
-from fir_ser.settings import DEVELOPER_USE_STATUS, DEVELOPER_DISABLED_STATUS
+from fir_ser.settings import DEVELOPER_USE_STATUS, DEVELOPER_DISABLED_STATUS, DEVELOPER_UID_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -315,8 +316,17 @@ class SuperSignUsedView(APIView):
         device_udid = data.get('device_udid', '')
         developer_id = data.get('developer_id', '')
         bundle_id = data.get('bundle_id', '')
+        other_uid_info = data.get('other_uid', '')
         if device_udid and developer_id and bundle_id:
             app_obj = Apps.objects.filter(user_id=request.user, bundle_id=bundle_id).first()
+            if app_obj is None and not developer_id.startswith(DEVELOPER_UID_KEY):
+                if other_uid_info:
+                    other_uid = other_uid_info.get('uid')
+                    if other_uid and check_uid_has_relevant(request.user.uid, other_uid):
+                        app_obj = Apps.objects.filter(bundle_id=bundle_id).first()
+            if developer_id.startswith(DEVELOPER_UID_KEY):
+                developer_id = AppleDeveloperUid().get_decrypt_uid(developer_id.lstrip('T:'))
+
             app_to_dev_obj = APPToDeveloper.objects.filter(app_id=app_obj, developerid__issuer_id=developer_id).first()
             if app_obj and app_to_dev_obj:
                 res = get_app_download_url(request, res, app_obj.app_id, app_obj.short, app_obj.password,
@@ -346,6 +356,7 @@ class AppUDIDUsedView(APIView):
     def delete(self, request):
         res = BaseResponse()
         pk = request.query_params.get("id", None)
+        other_uid = request.query_params.get("uid", None)
         app_id = request.query_params.get("aid", None)
         disabled = request.query_params.get("disabled", None)
         if disabled is not None and disabled == '1':
@@ -353,15 +364,22 @@ class AppUDIDUsedView(APIView):
         else:
             disabled = False
         app_udid_obj = AppUDID.objects.filter(pk=pk, app_id__user_id=request.user)
+        if not app_udid_obj and check_uid_has_relevant(request.user.uid, other_uid):
+            app_udid_obj = AppUDID.objects.filter(pk=pk, app_id__user_id__uid=other_uid)
         if app_udid_obj:
             super_sign_used_obj = APPSuperSignUsedInfo.objects.filter(udid=app_udid_obj.first()).first()
-            if super_sign_used_obj and super_sign_used_obj.developerid.user_id.pk == request.user.pk:
-                logger.error(f"user {request.user} delete devices {app_udid_obj}")
-                IosUtils.disable_udid(app_udid_obj.first(), app_id, disabled)
+            if super_sign_used_obj:
+                if super_sign_used_obj.developerid.user_id.pk == request.user.pk:
+                    logger.error(f"user {request.user} delete devices {app_udid_obj}")
+                    IosUtils.disable_udid(app_udid_obj.first(), app_id, disabled)
+                else:
+                    IosUtils.disable_udid(app_udid_obj.first(), app_id)
+                    # res.code = 10002
+                    # res.msg = '公共账号池不允许禁用删除'
                 app_udid_obj.delete()
             else:
-                res.code = 10002
-                res.msg = '公共账号池不允许删除'
+                res.code = 10003
+                res.msg = '数据异常，删除失败'
         return Response(res.dict)
 
 
@@ -468,8 +486,12 @@ class DeviceUsedBillView(APIView):
         res = BaseResponse()
         udid = request.query_params.get("udid", None)
         act = request.query_params.get("act", None)
+
+        receive_user_id_list = IosDeveloperPublicPoolBill.objects.filter(user_id=request.user,
+                                                                         to_user_id__isnull=False).values(
+            'to_user_id').distinct()
         user_used_list = IosDeveloperPublicPoolBill.objects.filter(
-            Q(to_user_id=request.user) | Q(user_id=request.user))
+            Q(to_user_id=request.user) | Q(user_id=request.user) | Q(user_id_id__in=receive_user_id_list))
         page_obj = PageNumber()
         if udid:
             user_used_list = user_used_list.filter(udid=udid)
@@ -512,7 +534,11 @@ class DeviceUsedRankInfoView(APIView):
         search_key = request.query_params.get("appnamesearch")
         start_time = request.query_params.get("start_time")
         end_time = request.query_params.get("end_time")
-        app_used_sign_objs = APPSuperSignUsedInfo.objects.filter(user_id=request.user)
+        receive_user_id_list = IosDeveloperPublicPoolBill.objects.filter(user_id=request.user,
+                                                                         to_user_id__isnull=False).values(
+            'to_user_id').distinct()
+        app_used_sign_objs = APPSuperSignUsedInfo.objects.filter(
+            Q(user_id=request.user) | Q(user_id_id__in=receive_user_id_list))
         if search_key:
             app_used_sign_objs = app_used_sign_objs.filter(
                 Q(app_id__name=search_key) | Q(app_id__bundle_id=search_key) | Q(

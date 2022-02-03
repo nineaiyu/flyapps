@@ -11,9 +11,9 @@ from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_
 from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
 from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided
-from common.base.baseutils import get_choices_dict, get_choices_name_from_key
+from common.base.baseutils import get_choices_dict, get_choices_name_from_key, AppleDeveloperUid
 from common.cache.storage import AdPicShowCache
-from fir_ser.settings import DEVELOPER_USE_STATUS
+from fir_ser.settings import DEVELOPER_USE_STATUS, DEVELOPER_UID_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -470,16 +470,14 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
     developer_status = serializers.SerializerMethodField()
 
     def get_developer_status(self, obj):
-        if self.context.get('mine'):
-            return obj.developerid.get_status_display()
-        else:
-            return '公共账号池'
+        return obj.developerid.get_status_display()
 
     def get_developer_id(self, obj):
+        issuer_id = obj.developerid.issuer_id
         if self.context.get('mine'):
-            return obj.developerid.issuer_id
+            return issuer_id
         else:
-            return '公共账号池'
+            return f"{DEVELOPER_UID_KEY}{AppleDeveloperUid().get_encrypt_uid(issuer_id)}"
 
     def get_developer_description(self, obj):
         if self.context.get('mine'):
@@ -489,12 +487,9 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
 
     def get_other_uid(self, obj):
         user_obj = self.context.get('user_obj')
-        role = 0
-        if user_obj:
-            role = user_obj.role
-        if role == 3:
-            if obj.user_id != obj.developerid.user_id:
-                return obj.user_id.uid
+        if obj.user_id != obj.developerid.user_id:
+            if user_obj.uid != obj.user_id.uid:
+                return {'uid': obj.user_id.uid, 'name': obj.user_id.first_name}
 
 
 class DeveloperDeviceSerializer(serializers.ModelSerializer):
@@ -529,16 +524,14 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
     other_uid = serializers.SerializerMethodField()
 
     def get_issuer_id(self, obj):
+        issuer_id = obj.udid.developerid.issuer_id
         if self.context.get('mine'):
-            return obj.udid.developerid.issuer_id
+            return issuer_id
         else:
-            return '公共账号池'
+            return f"{DEVELOPER_UID_KEY}{AppleDeveloperUid().get_encrypt_uid(issuer_id)}"
 
     def get_developer_status(self, obj):
-        if self.context.get('mine'):
-            return obj.udid.developerid.get_status_display()
-        else:
-            return '公共账号池'
+        return obj.udid.developerid.get_status_display()
 
     def get_developer_description(self, obj):
         if self.context.get('mine'):
@@ -548,13 +541,11 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
 
     def get_other_uid(self, obj):
         user_obj = self.context.get('user_obj')
-        role = 0
-        if user_obj:
-            role = user_obj.role
-        if role == 3:
+        user_obj_new = obj.app_id.user_id
+        if user_obj.pk != user_obj_new.pk:
             super_user_obj = models.APPSuperSignUsedInfo.objects.filter(udid=obj, app_id=obj.app_id).first()
-            if super_user_obj.developerid.user_id != obj.app_id.user_id:
-                return obj.app_id.user_id.uid
+            if super_user_obj.developerid.user_id != user_obj_new:
+                return {'uid': user_obj_new.uid, 'name': user_obj_new.first_name}
 
     def get_is_mine(self, obj):
         return self.context.get('mine')
