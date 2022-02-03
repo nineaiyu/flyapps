@@ -116,7 +116,7 @@ class AppInfoView(APIView):
             if app_obj:
                 app_serializer = AppsSerializer(app_obj, context={"storage": Storage(request.user)})
                 res.data = app_serializer.data
-                count = APPToDeveloper.objects.filter(app_id=app_obj, developerid__user_id=request.user).count()
+                count = APPToDeveloper.objects.filter(app_id=app_obj).count()
                 res.data["count"] = count
             else:
                 logger.error(f"app_id:{app_id} is not found in user:{request.user}")

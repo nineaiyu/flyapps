@@ -19,7 +19,7 @@ from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppRe
     UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo, AppleDeveloperToAppUse
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign, \
-    get_developer_can_used_from_public_sign, update_or_create_developer_udid_info
+    get_developer_can_used_from_public_sign, update_or_create_developer_udid_info, check_uid_has_relevant
 from api.utils.response import BaseResponse
 from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
@@ -921,7 +921,7 @@ class IosUtils(object):
 
         for developer_id in developer_id_lists:
             developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_id[0]).first()
-            if developer_obj and developer_obj.user_id == app_obj.user_id:
+            if developer_obj and (developer_obj.user_id == app_obj.user_id or check_uid_has_relevant(developer_obj.user_id.uid,app_obj.user_id.uid)):
                 IosUtils.clean_super_sign_things_by_app_obj(app_obj, developer_obj)
 
     @staticmethod
