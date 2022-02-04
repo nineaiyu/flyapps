@@ -86,8 +86,8 @@ def start_api_sever_do_clean():
     invalid_config_cache()
 
 
-def clean_config_cache():
-    invalid_config_cache()
+def clean_config_cache(key):
+    invalid_config_cache(key)
 
 
 @app.task

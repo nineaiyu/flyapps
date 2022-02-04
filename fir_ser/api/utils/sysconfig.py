@@ -22,8 +22,8 @@ class SystemConfigSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-def invalid_config_cache():
-    SystemConfigCache('*').del_many()
+def invalid_config_cache(key='*'):
+    SystemConfigCache(key).del_many()
 
 
 # def make_json_value(value, default):
@@ -57,7 +57,7 @@ class ConfigCacheBase(object):
         if d_key != key and data is not None:
             db_data['value'] = data
             db_data['key'] = key
-        cache.set_storage_cache(db_data, timeout=0)
+        cache.set_storage_cache(db_data, timeout=60 * 60 * 24 * 30)
         return db_data.get('value')
 
     def set_value(self, key, value):
