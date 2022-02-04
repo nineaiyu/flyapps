@@ -141,7 +141,7 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
+        # 'rest_framework.renderers.BrowsableAPIRenderer',
     ),
     'DEFAULT_THROTTLE_CLASSES': [
         'api.utils.throttle.LoginUserThrottle',
@@ -236,25 +236,13 @@ CORS_ALLOW_HEADERS = (
     "x-token"
 )
 
-# geetest 配置信息
-GEETEST_ID = BASECONF.GEETEST_ID
-GEETEST_KEY = BASECONF.GEETEST_KEY
-GEETEST_CYCLE_TIME = BASECONF.GEETEST_CYCLE_TIME
-GEETEST_BYPASS_STATUS_KEY = BASECONF.GEETEST_BYPASS_STATUS_KEY
-GEETEST_BYPASS_URL = BASECONF.GEETEST_BYPASS_URL
-
-# 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG_KEY_INFO.sender 信息
-REGISTER = AUTHCONF.REGISTER
-# 个人资料修改修改也会使用该配置
-CHANGER = AUTHCONF.CHANGER
-LOGIN = AUTHCONF.LOGIN
-REPORT = AUTHCONF.REPORT
 THIRD_PART_CONFIG_KEY_INFO = {
     # APP存储配置
     'storage_key': STORAGEKEYCONF.STORAGE,
     'sender_key': SENDERCONF.SENDER
 }
 CACHE_KEY_TEMPLATE = {
+    'sysconfig_key': 'sysconfig',
     'user_can_download_key': 'user_can_download',
     'download_times_key': 'app_download_times',
     'make_token_key': 'make_token',
@@ -281,10 +269,6 @@ CACHE_KEY_TEMPLATE = {
 DATA_DOWNLOAD_KEY = "d_token"
 FILE_UPLOAD_TMP_KEY = ".tmp"
 DEVELOPER_UID_KEY = "T:"
-USER_FREE_DOWNLOAD_TIMES = 5
-AUTH_USER_FREE_DOWNLOAD_TIMES = 10
-NEW_USER_GIVE_DOWNLOAD_TIMES = 100
-AUTH_USER_GIVE_DOWNLOAD_TIMES = 200
 
 # (-1, '疑似被封'), (0, '未激活'), (1, '已激活'), (2, '协议待同意'), (3, '维护中'), (4, '证书过期'), (5, '状态异常')
 DEVELOPER_USE_STATUS = [1, 2, 3, 4, 5]  # 开发者可用状态，详情查看 model.AppIOSDeveloperInfo
@@ -303,32 +287,6 @@ SYNC_CACHE_TO_DATABASE = {
     'clean_local_tmp_file_from_mtime': 60 * 60,  # 清理最后一次修改时间超过限制时间的临时文件,单位秒
     'auto_check_ios_developer_active_times': 60 * 60 * 12,  # ios开发者证书检测时间
 }
-
-SERVER_DOMAIN = BASECONF.SERVER_DOMAIN
-
-MOBILE_CONFIG_SIGN_SSL = IPACONF.MOBILE_CONFIG_SIGN_SSL
-
-APPLE_DEVELOPER_API_PROXY = IPACONF.APPLE_DEVELOPER_API_PROXY
-
-APPLE_DEVELOPER_API_TIMEOUT = IPACONF.APPLE_DEVELOPER_API_TIMEOUT
-
-APPLE_DEVELOPER_API_PROXY_LIST = IPACONF.APPLE_DEVELOPER_API_PROXY_LIST
-
-DEFAULT_MOBILEPROVISION = IPACONF.DEFAULT_MOBILEPROVISION
-# DEFAULT_MOBILEPROVISION = {
-#     # 默认描述文件路径或者下载路径，用户企业签名或者超级签名 跳转 [设置 - 通用 - 描述文件|设备管理] 页面
-#     # 如果配置了path路径，则走路径，如果配置了url，则走URL，path 优先级大于url优先级
-#     'enterprise': {
-#         'path': os.path.join(MEDIA_ROOT, 'embedded.mobileprovision'),
-#         'url': 'https://ali-static.jappstore.com/embedded.mobileprovision'
-#     },
-#     'supersign': {
-#         # 超级签名，如果self 为True，则默认用自己的描述文件，否则同企业配置顺序一致,自己的配置文件有时候有问题
-#         'self': False,
-#         'path': os.path.join(MEDIA_ROOT, 'embedded.mobileprovision'),
-#         'url': 'https://ali-static.jappstore.com/embedded.mobileprovision'
-#     }
-# }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
@@ -473,7 +431,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'check_bypass_status_job': {
         'task': 'api.tasks.check_bypass_status_job',
-        'schedule': GEETEST_CYCLE_TIME,
+        'schedule': BASECONF.GEETEST_CYCLE_TIME,
         'args': ()
     },
     'auto_clean_upload_tmp_file_job': {
@@ -510,13 +468,7 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-MSGTEMPLATE = {
-    'NOT_EXIST_DEVELOPER': '用户 %s 你好，应用 %s 签名失败了，苹果开发者总设备量已经超限，请添加新的苹果开发者或者修改开发者设备数量。感谢有你!',
-    'ERROR_DEVELOPER': '用户 %s 你好，应用 %s 签名失败了，苹果开发者 %s 信息异常，请重新检查苹果开发者状态是否正常。感谢有你!',
-    'AUTO_CHECK_DEVELOPER': '用户 %s 你好，苹果开发者 %s 信息异常，请重新检查苹果开发者状态是否正常。感谢有你!',
-}
-
-## listen port
+# listen port
 
 SERVER_BIND_HOST = BASECONF.SERVER_BIND_HOST
 SERVER_LISTEN_PORT = BASECONF.SERVER_LISTEN_PORT

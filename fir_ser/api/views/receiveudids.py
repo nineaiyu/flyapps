@@ -18,8 +18,9 @@ from api.utils.modelutils import get_redirect_server_domain, add_remote_info_fro
     get_app_download_uri
 from api.utils.response import BaseResponse
 from api.utils.storage.caches import check_app_permission
+from api.utils.sysconfig import Config
 from api.utils.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
-from common.base.baseutils import get_real_ip_address, get_http_server_domain, make_random_uuid
+from common.base.baseutils import get_real_ip_address, make_random_uuid, get_server_domain_from_request
 from fir_ser.celery import app
 
 logger = logging.getLogger(__name__)
@@ -107,7 +108,7 @@ class ShowUdidView(View):
         udid = request.GET.get("udid")
         if udid:
             return HttpResponse("udid: %s" % udid)
-        server_domain = get_http_server_domain(request)
+        server_domain = get_server_domain_from_request(request, Config.POST_UDID_DOMAIN)
         path_info_lists = [server_domain, "show_udid"]
         udid_url = "/".join(path_info_lists)
         ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, 'show_udid_info', 'flyapps.cn', '查询设备udid')
@@ -120,6 +121,6 @@ class ShowUdidView(View):
         stream_f = str(request.body)
         format_udid_info = udid_bytes_to_dict(stream_f)
         logger.info(f"show_udid receive new udid {format_udid_info}")
-        server_domain = get_http_server_domain(request)
+        server_domain = get_server_domain_from_request(request, Config.POST_UDID_DOMAIN)
         return HttpResponsePermanentRedirect(
             "%s/show_udid?udid=%s" % (server_domain, format_udid_info.get("udid")))

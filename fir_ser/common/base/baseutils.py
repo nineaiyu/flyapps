@@ -21,7 +21,7 @@ from django.core.validators import validate_email
 from django.utils import timezone
 from dns.resolver import Resolver
 
-from fir_ser.settings import SUPER_SIGN_ROOT, SERVER_DOMAIN
+from fir_ser.settings import SUPER_SIGN_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -248,17 +248,6 @@ def get_server_domain_from_request(request, server_domain):
             protocol = 'http'
         server_domain = "%s://%s" % (protocol, http_host)
     return server_domain
-
-
-def get_http_server_domain(request):
-    server_domain = SERVER_DOMAIN.get('POST_UDID_DOMAIN', None)
-    return get_server_domain_from_request(request, server_domain)
-
-
-def get_post_udid_url(request, short):
-    server_domain = get_http_server_domain(request)
-    path_info_lists = [server_domain, "udid", short]
-    return "/".join(path_info_lists)
 
 
 def format_apple_date(s_date):

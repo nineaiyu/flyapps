@@ -22,9 +22,10 @@ from api.utils.response import BaseResponse
 from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
 from api.utils.storage.caches import check_app_permission, get_app_download_url
 from api.utils.storage.storage import Storage, get_local_storage
+from api.utils.sysconfig import Config
 from api.utils.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 from common.base.baseutils import get_profile_full_path, make_random_uuid, get_origin_domain_name, \
-    format_get_uri, get_post_udid_url
+    format_get_uri, get_server_domain_from_request
 from fir_ser import settings
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,12 @@ def file_response(stream, filename, content_type):
 def mobileprovision_file_response(file_path):
     return file_response(open(file_path, 'rb'), make_random_uuid() + '.mobileprovision',
                          "application/x-apple-aspen-config")
+
+
+def get_post_udid_url(request, short):
+    server_domain = get_server_domain_from_request(request, Config.POST_UDID_DOMAIN)
+    path_info_lists = [server_domain, "udid", short]
+    return "/".join(path_info_lists)
 
 
 class DownloadView(APIView):
@@ -100,7 +107,7 @@ class DownloadView(APIView):
                         app_super_obj = APPSuperSignUsedInfo.objects.last()
 
                     if not app_super_obj:
-                        file_path = settings.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
+                        file_path = Config.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
                         if file_path and os.path.isfile(file_path):
                             return mobileprovision_file_response(file_path)
                     else:
@@ -109,7 +116,7 @@ class DownloadView(APIView):
                         if os.path.isfile(file_path):
                             return mobileprovision_file_response(file_path)
                         else:
-                            file_path = settings.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
+                            file_path = Config.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
                             if file_path and os.path.isfile(file_path):
                                 return mobileprovision_file_response(file_path)
 
@@ -117,7 +124,7 @@ class DownloadView(APIView):
             elif f_type == 'dmobileprovision':  # 企业签名安装信任跳转
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
                 if release_obj:
-                    file_path = settings.DEFAULT_MOBILEPROVISION.get("enterprise").get('path')
+                    file_path = Config.DEFAULT_MOBILEPROVISION.get("enterprise").get('path')
                     if file_path and os.path.isfile(file_path):
                         return mobileprovision_file_response(file_path)
                 res.msg = "d_mobile_provision release_id error"

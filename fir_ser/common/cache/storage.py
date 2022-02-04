@@ -203,3 +203,9 @@ class SignUdidQueueCache(RedisCacheBase):
     def __init__(self, prefix_key):
         self.cache_key = f"{CACHE_KEY_TEMPLATE.get('ipa_sign_udid_queue_key')}_{prefix_key}"
         super().__init__(self.cache_key)
+
+
+class SystemConfigCache(RedisCacheBase):
+    def __init__(self, prefix_key):
+        self.cache_key = f"{CACHE_KEY_TEMPLATE.get('sysconfig_key')}_{prefix_key}"
+        super().__init__(self.cache_key)

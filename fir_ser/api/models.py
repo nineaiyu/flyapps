@@ -644,3 +644,17 @@ class AppleDeveloperToAppUse(models.Model):
 
     def __str__(self):
         return "%s-%s" % (self.app_id.name, self.developerid.issuer_id)
+
+
+class SystemConfig(models.Model):
+    key = models.CharField(max_length=256, unique=True, verbose_name="配置名称")
+    value = models.CharField(max_length=512, verbose_name="配置值")
+    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = '系统配置项'
+        verbose_name_plural = "系统配置项"
+
+    def __str__(self):
+        return "%s-%s" % (self.key, self.description)

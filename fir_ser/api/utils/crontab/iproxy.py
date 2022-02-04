@@ -10,14 +10,14 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
+from api.utils.sysconfig import Config
 from common.cache.storage import IpProxyListCache, IpProxyActiveCache
-from fir_ser.settings import APPLE_DEVELOPER_API_PROXY_LIST, APPLE_DEVELOPER_API_PROXY
 
 logger = logging.getLogger(__name__)
 
 
 def get_best_proxy_ips(url='https://api.appstoreconnect.apple.com/agreement'):
-    active_proxy_ips = [proxy_info['proxy'] for proxy_info in APPLE_DEVELOPER_API_PROXY_LIST if
+    active_proxy_ips = [proxy_info['proxy'] for proxy_info in Config.APPLE_DEVELOPER_API_PROXY_LIST if
                         proxy_info.get('active')]
     access_ip_info = []
     if not active_proxy_ips:
@@ -71,7 +71,7 @@ def get_proxy_ip_from_cache(change_ip=False):
             'https': proxy_ip
         }
     else:
-        proxy_info = APPLE_DEVELOPER_API_PROXY
+        proxy_info = Config.APPLE_DEVELOPER_API_PROXY
     logger.info(f"make ip proxy cache {proxy_info}")
     active_proxy_cache.set_storage_cache(proxy_info, 24 * 60 * 60)
     return proxy_info

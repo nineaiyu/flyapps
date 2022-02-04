@@ -10,12 +10,11 @@ from hashlib import sha1
 import requests
 
 from api.utils.mp.utils import WxMsgCryptBase
+from api.utils.sysconfig import Config
 from common.base.baseutils import get_format_time
 from common.cache.storage import WxTokenCache
-from fir_ser.settings import THIRDLOGINCONF
 
 logger = logging.getLogger(__name__)
-wx_login_info = THIRDLOGINCONF.wx_official
 
 
 def format_req_json(j_data, func, *args, **kwargs):
@@ -151,11 +150,12 @@ class WxOfficialBase(object):
 
     @classmethod
     def make_wx_auth_obj(cls):
-        return cls(**wx_login_info.get('auth'))
+        return cls(**Config.THIRDLOGINCONF.get('auth'))
 
 
 def check_signature(params):
-    tmp_list = sorted([wx_login_info.get('auth', {}).get('token'), params.get("timestamp"), params.get("nonce")])
+    tmp_list = sorted(
+        [Config.THIRDLOGINCONF.get('auth', {}).get('token'), params.get("timestamp"), params.get("nonce")])
     tmp_str = "".join(tmp_list)
     tmp_str = sha1(tmp_str.encode("utf-8")).hexdigest()
     if tmp_str == params.get("signature"):
@@ -165,7 +165,7 @@ def check_signature(params):
 
 class WxMsgCrypt(WxMsgCryptBase):
     def __init__(self):
-        super().__init__(**wx_login_info.get('auth'))
+        super().__init__(**Config.THIRDLOGINCONF.get('auth'))
 
 
 class WxTemplateMsg(object):

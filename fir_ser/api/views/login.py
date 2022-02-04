@@ -13,22 +13,22 @@ from api.utils.response import BaseResponse
 from api.utils.serializer import UserInfoSerializer, CertificationSerializer, UserCertificationSerializer
 from api.utils.storage.caches import login_auth_failed, set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache, \
     new_user_download_times_gift
+from api.utils.sysconfig import Config
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle, GetAuthC1Throttle, GetAuthC2Throttle
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
     check_username_exists, set_user_token, clean_user_token_and_cache
 from common.base.baseutils import is_valid_phone, is_valid_email, get_real_ip_address
-from fir_ser.settings import LOGIN, CHANGER, REPORT, NEW_USER_GIVE_DOWNLOAD_TIMES, REGISTER
 
 logger = logging.getLogger(__name__)
 
 
 def get_login_type():
-    return LOGIN.get("login_type")
+    return Config.LOGIN.get("login_type")
 
 
 def get_register_type():
-    return REGISTER.get("register_type")
+    return Config.REGISTER.get("register_type")
 
 
 def reset_user_pwd(user, sure_password, old_password=''):
@@ -251,12 +251,12 @@ class LoginView(APIView):
         response = BaseResponse()
         receive = request.data
         username = receive.get("username", None)
-        if LOGIN.get("captcha"):
+        if Config.LOGIN.get("captcha"):
             is_valid = valid_captcha(receive.get("captcha_key", None), receive.get("authcode", None), username)
         else:
             is_valid = True
         if is_valid:
-            if LOGIN.get("geetest"):
+            if Config.LOGIN.get("geetest"):
                 geetest = receive.get("geetest", None)
                 if geetest and second_validate(geetest).get("result", "") == "success":
                     pass
@@ -359,12 +359,12 @@ class LoginView(APIView):
     def get(self, request):
         response = BaseResponse()
         response.data = {}
-        if LOGIN.get("captcha"):
+        if Config.LOGIN.get("captcha"):
             response.data = get_captcha()
-        if LOGIN.get("geetest"):
+        if Config.LOGIN.get("geetest"):
             response.data['geetest'] = True
         response.data['login_type'] = get_login_type()
-        allow_f = REGISTER.get("enable")
+        allow_f = Config.REGISTER.get("enable")
         response.data['register_enable'] = allow_f
         return Response(response.dict)
 
@@ -404,7 +404,7 @@ class RegistView(APIView):
             response.msg = "不允许该类型注册"
             return Response(response.dict)
 
-        if REGISTER.get("geetest"):
+        if Config.REGISTER.get("geetest"):
             geetest = request.data.get("geetest", None)
             if geetest and second_validate(geetest).get("result", "") == "success":
                 pass
@@ -437,7 +437,7 @@ class RegistView(APIView):
                         response.code = 1000
                     if user_obj:
                         try:
-                            new_user_download_times_gift(user_obj, NEW_USER_GIVE_DOWNLOAD_TIMES)
+                            new_user_download_times_gift(user_obj, Config.NEW_USER_GIVE_DOWNLOAD_TIMES)
                         except Exception as e:
                             logger.error(f"用户{user_obj}赠送下载次数失败{e}")
                         response.msg = "注册成功"
@@ -458,11 +458,11 @@ class RegistView(APIView):
     def get(self, request):
         response = BaseResponse()
         response.data = {}
-        allow_f = REGISTER.get("enable")
+        allow_f = Config.REGISTER.get("enable")
         if allow_f:
-            if REGISTER.get("captcha"):
+            if Config.REGISTER.get("captcha"):
                 response.data = get_captcha()
-            if REGISTER.get("geetest"):
+            if Config.REGISTER.get("geetest"):
                 response.data['geetest'] = True
             response.data['register_type'] = get_register_type()
         response.data['enable'] = allow_f
@@ -510,7 +510,7 @@ class UserInfoView(APIView):
         mobile = data.get("mobile", None)
         email = data.get("email", None)
         if mobile or email:
-            if CHANGER.get('captcha'):
+            if Config.CHANGER.get('captcha'):
                 is_valid = valid_captcha(data.get("captcha_key", None), data.get("authcode", None), request)
                 if not is_valid:
                     res.code = 1008
@@ -620,9 +620,9 @@ class AuthorizationView(APIView):
                 res.msg = "邀请码已失效"
                 return Response(res.dict)
         if ext and ext.get('report'):
-            p_data = REPORT
+            p_data = Config.REPORT
         else:
-            p_data = REGISTER
+            p_data = Config.REGISTER
 
         if p_data.get("captcha"):
             is_valid = valid_captcha(ext.get("captcha_key", None), ext.get("authcode", None), target)
@@ -666,7 +666,7 @@ class ChangeAuthorizationView(APIView):
         target = request.data.get("target", None)
         ext = request.data.get("ext", None)
         f_type = request.data.get("ftype", None)
-        if REGISTER.get("captcha"):
+        if Config.REGISTER.get("captcha"):
             if ext and valid_captcha(ext.get("captcha_key", None), ext.get("authcode", None), target):
                 pass
             else:
@@ -674,7 +674,7 @@ class ChangeAuthorizationView(APIView):
                 res.msg = "图片验证码有误"
                 return Response(res.dict)
 
-        if REGISTER.get("geetest"):
+        if Config.REGISTER.get("geetest"):
             geetest = request.data.get("geetest", None)
             if geetest and second_validate(geetest).get("result", "") == "success":
                 pass
@@ -754,7 +754,7 @@ class CertificationView(APIView):
             return Response(res.dict)
 
         try:
-            if CHANGER.get("captcha"):
+            if Config.CHANGER.get("captcha"):
                 if data and valid_captcha(data.get("captcha_key", None), data.get("authcode", None),
                                           data.get("mobile")):
                     del data["captcha_key"]
@@ -763,7 +763,7 @@ class CertificationView(APIView):
                     res.code = 1009
                     res.msg = "图片验证码有误"
                     return Response(res.dict)
-            if CHANGER.get('change_type').get('sms'):
+            if Config.CHANGER.get('change_type').get('sms'):
                 is_valid, target = is_valid_sender_code('sms', data.get("auth_token", None), data.get("auth_key", None))
                 if is_valid and str(target) == str(data.get("mobile")):
                     if login_auth_failed("get", str(data.get("mobile"))):
@@ -807,13 +807,13 @@ class ChangeInfoView(APIView):
     def get(self, request):
         response = BaseResponse()
         response.data = {}
-        allow_f = CHANGER.get("enable")
+        allow_f = Config.CHANGER.get("enable")
         if allow_f:
-            if CHANGER.get("captcha"):
+            if Config.CHANGER.get("captcha"):
                 response.data = get_captcha()
-            if CHANGER.get("geetest"):
+            if Config.CHANGER.get("geetest"):
                 response.data['geetest'] = True
-            response.data['change_type'] = CHANGER.get("change_type")
+            response.data['change_type'] = Config.CHANGER.get("change_type")
         response.data['enable'] = allow_f
         return Response(response.dict)
 

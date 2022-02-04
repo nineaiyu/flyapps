@@ -13,9 +13,9 @@ from admin.utils.utils import ApiResponse
 from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.serializer import UserInfoSerializer
 from api.utils.storage.caches import login_auth_failed
+from api.utils.sysconfig import Config
 from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle
 from api.utils.utils import get_captcha, valid_captcha, set_user_token
-from fir_ser.settings import LOGIN
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class LoginView(APIView):
         code = 1000
         msg = 'success'
         data = None
-        if LOGIN.get("captcha"):
+        if Config.LOGIN.get("captcha"):
             is_valid = valid_captcha(receive.get("captcha_key", None), receive.get("authcode", None), username)
         else:
             is_valid = True
@@ -69,7 +69,7 @@ class LoginView(APIView):
 
     def get(self, request):
         data = {}
-        if LOGIN.get("captcha"):
+        if Config.LOGIN.get("captcha"):
             data = get_captcha()
         return ApiResponse(data=data)
 

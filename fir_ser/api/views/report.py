@@ -13,10 +13,10 @@ from api.utils.modelutils import add_remote_info_from_request
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppReportSerializer
 from api.utils.storage.caches import login_auth_failed
+from api.utils.sysconfig import Config
 from api.utils.throttle import InstallThrottle2
 from api.utils.utils import is_valid_sender_code, get_captcha
 from common.base.baseutils import get_real_ip_address, get_choices_dict
-from fir_ser.settings import REPORT
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +27,13 @@ class ReportView(APIView):
     def get(self, request):
         response = BaseResponse()
         response.data = {}
-        allow_f = REPORT.get("enable")
+        allow_f = Config.REPORT.get("enable")
         if allow_f:
-            if REPORT.get("captcha"):
+            if Config.REPORT.get("captcha"):
                 response.data = get_captcha()
-            if REPORT.get("geetest"):
+            if Config.REPORT.get("geetest"):
                 response.data['geetest'] = True
-            response.data['report_type'] = REPORT.get("report_type")
+            response.data['report_type'] = Config.REPORT.get("report_type")
             response.data['s_list'] = get_choices_dict(AppReportInfo.report_type_choices)
         response.data['enable'] = allow_f
         return Response(response.dict)

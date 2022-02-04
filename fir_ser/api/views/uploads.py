@@ -19,6 +19,7 @@ from api.utils.modelutils import check_super_sign_permission, get_app_download_u
 from api.utils.response import BaseResponse
 from api.utils.storage.caches import upload_file_tmp_name, del_cache_response_by_short
 from api.utils.storage.storage import Storage
+from api.utils.sysconfig import Config
 from common.base.baseutils import make_app_uuid, make_from_user_uuid
 from common.cache.state import MigrateStorageState
 from fir_ser import settings
@@ -92,7 +93,7 @@ class AppAnalyseView(APIView):
                         "enable_sign": enable_sign
                         }
             if storage_type not in [1, 2]:
-                res.data['domain_name'] = settings.SERVER_DOMAIN.get("FILE_UPLOAD_DOMAIN", None)
+                res.data['domain_name'] = Config.FILE_UPLOAD_DOMAIN
         else:
             res.code = 1003
 
@@ -202,7 +203,7 @@ class UploadView(APIView):
                     upload_token = storage.get_upload_token(upload_key)
                     storage_type = storage.get_storage_type()
                     res.data = {
-                        "domain_name": settings.SERVER_DOMAIN.get("FILE_UPLOAD_DOMAIN", None),
+                        "domain_name": Config.FILE_UPLOAD_DOMAIN,
                         "upload_token": upload_token,
                         "upload_key": upload_key,
                         "storage": storage_type,

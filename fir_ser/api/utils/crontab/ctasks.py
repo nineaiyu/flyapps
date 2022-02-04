@@ -13,9 +13,9 @@ from django.core.cache import cache
 from api.models import Apps, UserInfo, AppIOSDeveloperInfo
 from api.utils.app.supersignutils import IosUtils
 from api.utils.storage.storage import Storage
+from api.utils.sysconfig import Config
 from api.utils.utils import send_ios_developer_active_status
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT, MSGTEMPLATE, \
-    DEVELOPER_AUTO_CHECK_STATUS
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT, DEVELOPER_AUTO_CHECK_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -83,5 +83,5 @@ def auto_check_ios_developer_active():
                 error_issuer_id[userinfo.uid] = list(set(err_issuer_id))
     for uid, val in error_issuer_id.items():
         userinfo = UserInfo.objects.filter(uid=uid).first()
-        send_ios_developer_active_status(userinfo, MSGTEMPLATE.get('AUTO_CHECK_DEVELOPER') % (
+        send_ios_developer_active_status(userinfo, Config.MSG_AUTO_CHECK_DEVELOPER % (
             userinfo.first_name, ",".join(val)))

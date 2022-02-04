@@ -17,10 +17,10 @@ from api.utils.crontab.iproxy import get_best_proxy_ips, clean_ip_proxy_infos
 from api.utils.geetest.geetest_utils import check_bypass_status
 from api.utils.mp.wechat import sync_wx_access_token
 from api.utils.storage.storage import get_local_storage
+from api.utils.sysconfig import Config, invalid_config_cache
 from api.views.login import get_login_type
 from common.cache.state import MigrateStorageState
 from fir_ser.celery import app
-from fir_ser.settings import LOGIN, CHANGER, REGISTER
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +83,11 @@ def start_api_sever_do_clean():
     get_local_storage(clean_cache=True)
     check_bypass_status()
     clean_ip_proxy_infos()
+    invalid_config_cache()
+
+
+def clean_config_cache():
+    invalid_config_cache()
 
 
 @app.task
@@ -92,7 +97,8 @@ def sync_download_times_job():
 
 @app.task
 def check_bypass_status_job():
-    if LOGIN.get("geetest") or CHANGER.get('geetest') or REGISTER.get('geetest'):
+    if Config.LOGIN.get("geetest") or Config.CHANGER.get('geetest') or Config.REGISTER.get(
+            'geetest') or Config.REPORT.get('geetest'):
         check_bypass_status()
 
 

@@ -16,8 +16,8 @@ from admin.utils.utils import AppsPageNumber, BaseModelSet, ApiResponse
 from api.models import UserInfo, UserCertificationInfo, ThirdWeChatUserInfo
 from api.utils.auth import AdminTokenAuthentication
 from api.utils.storage.caches import auth_user_download_times_gift
+from api.utils.sysconfig import Config
 from common.base.baseutils import get_dict_from_filter_fields
-from fir_ser.settings import AUTH_USER_GIVE_DOWNLOAD_TIMES
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ class UserInfoView(APIView):
                         status = user_cert_obj.status
                         UserCertificationInfo.objects.filter(user_id=user_obj).update(status=data["certification"])
                         if status != 1 and UserCertificationInfo.objects.filter(user_id=user_obj).first().status == 1:
-                            auth_user_download_times_gift(user_obj, AUTH_USER_GIVE_DOWNLOAD_TIMES)
+                            auth_user_download_times_gift(user_obj, Config.AUTH_USER_GIVE_DOWNLOAD_TIMES)
                 data = users_serializer.data
                 return ApiResponse(data=data)
         return ApiResponse(code=1004, msg='数据校验失败')
@@ -97,7 +97,7 @@ class UserCertificationInfoView(APIView):
             if users_serializer.is_valid():
                 users_serializer.save()
                 if status != 1 and users_serializer.data.get('status') == 1:
-                    auth_user_download_times_gift(obj.user_id, AUTH_USER_GIVE_DOWNLOAD_TIMES)
+                    auth_user_download_times_gift(obj.user_id, Config.AUTH_USER_GIVE_DOWNLOAD_TIMES)
                 data = users_serializer.data
                 return ApiResponse(data=data)
         return ApiResponse(code=1004, msg='数据校验失败')

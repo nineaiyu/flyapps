@@ -26,13 +26,14 @@ from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSeriali
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
     consume_user_download_times_by_app_obj, add_udid_cache_queue, get_and_clean_udid_cache_queue
 from api.utils.storage.storage import Storage
+from api.utils.sysconfig import Config
 from api.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status, delete_local_files, \
     download_files_form_oss, get_developer_udided
 from common.base.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
     get_format_time, make_app_uuid, make_from_user_uuid
 from common.base.magic import run_function_by_locker, call_function_try_attempts
 from common.cache.state import CleanErrorBundleIdSignDataState
-from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, MOBILE_CONFIG_SIGN_SSL, MSGTEMPLATE, DEVELOPER_USE_STATUS
+from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, DEVELOPER_USE_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -99,9 +100,9 @@ def udid_bytes_to_dict(xml_stream):
 
 
 def make_sign_udid_mobile_config(udid_url, short, bundle_id, app_name):
-    if MOBILE_CONFIG_SIGN_SSL.get("open"):
-        ssl_key_path = MOBILE_CONFIG_SIGN_SSL.get("ssl_key_path", None)
-        ssl_pem_path = MOBILE_CONFIG_SIGN_SSL.get("ssl_pem_path", None)
+    if Config.MOBILE_CONFIG_SIGN_SSL.get("open"):
+        ssl_key_path = Config.MOBILE_CONFIG_SIGN_SSL.get("ssl_key_path", None)
+        ssl_pem_path = Config.MOBILE_CONFIG_SIGN_SSL.get("ssl_pem_path", None)
 
         if ssl_key_path and ssl_pem_path and os.path.isfile(ssl_key_path) and os.path.isfile(ssl_pem_path):
             mobile_config_tmp_dir = os.path.join(SUPER_SIGN_ROOT, 'tmp', 'mobile_config')
@@ -217,7 +218,7 @@ def disable_developer_and_send_email(app_obj, developer_obj):
     developer_obj.status = 5
     developer_obj.save(update_fields=['status'])
     send_ios_developer_active_status(developer_obj.user_id,
-                                     MSGTEMPLATE.get('ERROR_DEVELOPER') % (
+                                     Config.MSG_ERROR_DEVELOPER % (
                                          developer_obj.user_id.first_name, app_obj.name,
                                          developer_obj.issuer_id))
 
@@ -418,7 +419,7 @@ class IosUtils(object):
             if self.user_obj.email:
                 if send_msg_over_limit("get", self.user_obj.email):
                     send_msg_over_limit("set", self.user_obj.email)
-                    send_ios_developer_active_status(self.user_obj, MSGTEMPLATE.get('NOT_EXIST_DEVELOPER', '')
+                    send_ios_developer_active_status(self.user_obj, Config.MSG_NOT_EXIST_DEVELOPER
                                                      % (
                                                          self.user_obj.first_name, self.app_obj.name))
                 else:

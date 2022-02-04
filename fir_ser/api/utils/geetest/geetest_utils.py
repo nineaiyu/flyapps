@@ -11,8 +11,7 @@ import requests
 from django.core.cache import cache as redis_connect
 
 from api.utils.geetest.geetest_lib import GeetestLib
-from fir_ser.settings import GEETEST_ID, GEETEST_KEY, GEETEST_BYPASS_URL, \
-    GEETEST_BYPASS_STATUS_KEY
+from api.utils.sysconfig import Config
 
 logger = logging.getLogger(__name__)
 
@@ -20,25 +19,25 @@ logger = logging.getLogger(__name__)
 # 发送bypass请求，获取bypass状态并进行缓存（如何缓存可根据自身情况合理选择,这里是使用redis进行缓存）
 def check_bypass_status():
     response = ""
-    params = {"gt": GEETEST_ID}
+    params = {"gt": Config.GEETEST_ID}
     try:
-        response = requests.get(url=GEETEST_BYPASS_URL, params=params)
+        response = requests.get(url=Config.GEETEST_BYPASS_URL, params=params)
     except Exception as e:
         logger.error(f"check_bypass_status failed Exception:{e}")
     if response and response.status_code == 200:
         logger.debug(f"check_bypass_status success {response.content}")
         bypass_status_str = response.content.decode("utf-8")
         bypass_status = json.loads(bypass_status_str).get("status")
-        redis_connect.set(GEETEST_BYPASS_STATUS_KEY, bypass_status)
+        redis_connect.set(Config.GEETEST_BYPASS_STATUS_KEY, bypass_status)
     else:
         bypass_status = "fail"
-        redis_connect.set(GEETEST_BYPASS_STATUS_KEY, bypass_status)
+        redis_connect.set(Config.GEETEST_BYPASS_STATUS_KEY, bypass_status)
     logger.debug(f"bypass状态已经获取并存入redis，当前状态为 {bypass_status}")
 
 
 # 从缓存中取出当前缓存的bypass状态(success/fail)
 def get_bypass_cache(count=3):
-    bypass_status_cache = redis_connect.get(GEETEST_BYPASS_STATUS_KEY)
+    bypass_status_cache = redis_connect.get(Config.GEETEST_BYPASS_STATUS_KEY)
     if bypass_status_cache:
         return bypass_status_cache
     else:
@@ -59,7 +58,7 @@ def first_register(user_id, ip_address):
     #     client_type 客户端类型，web：电脑上的浏览器；h5：手机上的浏览器，包括移动应用内完全内置的web_view；native：通过原生sdk植入app应用的方式；unknown：未知
     #     ip_address 客户端请求sdk服务器的ip地址
     bypass_status = get_bypass_cache()
-    gt_lib = GeetestLib(GEETEST_ID, GEETEST_KEY)
+    gt_lib = GeetestLib(Config.GEETEST_ID, Config.GEETEST_KEY)
     digestmod = "md5"
     param_dict = {"digestmod": digestmod, "user_id": user_id, "client_type": "web", "ip_address": ip_address}
     if bypass_status == "success":
@@ -76,7 +75,7 @@ def second_validate(rdata):
     validate = rdata.get(GeetestLib.GEETEST_VALIDATE, None)
     seccode = rdata.get(GeetestLib.GEETEST_SECCODE, None)
     bypass_status = get_bypass_cache()
-    gt_lib = GeetestLib(GEETEST_ID, GEETEST_KEY)
+    gt_lib = GeetestLib(Config.GEETEST_ID, Config.GEETEST_KEY)
     if bypass_status == "success":
         result = gt_lib.success_validate(challenge, validate, seccode)
     else:

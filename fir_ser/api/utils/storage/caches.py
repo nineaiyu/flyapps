@@ -17,14 +17,14 @@ from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, 
 from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name, \
     add_remote_info_from_request
 from api.utils.storage.storage import Storage, LocalStorage
+from api.utils.sysconfig import Config
 from common.base.baseutils import check_app_password, get_order_num, get_real_ip_address
 from common.cache.invalid import invalid_app_cache, invalid_short_cache, invalid_app_download_times_cache, \
     invalid_head_img_cache
 from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCache, DownloadUrlCache, AppInstanceCache, \
     UploadTmpFileNameCache, RedisCacheBase, UserCanDownloadCache, UserFreeDownloadTimesCache, WxTicketCache, \
     SignUdidQueueCache, CloudStorageCache
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SERVER_DOMAIN, SYNC_CACHE_TO_DATABASE, DEFAULT_MOBILEPROVISION, \
-    USER_FREE_DOWNLOAD_TIMES, AUTH_USER_FREE_DOWNLOAD_TIMES, DEVELOPER_USE_STATUS
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, DEVELOPER_USE_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def sync_download_times_by_app_id(app_ids):
 def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='', udid=None):
     now = time.time()
     if isdownload is None:
-        local_storage = LocalStorage(**SERVER_DOMAIN.get("IOS_PMFILE_DOWNLOAD_DOMAIN"))
+        local_storage = LocalStorage(**Config.IOS_PMFILE_DOWNLOAD_DOMAIN)
         download_url_type = 'plist'
         if not udid:
             if app_obj.get('issupersign', None):
@@ -68,11 +68,11 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
             else:
                 return "", ""
 
-        supersign = DEFAULT_MOBILEPROVISION.get("supersign")
+        supersign = Config.DEFAULT_MOBILEPROVISION.get("supersign")
         mobileconifg = ""
 
         if download_url_type == 'plist':
-            enterprise = DEFAULT_MOBILEPROVISION.get("enterprise")
+            enterprise = Config.DEFAULT_MOBILEPROVISION.get("enterprise")
             mpath = enterprise.get('path', None)
             murl = enterprise.get('url', None)
         else:
@@ -314,9 +314,9 @@ def set_user_download_times_flag(user_id, act):
 
 
 def get_user_free_download_times(user_id, act='get', amount=1, auth_status=False):
-    free_download_times = USER_FREE_DOWNLOAD_TIMES
+    free_download_times = Config.USER_FREE_DOWNLOAD_TIMES
     if auth_status:
-        free_download_times = AUTH_USER_FREE_DOWNLOAD_TIMES
+        free_download_times = Config.AUTH_USER_FREE_DOWNLOAD_TIMES
     cache_obj = UserFreeDownloadTimesCache(user_id)
     user_free_download_times = cache_obj.get_storage_cache()
     if user_free_download_times is not None:
@@ -401,7 +401,7 @@ def user_auth_success(user_id):
     :return:
     """
     get_user_free_download_times(user_id, 'get')
-    get_user_free_download_times(user_id, 'set', USER_FREE_DOWNLOAD_TIMES - AUTH_USER_FREE_DOWNLOAD_TIMES)
+    get_user_free_download_times(user_id, 'set', Config.USER_FREE_DOWNLOAD_TIMES - Config.AUTH_USER_FREE_DOWNLOAD_TIMES)
     return enable_user_download(user_id)
 
 

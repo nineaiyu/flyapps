@@ -14,9 +14,9 @@ from functools import wraps
 
 import jwt
 import requests
-from django.conf import settings
 
 from api.utils.crontab.iproxy import get_proxy_ip_from_cache
+from api.utils.sysconfig import Config
 
 logger = logging.getLogger(__name__)
 
@@ -736,7 +736,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         self.p8_private_key = p8_private_key
         self.exp_seconds = exp_seconds
         self.proxies = get_proxy_ip_from_cache()
-        self.timeout = settings.APPLE_DEVELOPER_API_TIMEOUT if settings.APPLE_DEVELOPER_API_TIMEOUT else 120
+        self.timeout = Config.APPLE_DEVELOPER_API_TIMEOUT if Config.APPLE_DEVELOPER_API_TIMEOUT else 120
         self.__make_jwt_headers()
         DevicesAPI.__init__(self, self.BASE_URI, self.headers)
         BundleIDsAPI.__init__(self, self.BASE_URI, self.headers)

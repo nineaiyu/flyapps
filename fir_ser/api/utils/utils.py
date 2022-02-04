@@ -21,9 +21,10 @@ from api.utils.sendmsg.sendmsg import SendMessage
 from api.utils.storage.caches import consume_user_download_times
 from api.utils.storage.localApi import LocalStorage
 from api.utils.storage.storage import Storage
+from api.utils.sysconfig import Config
 from common.base.baseutils import get_real_ip_address
 from common.cache.storage import UserTokenCache, TempCache
-from fir_ser.settings import SERVER_DOMAIN, CAPTCHA_LENGTH, MEDIA_ROOT, DEVELOPER_USE_STATUS
+from fir_ser.settings import CAPTCHA_LENGTH, MEDIA_ROOT, DEVELOPER_USE_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +89,7 @@ def get_captcha():
     captcha_key = CaptchaStore.generate_key()
     captcha_image = captcha_image_url(captcha_key)
     CaptchaStore.remove_expired()
-    local_storage = LocalStorage(**SERVER_DOMAIN.get("IOS_PMFILE_DOWNLOAD_DOMAIN"))
+    local_storage = LocalStorage(**Config.IOS_PMFILE_DOWNLOAD_DOMAIN)
     return {"captcha_image": "/".join([local_storage.get_base_url(), captcha_image.strip("/"), '']),
             "captcha_key": captcha_key,
             "length": CAPTCHA_LENGTH}
