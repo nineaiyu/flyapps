@@ -236,7 +236,7 @@ class AppInfoView(APIView):
                         #     res.code = 1008
                         #     res.msg = "超级签余额不足，无法开启"
                         #     return Response(res.dict)
-                        if not check_super_sign_permission(request.user):
+                        if data.get('issupersign', -1) == 1 and not check_super_sign_permission(request.user):
                             logger.error(f"app_id:{app_id} can't open super_sign,owner has no ios developer")
                             res.code = 1008
                             res.msg = "超级签余额不足，无法开启"

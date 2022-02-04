@@ -13,18 +13,20 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, \
-    UDIDsyncDeveloper, AppleDeveloperToAppUse, Apps, DeveloperAppID, APPToDeveloper, DeveloperDevicesID
+    UDIDsyncDeveloper, AppleDeveloperToAppUse, Apps, DeveloperAppID, APPToDeveloper, DeveloperDevicesID, \
+    IosDeveloperBill, UserInfo
 from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
 from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, PageNumber, \
     check_uid_has_relevant
 from api.utils.response import BaseResponse
 from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, BillInfoSerializer, \
-    DeveloperDeviceSerializer, AppleDeveloperToAppUseSerializer, AppleDeveloperToAppUseAppsSerializer
+    DeveloperDeviceSerializer, AppleDeveloperToAppUseSerializer, AppleDeveloperToAppUseAppsSerializer, \
+    BillTransferSerializer
 from api.utils.storage.caches import get_app_download_url
 from api.utils.utils import get_developer_devices
-from common.base.baseutils import get_choices_dict, get_choices_name_from_key, AppleDeveloperUid
-from common.cache.state import CleanSignDataState
+from common.base.baseutils import get_choices_dict, get_choices_name_from_key, AppleDeveloperUid, get_real_ip_address
+from common.cache.state import CleanSignDataState, MigrateStorageState
 from fir_ser.settings import DEVELOPER_USE_STATUS, DEVELOPER_DISABLED_STATUS, DEVELOPER_UID_KEY
 
 logger = logging.getLogger(__name__)
@@ -487,11 +489,11 @@ class DeviceUsedBillView(APIView):
         udid = request.query_params.get("udid", None)
         act = request.query_params.get("act", None)
 
-        receive_user_id_list = IosDeveloperPublicPoolBill.objects.filter(user_id=request.user,
-                                                                         to_user_id__isnull=False).values(
+        receive_user_id_list = IosDeveloperBill.objects.filter(user_id=request.user, to_user_id__isnull=False,
+                                                               status=2).values(
             'to_user_id').distinct()
         user_used_list = IosDeveloperPublicPoolBill.objects.filter(
-            Q(to_user_id=request.user) | Q(user_id=request.user) | Q(user_id_id__in=receive_user_id_list))
+            Q(user_id=request.user) | Q(user_id_id__in=receive_user_id_list))
         page_obj = PageNumber()
         if udid:
             user_used_list = user_used_list.filter(udid=udid)
@@ -524,6 +526,126 @@ class DeviceUsedBillView(APIView):
         return Response(res.dict)
 
 
+class DeviceTransferBillView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [SuperSignPermission, ]
+
+    def get(self, request):
+        res = BaseResponse()
+        uidsearch = request.query_params.get("uidsearch", None)
+
+        user_used_list = IosDeveloperBill.objects.filter(
+            Q(user_id=request.user) | Q(to_user_id=request.user)).distinct()
+        page_obj = PageNumber()
+        if uidsearch:
+            user_used_list = user_used_list.filter(Q(user_id__uid=uidsearch) | Q(to_user_id__uid=uidsearch))
+
+        app_page_serializer = page_obj.paginate_queryset(queryset=user_used_list.order_by("-created_time"),
+                                                         request=request,
+                                                         view=self)
+        app_serializer = BillTransferSerializer(app_page_serializer, many=True, context={'user_obj': request.user})
+        res.data = app_serializer.data
+        res.count = user_used_list.count()
+
+        res.balance_info = {
+            'used_balance': get_user_public_used_sign_num(request.user),
+            'all_balance': get_user_public_sign_num(request.user)
+        }
+        return Response(res.dict)
+
+    def put(self, request):
+        res = BaseResponse()
+        uid = request.data.get('uid')
+        if uid:
+            user_obj = UserInfo.objects.filter(uid=uid, is_active=True, supersign_active=True).first()
+            if user_obj:
+                bill_obj = IosDeveloperBill.objects.filter(user_id=request.user, to_user_id__uid=uid, status=2).first()
+                number = 0
+                if bill_obj:
+                    number = bill_obj.number
+                res.data = {'uid': user_obj.uid, 'name': user_obj.first_name, "number": number}
+            else:
+                res.msg = '用户信息不存在'
+                res.code = 1003
+        else:
+            res.msg = '参数有误'
+            res.code = 1003
+        return Response(res.dict)
+
+    def post(self, request):
+        res = BaseResponse()
+        uid = request.data.get('uid')
+        number = request.data.get('number')
+        if uid and number:
+            to_user_obj = UserInfo.objects.filter(uid=uid, is_active=True, supersign_active=True).first()
+            if to_user_obj:
+                if isinstance(number, int) and 0 < number < 99999:
+                    user_obj = request.user
+                    if user_obj.pk != to_user_obj.pk:
+                        try:
+                            use_num = get_developer_devices(AppIOSDeveloperInfo.objects.filter(user_id=user_obj))
+                            all_balance = use_num.get('max_total', 0)
+                            if all_balance > 0 and number <= all_balance:
+                                bill_obj = IosDeveloperBill.objects.filter(user_id=user_obj, to_user_id=to_user_obj,
+                                                                           status=2).first()
+                                if bill_obj:
+                                    bill_obj.number = number + bill_obj.number
+                                    if bill_obj.number >= all_balance:
+                                        bill_obj.number = all_balance
+                                    bill_obj.remote_addr = get_real_ip_address(request)
+                                    bill_obj.description = f'{user_obj.first_name} 共享给 {to_user_obj.first_name} {bill_obj.number} 设备数'
+                                    bill_obj.save(update_fields=['number', 'remote_addr', 'description'])
+                                else:
+                                    IosDeveloperBill.objects.create(user_id=user_obj, to_user_id=to_user_obj,
+                                                                    status=2, number=number,
+                                                                    remote_addr=get_real_ip_address(request),
+                                                                    description=f'{user_obj.first_name} 共享给 {to_user_obj.first_name} {number} 设备数')
+                                return Response(res.dict)
+                            else:
+                                res.msg = f'设备余额不足,当前设备余额最大为 {all_balance}'
+                        except Exception as e:
+                            res.msg = str(e)
+                    else:
+                        res.msg = '用户不合法'
+                else:
+                    res.msg = '划转数量异常'
+            else:
+                res.msg = '用户信息不存在'
+        else:
+            res.msg = '参数有误'
+        res.code = 1003
+        return Response(res.dict)
+
+    def delete(self, request):
+        res = BaseResponse()
+        uid = request.query_params.get("uid", None)
+        status = request.query_params.get("status", None)
+        number = request.query_params.get("number", None)
+        if MigrateStorageState(request.user.uid).get_state():
+            res.code = 1008
+            res.msg = "数据迁移中，无法处理该操作"
+            return Response(res.dict)
+        if uid and status and number:
+            bill_obj = IosDeveloperBill.objects.filter(user_id=request.user, to_user_id__uid=uid, status=status,
+                                                       number=abs(int(number))).first()
+            if bill_obj:
+                target_user_obj = UserInfo.objects.filter(uid=uid).first()
+                bill_obj.status = 1
+                bill_obj.save(update_fields=['status'])
+                if target_user_obj:
+                    for app_obj in Apps.objects.filter(user_id=target_user_obj, type=1):
+                        app_obj.issupersign = False
+                        app_obj.save(update_fields=['issupersign'])
+                        count = APPToDeveloper.objects.filter(app_id=app_obj).count()
+                        if app_obj.issupersign or count > 0:
+                            logger.info(f"app_id:{app_obj} is super_sign ,clean IOS developer")
+                            IosUtils.clean_app_by_user_obj(app_obj)
+            else:
+                res.code = 1003
+                res.msg = '转移记录不存在'
+        return Response(res.dict)
+
+
 class DeviceUsedRankInfoView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
     permission_classes = [SuperSignPermission, ]
@@ -534,8 +656,8 @@ class DeviceUsedRankInfoView(APIView):
         search_key = request.query_params.get("appnamesearch")
         start_time = request.query_params.get("start_time")
         end_time = request.query_params.get("end_time")
-        receive_user_id_list = IosDeveloperPublicPoolBill.objects.filter(user_id=request.user,
-                                                                         to_user_id__isnull=False).values(
+        receive_user_id_list = IosDeveloperBill.objects.filter(user_id=request.user, to_user_id__isnull=False,
+                                                               status=2).values(
             'to_user_id').distinct()
         app_used_sign_objs = APPSuperSignUsedInfo.objects.filter(
             Q(user_id=request.user) | Q(user_id_id__in=receive_user_id_list))

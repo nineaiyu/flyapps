@@ -9,6 +9,42 @@
       <apple-developer-bind-app v-if="bind_appletoapp_sure" :issuer_id="editdeveloperinfo.issuer_id"
                                 transitionName="bind_appletoapp"/>
     </el-dialog>
+    <el-dialog :close-on-click-modal="false" :destroy-on-close="true" :visible.sync="transferVisible"
+               style="text-align:center" title="设备共享" width="700px">
+      <el-tag style="margin: 0 auto 20px">设备共享指的是 将您的设备共享给目标用户使用，目标用户使用的设备数取决于您所共享的最大设备数</el-tag>
+      <el-form label-width="30%">
+        <el-form-item label="目标用户UID" style="width: 80%">
+          <el-row :gutter="24">
+            <el-col :span="19">
+              <el-input v-model="target_uid" clearable/>
+            </el-col>
+            <el-col :span="4">
+              <el-button @click="checkuid(target_uid)">查询校验</el-button>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item v-if="transferInfo.uid" label="目标用户信息" style="width: 80%;text-align: left">
+          <el-row :gutter="24">
+            <el-col :span="18">
+              <!--              <el-tag> 用户UID: {{transferInfo.uid}}</el-tag>-->
+              <el-tag> 用户昵称: {{ transferInfo.name }}</el-tag>
+              <el-tag> 共享设备数: {{ transferInfo.number }}</el-tag>
+            </el-col>
+          </el-row>
+
+        </el-form-item>
+        <el-form-item label="共享设备数量" style="width: 80%;text-align: left">
+          <el-row :gutter="24">
+            <el-col :span="18">
+              <el-input-number v-model="target_number" :max="999999" :min="1"/>
+            </el-col>
+          </el-row>
+
+        </el-form-item>
+        <el-button :disabled="cantransfer" @click="transferFun(target_uid,target_number)">确定共享</el-button>
+        <el-button @click="transferVisible=false">取消</el-button>
+      </el-form>
+    </el-dialog>
     <el-dialog :close-on-click-modal="false" :destroy-on-close="true" :visible.sync="importcertDeveloperVisible"
                style="text-align:center" title="发布证书导入" width="700px">
       <el-form label-width="30%">
@@ -155,12 +191,7 @@
             label="客户端IP"
             prop="remote_addr">
         </el-table-column>
-        <el-table-column
-            align="center"
-            label="账单类型"
-            prop="action"
-            width="100">
-        </el-table-column>
+
 
         <el-table-column
             :formatter="deviceformatter"
@@ -174,28 +205,28 @@
             label="应用状态"
         >
           <template slot-scope="scope">
-            <div v-if="scope.row.action==='消费'">
-              <el-tag v-if="scope.row.app_status===false" type="info">应用删除</el-tag>
-              <el-tag v-else>
-                应用存在
-              </el-tag>
-            </div>
-            <span v-else>{{ scope.row.description }}</span>
+            <el-tag v-if="scope.row.app_status===false" type="info">应用删除</el-tag>
+            <el-tag v-else>
+              应用存在
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column
             align="center"
             label="设备状态">
           <template slot-scope="scope">
-            <div v-if="scope.row.action==='消费'">
-              <el-tag v-if="scope.row.is_used===false" type="info">已经释放</el-tag>
-              <el-tag v-else>
-                使用中
-              </el-tag>
-            </div>
+            <el-tag v-if="scope.row.is_used===false" type="info">已经释放</el-tag>
+            <el-tag v-else>
+              使用中
+            </el-tag>
           </template>
         </el-table-column>
-
+        <el-table-column
+            align="center"
+            label="账单备注"
+            prop="description"
+            width="100">
+        </el-table-column>
       </el-table>
       <div style="margin-top: 20px">
         <el-pagination
@@ -962,19 +993,6 @@
         <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
-        <div style="width: 40%;margin-right: 30px;float:right">
-          <el-link :underline="false">公共签名池设备数量：{{ balance_info.all_balance }} 已经使用：【 {{
-              balance_info.used_balance
-            }} 】
-            还剩：【 {{ balance_info.all_balance - balance_info.used_balance }} 】 可用
-          </el-link>
-          <el-progress
-              :color="developer_usedColor"
-              :percentage="bill_percent"
-              :stroke-width="18" :text-inside="true" status="success"
-              type="line"/>
-        </div>
-
         <el-table
             v-loading="loading"
             :data="app_bill_lists"
@@ -1034,6 +1052,101 @@
 
         </el-table>
 
+      </el-tab-pane>
+      <el-tab-pane label="设备共享记录" name="transferbill">
+        <el-input
+            v-model="uidsearch"
+            clearable
+            placeholder="输入用户UID"
+            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+
+        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
+          搜索
+        </el-button>
+        <el-button icon="el-icon-s-unfold" plain @click="transferVisible=true">
+          设备共享
+        </el-button>
+        <div style="width: 40%;margin-right: 30px;float:right">
+          <el-link :underline="false">共享签名池设备数量：{{ balance_info.all_balance }} 已经使用：【 {{
+              balance_info.used_balance
+            }} 】
+            还剩：【 {{ balance_info.all_balance - balance_info.used_balance }} 】 可用
+          </el-link>
+          <el-progress
+              :color="developer_usedColor"
+              :percentage="bill_percent"
+              :stroke-width="18" :text-inside="true" status="success"
+              type="line"/>
+        </div>
+
+        <el-table
+            v-loading="loading"
+            :data="transfer_bill_lists"
+            border
+            stripe
+            style="width: 100%">
+
+          <el-table-column
+              align="center"
+              fixed
+              label="目标用户UID">
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <p>用户UID: {{ scope.row.target_user.uid }}</p>
+                <p>用户昵称: {{ scope.row.target_user.name }}</p>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.target_user.uid }}</span>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="状态"
+              prop="status_display"
+              width="100">
+
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="设备数量"
+              prop="number"
+              width="100">
+
+          </el-table-column>
+          <el-table-column
+              :formatter="deviceformatter"
+              align="center"
+              label="日期"
+              prop="created_time"
+              width="160">
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="备注"
+              prop="description">
+          </el-table-column>
+
+          <el-table-column
+              align="center"
+              fixed="right"
+              label="操作"
+              width="100">
+            <template slot-scope="scope">
+              <el-tooltip v-if="scope.row.cancel" content="点击撤回共享设备数，并清理目标用户签名脏数据" placement="top">
+                <el-tag v-if="scope.row.status===2"
+                        type="success"
+                        @click="cancelshare(scope.row)"
+                >成功
+                </el-tag>
+                <el-tag v-else-if="scope.row.status === 1">已撤回</el-tag>
+                <el-tag v-else>状态异常</el-tag>
+              </el-tooltip>
+            </template>
+          </el-table-column>
+
+
+        </el-table>
       </el-tab-pane>
       <el-tab-pane label="设备消耗统计" name="devicesrank">
         <el-input
@@ -1118,6 +1231,7 @@ import {
   developercert,
   DeviceBillInfo,
   DeviceRankInfo,
+  DeviceTransferBillInfo,
   iosdeveloper,
   iosdevices,
   iosdevicesudid,
@@ -1140,6 +1254,7 @@ export default {
       app_developer_lists: [],
       app_devices_lists: [],
       app_bill_lists: [],
+      transfer_bill_lists: [],
       app_rank_lists: [],
       app_rank_number: 0,
       app_bill_info_lists: [],
@@ -1148,10 +1263,16 @@ export default {
       udidsearch: "",
       Bundleidsearch: "",
       appidseach: "",
+      uidsearch: "",
       appnamesearch: "",
       timerangesearch: [],
       dialogaddDeveloperVisible: false,
       importcertDeveloperVisible: false,
+      target_uid: '',
+      target_number: 1,
+      transferVisible: false,
+      cantransfer: true,
+      transferInfo: {uid: '', name: '', number: 0},
       title: "",
       editdeveloperinfo: {auth_type: 0, usable_number: 100, app_limit_number: 100, p8key: ''},
       isedit: false,
@@ -1228,6 +1349,66 @@ export default {
     }
   },
   methods: {
+    refreshactiveFun() {
+      this.get_data_from_tabname(this.activeName, {
+        "size": this.pagination.pagesize,
+        "page": this.pagination.currentPage
+      })
+    },
+    cancelshare(billinfo) {
+
+      this.$confirm('确定要撤回么，撤回之后，对方账号将无法使用该账户设备数，并且会清理对方账户已经设备的设备数据信息?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        const loadingobj = this.$loading({
+          lock: true,
+          text: '操作中，请耐心等待',
+          spinner: 'el-icon-loading',
+          // background: 'rgba(0, 0, 0, 0.7)'
+        });
+        DeviceTransferBillInfo(data => {
+          loadingobj.close()
+          if (data.code === 1000) {
+            this.$message.success("操作成功")
+            this.refreshactiveFun()
+          } else {
+            this.$message.error("撤回失败 " + data.msg)
+          }
+        }, {
+          'methods': 'DELETE',
+          data: {uid: billinfo.target_user.uid, status: billinfo.status, number: billinfo.number}
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消撤回操作'
+        });
+      });
+    },
+    transferFun(target_uid, target_number) {
+      DeviceTransferBillInfo(data => {
+        if (data.code === 1000) {
+          this.transferVisible = false;
+          this.$message.success("共享成功")
+          this.refreshactiveFun()
+        } else {
+          this.$message.error("共享失败 " + data.msg)
+        }
+      }, {'methods': 'POST', data: {uid: target_uid, number: target_number}})
+    },
+    checkuid(uid) {
+      DeviceTransferBillInfo(data => {
+        if (data.code === 1000) {
+          this.transferInfo = data.data
+          this.cantransfer = false
+        } else {
+          this.cantransfer = true
+          this.$message.error("查询失败 " + data.msg)
+        }
+      }, {'methods': 'PUT', data: {uid: uid}})
+    },
     get_developer_uid(uid) {
       if (uid && uid.indexOf(':') > -1) {
         return '公共账号池'
@@ -1452,10 +1633,7 @@ export default {
     },
     handleCurrentChange(val) {
       this.pagination.currentPage = val;
-      this.get_data_from_tabname(this.activeName, {
-        "size": this.pagination.pagesize,
-        "page": this.pagination.currentPage
-      })
+      this.this.refreshactiveFun()
     },
     syncdevices() {
       this.iosdeveloperFun({
@@ -1612,6 +1790,9 @@ export default {
         this.iosdeveloperFun({"methods": "GET", "data": data})
       } else if (tabname === "devicesbill") {
         this.iosdevicebillFun({"methods": "GET", "data": data})
+      } else if (tabname === "transferbill") {
+        data.uidsearch = this.uidsearch.replace(/^\s+|\s+$/g, "");
+        this.deviceTransferFun({"methods": "GET", "data": data})
       } else if (tabname === "devicesrank") {
         if (this.timerangesearch && this.timerangesearch.length === 2) {
           data.start_time = this.timerangesearch[0];
@@ -1716,10 +1897,7 @@ export default {
           this.$message.error("操作失败")
         }
         if (params.methods === 'PUT' || params.methods === 'DELETE') {
-          this.get_data_from_tabname(this.activeName, {
-            "size": this.pagination.pagesize,
-            "page": this.pagination.currentPage
-          })
+          this.this.refreshactiveFun()
         }
         if (params.methods !== 'GET') {
           this.loadingfun.close();
@@ -1728,6 +1906,35 @@ export default {
         }
       }, params)
     },
+    deviceTransferFun(params) {
+      this.loading = true;
+      DeviceTransferBillInfo(data => {
+        if (data.code === 1000) {
+          this.transfer_bill_lists = data.data;
+          this.pagination.total = data.count;
+          if (data.balance_info) {
+            this.balance_info = data.balance_info;
+            if (this.balance_info.all_balance - this.balance_info.used_balance === 0) {
+              if (this.balance_info.all_balance === 0) {
+                this.bill_percent = 0;
+              } else {
+                this.bill_percent = 100;
+              }
+            } else {
+              if (this.balance_info.all_balance - this.balance_info.used_balance < 0) {
+                this.bill_percent = 100;
+              } else {
+                this.bill_percent = parseInt(this.balance_info.used_balance * 100 / this.balance_info.all_balance);
+              }
+            }
+          }
+        } else {
+          this.$message.error("操作失败了 " + data.msg);
+        }
+        this.loading = false
+      }, params)
+    },
+
     iosdevicebillFun(params) {
       this.loading = true;
       DeviceBillInfo(data => {
@@ -1738,22 +1945,6 @@ export default {
           } else {
             this.app_bill_lists = data.data;
             this.pagination.total = data.count;
-            if (data.balance_info) {
-              this.balance_info = data.balance_info;
-              if (this.balance_info.all_balance - this.balance_info.used_balance === 0) {
-                if (this.balance_info.all_balance === 0) {
-                  this.bill_percent = 0;
-                } else {
-                  this.bill_percent = 100;
-                }
-              } else {
-                if (this.balance_info.all_balance - this.balance_info.used_balance < 0) {
-                  this.bill_percent = 100;
-                } else {
-                  this.bill_percent = parseInt(this.balance_info.used_balance * 100 / this.balance_info.all_balance);
-                }
-              }
-            }
           }
         } else {
           this.$message.error("操作失败了 " + data.msg);
@@ -1824,10 +2015,7 @@ export default {
             this.developer_udevices_lists = data.data;
             this.pagination.total = data.count;
           } else {
-            this.get_data_from_tabname(this.activeName, {
-              "size": this.pagination.pagesize,
-              "page": this.pagination.currentPage
-            })
+            this.this.refreshactiveFun()
           }
         } else {
           this.$message.error("操作失败了 " + data.msg);
@@ -1845,7 +2033,7 @@ export default {
     getUserInfoFun(this);
     if (this.$route.params.act) {
       let activeName = this.$route.params.act;
-      let activeName_list = ["useddevices", "devicesudid", "adddeveloper", "iosdeveloper"];
+      let activeName_list = ["iosdeveloper", "adddeveloper","iosudevices","useddevices", "devicesudid","devicesbill","transferbill","devicesrank"];
       for (let index in activeName_list) {
         if (activeName_list[index] === activeName) {
           this.activeName = activeName;

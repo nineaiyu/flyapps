@@ -11,7 +11,7 @@ from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_
 from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
 from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided
-from common.base.baseutils import get_choices_dict, get_choices_name_from_key, AppleDeveloperUid
+from common.base.baseutils import get_choices_dict, AppleDeveloperUid
 from common.cache.storage import AdPicShowCache
 from fir_ser.settings import DEVELOPER_USE_STATUS, DEVELOPER_UID_KEY
 
@@ -642,18 +642,15 @@ class BillDeveloperInfoSerializer(serializers.ModelSerializer):
 class BillInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.IosDeveloperPublicPoolBill
-        exclude = ["user_id", "to_user_id", "developer_info", "app_info", "udid_sync_info", "app_id"]
+        exclude = ["user_id", "developer_info", "app_info", "udid_sync_info", "app_id"]
 
     app_name = serializers.SerializerMethodField()
-    action = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     is_used = serializers.SerializerMethodField()
     app_status = serializers.SerializerMethodField()
     remote_addr = serializers.SerializerMethodField()
 
     def get_remote_addr(self, obj):
-        if obj.to_user_id == self.context.get('user_obj'):
-            return ''
         return obj.remote_addr
 
     def get_app_status(self, obj):
@@ -662,27 +659,43 @@ class BillInfoSerializer(serializers.ModelSerializer):
         return False
 
     def get_is_used(self, obj):
-        if obj.udid_sync_info or obj.to_user_id:
+        if obj.udid_sync_info:
             return True
         return False
-
-    def get_action(self, obj):
-        return get_choices_name_from_key(obj.action_choices, obj.action)
 
     def get_app_name(self, obj):
         if obj.app_info:
             return obj.app_info.get('name')
-        elif obj.to_user_id:
-            return obj.user_id.first_name
 
     def get_description(self, obj):
         if obj.udid:
-            return f"{self.get_app_name(obj)}-{self.get_action(obj)} -{obj.number} 设备数"
-        if obj.to_user_id:
-            if obj.to_user_id == self.context.get('user_obj'):
-                return f"{obj.user_id.first_name}-{self.get_action(obj)} +{obj.number} 设备数"
-            else:
-                return f"向 {obj.to_user_id.first_name} {self.get_action(obj)} -{obj.number} 设备数"
+            return f"{self.get_app_name(obj)}-消耗- {obj.number} 设备数"
+
+
+class BillTransferSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.IosDeveloperBill
+        exclude = ["id", "remote_addr", "user_id", "to_user_id"]
+
+    target_user = serializers.SerializerMethodField()
+    cancel = serializers.SerializerMethodField()
+    number = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display')
+
+    def get_target_user(self, obj):
+        user_obj = obj.user_id
+        if self.get_cancel(obj):
+            user_obj = obj.to_user_id
+        return {'uid': user_obj.uid, 'name': user_obj.first_name}
+
+    def get_cancel(self, obj):
+        return self.context.get('user_obj').pk == obj.user_id.pk
+
+    def get_number(self, obj):
+        if self.get_cancel(obj):
+            return -obj.number
+        else:
+            return obj.number
 
 
 class AppReportSerializer(serializers.ModelSerializer):

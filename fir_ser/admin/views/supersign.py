@@ -13,11 +13,11 @@ from rest_framework.views import APIView
 
 from admin.utils.serializer import AdminDeveloperSerializer, AdminSuperSignUsedSerializer, AdminBillInfoSerializer
 from admin.utils.utils import AppsPageNumber, BaseModelSet, ApiResponse
-from api.models import APPSuperSignUsedInfo, AppIOSDeveloperInfo, IosDeveloperPublicPoolBill
+from api.models import APPSuperSignUsedInfo, AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, IosDeveloperBill
 from api.utils.auth import AdminTokenAuthentication
 from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, get_user_obj_from_epu
 from api.utils.utils import get_developer_devices
-from common.base.baseutils import get_real_ip_address, get_order_num
+from common.base.baseutils import get_real_ip_address
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ class SuperSignBillFilter(filters.FilterSet):
 
     class Meta:
         model = IosDeveloperPublicPoolBill
-        fields = ["id", "user_id", "to_user_id", "action", "udid", "app_id"]
+        fields = ["id", "user_id", "udid", "app_id"]
 
 
 class SuperSignBillView(BaseModelSet):
@@ -93,13 +93,10 @@ class SuperSignBillView(BaseModelSet):
             to_user_obj = get_user_obj_from_epu(to_user_id)
             if user_obj and to_user_obj and user_obj.pk != to_user_obj.pk:
                 try:
-                    IosDeveloperPublicPoolBill.objects.create(user_id=user_obj, to_user_id=to_user_obj,
-                                                              action=2, number=number,
-                                                              remote_addr=get_real_ip_address(request),
-                                                              product='后台转账',
-                                                              udid=f'oid:{get_order_num()}',
-                                                              version=f'{user_obj.first_name} 后台转账 {number} 设备数',
-                                                              )
+                    IosDeveloperBill.objects.create(user_id=user_obj, to_user_id=to_user_obj,
+                                                    status=2, number=number,
+                                                    remote_addr=get_real_ip_address(request),
+                                                    description=f'{user_obj.first_name} 共享给 {to_user_obj.first_name} {number} 设备数')
                     return ApiResponse()
                 except Exception as e:
                     msg = str(e)

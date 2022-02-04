@@ -753,6 +753,21 @@ export function DeviceBillInfo(callBack, params, load = true) {
     );
 }
 
+/**设备流转账单 */
+export function DeviceTransferBillInfo(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/supersign/devicebill',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 /**签名下载排行 */
 export function DeviceRankInfo(callBack, params, load = true) {
     getData(

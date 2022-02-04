@@ -16,7 +16,8 @@ from django.core.cache import cache
 from django.db.models import Count, F
 
 from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
-    UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo, AppleDeveloperToAppUse
+    UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo, AppleDeveloperToAppUse, \
+    IosDeveloperBill
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign, \
     get_developer_can_used_from_public_sign, update_or_create_developer_udid_info, check_uid_has_relevant
@@ -365,7 +366,7 @@ def get_developer_obj_by_others(user_obj, udid, app_obj, read_only):
     result, is_exist = get_developer_user_by_app_udid([user_obj], udid, app_obj, read_only=read_only)
     if result:
         return result
-    receive_user_id_list = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj).values('user_id').distinct()
+    receive_user_id_list = IosDeveloperBill.objects.filter(to_user_id=user_obj, status=2).values('user_id').distinct()
     if receive_user_id_list:
         result, is_exist = get_developer_user_by_app_udid(UserInfo.objects.filter(pk__in=receive_user_id_list), udid,
                                                           app_obj, read_only=read_only)
@@ -623,7 +624,7 @@ class IosUtils(object):
                                                             app_info=BillAppInfoSerializer(app_obj).data,
                                                             developer_info=BillDeveloperInfoSerializer(
                                                                 developer_obj).data,
-                                                            action=0, number=1, udid_sync_info=udid_sync_info,
+                                                            number=1, udid_sync_info=udid_sync_info,
                                                             remote_addr=client_ip, product=udid_sync_info.product,
                                                             udid=device_udid, version=udid_sync_info.version,
                                                             app_id=app_obj
@@ -921,7 +922,9 @@ class IosUtils(object):
 
         for developer_id in developer_id_lists:
             developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_id[0]).first()
-            if developer_obj and (developer_obj.user_id == app_obj.user_id or check_uid_has_relevant(developer_obj.user_id.uid,app_obj.user_id.uid)):
+            if developer_obj and (
+                    developer_obj.user_id == app_obj.user_id or check_uid_has_relevant(developer_obj.user_id.uid,
+                                                                                       app_obj.user_id.uid)):
                 IosUtils.clean_super_sign_things_by_app_obj(app_obj, developer_obj)
 
     @staticmethod

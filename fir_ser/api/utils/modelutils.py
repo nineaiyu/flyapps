@@ -13,7 +13,7 @@ from django.db.models import Count, Sum, Q
 from rest_framework.pagination import PageNumberPagination
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
-    AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper, UserInfo, UDIDsyncDeveloper
+    AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper, UserInfo, UDIDsyncDeveloper, IosDeveloperBill
 from common.base.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name, is_valid_phone
 
@@ -183,15 +183,14 @@ def get_ios_developer_public_num(user_obj):
 
 
 def get_user_public_sign_num(user_obj):
-    add_number = IosDeveloperPublicPoolBill.objects.filter(to_user_id=user_obj, action__in=[1, 2]).aggregate(
+    add_number = IosDeveloperBill.objects.filter(to_user_id=user_obj, status=2).aggregate(
         number=Sum('number'))
     number = add_number.get("number", 0)
     return number if number else 0
 
 
 def get_user_public_used_sign_num(user_obj):
-    used_number = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj, action=0,
-                                                            udid_sync_info__isnull=False).exclude(
+    used_number = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj, udid_sync_info__isnull=False).exclude(
         udid_sync_info__developerid__user_id=user_obj).values('number',
                                                               'udid_sync_info_id').annotate(
         counts=Count('udid_sync_info_id')).aggregate(number=Sum('number'))
@@ -200,13 +199,13 @@ def get_user_public_used_sign_num(user_obj):
 
 
 def get_developer_can_used_from_public_sign(user_obj):
-    o_number_info = IosDeveloperPublicPoolBill.objects.filter(to_user_id__isnull=False, user_id=user_obj).values(
-        'number').aggregate(number=Sum('number'))
+    o_number_info = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj).values('number').aggregate(
+        number=Sum('number'))
     o_number = o_number_info.get("number", 0)
     if o_number is None:
         o_number = 0
     u_number_info = IosDeveloperPublicPoolBill.objects.filter(
-        user_id_id__in=IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj).values('to_user_id_id')).values(
+        user_id_id__in=IosDeveloperBill.objects.filter(user_id=user_obj).values('to_user_id_id')).values(
         'number',
         'udid_sync_info_id').annotate(
         counts=Count('udid_sync_info_id')).aggregate(number=Sum('number'))
@@ -260,7 +259,7 @@ def update_or_create_developer_udid_info(device_obj, developer_obj):
 
 def check_uid_has_relevant(user_uid, to_user_uid):
     if user_uid and to_user_uid:
-        return IosDeveloperPublicPoolBill.objects.filter(user_id__uid=user_uid, to_user_id__uid=to_user_uid).first()
+        return IosDeveloperBill.objects.filter(user_id__uid=user_uid, to_user_id__uid=to_user_uid, status=2).first()
 
 
 class PageNumber(PageNumberPagination):

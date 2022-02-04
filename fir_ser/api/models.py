@@ -268,9 +268,7 @@ class AppIOSDeveloperInfo(models.Model):
     user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
     issuer_id = models.CharField(max_length=64, null=False, verbose_name="标识创建认证令牌的发放者")
     private_key_id = models.CharField(max_length=64, null=False, verbose_name="密钥 ID")
-    # p8key = models.TextField(max_length=512, null=False, verbose_name="p8key")
     p8key = AESCharField(max_length=512, null=False, verbose_name="p8key")
-    # is_actived = models.BooleanField(default=False, verbose_name="是否已经激活")
     certid = models.CharField(max_length=64, blank=True, verbose_name="超级签名自动创建证书ID", null=True)
     usable_number = models.IntegerField(verbose_name="可使用设备数", default=100)
     app_limit_number = models.IntegerField(verbose_name="可分配应用数，最大160", default=100)
@@ -546,14 +544,7 @@ class UserAdDisplayInfo(models.Model):
 
 
 class IosDeveloperPublicPoolBill(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE,
-                                related_name='org_user_id')
-    to_user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE,
-                                   related_name='to_user_id', null=True, blank=True)
-
-    action_choices = ((0, '消费'), (1, '充值'), (2, '转账'))
-    action = models.SmallIntegerField(choices=action_choices, default=0, verbose_name="资金类型",
-                                      help_text="0 消费 1 充值 2 转账")
+    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
     number = models.IntegerField(verbose_name="消耗次数", default=1)
     app_info = models.JSONField(max_length=256, verbose_name="属于哪个APP", null=True, blank=True)
     udid = models.CharField(max_length=64, verbose_name="设备udid", null=True, blank=True)
@@ -568,8 +559,31 @@ class IosDeveloperPublicPoolBill(models.Model):
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
 
     class Meta:
-        verbose_name = '资金流转账单'
-        verbose_name_plural = "资金流转账单"
+        verbose_name = '设备消耗账单'
+        verbose_name_plural = "设备消耗账单"
+
+    def __str__(self):
+        return "%s-%s" % (self.user_id, self.description)
+
+
+class IosDeveloperBill(models.Model):
+    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE,
+                                related_name='org_user_id')
+    to_user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE,
+                                   related_name='to_user_id', null=True, blank=True)
+
+    status_choices = ((0, '失效'), (1, '已撤回'), (2, '成功'))
+    status = models.SmallIntegerField(choices=status_choices, default=0, verbose_name="状态",
+                                      help_text="0 失效 1 撤回 2 转账")
+    number = models.IntegerField(verbose_name="设备数量", default=1)
+    description = models.CharField(verbose_name="操作描述", max_length=128, default='', blank=True)
+    remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址")
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = '设备划转账单'
+        verbose_name_plural = "设备划转账单"
 
     def __str__(self):
         return "%s-%s—%s" % (self.user_id, self.to_user_id, self.description)

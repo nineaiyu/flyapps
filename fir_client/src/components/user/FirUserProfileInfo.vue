@@ -104,6 +104,13 @@
       </el-form-item>
 
 
+      <el-form-item label="用户UID">
+        <el-row :gutter="36">
+          <el-col :span="18">
+            <el-input :value="userinfo.uid" disabled/>
+          </el-col>
+        </el-row>
+      </el-form-item>
       <el-form-item label="手机号码">
         <el-row :gutter="36">
           <el-col :span="16">
