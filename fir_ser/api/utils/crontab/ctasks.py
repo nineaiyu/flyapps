@@ -66,7 +66,7 @@ def auto_delete_ios_mobile_tmp_file():
 
 
 def auto_check_ios_developer_active():
-    all_ios_developer = AppIOSDeveloperInfo.objects.filter(status__in=DEVELOPER_AUTO_CHECK_STATUS)
+    all_ios_developer = AppIOSDeveloperInfo.objects.filter(status__in=DEVELOPER_AUTO_CHECK_STATUS, auto_check=True)
     error_issuer_id = {}
     for ios_developer in all_ios_developer:
         userinfo = ios_developer.user_id

@@ -112,7 +112,7 @@
               inactive-color="#ff4949"
               inactive-value="off">
           </el-switch>
-          <el-tag style="margin-left: 10px" type="warning"> 该模式下，新设备，新应用无法进行注册安装，但是已经安装的不影响</el-tag>
+          <el-tag style="margin-left: 10px" type="warning"> 该模式下，新设备，新应用无法进行注册安装，但是已经安装的不影响，默认关闭</el-tag>
           <el-tag v-if="read_only_mode==='on'" style="margin-left: 50px" type="warning"> 通过账户激活进行关闭维护模式</el-tag>
         </el-form-item>
         <el-form-item label="清理禁用设备" label-width="110px" style="text-align: left">
@@ -123,7 +123,17 @@
               active-color="#13ce66"
               inactive-color="#ff4949">
           </el-switch>
-          <el-tag style="margin-left: 10px" type="warning"> 清理数据的时候，是否同时将开发者设备禁用，默认不禁用</el-tag>
+          <el-tag style="margin-left: 10px" type="warning"> 清理数据的时候，是否同时将开发者设备禁用，默认关闭</el-tag>
+        </el-form-item>
+        <el-form-item label="状态自动检测" label-width="110px" style="text-align: left">
+          <el-switch
+              v-model="editdeveloperinfo.auto_check"
+              :active-value="true"
+              :inactive-value="false"
+              active-color="#13ce66"
+              inactive-color="#ff4949">
+          </el-switch>
+          <el-tag style="margin-left: 10px" type="warning"> 开启之后，每天凌晨自动检测该开发者状态是否正常，默认关闭</el-tag>
         </el-form-item>
         <el-form-item label="证书id" label-width="110px">
           <el-input v-model="editdeveloperinfo.certid" :disabled='isedit'/>
@@ -381,7 +391,7 @@
               fixed
               label="开发者ID issuer_id"
               prop="issuer_id"
-              width="200">
+              width="160">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
                 <el-tooltip content="点击复制到剪贴板">
@@ -412,7 +422,7 @@
               align="center"
               label="是否激活"
               prop="status"
-              width="110">
+              width="105">
             <template slot-scope="scope">
               <el-tooltip v-if="scope.row.status!==0" content="点击禁用">
                 <el-button size="small" type="success" @click="disabledeveloperFun(scope.row,'disable')">已激活</el-button>
@@ -527,6 +537,16 @@
                   </el-link>
                 </div>
               </el-popover>
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="自动检测"
+              prop="auto_check"
+              width="60">
+            <template slot-scope="scope">
+              <el-tag v-if="scope.row.auto_check" size="medium">是</el-tag>
+              <el-tag v-else size="medium" type="info">否</el-tag>
             </template>
           </el-table-column>
           <el-table-column
@@ -1092,7 +1112,13 @@
               label="目标用户UID">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
-                <p>用户UID: {{ scope.row.target_user.uid }}</p>
+                <el-tooltip content="点击复制到剪贴板">
+
+                  <el-link v-clipboard:copy="scope.row.target_user.uid"
+                           v-clipboard:success="copy_success"
+                           :underline="false">用户UID: {{ scope.row.target_user.uid }}
+                  </el-link>
+                </el-tooltip>
                 <p>用户昵称: {{ scope.row.target_user.name }}</p>
                 <div slot="reference" class="name-wrapper">
                   <span>{{ scope.row.target_user.uid }}</span>
@@ -1633,7 +1659,7 @@ export default {
     },
     handleCurrentChange(val) {
       this.pagination.currentPage = val;
-      this.this.refreshactiveFun()
+      this.refreshactiveFun()
     },
     syncdevices() {
       this.iosdeveloperFun({
@@ -1897,7 +1923,7 @@ export default {
           this.$message.error("操作失败")
         }
         if (params.methods === 'PUT' || params.methods === 'DELETE') {
-          this.this.refreshactiveFun()
+          this.refreshactiveFun()
         }
         if (params.methods !== 'GET') {
           this.loadingfun.close();
@@ -2015,7 +2041,7 @@ export default {
             this.developer_udevices_lists = data.data;
             this.pagination.total = data.count;
           } else {
-            this.this.refreshactiveFun()
+            this.refreshactiveFun()
           }
         } else {
           this.$message.error("操作失败了 " + data.msg);
@@ -2033,7 +2059,7 @@ export default {
     getUserInfoFun(this);
     if (this.$route.params.act) {
       let activeName = this.$route.params.act;
-      let activeName_list = ["iosdeveloper", "adddeveloper","iosudevices","useddevices", "devicesudid","devicesbill","transferbill","devicesrank"];
+      let activeName_list = ["iosdeveloper", "adddeveloper", "iosudevices", "useddevices", "devicesudid", "devicesbill", "transferbill", "devicesrank"];
       for (let index in activeName_list) {
         if (activeName_list[index] === activeName) {
           this.activeName = activeName;

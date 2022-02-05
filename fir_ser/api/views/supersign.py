@@ -205,6 +205,8 @@ class DeveloperView(APIView):
 
                 developer_obj.clean_status = data.get("clean_status", developer_obj.clean_status)
                 update_fields.append("clean_status")
+                developer_obj.auto_check = data.get("auto_check", developer_obj.auto_check)
+                update_fields.append("auto_check")
 
                 private_key_id = data.get("private_key_id", developer_obj.private_key_id)
                 p8key = data.get("p8key", developer_obj.p8key)

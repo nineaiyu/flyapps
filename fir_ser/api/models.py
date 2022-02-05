@@ -284,6 +284,7 @@ class AppIOSDeveloperInfo(models.Model):
     status = models.SmallIntegerField(choices=status_choices, verbose_name="账户状态", default=0)
 
     clean_status = models.BooleanField(verbose_name="清理是否同时禁用设备ID", default=False)
+    auto_check = models.BooleanField(verbose_name="是否自动检测开发者状态", default=False)
 
     class Meta:
         verbose_name = '苹果开发者账户'
