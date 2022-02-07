@@ -11,7 +11,8 @@ from rest_framework import serializers
 
 from api.models import SystemConfig
 from common.cache.storage import SystemConfigCache
-from config import BASECONF, API_DOMAIN, MOBILEPROVISION, WEB_DOMAIN, THIRDLOGINCONF, AUTHCONF, IPACONF, MSGCONF
+from config import BASECONF, API_DOMAIN, MOBILEPROVISION, WEB_DOMAIN, THIRDLOGINCONF, AUTHCONF, IPACONF, MSGCONF, \
+    DOWNLOADTIMESCONF
 
 logger = logging.getLogger(__name__)
 
@@ -173,13 +174,11 @@ class GeeTestConfCache(ConfigCacheBase):
 
     @property
     def GEETEST_ID(self):
-        value = super().get_value('GEETEST_ID')
-        return value if value else BASECONF.GEETEST_ID
+        return super().get_value('GEETEST_ID', BASECONF.GEETEST_ID)
 
     @property
     def GEETEST_KEY(self):
-        value = super().get_value('GEETEST_KEY')
-        return value if value else BASECONF.GEETEST_KEY
+        return super().get_value('GEETEST_KEY', BASECONF.GEETEST_KEY)
 
     @property
     def GEETEST_CYCLE_TIME(self):
@@ -187,18 +186,15 @@ class GeeTestConfCache(ConfigCacheBase):
         定时任务初始化，该数值无效，需要在配置中定义
         :return:
         """
-        value = super().get_value('GEETEST_CYCLE_TIME')
-        return value if value else BASECONF.GEETEST_CYCLE_TIME
+        return super().get_value('GEETEST_CYCLE_TIME', BASECONF.GEETEST_CYCLE_TIME)
 
     @property
     def GEETEST_BYPASS_STATUS_KEY(self):
-        value = super().get_value('GEETEST_BYPASS_STATUS_KEY')
-        return value if value else BASECONF.GEETEST_BYPASS_STATUS_KEY
+        return super().get_value('GEETEST_BYPASS_STATUS_KEY', BASECONF.GEETEST_BYPASS_STATUS_KEY)
 
     @property
     def GEETEST_BYPASS_URL(self):
-        value = super().get_value('GEETEST_BYPASS_URL')
-        return value if value else BASECONF.GEETEST_BYPASS_URL
+        return super().get_value('GEETEST_BYPASS_URL', BASECONF.GEETEST_BYPASS_URL)
 
 
 class UserDownloadTimesCache(ConfigCacheBase):
@@ -207,23 +203,19 @@ class UserDownloadTimesCache(ConfigCacheBase):
 
     @property
     def USER_FREE_DOWNLOAD_TIMES(self):
-        value = super().get_value('USER_FREE_DOWNLOAD_TIMES')
-        return value if value else 5
+        return super().get_value('USER_FREE_DOWNLOAD_TIMES', DOWNLOADTIMESCONF.USER_FREE_DOWNLOAD_TIMES)
 
     @property
     def AUTH_USER_FREE_DOWNLOAD_TIMES(self):
-        value = super().get_value('AUTH_USER_FREE_DOWNLOAD_TIMES')
-        return value if value else 10
+        return super().get_value('AUTH_USER_FREE_DOWNLOAD_TIMES', DOWNLOADTIMESCONF.AUTH_USER_FREE_DOWNLOAD_TIMES)
 
     @property
     def NEW_USER_GIVE_DOWNLOAD_TIMES(self):
-        value = super().get_value('NEW_USER_GIVE_DOWNLOAD_TIMES')
-        return value if value else 100
+        return super().get_value('NEW_USER_GIVE_DOWNLOAD_TIMES', DOWNLOADTIMESCONF.NEW_USER_GIVE_DOWNLOAD_TIMES)
 
     @property
     def AUTH_USER_GIVE_DOWNLOAD_TIMES(self):
-        value = super().get_value('AUTH_USER_GIVE_DOWNLOAD_TIMES')
-        return value if value else 200
+        return super().get_value('AUTH_USER_GIVE_DOWNLOAD_TIMES', DOWNLOADTIMESCONF.AUTH_USER_GIVE_DOWNLOAD_TIMES)
 
 
 class EmailMsgCache(ConfigCacheBase):
