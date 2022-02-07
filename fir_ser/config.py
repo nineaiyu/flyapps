@@ -12,7 +12,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class BASECONF(object):
-    VERSION = '1.3.1'
+    VERSION = '2.0.0'
 
     DEBUG = True
 
