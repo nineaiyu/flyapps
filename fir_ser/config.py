@@ -12,7 +12,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class BASECONF(object):
-    VERSION = '2.0.0'
+    VERSION = '1.3.1'
 
     DEBUG = True
 
@@ -66,6 +66,66 @@ class CACHECONF(object):
     host = '127.0.0.1'
     port = '6379'
     password = ''
+
+
+# 微信公众号登录配置
+class THIRDLOGINCONF(object):
+    wx_official = {
+        'name': 'wx_official',
+        'auth': {
+            'app_id': 'we6',
+            'app_secret': '5bfb678',
+            'token': 'f0ae1b879b8',
+            'encoding_aes_key': '7b9URovp83gG',
+        },
+        'active': True
+    }
+
+
+class AUTHCONF(object):
+    # 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG_KEY_INFO.sender 信息
+    REGISTER = {
+        "enable": True,
+        "captcha": False,  # 是否开启注册字母验证码
+        "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
+        "register_type": {
+            'sms': True,  # 短信注册
+            'email': True,  # 邮件注册
+            'code': False,  # 邀请码注册,邀请码必填写，需要和短信，邮件一起使用
+        }
+    }
+    # 个人资料修改修改也会使用该配置
+    CHANGER = {
+        "enable": True,
+        "captcha": False,  # 是否开启注册字母验证码
+        "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
+        "change_type": {
+            'sms': True,  # 短信注册
+            'email': True,  # 邮件注册
+            'code': False,  # 邀请码注册,邀请码必填写，需要和短信，邮件一起使用
+        }
+    }
+    LOGIN = {
+        "captcha": False,  # 是否开启登录字母验证码
+        "geetest": True,  # 是否开启geetest验证
+        "login_type": {
+            'sms': True,  # 短信登录
+            'email': True,  # 邮件登录
+            'up': False,  # 密码登录
+            'third': {
+                'wxp': THIRDLOGINCONF.wx_official.get('active')  # 微信公众号登录，需要在 THIRDLOGINCONF 配置好微信公众号登录
+            },
+        }
+    }
+    REPORT = {
+        "enable": True,
+        "captcha": True,  # 是否开启注册字母验证码
+        "geetest": False,  # 是否开启geetest验证，如要开启请先配置geetest
+        "report_type": {
+            'sms': False,  # 短信举报
+            'email': True,  # 邮件举报
+        }
+    }
 
 
 class STORAGEKEYCONF(object):
@@ -176,6 +236,40 @@ class SENDERCONF(object):
     ]
 
 
+class IPACONF(object):
+    APPLE_DEVELOPER_API_PROXY_LIST = [
+        # '47.243.172.201:17897',
+        # '47.243.172.202:17897',
+        # '47.243.172.203:17897'
+    ]
+    APPLE_DEVELOPER_API_PROXY = {
+        # 代理的作用，主要是为了加快苹果api的访问，在国内会出现卡死，访问超时等问题，怀疑是被苹果服务器拦截了
+        # 'http': '47.243.172.202:17897',
+        # 'https': '47.243.172.202:17897'
+    }
+    APPLE_DEVELOPER_API_TIMEOUT = 120  # 访问苹果api超时时间，默认3分钟
+    MOBILE_CONFIG_SIGN_SSL = {
+        # 描述文件是否签名，默认是关闭状态；如果开启，并且ssl_key_path 和 ssl_pem_path 正常，则使用填写的ssl进行签名,否则默认不签名
+        'open': True,
+        'ssl_key_path': '/data/cert/%s.key' % API_DOMAIN.split("://")[1],
+        'ssl_pem_path': '/data/cert/%s.pem' % API_DOMAIN.split("://")[1]
+    }
+    DEFAULT_MOBILEPROVISION = {
+        # 默认描述文件路径或者下载路径，用户企业签名或者超级签名 跳转 [设置 - 通用 - 描述文件|设备管理] 页面
+        # 如果配置了path路径，则走路径，如果配置了url，则走URL，path 优先级大于url优先级
+        'enterprise': {
+            'url': MOBILEPROVISION,
+            # 'path': os.path.join(BASE_DIR,'files', 'embedded.mobileprovision'),
+        },
+        'supersign': {
+            # 超级签名，如果self 为True，则默认用自己的描述文件，否则同企业配置顺序一致,自己的配置文件有时候有问题
+            'self': False,
+            'url': MOBILEPROVISION,
+            # 'path': os.path.join(BASE_DIR,'files', 'embedded.mobileprovision'),
+        }
+    }
+
+
 class PAYCONF(object):
     PAY_SUCCESS_URL = '%s/user/orders' % WEB_DOMAIN  # 前端页面，支付成功跳转页面
     PAY_CONFIG_KEY_INFO = [
@@ -239,3 +333,9 @@ bIX1aWjPxirQX9mzaL3oEQI=
             }
         }
     ]
+
+
+class MSGCONF(object):
+    MSG_NOT_EXIST_DEVELOPER = '用户 %s 你好，应用 %s 签名失败了，苹果开发者总设备量已经超限，请添加新的苹果开发者或者修改开发者设备数量。感谢有你!'
+    MSG_ERROR_DEVELOPER = '用户 %s 你好，应用 %s 签名失败了，苹果开发者 %s 信息异常，请重新检查苹果开发者状态是否正常。感谢有你!'
+    MSG_AUTO_CHECK_DEVELOPER = '用户 %s 你好，苹果开发者 %s 信息异常，请重新检查苹果开发者状态是否正常。感谢有你!'

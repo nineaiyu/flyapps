@@ -11,7 +11,7 @@ from rest_framework import serializers
 
 from api.models import SystemConfig
 from common.cache.storage import SystemConfigCache
-from config import BASECONF, API_DOMAIN, MOBILEPROVISION, WEB_DOMAIN
+from config import BASECONF, API_DOMAIN, MOBILEPROVISION, WEB_DOMAIN, THIRDLOGINCONF, AUTHCONF, IPACONF, MSGCONF
 
 logger = logging.getLogger(__name__)
 
@@ -24,17 +24,6 @@ class SystemConfigSerializer(serializers.ModelSerializer):
 
 def invalid_config_cache(key='*'):
     SystemConfigCache(key).del_many()
-
-
-# def make_json_value(value, default):
-#     try:
-#         if isinstance(value, str):
-#             value = json.loads(value)
-#         if isinstance(value, dict):
-#             return value
-#     except Exception as e:
-#         logger.warning(f"sysconfig make json value failed {value} Exception:{e}")
-#         return default
 
 
 class ConfigCacheBase(object):
@@ -75,23 +64,23 @@ class ConfigCacheBase(object):
 
     @property
     def MOBILEPROVISION(self):
-        return self.get_value('MOBILEPROVISION') if self.get_value('MOBILEPROVISION') else MOBILEPROVISION
+        return self.get_value('MOBILEPROVISION', MOBILEPROVISION)
 
     @property
     def API_DOMAIN(self):
-        return self.get_value('API_DOMAIN') if self.get_value('API_DOMAIN') else API_DOMAIN
+        return self.get_value('API_DOMAIN', API_DOMAIN)
 
     @property
     def WEB_DOMAIN(self):
-        return self.get_value('WEB_DOMAIN') if self.get_value('WEB_DOMAIN') else WEB_DOMAIN
+        return self.get_value('WEB_DOMAIN', WEB_DOMAIN)
 
     @property
     def POST_UDID_DOMAIN(self):
-        return self.get_value('POST_UDID_DOMAIN') if self.get_value('POST_UDID_DOMAIN') else self.API_DOMAIN
+        return self.get_value('POST_UDID_DOMAIN', self.API_DOMAIN)
 
     @property
     def FILE_UPLOAD_DOMAIN(self):
-        return self.get_value('FILE_UPLOAD_DOMAIN') if self.get_value('FILE_UPLOAD_DOMAIN') else self.API_DOMAIN
+        return self.get_value('FILE_UPLOAD_DOMAIN', self.API_DOMAIN)
 
 
 class BaseConfCache(ConfigCacheBase):
@@ -121,45 +110,19 @@ class IpaConfCache(ConfigCacheBase):
 
     @property
     def MOBILE_CONFIG_SIGN_SSL(self):
-        return super().get_value('MOBILE_CONFIG_SIGN_SSL', {
-            # 描述文件是否签名，默认是关闭状态；如果开启，并且ssl_key_path 和 ssl_pem_path 正常，则使用填写的ssl进行签名,否则默认不签名
-            'open': True,
-            'ssl_key_path': '/data/cert/%s.key' % self.API_DOMAIN.split("://")[1],
-            'ssl_pem_path': '/data/cert/%s.pem' % self.API_DOMAIN.split("://")[1]
-        })
+        return super().get_value('MOBILE_CONFIG_SIGN_SSL', IPACONF.MOBILE_CONFIG_SIGN_SSL)
 
     @property
     def DEFAULT_MOBILEPROVISION(self):
-        return super().get_value('DEFAULT_MOBILEPROVISION', {
-            # 默认描述文件路径或者下载路径，用户企业签名或者超级签名 跳转 [设置 - 通用 - 描述文件|设备管理] 页面
-            # 如果配置了path路径，则走路径，如果配置了url，则走URL，path 优先级大于url优先级
-            'enterprise': {
-                'url': self.MOBILEPROVISION,
-                # 'path': os.path.join(BASE_DIR,'files', 'embedded.mobileprovision'),
-            },
-            'supersign': {
-                # 超级签名，如果self 为True，则默认用自己的描述文件，否则同企业配置顺序一致,自己的配置文件有时候有问题
-                'self': False,
-                'url': self.MOBILEPROVISION,
-                # 'path': os.path.join(BASE_DIR,'files', 'embedded.mobileprovision'),
-            }
-        })
+        return super().get_value('DEFAULT_MOBILEPROVISION', IPACONF.DEFAULT_MOBILEPROVISION)
 
     @property
     def APPLE_DEVELOPER_API_PROXY(self):
-        return super().get_value('APPLE_DEVELOPER_API_PROXY', {
-            # 代理的作用，主要是为了加快苹果api的访问，在国内会出现卡死，访问超时等问题，怀疑是被苹果服务器拦截了
-            # 'http': '47.243.172.202:17897',
-            # 'https': '47.243.172.202:17897'
-        })
+        return super().get_value('APPLE_DEVELOPER_API_PROXY', IPACONF.APPLE_DEVELOPER_API_PROXY)
 
     @property
     def APPLE_DEVELOPER_API_PROXY_LIST(self):
-        return super().get_value('APPLE_DEVELOPER_API_PROXY_LIST', [
-            # '47.243.172.201:17897',
-            # '47.243.172.202:17897',
-            # '47.243.172.203:17897'
-        ])
+        return super().get_value('APPLE_DEVELOPER_API_PROXY_LIST', IPACONF.APPLE_DEVELOPER_API_PROXY_LIST)
 
     @property
     def APPLE_DEVELOPER_API_TIMEOUT(self):
@@ -167,8 +130,7 @@ class IpaConfCache(ConfigCacheBase):
         访问苹果api超时时间，默认2分钟
         :return:
         """
-        value = super().get_value('APPLE_DEVELOPER_API_TIMEOUT')
-        return value if value is not None else 2 * 60
+        return super().get_value('APPLE_DEVELOPER_API_TIMEOUT', 2 * 60)
 
 
 class WechatConfCache(ConfigCacheBase):
@@ -177,16 +139,7 @@ class WechatConfCache(ConfigCacheBase):
 
     @property
     def THIRDLOGINCONF(self):
-        return super().get_value('THIRDLOGINCONF', {
-            'name': 'wx_official',
-            'auth': {
-                'app_id': 'we6',
-                'app_secret': '5bfb678',
-                'token': 'f0ae1b879b8',
-                'encoding_aes_key': '7b9URovp83gG',
-            },
-            'active': True
-        })
+        return super().get_value('THIRDLOGINCONF', THIRDLOGINCONF.wx_official)
 
 
 class AuthConfCache(WechatConfCache):
@@ -199,56 +152,19 @@ class AuthConfCache(WechatConfCache):
         注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG_KEY_INFO.sender 信息
         :return:
         """
-        return super().get_value('REGISTER', {
-            "enable": True,
-            "captcha": False,  # 是否开启注册字母验证码
-            "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
-            "register_type": {
-                'sms': True,  # 短信注册
-                'email': True,  # 邮件注册
-                'code': False,  # 邀请码注册,邀请码必填写，需要和短信，邮件一起使用
-            }
-        })
+        return super().get_value('REGISTER', AUTHCONF.REGISTER)
 
     @property
     def CHANGER(self):
-        return super().get_value('CHANGER', {
-            "enable": True,
-            "captcha": False,  # 是否开启注册字母验证码
-            "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
-            "change_type": {
-                'sms': True,  # 短信注册
-                'email': True,  # 邮件注册
-                'code': False,  # 邀请码注册,邀请码必填写，需要和短信，邮件一起使用
-            }
-        })
+        return super().get_value('CHANGER', AUTHCONF.CHANGER)
 
     @property
     def LOGIN(self):
-        return super().get_value('LOGIN', {
-            "captcha": False,  # 是否开启登录字母验证码
-            "geetest": True,  # 是否开启geetest验证
-            "login_type": {
-                'sms': True,  # 短信登录
-                'email': True,  # 邮件登录
-                'up': False,  # 密码登录
-                'third': {
-                    'wxp': self.THIRDLOGINCONF.get('active')  # 微信公众号登录，需要在 THIRDLOGINCONF 配置好微信公众号登录
-                },
-            }
-        })
+        return super().get_value('LOGIN', AUTHCONF.LOGIN)
 
     @property
     def REPORT(self):
-        return super().get_value('REPORT', {
-            "enable": True,
-            "captcha": True,  # 是否开启注册字母验证码
-            "geetest": False,  # 是否开启geetest验证，如要开启请先配置geetest
-            "report_type": {
-                'sms': False,  # 短信举报
-                'email': True,  # 邮件举报
-            }
-        })
+        return super().get_value('REPORT', AUTHCONF.REPORT)
 
 
 class GeeTestConfCache(ConfigCacheBase):
@@ -316,21 +232,15 @@ class EmailMsgCache(ConfigCacheBase):
 
     @property
     def MSG_NOT_EXIST_DEVELOPER(self):
-        value = super().get_value('MSG_NOT_EXIST_DEVELOPER')
-        tem = '用户 %s 你好，应用 %s 签名失败了，苹果开发者总设备量已经超限，请添加新的苹果开发者或者修改开发者设备数量。感谢有你!'
-        return value if value else tem
+        return super().get_value('MSG_NOT_EXIST_DEVELOPER', MSGCONF.MSG_NOT_EXIST_DEVELOPER)
 
     @property
     def MSG_ERROR_DEVELOPER(self):
-        value = super().get_value('MSG_ERROR_DEVELOPER')
-        tem = '用户 %s 你好，应用 %s 签名失败了，苹果开发者 %s 信息异常，请重新检查苹果开发者状态是否正常。感谢有你!'
-        return value if value else tem
+        return super().get_value('MSG_ERROR_DEVELOPER', MSGCONF.MSG_ERROR_DEVELOPER)
 
     @property
     def MSG_AUTO_CHECK_DEVELOPER(self):
-        value = super().get_value('MSG_AUTO_CHECK_DEVELOPER')
-        tem = '用户 %s 你好，苹果开发者 %s 信息异常，请重新检查苹果开发者状态是否正常。感谢有你!'
-        return value if value else tem
+        return super().get_value('MSG_AUTO_CHECK_DEVELOPER', MSGCONF.MSG_AUTO_CHECK_DEVELOPER)
 
 
 class ConfigCache(BaseConfCache, IpaConfCache, AuthConfCache, EmailMsgCache, UserDownloadTimesCache, GeeTestConfCache):
