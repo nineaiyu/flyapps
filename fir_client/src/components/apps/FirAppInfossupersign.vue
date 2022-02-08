@@ -41,15 +41,15 @@
       <el-form-item label="自动更新"
                     label-width="200px">
 
-          <el-switch
-              :disabled="supersign_disable"
-              v-model="currentapp.change_auto_sign"
-              active-color="#13ce66"
-              :active-value="true"
-              inactive-color="#ff4949"
-              :inactive-value="false"
-              @change="saveappinfo({change_auto_sign:currentapp.change_auto_sign})">
-          </el-switch>
+        <el-switch
+            v-model="currentapp.change_auto_sign"
+            :active-value="true"
+            :disabled="supersign_disable"
+            :inactive-value="false"
+            active-color="#13ce66"
+            inactive-color="#ff4949"
+            @change="saveappinfo({change_auto_sign:currentapp.change_auto_sign})">
+        </el-switch>
 
         <el-link :underline="false" style="margin-left: 20px">开启自动更新，新包入库或签名相关数据更改，系统将会自动更新签名包</el-link>
       </el-form-item>
