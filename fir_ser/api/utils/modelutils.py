@@ -13,7 +13,8 @@ from django.db.models import Count, Sum, Q
 from rest_framework.pagination import PageNumberPagination
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
-    AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper, UserInfo, UDIDsyncDeveloper, IosDeveloperBill
+    AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper, UserInfo, UDIDsyncDeveloper, IosDeveloperBill, \
+    AppUDID
 from common.base.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name, is_valid_phone
 
@@ -225,6 +226,8 @@ def check_super_sign_permission(user_obj):
 
 
 def check_ipa_is_latest_sign(app_obj, developer_obj=None):
+    if AppUDID.objects.filter(app_id=app_obj, udid__developerid=developer_obj, sign_status__lt=4).first():
+        return
     release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
     all_app_to_dev = APPToDeveloper.objects.filter(app_id=app_obj)
     if developer_obj:

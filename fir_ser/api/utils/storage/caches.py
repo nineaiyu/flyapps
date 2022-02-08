@@ -45,7 +45,7 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
             if app_obj.get('issupersign', None):
                 download_url_type = 'mobileconifg'
         else:
-            appudid_obj = AppUDID.objects.filter(app_id_id=app_obj.get("pk"), udid__udid=udid, is_signed=True).last()
+            appudid_obj = AppUDID.objects.filter(app_id_id=app_obj.get("pk"), udid__udid=udid, sign_status=4).last()
             if appudid_obj:
                 super_sign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid__udid=udid,
                                                                      app_id_id=app_obj.get("pk"),

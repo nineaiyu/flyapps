@@ -380,8 +380,8 @@ def get_developer_obj_by_others(user_obj, udid, app_obj, read_only):
 def check_sign_is_exists(user_obj, app_obj, udid, developer_obj, sign=True):
     d_result = {'code': 0, 'msg': 'success'}
     app_udid_obj = AppUDID.objects.filter(app_id=app_obj, udid__udid=udid, udid__developerid=developer_obj).first()
-    if app_udid_obj and app_udid_obj.is_download:
-        if app_udid_obj.is_signed:
+    if app_udid_obj and app_udid_obj.sign_status >= 3:
+        if app_udid_obj.sign_status == 4:
             if check_ipa_is_latest_sign(app_obj, developer_obj):
                 d_result['msg'] = f'udid {udid} exists app_id {app_obj}'
                 logger.warning(d_result)
@@ -527,7 +527,7 @@ class IosUtils(object):
             if udid_list:
                 for udid in udid_list:
                     udid_obj = UDIDsyncDeveloper.objects.filter(developerid_id=developer_obj_id, udid=udid).first()
-                    AppUDID.objects.filter(app_id=app_obj, udid=udid_obj).update(**{"is_signed": True})
+                    AppUDID.objects.filter(app_id=app_obj, udid=udid_obj, sign_status=3).update(sign_status=4)
             del_cache_response_by_short(app_obj.app_id)
             return True
 
@@ -606,8 +606,8 @@ class IosUtils(object):
         # 2. DeveloperDevicesID 添加新应用-设备绑定信息数据
         # 3. AppUDID 添加数据，该数据主要是为了记录使用，is_signed 判断是否已经签名成功
         del udid_info['udid']
-        udid_info['is_signed'] = False
-        udid_info['is_download'] = False
+        udid_info['sign_status'] = 1
+        # udid_info['is_download'] = False
         udid_obj, _ = AppUDID.objects.update_or_create(app_id=app_obj, udid=sync_device_obj,
                                                        defaults=udid_info)
 
@@ -652,7 +652,7 @@ class IosUtils(object):
                                                                      app_id=app_obj)
             else:
                 return status, result
-
+        AppUDID.objects.filter(app_id=app_obj, udid__developerid_id=developer_obj, sign_status=1).update(sign_status=2)
         return True, developer_app_id_obj
 
     @staticmethod
@@ -814,6 +814,9 @@ class IosUtils(object):
     def run_sign(user_obj, app_obj, developer_obj, d_time, udid_list=None):
         if udid_list is None:
             udid_list = []
+            # app_udid_queryset = AppUDID.objects.filter(app_id=app_obj, udid__developerid=developer_obj).all()
+            for udid_obj in UDIDsyncDeveloper.objects.filter(appudid__app_id=app_obj, developerid=developer_obj).all():
+                udid_list.append(udid_obj.udid)
         else:
             new_did_list = []
             for did_udid in udid_list:
@@ -823,10 +826,10 @@ class IosUtils(object):
                 return True, True
             else:
                 udid_list = new_did_list
-
+        udid_list = list(set(udid_list))
         d_result = {'code': 0, 'msg': 'success'}
         AppUDID.objects.filter(app_id=app_obj, udid__udid__in=udid_list,
-                               udid__developerid=developer_obj).update(is_download=True)
+                               udid__developerid=developer_obj, sign_status=2).update(sign_status=3)
         start_time = time.time()
         logger.info(f"app_id {app_obj} download profile success. time:{start_time - d_time}")
         random_file_name = make_from_user_uuid(developer_obj.user_id.uid)

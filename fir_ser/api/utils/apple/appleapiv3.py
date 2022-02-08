@@ -903,7 +903,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             return True
         return False
 
-    @call_function_try_attempts()
+    @call_function_try_attempts(try_attempts=2)
     def enable_capability_by_s_type(self, bundle_id, s_type):
         capability_list = get_capability(s_type)
         if capability_list:
@@ -915,16 +915,16 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
                     logger.warning(f"{bundle_id} enable_capability {capability} failed {req.content}")
         return True
 
-    @call_function_try_attempts()
+    @call_function_try_attempts(try_attempts=1)
     def disable_capability_by_s_type(self, bundle_id, s_type=len(capability_info) - 1):
         capability_list = get_capability(s_type)
         if capability_list:
             for capability in capability_list:
                 req = super().disable_capability(bundle_id, capability)
                 if self.__do_success(req, 204):
-                    logger.info(f"{bundle_id} enable_capability {capability} success")
+                    logger.info(f"{bundle_id} disable_capability {capability} success")
                 else:
-                    logger.warning(f"{bundle_id} enable_capability {capability} failed {req.content}")
+                    logger.warning(f"{bundle_id} disable_capability {capability} failed {req.content}")
         return True
 
     def enable_push_vpn_capability(self, bundle_id):

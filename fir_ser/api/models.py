@@ -137,6 +137,7 @@ class Apps(models.Model):
     password = models.CharField(verbose_name="访问密码", blank=True, help_text='默认 没有密码', max_length=32)
     isshow = models.BooleanField(verbose_name="下载页可见", default=True)
     issupersign = models.BooleanField(verbose_name="是否超级签名包", default=False)
+    change_auto_sign = models.BooleanField(verbose_name="签名相关的数据更新自动签名", default=False)
     supersign_type_choices = ((0, '普通权限'), (1, '推送权限，请上传adhoc包'), (2, 'network、vpn、推送权限，请上传adhoc包'), (3, '特殊权限'))
     supersign_type = models.SmallIntegerField(choices=supersign_type_choices, default=1, verbose_name="签名类型")
     new_bundle_id = models.CharField(max_length=64, blank=True, null=True, verbose_name="new_bundle_id",
@@ -252,8 +253,10 @@ class AppUDID(models.Model):
     iccid = models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    is_signed = models.BooleanField(verbose_name="是否完成签名打包", default=False)
-    is_download = models.BooleanField(verbose_name="描述文件是否已经下载", default=False)
+    # is_signed = models.BooleanField(verbose_name="是否完成签名打包", default=False)
+    # is_download = models.BooleanField(verbose_name="描述文件是否已经下载", default=False)
+    sign_status_choices = ((0, '新设备入库准备'), (1, '设备ID已经注册'), (2, 'bundelid已经注册'), (3, '描述文件已经下载'), (4, '已经完成签名打包'))
+    sign_status = models.SmallIntegerField(choices=sign_status_choices, default=0, verbose_name="签名状态")
 
     class Meta:
         verbose_name = '设备详情'

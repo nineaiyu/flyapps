@@ -38,6 +38,21 @@
           </el-link>
         </el-tooltip>
       </el-form-item>
+      <el-form-item label="自动更新"
+                    label-width="200px">
+
+          <el-switch
+              :disabled="supersign_disable"
+              v-model="currentapp.change_auto_sign"
+              active-color="#13ce66"
+              :active-value="true"
+              inactive-color="#ff4949"
+              :inactive-value="false"
+              @change="saveappinfo({change_auto_sign:currentapp.change_auto_sign})">
+          </el-switch>
+
+        <el-link :underline="false" style="margin-left: 20px">开启自动更新，新包入库或签名相关数据更改，系统将会自动更新签名包</el-link>
+      </el-form-item>
       <el-form-item label="专属配置" label-width="200px">
         <el-button :disabled="supersign_disable" @click="bindAppletoapp">配置专属苹果开发账户</el-button>
         <el-link :disabled="supersign_disable" :underline="false" style="margin-left: 20px" @click="bindAppletoapp"> 拥有

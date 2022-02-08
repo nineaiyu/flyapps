@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.base_views import app_delete
-from api.models import Apps, AppReleaseInfo, APPToDeveloper, UserInfo, AppScreenShot
+from api.models import Apps, AppReleaseInfo, APPToDeveloper, UserInfo, AppScreenShot, AppUDID
 from api.tasks import run_resign_task
 from api.utils.app.supersignutils import IosUtils
 from api.utils.auth import ExpiringTokenAuthentication
@@ -229,13 +229,6 @@ class AppInfoView(APIView):
                     app_obj.wxredirect = data.get("wxredirect", app_obj.wxredirect)
                     update_fields.append("wxredirect")
                     if app_obj.type == 1 and data.get('issupersign', -1) != -1:
-                        # 为啥注释掉，就是该udid已经在该平台使用了，虽然已经没有余额，但是其他应用也是可以超级签名的
-                        # developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user)
-                        # use_num = get_developer_devices(developer_obj)
-                        # if use_num.get("flyapp_used_sum") >= use_num.get("all_usable_number"):
-                        #     res.code = 1008
-                        #     res.msg = "超级签余额不足，无法开启"
-                        #     return Response(res.dict)
                         if data.get('issupersign', -1) == 1 and not check_super_sign_permission(request.user):
                             logger.error(f"app_id:{app_id} can't open super_sign,owner has no ios developer")
                             res.code = 1008
@@ -244,16 +237,36 @@ class AppInfoView(APIView):
                         do_sign_flag = 3
                         app_obj.issupersign = data.get("issupersign", app_obj.issupersign)
                         update_fields.append("issupersign")
+                    if app_obj.issupersign and data.get('change_auto_sign', -1) != -1:
+                        if data.get('change_auto_sign', -1) == 1:
+                            do_sign_flag = 3
+                        app_obj.change_auto_sign = data.get("change_auto_sign", app_obj.change_auto_sign)
+                        update_fields.append("change_auto_sign")
+
                     logger.info(f"app_id:{app_id} update new data:{app_obj.__dict__}")
                     app_obj.save(update_fields=update_fields)
                     if app_obj.issupersign:
                         c_task = None
                         if do_sign_flag == 1:
-                            c_task = run_resign_task(app_obj.pk, True)
+                            AppUDID.objects.filter(app_id=app_obj).update(sign_status=2)
+                            if app_obj.change_auto_sign:
+                                c_task = run_resign_task(app_obj.pk, True)
+
                         if do_sign_flag == 2:
-                            c_task = run_resign_task(app_obj.pk, False)
+                            AppUDID.objects.filter(app_id=app_obj, sign_status__gte=3).update(sign_status=3)
+                            if app_obj.change_auto_sign:
+                                flag = False
+                                if AppUDID.objects.filter(app_id=app_obj, sign_status=2).first():
+                                    flag = True
+                                c_task = run_resign_task(app_obj.pk, flag)
+
                         if do_sign_flag == 3:
-                            c_task = run_resign_task(app_obj.pk, False, False)
+                            if app_obj.change_auto_sign:
+                                flag = False
+                                if AppUDID.objects.filter(app_id=app_obj, sign_status=2).first():
+                                    flag = True
+                                c_task = run_resign_task(app_obj.pk, flag, False)
+
                         if c_task:
                             logger.info(f"app {app_obj} run_resign_task msg:{c_task}")
                     del_cache_response_by_short(app_obj.app_id)

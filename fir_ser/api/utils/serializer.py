@@ -512,7 +512,7 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppUDID
         # depth = 1
-        exclude = ["updated_time", "is_signed"]
+        exclude = ["updated_time", "sign_status"]
 
     bundle_name = serializers.CharField(source="app_id.name")
     bundle_id = serializers.CharField(source="app_id.bundle_id")

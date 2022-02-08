@@ -10,7 +10,7 @@ import os
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo, UserAdDisplayInfo
+from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo, UserAdDisplayInfo, AppUDID
 from api.tasks import run_resign_task
 from api.utils.TokenManager import verify_token
 from api.utils.app.apputils import get_random_short, save_app_infos
@@ -139,10 +139,12 @@ class AppAnalyseView(APIView):
                 storage.rename_file(app_tmp_filename, app_new_filename)
                 storage.rename_file(png_tmp_filename, png_new_filename)
 
-                app_obj = Apps.objects.filter(bundle_id=data.get("bundleid"), user_id=request.user).first()
+                app_obj = Apps.objects.filter(bundle_id=data.get("bundleid"), user_id=request.user, type=4).first()
                 if app_obj:
-                    c_task = run_resign_task(app_obj.pk, False, False)
-                    logger.info(f"app {app_obj} run_resign_task end msg:{c_task}")
+                    AppUDID.objects.filter(app_id=app_obj, sign_status__gte=3).update(sign_status=3)
+                    if app_obj.change_auto_sign:
+                        c_task = run_resign_task(app_obj.pk, False, False)
+                        logger.info(f"app {app_obj} run_resign_task end msg:{c_task}")
             else:
                 storage.delete_file(app_tmp_filename)
                 storage.delete_file(png_tmp_filename)
