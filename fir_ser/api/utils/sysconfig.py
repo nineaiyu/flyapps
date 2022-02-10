@@ -33,7 +33,14 @@ class ConfigCacheBase(object):
 
     def get_value_from_db(self, key):
         sys_obj = SystemConfig.objects.filter(key=key).first()
-        return SystemConfigSerializer(sys_obj).data
+        data = SystemConfigSerializer(sys_obj).data
+        value = data.get('value', '')
+        if value:
+            try:
+                data['value'] = json.loads(value)
+            except Exception as e:
+                logger.warning(f"db config - json loads failed {e}")
+        return data
 
     def get_value(self, key, data=None):
         if data is None:
