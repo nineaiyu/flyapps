@@ -20,7 +20,7 @@ from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppRe
     IosDeveloperBill
 from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
 from api.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign, \
-    get_developer_can_used_from_public_sign, update_or_create_developer_udid_info, check_uid_has_relevant
+    update_or_create_developer_udid_info, check_uid_has_relevant
 from api.utils.response import BaseResponse
 from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
 from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
@@ -233,9 +233,7 @@ def get_new_developer_by_app_obj(app_obj, obj_base_filter, apple_to_app=False):
     developer_obj_lists = developer_obj_lists.all().distinct().order_by("created_time")
     for developer_obj in developer_obj_lists:
         # 通过开发者数限制进行过滤
-        used_number = get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
-            developer_obj.user_id)
-        if used_number < developer_obj.usable_number:
+        if get_developer_udided(developer_obj)[2] < developer_obj.usable_number:
             if apple_to_app:
                 apple_to_app_obj = AppleDeveloperToAppUse.objects.filter(app_id=app_obj,
                                                                          developerid=developer_obj).first()
@@ -327,8 +325,7 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True,
         # developer_obj_dict_queryset = filter_developer_by_pk_list(developer_pk_list, 'developerappid')
         # developer_pk_list = [developer_obj_dict.get('pk') for developer_obj_dict in developer_obj_dict_queryset]
         for developer_obj in AppIOSDeveloperInfo.objects.filter(pk__in=developer_pk_list):
-            if get_developer_udided(developer_obj)[2] + get_developer_can_used_from_public_sign(
-                    developer_obj.user_id) < developer_obj.usable_number:
+            if get_developer_udided(developer_obj)[2] < developer_obj.usable_number:
                 exist_app_developer_pk_list.append(developer_obj.pk)
 
     # 查询状态正常的专属开发者信息，判断是否为专属应用
