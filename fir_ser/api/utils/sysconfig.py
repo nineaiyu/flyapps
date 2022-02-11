@@ -7,6 +7,7 @@
 import json
 import logging
 
+from django.template import Context, Template
 from rest_framework import serializers
 
 from api.models import SystemConfig
@@ -23,24 +24,39 @@ class SystemConfigSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+def get_render_context(tmp: str, context: dict) -> str:
+    template = Template(tmp)
+    context = Context(context)
+    return template.render(context)
+
+
 def invalid_config_cache(key='*'):
     SystemConfigCache(key).del_many()
+
+
+def get_value_from_db(key):
+    context_dict = {}
+    for sys_obj_dict in SystemConfig.objects.values().all():
+        context_dict[sys_obj_dict['key']] = sys_obj_dict['value']
+    data = SystemConfigSerializer(SystemConfig.objects.filter(key=key).first()).data
+    value = data.get('value', '')
+    if value:
+        try:
+            r_text = get_render_context(value, context_dict)
+            data['value'] = r_text
+            try:
+                data['value'] = json.loads(r_text)
+            except Exception as e:
+                logger.warning(f"db config - json loads failed {e}")
+        except Exception as e:
+            logger.warning(f"db config - render failed {e}")
+
+    return data
 
 
 class ConfigCacheBase(object):
     def __init__(self, px=''):
         self.px = px
-
-    def get_value_from_db(self, key):
-        sys_obj = SystemConfig.objects.filter(key=key).first()
-        data = SystemConfigSerializer(sys_obj).data
-        value = data.get('value', '')
-        if value:
-            try:
-                data['value'] = json.loads(value)
-            except Exception as e:
-                logger.warning(f"db config - json loads failed {e}")
-        return data
 
     def get_value(self, key, data=None):
         if data is None:
@@ -49,7 +65,7 @@ class ConfigCacheBase(object):
         cache_data = cache.get_storage_cache()
         if cache_data is not None and cache_data.get('key', '') == key:
             return cache_data.get('value')
-        db_data = self.get_value_from_db(key)
+        db_data = get_value_from_db(key)
         d_key = db_data.get('key', '')
         if d_key != key and data is not None:
             db_data['value'] = data

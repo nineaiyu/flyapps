@@ -133,7 +133,7 @@
               active-color="#13ce66"
               inactive-color="#ff4949">
           </el-switch>
-          <el-tag style="margin-left: 10px" type="warning"> 开启之后，每天凌晨自动检测该开发者状态是否正常，默认关闭</el-tag>
+          <el-tag style="margin-left: 10px" type="warning"> 开启之后，每天凌晨自动检测该开发者状态和设备使用状态，默认关闭</el-tag>
         </el-form-item>
         <el-form-item label="证书id" label-width="110px">
           <el-input v-model="editdeveloperinfo.certid" :disabled='isedit'/>

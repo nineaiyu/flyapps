@@ -200,8 +200,8 @@ def get_user_public_used_sign_num(user_obj):
 
 
 def get_developer_can_used_from_public_sign(user_obj):
-    o_number_info = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj).values('number').aggregate(
-        number=Sum('number'))
+    o_number_info = IosDeveloperBill.objects.filter(to_user_id__isnull=False, user_id=user_obj).values(
+        'number').aggregate(number=Sum('number'))
     o_number = o_number_info.get("number", 0)
     if o_number is None:
         o_number = 0

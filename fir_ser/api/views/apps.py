@@ -23,6 +23,7 @@ from api.utils.storage.caches import del_cache_response_by_short, get_app_today_
 from api.utils.storage.storage import Storage
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
 from common.cache.state import MigrateStorageState, CleanAppSignDataState
+from fir_ser.settings import DEVELOPER_WRITE_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -256,14 +257,16 @@ class AppInfoView(APIView):
                             AppUDID.objects.filter(app_id=app_obj, sign_status__gte=3).update(sign_status=3)
                             if app_obj.change_auto_sign:
                                 flag = False
-                                if AppUDID.objects.filter(app_id=app_obj, sign_status=2).first():
+                                if AppUDID.objects.filter(app_id=app_obj, sign_status=2,
+                                                          udid__developerid__status__in=DEVELOPER_WRITE_STATUS).first():
                                     flag = True
                                 c_task = run_resign_task(app_obj.pk, flag)
 
                         if do_sign_flag == 3:
                             if app_obj.change_auto_sign:
                                 flag = False
-                                if AppUDID.objects.filter(app_id=app_obj, sign_status=2).first():
+                                if AppUDID.objects.filter(app_id=app_obj, sign_status=2,
+                                                          udid__developerid__status__in=DEVELOPER_WRITE_STATUS).first():
                                     flag = True
                                 c_task = run_resign_task(app_obj.pk, flag, False)
 
