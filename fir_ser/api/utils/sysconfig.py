@@ -6,8 +6,10 @@
 
 import json
 import logging
+import re
 
 from django.template import Context, Template
+from django.template.base import VariableNode
 from rest_framework import serializers
 
 from api.models import SystemConfig
@@ -26,6 +28,11 @@ class SystemConfigSerializer(serializers.ModelSerializer):
 
 def get_render_context(tmp: str, context: dict) -> str:
     template = Template(tmp)
+    for node in template.nodelist:
+        if isinstance(node, VariableNode):
+            v_key = re.findall(r'<Variable Node: (.*)>', str(node))
+            if v_key and v_key[0].isupper():
+                context[v_key[0]] = getattr(Config, v_key[0])
     context = Context(context)
     return template.render(context)
 
@@ -34,29 +41,32 @@ def invalid_config_cache(key='*'):
     SystemConfigCache(key).del_many()
 
 
-def get_value_from_db(key):
-    context_dict = {}
-    for sys_obj_dict in SystemConfig.objects.values().all():
-        context_dict[sys_obj_dict['key']] = sys_obj_dict['value']
-    data = SystemConfigSerializer(SystemConfig.objects.filter(key=key).first()).data
-    value = data.get('value', '')
+def get_render_value(value):
     if value:
         try:
-            r_text = get_render_context(value, context_dict)
-            data['value'] = r_text
-            try:
-                data['value'] = json.loads(r_text)
-            except Exception as e:
-                logger.warning(f"db config - json loads failed {e}")
+            context_dict = {}
+            for sys_obj_dict in SystemConfig.objects.values().all():
+                if re.findall('{{.*%s.*}}' % sys_obj_dict['key'], sys_obj_dict['value']):
+                    logger.warning(f"get same render key. so continue")
+                    continue
+                context_dict[sys_obj_dict['key']] = sys_obj_dict['value']
+
+            value = get_render_context(value, context_dict)
         except Exception as e:
             logger.warning(f"db config - render failed {e}")
-
-    return data
+    return value
 
 
 class ConfigCacheBase(object):
     def __init__(self, px=''):
         self.px = px
+
+    def get_value_from_db(self, key):
+        data = SystemConfigSerializer(SystemConfig.objects.filter(key=key).first()).data
+        if re.findall('{{.*%s.*}}' % data['key'], data['value']):
+            logger.warning(f"get same render key. so get default value")
+            data['key'] = ''
+        return data
 
     def get_value(self, key, data=None):
         if data is None:
@@ -65,11 +75,16 @@ class ConfigCacheBase(object):
         cache_data = cache.get_storage_cache()
         if cache_data is not None and cache_data.get('key', '') == key:
             return cache_data.get('value')
-        db_data = get_value_from_db(key)
+        db_data = self.get_value_from_db(key)
         d_key = db_data.get('key', '')
         if d_key != key and data is not None:
-            db_data['value'] = data
+            db_data['value'] = json.dumps(data)
             db_data['key'] = key
+        db_data['value'] = get_render_value(db_data['value'])
+        try:
+            db_data['value'] = json.loads(db_data['value'])
+        except Exception as e:
+            logger.warning(f"db config - json loads failed {e}")
         cache.set_storage_cache(db_data, timeout=60 * 60 * 24 * 30)
         return db_data.get('value')
 
@@ -105,6 +120,10 @@ class ConfigCacheBase(object):
     @property
     def FILE_UPLOAD_DOMAIN(self):
         return self.get_value('FILE_UPLOAD_DOMAIN', self.API_DOMAIN)
+
+    @property
+    def CAN_RENDER_KEY(self):
+        return self.get_value('CAN_RENDER_KEY', [])
 
 
 class BaseConfCache(ConfigCacheBase):
