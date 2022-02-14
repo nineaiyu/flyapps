@@ -10,8 +10,8 @@ import json
 import logging
 from datetime import datetime, timedelta
 
-from api.utils.pay.alipay import AliPay, AliPayConfig
-from api.utils.storage.caches import update_order_info, update_order_status
+from common.libs.pay.alipay import AliPay, AliPayConfig
+from common.utils.caches import update_order_info, update_order_status
 
 logger = logging.getLogger('pay')
 

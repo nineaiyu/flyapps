@@ -10,7 +10,7 @@ import logging
 import os
 
 from api.utils.TokenManager import make_token
-from api.utils.storage.aliyunApi import AliYunCdn
+from common.libs.storage.aliyunApi import AliYunCdn
 from fir_ser import settings
 
 logger = logging.getLogger(__name__)

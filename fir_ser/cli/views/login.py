@@ -1,7 +1,7 @@
 import logging
 
-from api.utils.auth import ApiTokenAuthentication
 from api.views.login import UserInfoView
+from common.core.auth import ApiTokenAuthentication
 
 logger = logging.getLogger(__name__)
 

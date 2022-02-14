@@ -15,15 +15,15 @@ from api.base_views import app_delete
 from api.models import Apps, AppReleaseInfo, APPToDeveloper, UserInfo, AppScreenShot, AppUDID
 from api.tasks import run_resign_task
 from api.utils.app.supersignutils import IosUtils
-from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.modelutils import get_user_domain_name, get_app_domain_name, check_super_sign_permission
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer, AppsQrListSerializer
-from api.utils.storage.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
-from api.utils.storage.storage import Storage
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
 from common.cache.state import MigrateStorageState, CleanAppSignDataState
-from fir_ser.settings import DEVELOPER_WRITE_STATUS
+from common.core.auth import ExpiringTokenAuthentication
+from common.core.sysconfig import Config
+from common.utils.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
+from common.utils.storage import Storage
 
 logger = logging.getLogger(__name__)
 
@@ -258,7 +258,7 @@ class AppInfoView(APIView):
                             if app_obj.change_auto_sign:
                                 flag = False
                                 if AppUDID.objects.filter(app_id=app_obj, sign_status=2,
-                                                          udid__developerid__status__in=DEVELOPER_WRITE_STATUS).first():
+                                                          udid__developerid__status__in=Config.DEVELOPER_WRITE_STATUS).first():
                                     flag = True
                                 c_task = run_resign_task(app_obj.pk, flag)
 
@@ -266,7 +266,7 @@ class AppInfoView(APIView):
                             if app_obj.change_auto_sign:
                                 flag = False
                                 if AppUDID.objects.filter(app_id=app_obj, sign_status=2,
-                                                          udid__developerid__status__in=DEVELOPER_WRITE_STATUS).first():
+                                                          udid__developerid__status__in=Config.DEVELOPER_WRITE_STATUS).first():
                                     flag = True
                                 c_task = run_resign_task(app_obj.pk, flag, False)
 

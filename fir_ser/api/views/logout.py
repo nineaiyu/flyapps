@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import Token
-from api.utils.auth import ExpiringTokenAuthentication
 from common.cache.storage import RedisCacheBase
+from common.core.auth import ExpiringTokenAuthentication
 
 logger = logging.getLogger(__name__)
 

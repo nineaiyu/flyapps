@@ -14,10 +14,10 @@ from rest_framework.views import APIView
 from admin.utils.serializer import AdminDeveloperSerializer, AdminSuperSignUsedSerializer, AdminBillInfoSerializer
 from admin.utils.utils import AppsPageNumber, BaseModelSet, ApiResponse
 from api.models import APPSuperSignUsedInfo, AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, IosDeveloperBill
-from api.utils.auth import AdminTokenAuthentication
 from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, get_user_obj_from_epu
 from api.utils.utils import get_developer_devices
 from common.base.baseutils import get_real_ip_address
+from common.core.auth import AdminTokenAuthentication
 
 logger = logging.getLogger(__name__)
 

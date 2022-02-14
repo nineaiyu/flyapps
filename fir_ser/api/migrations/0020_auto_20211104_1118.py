@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 
-import api.utils.daobase
+import common.base.daobase
 
 
 class Migration(migrations.Migration):
@@ -28,11 +28,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='appiosdeveloperinfo',
             name='p8key',
-            field=api.utils.daobase.AESCharField(max_length=512, verbose_name='p8key'),
+            field=common.base.daobase.AESCharField(max_length=512, verbose_name='p8key'),
         ),
         migrations.AlterField(
             model_name='appstorage',
             name='secret_key',
-            field=api.utils.daobase.AESCharField(blank=True, max_length=128, null=True, verbose_name='存储访问secret'),
+            field=common.base.daobase.AESCharField(blank=True, max_length=128, null=True, verbose_name='存储访问secret'),
         ),
     ]

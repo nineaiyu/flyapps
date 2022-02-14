@@ -99,7 +99,19 @@ DATABASES = {
         # 设置MySQL的驱动
         # 'OPTIONS': {'init_command': 'SET storage_engine=INNODB'},
         'OPTIONS': {'init_command': 'SET sql_mode="STRICT_TRANS_TABLES"', 'charset': 'utf8mb4'}
-    }
+    },
+    # 'slave': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': DBCONF.name,
+    #     'USER': DBCONF.user,
+    #     'PASSWORD': DBCONF.password,
+    #     'HOST': DBCONF.host,
+    #     'PORT': DBCONF.port,
+    #     'CONN_MAX_AGE': 600,
+    #     # 设置MySQL的驱动
+    #     # 'OPTIONS': {'init_command': 'SET storage_engine=INNODB'},
+    #     'OPTIONS': {'init_command': 'SET sql_mode="STRICT_TRANS_TABLES"', 'charset': 'utf8mb4'}
+    # }
     # 'default': {
     #     'ENGINE': 'django.db.backends.postgresql',
     #     'NAME': DBCONF.name,
@@ -120,6 +132,15 @@ DATABASES = {
     # create database flyapp with owner=flyuser;
 
 }
+
+# 读写分离 可能会出现 the current database router prevents this relation.
+# 1.项目设置了router读写分离，且在ORM create()方法中，使用了前边filter()方法得到的数据，
+# 2.由于django是惰性查询，前边的filter()并没有立即查询，而是在create()中引用了filter()的数据时，执行了filter()，
+# 3.此时写操作的db指针指向write_db，filter()的db指针指向read_db，两者发生冲突，导致服务禁止了此次与mysql的交互
+# 解决办法：
+# 在前边filter()方法中，使用using()方法，使filter()方法立即与数据库交互，查出数据。
+
+# DATABASE_ROUTERS = ['common.core.dbrouter.DBRouter']
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -144,10 +165,10 @@ REST_FRAMEWORK = {
         # 'rest_framework.renderers.BrowsableAPIRenderer',
     ),
     'DEFAULT_THROTTLE_CLASSES': [
-        'api.utils.throttle.LoginUserThrottle',
+        'common.core.throttle.LoginUserThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': BASECONF.DEFAULT_THROTTLE_RATES,
-    'EXCEPTION_HANDLER': 'admin.utils.exception.common_exception_handler',
+    'EXCEPTION_HANDLER': 'common.core.exception.common_exception_handler',
 
 }
 # Internationalization
@@ -236,11 +257,6 @@ CORS_ALLOW_HEADERS = (
     "x-token"
 )
 
-THIRD_PART_CONFIG_KEY_INFO = {
-    # APP存储配置
-    'storage_key': STORAGEKEYCONF.STORAGE,
-    'sender_key': SENDERCONF.SENDER
-}
 CACHE_KEY_TEMPLATE = {
     'sysconfig_key': 'sysconfig',
     'user_can_download_key': 'user_can_download',
@@ -268,13 +284,6 @@ CACHE_KEY_TEMPLATE = {
 
 DATA_DOWNLOAD_KEY = "d_token"
 FILE_UPLOAD_TMP_KEY = ".tmp"
-DEVELOPER_UID_KEY = "T:"
-
-# (-1, '疑似被封'), (0, '未激活'), (1, '已激活'), (2, '协议待同意'), (3, '维护中'), (4, '证书过期'), (5, '状态异常')
-DEVELOPER_USE_STATUS = [1, 2, 3, 4, 5]  # 开发者可用状态，详情查看 model.AppIOSDeveloperInfo
-DEVELOPER_AUTO_CHECK_STATUS = [1, 2]  # 定时认证自动检测
-DEVELOPER_WRITE_STATUS = [1, 3, 4]  # 开发者api写操作查询
-DEVELOPER_DISABLED_STATUS = [2, 4, 5]  # 开发者不可 修改为状态
 
 SYNC_CACHE_TO_DATABASE = {
     'download_times': 10,  # 下载次数同步时间
@@ -386,8 +395,6 @@ LOGGING = {
         },
     },
 }
-
-PAY_CONFIG_KEY_INFO = PAYCONF.PAY_CONFIG_KEY_INFO
 
 # 结果存放到Django|redis
 # CELERY_RESULT_BACKEND = 'django-db'

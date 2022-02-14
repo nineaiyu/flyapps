@@ -9,12 +9,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import UserAdDisplayInfo
-from api.utils.auth import ExpiringTokenAuthentication, UserAdInfoPermission
 from api.utils.modelutils import PageNumber
 from api.utils.response import BaseResponse
 from api.utils.serializer import UserAdInfoSerializer
-from api.utils.storage.caches import reset_short_response_cache
-from api.utils.storage.storage import Storage
+from common.core.auth import ExpiringTokenAuthentication, UserAdInfoPermission
+from common.utils.caches import reset_short_response_cache
+from common.utils.storage import Storage
 
 logger = logging.getLogger(__name__)
 

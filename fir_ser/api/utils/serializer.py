@@ -8,12 +8,12 @@ from api import models
 from api.utils.TokenManager import make_token
 from api.utils.app.apputils import bytes2human
 from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_app_download_uri
-from api.utils.storage.caches import get_user_free_download_times, get_user_cert_auth_status
-from api.utils.storage.storage import Storage
 from api.utils.utils import get_developer_udided
 from common.base.baseutils import get_choices_dict, AppleDeveloperUid
 from common.cache.storage import AdPicShowCache
-from fir_ser.settings import DEVELOPER_USE_STATUS, DEVELOPER_UID_KEY
+from common.core.sysconfig import Config
+from common.utils.caches import get_user_free_download_times, get_user_cert_auth_status
+from common.utils.storage import Storage
 
 logger = logging.getLogger(__name__)
 
@@ -422,7 +422,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
         app_id = self.context.get('app_id', '')
         if app_id:
             developer_app_obj = models.DeveloperAppID.objects.filter(developerid=obj,
-                                                                     developerid__status__in=DEVELOPER_USE_STATUS,
+                                                                     developerid__status__in=Config.DEVELOPER_USE_STATUS,
                                                                      developerid__certid__isnull=False)
             if developer_app_obj.filter(app_id__app_id=app_id).distinct().count():
                 return False
@@ -477,7 +477,7 @@ class SuperSignUsedSerializer(serializers.ModelSerializer):
         if self.context.get('mine'):
             return issuer_id
         else:
-            return f"{DEVELOPER_UID_KEY}{AppleDeveloperUid().get_encrypt_uid(issuer_id)}"
+            return f"{Config.DEVELOPER_UID_KEY}{AppleDeveloperUid().get_encrypt_uid(issuer_id)}"
 
     def get_developer_description(self, obj):
         if self.context.get('mine'):
@@ -528,7 +528,7 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
         if self.context.get('mine'):
             return issuer_id
         else:
-            return f"{DEVELOPER_UID_KEY}{AppleDeveloperUid().get_encrypt_uid(issuer_id)}"
+            return f"{Config.DEVELOPER_UID_KEY}{AppleDeveloperUid().get_encrypt_uid(issuer_id)}"
 
     def get_developer_status(self, obj):
         return obj.udid.developerid.get_status_display()

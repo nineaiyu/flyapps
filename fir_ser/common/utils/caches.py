@@ -16,15 +16,15 @@ from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, 
     UserCertificationInfo, Order
 from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name, \
     add_remote_info_from_request
-from api.utils.storage.storage import Storage, LocalStorage
-from api.utils.sysconfig import Config
 from common.base.baseutils import check_app_password, get_order_num, get_real_ip_address
 from common.cache.invalid import invalid_app_cache, invalid_short_cache, invalid_app_download_times_cache, \
     invalid_head_img_cache
 from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCache, DownloadUrlCache, AppInstanceCache, \
     UploadTmpFileNameCache, RedisCacheBase, UserCanDownloadCache, UserFreeDownloadTimesCache, WxTicketCache, \
     SignUdidQueueCache, CloudStorageCache
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, DEVELOPER_USE_STATUS
+from common.core.sysconfig import Config
+from common.utils.storage import Storage, LocalStorage
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
             if appudid_obj:
                 super_sign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid__udid=udid,
                                                                      app_id_id=app_obj.get("pk"),
-                                                                     developerid__status__in=DEVELOPER_USE_STATUS).last()
+                                                                     developerid__status__in=Config.DEVELOPER_USE_STATUS).last()
                 if super_sign_obj and super_sign_obj.user_id.supersign_active:
                     app_to_developer_obj = APPToDeveloper.objects.filter(app_id_id=app_obj.get("pk"),
                                                                          developerid=super_sign_obj.developerid).last()

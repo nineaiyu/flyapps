@@ -15,8 +15,8 @@ from admin.utils.utils import AppsPageNumber, ApiResponse, BaseModelSet
 from api.base_views import app_delete
 from api.models import AppReleaseInfo, Apps
 from api.utils.TokenManager import verify_token
-from api.utils.auth import AdminTokenAuthentication
-from api.utils.storage.caches import del_cache_response_by_short, get_download_url_by_cache
+from common.core.auth import AdminTokenAuthentication
+from common.utils.caches import del_cache_response_by_short, get_download_url_by_cache
 
 logger = logging.getLogger(__name__)
 

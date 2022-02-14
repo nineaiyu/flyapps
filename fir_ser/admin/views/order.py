@@ -13,8 +13,8 @@ from rest_framework.filters import OrderingFilter
 from admin.utils.serializer import AdminOrdersSerializer
 from admin.utils.utils import BaseModelSet, AppsPageNumber, ApiResponse
 from api.models import UserInfo, Order
-from api.utils.auth import AdminTokenAuthentication
-from api.utils.storage.caches import update_order_info, admin_change_user_download_times
+from common.core.auth import AdminTokenAuthentication
+from common.utils.caches import update_order_info, admin_change_user_download_times
 
 logger = logging.getLogger(__name__)
 

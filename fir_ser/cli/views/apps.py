@@ -6,8 +6,8 @@
 
 import logging
 
-from api.utils.auth import ApiTokenAuthentication
 from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView
+from common.core.auth import ApiTokenAuthentication
 
 logger = logging.getLogger(__name__)
 

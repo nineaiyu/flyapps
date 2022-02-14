@@ -271,7 +271,8 @@ class IPACONF(object):
 
 
 class PAYCONF(object):
-    PAY_SUCCESS_URL = '%s/user/orders' % WEB_DOMAIN  # 前端页面，支付成功跳转页面
+    PAY_SUCCESS_URL = '{{WEB_DOMAIN}}/user/orders'  # 前端页面，支付成功跳转页面
+    APP_NOTIFY_URL = '{{API_DOMAIN}}/api/v1/fir/server/pay_success'  # 支付支付回调URL
     PAY_CONFIG_KEY_INFO = [
         {
             'NAME': 'alipay',
@@ -285,8 +286,8 @@ MIIEowIBAAKCAQEAhqf2mwftoxZDNpl4eWsQ6mEfXgMlNPr6jv72ecA4hbKWqChXQmGS1T+0VsRTSoOX
                 'ALI_PUBLIC_KEY': '''-----BEGIN CERTIFICATE-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkru1ulQV1v4q+q38nyzgkdd3evf7C1/Ipu6K+ZFb5FiuxJ7mildkBSuKz/8+TRd+tjgk2lfc2ehK5pja3cxDO/nb25sBoWiU09rtxgXLehLsgRRhatbICrlOnYxg5aiB5odAp3NMRqore4lnVYwfIyL9M49I0G/NbQzYjUQvAQJsnHwc6a6Kuqi1CwR1WXI0sDF9w7KXC4vRFFIUTwI4bVq4HQWI7NhbgEajHM/j6D6Bh/OMcTYnJJzCja0WmZRe5flfCsELlPESOCWUMbYoaNfBzpNvvyOpmRgs9jgy2WY9SeaB9hxwkpr8tOd2Sc7j3221JKCyDaFAX+4zPy7/fQIDAQAB
 -----END CERTIFICATE-----''',
-                'APP_NOTIFY_URL': '%s/api/v1/fir/server/pay_success' % API_DOMAIN,  # 支付支付回调URL
-                'RETURN_URL': PAY_SUCCESS_URL,  # 支付前端页面回调URL
+                'APP_NOTIFY_URL': '{{APP_NOTIFY_URL}}',  # 支付支付回调URL
+                'RETURN_URL': '{{PAY_SUCCESS_URL}}',  # 支付前端页面回调URL
                 'SUBJECT': '向 FLY分发平台 充值',
             }
         },
@@ -327,8 +328,8 @@ daWIhg++OHN2MBRutj7oL/AFAxyu467YA5+itEJLHNATbOr/s13S66nePNXox/hr
 bIX1aWjPxirQX9mzaL3oEQI=
 -----END PRIVATE KEY-----''',
                 'API_V3_KEY': '60DbP621a9C3162dDd4AB9c2O15a005L',
-                'APP_NOTIFY_URL': '%s/api/v1/fir/server/pay_success' % API_DOMAIN,  # 支付支付回调URL
-                'RETURN_URL': PAY_SUCCESS_URL,  # 支付前端页面回调URL
+                'APP_NOTIFY_URL': '{{APP_NOTIFY_URL}}',  # 支付支付回调URL
+                'RETURN_URL': '{{PAY_SUCCESS_URL}}',  # 支付前端页面回调URL
                 'SUBJECT': '向 FLY分发平台 充值',
             }
         }
@@ -346,3 +347,12 @@ class DOWNLOADTIMESCONF(object):
     AUTH_USER_FREE_DOWNLOAD_TIMES = 10
     NEW_USER_GIVE_DOWNLOAD_TIMES = 100
     AUTH_USER_GIVE_DOWNLOAD_TIMES = 200
+
+
+class APPLEDEVELOPERCONF(object):
+    # (-1, '疑似被封'), (0, '未激活'), (1, '已激活'), (2, '协议待同意'), (3, '维护中'), (4, '证书过期'), (5, '状态异常')
+    DEVELOPER_USE_STATUS = [1, 2, 3, 4, 5]  # 开发者可用状态，详情查看 model.AppIOSDeveloperInfo
+    DEVELOPER_AUTO_CHECK_STATUS = [1, 2]  # 定时认证自动检测
+    DEVELOPER_WRITE_STATUS = [1, 3, 4]  # 开发者api写操作查询
+    DEVELOPER_DISABLED_STATUS = [2, 4, 5]  # 开发者不可 修改为状态，用户前端控制
+    DEVELOPER_UID_KEY = "T:"  # 开发者共享给其他第三方用户， 中间必须包含 : 前端需要根据 : 进行分割

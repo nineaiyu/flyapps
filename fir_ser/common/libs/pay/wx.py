@@ -8,8 +8,8 @@ import json
 import logging
 from datetime import datetime, timedelta
 
-from api.utils.pay.wxpay import WeChatPay, WeChatPayType
-from api.utils.storage.caches import update_order_info, update_order_status
+from common.libs.pay.wxpay import WeChatPay, WeChatPayType
+from common.utils.caches import update_order_info, update_order_status
 
 logger = logging.getLogger('pay')
 

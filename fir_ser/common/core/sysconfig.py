@@ -15,7 +15,7 @@ from rest_framework import serializers
 from api.models import SystemConfig
 from common.cache.storage import SystemConfigCache
 from config import BASECONF, API_DOMAIN, MOBILEPROVISION, WEB_DOMAIN, THIRDLOGINCONF, AUTHCONF, IPACONF, MSGCONF, \
-    DOWNLOADTIMESCONF
+    DOWNLOADTIMESCONF, PAYCONF, STORAGEKEYCONF, SENDERCONF, APPLEDEVELOPERCONF
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ def get_render_value(value):
     if value:
         try:
             context_dict = {}
-            for sys_obj_dict in SystemConfig.objects.values().all():
+            for sys_obj_dict in SystemConfig.objects.filter(enable=True).values().all():
                 if re.findall('{{.*%s.*}}' % sys_obj_dict['key'], sys_obj_dict['value']):
                     logger.warning(f"get same render key. so continue")
                     continue
@@ -62,7 +62,7 @@ class ConfigCacheBase(object):
         self.px = px
 
     def get_value_from_db(self, key):
-        data = SystemConfigSerializer(SystemConfig.objects.filter(key=key).first()).data
+        data = SystemConfigSerializer(SystemConfig.objects.filter(enable=True, key=key).first()).data
         if re.findall('{{.*%s.*}}' % data['key'], data['value']):
             logger.warning(f"get same render key. so get default value")
             data['key'] = ''
@@ -120,10 +120,6 @@ class ConfigCacheBase(object):
     @property
     def FILE_UPLOAD_DOMAIN(self):
         return self.get_value('FILE_UPLOAD_DOMAIN', self.API_DOMAIN)
-
-    @property
-    def CAN_RENDER_KEY(self):
-        return self.get_value('CAN_RENDER_KEY', [])
 
 
 class BaseConfCache(ConfigCacheBase):
@@ -277,7 +273,59 @@ class EmailMsgCache(ConfigCacheBase):
         return super().get_value('MSG_AUTO_CHECK_DEVELOPER', MSGCONF.MSG_AUTO_CHECK_DEVELOPER)
 
 
-class ConfigCache(BaseConfCache, IpaConfCache, AuthConfCache, EmailMsgCache, UserDownloadTimesCache, GeeTestConfCache):
+class PayConfCache(ConfigCacheBase):
+    def __init__(self):
+        super(PayConfCache, self).__init__()
+
+    @property
+    def PAY_SUCCESS_URL(self):
+        return super().get_value('PAY_SUCCESS_URL', PAYCONF.PAY_SUCCESS_URL)
+
+    @property
+    def APP_NOTIFY_URL(self):
+        return super().get_value('APP_NOTIFY_URL', PAYCONF.APP_NOTIFY_URL)
+
+    @property
+    def PAY_CONFIG_KEY_INFO(self):
+        return super().get_value('PAY_CONFIG_KEY_INFO', PAYCONF.PAY_CONFIG_KEY_INFO)
+
+
+class ThirdPartConfCache(ConfigCacheBase):
+    def __init__(self):
+        super(ThirdPartConfCache, self).__init__()
+
+    @property
+    def STORAGE(self):
+        return super().get_value('STORAGE', STORAGEKEYCONF.STORAGE)
+
+    @property
+    def SENDER(self):
+        return super().get_value('SENDER', SENDERCONF.SENDER)
+
+
+class AppleDeveloperConfCache(ConfigCacheBase):
+    def __init__(self):
+        super(AppleDeveloperConfCache, self).__init__()
+
+    @property
+    def DEVELOPER_USE_STATUS(self):
+        return super().get_value('DEVELOPER_USE_STATUS', APPLEDEVELOPERCONF.DEVELOPER_USE_STATUS)
+
+    @property
+    def DEVELOPER_AUTO_CHECK_STATUS(self):
+        return super().get_value('SENDER', APPLEDEVELOPERCONF.DEVELOPER_AUTO_CHECK_STATUS)
+
+    @property
+    def DEVELOPER_WRITE_STATUS(self):
+        return super().get_value('SENDER', APPLEDEVELOPERCONF.DEVELOPER_WRITE_STATUS)
+
+    @property
+    def DEVELOPER_DISABLED_STATUS(self):
+        return super().get_value('SENDER', APPLEDEVELOPERCONF.DEVELOPER_DISABLED_STATUS)
+
+
+class ConfigCache(BaseConfCache, IpaConfCache, AuthConfCache, EmailMsgCache, UserDownloadTimesCache, GeeTestConfCache,
+                  PayConfCache, ThirdPartConfCache, AppleDeveloperConfCache):
     def __init__(self):
         super(ConfigCache, self).__init__()
 

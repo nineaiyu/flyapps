@@ -10,8 +10,8 @@ import logging
 import requests
 from django.core.cache import cache as redis_connect
 
-from api.utils.geetest.geetest_lib import GeetestLib
-from api.utils.sysconfig import Config
+from common.core.sysconfig import Config
+from common.libs.geetest.geetest_lib import GeetestLib
 
 logger = logging.getLogger(__name__)
 

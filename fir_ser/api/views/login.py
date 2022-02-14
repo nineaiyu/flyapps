@@ -5,20 +5,20 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import UserInfo, UserCertificationInfo, CertificationInfo, Apps
-from api.utils.auth import ExpiringTokenAuthentication
-from api.utils.geetest.geetest_utils import first_register, second_validate
 from api.utils.modelutils import get_min_default_domain_cname_obj, add_remote_info_from_request
-from api.utils.mp.wechat import make_wx_login_qrcode, show_qrcode_url
 from api.utils.response import BaseResponse
 from api.utils.serializer import UserInfoSerializer, CertificationSerializer, UserCertificationSerializer
-from api.utils.storage.caches import login_auth_failed, set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache, \
-    new_user_download_times_gift
-from api.utils.sysconfig import Config
-from api.utils.throttle import VisitRegister1Throttle, VisitRegister2Throttle, GetAuthC1Throttle, GetAuthC2Throttle
 from api.utils.utils import get_captcha, valid_captcha, \
     get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
     check_username_exists, set_user_token, clean_user_token_and_cache
 from common.base.baseutils import is_valid_phone, is_valid_email, get_real_ip_address
+from common.core.auth import ExpiringTokenAuthentication
+from common.core.sysconfig import Config
+from common.core.throttle import VisitRegister1Throttle, VisitRegister2Throttle, GetAuthC1Throttle, GetAuthC2Throttle
+from common.libs.geetest.geetest_utils import first_register, second_validate
+from common.libs.mp.wechat import make_wx_login_qrcode, show_qrcode_url
+from common.utils.caches import login_auth_failed, set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache, \
+    new_user_download_times_gift
 
 logger = logging.getLogger(__name__)
 

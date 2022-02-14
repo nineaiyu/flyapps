@@ -4,9 +4,9 @@ from django.db import models
 from django.db.models import Count
 
 from api.utils.TokenManager import generate_alphanumeric_token_of_length, generate_numeric_token_of_length
-######################################## 用户表 ########################################
-from api.utils.daobase import AESCharField
 from common.base.baseutils import make_random_uuid
+######################################## 用户表 ########################################
+from common.base.daobase import AESCharField
 
 
 # Create your models here.
@@ -651,8 +651,9 @@ class AppleDeveloperToAppUse(models.Model):
 
 
 class SystemConfig(models.Model):
-    key = models.CharField(max_length=256, unique=True, verbose_name="配置名称")
-    value = models.CharField(max_length=512, verbose_name="配置值")
+    key = models.CharField(max_length=128, unique=True, verbose_name="配置名称")
+    value = models.TextField(max_length=10240, verbose_name="配置值")
+    enable = models.BooleanField(default=True, verbose_name="是否启用该配置项")
     description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 

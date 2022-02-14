@@ -14,12 +14,12 @@ from api.utils.app.supersignutils import IosUtils, resign_by_app_id_and_develope
 from api.utils.crontab.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_delete_ios_mobile_tmp_file, \
     auto_check_ios_developer_active
 from api.utils.crontab.iproxy import get_best_proxy_ips, clean_ip_proxy_infos
-from api.utils.geetest.geetest_utils import check_bypass_status
-from api.utils.mp.wechat import sync_wx_access_token
-from api.utils.storage.storage import get_local_storage
-from api.utils.sysconfig import Config, invalid_config_cache
 from api.views.login import get_login_type
 from common.cache.state import MigrateStorageState
+from common.core.sysconfig import Config, invalid_config_cache
+from common.libs.geetest.geetest_utils import check_bypass_status
+from common.libs.mp.wechat import sync_wx_access_token
+from common.utils.storage import get_local_storage
 from fir_ser.celery import app
 
 logger = logging.getLogger(__name__)

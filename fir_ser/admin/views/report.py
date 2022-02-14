@@ -13,7 +13,7 @@ from rest_framework.filters import OrderingFilter
 from admin.utils.serializer import AdminAppReportSerializer
 from admin.utils.utils import AppsPageNumber, BaseModelSet
 from api.models import AppReportInfo
-from api.utils.auth import AdminTokenAuthentication
+from common.core.auth import AdminTokenAuthentication
 
 logger = logging.getLogger(__name__)
 

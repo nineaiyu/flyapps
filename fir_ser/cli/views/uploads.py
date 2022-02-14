@@ -5,8 +5,8 @@
 # date: 2020/3/6
 
 
-from api.utils.auth import ApiTokenAuthentication
 from api.views.uploads import AppAnalyseView, UploadView
+from common.core.auth import ApiTokenAuthentication
 
 
 class CliAppAnalyseView(AppAnalyseView):

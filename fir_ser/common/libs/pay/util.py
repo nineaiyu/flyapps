@@ -3,14 +3,13 @@
 # project: 4月 
 # author: NinEveN
 # date: 2021/4/18
-
-from api.utils.pay.ali import Alipay
-from api.utils.pay.wx import Weixinpay
-from fir_ser.settings import PAY_CONFIG_KEY_INFO
+from common.core.sysconfig import Config
+from common.libs.pay.ali import Alipay
+from common.libs.pay.wx import Weixinpay
 
 
 def get_pay_obj_form_name(pay_name):
-    for pay_info in PAY_CONFIG_KEY_INFO:
+    for pay_info in Config.PAY_CONFIG_KEY_INFO:
         if pay_name == pay_info.get('NAME', '') and pay_info.get('ENABLED', False):
             auth_info = pay_info.get('AUTH', None)
             p_type = pay_info.get('TYPE', '')
@@ -25,7 +24,7 @@ def get_pay_obj_form_name(pay_name):
 
 def get_enable_pay_choices():
     pay_choices = []
-    for pay_info in PAY_CONFIG_KEY_INFO:
+    for pay_info in Config.PAY_CONFIG_KEY_INFO:
         if pay_info.get('ENABLED', False):
             pay_choices.append({'type': pay_info.get('TYPE'), 'name': pay_info.get('NAME', '')})
     return pay_choices

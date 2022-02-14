@@ -10,8 +10,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-from api.utils.sysconfig import Config
 from common.cache.storage import IpProxyListCache, IpProxyActiveCache
+from common.core.sysconfig import Config
 
 logger = logging.getLogger(__name__)
 

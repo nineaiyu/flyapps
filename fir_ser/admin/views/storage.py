@@ -16,8 +16,8 @@ from admin.utils.serializer import AdminStorageSerializer
 from admin.utils.utils import AppsPageNumber, BaseModelSet, ApiResponse
 from api.base_views import storage_change
 from api.models import UserInfo, AppStorage
-from api.utils.auth import AdminTokenAuthentication
 from common.base.baseutils import format_storage_selection
+from common.core.auth import AdminTokenAuthentication
 
 logger = logging.getLogger(__name__)
 

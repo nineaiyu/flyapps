@@ -9,10 +9,10 @@ from hashlib import sha1
 
 import requests
 
-from api.utils.mp.utils import WxMsgCryptBase
-from api.utils.sysconfig import Config
 from common.base.baseutils import get_format_time
 from common.cache.storage import WxTokenCache
+from common.core.sysconfig import Config
+from common.libs.mp.utils import WxMsgCryptBase
 
 logger = logging.getLogger(__name__)
 

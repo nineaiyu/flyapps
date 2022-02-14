@@ -12,14 +12,14 @@ from rest_framework.views import APIView
 from rest_framework_xml.parsers import XMLParser
 
 from api.models import ThirdWeChatUserInfo, UserInfo, UserCertificationInfo
-from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.modelutils import PageNumber
-from api.utils.mp.chat import reply, receive
-from api.utils.mp.wechat import check_signature, WxMsgCrypt, get_userinfo_from_openid, WxTemplateMsg
 from api.utils.response import BaseResponse
 from api.utils.serializer import ThirdWxSerializer
-from api.utils.storage.caches import set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache
 from api.views.login import get_login_type
+from common.core.auth import ExpiringTokenAuthentication
+from common.libs.mp.chat import reply, receive
+from common.libs.mp.wechat import check_signature, WxMsgCrypt, get_userinfo_from_openid, WxTemplateMsg
+from common.utils.caches import set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache
 from config import WEB_DOMAIN
 
 logger = logging.getLogger(__name__)

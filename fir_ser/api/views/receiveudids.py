@@ -17,10 +17,10 @@ from api.utils.app.supersignutils import udid_bytes_to_dict, make_sign_udid_mobi
 from api.utils.modelutils import get_redirect_server_domain, add_remote_info_from_request, \
     get_app_download_uri
 from api.utils.response import BaseResponse
-from api.utils.storage.caches import check_app_permission
-from api.utils.sysconfig import Config
-from api.utils.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
 from common.base.baseutils import get_real_ip_address, make_random_uuid, get_server_domain_from_request
+from common.core.sysconfig import Config
+from common.core.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
+from common.utils.caches import check_app_permission
 from fir_ser.celery import app
 
 logger = logging.getLogger(__name__)

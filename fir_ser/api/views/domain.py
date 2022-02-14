@@ -9,12 +9,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import UserDomainInfo, Apps
-from api.utils.auth import ExpiringTokenAuthentication
 from api.utils.modelutils import get_user_domain_name, get_min_default_domain_cname_obj, PageNumber
 from api.utils.response import BaseResponse
 from api.utils.serializer import DomainNameSerializer
-from api.utils.storage.caches import del_cache_response_by_short, reset_app_wx_easy_type
 from common.base.baseutils import is_valid_domain, get_cname_from_domain, get_choices_dict
+from common.core.auth import ExpiringTokenAuthentication
+from common.utils.caches import del_cache_response_by_short, reset_app_wx_easy_type
 
 logger = logging.getLogger(__name__)
 

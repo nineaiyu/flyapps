@@ -14,10 +14,10 @@ from rest_framework.views import APIView
 from admin.utils.serializer import AdminUserInfoSerializer, AdminUserCertificationSerializer, AdminThirdWxSerializer
 from admin.utils.utils import AppsPageNumber, BaseModelSet, ApiResponse
 from api.models import UserInfo, UserCertificationInfo, ThirdWeChatUserInfo
-from api.utils.auth import AdminTokenAuthentication
-from api.utils.storage.caches import auth_user_download_times_gift
-from api.utils.sysconfig import Config
 from common.base.baseutils import get_dict_from_filter_fields
+from common.core.auth import AdminTokenAuthentication
+from common.core.sysconfig import Config
+from common.utils.caches import auth_user_download_times_gift
 
 logger = logging.getLogger(__name__)
 

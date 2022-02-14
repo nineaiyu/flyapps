@@ -8,10 +8,10 @@ import random
 
 from api.models import AppReleaseInfo, Apps
 from api.utils.modelutils import get_user_domain_name
-from api.utils.storage.caches import del_cache_response_by_short
-from api.utils.storage.storage import Storage
 from common.base.baseutils import make_app_uuid
 from common.cache.state import MigrateStorageState
+from common.utils.caches import del_cache_response_by_short
+from common.utils.storage import Storage
 
 logger = logging.getLogger(__name__)
 

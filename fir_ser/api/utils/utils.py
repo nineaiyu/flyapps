@@ -17,14 +17,14 @@ from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
 from api.utils.TokenManager import generate_numeric_token_of_length, generate_alphanumeric_token_of_length, make_token, \
     verify_token
 from api.utils.modelutils import get_app_d_count_by_app_id
-from api.utils.sendmsg.sendmsg import SendMessage
-from api.utils.storage.caches import consume_user_download_times
-from api.utils.storage.localApi import LocalStorage
-from api.utils.storage.storage import Storage
-from api.utils.sysconfig import Config
 from common.base.baseutils import get_real_ip_address
 from common.cache.storage import UserTokenCache, TempCache
-from fir_ser.settings import CAPTCHA_LENGTH, MEDIA_ROOT, DEVELOPER_USE_STATUS
+from common.core.sysconfig import Config
+from common.libs.storage.localApi import LocalStorage
+from common.utils.caches import consume_user_download_times
+from common.utils.sendmsg import SendMessage
+from common.utils.storage import Storage
+from fir_ser.settings import CAPTCHA_LENGTH, MEDIA_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -62,13 +62,13 @@ def get_developer_devices(developer_obj_lists):
     other_used_sum = 0
     flyapp_used_sum = 0
     max_total = 0
-    for dev_obj in developer_obj_lists.filter(status__in=DEVELOPER_USE_STATUS):
+    for dev_obj in developer_obj_lists.filter(status__in=Config.DEVELOPER_USE_STATUS):
         other_used, flyapp_used, _ = get_developer_udided(dev_obj)
         other_used_sum += other_used
         flyapp_used_sum += flyapp_used
         max_total += 100
 
-    use_number_obj_list = developer_obj_lists.filter(status__in=DEVELOPER_USE_STATUS)
+    use_number_obj_list = developer_obj_lists.filter(status__in=Config.DEVELOPER_USE_STATUS)
     all_use_number = 0
     all_usable_number = 0
     for use_number_obj in use_number_obj_list:

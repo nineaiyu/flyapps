@@ -12,10 +12,10 @@ from django.core.cache import cache
 
 from api.models import Apps, UserInfo, AppIOSDeveloperInfo
 from api.utils.app.supersignutils import IosUtils
-from api.utils.storage.storage import Storage
-from api.utils.sysconfig import Config
 from api.utils.utils import send_ios_developer_active_status
-from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT, DEVELOPER_AUTO_CHECK_STATUS
+from common.core.sysconfig import Config
+from common.utils.storage import Storage
+from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE, SUPER_SIGN_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,8 @@ def auto_delete_ios_mobile_tmp_file():
 
 
 def auto_check_ios_developer_active():
-    all_ios_developer = AppIOSDeveloperInfo.objects.filter(status__in=DEVELOPER_AUTO_CHECK_STATUS, auto_check=True)
+    all_ios_developer = AppIOSDeveloperInfo.objects.filter(status__in=Config.DEVELOPER_AUTO_CHECK_STATUS,
+                                                           auto_check=True)
     error_issuer_id = {}
     for ios_developer in all_ios_developer:
         userinfo = ios_developer.user_id

@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 from proxy.views import proxy_view
 from rest_framework.views import APIView
 
-from api.utils.auth import AdminTokenAuthentication
+from common.core.auth import AdminTokenAuthentication
 
 flower_url = f'{settings.CELERY_FLOWER_HOST}:{settings.CELERY_FLOWER_PORT}'
 

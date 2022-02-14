@@ -12,11 +12,11 @@ from api.models import Apps, AppReportInfo
 from api.utils.modelutils import add_remote_info_from_request
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppReportSerializer
-from api.utils.storage.caches import login_auth_failed
-from api.utils.sysconfig import Config
-from api.utils.throttle import InstallThrottle2
 from api.utils.utils import is_valid_sender_code, get_captcha
 from common.base.baseutils import get_real_ip_address, get_choices_dict
+from common.core.sysconfig import Config
+from common.core.throttle import InstallThrottle2
+from common.utils.caches import login_auth_failed
 
 logger = logging.getLogger(__name__)
 

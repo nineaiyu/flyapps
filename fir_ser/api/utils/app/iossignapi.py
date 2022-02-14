@@ -15,10 +15,11 @@ from OpenSSL.crypto import (load_pkcs12, dump_certificate_request, dump_privatek
 
 from api.models import AppIOSDeveloperInfo
 from api.utils.app.shellcmds import shell_command, use_user_pass
-from api.utils.apple.appleapiv3 import AppStoreConnectApi
 from common.base.baseutils import get_format_time, format_apple_date, make_app_uuid
 from common.cache.state import CleanErrorBundleIdSignDataState
-from fir_ser.settings import SUPER_SIGN_ROOT, DEVELOPER_WRITE_STATUS
+from common.core.sysconfig import Config
+from common.libs.apple.appleapiv3 import AppStoreConnectApi
+from fir_ser.settings import SUPER_SIGN_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -238,7 +239,7 @@ class AppDeveloperApiV2(object):
                     return attr(*args, **kwargs)
                 else:
                     if AppIOSDeveloperInfo.objects.filter(pk=self.developer_pk,
-                                                          status__in=DEVELOPER_WRITE_STATUS).first():
+                                                          status__in=Config.DEVELOPER_WRITE_STATUS).first():
                         start_time = time.time()
                         logger.info(f'{self.issuer_id} calling {attr.__name__} time:{start_time}')
                         result = attr(*args, **kwargs)

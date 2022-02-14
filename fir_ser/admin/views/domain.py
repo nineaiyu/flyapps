@@ -13,8 +13,8 @@ from rest_framework.filters import OrderingFilter
 from admin.utils.serializer import AdminDomainNameSerializer
 from admin.utils.utils import BaseModelSet, AppsPageNumber, ApiResponse
 from api.models import UserDomainInfo
-from api.utils.auth import AdminTokenAuthentication
-from api.utils.storage.caches import reset_app_wx_easy_type
+from common.core.auth import AdminTokenAuthentication
+from common.utils.caches import reset_app_wx_easy_type
 
 logger = logging.getLogger(__name__)
 

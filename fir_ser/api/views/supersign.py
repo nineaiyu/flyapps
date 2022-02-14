@@ -16,18 +16,18 @@ from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDe
     UDIDsyncDeveloper, AppleDeveloperToAppUse, Apps, DeveloperAppID, APPToDeveloper, DeveloperDevicesID, \
     IosDeveloperBill, UserInfo
 from api.utils.app.supersignutils import IosUtils
-from api.utils.auth import ExpiringTokenAuthentication, SuperSignPermission
 from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, PageNumber, \
     check_uid_has_relevant
 from api.utils.response import BaseResponse
 from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, BillInfoSerializer, \
     DeveloperDeviceSerializer, AppleDeveloperToAppUseSerializer, AppleDeveloperToAppUseAppsSerializer, \
     BillTransferSerializer
-from api.utils.storage.caches import get_app_download_url
 from api.utils.utils import get_developer_devices
 from common.base.baseutils import get_choices_dict, get_choices_name_from_key, AppleDeveloperUid, get_real_ip_address
 from common.cache.state import CleanSignDataState, MigrateStorageState
-from fir_ser.settings import DEVELOPER_USE_STATUS, DEVELOPER_DISABLED_STATUS, DEVELOPER_UID_KEY
+from common.core.auth import ExpiringTokenAuthentication, SuperSignPermission
+from common.core.sysconfig import Config
+from common.utils.caches import get_app_download_url
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class DeveloperView(APIView):
 
         res.data = developer_serializer.data
         res.count = developer_obj.count()
-        res.status_choices = get_choices_dict(AppIOSDeveloperInfo.status_choices, DEVELOPER_DISABLED_STATUS)
+        res.status_choices = get_choices_dict(AppIOSDeveloperInfo.status_choices, Config.DEVELOPER_DISABLED_STATUS)
         res.apple_auth_list = get_choices_dict(AppIOSDeveloperInfo.auth_type_choices)
         return Response(res.dict)
 
@@ -93,7 +93,7 @@ class DeveloperView(APIView):
                 res = BaseResponse()
                 result_list = []
                 for developer_s_obj in AppIOSDeveloperInfo.objects.filter(user_id=request.user,
-                                                                          status__in=DEVELOPER_USE_STATUS).all():
+                                                                          status__in=Config.DEVELOPER_USE_STATUS).all():
                     status, result = IosUtils.get_device_from_developer(developer_s_obj)
                     if not status:
                         result_list.append(result.get("err_info"))
@@ -111,7 +111,7 @@ class DeveloperView(APIView):
             elif act == "setstatus":
                 issuer_ids = data.get("issuer_ids", [])
                 status = data.get("status", None)
-                if issuer_ids and status is not None:
+                if issuer_ids and status is not None and status not in Config.DEVELOPER_DISABLED_STATUS:
                     status_text = get_choices_name_from_key(AppIOSDeveloperInfo.status_choices, status)
                     if status_text:
                         AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id__in=issuer_ids).update(
@@ -323,12 +323,12 @@ class SuperSignUsedView(APIView):
         other_uid_info = data.get('other_uid', '')
         if device_udid and developer_id and bundle_id:
             app_obj = Apps.objects.filter(user_id=request.user, bundle_id=bundle_id).first()
-            if app_obj is None and not developer_id.startswith(DEVELOPER_UID_KEY):
+            if app_obj is None and not developer_id.startswith(Config.DEVELOPER_UID_KEY):
                 if other_uid_info:
                     other_uid = other_uid_info.get('uid')
                     if other_uid and check_uid_has_relevant(request.user.uid, other_uid):
                         app_obj = Apps.objects.filter(bundle_id=bundle_id).first()
-            if developer_id.startswith(DEVELOPER_UID_KEY):
+            if developer_id.startswith(Config.DEVELOPER_UID_KEY):
                 developer_id = AppleDeveloperUid().get_decrypt_uid(developer_id.lstrip('T:'))
 
             app_to_dev_obj = APPToDeveloper.objects.filter(app_id=app_obj, developerid__issuer_id=developer_id).first()
@@ -744,7 +744,7 @@ class AppleDeveloperBindAppsView(APIView):
 
             for item in add_issuer_ids:
                 developer_obj = AppIOSDeveloperInfo.objects.filter(issuer_id=item, user_id=request.user,
-                                                                   status__in=DEVELOPER_USE_STATUS,
+                                                                   status__in=Config.DEVELOPER_USE_STATUS,
                                                                    certid__isnull=False).first()
                 developer_aid_obj = DeveloperAppID.objects.filter(developerid=developer_obj)
                 is_exist = developer_aid_obj.filter(app_id=app_obj).count()

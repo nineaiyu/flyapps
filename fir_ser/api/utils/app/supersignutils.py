@@ -23,17 +23,17 @@ from api.utils.modelutils import get_ios_developer_public_num, check_ipa_is_late
     update_or_create_developer_udid_info, check_uid_has_relevant
 from api.utils.response import BaseResponse
 from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
-from api.utils.storage.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
-    consume_user_download_times_by_app_obj, add_udid_cache_queue, get_and_clean_udid_cache_queue
-from api.utils.storage.storage import Storage
-from api.utils.sysconfig import Config
 from api.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status, delete_local_files, \
     download_files_form_oss, get_developer_udided
 from common.base.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
     get_format_time, make_app_uuid, make_from_user_uuid
 from common.base.magic import run_function_by_locker, call_function_try_attempts
 from common.cache.state import CleanErrorBundleIdSignDataState
-from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT, DEVELOPER_USE_STATUS
+from common.core.sysconfig import Config
+from common.utils.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
+    consume_user_download_times_by_app_obj, add_udid_cache_queue, get_and_clean_udid_cache_queue
+from common.utils.storage import Storage
+from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -286,7 +286,7 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True,
     """
 
     if read_only:
-        status_choice = DEVELOPER_USE_STATUS
+        status_choice = Config.DEVELOPER_USE_STATUS
     else:
         status_choice = [1]
     status_filter = {'developerid__certid__isnull': False, 'developerid__status__in': status_choice}

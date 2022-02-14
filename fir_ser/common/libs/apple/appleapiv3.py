@@ -16,7 +16,7 @@ import jwt
 import requests
 
 from api.utils.crontab.iproxy import get_proxy_ip_from_cache
-from api.utils.sysconfig import Config
+from common.core.sysconfig import Config
 
 logger = logging.getLogger(__name__)
 

@@ -7,8 +7,8 @@ from api import models
 from api.utils.serializer import AppReleaseSerializer, UserInfoSerializer, AppsSerializer, StorageSerializer, \
     DeveloperSerializer, SuperSignUsedSerializer, ThirdWxSerializer, DomainNameSerializer, BillInfoSerializer, \
     AppReportSerializer
-from api.utils.storage.storage import Storage
 from common.base.baseutils import get_choices_dict, get_choices_name_from_key
+from common.utils.storage import Storage
 
 logger = logging.getLogger(__name__)
 

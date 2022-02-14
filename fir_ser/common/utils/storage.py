@@ -10,10 +10,10 @@ import time
 from common.base.baseutils import get_dict_from_filter_fields
 from common.base.magic import run_function_by_locker
 from common.cache.storage import CloudStorageCache, LocalStorageCache, DownloadUrlCache
-from fir_ser.settings import THIRD_PART_CONFIG_KEY_INFO
-from .aliyunApi import AliYunOss, AliYunCdn
-from .localApi import LocalStorage
-from .qiniuApi import QiNiuOss
+from common.core.sysconfig import Config
+from common.libs.storage.aliyunApi import AliYunOss, AliYunCdn
+from common.libs.storage.localApi import LocalStorage
+from common.libs.storage.qiniuApi import QiNiuOss
 
 logger = logging.getLogger(__name__)
 
@@ -140,8 +140,7 @@ class Storage(object):
 
 
 def get_local_storage(clean_cache=False):
-    storage_lists = THIRD_PART_CONFIG_KEY_INFO.get('storage_key')
-    for storage in storage_lists:
+    for storage in Config.STORAGE:
         storage_type = storage.get('type', None)
         if storage_type == 0:
             auth = storage.get('auth', {})
@@ -162,8 +161,7 @@ def get_local_storage(clean_cache=False):
 
 
 def get_storage_form_conf(user):
-    storage_lists = THIRD_PART_CONFIG_KEY_INFO.get('storage_key', [])
-    for storage in storage_lists:
+    for storage in Config.STORAGE:
         if storage.get("active", None):
             storage_type = storage.get('type', None)
             auth = storage.get('auth', {})
