@@ -59,7 +59,7 @@ class DBCONF(object):
     port = '3306'
     password = 'KGzKjZpWBp4R4RSa'
     user = 'flyuser'
-    name = 'flyapp'
+    name = 'flyappnew'
 
 
 class CACHECONF(object):

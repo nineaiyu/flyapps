@@ -7,7 +7,7 @@ import logging
 
 from rest_framework.views import exception_handler
 
-from admin.utils.utils import ApiResponse
+from common.core.response import ApiResponse
 
 logger = logging.getLogger(__file__)
 
