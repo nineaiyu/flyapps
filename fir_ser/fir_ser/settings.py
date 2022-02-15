@@ -369,7 +369,7 @@ LOGGING = {
             'encoding': 'utf-8',
         },
         'sql': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
             'filename': os.path.join(BASE_LOG_DIR, "flyapp_sql.log"),  # 日志文件
             'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
@@ -392,7 +392,7 @@ LOGGING = {
         'django.db.backends': {
             'handlers': ['console', 'sql'],
             'propagate': True,
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
     },
 }
@@ -453,7 +453,7 @@ CELERY_BEAT_SCHEDULE = {
         'args': ()
     },
     'auto_check_ios_developer_active_job': {
-        'task': 'api.tasks.auto_check_ios_developer_active_job',
+        'task': 'xsign.tasks.auto_check_ios_developer_active_job',
         # 'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
         'schedule': crontab(hour=1, minute=1),
         'args': ()
@@ -470,7 +470,7 @@ CELERY_BEAT_SCHEDULE = {
         'args': (),
     },
     'get_best_proxy_ips_job': {
-        'task': 'api.tasks.get_best_proxy_ips_job',
+        'task': 'xsign.tasks.get_best_proxy_ips_job',
         'schedule': SYNC_CACHE_TO_DATABASE.get("best_proxy_ips_times"),
         'args': (),
     },

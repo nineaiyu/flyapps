@@ -123,7 +123,7 @@
 </template>
 
 <script>
-import {apputils,} from "@/restful"
+import {appSignInfo,} from "@/restful"
 import {deepCopy} from "@/utils";
 import AppleDeveloperBindApp from "@/components/base/AppleDeveloperBindApp";
 
@@ -164,18 +164,33 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       });
-      apputils(data => {
+      appSignInfo(data => {
         if (data.code === 1000) {
           this.$message.success('数据更新成功');
         } else {
           this.$message.error('操作失败,' + data.msg);
           this.$store.dispatch('doucurrentapp', this.orgcurrentapp);
         }
+        this.getappinfo();
         loading.close();
       }, {
         "methods": "PUT",
         "app_id": this.currentapp.app_id,
         "data": data
+      });
+    },
+    getappinfo(){
+      appSignInfo(data => {
+        if (data.code === 1000) {
+          for (let name of Object.keys(data.data)) {
+            this.currentapp[name] = data.data[name]
+          }
+        } else {
+          this.$message.error('数据获取失败,' + data.msg);
+        }
+      }, {
+        "methods": "GET",
+        "app_id": this.currentapp.app_id,
       });
     },
     setbuttonsignshow(currentapp) {
@@ -229,6 +244,9 @@ export default {
     },
     appinit() {
       this.currentapp = this.$store.state.currentapp;
+      if(this.currentapp.app_id){
+        this.getappinfo();
+      }
       this.set_default_flag();
       this.orgcurrentapp = deepCopy(this.currentapp);
       this.set_default_ms(this.currentapp);

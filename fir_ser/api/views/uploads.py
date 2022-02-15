@@ -23,7 +23,6 @@ from common.utils.caches import upload_file_tmp_name, del_cache_response_by_shor
 from common.utils.storage import Storage
 from common.utils.token import verify_token
 from fir_ser import settings
-from xsign.utils.modelutils import check_super_sign_permission
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +89,6 @@ class AppAnalyseView(APIView):
                         "storage": storage_type,
                         "is_new": is_new,
                         "binary_url": binary_url,
-                        "sign": check_super_sign_permission(request.user),
                         "enable_sign": enable_sign
                         }
             if storage_type not in [1, 2]:

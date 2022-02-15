@@ -300,7 +300,8 @@ class Migration(migrations.Migration):
                 ('created_time', models.DateTimeField(auto_now_add=True, verbose_name='订单创建时间')),
                 ('description', models.TextField(blank=True, default='', null=True, verbose_name='备注')),
                 (
-                'user_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                    'user_id',
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.CreateModel(
@@ -332,7 +333,8 @@ class Migration(migrations.Migration):
                 ('secret_key',
                  common.base.daobase.AESCharField(blank=True, max_length=128, null=True, verbose_name='存储访问secret')),
                 (
-                'bucket_name', models.CharField(blank=True, max_length=128, null=True, verbose_name='存储空间bucket_name')),
+                    'bucket_name',
+                    models.CharField(blank=True, max_length=128, null=True, verbose_name='存储空间bucket_name')),
                 ('domain_name',
                  models.CharField(blank=True, help_text='fly-storage.dvcloud.xin,可以自定义端口', max_length=128, null=True,
                                   verbose_name='下载域名')),
@@ -401,7 +403,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('is_master', models.BooleanField(default=True, verbose_name='是否master版本')),
                 (
-                'release_id', models.CharField(db_index=True, max_length=64, unique=True, verbose_name='release 版本id')),
+                    'release_id',
+                    models.CharField(db_index=True, max_length=64, unique=True, verbose_name='release 版本id')),
                 ('build_version', models.CharField(blank=True, max_length=64, verbose_name='build版本')),
                 ('app_version', models.CharField(blank=True, max_length=64, verbose_name='app版本')),
                 ('release_type',

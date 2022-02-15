@@ -587,7 +587,7 @@
   </el-container>
 </template>
 <script>
-import {analyseApps, apputils, get_package_prices, getapps, getuploadurl, my_order} from "@/restful";
+import {analyseApps, apputils, checkCanSign, get_package_prices, getapps, getuploadurl, my_order} from "@/restful";
 import {
   dataURLtoFile,
   deepCopy,
@@ -715,8 +715,13 @@ export default {
                     analyseappinfo[name] = data.data[name]
                   }
                   if (this.currentfile) {
-                    this.willuploadApp = true;
-                    resolve()
+                    checkCanSign(res => {
+                      if (res.code === 1000) {
+                        analyseappinfo.sign = res.data.sign
+                      }
+                      this.willuploadApp = true;
+                      resolve()
+                    }, {methods: 'GET'})
                   } else {
                     this.uploadcloud(analyseappinfo, file, true, resolve)
                   }

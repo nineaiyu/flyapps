@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.urls import re_path
 
+from xsign.views.appinfo import AppCanSignView, AppSignInfoView
 from xsign.views.receiveudids import IosUDIDView, TaskView
 from xsign.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView, SuperSignCertView, \
     DeviceUsedBillView, DeveloperDeviceView, DeviceUsedRankInfoView, AppleDeveloperBindAppsView, DeviceTransferBillView
@@ -31,4 +32,6 @@ urlpatterns = [
     re_path(r"^devicebill$", DeviceTransferBillView.as_view()),
     re_path(r"^rank$", DeviceUsedRankInfoView.as_view()),
     re_path(r"^bind$", AppleDeveloperBindAppsView.as_view()),
+    re_path(r"^cansign$", AppCanSignView.as_view()),
+    re_path(r"^signinfo/(?P<app_id>\w+)$", AppSignInfoView.as_view()),
 ]

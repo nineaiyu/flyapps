@@ -1579,7 +1579,14 @@ export default {
           if (this.cert_pwd && this.cert_pwd.toString().trim().length > 0) {
             let reader = new FileReader();
             reader.onload = evt => {
+              const loadingobj = this.$loading({
+                lock: true,
+                text: '操作中，请耐心等待',
+                spinner: 'el-icon-loading',
+                // background: 'rgba(0, 0, 0, 0.7)'
+              });
               developercert(data => {
+                loadingobj.close()
                 if (data.code === 1000) {
                   this.$message.success("证书导入成功");
                   this.importcertDeveloperVisible = false;

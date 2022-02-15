@@ -73,7 +73,10 @@ export function set_auth_token() {
 
 set_auth_token();
 
-function ErrorMsg(error) {
+function ErrorMsg(error, load) {
+    if (!load) {
+        return
+    }
     if (error && error.response) {
         switch (error.response.status) {
             case 400:
@@ -144,7 +147,7 @@ function getData(methods, url, params = {}, callBack, load, isCode = false) {
                 }
             })
             .catch(function (error) {
-                ErrorMsg(error);
+                ErrorMsg(error, load);
                 callBack({"code": -1});
             });
 
@@ -159,7 +162,7 @@ function getData(methods, url, params = {}, callBack, load, isCode = false) {
                 }
             })
             .catch(function (error) {
-                ErrorMsg(error);
+                ErrorMsg(error, load);
                 callBack({"code": -1});
             });
 
@@ -175,7 +178,7 @@ function getData(methods, url, params = {}, callBack, load, isCode = false) {
 
             })
             .catch(function (error) {
-                ErrorMsg(error);
+                ErrorMsg(error, load);
                 callBack({"code": -1});
             });
     } else if (methods === 'FILE') {
@@ -185,7 +188,7 @@ function getData(methods, url, params = {}, callBack, load, isCode = false) {
                 convertRes2Blob(response)
             })
             .catch(function (error) {
-                ErrorMsg(error);
+                ErrorMsg(error, load);
                 callBack({"code": -1});
             });
     } else {
@@ -195,7 +198,7 @@ function getData(methods, url, params = {}, callBack, load, isCode = false) {
                 callBack(response.data);
             })
             .catch(function (error) {
-                ErrorMsg(error);
+                ErrorMsg(error, load);
                 callBack({"code": -1});
             });
     }
@@ -509,67 +512,6 @@ export function uploadimgs(callBack, params, load = true) {
     );
 }
 
-/**超级签名 苹果开发者信息 */
-export function iosdeveloper(callBack, params, load = true) {
-    getData(
-        params.methods,
-        USERSEVER + '/supersign/developer',
-        params.data,
-        data => {
-            callBack(data);
-        },
-        load,
-        true,
-        true
-    );
-}
-
-/**超级签名 设备消耗信息 */
-export function iosdevices(callBack, params, load = true) {
-    getData(
-        params.methods,
-        USERSEVER + '/supersign/devices',
-        params.data,
-        data => {
-            callBack(data);
-        },
-        load,
-        true,
-        true
-    );
-}
-
-/**超级签名 设备udid信息 */
-export function iosdevicesudid(callBack, params, load = true) {
-    // eslint-disable-next-line no-console
-    getData(
-        params.methods,
-        USERSEVER + '/supersign/udid',
-        params.data,
-        data => {
-            callBack(data);
-        },
-        load,
-        true,
-        true
-    );
-}
-
-/**超级签名 苹果开发设备udid信息 */
-export function iosudevices(callBack, params, load = true) {
-    // eslint-disable-next-line no-console
-    getData(
-        params.methods,
-        USERSEVER + '/supersign/udevices',
-        params.data,
-        data => {
-            callBack(data);
-        },
-        load,
-        true,
-        true
-    );
-}
 
 /**获取充值价格信息 */
 export function get_package_prices(callBack, params, load = true) {
@@ -663,21 +605,6 @@ export function gettask(callBack, params, load = true) {
 }
 
 
-/**签名证书 */
-export function developercert(callBack, params, load = true) {
-    getData(
-        params.methods,
-        USERSEVER + '/supersign/cert',
-        params.data,
-        data => {
-            callBack(data);
-        },
-        load,
-        true,
-        true
-    );
-}
-
 /**微信用户绑定 */
 export function wxutils(callBack, params, load = true) {
     getData(
@@ -738,11 +665,61 @@ export function qrcodeinfo(callBack, params, load = true) {
     );
 }
 
+
+/**应用举报 */
+export function appReport(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/report',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+// 超级签名相关api
+
+let SIGNSEVER = DOMAIN + '/api/v1/fir/xsign';
+
+/** 超级签名--检测该账户是否可开启超级签名 */
+export function checkCanSign(callBack, params, load = false) {
+    getData(
+        params.methods,
+        SIGNSEVER + '/cansign',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+/** 苹果签名应用操作 */
+export function appSignInfo(callBack, params, load = true) {
+    getData(
+        params.methods,
+        SIGNSEVER + '/signinfo/' + params.app_id,
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 /**签名账单 */
 export function DeviceBillInfo(callBack, params, load = true) {
     getData(
         params.methods,
-        USERSEVER + '/supersign/bill',
+        SIGNSEVER + '/bill',
         params.data,
         data => {
             callBack(data);
@@ -757,7 +734,7 @@ export function DeviceBillInfo(callBack, params, load = true) {
 export function DeviceTransferBillInfo(callBack, params, load = true) {
     getData(
         params.methods,
-        USERSEVER + '/supersign/devicebill',
+        SIGNSEVER + '/devicebill',
         params.data,
         data => {
             callBack(data);
@@ -772,7 +749,7 @@ export function DeviceTransferBillInfo(callBack, params, load = true) {
 export function DeviceRankInfo(callBack, params, load = true) {
     getData(
         params.methods,
-        USERSEVER + '/supersign/rank',
+        SIGNSEVER + '/rank',
         params.data,
         data => {
             callBack(data);
@@ -787,7 +764,7 @@ export function DeviceRankInfo(callBack, params, load = true) {
 export function developerBindAppFun(callBack, params, load = true) {
     getData(
         params.methods,
-        USERSEVER + '/supersign/bind',
+        SIGNSEVER + '/bind',
         params.data,
         data => {
             callBack(data);
@@ -798,11 +775,74 @@ export function developerBindAppFun(callBack, params, load = true) {
     );
 }
 
-/**应用举报 */
-export function appReport(callBack, params, load = true) {
+
+/**超级签名 苹果开发者信息 */
+export function iosdeveloper(callBack, params, load = true) {
     getData(
         params.methods,
-        USERSEVER + '/report',
+        SIGNSEVER + '/developer',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+/**超级签名 设备消耗信息 */
+export function iosdevices(callBack, params, load = true) {
+    getData(
+        params.methods,
+        SIGNSEVER + '/devices',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+/**超级签名 设备udid信息 */
+export function iosdevicesudid(callBack, params, load = true) {
+    // eslint-disable-next-line no-console
+    getData(
+        params.methods,
+        SIGNSEVER + '/udid',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+/**超级签名 苹果开发设备udid信息 */
+export function iosudevices(callBack, params, load = true) {
+    // eslint-disable-next-line no-console
+    getData(
+        params.methods,
+        SIGNSEVER + '/udevices',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+/**签名证书 */
+export function developercert(callBack, params, load = true) {
+    getData(
+        params.methods,
+        SIGNSEVER + '/cert',
         params.data,
         data => {
             callBack(data);
