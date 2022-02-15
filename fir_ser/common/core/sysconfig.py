@@ -313,15 +313,15 @@ class AppleDeveloperConfCache(ConfigCacheBase):
 
     @property
     def DEVELOPER_AUTO_CHECK_STATUS(self):
-        return super().get_value('SENDER', APPLEDEVELOPERCONF.DEVELOPER_AUTO_CHECK_STATUS)
+        return super().get_value('DEVELOPER_AUTO_CHECK_STATUS', APPLEDEVELOPERCONF.DEVELOPER_AUTO_CHECK_STATUS)
 
     @property
     def DEVELOPER_WRITE_STATUS(self):
-        return super().get_value('SENDER', APPLEDEVELOPERCONF.DEVELOPER_WRITE_STATUS)
+        return super().get_value('DEVELOPER_WRITE_STATUS', APPLEDEVELOPERCONF.DEVELOPER_WRITE_STATUS)
 
     @property
     def DEVELOPER_DISABLED_STATUS(self):
-        return super().get_value('SENDER', APPLEDEVELOPERCONF.DEVELOPER_DISABLED_STATUS)
+        return super().get_value('DEVELOPER_DISABLED_STATUS', APPLEDEVELOPERCONF.DEVELOPER_DISABLED_STATUS)
 
 
 class ConfigCache(BaseConfCache, IpaConfCache, AuthConfCache, EmailMsgCache, UserDownloadTimesCache, GeeTestConfCache,
