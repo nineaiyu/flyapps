@@ -11,41 +11,22 @@ from django.http import FileResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import Apps, AppReleaseInfo, APPToDeveloper, APPSuperSignUsedInfo
-from api.utils.TokenManager import verify_token
-from api.utils.app.apputils import make_resigned
-from api.utils.app.supersignutils import make_sign_udid_mobile_config
+from api.models import Apps, AppReleaseInfo
 from api.utils.modelutils import get_filename_form_file, check_app_domain_name_access, \
     ad_random_weight, get_app_download_uri
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
-from common.base.baseutils import get_profile_full_path, make_random_uuid, get_origin_domain_name, \
-    format_get_uri, get_server_domain_from_request
+from common.base.baseutils import get_origin_domain_name, format_get_uri
 from common.core.decorators import cache_response  # 本来使用的是 drf-extensions==0.7.0 但是还未支持该版本Django
+from common.core.response import mobileprovision_file_response
 from common.core.sysconfig import Config
 from common.core.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 from common.utils.caches import check_app_permission, get_app_download_url
 from common.utils.storage import Storage, get_local_storage
+from common.utils.token import verify_token
 from fir_ser import settings
 
 logger = logging.getLogger(__name__)
-
-
-def file_response(stream, filename, content_type):
-    return FileResponse(stream, as_attachment=True,
-                        filename=filename,
-                        content_type=content_type)
-
-
-def mobileprovision_file_response(file_path):
-    return file_response(open(file_path, 'rb'), make_random_uuid() + '.mobileprovision',
-                         "application/x-apple-aspen-config")
-
-
-def get_post_udid_url(request, short):
-    server_domain = get_server_domain_from_request(request, Config.POST_UDID_DOMAIN)
-    path_info_lists = [server_domain, "udid", short]
-    return "/".join(path_info_lists)
 
 
 class DownloadView(APIView):
@@ -69,59 +50,7 @@ class DownloadView(APIView):
             flag = verify_token(down_token, filename)
 
         if flag:
-            if f_type == 'plist':
-                release_id = filename.split('.')[0]
-                app_to_developer_obj = APPToDeveloper.objects.filter(binary_file=release_id).first()
-                if app_to_developer_obj:
-                    release_obj = AppReleaseInfo.objects.filter(is_master=True,
-                                                                app_id=app_to_developer_obj.app_id).first()
-                else:
-                    release_obj = AppReleaseInfo.objects.filter(release_id=release_id).first()
-                if release_obj:
-                    app_obj = release_obj.app_id
-                    storage = Storage(app_obj.user_id)
-                    bundle_id = app_obj.bundle_id
-                    app_version = release_obj.app_version
-                    name = app_obj.name
-                    ios_plist_bytes = make_resigned(storage.get_download_url(filename.split('.')[0] + ".ipa"),
-                                                    storage.get_download_url(release_obj.icon_url), bundle_id,
-                                                    app_version, name)
-                    return file_response(ios_plist_bytes, make_random_uuid(), "application/x-plist")
-                res.msg = "plist release_id error"
-            elif f_type == 'mobileconifg':
-                release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
-                if release_obj:
-                    app_obj = release_obj.app_id
-                    udid_url = get_post_udid_url(request, app_obj.short)
-                    ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, f'{app_obj.app_id}_{app_obj.short}',
-                                                                          app_obj.bundle_id,
-                                                                          app_obj.name)
-                    return file_response(ios_udid_mobile_config, make_random_uuid() + '.mobileconfig',
-                                         "application/x-apple-aspen-config")
-                res.msg = "mobile_config release_id error"
-            elif f_type == 'mobileprovision':
-                release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
-                if release_obj:
-                    app_super_obj = APPSuperSignUsedInfo.objects.filter(app_id=release_obj.app_id).last()
-                    if not app_super_obj:
-                        app_super_obj = APPSuperSignUsedInfo.objects.last()
-
-                    if not app_super_obj:
-                        file_path = Config.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
-                        if file_path and os.path.isfile(file_path):
-                            return mobileprovision_file_response(file_path)
-                    else:
-                        developer_obj = app_super_obj.developerid
-                        file_path = get_profile_full_path(developer_obj, release_obj.app_id)
-                        if os.path.isfile(file_path):
-                            return mobileprovision_file_response(file_path)
-                        else:
-                            file_path = Config.DEFAULT_MOBILEPROVISION.get("supersign").get('path')
-                            if file_path and os.path.isfile(file_path):
-                                return mobileprovision_file_response(file_path)
-
-                res.msg = "mobile_provision release_id error"
-            elif f_type == 'dmobileprovision':  # 企业签名安装信任跳转
+            if f_type == 'dmobileprovision':  # 企业签名安装信任跳转
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
                 if release_obj:
                     file_path = Config.DEFAULT_MOBILEPROVISION.get("enterprise").get('path')

@@ -3,10 +3,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Count
 
-from api.utils.TokenManager import generate_alphanumeric_token_of_length, generate_numeric_token_of_length
 from common.base.baseutils import make_random_uuid
 ######################################## 用户表 ########################################
 from common.base.daobase import AESCharField
+from common.utils.token import generate_alphanumeric_token_of_length, generate_numeric_token_of_length
 
 
 # Create your models here.
@@ -69,7 +69,7 @@ class UserInfo(AbstractUser):
 
 
 class ThirdWeChatUserInfo(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
     openid = models.CharField(max_length=64, unique=True, verbose_name="普通用户的标识，对当前公众号唯一")
     nickname = models.CharField(max_length=64, verbose_name="昵称", blank=True)
     sex = models.SmallIntegerField(default=0, verbose_name="性别", help_text="值为1时是男性，值为2时是女性，值为0时是未知")
@@ -122,7 +122,7 @@ class VerifyName(models.Model):
 
 class Apps(models.Model):
     app_id = models.CharField(max_length=64, unique=True, db_index=True)  # ，唯一标识
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
     type_choices = ((0, 'android'), (1, 'ios'))
     type = models.SmallIntegerField(choices=type_choices, default=0, verbose_name="类型")
     status_choices = ((0, '封禁'), (1, '正常'), (2, '违规'))
@@ -147,7 +147,6 @@ class Apps(models.Model):
     supersign_limit_number = models.IntegerField(verbose_name="签名使用限额", default=0)
     wxredirect = models.BooleanField(verbose_name="微信内第三方链接自动跳转", default=True)
     wxeasytype = models.BooleanField(verbose_name="微信内简易模式，避免微信封停", default=True)
-    # domain_name = models.CharField(verbose_name="专属访问域名", blank=True, null=True, max_length=64)
     description = models.TextField('描述', blank=True, null=True, default=None, )
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
@@ -161,7 +160,7 @@ class Apps(models.Model):
 
 
 class AppScreenShot(models.Model):
-    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
+    app_id = models.ForeignKey(to=Apps, on_delete=models.CASCADE, verbose_name="属于哪个APP")
     screenshot_url = models.CharField(max_length=128, blank=True, verbose_name="应用截图URL")
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
 
@@ -177,7 +176,7 @@ class AppScreenShot(models.Model):
 class AppReleaseInfo(models.Model):
     is_master = models.BooleanField(verbose_name="是否master版本", default=True)
     release_id = models.CharField(max_length=64, unique=True, verbose_name="release 版本id", db_index=True)
-    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
+    app_id = models.ForeignKey(to=Apps, on_delete=models.CASCADE, verbose_name="属于哪个APP")
     build_version = models.CharField(max_length=64, verbose_name="build版本", blank=True)
     app_version = models.CharField(max_length=64, verbose_name="app版本", blank=True)
     release_choices = ((0, 'android'), (1, 'adhoc'), (2, 'Inhouse'), (3, 'unknown'))
@@ -200,7 +199,7 @@ class AppReleaseInfo(models.Model):
 
 
 class AppStorage(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
     name = models.CharField(max_length=64, blank=True, null=True, verbose_name="存储名字")
     storage_choices = ((0, '本地存储'), (1, '七牛云存储'), (2, '阿里云存储'), (3, '默认存储'))
     storage_type = models.SmallIntegerField(choices=storage_choices, default=3, verbose_name="存储类型")
@@ -243,153 +242,6 @@ class AppStorage(models.Model):
         return "%s %s" % (self.user_id.get_username(), self.name)
 
 
-class AppUDID(models.Model):
-    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
-    udid = models.ForeignKey(to="UDIDsyncDeveloper", verbose_name="udid唯一标识", on_delete=models.CASCADE)
-    product = models.CharField(max_length=64, verbose_name="产品", blank=True, null=True, )
-    serial = models.CharField(max_length=64, verbose_name="序列号", blank=True, null=True, )
-    version = models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
-    imei = models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
-    iccid = models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
-    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    # is_signed = models.BooleanField(verbose_name="是否完成签名打包", default=False)
-    # is_download = models.BooleanField(verbose_name="描述文件是否已经下载", default=False)
-    sign_status_choices = ((0, '新设备入库准备'), (1, '设备ID已经注册'), (2, 'bundelid已经注册'), (3, '描述文件已经下载'), (4, '已经完成签名打包'))
-    sign_status = models.SmallIntegerField(choices=sign_status_choices, default=0, verbose_name="签名状态")
-
-    class Meta:
-        verbose_name = '设备详情'
-        verbose_name_plural = "设备详情"
-        unique_together = ('app_id', 'udid',)
-
-    def __str__(self):
-        return "%s-%s" % (self.app_id.name, self.udid)
-
-
-class AppIOSDeveloperInfo(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
-    issuer_id = models.CharField(max_length=64, null=False, verbose_name="标识创建认证令牌的发放者")
-    private_key_id = models.CharField(max_length=64, null=False, verbose_name="密钥 ID")
-    p8key = AESCharField(max_length=512, null=False, verbose_name="p8key")
-    certid = models.CharField(max_length=64, blank=True, verbose_name="超级签名自动创建证书ID", null=True)
-    usable_number = models.IntegerField(verbose_name="可使用设备数", default=100)
-    app_limit_number = models.IntegerField(verbose_name="可分配应用数，最大160", default=100)
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
-    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    cert_expire_time = models.DateTimeField(blank=True, null=True, verbose_name="证书过期时间")
-    description = models.TextField('备注', blank=True, null=True, default='')
-    auth_type_choices = ((0, 'p8key认证'),)
-    auth_type = models.SmallIntegerField(choices=auth_type_choices, default=0, verbose_name="认证类型")
-
-    # 协议待同意和维护中：代表只读，不可创建和注册新设备号
-    status_choices = ((-1, '疑似被封'), (0, '未激活'), (1, '已激活'), (2, '协议待同意'), (3, '维护中'), (4, '证书过期'), (5, '状态异常'))
-    status = models.SmallIntegerField(choices=status_choices, verbose_name="账户状态", default=0)
-
-    clean_status = models.BooleanField(verbose_name="清理是否同时禁用设备ID", default=False)
-    auto_check = models.BooleanField(verbose_name="是否自动检测开发者状态", default=False)
-
-    class Meta:
-        verbose_name = '苹果开发者账户'
-        verbose_name_plural = "苹果开发者账户"
-        unique_together = (('user_id', 'issuer_id'),)
-
-    def save(self, *args, **kwargs):
-        if self.usable_number > 100:
-            self.usable_number = 100
-        elif self.usable_number < 0:
-            self.usable_number = 0
-
-        if self.app_limit_number > 160:
-            self.app_limit_number = 160
-        elif self.app_limit_number < 0:
-            self.app_limit_number = 0
-
-        return super(AppIOSDeveloperInfo, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return "%s-%s" % (self.user_id, self.issuer_id)
-
-
-class APPSuperSignUsedInfo(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
-    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
-    udid = models.ForeignKey(to="AppUDID", on_delete=models.CASCADE, verbose_name="所消耗的udid")
-    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
-    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-
-    class Meta:
-        verbose_name = '设备使用统计'
-        verbose_name_plural = "设备使用统计"
-
-    def __str__(self):
-        return "%s-%s-%s" % (self.user_id, self.app_id, self.udid)
-
-
-class APPToDeveloper(models.Model):
-    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
-    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
-    binary_file = models.CharField(max_length=128, blank=True, verbose_name="签名包名称", null=True, unique=True)
-    release_file = models.CharField(max_length=128, blank=True, verbose_name="源包名称", null=True)
-    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-
-    class Meta:
-        verbose_name = '应用开发者绑定'
-        verbose_name_plural = "应用开发者绑定"
-
-    def __str__(self):
-        return "%s-%s-%s" % (self.developerid, self.app_id, self.binary_file)
-
-
-class UDIDsyncDeveloper(models.Model):
-    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
-    udid = models.CharField(max_length=64, verbose_name="udid唯一标识", db_index=True)
-    product = models.CharField(max_length=64, verbose_name="产品", blank=True, null=True, )
-    serial = models.CharField(max_length=64, verbose_name="序列号", blank=True, null=True, )
-    version = models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间"),
-    status = models.BooleanField(verbose_name="设备在开发者平台状态", default=False)
-
-    class Meta:
-        verbose_name = 'iOS开发平台同步设备信息'
-        verbose_name_plural = "iOS开发平台同步设备信息"
-        unique_together = ('udid', 'developerid',)
-
-    def __str__(self):
-        return "%s-%s-%s" % (self.product, self.udid, self.developerid)
-
-
-class DeveloperAppID(models.Model):
-    aid = models.CharField(max_length=64, null=False)  # ，apple APP 唯一标识
-    profile_id = models.CharField(max_length=64, null=True, blank=True)  # ，profile_id 唯一标识
-    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
-    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
-
-    class Meta:
-        verbose_name = '超级签APP id'
-        verbose_name_plural = "超级签APP id"
-        unique_together = ('aid', 'developerid', 'app_id')
-
-    def __str__(self):
-        return "%s-%s-%s" % (self.aid, self.app_id, self.developerid)
-
-
-class DeveloperDevicesID(models.Model):
-    did = models.CharField(max_length=64, null=False)  # ，apple 设备唯一标识
-    udid = models.ForeignKey(to="UDIDsyncDeveloper", on_delete=models.CASCADE, verbose_name="所消耗的udid")
-    developerid = models.ForeignKey(to="AppIOSDeveloperInfo", on_delete=models.CASCADE, verbose_name="所使用苹果开发者账户")
-    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="属于哪个APP")
-
-    class Meta:
-        verbose_name = '超级签Devices id'
-        verbose_name_plural = "超级签Devices id"
-        unique_together = ('did', 'developerid', 'app_id')
-
-    def __str__(self):
-        return "%s-%s-%s-%s" % (self.id, self.app_id, self.developerid, self.udid)
-
-
 ######################################## 订单表 ########################################
 
 class Order(models.Model):
@@ -399,7 +251,7 @@ class Order(models.Model):
     payment_number = models.CharField(max_length=128, verbose_name="支付第3方订单号", null=True, blank=True)
     payment_name = models.CharField(max_length=128, verbose_name="支付商家名称", null=True, blank=True)
     order_number = models.CharField(max_length=128, verbose_name="订单号", unique=True)  # 考虑到订单合并支付的问题
-    user_id = models.ForeignKey("UserInfo", on_delete=models.CASCADE)
+    user_id = models.ForeignKey(UserInfo, on_delete=models.CASCADE)
     actual_amount = models.BigIntegerField(verbose_name="实付金额,单位分")
     actual_download_times = models.BigIntegerField(verbose_name="实际购买的数量", default=0)
     actual_download_gift_times = models.BigIntegerField(verbose_name="实际赠送的数量", default=0)
@@ -441,7 +293,7 @@ class Price(models.Model):
 
 
 class UserCertificationInfo(models.Model):
-    user_id = models.OneToOneField(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE,
+    user_id = models.OneToOneField(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE,
                                    related_name='certification')
     name = models.CharField(max_length=128, null=False, verbose_name="真实姓名")
     card = models.CharField(max_length=128, null=False, verbose_name="身份证号码", unique=True)
@@ -463,7 +315,7 @@ class UserCertificationInfo(models.Model):
 
 
 class CertificationInfo(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
     certification_url = models.CharField(max_length=128, blank=True, verbose_name="认证URL")
     type_choices = ((0, '未知'), (1, '国徽面照片'), (2, '人像面照片'), (3, '手持身份证照片'))
     type = models.SmallIntegerField(choices=type_choices, default=0, verbose_name="图像类型")
@@ -500,9 +352,9 @@ class DomainCnameInfo(models.Model):
 
 
 class UserDomainInfo(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
-    app_id = models.ForeignKey(to="Apps", on_delete=models.CASCADE, verbose_name="APP专属域名", null=True, blank=True)
-    cname_id = models.ForeignKey(to="DomainCnameInfo", verbose_name="cname解析ID", on_delete=models.CASCADE)
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
+    app_id = models.ForeignKey(to=Apps, on_delete=models.CASCADE, verbose_name="APP专属域名", null=True, blank=True)
+    cname_id = models.ForeignKey(to=DomainCnameInfo, verbose_name="cname解析ID", on_delete=models.CASCADE)
     domain_name = models.CharField(verbose_name="下载页面域名", db_index=True, max_length=64, null=False, blank=False)
     is_https = models.BooleanField(default=False, verbose_name="是否支持HTTPS")
     weight = models.IntegerField(verbose_name="下载页域名展示权重", default=10)
@@ -527,7 +379,7 @@ class UserDomainInfo(models.Model):
 
 
 class UserAdDisplayInfo(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
     ad_name = models.CharField(verbose_name="广告名称", max_length=256, null=False, blank=False)
     ad_uri = models.CharField(verbose_name="广告跳转地址", max_length=256, null=False, blank=False)
     ad_pic = models.CharField(verbose_name="广告图片地址", max_length=256, null=False, blank=False, help_text="像素最高80px", )
@@ -544,52 +396,6 @@ class UserAdDisplayInfo(models.Model):
 
     def __str__(self):
         return "%s-%s-%s" % (self.user_id, self.description, self.is_enable)
-
-
-class IosDeveloperPublicPoolBill(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE)
-    number = models.IntegerField(verbose_name="消耗次数", default=1)
-    app_info = models.JSONField(max_length=256, verbose_name="属于哪个APP", null=True, blank=True)
-    udid = models.CharField(max_length=64, verbose_name="设备udid", null=True, blank=True)
-    product = models.CharField(max_length=64, verbose_name="设备udid", null=True, blank=True)
-    version = models.CharField(max_length=64, verbose_name="设备udid", null=True, blank=True)
-    developer_info = models.JSONField(max_length=256, verbose_name="开发者信息", null=True, blank=True)
-    udid_sync_info = models.ForeignKey(to="UDIDsyncDeveloper", on_delete=models.SET_NULL, verbose_name="关联同步设备信息",
-                                       null=True, blank=True)
-    app_id = models.ForeignKey(to="Apps", on_delete=models.SET_NULL, verbose_name="属于哪个APP", null=True, blank=True)
-    description = models.CharField(verbose_name="操作描述", max_length=128, default='', blank=True)
-    remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址")
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
-
-    class Meta:
-        verbose_name = '设备消耗账单'
-        verbose_name_plural = "设备消耗账单"
-
-    def __str__(self):
-        return "%s-%s" % (self.user_id, self.description)
-
-
-class IosDeveloperBill(models.Model):
-    user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE,
-                                related_name='org_user_id')
-    to_user_id = models.ForeignKey(to="UserInfo", verbose_name="用户ID", on_delete=models.CASCADE,
-                                   related_name='to_user_id', null=True, blank=True)
-
-    status_choices = ((0, '失效'), (1, '已撤回'), (2, '成功'))
-    status = models.SmallIntegerField(choices=status_choices, default=0, verbose_name="状态",
-                                      help_text="0 失效 1 撤回 2 转账")
-    number = models.IntegerField(verbose_name="设备数量", default=1)
-    description = models.CharField(verbose_name="操作描述", max_length=128, default='', blank=True)
-    remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址")
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
-    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-
-    class Meta:
-        verbose_name = '设备划转账单'
-        verbose_name_plural = "设备划转账单"
-
-    def __str__(self):
-        return "%s-%s—%s" % (self.user_id, self.to_user_id, self.description)
 
 
 class RemoteClientInfo(models.Model):
@@ -610,7 +416,7 @@ class RemoteClientInfo(models.Model):
 
 
 class AppReportInfo(models.Model):
-    app_id = models.ForeignKey(to="Apps", on_delete=models.SET_NULL, verbose_name="应用信息",
+    app_id = models.ForeignKey(to=Apps, on_delete=models.SET_NULL, verbose_name="应用信息",
                                null=True, blank=True)
     app_name = models.CharField(max_length=32, blank=True, null=True, verbose_name="应用名称")
     bundle_id = models.CharField(max_length=64, blank=True, verbose_name="bundle id")
@@ -631,22 +437,6 @@ class AppReportInfo(models.Model):
 
     def __str__(self):
         return "%s-%s" % (self.app_name, self.report_reason)
-
-
-class AppleDeveloperToAppUse(models.Model):
-    app_id = models.ForeignKey(to='Apps', on_delete=models.CASCADE)
-    developerid = models.ForeignKey(to='AppIOSDeveloperInfo', on_delete=models.CASCADE)
-    usable_number = models.IntegerField(verbose_name="可使用设备数", default=100)
-    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
-
-    class Meta:
-        verbose_name = '开发者专属于应用'
-        verbose_name_plural = "开发者专属于应用"
-        unique_together = ('app_id', 'developerid')
-
-    def __str__(self):
-        return "%s-%s" % (self.app_id.name, self.developerid.issuer_id)
 
 
 class SystemConfig(models.Model):

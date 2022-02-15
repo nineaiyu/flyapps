@@ -12,16 +12,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.base_views import app_delete
-from api.models import Apps, AppReleaseInfo, APPToDeveloper, UserInfo, AppScreenShot, AppUDID
-from api.tasks import run_resign_task
-from api.utils.app.supersignutils import IosUtils
-from api.utils.modelutils import get_user_domain_name, get_app_domain_name, check_super_sign_permission
+from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot
+from api.utils.modelutils import get_user_domain_name, get_app_domain_name
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer, AppsQrListSerializer
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
-from common.cache.state import MigrateStorageState, CleanAppSignDataState
+from common.cache.state import MigrateStorageState
 from common.core.auth import ExpiringTokenAuthentication
-from common.core.sysconfig import Config
+from common.core.singals import delete_app_signal
 from common.utils.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
 from common.utils.storage import Storage
 
@@ -117,8 +115,6 @@ class AppInfoView(APIView):
             if app_obj:
                 app_serializer = AppsSerializer(app_obj, context={"storage": Storage(request.user)})
                 res.data = app_serializer.data
-                count = APPToDeveloper.objects.filter(app_id=app_obj).count()
-                res.data["count"] = count
             else:
                 logger.error(f"app_id:{app_id} is not found in user:{request.user}")
                 res.msg = "未找到该应用"
@@ -140,18 +136,6 @@ class AppInfoView(APIView):
             if MigrateStorageState(request.user.uid).get_state():
                 res.code = 1008
                 res.msg = "数据迁移中，无法处理该操作"
-                return Response(res.dict)
-
-            clean = data.get("clean", None)
-            if clean:
-                with CleanAppSignDataState(request.user.uid) as state:
-                    if state:
-                        logger.info(f"app_id:{app_id} clean:{clean} ,close super_sign should clean_app_by_user_obj")
-                        app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
-                        IosUtils.clean_app_by_user_obj(app_obj)
-                    else:
-                        res.code = 1008
-                        res.msg = "数据清理中,请耐心等待"
                 return Response(res.dict)
 
             has_combo = data.get("has_combo", None)
@@ -183,95 +167,23 @@ class AppInfoView(APIView):
                         res.msg = "该应用已经关联"
             else:
                 try:
-                    do_sign_flag = 0
                     app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
                     logger.info("app_id:%s update old data:%s" % (app_id, app_obj.__dict__))
                     app_obj.description = data.get("description", app_obj.description)
                     app_obj.short = data.get("short", app_obj.short)
                     app_obj.name = data.get("name", app_obj.name)
                     app_obj.password = data.get("password", app_obj.password)
-                    app_obj.supersign_limit_number = data.get("supersign_limit_number",
-                                                              app_obj.supersign_limit_number)
                     app_obj.isshow = data.get("isshow", app_obj.isshow)
-                    update_fields = ["description", "short", "name", "password", "supersign_limit_number", "isshow"]
+                    update_fields = ["description", "short", "name", "password", "isshow"]
                     if get_user_domain_name(request.user) or get_app_domain_name(app_obj):
                         app_obj.wxeasytype = data.get("wxeasytype", app_obj.wxeasytype)
                     else:
                         app_obj.wxeasytype = 1
                     update_fields.append("wxeasytype")
-                    if app_obj.issupersign:
-                        if app_obj.supersign_type in [x[0] for x in list(app_obj.supersign_type_choices)]:
-                            if app_obj.supersign_type != data.get("supersign_type", app_obj.supersign_type):
-                                do_sign_flag = 1
-                            app_obj.supersign_type = data.get("supersign_type", app_obj.supersign_type)
-                            update_fields.append("supersign_type")
-                        new_bundle_id = data.get("new_bundle_id", None)
-                        new_bundle_name = data.get("new_bundle_name", None)
-                        if new_bundle_id is not None:
-                            if new_bundle_id and new_bundle_id != app_obj.bundle_id and len(new_bundle_id) > 3:
-                                if new_bundle_id != app_obj.new_bundle_id:
-                                    do_sign_flag = 2
-                                app_obj.new_bundle_id = new_bundle_id
-                            if new_bundle_id == '' or (app_obj.new_bundle_id != new_bundle_id):
-                                if app_obj.bundle_id != app_obj.new_bundle_id:
-                                    do_sign_flag = 2
-                                app_obj.new_bundle_id = app_obj.bundle_id
-                            update_fields.append('new_bundle_id')
-                        if new_bundle_name is not None:
-                            if new_bundle_name and new_bundle_name != app_obj.name and len(new_bundle_name) > 0:
-                                if new_bundle_name != app_obj.new_bundle_name:
-                                    do_sign_flag = 2
-                                app_obj.new_bundle_name = new_bundle_name
-                            if new_bundle_name == '' or (app_obj.new_bundle_name != new_bundle_name):
-                                if app_obj.name != app_obj.new_bundle_name:
-                                    do_sign_flag = 2
-                                app_obj.new_bundle_name = app_obj.name
-                            update_fields.append('new_bundle_name')
                     app_obj.wxredirect = data.get("wxredirect", app_obj.wxredirect)
                     update_fields.append("wxredirect")
-                    if app_obj.type == 1 and data.get('issupersign', -1) != -1:
-                        if data.get('issupersign', -1) == 1 and not check_super_sign_permission(request.user):
-                            logger.error(f"app_id:{app_id} can't open super_sign,owner has no ios developer")
-                            res.code = 1008
-                            res.msg = "超级签余额不足，无法开启"
-                            return Response(res.dict)
-                        do_sign_flag = 3
-                        app_obj.issupersign = data.get("issupersign", app_obj.issupersign)
-                        update_fields.append("issupersign")
-                    if app_obj.issupersign and data.get('change_auto_sign', -1) != -1:
-                        if data.get('change_auto_sign', -1) == 1:
-                            do_sign_flag = 3
-                        app_obj.change_auto_sign = data.get("change_auto_sign", app_obj.change_auto_sign)
-                        update_fields.append("change_auto_sign")
-
                     logger.info(f"app_id:{app_id} update new data:{app_obj.__dict__}")
                     app_obj.save(update_fields=update_fields)
-                    if app_obj.issupersign:
-                        c_task = None
-                        if do_sign_flag == 1:
-                            AppUDID.objects.filter(app_id=app_obj).update(sign_status=2)
-                            if app_obj.change_auto_sign:
-                                c_task = run_resign_task(app_obj.pk, True)
-
-                        if do_sign_flag == 2:
-                            AppUDID.objects.filter(app_id=app_obj, sign_status__gte=3).update(sign_status=3)
-                            if app_obj.change_auto_sign:
-                                flag = False
-                                if AppUDID.objects.filter(app_id=app_obj, sign_status=2,
-                                                          udid__developerid__status__in=Config.DEVELOPER_WRITE_STATUS).first():
-                                    flag = True
-                                c_task = run_resign_task(app_obj.pk, flag)
-
-                        if do_sign_flag == 3:
-                            if app_obj.change_auto_sign:
-                                flag = False
-                                if AppUDID.objects.filter(app_id=app_obj, sign_status=2,
-                                                          udid__developerid__status__in=Config.DEVELOPER_WRITE_STATUS).first():
-                                    flag = True
-                                c_task = run_resign_task(app_obj.pk, flag, False)
-
-                        if c_task:
-                            logger.info(f"app {app_obj} run_resign_task msg:{c_task}")
                     del_cache_response_by_short(app_obj.app_id)
                 except Exception as e:
                     logger.error(f"app_id:{app_id} update Exception:{e}")
@@ -337,10 +249,7 @@ class AppReleaseInfoView(APIView):
                         app_release_obj.delete()
                     elif app_release_obj.is_master and app_release_count < 2:
                         logger.info(f"delete app master release {app_release_obj} and clean app {app_obj}")
-                        count = APPToDeveloper.objects.filter(app_id=app_obj).count()
-                        if app_obj.issupersign or count > 0:
-                            logger.info(f"app_id:{app_id} is super_sign ,delete this app need clean IOS developer")
-                            IosUtils.clean_app_by_user_obj(app_obj)
+                        delete_app_signal.send(None, app_pk=app_obj.pk)
 
                         storage.delete_file(app_release_obj.release_id, app_release_obj.release_type)
                         delete_local_files(app_release_obj.release_id, app_release_obj.release_type)

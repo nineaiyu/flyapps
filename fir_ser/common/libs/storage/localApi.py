@@ -9,8 +9,8 @@
 import logging
 import os
 
-from api.utils.TokenManager import make_token
 from common.libs.storage.aliyunApi import AliYunCdn
+from common.utils.token import make_token
 from fir_ser import settings
 
 logger = logging.getLogger(__name__)

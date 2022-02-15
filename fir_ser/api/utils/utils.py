@@ -12,10 +12,7 @@ from captcha.helpers import captcha_image_url
 from captcha.models import CaptchaStore
 from django.core.cache import cache
 
-from api.models import APPSuperSignUsedInfo, APPToDeveloper, \
-    UDIDsyncDeveloper, UserInfo, AppReleaseInfo, AppScreenShot, Token, DeveloperDevicesID, UserAdDisplayInfo
-from api.utils.TokenManager import generate_numeric_token_of_length, generate_alphanumeric_token_of_length, make_token, \
-    verify_token
+from api.models import UserInfo, AppReleaseInfo, AppScreenShot, Token, UserAdDisplayInfo
 from api.utils.modelutils import get_app_d_count_by_app_id
 from common.base.baseutils import get_real_ip_address
 from common.cache.storage import UserTokenCache, TempCache
@@ -24,65 +21,11 @@ from common.libs.storage.localApi import LocalStorage
 from common.utils.caches import consume_user_download_times
 from common.utils.sendmsg import SendMessage
 from common.utils.storage import Storage
+from common.utils.token import generate_numeric_token_of_length, generate_alphanumeric_token_of_length, make_token, \
+    verify_token
 from fir_ser.settings import CAPTCHA_LENGTH, MEDIA_ROOT
 
 logger = logging.getLogger(__name__)
-
-
-def delete_app_to_dev_and_file(developer_obj, app_id):
-    app_to_developer_obj = APPToDeveloper.objects.filter(developerid=developer_obj, app_id_id=app_id)
-    if app_to_developer_obj:
-        binary_file = app_to_developer_obj.first().binary_file + ".ipa"
-        delete_local_files(binary_file)
-        storage = Storage(developer_obj.user_id)
-        storage.delete_file(binary_file)
-        app_to_developer_obj.delete()
-
-
-def get_developer_udided(developer_obj):
-    super_sing_used_obj = APPSuperSignUsedInfo.objects.filter(developerid=developer_obj).all()
-    udid_sync_developer_obj = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).all()
-    developer_udid_lists = []
-    super_sign_udid_lists = []
-    if udid_sync_developer_obj:
-        developer_udid_lists = list(udid_sync_developer_obj.values_list("udid"))
-    if super_sing_used_obj:
-        super_sign_udid_lists = list(super_sing_used_obj.values_list("udid__udid__udid"))
-    return len(set(developer_udid_lists) - set(super_sign_udid_lists)), len(set(super_sign_udid_lists)), len(
-        set(developer_udid_lists))
-
-
-def usable_number(developer_obj):
-    d_count = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).count()
-    u_count = developer_obj.usable_number
-    return d_count if d_count > u_count else u_count
-
-
-def get_developer_devices(developer_obj_lists):
-    other_used_sum = 0
-    flyapp_used_sum = 0
-    max_total = 0
-    for dev_obj in developer_obj_lists.filter(status__in=Config.DEVELOPER_USE_STATUS):
-        other_used, flyapp_used, _ = get_developer_udided(dev_obj)
-        other_used_sum += other_used
-        flyapp_used_sum += flyapp_used
-        max_total += 100
-
-    use_number_obj_list = developer_obj_lists.filter(status__in=Config.DEVELOPER_USE_STATUS)
-    all_use_number = 0
-    all_usable_number = 0
-    for use_number_obj in use_number_obj_list:
-        all_usable_number += usable_number(use_number_obj)
-        all_use_number += DeveloperDevicesID.objects.filter(developerid=use_number_obj).values(
-            'udid').distinct().count()
-    use_num = {
-        "all_usable_number": all_usable_number,
-        "all_use_number": all_use_number,
-        "other_used_sum": other_used_sum,
-        "flyapp_used_sum": flyapp_used_sum,
-        "max_total": max_total
-    }
-    return use_num
 
 
 def get_captcha():

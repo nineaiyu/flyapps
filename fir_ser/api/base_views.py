@@ -6,12 +6,12 @@
 
 import logging
 
-from api.models import AppReleaseInfo, APPToDeveloper, UserInfo, AppScreenShot, AppStorage
-from api.utils.app.supersignutils import IosUtils
+from api.models import AppReleaseInfo, UserInfo, AppScreenShot, AppStorage
 from api.utils.response import BaseResponse
 from api.utils.utils import delete_local_files, delete_app_screenshots_files, change_storage_and_change_head_img, \
     migrating_storage_data, clean_storage_data, check_storage_is_new_storage
 from common.cache.state import MigrateStorageState
+from common.core.singals import delete_app_signal
 from common.utils.caches import del_cache_response_by_short, del_cache_by_delete_app, \
     del_cache_storage
 from common.utils.storage import Storage
@@ -31,10 +31,7 @@ def app_delete(app_obj):
         res.msg = "数据迁移中"
         return res
 
-    count = APPToDeveloper.objects.filter(app_id=app_obj).count()
-    if app_obj.issupersign or count > 0:
-        logger.info(f"app_id:{app_obj.app_id} is supersign ,delete this app need clean IOS developer")
-        IosUtils.clean_app_by_user_obj(app_obj)
+    delete_app_signal.send(None, app_pk=app_obj.pk)
 
     storage = Storage(user_obj)
     has_combo = app_obj.has_combo

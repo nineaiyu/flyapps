@@ -19,12 +19,13 @@ from django.views.static import serve
 
 from admin.views.celery_flower import CeleryFlowerView
 from api.views.download import DownloadView, InstallView
-from api.views.receiveudids import IosUDIDView, ShowUdidView
 from fir_ser import settings
+from xsign.views.receiveudids import IosUDIDView, ShowUdidView
 
 urlpatterns = [
     re_path('fly.admin/', admin.site.urls),
     re_path("api/v1/fir/server/", include('api.urls')),
+    re_path("api/v1/fir/xsign/", include('xsign.urls')),
     re_path("api/v2/fir/server/", include('cli.urls')),
     re_path("api/v3/fir/server/", include('admin.urls')),
     re_path('^captcha/', include('captcha.urls')),

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django_celery_results',
     'corsheaders',
     'django_filters',
+    'xsign.apps.ApiConfig',
 ]
 
 MIDDLEWARE = [
@@ -368,7 +369,7 @@ LOGGING = {
             'encoding': 'utf-8',
         },
         'sql': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
             'filename': os.path.join(BASE_LOG_DIR, "flyapp_sql.log"),  # 日志文件
             'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M

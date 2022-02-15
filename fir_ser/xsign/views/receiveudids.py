@@ -12,8 +12,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import Apps
-from api.tasks import run_sign_task
-from api.utils.app.supersignutils import udid_bytes_to_dict, make_sign_udid_mobile_config
 from api.utils.modelutils import get_redirect_server_domain, add_remote_info_from_request, \
     get_app_download_uri
 from api.utils.response import BaseResponse
@@ -22,6 +20,8 @@ from common.core.sysconfig import Config
 from common.core.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
 from common.utils.caches import check_app_permission
 from fir_ser.celery import app
+from xsign.tasks import run_sign_task
+from xsign.utils.supersignutils import udid_bytes_to_dict, make_sign_udid_mobile_config
 
 logger = logging.getLogger(__name__)
 

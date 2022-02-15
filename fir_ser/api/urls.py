@@ -23,11 +23,8 @@ from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationVi
     UserApiTokenView, CertificationView, ChangeInfoView, WeChatLoginView, WeChatLoginCheckView
 from api.views.logout import LogoutView
 from api.views.order import PriceView, OrderView, PaySuccess
-from api.views.receiveudids import IosUDIDView, TaskView
 from api.views.report import ReportView
 from api.views.storage import StorageView, CleanStorageView
-from api.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView, SuperSignCertView, \
-    DeviceUsedBillView, DeveloperDeviceView, DeviceUsedRankInfoView, AppleDeveloperBindAppsView, DeviceTransferBillView
 from api.views.thirdlogin import ValidWxChatToken, ThirdWxAccount
 from api.views.uploads import AppAnalyseView, UploadView
 
@@ -51,21 +48,10 @@ urlpatterns = [
     re_path("^userinfo", UserInfoView.as_view()),
     re_path("^token", UserApiTokenView.as_view()),
     re_path(r"^short/(?P<short>\w+)$", ShortDownloadView.as_view()),
-    re_path(r"^udid/(?P<short>\w+)$", IosUDIDView.as_view()),
-    re_path(r"^task/(?P<short>\w+)$", TaskView.as_view()),
     re_path("^analyse$", AppAnalyseView.as_view()),
     re_path("^advert$", UserAdInfoView.as_view()),
     re_path("^report$", ReportView.as_view()),
     re_path("^qrcode$", AppsQrcodeShowView.as_view()),
-    re_path("^supersign/developer$", DeveloperView.as_view()),
-    re_path("^supersign/devices$", SuperSignUsedView.as_view()),
-    re_path("^supersign/udid$", AppUDIDUsedView.as_view()),
-    re_path("^supersign/udevices$", DeveloperDeviceView.as_view()),
-    re_path("^supersign/cert$", SuperSignCertView.as_view()),
-    re_path("^supersign/bill$", DeviceUsedBillView.as_view()),
-    re_path("^supersign/devicebill$", DeviceTransferBillView.as_view()),
-    re_path("^supersign/rank$", DeviceUsedRankInfoView.as_view()),
-    re_path("^supersign/bind$", AppleDeveloperBindAppsView.as_view()),
     re_path("^package_prices$", PriceView.as_view()),
     re_path("^orders$", OrderView.as_view()),
     re_path("^certification$", CertificationView.as_view()),

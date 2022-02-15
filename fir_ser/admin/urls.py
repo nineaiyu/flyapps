@@ -22,8 +22,8 @@ from admin.views.login import LoginView, LoginUserView
 from admin.views.order import OrderInfoView
 from admin.views.report import AdminReportView
 from admin.views.storage import StorageInfoView, StorageChangeView
-from admin.views.supersign import DeveloperInfoView, DevicesInfoView, SuperSignBillView, SuperSignBillUserInfoView
 from admin.views.user import UserInfoView, UserCertificationInfoView, ThirdWxAccountView
+from xsign.views.admin.supersign import DeveloperInfoView, DevicesInfoView, SuperSignBillView, SuperSignBillUserInfoView
 
 router = SimpleRouter(False)
 router.register('app/info', AppInfoView)

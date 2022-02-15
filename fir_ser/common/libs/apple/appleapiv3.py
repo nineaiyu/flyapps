@@ -15,8 +15,8 @@ from functools import wraps
 import jwt
 import requests
 
-from api.utils.crontab.iproxy import get_proxy_ip_from_cache
 from common.core.sysconfig import Config
+from xsign.utils.iproxy import get_proxy_ip_from_cache
 
 logger = logging.getLogger(__name__)
 

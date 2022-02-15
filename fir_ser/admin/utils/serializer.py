@@ -5,8 +5,7 @@ from rest_framework import serializers
 
 from api import models
 from api.utils.serializer import AppReleaseSerializer, UserInfoSerializer, AppsSerializer, StorageSerializer, \
-    DeveloperSerializer, SuperSignUsedSerializer, ThirdWxSerializer, DomainNameSerializer, BillInfoSerializer, \
-    AppReportSerializer
+    ThirdWxSerializer, DomainNameSerializer, AppReportSerializer
 from common.base.baseutils import get_choices_dict, get_choices_name_from_key
 from common.utils.storage import Storage
 
@@ -163,40 +162,6 @@ class AdminStorageSerializer(StorageSerializer):
     used_id = serializers.IntegerField(source="user_id.pk")
 
 
-class AdminDeveloperSerializer(DeveloperSerializer):
-    class Meta:
-        model = models.AppIOSDeveloperInfo
-        # depth = 1
-        exclude = ["p8key", ]
-
-    auth_type_choices = serializers.SerializerMethodField()
-
-    def get_auth_type_choices(self, obj):
-        return get_choices_dict(obj.auth_type_choices)
-
-    status_choices = serializers.SerializerMethodField()
-
-    def get_status_choices(self, obj):
-        return get_choices_dict(obj.status_choices)
-
-
-class AdminSuperSignUsedSerializer(SuperSignUsedSerializer):
-    class Meta:
-        model = models.APPSuperSignUsedInfo
-        fields = ["created_time", "device_udid", "device_name", "developer_id", "bundle_id", "bundle_name", "app_id",
-                  "id", "user_id", "short", "developer_pk"]
-
-    app_id = serializers.IntegerField(source="app_id.pk")
-
-    user_id = serializers.IntegerField(source="user_id.pk")
-
-    short = serializers.CharField(source="app_id.short")
-    developer_status = serializers.CharField(source="developerid.get_status_display")
-    developer_id = serializers.CharField(source="developerid.issuer_id")
-    developer_description = serializers.CharField(source="developerid.description")
-    developer_pk = serializers.IntegerField(source="developerid.pk")
-
-
 class AdminOrdersSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Order
@@ -263,19 +228,6 @@ class AdminDomainNameSerializer(DomainNameSerializer):
 
     def get_domain_type_choices(self, obj):
         return get_choices_dict(obj.domain_type_choices)
-
-
-class AdminBillInfoSerializer(BillInfoSerializer):
-    class Meta:
-        model = models.IosDeveloperPublicPoolBill
-        fields = '__all__'
-        read_only_fields = ["id", "user_id", "to_user_id", "action", "number", "app_info", "udid",
-                            "udid_sync_info", "app_id", "remote_addr"]
-
-    action_choices = serializers.SerializerMethodField()
-
-    def get_action_choices(self, obj):
-        return get_choices_dict(obj.action_choices)
 
 
 class AdminAppReportSerializer(AppReportSerializer):

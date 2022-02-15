@@ -12,10 +12,11 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.views import APIView
 
 from admin.utils.serializer import AdminUserInfoSerializer, AdminUserCertificationSerializer, AdminThirdWxSerializer
-from admin.utils.utils import AppsPageNumber, BaseModelSet, ApiResponse
+from admin.utils.utils import AppsPageNumber, BaseModelSet
 from api.models import UserInfo, UserCertificationInfo, ThirdWeChatUserInfo
 from common.base.baseutils import get_dict_from_filter_fields
 from common.core.auth import AdminTokenAuthentication
+from common.core.response import ApiResponse
 from common.core.sysconfig import Config
 from common.utils.caches import auth_user_download_times_gift
 
@@ -46,12 +47,12 @@ class UserInfoView(APIView):
 
     def put(self, request):
         data = request.data
-        id = data.get("id", None)
-        if not id:
+        pk = data.get("id", None)
+        if not pk:
             return ApiResponse(code=1003, msg="参数错误")
-        user_obj = UserInfo.objects.filter(id=id).first()
+        user_obj = UserInfo.objects.filter(id=pk).first()
         if user_obj:
-            data['pk'] = id
+            data['pk'] = pk
             users_serializer = AdminUserInfoSerializer(user_obj, data=data, partial=True)
             if users_serializer.is_valid():
                 users_serializer.save()

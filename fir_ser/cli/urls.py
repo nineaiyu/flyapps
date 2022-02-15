@@ -21,8 +21,8 @@ from cli.views.uploads import CliAppAnalyseView, CliUploadView
 
 urlpatterns = [
     re_path("^apps$", CliAppsView.as_view()),
-    re_path("^apps/(?P<app_id>\w+)", CliAppInfoView.as_view()),
-    re_path("^appinfos/(?P<app_id>\w+)/(?P<act>\w+)", CliAppReleaseInfoView.as_view()),
+    re_path(r"^apps/(?P<app_id>\w+)", CliAppInfoView.as_view()),
+    re_path(r"^appinfos/(?P<app_id>\w+)/(?P<act>\w+)", CliAppReleaseInfoView.as_view()),
     re_path("^upload$", CliUploadView.as_view()),
     re_path("^userinfo", CliUserInfoView.as_view()),
     re_path("^analyse$", CliAppAnalyseView.as_view()),

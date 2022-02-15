@@ -12,22 +12,24 @@ from django.http.response import FileResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, \
-    UDIDsyncDeveloper, AppleDeveloperToAppUse, Apps, DeveloperAppID, APPToDeveloper, DeveloperDevicesID, \
-    IosDeveloperBill, UserInfo
-from api.utils.app.supersignutils import IosUtils
-from api.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, PageNumber, \
-    check_uid_has_relevant
+from api.models import Apps, UserInfo
+from api.utils.modelutils import PageNumber
 from api.utils.response import BaseResponse
-from api.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, BillInfoSerializer, \
-    DeveloperDeviceSerializer, AppleDeveloperToAppUseSerializer, AppleDeveloperToAppUseAppsSerializer, \
-    BillTransferSerializer
-from api.utils.utils import get_developer_devices
 from common.base.baseutils import get_choices_dict, get_choices_name_from_key, AppleDeveloperUid, get_real_ip_address
 from common.cache.state import CleanSignDataState, MigrateStorageState
 from common.core.auth import ExpiringTokenAuthentication, SuperSignPermission
 from common.core.sysconfig import Config
 from common.utils.caches import get_app_download_url
+from xsign.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, \
+    UDIDsyncDeveloper, AppleDeveloperToAppUse, DeveloperAppID, APPToDeveloper, DeveloperDevicesID, \
+    IosDeveloperBill
+from xsign.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, check_uid_has_relevant, \
+    get_developer_devices
+from xsign.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, \
+    BillInfoSerializer, \
+    DeveloperDeviceSerializer, AppleDeveloperToAppUseSerializer, AppleDeveloperToAppUseAppsSerializer, \
+    BillTransferSerializer
+from xsign.utils.supersignutils import IosUtils
 
 logger = logging.getLogger(__name__)
 

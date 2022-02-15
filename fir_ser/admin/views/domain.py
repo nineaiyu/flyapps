@@ -11,9 +11,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
 from admin.utils.serializer import AdminDomainNameSerializer
-from admin.utils.utils import BaseModelSet, AppsPageNumber, ApiResponse
+from admin.utils.utils import BaseModelSet, AppsPageNumber
 from api.models import UserDomainInfo
 from common.core.auth import AdminTokenAuthentication
+from common.core.response import ApiResponse
 from common.utils.caches import reset_app_wx_easy_type
 
 logger = logging.getLogger(__name__)

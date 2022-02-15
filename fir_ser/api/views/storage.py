@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from api.base_views import storage_change, app_delete
 from api.models import AppStorage, Apps
-from api.utils.app.apputils import clean_history_apps
+from api.utils.apputils import clean_history_apps
 from api.utils.response import BaseResponse
 from api.utils.serializer import StorageSerializer
 from api.utils.utils import upload_oss_default_head_img

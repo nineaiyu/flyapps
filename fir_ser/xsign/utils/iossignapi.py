@@ -8,41 +8,60 @@ import datetime
 import logging
 import os
 import re
+import signal
 import time
+from subprocess import Popen, PIPE
 
 from OpenSSL.crypto import (load_pkcs12, dump_certificate_request, dump_privatekey, PKey, TYPE_RSA, X509Req,
                             dump_certificate, load_privatekey, load_certificate, PKCS12, FILETYPE_PEM, FILETYPE_ASN1)
 
-from api.models import AppIOSDeveloperInfo
-from api.utils.app.shellcmds import shell_command, use_user_pass
 from common.base.baseutils import get_format_time, format_apple_date, make_app_uuid
 from common.cache.state import CleanErrorBundleIdSignDataState
 from common.core.sysconfig import Config
 from common.libs.apple.appleapiv3 import AppStoreConnectApi
 from fir_ser.settings import SUPER_SIGN_ROOT
+from xsign.models import AppIOSDeveloperInfo
 
 logger = logging.getLogger(__name__)
 
 
-def exec_shell(cmd, remote=False, timeout=None):
-    if remote:
-        host_ip = "10.66.6.66"
-        port = 65534
-        user = "root"
-        passwd = "root"
-        result = use_user_pass(host_ip, port, user, passwd, cmd)
-        return result
-    else:
-        logger.info(f"exec_shell cmd:{cmd}")
-        result = shell_command(cmd, timeout)
-        logger.info(f"exec_shell cmd:{cmd}  result:{result}")
-        if result.get("exit_code") != 0:
-            err_info = result.get("err_info", None)
-            if err_info:
-                logger.error(f"exec_shell cmd:{cmd}  failed: {err_info}")
-                result["err_info"] = "Unknown Error"
-            return False, result
-        return True, result
+def shell_command(command, timeout):
+    result = {'exit_code': 99, 'return_info': ''}
+    shell_start_time = time.time()
+    child = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+    if timeout:
+        while child.poll() is None:
+            time.sleep(1)
+            now = time.time()
+            if int(now - shell_start_time) > timeout:
+                os.kill(child.pid, signal.SIGKILL)
+                os.waitpid(-1, os.WNOHANG)
+                result['exit_code'] = 126
+                return result
+
+    out, err = child.communicate()
+    if err:
+        result['err_info'] = err.decode("utf-8")
+    shell_end_time = time.time()
+    result['shell_run_time'] = shell_end_time - shell_start_time
+    out = out.strip(b'\n')
+    result['return_info'] = out
+    result['exit_code'] = child.returncode
+    logger.info(f'shell: {command} - return_info:{out} - exit_code:{child.returncode}')
+    return result
+
+
+def exec_shell(cmd, timeout=None):
+    logger.info(f"exec_shell cmd:{cmd}")
+    result = shell_command(cmd, timeout)
+    logger.info(f"exec_shell cmd:{cmd}  result:{result}")
+    if result.get("exit_code") != 0:
+        err_info = result.get("err_info", None)
+        if err_info:
+            logger.error(f"exec_shell cmd:{cmd}  failed: {err_info}")
+            result["err_info"] = "Unknown Error"
+        return False, result
+    return True, result
 
 
 class ResignApp(object):

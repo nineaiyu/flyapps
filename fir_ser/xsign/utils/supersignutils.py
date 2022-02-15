@@ -15,16 +15,10 @@ import xmltodict
 from django.core.cache import cache
 from django.db.models import Count, F
 
-from api.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, AppReleaseInfo, Apps, APPToDeveloper, \
-    UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, UserInfo, AppleDeveloperToAppUse, \
-    IosDeveloperBill
-from api.utils.app.iossignapi import ResignApp, AppDeveloperApiV2
-from api.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign, \
-    update_or_create_developer_udid_info, check_uid_has_relevant
+from api.models import UserInfo, AppReleaseInfo, Apps
 from api.utils.response import BaseResponse
-from api.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
-from api.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status, delete_local_files, \
-    download_files_form_oss, get_developer_udided
+from api.utils.utils import send_ios_developer_active_status, delete_local_files, \
+    download_files_form_oss
 from common.base.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
     get_format_time, make_app_uuid, make_from_user_uuid
 from common.base.magic import run_function_by_locker, call_function_try_attempts
@@ -34,6 +28,14 @@ from common.utils.caches import del_cache_response_by_short, send_msg_over_limit
     consume_user_download_times_by_app_obj, add_udid_cache_queue, get_and_clean_udid_cache_queue
 from common.utils.storage import Storage
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT
+from xsign.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, APPToDeveloper, \
+    UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, AppleDeveloperToAppUse, \
+    IosDeveloperBill
+from xsign.utils.iossignapi import ResignApp, AppDeveloperApiV2
+from xsign.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign, \
+    update_or_create_developer_udid_info, check_uid_has_relevant, get_developer_udided
+from xsign.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
+from xsign.utils.utils import delete_app_to_dev_and_file
 
 logger = logging.getLogger(__name__)
 

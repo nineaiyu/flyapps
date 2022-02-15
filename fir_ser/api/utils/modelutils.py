@@ -9,14 +9,12 @@ import logging
 import random
 from urllib.parse import urljoin
 
-from django.db.models import Count, Sum, Q
+from django.db.models import Count
 from rest_framework.pagination import PageNumberPagination
 
-from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
-    AppIOSDeveloperInfo, IosDeveloperPublicPoolBill, APPToDeveloper, UserInfo, UDIDsyncDeveloper, IosDeveloperBill, \
-    AppUDID
+from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo
 from common.base.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
-    get_origin_domain_name, is_valid_phone
+    get_origin_domain_name
 
 logger = logging.getLogger(__name__)
 
@@ -173,96 +171,6 @@ def check_app_domain_name_access(app_obj, access_domain_name, user_obj, extra_do
             domain_list.append(user_qr_domain_name)
         if access_domain_name in domain_list:
             return True
-
-
-def get_ios_developer_public_num(user_obj):
-    add_number = get_user_public_sign_num(user_obj)
-    if not add_number:
-        add_number = -99
-    used_number = get_user_public_used_sign_num(user_obj)
-    return add_number - used_number
-
-
-def get_user_public_sign_num(user_obj):
-    add_number = IosDeveloperBill.objects.filter(to_user_id=user_obj, status=2).aggregate(
-        number=Sum('number'))
-    number = add_number.get("number", 0)
-    return number if number else 0
-
-
-def get_user_public_used_sign_num(user_obj):
-    used_number = IosDeveloperPublicPoolBill.objects.filter(user_id=user_obj, udid_sync_info__isnull=False).exclude(
-        udid_sync_info__developerid__user_id=user_obj).values('number',
-                                                              'udid_sync_info_id').annotate(
-        counts=Count('udid_sync_info_id')).aggregate(number=Sum('number'))
-    number = used_number.get("number", 0)
-    return number if number else 0
-
-
-# def get_developer_can_used_from_public_sign(user_obj):
-#     o_number_info = IosDeveloperBill.objects.filter(to_user_id__isnull=False, user_id=user_obj).values(
-#         'number').aggregate(number=Sum('number'))
-#     o_number = o_number_info.get("number", 0)
-#     if o_number is None:
-#         o_number = 0
-#     u_number_info = IosDeveloperPublicPoolBill.objects.filter(
-#         user_id_id__in=IosDeveloperBill.objects.filter(user_id=user_obj).values('to_user_id_id')).values(
-#         'number',
-#         'udid_sync_info_id').annotate(
-#         counts=Count('udid_sync_info_id')).aggregate(number=Sum('number'))
-#     u_number = u_number_info.get("number", 0)
-#     if u_number is None:
-#         u_number = 0
-#     return o_number - u_number
-
-
-def check_super_sign_permission(user_obj):
-    if not user_obj.supersign_active:
-        return False
-    developer_count = AppIOSDeveloperInfo.objects.filter(user_id=user_obj).count()
-    if developer_count == 0 and get_ios_developer_public_num(user_obj) < 0:
-        return False
-    return True
-
-
-def check_ipa_is_latest_sign(app_obj, developer_obj=None):
-    if AppUDID.objects.filter(app_id=app_obj, udid__developerid=developer_obj, sign_status__lt=4).first():
-        return
-    release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
-    all_app_to_dev = APPToDeveloper.objects.filter(app_id=app_obj)
-    if developer_obj:
-        all_app_to_dev = all_app_to_dev.filter(developerid=developer_obj)
-    all_app_to_dev = all_app_to_dev.all()
-    t_count = 0
-    for apptodev_obj in all_app_to_dev:
-        if release_obj.release_id == apptodev_obj.release_file:
-            t_count += 1
-    if t_count == all_app_to_dev.count():
-        return True
-
-
-def get_user_obj_from_epu(user_id):
-    if is_valid_phone(user_id):
-        user_obj = UserInfo.objects.filter(mobile=user_id).first()
-    else:
-        user_obj = UserInfo.objects.filter(Q(email=user_id) | Q(uid=user_id)).first()
-    return user_obj
-
-
-def update_or_create_developer_udid_info(device_obj, developer_obj):
-    device = {
-        "serial": device_obj.id,
-        "product": device_obj.name,
-        "udid": device_obj.udid,
-        "version": device_obj.model,
-        "status": True if device_obj.status == 'ENABLED' else False
-    }
-    return UDIDsyncDeveloper.objects.update_or_create(developerid=developer_obj, udid=device_obj.udid, defaults=device)
-
-
-def check_uid_has_relevant(user_uid, to_user_uid):
-    if user_uid and to_user_uid:
-        return IosDeveloperBill.objects.filter(user_id__uid=user_uid, to_user_id__uid=to_user_uid, status=2).first()
 
 
 class PageNumber(PageNumberPagination):

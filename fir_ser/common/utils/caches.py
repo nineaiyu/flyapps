@@ -12,8 +12,7 @@ from django.core.cache import cache
 from django.db.models import F
 from django.utils import timezone
 
-from api.models import Apps, UserInfo, AppReleaseInfo, AppUDID, APPToDeveloper, APPSuperSignUsedInfo, \
-    UserCertificationInfo, Order
+from api.models import Apps, UserInfo, AppReleaseInfo, UserCertificationInfo, Order
 from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name, \
     add_remote_info_from_request
 from common.base.baseutils import check_app_password, get_order_num, get_real_ip_address
@@ -560,9 +559,6 @@ def get_app_download_url(request, res, app_id, short, password, release_id, isdo
             add_remote_info_from_request(request, msg)
             set_app_download_by_cache(app_id)
             amount = app_obj.get("d_count")
-            # # 超级签需要多消耗2倍下载次数
-            # if app_obj.get("issupersign"):
-            #     amount *= 2
             auth_status = False
             status = app_obj.get('user_id__certification__status', None)
             if status and status == 1:

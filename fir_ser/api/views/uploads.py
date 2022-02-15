@@ -10,19 +10,20 @@ import os
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo, UserAdDisplayInfo, AppUDID
-from api.tasks import run_resign_task
-from api.utils.TokenManager import verify_token
-from api.utils.app.apputils import get_random_short, save_app_infos
-from api.utils.modelutils import check_super_sign_permission, get_app_download_uri
+from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo, UserAdDisplayInfo
+from api.utils.apputils import get_random_short, save_app_infos
+from api.utils.modelutils import get_app_download_uri
 from api.utils.response import BaseResponse
 from common.base.baseutils import make_app_uuid, make_from_user_uuid
 from common.cache.state import MigrateStorageState
 from common.core.auth import ExpiringTokenAuthentication
+from common.core.singals import run_resign_task_signal
 from common.core.sysconfig import Config
 from common.utils.caches import upload_file_tmp_name, del_cache_response_by_short
 from common.utils.storage import Storage
+from common.utils.token import verify_token
 from fir_ser import settings
+from xsign.utils.modelutils import check_super_sign_permission
 
 logger = logging.getLogger(__name__)
 
@@ -141,10 +142,7 @@ class AppAnalyseView(APIView):
 
                 app_obj = Apps.objects.filter(bundle_id=data.get("bundleid"), user_id=request.user, type=4).first()
                 if app_obj:
-                    AppUDID.objects.filter(app_id=app_obj, sign_status__gte=3).update(sign_status=3)
-                    if app_obj.change_auto_sign:
-                        c_task = run_resign_task(app_obj.pk, False, False)
-                        logger.info(f"app {app_obj} run_resign_task end msg:{c_task}")
+                    run_resign_task_signal.send(sender=None, app_pk=app_obj.pk)
             else:
                 storage.delete_file(app_tmp_filename)
                 storage.delete_file(png_tmp_filename)

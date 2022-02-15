@@ -9,10 +9,10 @@ import logging
 from django.contrib import auth
 from rest_framework.views import APIView
 
-from admin.utils.utils import ApiResponse
 from api.utils.serializer import UserInfoSerializer
 from api.utils.utils import get_captcha, valid_captcha, set_user_token
 from common.core.auth import ExpiringTokenAuthentication
+from common.core.response import ApiResponse
 from common.core.sysconfig import Config
 from common.core.throttle import VisitRegister1Throttle, VisitRegister2Throttle
 from common.utils.caches import login_auth_failed
