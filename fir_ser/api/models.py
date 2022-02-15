@@ -412,9 +412,8 @@ class Order(models.Model):
     created_time = models.DateTimeField(verbose_name="订单创建时间", auto_now_add=True)
     description = models.TextField('备注', blank=True, null=True, default='')
 
-
-def __str__(self):
-    return "%s-%s-%s元" % (self.user_id, self.order_number, self.actual_amount / 100)
+    def __str__(self):
+        return "%s-%s-%s元" % (self.user_id, self.order_number, self.actual_amount / 100)
 
 
 class Price(models.Model):
