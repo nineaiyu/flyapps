@@ -139,7 +139,7 @@ class AppAnalyseView(APIView):
                 storage.rename_file(app_tmp_filename, app_new_filename)
                 storage.rename_file(png_tmp_filename, png_new_filename)
 
-                app_obj = Apps.objects.filter(bundle_id=data.get("bundleid"), user_id=request.user, type=4).first()
+                app_obj = Apps.objects.filter(bundle_id=data.get("bundleid"), user_id=request.user, type=1).first()
                 if app_obj:
                     AppUDID.objects.filter(app_id=app_obj, sign_status__gte=3).update(sign_status=3)
                     if app_obj.change_auto_sign:
