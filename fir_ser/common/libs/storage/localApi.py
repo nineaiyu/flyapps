@@ -31,8 +31,11 @@ class LocalStorage(object):
         uri = 'https://' if self.is_https else 'http://'
         return f"{uri}{self.domain_name}"
 
-    def get_download_url(self, name, expires=600, force_new=False):
-        download_url = '/'.join([self.get_base_url(), 'download', name])
+    def get_download_url(self, name, expires=600, force_new=False, is_xsign=False):
+        d_dir = 'download'
+        if name.endswith('.mobileconifg') or is_xsign:
+            d_dir = 'xdownload'
+        download_url = '/'.join([self.get_base_url(), d_dir, name])
         if self.download_auth_type == 1:
             download_url = f"{download_url}?{settings.DATA_DOWNLOAD_KEY}={make_token(name, expires, force_new=force_new)}"
         elif self.download_auth_type == 2:

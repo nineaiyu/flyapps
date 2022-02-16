@@ -10,7 +10,7 @@ import os
 from rest_framework.views import APIView
 
 from api.models import AppReleaseInfo
-from common.base.baseutils import get_profile_full_path, make_random_uuid, get_server_domain_from_request
+from common.base.baseutils import get_profile_full_path, make_random_uuid, get_server_domain_from_request, make_resigned
 from common.core.response import ApiResponse, file_response, mobileprovision_file_response
 from common.core.sysconfig import Config
 from common.utils.storage import Storage, get_local_storage
@@ -18,7 +18,6 @@ from common.utils.token import verify_token
 from fir_ser import settings
 from xsign.models import APPToDeveloper, APPSuperSignUsedInfo
 from xsign.utils.supersignutils import make_sign_udid_mobile_config
-from xsign.utils.utils import make_resigned
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +28,7 @@ def get_post_udid_url(request, short):
     return "/".join(path_info_lists)
 
 
-class DownloadView(APIView):
+class XsignDownloadView(APIView):
     """
     文件下载接口,适用于本地存储和所有plist文件下载
     """

@@ -111,12 +111,13 @@ class AppsSerializer(serializers.ModelSerializer):
     def get_preview_url(self, obj):
         return get_app_download_uri(None, obj.user_id, obj)
 
-    # private_developer_number = serializers.SerializerMethodField()
+    private_developer_number = serializers.IntegerField(default=0)
+    count = serializers.IntegerField(default=0)
     #
     # def get_private_developer_number(self, obj):
     #     return models.AppleDeveloperToAppUse.objects.filter(app_id=obj).count()
     #
-    # private_developer_used_number = serializers.SerializerMethodField()
+    private_developer_used_number = serializers.IntegerField(default=0)
     #
     # def get_private_developer_used_number(self, obj):
     #     return models.DeveloperDevicesID.objects.filter(app_id=obj,
@@ -132,12 +133,12 @@ class AppsSerializer(serializers.ModelSerializer):
     def get_sign_type_choice(self, obj):
         return get_choices_dict(obj.supersign_type_choices)
 
-    # supersign_used_number = serializers.SerializerMethodField()
+    supersign_used_number = serializers.IntegerField(default=0)
     #
     # def get_supersign_used_number(self, obj):
     #     return models.APPSuperSignUsedInfo.objects.filter(app_id=obj).all().count()
     #
-    # developer_used_count = serializers.SerializerMethodField()
+    developer_used_count = serializers.IntegerField(default=0)
     #
     # def get_developer_used_count(self, obj):
     #     return models.DeveloperAppID.objects.filter(app_id=obj).all().count()

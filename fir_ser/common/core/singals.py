@@ -27,6 +27,7 @@ def run_resign_task_callback(sender, **kwargs):
         if app_obj.change_auto_sign:
             c_task = run_resign_task(app_obj.pk, False, False)
             logger.info(f"app {app_obj} run_resign_task end msg:{c_task}")
+    return 'success'
 
 
 """

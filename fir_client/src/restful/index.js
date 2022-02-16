@@ -589,21 +589,6 @@ export function domainFun(callBack, params, load = true) {
     );
 }
 
-/**获取签名任务状态 */
-export function gettask(callBack, params, load = true) {
-    getData(
-        'GET',
-        USERSEVER + '/task/' + params.short,
-        params.data,
-        data => {
-            callBack(data);
-        },
-        load,
-        true,
-        true
-    );
-}
-
 
 /**微信用户绑定 */
 export function wxutils(callBack, params, load = true) {
@@ -681,7 +666,7 @@ export function appReport(callBack, params, load = true) {
     );
 }
 
-// 超级签名相关api
+/** 超级签名************************************************相关api */
 
 let SIGNSEVER = DOMAIN + '/api/v1/fir/xsign';
 
@@ -852,3 +837,19 @@ export function developercert(callBack, params, load = true) {
         true
     );
 }
+
+/**获取签名任务状态 */
+export function gettask(callBack, params, load = true) {
+    getData(
+        'GET',
+        SIGNSEVER + '/task/' + params.short,
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+

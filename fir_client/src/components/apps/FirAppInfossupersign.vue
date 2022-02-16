@@ -179,7 +179,7 @@ export default {
         "data": data
       });
     },
-    getappinfo(){
+    getappinfo() {
       appSignInfo(data => {
         if (data.code === 1000) {
           for (let name of Object.keys(data.data)) {
@@ -244,7 +244,7 @@ export default {
     },
     appinit() {
       this.currentapp = this.$store.state.currentapp;
-      if(this.currentapp.app_id){
+      if (this.currentapp.app_id) {
         this.getappinfo();
       }
       this.set_default_flag();

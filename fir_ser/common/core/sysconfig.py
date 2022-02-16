@@ -323,6 +323,10 @@ class AppleDeveloperConfCache(ConfigCacheBase):
     def DEVELOPER_DISABLED_STATUS(self):
         return super().get_value('DEVELOPER_DISABLED_STATUS', APPLEDEVELOPERCONF.DEVELOPER_DISABLED_STATUS)
 
+    @property
+    def DEVELOPER_UID_KEY(self):
+        return super().get_value('DEVELOPER_UID_KEY', APPLEDEVELOPERCONF.DEVELOPER_UID_KEY)
+
 
 class ConfigCache(BaseConfCache, IpaConfCache, AuthConfCache, EmailMsgCache, UserDownloadTimesCache, GeeTestConfCache,
                   PayConfCache, ThirdPartConfCache, AppleDeveloperConfCache):

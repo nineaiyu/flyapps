@@ -16,9 +16,9 @@ from api.utils.modelutils import get_filename_form_file, check_app_domain_name_a
     ad_random_weight, get_app_download_uri
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
-from common.base.baseutils import get_origin_domain_name, format_get_uri
+from common.base.baseutils import get_origin_domain_name, format_get_uri, make_random_uuid, make_resigned
 from common.core.decorators import cache_response  # 本来使用的是 drf-extensions==0.7.0 但是还未支持该版本Django
-from common.core.response import mobileprovision_file_response
+from common.core.response import mobileprovision_file_response, file_response, ApiResponse
 from common.core.sysconfig import Config
 from common.core.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
 from common.utils.caches import check_app_permission, get_app_download_url
@@ -50,7 +50,21 @@ class DownloadView(APIView):
             flag = verify_token(down_token, filename)
 
         if flag:
-            if f_type == 'dmobileprovision':  # 企业签名安装信任跳转
+            if f_type == 'plist':
+                release_id = filename.split('.')[0]
+                release_obj = AppReleaseInfo.objects.filter(release_id=release_id).first()
+                if release_obj:
+                    app_obj = release_obj.app_id
+                    storage = Storage(app_obj.user_id)
+                    bundle_id = app_obj.bundle_id
+                    app_version = release_obj.app_version
+                    name = app_obj.name
+                    ios_plist_bytes = make_resigned(storage.get_download_url(filename.split('.')[0] + ".ipa"),
+                                                    storage.get_download_url(release_obj.icon_url), bundle_id,
+                                                    app_version, name)
+                    return file_response(ios_plist_bytes, make_random_uuid(), "application/x-plist")
+                return ApiResponse(code=1004, msg="plist release_id error")
+            elif f_type == 'dmobileprovision':  # 企业签名安装信任跳转
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
                 if release_obj:
                     file_path = Config.DEFAULT_MOBILEPROVISION.get("enterprise").get('path')

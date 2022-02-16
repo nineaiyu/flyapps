@@ -12,7 +12,7 @@ from django.core.cache import cache
 from django.db.models import F
 from django.utils import timezone
 
-from api.models import Apps, UserInfo, AppReleaseInfo, UserCertificationInfo, Order
+from api.models import Apps, UserInfo, UserCertificationInfo, Order
 from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name, \
     add_remote_info_from_request
 from common.base.baseutils import check_app_password, get_order_num, get_real_ip_address
@@ -24,6 +24,7 @@ from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCac
 from common.core.sysconfig import Config
 from common.utils.storage import Storage, LocalStorage
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE
+from xsign.singals.downloadapp import xsign_app_download_url_signal
 
 logger = logging.getLogger(__name__)
 
@@ -44,28 +45,9 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
             if app_obj.get('issupersign', None):
                 download_url_type = 'mobileconifg'
         else:
-            appudid_obj = AppUDID.objects.filter(app_id_id=app_obj.get("pk"), udid__udid=udid, sign_status=4).last()
-            if appudid_obj:
-                super_sign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid__udid=udid,
-                                                                     app_id_id=app_obj.get("pk"),
-                                                                     developerid__status__in=Config.DEVELOPER_USE_STATUS).last()
-                if super_sign_obj and super_sign_obj.user_id.supersign_active:
-                    app_to_developer_obj = APPToDeveloper.objects.filter(app_id_id=app_obj.get("pk"),
-                                                                         developerid=super_sign_obj.developerid).last()
-                    if app_to_developer_obj:
-                        release_obj = AppReleaseInfo.objects.filter(app_id_id=app_obj.get("pk"), is_master=True).last()
-                        if release_obj.release_id == app_to_developer_obj.release_file:
-                            binary_file = app_to_developer_obj.binary_file
-                        else:
-                            binary_file = app_to_developer_obj.release_file
-                        return local_storage.get_download_url(
-                            binary_file + "." + download_url_type, limit), ""
-                    else:
-                        return "", ""
-                else:
-                    return "", ""
-            else:
-                return "", ""
+            result = xsign_app_download_url_signal.send(None, app_pk=app_obj.get('pk'), udid=udid,
+                                                        download_url_type=download_url_type, limit=limit)
+            return result[0][1]
 
         supersign = Config.DEFAULT_MOBILEPROVISION.get("supersign")
         mobileconifg = ""
