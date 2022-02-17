@@ -21,7 +21,8 @@ from common.core.decorators import cache_response  # 本来使用的是 drf-exte
 from common.core.response import mobileprovision_file_response, file_response, ApiResponse
 from common.core.sysconfig import Config
 from common.core.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
-from common.utils.caches import check_app_permission, get_app_download_url
+from common.utils.caches import check_app_permission
+from common.utils.download import get_app_download_url
 from common.utils.storage import Storage, get_local_storage
 from common.utils.token import verify_token
 from fir_ser import settings

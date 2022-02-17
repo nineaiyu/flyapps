@@ -19,7 +19,7 @@ from common.base.baseutils import get_choices_dict, get_choices_name_from_key, A
 from common.cache.state import CleanSignDataState, MigrateStorageState
 from common.core.auth import ExpiringTokenAuthentication, SuperSignPermission
 from common.core.sysconfig import Config
-from common.utils.caches import get_app_download_url
+from common.utils.download import get_app_download_url
 from xsign.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, \
     UDIDsyncDeveloper, AppleDeveloperToAppUse, DeveloperAppID, APPToDeveloper, DeveloperDevicesID, \
     IosDeveloperBill

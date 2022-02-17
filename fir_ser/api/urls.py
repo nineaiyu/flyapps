@@ -18,7 +18,7 @@ from django.urls import re_path
 from api.views.advert import UserAdInfoView
 from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView, AppsQrcodeShowView
 from api.views.domain import DomainCnameView, DomainInfoView
-from api.views.download import ShortDownloadView
+from api.views.download import ShortDownloadView, InstallView, DownloadView
 from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, \
     UserApiTokenView, CertificationView, ChangeInfoView, WeChatLoginView, WeChatLoginCheckView
 from api.views.logout import LogoutView
@@ -62,5 +62,6 @@ urlpatterns = [
     re_path("^third.wx.login$", WeChatLoginView.as_view()),
     re_path("^third.wx.sync$", WeChatLoginCheckView.as_view()),
     re_path("^twx/info$", ThirdWxAccount.as_view()),
-
+    re_path(r"^install/(?P<app_id>\w+)$", InstallView.as_view(), name="install"),
+    re_path(r"^download/(?P<filename>\w+\.\w+)$", DownloadView.as_view(), name="download"),
 ]

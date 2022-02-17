@@ -5,7 +5,6 @@
 # date: 2020/4/7
 
 import logging
-import os
 import time
 
 from django.core.cache import cache
@@ -13,18 +12,15 @@ from django.db.models import F
 from django.utils import timezone
 
 from api.models import Apps, UserInfo, UserCertificationInfo, Order
-from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name, \
-    add_remote_info_from_request
-from common.base.baseutils import check_app_password, get_order_num, get_real_ip_address
+from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name
+from common.base.baseutils import get_order_num
 from common.cache.invalid import invalid_app_cache, invalid_short_cache, invalid_app_download_times_cache, \
     invalid_head_img_cache
-from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCache, DownloadUrlCache, AppInstanceCache, \
+from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCache, \
     UploadTmpFileNameCache, RedisCacheBase, UserCanDownloadCache, UserFreeDownloadTimesCache, WxTicketCache, \
     SignUdidQueueCache, CloudStorageCache
 from common.core.sysconfig import Config
-from common.utils.storage import Storage, LocalStorage
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE
-from xsign.singals.downloadapp import xsign_app_download_url_signal
 
 logger = logging.getLogger(__name__)
 
@@ -36,133 +32,10 @@ def sync_download_times_by_app_id(app_ids):
         logger.info(f"sync_download_times_by_app_id app_id:{app_id} count_hits:{v}")
 
 
-def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='', udid=None):
-    now = time.time()
-    if isdownload is None:
-        local_storage = LocalStorage(**Config.IOS_PMFILE_DOWNLOAD_DOMAIN)
-        download_url_type = 'plist'
-        if not udid:
-            if app_obj.get('issupersign', None):
-                download_url_type = 'mobileconifg'
-        else:
-            result = xsign_app_download_url_signal.send(None, app_pk=app_obj.get('pk'), udid=udid,
-                                                        download_url_type=download_url_type, limit=limit)
-            return result[0][1]
-
-        supersign = Config.DEFAULT_MOBILEPROVISION.get("supersign")
-        mobileconifg = ""
-
-        if download_url_type == 'plist':
-            enterprise = Config.DEFAULT_MOBILEPROVISION.get("enterprise")
-            mpath = enterprise.get('path', None)
-            murl = enterprise.get('url', None)
-        else:
-            mpath = supersign.get('path', None)
-            murl = supersign.get('url', None)
-
-        if murl and len(murl) > 5:
-            mobileconifg = murl
-
-        if mpath and os.path.isfile(mpath):
-            mobileconifg = local_storage.get_download_url(filename.split(".")[0] + "." + "dmobileprovision", limit)
-
-        if download_url_type == 'mobileconifg' and supersign.get("self"):
-            mobileconifg = local_storage.get_download_url(filename.split(".")[0] + "." + "mobileprovision", limit)
-
-        return local_storage.get_download_url(filename.split(".")[0] + "." + download_url_type, limit), mobileconifg
-    download_val = DownloadUrlCache(key, filename).get_storage_cache()
-    if download_val:
-        if download_val.get("time") > now - 60:
-            return download_val.get("download_url"), ""
-    else:
-        user_obj = UserInfo.objects.filter(pk=app_obj.get("user_id")).first()
-        storage = Storage(user_obj)
-        return storage.get_download_url(filename, limit), ""
-
-
-def get_app_instance_by_cache(app_id, password, limit, udid):
-    if udid:
-        app_info = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type', 'password', 'issupersign',
-                                                             'user_id__certification__status').first()
-        if app_info:
-            app_info['d_count'] = get_app_d_count_by_app_id(app_id)
-            app_password = app_info.get("password")
-            if not check_app_password(app_password, password):
-                return None
-        return app_info
-    app_instance_cache = AppInstanceCache(app_id)
-    app_obj_cache = app_instance_cache.get_storage_cache()
-    if not app_obj_cache:
-        app_obj_cache = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type', 'password',
-                                                                  'issupersign',
-                                                                  'user_id__certification__status').first()
-        if app_obj_cache:
-            app_obj_cache['d_count'] = get_app_d_count_by_app_id(app_id)
-            app_instance_cache.set_storage_cache(app_obj_cache, limit)
-    if not app_obj_cache:
-        return None
-    app_password = app_obj_cache.get("password")
-
-    if not check_app_password(app_password, password):
-        return None
-
-    return app_obj_cache
-
-
-def set_app_download_by_cache(app_id, limit=900):
-    app_download_cache = AppDownloadTimesCache(app_id)
-    download_times = app_download_cache.get_storage_cache()
-    if not download_times:
-        download_times = Apps.objects.filter(app_id=app_id).values("count_hits").first().get('count_hits')
-        app_download_cache.set_storage_cache(download_times + 1, limit)
-    else:
-        app_download_cache.incr()
-        app_download_cache.expire(limit)
-    set_app_today_download_times(app_id)
-    return download_times + 1
-
-
 def del_cache_response_by_short(app_id, udid=''):
     app_obj = Apps.objects.filter(app_id=app_id).first()
     invalid_app_cache(app_obj)
     invalid_app_cache(app_obj.has_combo)
-    # apps_dict = Apps.objects.filter(app_id=app_id).values("id", "short", "app_id", "has_combo").first()
-    # if apps_dict:
-    #     del_cache_response_by_short_util(apps_dict.get("short"), apps_dict.get("app_id"), udid)
-    #     if apps_dict.get("has_combo"):
-    #         combo_dict = Apps.objects.filter(pk=apps_dict.get("has_combo")).values("id", "short", "app_id").first()
-    #         if combo_dict:
-    #             del_cache_response_by_short_util(combo_dict.get("short"), combo_dict.get("app_id"), udid)
-
-
-# def del_short_cache(short):
-#     key = "_".join([CACHE_KEY_TEMPLATE.get("download_short_key"), short, '*'])
-#     for app_download_key in cache.iter_keys(key):
-#         cache.delete(app_download_key)
-
-
-# def del_make_token_key_cache(release_id):
-#     key = "_".join(['', CACHE_KEY_TEMPLATE.get("make_token_key"), f"{release_id}*"])
-#     for make_token_key in cache.iter_keys(key):
-#         cache.delete(make_token_key)
-
-
-# def del_cache_response_by_short_util(short, app_id, udid):
-#     logger.info(f"del_cache_response_by_short short:{short} app_id:{app_id} udid:{udid}")
-#     del_short_cache(short)
-#
-#     cache.delete("_".join([CACHE_KEY_TEMPLATE.get("app_instance_key"), app_id]))
-#
-#     key = 'ShortDownloadView'.lower()
-#     master_release_dict = AppReleaseInfo.objects.filter(app_id__app_id=app_id, is_master=True).values('icon_url',
-#                                                                                                       'release_id').first()
-#     if master_release_dict:
-#         download_val = CACHE_KEY_TEMPLATE.get('download_url_key')
-#         cache.delete("_".join([key, download_val, os.path.basename(master_release_dict.get("icon_url")), udid]))
-#         cache.delete("_".join([key, download_val, master_release_dict.get('release_id'), udid]))
-#         cache.delete(
-#             "_".join([key, CACHE_KEY_TEMPLATE.get("make_token_key"), master_release_dict.get('release_id'), udid]))
-#         del_make_token_key_cache(master_release_dict.get('release_id'))
 
 
 def del_cache_by_delete_app(app_id):
@@ -184,14 +57,6 @@ def del_cache_storage(user_obj):
         del_cache_by_app_id(app_obj.app_id, user_obj)
     CloudStorageCache('*', user_obj.uid).del_many()
     invalid_head_img_cache(user_obj)
-
-
-def set_app_today_download_times(app_id):
-    cache_obj = AppDownloadTodayTimesCache(app_id)
-    if cache_obj.get_storage_cache():
-        cache_obj.incr()
-    else:
-        cache_obj.set_storage_cache(1, 3600 * 24)
 
 
 def get_app_today_download_times(app_ids):
@@ -517,40 +382,3 @@ def get_and_clean_udid_cache_queue(prefix_key):
             data = []
         cache_obj.del_storage_cache()
         return data
-
-
-def get_app_download_url(request, res, app_id, short, password, release_id, isdownload, udid):
-    app_obj = get_app_instance_by_cache(app_id, password, 900, udid)
-    if app_obj:
-        if app_obj.get("type") == 0:
-            app_type = '.apk'
-            download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600)
-        else:
-            app_type = '.ipa'
-            if isdownload:
-                download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600, udid=udid)
-            else:
-                download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600, isdownload,
-                                                                    udid=udid)
-
-        res.data = {"download_url": download_url, "extra_url": extra_url}
-        if download_url != "" and "mobileconifg" not in download_url:
-            ip = get_real_ip_address(request)
-            msg = f"remote ip {ip} short {short} download_url {download_url} app_obj {app_obj}"
-            logger.info(msg)
-            add_remote_info_from_request(request, msg)
-            set_app_download_by_cache(app_id)
-            amount = app_obj.get("d_count")
-            auth_status = False
-            status = app_obj.get('user_id__certification__status', None)
-            if status and status == 1:
-                auth_status = True
-            if not consume_user_download_times(app_obj.get("user_id"), app_id, amount, auth_status):
-                res.code = 1009
-                res.msg = "可用下载额度不足"
-                del res.data
-                return res
-        return res
-    res.code = 1006
-    res.msg = "该应用不存在"
-    return res

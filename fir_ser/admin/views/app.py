@@ -16,7 +16,8 @@ from api.base_views import app_delete
 from api.models import AppReleaseInfo, Apps
 from common.core.auth import AdminTokenAuthentication
 from common.core.response import ApiResponse
-from common.utils.caches import del_cache_response_by_short, get_download_url_by_cache
+from common.utils.caches import del_cache_response_by_short
+from common.utils.download import get_download_url_by_cache
 from common.utils.token import verify_token
 
 logger = logging.getLogger(__name__)

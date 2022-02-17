@@ -15,27 +15,30 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import re_path, include
-from django.views.static import serve
 
 from admin.views.celery_flower import CeleryFlowerView
-from api.views.download import DownloadView, InstallView
-from fir_ser import settings
-from xsign.views.download import XsignDownloadView
-from xsign.views.receiveudids import IosUDIDView, ShowUdidView
+
+# from django.views.static import serve
+# from fir_ser import settings
 
 urlpatterns = [
     re_path('fly.admin/', admin.site.urls),
+    # web api 请求地址
     re_path("api/v1/fir/server/", include('api.urls')),
-    re_path("api/v1/fir/xsign/", include('xsign.urls')),
-    re_path(r"xdownload/(?P<filename>\w+\.\w+)$", XsignDownloadView.as_view(), name="xdownload"),
+    # client 脚本请求地址
     re_path("api/v2/fir/server/", include('cli.urls')),
+    # 管理后台请求地址
     re_path("api/v3/fir/server/", include('admin.urls')),
+    # 图片验证码
     re_path('^captcha/', include('captcha.urls')),
-    # media路径配置
-    re_path('files/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-    re_path(r"download/(?P<filename>\w+\.\w+)$", DownloadView.as_view(), name="download"),
-    re_path(r"install/(?P<app_id>\w+)$", InstallView.as_view(), name="install"),
-    re_path(r"^udid/(?P<short>\w+)$", IosUDIDView.as_view()),
-    re_path("^show_udid$", ShowUdidView.as_view()),
+
+    # 该配置暂时无用
+    # media路径配置 如果未开启token 授权，可以启动下面配置，直接让nginx读取资源，无需 uwsgi 进行转发
+    # re_path('^files/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+
+    # 任务监控
     re_path(r'flower/(?P<path>.*)', CeleryFlowerView.as_view()),
+
+    # 超级签名
+    re_path("api/v1/fir/xsign/", include('xsign.urls')),
 ]

@@ -9,6 +9,8 @@
 import logging
 import os
 
+from django.urls import reverse
+
 from common.libs.storage.aliyunApi import AliYunCdn
 from common.utils.token import make_token
 from fir_ser import settings
@@ -35,7 +37,7 @@ class LocalStorage(object):
         d_dir = 'download'
         if name.endswith('.mobileconifg') or is_xsign:
             d_dir = 'xdownload'
-        download_url = '/'.join([self.get_base_url(), d_dir, name])
+        download_url = f'{self.get_base_url()}{reverse(d_dir, kwargs={"filename": name})}'
         if self.download_auth_type == 1:
             download_url = f"{download_url}?{settings.DATA_DOWNLOAD_KEY}={make_token(name, expires, force_new=force_new)}"
         elif self.download_auth_type == 2:

@@ -7,6 +7,7 @@
 import logging
 import os
 
+from django.urls import reverse
 from rest_framework.views import APIView
 
 from api.models import AppReleaseInfo
@@ -24,8 +25,7 @@ logger = logging.getLogger(__name__)
 
 def get_post_udid_url(request, short):
     server_domain = get_server_domain_from_request(request, Config.POST_UDID_DOMAIN)
-    path_info_lists = [server_domain, "udid", short]
-    return "/".join(path_info_lists)
+    return f'{server_domain}{reverse("xudid", kwargs={"short": short})}'
 
 
 class XsignDownloadView(APIView):
