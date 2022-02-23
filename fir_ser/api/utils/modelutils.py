@@ -12,7 +12,8 @@ from urllib.parse import urljoin
 from django.db.models import Count
 from rest_framework.pagination import PageNumberPagination
 
-from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo
+from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
+    AppBundleIdBlackList
 from common.base.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name
 
@@ -178,3 +179,24 @@ class PageNumber(PageNumberPagination):
     page_size_query_param = 'size'  # URL中每页显示条数的参数
     page_query_param = 'page'  # URL中页码的参数
     max_page_size = 100  # 最大页码数限制
+
+
+def check_bundle_id_legal(user_uid, bundle_id):
+    """
+    优先级：用户黑名单 > 用户白名单 > 全局黑名单 > 全局白名单
+    1. 用户白  通过，用户黑，拒绝
+    2.全局白 通过，全局黑，拒绝
+    :param user_uid: user uid
+    :param bundle_id:   bundle id
+    :return: default is allow, True is black
+    """
+    base_queryset = AppBundleIdBlackList.objects.filter(enable=True, bundle_id=bundle_id).all()
+    if base_queryset:
+        app_black_obj = base_queryset.filter(user_uid=user_uid).first()
+        if app_black_obj:
+            return app_black_obj.status == 0
+        else:
+            app_black_obj = base_queryset.filter(user_uid='*').first()
+            if app_black_obj:
+                return app_black_obj.status == 0
+    return False

@@ -118,8 +118,6 @@ class VerifyName(models.Model):
         return f"self.name"
 
 
-######################################## APP表 ########################################
-
 class Apps(models.Model):
     app_id = models.CharField(max_length=64, unique=True, db_index=True)  # ，唯一标识
     user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
@@ -157,6 +155,27 @@ class Apps(models.Model):
 
     def __str__(self):
         return "%s %s-%s %s" % (self.name, self.get_type_display(), self.short, self.issupersign)
+
+
+class AppBundleIdBlackList(models.Model):
+    """
+    :keyword 优先级：用户黑名单 > 用户白名单 > 全局黑名单 > 全局白名单
+    """
+    user_uid = models.CharField(max_length=64, verbose_name="用户ID,*表示全局", default='*')
+    bundle_id = models.CharField(max_length=64, blank=True, verbose_name="bundle id")
+    enable = models.BooleanField(default=True, verbose_name="是否启用该配置项")
+    status_choices = ((0, '黑名单'), (1, '白名单'))
+    status = models.SmallIntegerField(choices=status_choices, default=1, verbose_name="状态")
+    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = '新应用上传黑白名单'
+        verbose_name_plural = "新应用上传黑白名单"
+        unique_together = ('user_uid', 'bundle_id')
+
+    def __str__(self):
+        return "%s-%s-%s" % (self.user_uid, self.bundle_id, self.enable)
 
 
 class AppScreenShot(models.Model):
@@ -241,8 +260,6 @@ class AppStorage(models.Model):
     def __str__(self):
         return "%s %s" % (self.user_id.get_username(), self.name)
 
-
-######################################## 订单表 ########################################
 
 class Order(models.Model):
     """订单"""

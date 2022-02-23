@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 
 from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo, UserAdDisplayInfo
 from api.utils.apputils import get_random_short, save_app_infos
-from api.utils.modelutils import get_app_download_uri
+from api.utils.modelutils import get_app_download_uri, check_bundle_id_legal
 from api.utils.response import BaseResponse
 from common.base.baseutils import make_app_uuid, make_from_user_uuid
 from common.cache.state import MigrateStorageState
@@ -40,6 +40,11 @@ class AppAnalyseView(APIView):
         # 1.接收 bundelid ，返回随机应用名称和短连接
         bundle_id = request.data.get("bundleid", None)
         app_type = request.data.get("type", None)
+        if bundle_id:
+            if check_bundle_id_legal(request.user.uid, bundle_id):
+                res.code = 1004
+                res.msg = "疑似违规，上传失败，如有疑问，请联系管理员"
+                return Response(res.dict)
 
         if MigrateStorageState(request.user.uid).get_state():
             res.code = 1008

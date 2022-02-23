@@ -727,9 +727,19 @@ export default {
                   }
 
                 } else {
-                  this.$message.error("应用 " + analyseappinfo.appname + " 上传token获取失败，请刷新重试")
+                  let err_msg = "应用 " + analyseappinfo.appname
+                  if (data.code === 1003) {
+                    err_msg += " 上传token获取失败，请刷新重试"
+                  } else {
+                    err_msg += data.msg
+                  }
+                  this.$message.error(err_msg)
+                  if (this.currentfile) {
+                    this.closeUpload()
+                  } else {
+                    this.trymultiFileList.push(file);
+                  }
                   resolve()
-                  this.trymultiFileList.push(file);
                   // this.multiFileList.splice(this.multiFileList.indexOf(file), 1)
                 }
                 loading.close();
@@ -993,10 +1003,11 @@ export default {
       this.willuploadApp = false;
       this.uploadflag = false;
       this.analyseappinfo = {};
-
+      this.currentfile = null;
       this.multiupload = false;
       this.multiuploaddisable = false;
       this.multiFileList = [];
+      this.trymultiFileList = [];
       this.$refs.upload.clearFiles();
       this.$refs.upload.abort();
       this.uploadprocess = deepCopy(fiveProcess);
