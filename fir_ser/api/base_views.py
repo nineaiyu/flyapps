@@ -11,7 +11,7 @@ from api.utils.response import BaseResponse
 from api.utils.utils import delete_local_files, delete_app_screenshots_files, change_storage_and_change_head_img, \
     migrating_storage_data, clean_storage_data, check_storage_is_new_storage
 from common.cache.state import MigrateStorageState
-from common.core.singals import delete_app_signal
+from common.core.signals import delete_app_signal
 from common.utils.caches import del_cache_response_by_short, del_cache_by_delete_app, \
     del_cache_storage
 from common.utils.storage import Storage
@@ -31,7 +31,7 @@ def app_delete(app_obj):
         res.msg = "数据迁移中"
         return res
 
-    delete_app_signal.send(None, app_pk=app_obj.pk)
+    delete_app_signal.send(None, app_pk=app_obj)
 
     storage = Storage(user_obj)
     has_combo = app_obj.has_combo

@@ -7,8 +7,9 @@ import logging
 from django.dispatch import receiver
 
 from api.models import AppReleaseInfo
-from api.models import Apps
-from common.core.singals import run_resign_task_signal, delete_app_signal, xsign_app_download_url_signal
+from api.utils.utils import migrating_storage_file_data, get_filename_from_apptype
+from common.core.signals import run_resign_task_signal, delete_app_signal, xsign_app_download_url_signal, \
+    xsign_migrate_data_signal, xsign_clean_data_signal
 from common.core.sysconfig import Config
 from common.libs.storage.localApi import LocalStorage
 from xsign.models import AppUDID, APPToDeveloper, APPSuperSignUsedInfo
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 @receiver(run_resign_task_signal)
 def run_resign_task_callback(sender, **kwargs):
-    app_obj = Apps.objects.filter(pk=kwargs.get('app_pk')).first()
+    app_obj = kwargs.get('app_obj')
     if app_obj:
         AppUDID.objects.filter(app_id=app_obj, sign_status__gte=3).update(sign_status=3)
         if app_obj.change_auto_sign:
@@ -40,7 +41,7 @@ def run_resign_task_callback(sender, **kwargs):
 
 @receiver(delete_app_signal)
 def delete_app_callback(sender, **kwargs):
-    app_obj = Apps.objects.filter(pk=kwargs.get('app_pk')).first()
+    app_obj = kwargs.get('app_obj')
     if app_obj:
         count = APPToDeveloper.objects.filter(app_id=app_obj).count()
         if app_obj.issupersign or count > 0:
@@ -83,3 +84,36 @@ def xsign_app_download_url_callback(sender, **kwargs):
             return "", ""
     else:
         return "", ""
+
+
+"""
+迁移超级签名数据
+"""
+
+
+@receiver(xsign_migrate_data_signal)
+def xsign_migrate_data_signal_callback(sender, **kwargs):
+    app_release_obj = kwargs.get('app_release_obj')
+    user_obj = kwargs.get('user_obj')
+    new_storage_obj = kwargs.get('new_storage_obj')
+    clean_old_data = kwargs.get('clean_old_data')
+    for apptodev_obj in APPToDeveloper.objects.filter(app_id=app_release_obj.app_id).all():
+        filename = get_filename_from_apptype(apptodev_obj.binary_file, app_release_obj.release_type)
+        migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data)
+
+
+"""
+清理超级签名数据
+"""
+
+
+@receiver(xsign_clean_data_signal)
+def xsign_clean_data_signal_callback(sender, **kwargs):
+    app_release_obj = kwargs.get('app_release_obj')
+    storage_obj = kwargs.get('storage_obj')
+    for apptodev_obj in APPToDeveloper.objects.filter(app_id=app_release_obj.app_id).all():
+        storage_obj.delete_file(apptodev_obj.binary_file, app_release_obj.release_type)
+
+
+def main():
+    logger.info('signal receiver init success')

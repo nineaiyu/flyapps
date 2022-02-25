@@ -379,3 +379,25 @@ class WxTemplateMsg(object):
             },
         }
         return self.send_msg(to_user, msg_id, content_data)
+
+    def auth_code_msg(self, to_user, wx_nick_name, code, expire_date):
+        msg_id = 'vRCegZatP18LAe9ytLirwfL1CFyzaCQwM89hMAKsUAA'
+        content_data = {
+            "first": {
+                "value": f"您好，“{wx_nick_name}”",
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": code,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": f"{expire_date}内有效",
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "若非本人操作，可能您的帐号存在安全风险，请及时修改密码",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(to_user, msg_id, content_data)

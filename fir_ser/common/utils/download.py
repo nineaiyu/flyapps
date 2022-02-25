@@ -12,7 +12,7 @@ from api.models import Apps, UserInfo
 from api.utils.modelutils import get_app_d_count_by_app_id, add_remote_info_from_request
 from common.base.baseutils import check_app_password, get_real_ip_address
 from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCache, DownloadUrlCache, AppInstanceCache
-from common.core.singals import xsign_app_download_url_signal
+from common.core.signals import xsign_app_download_url_signal
 from common.core.sysconfig import Config
 from common.utils.caches import consume_user_download_times
 from common.utils.storage import Storage, LocalStorage
