@@ -292,6 +292,7 @@ SYNC_CACHE_TO_DATABASE = {
     'wx_get_access_token_times': 60 * 10,  # 微信access_token 自动获取时间
     'try_login_times': (10, 12 * 60 * 60),  # 当天登录失败次数，超过该失败次数，锁定24小时
     'auto_clean_tmp_file_times': 60 * 30,  # 定时清理上传失误生成的临时文件
+    'auto_clean_captcha_store_times': 60 * 60,  # 定时清理临时验证码数据
     'auto_clean_local_tmp_file_times': 60 * 30,  # 定时清理临时文件,现在包含超级签名描述临时文件
     'try_send_msg_over_limit_times': (3, 60 * 60),  # 每小时用户发送信息次数
     'clean_local_tmp_file_from_mtime': 60 * 60,  # 清理最后一次修改时间超过限制时间的临时文件,单位秒
@@ -450,6 +451,11 @@ CELERY_BEAT_SCHEDULE = {
     'auto_delete_tmp_file_job': {
         'task': 'api.tasks.auto_delete_tmp_file_job',
         'schedule': SYNC_CACHE_TO_DATABASE.get("auto_clean_local_tmp_file_times"),
+        'args': ()
+    },
+    'auto_clean_captcha_store_job': {
+        'task': 'api.tasks.auto_clean_captcha_store_job',
+        'schedule': SYNC_CACHE_TO_DATABASE.get("auto_clean_captcha_store_times"),
         'args': ()
     },
     'auto_check_ios_developer_active_job': {

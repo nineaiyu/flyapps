@@ -23,27 +23,32 @@ from common.utils.sendmsg import SendMessage
 from common.utils.storage import Storage
 from common.utils.token import generate_numeric_token_of_length, generate_alphanumeric_token_of_length, make_token, \
     verify_token
-from fir_ser.settings import CAPTCHA_LENGTH, MEDIA_ROOT
+from fir_ser.settings import MEDIA_ROOT
 
 logger = logging.getLogger(__name__)
 
 
 def get_captcha():
-    captcha_key = CaptchaStore.generate_key()
+    # 随机字符串
+    random_char_fun = 'captcha.helpers.random_char_challenge'
+
+    # 数学运算
+    math_fun = 'captcha.helpers.math_challenge'
+
+    captcha_key = CaptchaStore.generate_key(random_char_fun)
     captcha_image = captcha_image_url(captcha_key)
-    CaptchaStore.remove_expired()
     local_storage = LocalStorage(**Config.IOS_PMFILE_DOWNLOAD_DOMAIN)
     return {"captcha_image": "/".join([local_storage.get_base_url(), captcha_image.strip("/"), '']),
             "captcha_key": captcha_key,
-            "length": CAPTCHA_LENGTH}
+            "length": len(CaptchaStore.objects.filter(hashkey=captcha_key).first().response)}
 
 
 def valid_captcha(captcha_key, code, username):
     if username:
-        challenge = CaptchaStore.objects.filter(hashkey=captcha_key).values("challenge").first()
-        logger.info(f"captcha_key:{captcha_key} code:{code}  challenge:{challenge}")
-        if challenge:
-            if captcha_key and code and code.strip(" ").lower() == challenge.get("challenge").lower():
+        captcha_obj = CaptchaStore.objects.filter(hashkey=captcha_key).values("response").first()
+        logger.info(f"captcha_key:{captcha_key} code:{code}  challenge:{captcha_obj}")
+        if captcha_obj:
+            if captcha_key and code and code.strip(" ").lower() == captcha_obj.get("response").lower():
                 return True
     return False
 

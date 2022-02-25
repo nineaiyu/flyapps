@@ -6,6 +6,8 @@
 
 import logging
 
+from captcha.models import CaptchaStore
+
 from api.utils.ctasks import sync_download_times, auto_clean_upload_tmp_file
 from api.views.login import get_login_type
 from common.core.sysconfig import Config, invalid_config_cache
@@ -46,6 +48,11 @@ def check_bypass_status_job():
 @app.task
 def auto_clean_upload_tmp_file_job():
     auto_clean_upload_tmp_file()
+
+
+@app.task
+def auto_clean_captcha_store_job():
+    CaptchaStore.remove_expired()
 
 
 @app.task
