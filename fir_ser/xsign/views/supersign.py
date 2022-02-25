@@ -145,14 +145,18 @@ class DeveloperView(APIView):
                             res.code = 1008
                             res.msg = result.get("return_info")
                             return Response(res.dict)
-                elif act == "renewcert":
+                elif act in ["renewcert", "cleancert"]:
                     if developer_obj.certid:
                         # clean developer somethings. remove profile and  revoke cert
-                        IosUtils.clean_developer(developer_obj, request.user)
+                        if act == 'cleancert':
+                            IosUtils.clean_developer(developer_obj, request.user)
                         status, result = IosUtils.revoke_developer_cert(developer_obj, request.user)
                         if status:
-                            pass
-                            # status, result = IosUtils.create_developer_cert(developer_obj, request.user)
+                            if act == 'renewcert':
+                                AppUDID.objects.filter(udid__developerid=developer_obj).update(
+                                    sign_status=2)
+
+                                status, result = IosUtils.create_developer_cert(developer_obj, request.user)
                             # if status:
                             #     IosUtils.get_device_from_developer(developer_obj, request.user)
                             # else:

@@ -161,16 +161,26 @@
                        @click="isocertcert">手动创建发布证书
             </el-button>
           </el-tooltip>
-          <el-tooltip content="清理发布证书，如果发布证书过期时间大于3天，将不会删除开发者发布证书，发布证书只能同时创建两个，请谨慎操作">
-            <el-button v-if="isedit &&  editdeveloperinfo.certid"
-                       size="small"
-                       type="danger"
-                       @click="isorenewcert">删除发布证书
-            </el-button>
-          </el-tooltip>
           <el-button v-if="isedit && editdeveloperinfo.status!==0" size="small" type="success"
                      @click="activedeveloperFun(editdeveloperinfo,'checkauth')">账户激活检测
           </el-button>
+          <el-divider/>
+          <el-tooltip content="清理发布证书，如果发布证书过期时间大于3天，将不会删除开发者发布证书，发布证书只能同时创建两个，请谨慎操作">
+            <div>
+              <el-button v-if="isedit &&  editdeveloperinfo.certid"
+                         size="small"
+                         type="danger"
+                         @click="isorenewcert('cleancert')">删除发布证书并清理签名数据
+              </el-button>
+              <el-button v-if="isedit &&  editdeveloperinfo.certid"
+                         size="small"
+                         type="danger"
+                         @click="isorenewcert('renewcert')">删除过期发布证书并重新签署新的证书
+              </el-button>
+            </div>
+
+          </el-tooltip>
+          <el-divider/>
           <!--          <el-button v-if="isedit && editdeveloperinfo.is_actived" size="small" @click="bindAppletoapp(editdeveloperinfo)">专属应用</el-button>-->
           <el-button @click="updateorcreate">保存</el-button>
           <el-button @click="canceledit">取消</el-button>
@@ -1709,7 +1719,7 @@ export default {
       developercert(data => {
       }, {methods: 'FILE', data: {issuer_id: this.editdeveloperinfo.issuer_id}})
     },
-    isorenewcert() {
+    isorenewcert(act) {
       this.$confirm('此操作将永久删除该发布证书, 建议先导出证书。是否继续删除?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -1717,7 +1727,7 @@ export default {
       }).then(() => {
         this.iosdeveloperFun({
           "methods": "PUT",
-          "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": "renewcert"}
+          "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": act}
         });
       }).catch(() => {
         this.$message({
