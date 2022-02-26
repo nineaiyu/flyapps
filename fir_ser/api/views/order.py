@@ -123,7 +123,7 @@ def get_order_obj(user_obj, order_number):
     return Order.objects.filter(user_id=user_obj, order_number=order_number).first()
 
 
-def except_result(result, *args, **kwargs):
+def expect_func(result, *args, **kwargs):
     if result and result.status in [0, 4, 5, 6]:
         return True
 
@@ -135,7 +135,7 @@ class OrderSyncView(APIView):
         res = BaseResponse()
         order_number = request.data.get("order_number", None)
         if order_number:
-            status, result = get_pending_result(get_order_obj, except_result, order_number=order_number,
+            status, result = get_pending_result(get_order_obj, expect_func, order_number=order_number,
                                                 locker_key=order_number, user_obj=request.user)
             if not status and result:
                 res.code = 1001

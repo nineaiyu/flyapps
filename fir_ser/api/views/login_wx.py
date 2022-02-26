@@ -57,7 +57,7 @@ class WeChatBindView(APIView):
         return wx_qr_code_response(ret, code, qr_info, get_real_ip_address(request))
 
 
-def login_res(result, *args, **kwargs):
+def expect_func(result, *args, **kwargs):
     return result and result.get('pk')
 
 
@@ -68,7 +68,7 @@ class WeChatLoginCheckView(APIView):
             return Response(ret.dict)
         ticket = request.data.get("ticket")
         if ticket:
-            status, wx_ticket_data = get_pending_result(get_wx_ticket_login_info_cache, login_res, ticket=ticket,
+            status, wx_ticket_data = get_pending_result(get_wx_ticket_login_info_cache, expect_func, ticket=ticket,
                                                         locker_key=ticket)
             if status:
                 if wx_ticket_data.get('pk', -1) == -1:

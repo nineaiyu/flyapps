@@ -80,7 +80,7 @@ class IosUDIDView(APIView):
             "%s/%s?udid=%s%s" % (server_domain, short, format_udid_info.get("udid"), msg))
 
 
-def except_result(result, *args, **kwargs):
+def expect_func(result, *args, **kwargs):
     app_info = kwargs.get('app_info')
     logger.info(f"app {app_info} sign task state {result.state}  AA {result.successful()}")
     cache = TaskStateCache(app_info.pk, kwargs.get('task_id'))
@@ -111,7 +111,7 @@ class TaskView(APIView):
         if task_id:
             app_info = Apps.objects.filter(short=short).first()
             if app_info:
-                status, result = get_pending_result(task_func, except_result, task_id=task_id,
+                status, result = get_pending_result(task_func, expect_func, task_id=task_id,
                                                     locker_key=task_id, app_info=app_info)
                 if status:
                     if result.successful():
