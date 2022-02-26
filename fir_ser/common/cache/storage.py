@@ -209,3 +209,9 @@ class SystemConfigCache(RedisCacheBase):
     def __init__(self, prefix_key):
         self.cache_key = f"{CACHE_KEY_TEMPLATE.get('sysconfig_key')}_{prefix_key}"
         super().__init__(self.cache_key)
+
+
+class TaskStateCache(RedisCacheBase):
+    def __init__(self, app_pk, task_id):
+        self.cache_key = f"{CACHE_KEY_TEMPLATE.get('task_state_key')}_{app_pk}_{task_id}"
+        super().__init__(self.cache_key)

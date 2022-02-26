@@ -139,40 +139,34 @@ export default {
       set_auth_token();
       this.$router.push({name: 'FirApps'})
     },
-    loop_get_wx_info(wx_login_ticket) {
+    loop_get_wx_info(wx_login_ticket, c_count = 1) {
       if (wx_login_ticket && wx_login_ticket.length < 3) {
         this.$message.error("获取登陆码失败，请稍后再试");
         return
       }
-      let c_count = 1;
-      // eslint-disable-next-line no-unused-vars
-      const loop_t = window.setInterval(res => {
-        if (!this.loop_flag) {
-          window.clearInterval(loop_t);
+      wxLoginFun(data => {
+        c_count += 1;
+        if (c_count > 30) {
+          return;
         }
-        wxLoginFun(data => {
-          c_count += 1;
-          if (c_count > 120) {
-            window.clearInterval(loop_t);
-          }
-          if (data.code === 1000) {
-            window.clearInterval(loop_t);
-            this.set_cookie_and_token(data);
-          } else if (data.code === 1005) {
-            window.clearInterval(loop_t);
-            this.wx_visible = false;
-            this.loop_flag = false;
-            this.$message({
-              message: data.msg,
-              type: 'error',
-              duration: 30000
-            });
-          }
-        }, {
-          "methods": "POST",
-          data: {"ticket": wx_login_ticket}
-        })
-      }, 3000)
+        if (data.code === 1000) {
+          this.set_cookie_and_token(data);
+        } else if (data.code === 1005) {
+          this.wx_visible = false;
+          this.loop_flag = false;
+          this.$message({
+            message: data.msg,
+            type: 'error',
+            duration: 30000
+          });
+        } else if (data.code === 1006) {
+          return this.loop_get_wx_info(wx_login_ticket, c_count)
+        }
+      }, {
+        "methods": "POST",
+        data: {"ticket": wx_login_ticket}
+      })
+      // }, 3000)
 
     },
     wxLogin() {

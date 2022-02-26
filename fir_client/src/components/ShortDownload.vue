@@ -412,7 +412,9 @@ export default {
       timer: '',
       gomobile: true,
       mobileprovision: '',
-      ad_info: {ad_pic: '', ad_uri: ''}
+      ad_info: {ad_pic: '', ad_uri: ''},
+      task_spend_time: 0,
+      task_msg: ''
     }
   },
   beforeDestroy() {
@@ -516,36 +518,43 @@ export default {
       this.msg = msg;
       alert(this.msg)
     },
-    loop_check_task() {
-      let c_count = 1;
-      // eslint-disable-next-line no-unused-vars
-      const loop_t = window.setInterval(res => {
-        gettask(data => {
-          c_count += 1;
-          if (c_count > 120) {
-            window.clearInterval(loop_t);
-          }
-          if (data.code === 1000) {
-            window.clearInterval(loop_t);
-            if (data.msg) {
-              this.show_err_msg(data.msg);
-            } else {
-              this.wrong = false;
-            }
+    loop_check_task(c_count = 1, loop_t) {
+      if (c_count === 1) {
+        // eslint-disable-next-line no-unused-vars
+        loop_t = window.setInterval(res => {
+          this.task_spend_time += 1;
+          this.msg = this.task_msg + ' ○ ' + this.task_spend_time;
+        }, 3000)
+      }
+      gettask(data => {
+        c_count += 1;
+        if (c_count > 30) {
+          window.clearInterval(loop_t);
+          return;
+        }
+        if (data.code === 1000) {
+          window.clearInterval(loop_t);
+          if (data.msg) {
+            this.show_err_msg(data.msg);
           } else {
-            if (data.code === 1002) {
-              window.clearInterval(loop_t);
-              data.msg = '应用不存在'
-            }
-            if (data.msg) {
-              this.msg = data.msg + ' ○ ' + c_count;
-            }
+            this.wrong = false;
           }
-        }, {
-          "short": this.$route.params.short,
-          data: {"task_id": this.$route.query.task_id}
-        })
-      }, 3000)
+        } else {
+          if (data.code === 1002) {
+            window.clearInterval(loop_t);
+            data.msg = '应用不存在'
+          }
+          if (data.msg) {
+            this.task_msg = data.msg;
+          }
+          if (data.code === 1001) {
+            this.loop_check_task(c_count, loop_t)
+          }
+        }
+      }, {
+        "short": this.$route.params.short,
+        data: {"task_id": this.$route.query.task_id}
+      })
     },
     jiaocheng(act) {
       let signhelp = this.$refs.signhelp;
@@ -790,6 +799,9 @@ export default {
           if (this.mcurrentappinfo.release_type === 2 && !this.currentappinfo.issupersign) {
             this.signhelplist = this.inhousehelplist;
           }
+          if (this.agent !== '') {
+            this.check_msg();
+          }
         } else if (data.code === 1002) {
           window.location.href = location.href.replace(location.search, '');
         } else if (data.code === 302 && data.data) {
@@ -866,9 +878,6 @@ export default {
     this.getDownloadTokenFun();
     this.full_url = location.href;
     this.qrcode();
-    if (this.agent !== '') {
-      this.check_msg();
-    }
   }, filters: {
     getiOStype: function (type) {
       let ftype = '';

@@ -20,7 +20,8 @@ from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView, AppsQrcode
 from api.views.domain import DomainCnameView, DomainInfoView
 from api.views.download import ShortDownloadView, InstallView, DownloadView
 from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, \
-    UserApiTokenView, CertificationView, ChangeInfoView, WeChatLoginView, WeChatLoginCheckView
+    UserApiTokenView, CertificationView, ChangeInfoView
+from api.views.login_wx import WeChatLoginView, WeChatLoginCheckView, WeChatBindView
 from api.views.logout import LogoutView
 from api.views.order import PriceView, OrderView, PaySuccess
 from api.views.report import ReportView
@@ -60,6 +61,7 @@ urlpatterns = [
     re_path("^domain_info$", DomainInfoView.as_view()),
     re_path("^mp.weixin$", ValidWxChatToken.as_view()),
     re_path("^third.wx.login$", WeChatLoginView.as_view()),
+    re_path("^third.wx.bind$", WeChatBindView.as_view()),
     re_path("^third.wx.sync$", WeChatLoginCheckView.as_view()),
     re_path("^twx/info$", ThirdWxAccount.as_view()),
     re_path(r"^install/(?P<app_id>\w+)$", InstallView.as_view(), name="install"),

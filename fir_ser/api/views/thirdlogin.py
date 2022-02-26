@@ -72,10 +72,10 @@ def update_or_create_wx_userinfo(to_user, user_obj, create=True):
     if code:
         wx_user_info = {
             'openid': wx_user_info.get('openid'),
-            'nickname': wx_user_info.get('nickname'),
-            'sex': wx_user_info.get('sex'),
+            'nickname': wx_user_info.get('nickname'),  # 最新微信接口已经取消该字段
+            'sex': wx_user_info.get('sex'),  # 最新微信接口已经取消该字段
             'subscribe_time': wx_user_info.get('subscribe_time'),
-            'head_img_url': wx_user_info.get('headimgurl'),
+            'head_img_url': wx_user_info.get('headimgurl'),  # 最新微信接口已经取消该字段
             'address': f"{wx_user_info.get('country')}-{wx_user_info.get('province')}-{wx_user_info.get('city')}",
             'subscribe': wx_user_info.get('subscribe'),
         }

@@ -16,6 +16,8 @@ from api.utils.modelutils import get_redirect_server_domain, add_remote_info_fro
     get_app_download_uri
 from api.utils.response import BaseResponse
 from common.base.baseutils import get_real_ip_address, make_random_uuid, get_server_domain_from_request
+from common.base.magic import get_pending_result
+from common.cache.storage import TaskStateCache
 from common.core.sysconfig import Config
 from common.core.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
 from common.utils.caches import check_app_permission
@@ -78,6 +80,29 @@ class IosUDIDView(APIView):
             "%s/%s?udid=%s%s" % (server_domain, short, format_udid_info.get("udid"), msg))
 
 
+def except_result(result, *args, **kwargs):
+    app_info = kwargs.get('app_info')
+    logger.info(f"app {app_info} sign task state {result.state}  AA {result.successful()}")
+    cache = TaskStateCache(app_info.pk, kwargs.get('task_id'))
+    if result.state == 'SUCCESS':
+        cache.del_storage_cache()
+        return True
+    cache_data = cache.get_storage_cache()
+    if not cache_data:
+        cache.set_storage_cache(result.state)
+        return True
+    else:
+        if cache_data == result.state:
+            return False
+        else:
+            cache.set_storage_cache(result.state)
+            return True
+
+
+def task_func(task_id, *args, **kwargs):
+    return app.AsyncResult(task_id)
+
+
 class TaskView(APIView):
 
     def get(self, request, short):
@@ -86,15 +111,16 @@ class TaskView(APIView):
         if task_id:
             app_info = Apps.objects.filter(short=short).first()
             if app_info:
-                result = app.AsyncResult(task_id)
-                logger.info(f"app {app_info} sign task state {result.state}  AA {result.successful()}")
-                if result.successful():
-                    res.msg = result.get(propagate=False)
-                    return Response(res.dict)
-                elif result.state in ['PENDING']:
-                    res.msg = '签名队列中'
-                elif result.state in ['STARTED']:
-                    res.msg = '正在签名中'
+                status, result = get_pending_result(task_func, except_result, task_id=task_id,
+                                                    locker_key=task_id, app_info=app_info)
+                if status:
+                    if result.successful():
+                        res.msg = result.get(propagate=False)
+                        return Response(res.dict)
+                    elif result.state in ['PENDING']:
+                        res.msg = '签名队列中'
+                    elif result.state in ['STARTED']:
+                        res.msg = '正在签名中'
                 else:
                     res.msg = ''
                 res.code = 1001

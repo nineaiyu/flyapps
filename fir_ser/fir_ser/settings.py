@@ -260,6 +260,7 @@ CORS_ALLOW_HEADERS = (
 
 CACHE_KEY_TEMPLATE = {
     'sysconfig_key': 'sysconfig',
+    'task_state_key': 'task_state',
     'user_can_download_key': 'user_can_download',
     'download_times_key': 'app_download_times',
     'make_token_key': 'make_token',

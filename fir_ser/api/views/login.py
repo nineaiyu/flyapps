@@ -10,13 +10,11 @@ from api.utils.modelutils import get_min_default_domain_cname_obj, add_remote_in
 from api.utils.response import BaseResponse
 from api.utils.serializer import UserInfoSerializer, CertificationSerializer, UserCertificationSerializer
 from api.utils.utils import get_random_username, check_username_exists, set_user_token, clean_user_token_and_cache
-from common.base.baseutils import is_valid_phone, is_valid_email, get_real_ip_address
+from common.base.baseutils import is_valid_phone, is_valid_email
 from common.core.auth import ExpiringTokenAuthentication
 from common.core.sysconfig import Config
 from common.core.throttle import VisitRegister1Throttle, VisitRegister2Throttle, GetAuthC1Throttle, GetAuthC2Throttle
-from common.libs.mp.wechat import make_wx_login_qrcode, show_qrcode_url
-from common.utils.caches import login_auth_failed, set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache, \
-    new_user_download_times_gift
+from common.utils.caches import login_auth_failed, new_user_download_times_gift
 from common.utils.sendmsg import get_sender_sms_token, is_valid_sender_code, get_sender_email_token
 
 logger = logging.getLogger(__name__)
@@ -451,24 +449,6 @@ class RegistView(APIView):
         return Response(response.dict)
 
 
-def wx_qr_code_response(ret, code, qr_info, ip_addr):
-    if code:
-        logger.info(f"微信登录码获取成功， {qr_info}")
-        errmsg = qr_info.get('errmsg')
-        if errmsg:
-            ret.code = 1003
-            ret.msg = "微信登录码获取失败，请稍后"
-        else:
-            ticket = qr_info.get('ticket')
-            if ticket:
-                set_wx_ticket_login_info_cache(ticket, {'ip_addr': ip_addr})
-                ret.data = {'qr': show_qrcode_url(ticket), 'ticket': ticket}
-    else:
-        ret.code = 1003
-        ret.msg = "微信登录码获取失败，请稍后"
-    return Response(ret.dict)
-
-
 class UserInfoView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
 
@@ -577,12 +557,6 @@ class UserInfoView(APIView):
             return Response(res.dict)
 
         return Response(res.dict)
-
-    def post(self, request):
-        ret = BaseResponse()
-        uid = request.user.uid
-        code, qr_info = make_wx_login_qrcode(f"web.bind.{uid}")
-        return wx_qr_code_response(ret, code, qr_info, get_real_ip_address(request))
 
 
 class AuthorizationView(APIView):
@@ -780,45 +754,3 @@ class ChangeInfoView(APIView):
             response.data['change_type'] = Config.CHANGER.get("change_type")
         response.data['enable'] = allow_f
         return Response(response.dict)
-
-
-class WeChatLoginView(APIView):
-    throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
-
-    def get(self, request):
-        ret = BaseResponse()
-        if get_login_type().get('third', '').get('wxp'):
-            code, qr_info = make_wx_login_qrcode()
-            return wx_qr_code_response(ret, code, qr_info, get_real_ip_address(request))
-        return Response(ret.dict)
-
-
-class WeChatLoginCheckView(APIView):
-    def post(self, request):
-        ret = BaseResponse()
-        if not get_login_type().get('third', '').get('wxp'):
-            return Response(ret.dict)
-        ticket = request.data.get("ticket")
-        if ticket:
-            wx_ticket_data = get_wx_ticket_login_info_cache(ticket)
-            if wx_ticket_data and wx_ticket_data.get('pk'):
-                if wx_ticket_data.get('pk', -1) == -1:
-                    ret.msg = "还未绑定用户，请通过手机或者邮箱登录账户之后进行绑定"
-                    ret.code = 1005
-                else:
-                    user = UserInfo.objects.filter(pk=wx_ticket_data['pk']).first()
-                    if user.is_active:
-                        key, user_info = set_user_token(user, request)
-                        serializer = UserInfoSerializer(user_info)
-                        data = serializer.data
-                        ret.msg = "验证成功!"
-                        ret.userinfo = data
-                        ret.token = key
-                    else:
-                        ret.msg = "用户被禁用"
-                        ret.code = 1005
-            else:
-                ret.code = 1006
-        else:
-            ret.code = 1006
-        return Response(ret.dict)

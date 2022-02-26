@@ -238,6 +238,23 @@ export function wxLoginFun(callBack, params, load = true) {
     );
 }
 
+
+/**微信公众号关注绑定 */
+export function wxBindFun(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/third.wx.bind',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+
 /**获取验证token */
 export function getAuthTokenFun(callBack, params, load = true) {
     getData(
