@@ -8,11 +8,11 @@ import logging
 import os
 import time
 
-from api.utils.utils import send_ios_developer_active_status
 from common.core.sysconfig import Config
 from fir_ser.settings import SUPER_SIGN_ROOT, SYNC_CACHE_TO_DATABASE
 from xsign.models import UserInfo, AppIOSDeveloperInfo
 from xsign.utils.supersignutils import IosUtils
+from xsign.utils.utils import send_ios_developer_active_status
 
 logger = logging.getLogger(__name__)
 

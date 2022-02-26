@@ -175,6 +175,10 @@ class STORAGEKEYCONF(object):
 
 
 class SENDERCONF(object):
+    WHITE_SENDER_CODE = '666666'  # 白名单下，默认不发送真正验证码
+    WHITE_SENDER_LIST = [
+        '17600102953'
+    ]
     SENDER = [
         {
             'name': 'email',

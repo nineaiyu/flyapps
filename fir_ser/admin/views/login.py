@@ -9,8 +9,9 @@ import logging
 from django.contrib import auth
 from rest_framework.views import APIView
 
+from api.utils.auth.util import AuthInfo
 from api.utils.serializer import UserInfoSerializer
-from api.utils.utils import get_captcha, valid_captcha, set_user_token
+from api.utils.utils import set_user_token
 from common.core.auth import ExpiringTokenAuthentication
 from common.core.response import ApiResponse
 from common.core.sysconfig import Config
@@ -29,11 +30,11 @@ class LoginView(APIView):
         code = 1000
         msg = 'success'
         data = None
-        if Config.LOGIN.get("captcha"):
-            is_valid = valid_captcha(receive.get("captcha_key", None), receive.get("authcode", None), username)
-        else:
-            is_valid = True
-        if is_valid:
+        # if Config.LOGIN.get("captcha"):
+        #     is_valid = valid_captcha(receive.get("captcha_key", None), receive.get("verify_code", None), username)
+        # else:
+        #     is_valid = True
+        if True:
             if login_auth_failed("get", username):
                 password = receive.get("password")
                 user = auth.authenticate(username=username, password=password)
@@ -68,9 +69,8 @@ class LoginView(APIView):
         return ApiResponse(code=code, msg=msg, data=data)
 
     def get(self, request):
-        data = {}
-        if Config.LOGIN.get("captcha"):
-            data = get_captcha()
+        auth_obj = AuthInfo(Config.LOGIN.get("captcha"), False)
+        data = auth_obj.make_rules_info()
         return ApiResponse(data=data)
 
 

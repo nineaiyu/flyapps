@@ -5,20 +5,19 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import UserInfo, UserCertificationInfo, CertificationInfo, Apps
+from api.utils.auth.util import AuthInfo
 from api.utils.modelutils import get_min_default_domain_cname_obj, add_remote_info_from_request
 from api.utils.response import BaseResponse
 from api.utils.serializer import UserInfoSerializer, CertificationSerializer, UserCertificationSerializer
-from api.utils.utils import get_captcha, valid_captcha, \
-    get_sender_sms_token, is_valid_sender_code, get_sender_email_token, get_random_username, \
-    check_username_exists, set_user_token, clean_user_token_and_cache
+from api.utils.utils import get_random_username, check_username_exists, set_user_token, clean_user_token_and_cache
 from common.base.baseutils import is_valid_phone, is_valid_email, get_real_ip_address
 from common.core.auth import ExpiringTokenAuthentication
 from common.core.sysconfig import Config
 from common.core.throttle import VisitRegister1Throttle, VisitRegister2Throttle, GetAuthC1Throttle, GetAuthC2Throttle
-from common.libs.geetest.geetest_utils import first_register, second_validate
 from common.libs.mp.wechat import make_wx_login_qrcode, show_qrcode_url
 from common.utils.caches import login_auth_failed, set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache, \
     new_user_download_times_gift
+from common.utils.sendmsg import get_sender_sms_token, is_valid_sender_code, get_sender_email_token
 
 logger = logging.getLogger(__name__)
 
@@ -251,130 +250,117 @@ class LoginView(APIView):
         response = BaseResponse()
         receive = request.data
         username = receive.get("username", None)
-        if Config.LOGIN.get("captcha"):
-            is_valid = valid_captcha(receive.get("captcha_key", None), receive.get("authcode", None), username)
-        else:
-            is_valid = True
-        if is_valid:
-            if Config.LOGIN.get("geetest"):
-                geetest = receive.get("geetest", None)
-                if geetest and second_validate(geetest).get("result", "") == "success":
-                    pass
-                else:
-                    response.code = 1001
-                    response.msg = "geetest 验证有误"
-                    return Response(response.dict)
+        auth_obj = AuthInfo(Config.LOGIN.get("captcha"), Config.LOGIN.get("geetest"))
+        is_valid, msg = auth_obj.valid(receive)
+        if not is_valid or username is None:
+            response.code = 1001
+            response.msg = msg
+            return Response(response.dict)
 
-            login_type = receive.get("login_type", None)
-            seicode = receive.get("seicode", None)
-            if login_auth_failed("get", username):
-                if login_type == 'reset':
-                    user1_obj = None
-                    user2_obj = None
-                    act = None
-                    if is_valid_email(username):
-                        user1_obj = UserInfo.objects.filter(email=username).first()
-                        act = "email"
+        login_type = receive.get("login_type", None)
+        seicode = receive.get("seicode", None)
+        if login_auth_failed("get", username):
+            if login_type == 'reset':
+                user1_obj = None
+                user2_obj = None
+                act = None
+                if is_valid_email(username):
+                    user1_obj = UserInfo.objects.filter(email=username).first()
+                    act = "email"
 
-                    if is_valid_phone(username):
-                        user2_obj = UserInfo.objects.filter(mobile=username).first()
-                        act = "sms"
+                if is_valid_phone(username):
+                    user2_obj = UserInfo.objects.filter(mobile=username).first()
+                    act = "sms"
 
-                    if user1_obj or user2_obj:
-                        user_obj = user1_obj if user1_obj else user2_obj
-                        password = get_random_username()[:16]
+                if user1_obj or user2_obj:
+                    user_obj = user1_obj if user1_obj else user2_obj
+                    password = get_random_username()[:16]
 
-                        if login_auth_failed("get", user_obj.uid):
-                            login_auth_failed("set", user_obj.uid)
+                    if login_auth_failed("get", user_obj.uid):
+                        login_auth_failed("set", user_obj.uid)
 
-                            if seicode:
-                                is_valid, target = is_valid_sender_code(act, receive.get("auth_token", None), seicode)
-                                if is_valid and str(target) == str(username):
-                                    if user2_obj:
-                                        a, b = get_sender_sms_token('sms', username, 'password', password)
-                                    else:
-                                        a, b = get_sender_email_token('email', username, 'password', password)
-                                    if a and b:
-                                        reset_user_pwd(user_obj, password)
-                                        login_auth_failed("del", username)
-                                        msg = f'{user_obj} 找回密码成功，您的新密码为 {password} 请用新密码登录之后，及时修改密码'
-                                        add_remote_info_from_request(request, msg)
-                                        logger.warning(f'{user_obj} 找回密码成功，您的新密码为 {password} 请用新密码登录之后，及时修改密码')
-                                    else:
-                                        response.code = 1007
-                                        response.msg = "密码重置失败，请稍后重试或者联系管理员"
+                        if seicode:
+                            is_valid, target = is_valid_sender_code(act, receive.get("auth_token", None), seicode)
+                            if is_valid and str(target) == str(username):
+                                if user2_obj:
+                                    a, b = get_sender_sms_token('sms', username, 'password', password)
                                 else:
-                                    response.code = 1009
-                                    response.msg = "验证码有误，请检查或者重新尝试"
-
+                                    a, b = get_sender_email_token('email', username, 'password', password)
+                                if a and b:
+                                    reset_user_pwd(user_obj, password)
+                                    login_auth_failed("del", username)
+                                    msg = f'{user_obj} 找回密码成功，您的新密码为 {password} 请用新密码登录之后，及时修改密码'
+                                    add_remote_info_from_request(request, msg)
+                                    logger.warning(f'{user_obj} 找回密码成功，您的新密码为 {password} 请用新密码登录之后，及时修改密码')
+                                else:
+                                    response.code = 1007
+                                    response.msg = "密码重置失败，请稍后重试或者联系管理员"
                             else:
-                                res = check_register_userinfo(username, act, 'change', 'reset')
-                                return Response(res.dict)
+                                response.code = 1009
+                                response.msg = "验证码有误，请检查或者重新尝试"
 
                         else:
-                            response.code = 1008
-                            response.msg = "手机或者邮箱已经超过最大发送，请24小时后重试"
-                    else:
-                        response.code = 1002
-                        response.msg = "邮箱或者手机号不存在"
-                    return Response(response.dict)
+                            res = check_register_userinfo(username, act, 'change', 'reset')
+                            return Response(res.dict)
 
-                password = receive.get("password")
-                user = get_authenticate(username, password, login_type, get_login_type())
-                logger.info(f"username:{username}  password:{password}")
-                if user:
-                    if user.is_active:
-                        login_auth_failed("del", username)
-                        # update the token
-                        key, user_info = set_user_token(user, request)
-                        serializer = UserInfoSerializer(user_info, )
-                        data = serializer.data
-                        response.msg = "验证成功!"
-                        response.userinfo = data
-                        response.token = key
-                        add_remote_info_from_request(request, f"登录成功， token: {key}")
                     else:
-                        response.msg = "用户被禁用"
-                        response.code = 1005
+                        response.code = 1008
+                        response.msg = "手机或者邮箱已经超过最大发送，请24小时后重试"
                 else:
-                    login_auth_failed("set", username)
-                    #
-                    # try:
-                    #     UserInfo.objects.get(username=username)
-                    response.msg = "密码账户有误或用户被禁用"
                     response.code = 1002
-                    # except UserInfo.DoesNotExist:
-                    #     response.msg = "用户不存在!"
-                    #     response.code = 1003
+                    response.msg = "邮箱或者手机号不存在"
+                return Response(response.dict)
+
+            password = receive.get("password")
+            user = get_authenticate(username, password, login_type, get_login_type())
+            logger.info(f"username:{username}  password:{password}")
+            if user:
+                if user.is_active:
+                    login_auth_failed("del", username)
+                    # update the token
+                    key, user_info = set_user_token(user, request)
+                    serializer = UserInfoSerializer(user_info, )
+                    data = serializer.data
+                    response.msg = "验证成功!"
+                    response.userinfo = data
+                    response.token = key
+                    add_remote_info_from_request(request, f"登录成功， token: {key}")
+                else:
+                    response.msg = "用户被禁用"
+                    response.code = 1005
             else:
-                response.code = 1006
-                logger.error(f"username:{username} failed too try , locked")
-                response.msg = "用户登录失败次数过多，已被锁定，请1小时之后再次尝试"
+                login_auth_failed("set", username)
+                #
+                # try:
+                #     UserInfo.objects.get(username=username)
+                response.msg = "密码账户有误或用户被禁用"
+                response.code = 1002
+                # except UserInfo.DoesNotExist:
+                #     response.msg = "用户不存在!"
+                #     response.code = 1003
         else:
-            response.code = 1001
-            response.msg = "验证码有误"
+            response.code = 1006
+            logger.error(f"username:{username} failed too try , locked")
+            response.msg = "用户登录失败次数过多，已被锁定，请1小时之后再次尝试"
         add_remote_info_from_request(request, response.msg)
         return Response(response.dict)
 
     def get(self, request):
         response = BaseResponse()
         response.data = {}
-        if Config.LOGIN.get("captcha"):
-            response.data = get_captcha()
-        if Config.LOGIN.get("geetest"):
-            response.data['geetest'] = True
+        auth_obj = AuthInfo(Config.LOGIN.get("captcha"), Config.LOGIN.get("geetest"))
+        response.data['auth_rules'] = auth_obj.make_rules_info()
         response.data['login_type'] = get_login_type()
         allow_f = Config.REGISTER.get("enable")
         response.data['register_enable'] = allow_f
         return Response(response.dict)
 
     def put(self, request):
-        import hashlib
         response = BaseResponse()
         user_id = request.data.get('user_id', None)
         if user_id:
-            sha = hashlib.sha1(str(user_id).encode("utf-8"))
-            response.data = first_register(sha.hexdigest(), request.META.get('REMOTE_ADDR'))
+            auth_obj = AuthInfo(Config.LOGIN.get("captcha"), Config.LOGIN.get("geetest"))
+            response.data = auth_obj.make_geetest_info(user_id, request.META.get('REMOTE_ADDR'))
         else:
             response.code = 1002
             response.msg = '参数错误'
@@ -404,14 +390,12 @@ class RegistView(APIView):
             response.msg = "不允许该类型注册"
             return Response(response.dict)
 
-        if Config.REGISTER.get("geetest"):
-            geetest = request.data.get("geetest", None)
-            if geetest and second_validate(geetest).get("result", "") == "success":
-                pass
-            else:
-                response.code = 1018
-                response.msg = "geetest验证有误"
-                return Response(response.dict)
+        auth_obj = AuthInfo(Config.REGISTER.get("captcha"), Config.REGISTER.get("geetest"))
+        is_valid, msg = auth_obj.valid(request.data)
+        if not is_valid:
+            response.code = 1001
+            response.msg = msg
+            return Response(response.dict)
 
         is_valid, target = is_valid_sender_code(act, receive.get("auth_token", None), receive.get("auth_key", None))
         if is_valid and str(target) == str(username):
@@ -460,10 +444,8 @@ class RegistView(APIView):
         response.data = {}
         allow_f = Config.REGISTER.get("enable")
         if allow_f:
-            if Config.REGISTER.get("captcha"):
-                response.data = get_captcha()
-            if Config.REGISTER.get("geetest"):
-                response.data['geetest'] = True
+            auth_obj = AuthInfo(Config.REGISTER.get("captcha"), Config.REGISTER.get("geetest"))
+            response.data['auth_rules'] = auth_obj.make_rules_info()
             response.data['register_type'] = get_register_type()
         response.data['enable'] = allow_f
         return Response(response.dict)
@@ -510,12 +492,13 @@ class UserInfoView(APIView):
         mobile = data.get("mobile", None)
         email = data.get("email", None)
         if mobile or email:
-            if Config.CHANGER.get('captcha'):
-                is_valid = valid_captcha(data.get("captcha_key", None), data.get("authcode", None), request)
-                if not is_valid:
-                    res.code = 1008
-                    res.msg = "图片验证码异常"
-                    return Response(res.dict)
+
+            auth_obj = AuthInfo(Config.CHANGER.get("captcha"), False)
+            is_valid, msg = auth_obj.valid(data)
+            if not is_valid:
+                res.code = 1001
+                res.msg = msg
+                return Response(res.dict)
 
         if old_password and sure_password:
             user = auth.authenticate(username=request.user.username, password=old_password)
@@ -624,23 +607,14 @@ class AuthorizationView(APIView):
         else:
             p_data = Config.REGISTER
 
-        if p_data.get("captcha"):
-            is_valid = valid_captcha(ext.get("captcha_key", None), ext.get("authcode", None), target)
-            if ext and is_valid:
-                pass
-            else:
-                res.code = 1018
-                res.msg = "图片验证码有误"
-                return Response(res.dict)
-
-        if p_data.get("geetest"):
-            geetest = request.data.get("geetest", None)
-            if geetest and second_validate(geetest).get("result", "") == "success":
-                pass
-            else:
-                res.code = 1018
-                res.msg = "geetest验证有误"
-                return Response(res.dict)
+        auth_obj = AuthInfo(p_data.get("captcha"), p_data.get("geetest"))
+        auth_data = {'geetest': request.data.get("geetest", None)}
+        auth_data.update(ext)
+        is_valid, msg = auth_obj.valid(auth_data)
+        if not is_valid:
+            res.code = 1001
+            res.msg = msg
+            return Response(res.dict)
         if ext and ext.get('report'):
             app_obj = Apps.objects.filter(app_id=ext.get('report')).first()
             if app_obj:
@@ -666,22 +640,15 @@ class ChangeAuthorizationView(APIView):
         target = request.data.get("target", None)
         ext = request.data.get("ext", None)
         f_type = request.data.get("ftype", None)
-        if Config.REGISTER.get("captcha"):
-            if ext and valid_captcha(ext.get("captcha_key", None), ext.get("authcode", None), target):
-                pass
-            else:
-                res.code = 1009
-                res.msg = "图片验证码有误"
-                return Response(res.dict)
 
-        if Config.REGISTER.get("geetest"):
-            geetest = request.data.get("geetest", None)
-            if geetest and second_validate(geetest).get("result", "") == "success":
-                pass
-            else:
-                res.code = 1018
-                res.msg = "geetest验证有误"
-                return Response(res.dict)
+        auth_obj = AuthInfo(Config.REGISTER.get("captcha"), Config.REGISTER.get("geetest"))
+        auth_data = {'geetest': request.data.get("geetest", None)}
+        auth_data.update(ext)
+        is_valid, msg = auth_obj.valid(auth_data)
+        if not is_valid or target is None:
+            res.code = 1001
+            res.msg = msg
+            return Response(res.dict)
 
         res = check_change_userinfo(target, act, 'change', request.user, f_type)
         return Response(res.dict)
@@ -754,15 +721,14 @@ class CertificationView(APIView):
             return Response(res.dict)
 
         try:
-            if Config.CHANGER.get("captcha"):
-                if data and valid_captcha(data.get("captcha_key", None), data.get("authcode", None),
-                                          data.get("mobile")):
-                    del data["captcha_key"]
-                    del data["authcode"]
-                else:
-                    res.code = 1009
-                    res.msg = "图片验证码有误"
-                    return Response(res.dict)
+            auth_obj = AuthInfo(Config.CHANGER.get("captcha"), False)
+            is_valid, msg = auth_obj.valid(data)
+            if not is_valid or not data.get("mobile"):
+                res.code = 1001
+                res.msg = msg
+                return Response(res.dict)
+            del data["captcha_key"]
+            del data["verify_code"]
             if Config.CHANGER.get('change_type').get('sms'):
                 is_valid, target = is_valid_sender_code('sms', data.get("auth_token", None), data.get("auth_key", None))
                 if is_valid and str(target) == str(data.get("mobile")):
@@ -809,10 +775,8 @@ class ChangeInfoView(APIView):
         response.data = {}
         allow_f = Config.CHANGER.get("enable")
         if allow_f:
-            if Config.CHANGER.get("captcha"):
-                response.data = get_captcha()
-            if Config.CHANGER.get("geetest"):
-                response.data['geetest'] = True
+            auth_obj = AuthInfo(Config.CHANGER.get("captcha"), Config.CHANGER.get("geetest"))
+            response.data['auth_rules'] = auth_obj.make_rules_info()
             response.data['change_type'] = Config.CHANGER.get("change_type")
         response.data['enable'] = allow_f
         return Response(response.dict)

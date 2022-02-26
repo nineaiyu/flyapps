@@ -114,7 +114,7 @@
       <el-form-item label="手机号码">
         <el-row :gutter="36">
           <el-col :span="16">
-            <el-input ref="phone" v-model="userinfo.mobile" :disabled="!captcha.change_type.sms"
+            <el-input ref="phone" v-model="userinfo.mobile" :disabled="!change_type.sms"
                       :readonly="editphone !== true" clearable maxlength="11" placeholder="手机"
                       prefix-icon="el-icon-mobile"/>
           </el-col>
@@ -122,7 +122,7 @@
             <el-button icon="el-icon-edit" @click="changePhoneValue">
             </el-button>
           </el-col>
-          <el-col v-if="editphone === true && captcha.change_type.sms" :span="5">
+          <el-col v-if="editphone === true && change_type.sms" :span="5">
             <el-button class="save-button" plain type="success"
                        @click="savePhone">
               保存
@@ -131,11 +131,11 @@
         </el-row>
       </el-form-item>
 
-      <el-form-item v-if="editphone === true && captcha.captcha_image && captcha.change_type.sms" label="图片验证码"
+      <el-form-item v-if="editphone === true && captcha.captcha_image && change_type.sms" label="图片验证码"
                     style="height: 40px">
         <el-row :gutter="36" style="height: 40px">
           <el-col :span="14">
-            <el-input v-model="userinfo.authcode" clearable maxlength="6" placeholder="请输入图片验证码"/>
+            <el-input v-model="userinfo.verify_code" clearable maxlength="6" placeholder="请输入图片验证码"/>
           </el-col>
           <el-col :span="8">
             <el-image
@@ -147,7 +147,7 @@
         </el-row>
       </el-form-item>
 
-      <el-form-item v-if="editphone === true && captcha.change_type.sms" label="手机验证码">
+      <el-form-item v-if="editphone === true && change_type.sms" label="手机验证码">
         <el-row :gutter="36">
           <el-col :span="16">
             <el-input v-model="userinfo.auth_key" clearable maxlength="6"
@@ -167,7 +167,7 @@
       <el-form-item label="邮箱地址">
         <el-row :gutter="36">
           <el-col :span="16">
-            <el-input ref="email" v-model="userinfo.email" :disabled="!captcha.change_type.email"
+            <el-input ref="email" v-model="userinfo.email" :disabled="!change_type.email"
                       :readonly="editemail !== true" clearable maxlength="20" placeholder="邮箱"
                       prefix-icon="el-icon-bank-card"/>
           </el-col>
@@ -175,7 +175,7 @@
             <el-button icon="el-icon-edit" @click="changeemailValue">
             </el-button>
           </el-col>
-          <el-col v-if="editemail === true && captcha.change_type.email" :span="5">
+          <el-col v-if="editemail === true && change_type.email" :span="5">
             <el-button class="save-button" plain type="success"
                        @click="saveemail">
               保存
@@ -185,11 +185,11 @@
       </el-form-item>
 
 
-      <el-form-item v-if="editemail === true && captcha.captcha_image && captcha.change_type.email" label="图片验证码"
+      <el-form-item v-if="editemail === true && captcha.captcha_image && change_type.email" label="图片验证码"
                     style="height: 40px">
         <el-row :gutter="36" style="height: 40px">
           <el-col :span="14">
-            <el-input v-model="userinfo.authcode" clearable maxlength="6" placeholder="请输入图片验证码"/>
+            <el-input v-model="userinfo.verify_code" clearable maxlength="6" placeholder="请输入图片验证码"/>
           </el-col>
           <el-col :span="8">
             <el-image
@@ -201,7 +201,7 @@
         </el-row>
       </el-form-item>
 
-      <el-form-item v-if="editemail === true && captcha.change_type.email" label="邮箱验证码">
+      <el-form-item v-if="editemail === true && change_type.email" label="邮箱验证码">
         <el-row :gutter="36">
           <el-col :span="16">
             <el-input v-model="userinfo.auth_key" clearable maxlength="6"
@@ -295,7 +295,7 @@ export default {
     return {
       userinfo: {
         srccode: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-        authcode: ''
+        verify_code: ''
       },
       orguserinfo: {},
       editphone: false,
@@ -303,7 +303,9 @@ export default {
       editdomain_name: false,
       edituser_name: false,
       editposition: false,
-      captcha: {"captcha_image": '', "captcha_key": '', "length": 8, change_type: {email: false, sms: false}},
+      captcha: {"captcha_image": '', "captcha_key": '', "length": 8},
+      change_type: {email: false, sms: false},
+      auth_rules: {},
       form: {},
       wx_login_qr_url: '',
       wx_visible: false,
@@ -419,10 +421,12 @@ export default {
     get_auth_code() {
       changeInfoFun(data => {
         if (data.code === 1000) {
-          this.captcha = data.data;
+          this.auth_rules = data.data.auth_rules;
+          this.captcha = this.auth_rules.captcha;
+          this.change_type = data.data.change_type;
           this.userinfo.captcha_key = this.captcha.captcha_key;
-          if (this.userinfo.authcode) {
-            this.userinfo.authcode = '';
+          if (this.userinfo.verify_code) {
+            this.userinfo.verify_code = '';
           }
         } else {
           this.$message({
@@ -457,7 +461,7 @@ export default {
         auth_token: this.userinfo.auth_token,
         auth_key: this.userinfo.auth_key,
         captcha_key: this.userinfo.captcha_key,
-        authcode: this.userinfo.authcode,
+        verify_code: this.userinfo.verify_code,
       };
     },
     saveemail() {
@@ -564,14 +568,14 @@ export default {
     },
     getsmsemailcode(act, target) {
       let picode = {
-        "authcode": this.userinfo.authcode,
+        "verify_code": this.userinfo.verify_code,
         "captcha_key": this.captcha.captcha_key,
       };
       let params = {
         'act': act, 'target': target, 'ext': picode
       };
-      if (this.captcha.geetest) {
-        geetest(this, this.form.email, target, params, (n_params) => {
+      if (this.auth_rules.geetest) {
+        geetest(this, target, params, (n_params) => {
           this.do_get_auth_token(n_params);
         })
       } else {

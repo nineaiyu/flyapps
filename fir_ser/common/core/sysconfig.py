@@ -302,6 +302,14 @@ class ThirdPartConfCache(ConfigCacheBase):
     def SENDER(self):
         return super().get_value('SENDER', SENDERCONF.SENDER)
 
+    @property
+    def WHITE_SENDER_CODE(self):
+        return super().get_value('WHITE_SENDER_CODE', SENDERCONF.WHITE_SENDER_CODE)
+
+    @property
+    def WHITE_SENDER_LIST(self):
+        return super().get_value('WHITE_SENDER_LIST', SENDERCONF.WHITE_SENDER_LIST)
+
 
 class AppleDeveloperConfCache(ConfigCacheBase):
     def __init__(self):

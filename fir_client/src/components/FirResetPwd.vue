@@ -20,7 +20,7 @@
         <el-form-item v-if="captcha.captcha_image" style="height: 40px">
           <el-row style="height: 40px">
             <el-col :span="16">
-              <el-input v-model="form.authcode" clearable maxlength="6"
+              <el-input v-model="form.verify_code" clearable maxlength="6"
                         placeholder="请输入验证码" @keyup.enter.native="onSubmit"/>
             </el-col>
             <el-col :span="8">
@@ -81,11 +81,12 @@ export default {
       form: {
         email: '',
         password: '',
-        authcode: '',
+        verify_code: '',
         seicode: '',
         auth_token: ''
       },
       captcha: {"captcha_image": '', "captcha_key": '', "length": 8},
+      auth_rules: {},
       activeName: 'username',
       allow_ways: {},
       rutitle: '',
@@ -108,7 +109,7 @@ export default {
       }
     },
     is_captcha() {
-      let captcha_flag = this.form.authcode.length === this.captcha.length;
+      let captcha_flag = this.form.verify_code.length === this.captcha.length;
       if (this.captcha.captcha_key === '' || !this.captcha.captcha_key) {
         captcha_flag = true
       }
@@ -116,8 +117,8 @@ export default {
     },
     onSubmit() {
       let email = this.form.email;
-      let authcode = this.form.authcode;
-      let captcha_flag = this.form.authcode.length === this.captcha.length;
+      let verify_code = this.form.verify_code;
+      let captcha_flag = this.form.verify_code.length === this.captcha.length;
       if (this.captcha.captcha_key === '' || !this.captcha.captcha_key) {
         captcha_flag = true
       }
@@ -127,7 +128,7 @@ export default {
         if (checke || checkp) {
           let params = {
             "username": email,
-            "authcode": authcode,
+            "verify_code": verify_code,
             "captcha_key": this.captcha.captcha_key,
             "login_type": 'reset',
           };
@@ -140,7 +141,7 @@ export default {
             params['auth_token'] = auth_token
           }
           this.login_disable = true;
-          if (this.captcha.geetest) {
+          if (this.auth_rules.geetest) {
             geetest(this, this.form.email, params, (n_params) => {
               this.do_login(n_params);
             })
@@ -196,9 +197,10 @@ export default {
     get_auth_code() {
       loginFun(data => {
         if (data.code === 1000) {
-          this.captcha = data.data;
+          this.auth_rules = data.data.auth_rules;
+          this.captcha = this.auth_rules.captcha;
           this.register_enable = data.data.register_enable;
-          this.form.authcode = '';
+          this.form.verify_code = '';
         } else {
           this.$message({
             message: data.msg,

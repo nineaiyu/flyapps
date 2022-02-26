@@ -29,7 +29,7 @@
         <el-form-item v-if="captcha.captcha_image" style="height: 40px">
           <el-row style="height: 40px">
             <el-col :span="16">
-              <el-input v-model="form.authcode" clearable maxlength="6" placeholder="请输入图片验证码"/>
+              <el-input v-model="form.verify_code" clearable maxlength="6" placeholder="请输入图片验证码"/>
             </el-col>
             <el-col :span="8">
               <el-image
@@ -98,7 +98,7 @@ export default {
         email: '',
         password: '',
         password2: '',
-        authcode: '',
+        verify_code: '',
         srccode: '',
         seicode: '',
         authtoken: '',
@@ -107,6 +107,7 @@ export default {
 
       },
       captcha: {"captcha_image": '', "captcha_key": '', "length": 8},
+      auth_rules: {},
       allow_r: false,
       allow_ways: {},
       rutitle: '',
@@ -132,9 +133,10 @@ export default {
           if (jdata.enable) {
             this.allow_r = true;
             this.allow_ways = jdata.register_type;
-            this.form.authcode = '';
+            this.form.verify_code = '';
             this.set_rtitle();
-            this.captcha = data.data;
+            this.auth_rules = data.data.auth_rules;
+            this.captcha = this.auth_rules.captcha;
           } else {
             this.allow_r = false;
             this.$message({
@@ -181,19 +183,19 @@ export default {
       if (checkEmail(this.form.email)) {
         act = 'email'
       }
-      let authcode = this.form.authcode;
-      let captcha_flag = authcode.length === this.captcha.length;
+      let verify_code = this.form.verify_code;
+      let captcha_flag = verify_code.length === this.captcha.length;
       if (this.captcha.captcha_key === '' || !this.captcha.captcha_key) {
         captcha_flag = true
       }
       if (captcha_flag) {
         let picode = {
-          "authcode": authcode,
+          "verify_code": verify_code,
           "captcha_key": this.captcha.captcha_key,
           "icode": this.form.icode,
         };
         let params = {'act': act, 'target': this.form.email, 'ext': picode};
-        if (this.captcha.geetest) {
+        if (this.auth_rules.geetest) {
           geetest(this, this.form.email, params, (n_params) => {
             this.do_get_auth_token(n_params);
           })
@@ -277,8 +279,8 @@ export default {
       if (!this.docheck()) {
         return
       }
-      let authcode = this.form.authcode;
-      let captcha_flag = authcode.length === this.captcha.length;
+      let verify_code = this.form.verify_code;
+      let captcha_flag = verify_code.length === this.captcha.length;
       if (this.captcha.captcha_key === '' || !this.captcha.captcha_key) {
         captcha_flag = true
       }
@@ -292,7 +294,7 @@ export default {
             "auth_key": this.form.seicode
           };
           this.register_disable = true;
-          if (this.captcha.geetest) {
+          if (this.auth_rules.geetest) {
             geetest(this, this.form.email, params, (n_params) => {
               this.do_register(n_params);
             })

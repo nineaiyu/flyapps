@@ -17,8 +17,7 @@ from django.db.models import Count, F
 
 from api.models import UserInfo, AppReleaseInfo, Apps
 from api.utils.response import BaseResponse
-from api.utils.utils import send_ios_developer_active_status, delete_local_files, \
-    download_files_form_oss
+from api.utils.utils import delete_local_files, download_files_form_oss
 from common.base.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
     get_format_time, make_app_uuid, make_from_user_uuid
 from common.base.magic import run_function_by_locker, call_function_try_attempts
@@ -35,7 +34,7 @@ from xsign.utils.iossignapi import ResignApp, AppDeveloperApiV2
 from xsign.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign, \
     update_or_create_developer_udid_info, check_uid_has_relevant, get_developer_udided
 from xsign.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
-from xsign.utils.utils import delete_app_to_dev_and_file
+from xsign.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status
 
 logger = logging.getLogger(__name__)
 

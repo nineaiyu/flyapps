@@ -6,63 +6,53 @@
 
 import logging
 
+from common.cache.storage import TempCache
 from common.core.sysconfig import Config
 from common.libs.sendmsg.aliyunApi import AliMsgSender
 from common.libs.sendmsg.emailApi import EmailMsgSender
 from common.libs.sendmsg.jiguangApi import JiGuangMsgSender
+from common.utils.token import generate_numeric_token_of_length, make_token, verify_token
 
 logger = logging.getLogger(__name__)
 
 
-def get_default_sender(send_type):
-    """
-        sender_type :
-            0: 邮件
-            1: 阿里云
-            2: 极光
-    """
-    for sender in Config.SENDER:
-        if sender.get("active", None):
-            sender_type = sender.get('type', None)
-            auth = sender.get('auth', {})
-            if sender_type == 0 and send_type == 0:
-                return EmailMsgSender(**auth)
-            if sender_type == 1:
-                return AliMsgSender(**auth)
-            elif sender_type == 2:
-                return JiGuangMsgSender(**auth)
-            else:
-                continue
-    return None
-
-
-def get_sms_sender():
-    return get_default_sender(1)
-
-
-def get_email_sender():
-    return get_default_sender(0)
-
-
 class SendMessage(object):
-    def __init__(self, send_type):
+    def __init__(self, sender_type):
         """
-        :param send_type:  sms or email
+        :param sender_type:  sms or email
         """
-        self.send_type = send_type
+        self.sender_type = sender_type
         try:
-            if send_type == 'sms':
-                self.sender = get_sms_sender()
-            elif send_type == 'email':
-                self.sender = get_email_sender()
+            self.sender = self.__get_default_sender()
             if self.sender is None:
                 raise
         except Exception as e:
-            logger.error(f"get {send_type} sender failed Exception:{e}")
+            logger.error(f"get {sender_type} sender failed Exception:{e}")
             self.sender = None
 
+    def __get_default_sender(self):
+        """
+            sender_type :
+                0: 邮件
+                1: 阿里云
+                2: 极光
+        """
+        for sender in Config.SENDER:
+            if sender.get("active", None):
+                sender_type = sender.get('type', None)
+                auth = sender.get('auth', {})
+                if sender_type == 0 and self.sender_type == 'email':
+                    return EmailMsgSender(**auth)
+                if sender_type == 1:
+                    return AliMsgSender(**auth)
+                elif sender_type == 2:
+                    return JiGuangMsgSender(**auth)
+                else:
+                    continue
+        return None
+
     def send_email_msg(self, email, text):
-        if self.send_type == 'email':
+        if self.sender_type == 'email':
             status, msg = self.sender.send_email_msg(email, text)
             logger.info(f"send_email_msg target:{email} text:{text} status:{status} msg:{msg}")
             return status, msg
@@ -71,3 +61,41 @@ class SendMessage(object):
         status, msg = self.sender.send_msg_by_act(target, code, act)
         logger.info(f"send_{act}_msg target:{target} code:{code} status:{status} msg:{msg}")
         return status, msg
+
+
+def get_sender_token(sender, user_id, target, action, msg=None):
+    code = generate_numeric_token_of_length(6)
+    if msg:
+        code = msg
+    if target in Config.WHITE_SENDER_LIST:
+        code = str(Config.WHITE_SENDER_CODE)
+    token = make_token(code, time_limit=300, key=user_id)
+    TempCache(user_id, token).set_storage_cache(target, 60 * 5)
+    if target in Config.WHITE_SENDER_LIST:
+        return token, code
+    if action in ('change', 'password', 'register', 'login', 'common'):
+        sender.send_msg_by_act(target, code, action)
+    elif action == 'msg':
+        sender.send_email_msg(target, msg)
+    else:
+        logger.error(f"get_sender_token failed. action is {action}")
+        return None, None
+    return token, code
+
+
+def get_sender_sms_token(key, phone, action, msg=None):
+    sender = SendMessage('sms')
+    if sender.sender:
+        return get_sender_token(sender, key, phone, action, msg)
+    return False, False
+
+
+def is_valid_sender_code(key, token, code, success_once=False):
+    return verify_token(token, code, success_once), TempCache(key, token).get_storage_cache()
+
+
+def get_sender_email_token(key, email, action, msg=None):
+    sender = SendMessage('email')
+    if sender.sender:
+        return get_sender_token(sender, key, email, action, msg)
+    return False, False

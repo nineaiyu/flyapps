@@ -43,7 +43,7 @@
         </div>
         <div class="content-row">
           <div v-if="captcha.captcha_image" class="report_captcha">
-            <input v-model="report_info.authcode" maxlength="6" placeholder="请输入图片验证码" type="text"/>
+            <input v-model="report_info.verify_code" maxlength="6" placeholder="请输入图片验证码" type="text"/>
             <img :src="captcha.captcha_image" alt="验证码" @click="get_auth_code"/>
           </div>
 
@@ -355,12 +355,13 @@ export default {
   data() {
     return {
       captcha: {"captcha_image": '', "captcha_key": '', "length": 8},
+      auth_rules: {},
       report_info: {
         'username': '',
         'report_type': '',
         'report_reason': '',
         'seicode': '',
-        'authcode': '',
+        'verify_code': '',
         'email': '',
         'auth_token': '',
         'act': 'email',
@@ -459,12 +460,12 @@ export default {
       }
 
       let picode = {
-        "authcode": this.report_info.authcode,
+        "verify_code": this.report_info.verify_code,
         "captcha_key": this.captcha.captcha_key,
         "report": this.currentappinfo.app_id
       };
       let params = {'act': this.report_info.act, 'target': this.report_info.email, 'ext': picode};
-      if (this.captcha.geetest) {
+      if (this.auth_rules.geetest) {
         geetest(this, this.report_info.email, params, (n_params) => {
           this.do_get_auth_token(n_params);
         })
@@ -487,7 +488,8 @@ export default {
         if (data.code === 1000) {
           let jdata = data.data;
           if (jdata.enable) {
-            this.captcha = data.data;
+            this.auth_rules = data.data.auth_rules;
+            this.captcha = this.auth_rules.captcha;
             if (data.data.s_list) {
               this.report_info_list = data.data.s_list;
             }

@@ -9,14 +9,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import Apps, AppReportInfo
+from api.utils.auth.util import AuthInfo
 from api.utils.modelutils import add_remote_info_from_request
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppReportSerializer
-from api.utils.utils import is_valid_sender_code, get_captcha
 from common.base.baseutils import get_real_ip_address, get_choices_dict
 from common.core.sysconfig import Config
 from common.core.throttle import InstallThrottle2
 from common.utils.caches import login_auth_failed
+from common.utils.sendmsg import is_valid_sender_code
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +30,8 @@ class ReportView(APIView):
         response.data = {}
         allow_f = Config.REPORT.get("enable")
         if allow_f:
-            if Config.REPORT.get("captcha"):
-                response.data = get_captcha()
-            if Config.REPORT.get("geetest"):
-                response.data['geetest'] = True
+            auth_obj = AuthInfo(Config.REPORT.get("captcha"), Config.REPORT.get("geetest"))
+            response.data['auth_rules'] = auth_obj.make_rules_info()
             response.data['report_type'] = Config.REPORT.get("report_type")
             response.data['s_list'] = get_choices_dict(AppReportInfo.report_type_choices)
         response.data['enable'] = allow_f

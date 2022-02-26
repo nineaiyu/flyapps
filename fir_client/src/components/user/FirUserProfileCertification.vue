@@ -100,7 +100,7 @@
       </el-form-item>
 
 
-      <el-form-item v-if="captcha.change_type.sms" label="手机号码">
+      <el-form-item v-if="change_type.sms" label="手机号码">
         <el-row :gutter="36">
           <el-col :span="18">
             <el-input ref="phone" v-model="form.mobile" clearable
@@ -111,7 +111,7 @@
       <el-form-item v-if="captcha.captcha_image" label="图片验证码">
         <el-row :gutter="11">
           <el-col :span="12">
-            <el-input v-model="form.authcode" clearable maxlength="6" placeholder="请输入图片验证码"/>
+            <el-input v-model="form.verify_code" clearable maxlength="6" placeholder="请输入图片验证码"/>
           </el-col>
           <el-col :span="6">
             <el-image
@@ -123,7 +123,7 @@
         </el-row>
       </el-form-item>
 
-      <el-form-item v-if="captcha.change_type.sms" label="手机验证码">
+      <el-form-item v-if="change_type.sms" label="手机验证码">
         <el-row :gutter="11">
           <el-col :span="12">
             <el-input v-model="form.auth_key" clearable maxlength="6"
@@ -232,10 +232,11 @@ export default {
       captcha: {
         captcha_image: '',
         captcha_key: '',
-        authcode: '',
+        verify_code: '',
         length: 8,
-        change_type: {email: false, sms: false}
       },
+      change_type: {email: false, sms: false},
+      auth_rules: {},
       user_certification: {'one': '', 'two': '', 'three': ''},
       certification: {},
       certification_status: 0,
@@ -264,7 +265,7 @@ export default {
         this.$message.error("身份证输入不合法");
         return false;
       }
-      if (this.captcha.change_type.sms) {
+      if (this.change_type.sms) {
         let checkp = checkphone(this.form.mobile);
         if (!checkp) {
           this.$message.error("手机号输入不合法");
@@ -306,15 +307,15 @@ export default {
 
     getsmsemailcode(act, target) {
       let picode = {
-        "authcode": this.form.authcode,
+        "verify_code": this.form.verify_code,
         "captcha_key": this.captcha.captcha_key,
       };
       if (this.captcha.captcha_image) {
-        if (!this.form.authcode) {
+        if (!this.form.verify_code) {
           this.$message.error("图片验证码输入有误");
           return;
         }
-        let captcha_flag = this.form.authcode.length === this.captcha.length;
+        let captcha_flag = this.form.verify_code.length === this.captcha.length;
         if (this.captcha.captcha_key === '' || !this.captcha.captcha_key) {
           captcha_flag = true
         }
@@ -331,7 +332,7 @@ export default {
       }
 
       let params = {'act': act, 'target': target, 'ext': picode, 'user_id': target, 'ftype': 'certification'};
-      if (this.captcha.geetest) {
+      if (this.auth_rules.geetest) {
         geetest(this, this.form.mobile, params, (n_params) => {
           this.get_phone_code(n_params);
         })
@@ -359,12 +360,14 @@ export default {
     },
 
     get_auth_code() {
-      if (this.form.authcode) {
-        this.form.authcode = '';
+      if (this.form.verify_code) {
+        this.form.verify_code = '';
       }
       changeInfoFun(data => {
         if (data.code === 1000) {
-          this.captcha = data.data;
+          this.change_type = data.data.change_type;
+          this.auth_rules = data.data.auth_rules;
+          this.captcha = this.auth_rules.captcha
           if (this.captcha.captcha_key) {
             this.form.captcha_key = this.captcha.captcha_key;
           }

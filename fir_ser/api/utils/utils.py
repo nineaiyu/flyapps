@@ -8,50 +8,20 @@ import datetime
 import logging
 import os
 
-from captcha.helpers import captcha_image_url
-from captcha.models import CaptchaStore
 from django.core.cache import cache
 
 from api.models import UserInfo, AppReleaseInfo, AppScreenShot, Token, UserAdDisplayInfo
 from api.utils.modelutils import get_app_d_count_by_app_id
 from common.base.baseutils import get_real_ip_address
-from common.cache.storage import UserTokenCache, TempCache
+from common.cache.storage import UserTokenCache
 from common.core.signals import xsign_migrate_data_signal, xsign_clean_data_signal
-from common.core.sysconfig import Config
 from common.libs.storage.localApi import LocalStorage
 from common.utils.caches import consume_user_download_times
-from common.utils.sendmsg import SendMessage
 from common.utils.storage import Storage
-from common.utils.token import generate_numeric_token_of_length, generate_alphanumeric_token_of_length, make_token, \
-    verify_token
+from common.utils.token import generate_alphanumeric_token_of_length
 from fir_ser.settings import MEDIA_ROOT
 
 logger = logging.getLogger(__name__)
-
-
-def get_captcha():
-    # 随机字符串
-    random_char_fun = 'captcha.helpers.random_char_challenge'
-
-    # 数学运算
-    math_fun = 'captcha.helpers.math_challenge'
-
-    captcha_key = CaptchaStore.generate_key(random_char_fun)
-    captcha_image = captcha_image_url(captcha_key)
-    local_storage = LocalStorage(**Config.IOS_PMFILE_DOWNLOAD_DOMAIN)
-    return {"captcha_image": "/".join([local_storage.get_base_url(), captcha_image.strip("/"), '']),
-            "captcha_key": captcha_key,
-            "length": len(CaptchaStore.objects.filter(hashkey=captcha_key).first().response)}
-
-
-def valid_captcha(captcha_key, code, username):
-    if username:
-        captcha_obj = CaptchaStore.objects.filter(hashkey=captcha_key).values("response").first()
-        logger.info(f"captcha_key:{captcha_key} code:{code}  challenge:{captcha_obj}")
-        if captcha_obj:
-            if captcha_key and code and code.strip(" ").lower() == captcha_obj.get("response").lower():
-                return True
-    return False
 
 
 def upload_oss_default_head_img(user_obj, storage_obj):
@@ -59,40 +29,6 @@ def upload_oss_default_head_img(user_obj, storage_obj):
     if storage_obj:
         storage_obj = Storage(user_obj, storage_obj)
         return storage_obj.upload_file(head_img_full_path)
-
-
-def get_sender_token(sender, user_id, target, action, msg=None):
-    code = generate_numeric_token_of_length(6)
-    if msg:
-        code = msg
-    token = make_token(code, time_limit=300, key=user_id)
-    TempCache(user_id, token).set_storage_cache(target, 60 * 5)
-    if action in ('change', 'password', 'register', 'login', 'common'):
-        sender.send_msg_by_act(target, code, action)
-    elif action == 'msg':
-        sender.send_email_msg(target, msg)
-    else:
-        logger.error(f"get_sender_token failed. action is {action}")
-        return None, None
-    return token, code
-
-
-def get_sender_sms_token(key, phone, action, msg=None):
-    sender = SendMessage('sms')
-    if sender.sender:
-        return get_sender_token(sender, key, phone, action, msg)
-    return False, False
-
-
-def is_valid_sender_code(key, token, code, success_once=False):
-    return verify_token(token, code, success_once), TempCache(key, token).get_storage_cache()
-
-
-def get_sender_email_token(key, email, action, msg=None):
-    sender = SendMessage('email')
-    if sender.sender:
-        return get_sender_token(sender, key, email, action, msg)
-    return False, False
 
 
 def check_username_exists(username):
@@ -107,15 +43,6 @@ def get_random_username(length=16):
     if check_username_exists(username):
         return get_random_username(length)
     return username
-
-
-def send_ios_developer_active_status(user_info, msg):
-    act = 'email'
-    email = user_info.email
-    if email:
-        get_sender_email_token(act, email, 'msg', msg)
-    else:
-        logger.warning(f"user {user_info} has no email. so {msg} can't send!")
 
 
 def get_filename_from_apptype(filename, apptype):
