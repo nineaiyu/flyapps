@@ -5,14 +5,17 @@
 # date: 2021/9/6
 import json
 import logging
+import urllib
 from hashlib import sha1
 
 import requests
+from django.urls import reverse
 
 from common.base.baseutils import get_format_time
 from common.cache.storage import WxTokenCache
 from common.core.sysconfig import Config
 from common.libs.mp.utils import WxMsgCryptBase
+from common.libs.storage.localApi import LocalStorage
 
 logger = logging.getLogger(__name__)
 
@@ -401,3 +404,64 @@ class WxTemplateMsg(object):
             },
         }
         return self.send_msg(to_user, msg_id, content_data)
+
+
+class WxWebLogin(object):
+    """
+    通过网页授权，获取用户授权信息【公众号已经无法获取用户的昵称头像等隐私信息】
+    https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webpage_authorization.html
+    """
+
+    def __init__(self):
+        self.openid = None
+        self.access_token = None
+        auth_info = Config.THIRDLOGINCONF.get('auth')
+        self.app_id = auth_info.get('app_id')
+        self.app_secret = auth_info.get('app_secret')
+
+    def make_auth_uri(self):
+        """
+        第一步： 用户通过微信客户端打开该URI
+        :return:
+        """
+        # url = 'https://app.hehelucky.cn/api/v1/fir/server/wxweb'  # 该url是前端页面，用户微信跳转，后端页面也行
+        local_storage = LocalStorage(**Config.IOS_PMFILE_DOWNLOAD_DOMAIN)
+        url = f'{local_storage.get_base_url()}{reverse("mp.web.login")}'
+        encode_url = urllib.parse.quote(url, safe='/', encoding=None, errors=None)
+        code_url = f'https://open.weixin.qq.com/connect/oauth2/authorize?appid={self.app_id}&redirect_uri={encode_url}&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect'
+        return code_url
+
+    def get_wx_token(self, code):
+        """
+        第二步： 获取授权之后，微信会携带code并且自动跳转,然后通过code获取授权token，自测该token只能获取该用户信息，无法获取其他用户信息
+        :param code:
+        :return:
+            {
+              "access_token":"ACCESS_TOKEN",
+              "expires_in":7200,
+              "refresh_token":"REFRESH_TOKEN",
+              "openid":"OPENID",
+              "scope":"SCOPE"
+            }
+        """
+        t_url = f'https://api.weixin.qq.com/sns/oauth2/access_token?appid={self.app_id}&secret={self.app_secret}&code={code}&grant_type=authorization_code'
+        req = requests.get(t_url)
+        if req.status_code == 200:
+            logger.info(f"get access token {req.status_code} {req.text}")
+            auth_info = req.json()
+            self.access_token = auth_info.get('access_token')
+            self.openid = auth_info.get('openid')
+            return auth_info
+        return {}
+
+    def get_user_info(self):
+        """
+        第三步： 通过token获取用户信息
+        :return:
+        """
+        t_url = f'https://api.weixin.qq.com/sns/userinfo?access_token={self.access_token}&openid={self.openid}&lang=zh_CN'
+        req = requests.get(t_url)
+        if req.status_code == 200:
+            req.encoding = 'utf-8'
+            return req.json()
+        return {}

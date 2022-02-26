@@ -14,6 +14,7 @@ from api.utils.modelutils import PageNumber
 from api.utils.response import BaseResponse
 from api.utils.serializer import PriceSerializer, OrdersSerializer
 from common.base.baseutils import get_order_num, get_choices_dict
+from common.base.magic import get_pending_result
 from common.core.auth import ExpiringTokenAuthentication
 from common.libs.pay.util import get_pay_obj_form_name, get_enable_pay_choices, get_payment_type
 from common.utils.caches import update_order_status
@@ -50,7 +51,6 @@ class OrderView(APIView):
         pay_id = request.data.get("pay_id", None)
         order_number = request.data.get("order_number", None)
         if (price_id and pay_id) or order_number:
-            price_obj = Price.objects.filter(name=price_id).first()
             order_obj = Order.objects.filter(user_id=request.user, order_number=order_number).first()
             if order_obj and order_obj.status in [1, 2] and order_obj.payment_name:
                 pay_obj = get_pay_obj_form_name(order_obj.payment_name)
@@ -60,6 +60,8 @@ class OrderView(APIView):
                     res.data = pay_url
                     logger.info(f"{request.user} 下单成功 {res.dict}")
                     return Response(res.dict)
+
+            price_obj = Price.objects.filter(name=price_id).first()
             if price_obj:
                 try:
                     order_number = get_order_num()
@@ -114,6 +116,30 @@ class OrderView(APIView):
         else:
             res.code = 1001
             res.msg = "订单有误"
+        return Response(res.dict)
+
+
+def get_order_obj(user_obj, order_number):
+    return Order.objects.filter(user_id=user_obj, order_number=order_number).first()
+
+
+def except_result(result, *args, **kwargs):
+    if result and result.status in [0, 4, 5, 6]:
+        return True
+
+
+class OrderSyncView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+
+    def post(self, request):
+        res = BaseResponse()
+        order_number = request.data.get("order_number", None)
+        if order_number:
+            status, result = get_pending_result(get_order_obj, except_result, order_number=order_number,
+                                                locker_key=order_number, user_obj=request.user)
+            if not status and result:
+                res.code = 1001
+            res.msg = result.get_status_display()
         return Response(res.dict)
 
 

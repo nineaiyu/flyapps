@@ -11,6 +11,22 @@
                     微信授权登录用户信息
                 </span>
       <el-tag style="margin-bottom: 10px">授权用户将可以使用微信扫码直接登录</el-tag>
+      <el-button plain style="float: right;margin-top: 10px" @click="wx_web_login_fun"> 点击扫码同步微信用户信息</el-button>
+      <el-dialog
+          :visible.sync="show_web_visible"
+          append-to-body
+          center
+          title="手机微信扫码更新个人信息"
+          width="360px">
+        <vue-qr ref="qr"
+                :correctLevel="qrinfo.correctLevel"
+                :logoCornerRadius="qrinfo.logoCornerRadius"
+                :logoScale="qrinfo.logoScale"
+                :margin="qrinfo.margin"
+                :size="300" :text="wx_web_login_url"
+                class="code-wrap">
+        </vue-qr>
+      </el-dialog>
       <el-table
           :data="wx_user_list"
           border
@@ -286,11 +302,15 @@
 </template>
 
 <script>
-import {changeInfoFun, getAuthcTokenFun, userinfos, wxBindFun, wxLoginFun, wxutils} from '@/restful'
+import {changeInfoFun, getAuthcTokenFun, userinfos, wxBindFun, wxLoginFun, wxutils, wxWebScanFun} from '@/restful'
 import {deepCopy, geetest} from "@/utils";
+import VueQr from 'vue-qr';
 
 export default {
   name: "FirUserProfileInfo",
+  components: {
+    VueQr
+  },
   data() {
     return {
       userinfo: {
@@ -311,10 +331,29 @@ export default {
       wx_visible: false,
       loop_flag: false,
       show_wx_visible: false,
+      show_web_visible: false,
+      qrinfo: {
+        logoScale: 0.3,
+        logoCornerRadius: 12,
+        correctLevel: 3,
+        margin: 20
+      },
+      wx_web_login_url: '',
       wx_user_list: [],
       pagination: {"currentPage": 1, "total": 0, "pagesize": 999},
     }
   }, methods: {
+    wx_web_login_fun() {
+      wxWebScanFun(data => {
+        if (data.code === 1000) {
+          this.show_web_visible = true;
+          this.wx_web_login_url = data.data;
+        } else {
+          this.$message.error("信息获取失败")
+        }
+      }, {methods: 'GET'})
+
+    },
     delete_wx_u(wx_user_info) {
       this.$prompt(`此操作将导致微信用户 “${wx_user_info.nickname}” 无法通过扫码登录, 是否继续删除?`, '警告', {
         confirmButtonText: '确定',

@@ -247,7 +247,7 @@
 
 <script>
 
-import {my_order} from "@/restful";
+import {my_order, order_sync} from "@/restful";
 import {format_choices, getUserInfoFun} from '@/utils'
 import VueQr from 'vue-qr';
 
@@ -297,17 +297,37 @@ export default {
         methods: 'PUT', data: {order_number: order.order_number, act: 'cancel'},
       })
     },
+
+    loop_get_order_info(order_number, c_count = 1) {
+      order_sync(data => {
+        c_count += 1;
+        if (c_count > 30) {
+          return;
+        }
+        if (data.code === 1000) {
+          this.$message.success(data.msg);
+          this.get_data_from_tabname();
+          this.wx_pay = false;
+        } else if (data.code === 1001) {
+          return this.loop_get_order_info(order_number, c_count)
+        }
+      }, {
+        "methods": "POST",
+        data: {"order_number": order_number}
+      })
+    },
+
     goto_pay(order) {
       this.current_order_info = order;
       my_order(res => {
         if (res.code === 1000) {
           let data = res.data;
           if (data && data.url) {
-
             if (data && data.type === 'WX') {
               this.pay_code_url = data.url;
               this.wx_pay = true;
               this.$message.success("请用微信扫描支付");
+              this.loop_get_order_info(order.order_number)
             } else if (data && data.type === 'ALI') {
               let pay_url = data.url;
               if (pay_url && pay_url.length > 10) {

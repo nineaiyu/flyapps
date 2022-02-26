@@ -254,6 +254,20 @@ export function wxBindFun(callBack, params, load = true) {
     );
 }
 
+/**微信web扫码授权 */
+export function wxWebScanFun(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/mp.web.login',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
 
 /**获取验证token */
 export function getAuthTokenFun(callBack, params, load = true) {
@@ -550,6 +564,21 @@ export function my_order(callBack, params, load = true) {
     getData(
         params.methods,
         USERSEVER + '/orders',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+/**用户订单支付同步 */
+export function order_sync(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/orders.sync',
         params.data,
         data => {
             callBack(data);

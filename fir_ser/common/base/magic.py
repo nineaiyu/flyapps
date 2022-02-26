@@ -65,7 +65,7 @@ def call_function_try_attempts(try_attempts=3, sleep_time=2, failed_callback=Non
     return decorator
 
 
-def get_pending_result(func, expect_func, timeout=10, sleep_time=3, *args, **kwargs):
+def get_pending_result(func, expect_func, timeout=30, sleep_time=3, *args, **kwargs):
     try:
         with cache.lock("%s_%s" % ('get_pending_result', kwargs.get('locker_key')), timeout=timeout + sleep_time):
             count = 1
@@ -76,8 +76,8 @@ def get_pending_result(func, expect_func, timeout=10, sleep_time=3, *args, **kwa
                     return True, result
                 time.sleep(sleep_time)
                 if timeout < count * sleep_time:
-                    return False, 'timeout'
+                    return False, result
                 count += 1
     except Exception as e:
         logger.warning(f'get pending result exception: {e}')
-        return False, 'timeout'
+        return False, result

@@ -21,9 +21,9 @@ from api.views.domain import DomainCnameView, DomainInfoView
 from api.views.download import ShortDownloadView, InstallView, DownloadView
 from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, \
     UserApiTokenView, CertificationView, ChangeInfoView
-from api.views.login_wx import WeChatLoginView, WeChatLoginCheckView, WeChatBindView
+from api.views.login_wx import WeChatLoginView, WeChatLoginCheckView, WeChatBindView, WeChatWebLoginView
 from api.views.logout import LogoutView
-from api.views.order import PriceView, OrderView, PaySuccess
+from api.views.order import PriceView, OrderView, PaySuccess, OrderSyncView
 from api.views.report import ReportView
 from api.views.storage import StorageView, CleanStorageView
 from api.views.thirdlogin import ValidWxChatToken, ThirdWxAccount
@@ -55,11 +55,13 @@ urlpatterns = [
     re_path("^qrcode$", AppsQrcodeShowView.as_view()),
     re_path("^package_prices$", PriceView.as_view()),
     re_path("^orders$", OrderView.as_view()),
+    re_path("^orders.sync$", OrderSyncView.as_view()),
     re_path("^certification$", CertificationView.as_view()),
     re_path(r"^pay_success/(?P<name>\w+)$", PaySuccess.as_view()),
     re_path("^cname_domain$", DomainCnameView.as_view()),
     re_path("^domain_info$", DomainInfoView.as_view()),
     re_path("^mp.weixin$", ValidWxChatToken.as_view()),
+    re_path("^mp.web.login$", WeChatWebLoginView.as_view(), name="mp.web.login"),
     re_path("^third.wx.login$", WeChatLoginView.as_view()),
     re_path("^third.wx.bind$", WeChatBindView.as_view()),
     re_path("^third.wx.sync$", WeChatLoginCheckView.as_view()),
