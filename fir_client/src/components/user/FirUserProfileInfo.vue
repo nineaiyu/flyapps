@@ -329,7 +329,6 @@ export default {
       form: {},
       wx_login_qr_url: '',
       wx_visible: false,
-      loop_flag: false,
       show_wx_visible: false,
       show_web_visible: false,
       qrinfo: {
@@ -403,6 +402,9 @@ export default {
         this.$message.error("获取登陆码失败，请稍后再试");
         return
       }
+      if (!this.wx_visible) {
+        return;
+      }
       wxLoginFun(data => {
         c_count += 1;
         if (c_count > 30) {
@@ -412,7 +414,6 @@ export default {
           if (this.userinfo.uid === data.userinfo.uid) {
             this.$message.success("绑定成功");
             this.wx_visible = false;
-            this.loop_flag = false;
           }
         } else if (data.code === 1005) {
           this.$message({
@@ -435,18 +436,14 @@ export default {
         wxBindFun(data => {
           if (data.code === 1000) {
             this.wx_login_qr_url = data.data.qr;
-            this.loop_flag = true;
             this.loop_get_wx_info(data.data.ticket);
           } else {
             this.$message.error(data.msg);
             this.wx_visible = false;
-            this.loop_flag = false;
           }
         }, {
           "methods": "POST",
         })
-      } else {
-        this.loop_flag = false;
       }
     },
     get_auth_code() {

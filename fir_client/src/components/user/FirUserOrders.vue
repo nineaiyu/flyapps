@@ -299,6 +299,9 @@ export default {
     },
 
     loop_get_order_info(order_number, c_count = 1) {
+      if (!this.wx_pay) {
+        return
+      }
       order_sync(data => {
         c_count += 1;
         if (c_count > 30) {

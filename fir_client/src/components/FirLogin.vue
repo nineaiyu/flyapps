@@ -144,6 +144,9 @@ export default {
         this.$message.error("获取登陆码失败，请稍后再试");
         return
       }
+      if (!this.wx_visible) {
+        return;
+      }
       wxLoginFun(data => {
         c_count += 1;
         if (c_count > 30) {
