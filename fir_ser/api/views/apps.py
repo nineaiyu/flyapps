@@ -16,10 +16,10 @@ from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot
 from api.utils.modelutils import get_user_domain_name, get_app_domain_name
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer, AppsQrListSerializer
+from api.utils.signalutils import run_delete_app_signal
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
 from common.cache.state import MigrateStorageState
 from common.core.auth import ExpiringTokenAuthentication
-from common.core.signals import delete_app_signal
 from common.utils.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
 from common.utils.storage import Storage
 
@@ -249,7 +249,7 @@ class AppReleaseInfoView(APIView):
                         app_release_obj.delete()
                     elif app_release_obj.is_master and app_release_count < 2:
                         logger.info(f"delete app master release {app_release_obj} and clean app {app_obj}")
-                        delete_app_signal.send(None, app_pk=app_obj)
+                        run_delete_app_signal(app_obj)
 
                         storage.delete_file(app_release_obj.release_id, app_release_obj.release_type)
                         delete_local_files(app_release_obj.release_id, app_release_obj.release_type)

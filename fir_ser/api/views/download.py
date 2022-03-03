@@ -16,6 +16,7 @@ from api.utils.modelutils import get_filename_form_file, check_app_domain_name_a
     ad_random_weight, get_app_download_uri
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
+from api.utils.signalutils import run_get_xsign_binary_file
 from common.base.baseutils import get_origin_domain_name, format_get_uri, make_random_uuid, make_resigned
 from common.core.decorators import cache_response  # 本来使用的是 drf-extensions==0.7.0 但是还未支持该版本Django
 from common.core.response import mobileprovision_file_response, file_response, ApiResponse
@@ -76,8 +77,11 @@ class DownloadView(APIView):
                 file_path = os.path.join(settings.MEDIA_ROOT, filename)
                 try:
                     if os.path.isfile(file_path):
+                        status, x_filename = run_get_xsign_binary_file(filename)
+                        if not status:
+                            x_filename = get_filename_form_file(filename)
                         return FileResponse(open(file_path, 'rb'), as_attachment=True,
-                                            filename=get_filename_form_file(filename))
+                                            filename=x_filename)
                 except Exception as e:
                     logger.error(f"read {file_path} failed  Exception:{e}")
 

@@ -163,3 +163,19 @@ def get_app_sign_info(app_obj):
         'private_developer_used_number': DeveloperDevicesID.objects.filter(app_id=app_obj,
                                                                            developerid__appledevelopertoappuse__app_id=app_obj).distinct().count()
     }
+
+
+def get_filename_form_file(filename):
+    file_id_list = filename.split('.')
+    check = False
+    if file_id_list[-1] in ['ipa']:
+        app_to_obj = APPToDeveloper.objects.filter(binary_file='.'.join(file_id_list[0:-1])).first()
+        if app_to_obj:
+            app_obj = app_to_obj.app_id
+            if app_obj.type == 0:
+                f_type = '.apk'
+            else:
+                f_type = '.ipa'
+            filename = f"{app_obj.name}-sign-{app_obj.short}{f_type}"
+            check = True
+    return check, filename

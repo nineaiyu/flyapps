@@ -14,10 +14,10 @@ from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, Certificat
 from api.utils.apputils import get_random_short, save_app_infos
 from api.utils.modelutils import get_app_download_uri, check_bundle_id_legal
 from api.utils.response import BaseResponse
+from api.utils.signalutils import run_signal_resign_utils
 from common.base.baseutils import make_app_uuid, make_from_user_uuid
 from common.cache.state import MigrateStorageState
 from common.core.auth import ExpiringTokenAuthentication
-from common.core.signals import run_resign_task_signal
 from common.core.sysconfig import Config
 from common.utils.caches import upload_file_tmp_name, del_cache_response_by_short
 from common.utils.storage import Storage
@@ -145,7 +145,7 @@ class AppAnalyseView(APIView):
 
                 app_obj = Apps.objects.filter(bundle_id=data.get("bundleid"), user_id=request.user, type=1).first()
                 if app_obj:
-                    run_resign_task_signal.send(sender=None, app_obj=app_obj)
+                    run_signal_resign_utils(app_obj)
             else:
                 storage.delete_file(app_tmp_filename)
                 storage.delete_file(png_tmp_filename)

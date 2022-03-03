@@ -12,9 +12,9 @@ from django.core.cache import cache
 
 from api.models import UserInfo, AppReleaseInfo, AppScreenShot, Token, UserAdDisplayInfo
 from api.utils.modelutils import get_app_d_count_by_app_id
+from api.utils.signalutils import run_xsign_migrate_data, run_xsign_clean_data
 from common.base.baseutils import get_real_ip_address
 from common.cache.storage import UserTokenCache
-from common.core.signals import xsign_migrate_data_signal, xsign_clean_data_signal
 from common.libs.storage.localApi import LocalStorage
 from common.utils.caches import consume_user_download_times
 from common.utils.storage import Storage
@@ -157,8 +157,7 @@ def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
             for screenshot_obj in AppScreenShot.objects.filter(app_id=app_release_obj.app_id).all():
                 migrating_storage_file_data(user_obj, screenshot_obj.screenshot_url, new_storage_obj, clean_old_data)
             # 迁移超级签数据
-            xsign_migrate_data_signal.send(None, app_release_obj=app_release_obj, user_obj=user_obj,
-                                           new_storage_obj=new_storage_obj, clean_old_data=clean_old_data)
+            run_xsign_migrate_data(app_release_obj, user_obj, new_storage_obj, clean_old_data)
             # for apptodev_obj in APPToDeveloper.objects.filter(app_id=app_release_obj.app_id).all():
             #     filename = get_filename_from_apptype(apptodev_obj.binary_file, app_release_obj.release_type)
             #     migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data)
@@ -176,7 +175,7 @@ def clean_storage_data(user_obj, storage_obj=None):
         storage_obj.delete_file(app_release_obj.icon_url)
         for screenshot_obj in AppScreenShot.objects.filter(app_id=app_release_obj.app_id).all():
             storage_obj.delete_file(screenshot_obj.screenshot_url)
-        xsign_clean_data_signal.send(None, app_release_obj=app_release_obj, storage_obj=storage_obj)
+        run_xsign_clean_data(app_release_obj, storage_obj)
         # for apptodev_obj in APPToDeveloper.objects.filter(app_id=app_release_obj.app_id).all():
         #     storage_obj.delete_file(apptodev_obj.binary_file, app_release_obj.release_type)
     return True

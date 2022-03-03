@@ -96,6 +96,8 @@ def get_min_default_domain_cname_obj(is_system=True):
 def get_filename_form_file(filename):
     file_id_list = filename.split('.')
     if file_id_list[-1] in ['ipa', 'apk']:
+        # app_release_obj = APPToDeveloper.objects.filter(binary_file='.'.join(file_id_list[0:-1])).first()
+        # if not app_release_obj:
         app_release_obj = AppReleaseInfo.objects.filter(release_id='.'.join(file_id_list[0:-1])).first()
         if app_release_obj:
             app_obj = app_release_obj.app_id

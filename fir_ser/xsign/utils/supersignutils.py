@@ -51,6 +51,14 @@ def check_org_file(user_obj, org_file):
 
 
 def resign_by_app_id_and_developer(app_id, developer_id, developer_app_id, need_download_profile=True, force=True):
+    """
+    :param app_id:
+    :param developer_id:
+    :param developer_app_id:
+    :param need_download_profile:
+    :param force:  检测到已经是最新签名了，是否还继续强制签名， True 表示 强制， False 表示不强制，默认强制继续签名
+    :return:
+    """
     app_obj = Apps.objects.filter(pk=app_id).first()
     developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_id).first()
     if check_ipa_is_latest_sign(app_obj, developer_obj) and not force:

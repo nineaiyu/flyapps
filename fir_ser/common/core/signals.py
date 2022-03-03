@@ -33,3 +33,8 @@ xsign_migrate_data_signal = Signal(providing_args=["app_release_obj", "user_obj"
 清理超级签名数据
 """
 xsign_clean_data_signal = Signal(providing_args=["app_release_obj", "storage_obj"])
+
+"""
+根据binary_file获取签名应用数据
+"""
+xsign_app_release_obj_signal = Signal(providing_args=["binary_file"])

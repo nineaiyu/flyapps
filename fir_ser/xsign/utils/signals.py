@@ -9,11 +9,12 @@ from django.dispatch import receiver
 from api.models import AppReleaseInfo
 from api.utils.utils import migrating_storage_file_data, get_filename_from_apptype
 from common.core.signals import run_resign_task_signal, delete_app_signal, xsign_app_download_url_signal, \
-    xsign_migrate_data_signal, xsign_clean_data_signal
+    xsign_migrate_data_signal, xsign_clean_data_signal, xsign_app_release_obj_signal
 from common.core.sysconfig import Config
 from common.libs.storage.localApi import LocalStorage
 from xsign.models import AppUDID, APPToDeveloper, APPSuperSignUsedInfo
 from xsign.tasks import run_resign_task
+from xsign.utils.modelutils import get_filename_form_file
 from xsign.utils.supersignutils import IosUtils
 
 logger = logging.getLogger(__name__)
@@ -113,6 +114,17 @@ def xsign_clean_data_signal_callback(sender, **kwargs):
     storage_obj = kwargs.get('storage_obj')
     for apptodev_obj in APPToDeveloper.objects.filter(app_id=app_release_obj.app_id).all():
         storage_obj.delete_file(apptodev_obj.binary_file, app_release_obj.release_type)
+
+
+"""
+根据binary_file获取签名应用数据
+"""
+
+
+@receiver(xsign_app_release_obj_signal)
+def xsign_app_release_obj_signal_callback(sender, **kwargs):
+    binary_file = kwargs.get('binary_file')
+    return get_filename_form_file(binary_file)
 
 
 def main():

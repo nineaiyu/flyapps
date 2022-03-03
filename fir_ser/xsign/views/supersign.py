@@ -23,6 +23,7 @@ from common.utils.download import get_app_download_url
 from xsign.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, \
     UDIDsyncDeveloper, AppleDeveloperToAppUse, DeveloperAppID, APPToDeveloper, DeveloperDevicesID, \
     IosDeveloperBill
+from xsign.tasks import run_resign_task_do
 from xsign.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, check_uid_has_relevant, \
     get_developer_devices
 from xsign.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, \
@@ -339,6 +340,22 @@ class SuperSignUsedView(APIView):
 
             app_to_dev_obj = APPToDeveloper.objects.filter(app_id=app_obj, developerid__issuer_id=developer_id).first()
             if app_obj and app_to_dev_obj:
+                developer_app_id_obj = DeveloperAppID.objects.filter(app_id=app_obj,
+                                                                     developerid__issuer_id=developer_id).first()
+                appudid_obj = AppUDID.objects.filter(app_id=app_obj, udid__udid=device_udid,
+                                                     udid__developerid__issuer_id=developer_id).last()
+                need_download_profile = True
+                if appudid_obj.sign_status in [3, 4]:
+                    need_download_profile = False
+                c_task = run_resign_task_do.apply_async((app_obj.pk, app_to_dev_obj.developerid.pk,
+                                                         developer_app_id_obj.aid, need_download_profile, False))
+                msg = c_task.get(propagate=False)
+                logger.info(f"app {app_obj} run_resign_task msg:{msg}")
+                if c_task.successful():
+                    c_task.forget()
+                app_to_dev_obj = APPToDeveloper.objects.filter(app_id=app_obj,
+                                                               developerid__issuer_id=developer_id).first()
+
                 res = get_app_download_url(request, res, app_obj.app_id, app_obj.short, app_obj.password,
                                            app_to_dev_obj.binary_file, True, device_udid)
 

@@ -10,9 +10,9 @@ import time
 
 from api.models import Apps, UserInfo
 from api.utils.modelutils import get_app_d_count_by_app_id, add_remote_info_from_request
+from api.utils.signalutils import run_xsign_app_download_url
 from common.base.baseutils import check_app_password, get_real_ip_address
 from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCache, DownloadUrlCache, AppInstanceCache
-from common.core.signals import xsign_app_download_url_signal
 from common.core.sysconfig import Config
 from common.utils.caches import consume_user_download_times
 from common.utils.storage import Storage, LocalStorage
@@ -29,9 +29,7 @@ def get_download_url_by_cache(app_obj, filename, limit, isdownload=True, key='',
             if app_obj.get('issupersign', None):
                 download_url_type = 'mobileconifg'
         else:
-            result = xsign_app_download_url_signal.send(None, app_pk=app_obj.get('pk'), udid=udid,
-                                                        download_url_type=download_url_type, limit=limit)
-            return result[0][1]
+            return run_xsign_app_download_url(app_obj, udid, download_url_type, limit)
 
         supersign = Config.DEFAULT_MOBILEPROVISION.get("supersign")
         mobileconifg = ""
