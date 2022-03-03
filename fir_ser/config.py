@@ -78,7 +78,7 @@ class THIRDLOGINCONF(object):
             'token': 'f0ae1b879b8',
             'encoding_aes_key': '7b9URovp83gG',
         },
-        'active': True
+        'active': False
     }
 
 

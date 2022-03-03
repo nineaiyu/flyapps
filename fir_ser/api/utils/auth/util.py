@@ -28,7 +28,7 @@ class AuthInfo(object):
         self.geetest = geetest
 
     def make_rules_info(self):
-        data = {}
+        data = {'captcha': {"captcha_image": '', "captcha_key": '', "length": 8}, 'geetest': False}
         if self.captcha:
             data['captcha'] = CaptchaAuth().generate()
         if self.geetest:

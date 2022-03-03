@@ -655,8 +655,6 @@ class DeviceTransferBillView(APIView):
                                                        number=abs(int(number))).first()
             if bill_obj:
                 target_user_obj = UserInfo.objects.filter(uid=uid).first()
-                bill_obj.status = 1
-                bill_obj.save(update_fields=['status'])
                 if target_user_obj:
                     for app_obj in Apps.objects.filter(user_id=target_user_obj, type=1):
                         app_obj.issupersign = False
@@ -665,6 +663,8 @@ class DeviceTransferBillView(APIView):
                         if app_obj.issupersign or count > 0:
                             logger.info(f"app_id:{app_obj} is super_sign ,clean IOS developer")
                             IosUtils.clean_app_by_user_obj(app_obj)
+                bill_obj.status = 1
+                bill_obj.save(update_fields=['status'])
             else:
                 res.code = 1003
                 res.msg = '转移记录不存在'
