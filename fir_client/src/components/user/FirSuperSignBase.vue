@@ -1171,7 +1171,7 @@
             <template slot-scope="scope">
               <div v-if="scope.row.cancel">
                 <el-tooltip v-if="scope.row.status===2" content="点击撤回共享设备数，并清理目标用户签名脏数据" placement="top">
-                  <el-tag type="success" @click="cancelshare(scope.row)" >成功 </el-tag>
+                  <el-tag type="success" @click="cancelshare(scope.row)">成功</el-tag>
                 </el-tooltip>
                 <el-tag v-else-if="scope.row.status === 1" type="info">已撤回</el-tag>
                 <el-tag v-else>状态异常</el-tag>
@@ -1179,7 +1179,7 @@
 
               <div v-else>
                 <el-tooltip v-if="scope.row.status !== 1" content="清理所有签名数据" placement="top">
-                  <el-tag  @click="cleanshare(scope.row)" >清理
+                  <el-tag @click="cleanshare(scope.row)">清理
                   </el-tag>
                 </el-tooltip>
                 <el-tag v-else type="info">失效</el-tag>
@@ -1397,13 +1397,13 @@ export default {
         "page": this.pagination.currentPage
       })
     },
-    cancelshare(billinfo){
-      this.cancelsharebase(billinfo,'确定要撤回么，撤回之后，对方账号将无法使用该账户设备数，并且会清理对方账户已经分配的设备数据信息?','DELETE')
+    cancelshare(billinfo) {
+      this.cancelsharebase(billinfo, '确定要撤回么，撤回之后，对方账号将无法使用该账户设备数，并且会清理对方账户已经分配的设备数据信息?', 'DELETE')
     },
-    cleanshare(billinfo){
-      this.cancelsharebase(billinfo,'确定要清理么，确定会清理该账户已经分配的设备数据信息?','PUT')
+    cleanshare(billinfo) {
+      this.cancelsharebase(billinfo, '确定要清理么，确定会清理该账户已经分配的设备数据信息?', 'PUT')
     },
-    cancelsharebase(billinfo,msg,methods='DELETE') {
+    cancelsharebase(billinfo, msg, methods = 'DELETE') {
 
       this.$confirm(msg, '提示', {
         confirmButtonText: '确定',
