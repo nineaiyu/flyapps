@@ -1169,15 +1169,21 @@
               label="操作"
               width="100">
             <template slot-scope="scope">
-              <el-tooltip v-if="scope.row.cancel" content="点击撤回共享设备数，并清理目标用户签名脏数据" placement="top">
-                <el-tag v-if="scope.row.status===2"
-                        type="success"
-                        @click="cancelshare(scope.row)"
-                >成功
-                </el-tag>
-                <el-tag v-else-if="scope.row.status === 1">已撤回</el-tag>
+              <div v-if="scope.row.cancel">
+                <el-tooltip v-if="scope.row.status===2" content="点击撤回共享设备数，并清理目标用户签名脏数据" placement="top">
+                  <el-tag type="success" @click="cancelshare(scope.row)" >成功 </el-tag>
+                </el-tooltip>
+                <el-tag v-else-if="scope.row.status === 1" type="info">已撤回</el-tag>
                 <el-tag v-else>状态异常</el-tag>
-              </el-tooltip>
+              </div>
+
+              <div v-else>
+                <el-tooltip v-if="scope.row.status !== 1" content="清理所有签名数据" placement="top">
+                  <el-tag  @click="cleanshare(scope.row)" >清理
+                  </el-tag>
+                </el-tooltip>
+                <el-tag v-else type="info">失效</el-tag>
+              </div>
             </template>
           </el-table-column>
 
@@ -1391,9 +1397,15 @@ export default {
         "page": this.pagination.currentPage
       })
     },
-    cancelshare(billinfo) {
+    cancelshare(billinfo){
+      this.cancelsharebase(billinfo,'确定要撤回么，撤回之后，对方账号将无法使用该账户设备数，并且会清理对方账户已经分配的设备数据信息?','DELETE')
+    },
+    cleanshare(billinfo){
+      this.cancelsharebase(billinfo,'确定要清理么，确定会清理该账户已经分配的设备数据信息?','PUT')
+    },
+    cancelsharebase(billinfo,msg,methods='DELETE') {
 
-      this.$confirm('确定要撤回么，撤回之后，对方账号将无法使用该账户设备数，并且会清理对方账户已经设备的设备数据信息?', '提示', {
+      this.$confirm(msg, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -1410,10 +1422,10 @@ export default {
             this.$message.success("操作成功")
             this.refreshactiveFun()
           } else {
-            this.$message.error("撤回失败 " + data.msg)
+            this.$message.error("操作失败 " + data.msg)
           }
         }, {
-          'methods': 'DELETE',
+          'methods': methods,
           data: {uid: billinfo.target_user.uid, status: billinfo.status, number: billinfo.number}
         })
       }).catch(() => {

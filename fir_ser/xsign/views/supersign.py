@@ -641,6 +641,32 @@ class DeviceTransferBillView(APIView):
         res.code = 1003
         return Response(res.dict)
 
+    def put(self, request):
+        res = BaseResponse()
+        uid = request.data.get("uid", None)
+        status = request.data.get("status", None)
+        number = request.data.get("number", None)
+
+        if uid and status and number:
+            if check_uid_has_relevant(uid, request.user.uid):
+                if MigrateStorageState(uid).get_state():
+                    res.code = 1008
+                    res.msg = "数据迁移中，无法处理该操作"
+                    return Response(res.dict)
+                bill_obj = IosDeveloperBill.objects.filter(user_id__uid=uid, to_user_id=request.user, status=status,
+                                                           number=abs(int(number))).first()
+                if bill_obj:
+                    for app_obj in Apps.objects.filter(user_id=request.user, type=1):
+                        count = APPToDeveloper.objects.filter(app_id=app_obj).count()
+                        if app_obj.issupersign or count > 0:
+                            logger.info(f"app_id:{app_obj} is super_sign ,clean IOS developer")
+                            IosUtils.clean_app_by_user_obj(app_obj)
+                    return Response(res.dict)
+
+        res.code = 1003
+        res.msg = '转移记录不存在'
+        return Response(res.dict)
+
     def delete(self, request):
         res = BaseResponse()
         uid = request.query_params.get("uid", None)
