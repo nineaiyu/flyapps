@@ -1076,29 +1076,36 @@ class IosUtils(object):
             udid_developer_obj_list = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).values_list('udid')
             udid_developer_list = [x[0] for x in udid_developer_obj_list if len(x) > 0]
             udid_result_list = [device.udid for device in result]
+            logger.warning(f"issuer_id:{developer_obj.issuer_id} udid database info: {udid_developer_list}")
+            logger.warning(f"issuer_id:{developer_obj.issuer_id} udid develope info: {udid_result_list}")
 
             will_del_udid_list = list(set(udid_developer_list) - set(udid_result_list))
+            logger.warning(f"issuer_id:{developer_obj.issuer_id} udidsync will delete: {will_del_udid_list}")
 
             udid_enabled_result_list = [device.udid for device in result if device.status == 'ENABLED']
             will_del_disabled_udid_list = list(set(udid_developer_list) - set(udid_enabled_result_list))
+            logger.warning(f"issuer_id:{developer_obj.issuer_id} delete and disabled: {will_del_disabled_udid_list}")
 
             for device_obj in result:
                 obj, create = update_or_create_developer_udid_info(device_obj, developer_obj)
                 if not create:
                     DeveloperDevicesID.objects.filter(udid=obj, developerid=developer_obj).update(
                         **{'did': device_obj.id})
-            AppUDID.objects.filter(udid__udid__in=will_del_disabled_udid_list,
-                                   app_id__developerdevicesid__udid__in=UDIDsyncDeveloper.objects.filter(
-                                       udid__in=will_del_disabled_udid_list)).delete()
+            AppUDID.objects.filter(udid__udid__in=will_del_disabled_udid_list, udid__developerid=developer_obj).delete()
             developer_device_list = DeveloperDevicesID.objects.filter(udid__udid__in=will_del_disabled_udid_list,
                                                                       developerid=developer_obj).all()
+            app_pk_list = []
             for developer_device_obj in developer_device_list:
-                app_obj = developer_device_obj.app_id
+                app_pk_list.append(developer_device_obj.app_id.pk)
+                developer_device_obj.delete()
+
+            for app_pk in list(set(app_pk_list)):
+                app_obj = Apps.objects.filter(pk=app_pk).first()
                 if APPSuperSignUsedInfo.objects.filter(developerid=developer_obj, app_id=app_obj).count() == 0:
+                    logger.warning(f"issuer_id:{developer_obj.issuer_id} delete {app_obj} profile and sign ipa file")
                     IosUtils.clean_app_by_developer_obj(app_obj, developer_obj)
                     delete_app_to_dev_and_file(developer_obj, app_obj.pk)
                     delete_app_profile_file(developer_obj, app_obj)
-                developer_device_obj.delete()
 
             UDIDsyncDeveloper.objects.filter(udid__in=will_del_udid_list, developerid=developer_obj).delete()
 
