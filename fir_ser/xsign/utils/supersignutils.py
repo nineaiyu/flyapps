@@ -1076,13 +1076,15 @@ class IosUtils(object):
             udid_developer_obj_list = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).values_list('udid')
             udid_developer_list = [x[0] for x in udid_developer_obj_list if len(x) > 0]
             udid_result_list = [device.udid for device in result]
+            udid_enabled_result_list = [device.udid for device in result if device.status == 'ENABLED']
+
             logger.warning(f"issuer_id:{developer_obj.issuer_id} udid database info: {udid_developer_list}")
             logger.warning(f"issuer_id:{developer_obj.issuer_id} udid develope info: {udid_result_list}")
+            logger.warning(f"issuer_id:{developer_obj.issuer_id} udid develope enable info: {udid_enabled_result_list}")
 
             will_del_udid_list = list(set(udid_developer_list) - set(udid_result_list))
             logger.warning(f"issuer_id:{developer_obj.issuer_id} udidsync will delete: {will_del_udid_list}")
 
-            udid_enabled_result_list = [device.udid for device in result if device.status == 'ENABLED']
             will_del_disabled_udid_list = list(set(udid_developer_list) - set(udid_enabled_result_list))
             logger.warning(f"issuer_id:{developer_obj.issuer_id} delete and disabled: {will_del_disabled_udid_list}")
 
