@@ -8,6 +8,8 @@ import logging
 import os
 import time
 
+from django.template import loader
+
 from common.core.sysconfig import Config
 from fir_ser.settings import SUPER_SIGN_ROOT, SYNC_CACHE_TO_DATABASE
 from xsign.models import UserInfo, AppIOSDeveloperInfo
@@ -41,14 +43,17 @@ def auto_check_ios_developer_active():
         if userinfo.supersign_active:
             status, result = IosUtils.active_developer(ios_developer)
             msg = f"auto_check_ios_developer_active  user:{userinfo}  ios.developer:{ios_developer}  status:{status}  result:{result}"
+            err_issuer_id.append(ios_developer)
+            error_issuer_id[userinfo.uid] = list(set(err_issuer_id))
+
             if status:
                 IosUtils.get_device_from_developer(ios_developer)
                 logger.info(msg)
             else:
-                err_issuer_id.append(ios_developer.issuer_id)
                 logger.error(msg)
-                error_issuer_id[userinfo.uid] = list(set(err_issuer_id))
-    for uid, val in error_issuer_id.items():
+
+    for uid, developer_obj_list in error_issuer_id.items():
         userinfo = UserInfo.objects.filter(uid=uid).first()
-        send_ios_developer_active_status(userinfo, Config.MSG_AUTO_CHECK_DEVELOPER % (
-            userinfo.first_name, ",".join(val)))
+        content = loader.render_to_string('check_developer.html',
+                                          {'username': userinfo.first_name, 'developer_obj_list': developer_obj_list})
+        send_ios_developer_active_status(userinfo, content)

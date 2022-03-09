@@ -986,9 +986,10 @@ class IosUtils(object):
             return False, {'err_info': str(e)}
 
     @staticmethod
-    def active_developer(developer_obj):
+    def active_developer(developer_obj, auto_clean=True):
         """
         激活开发者账户
+        :param auto_clean:
         :param developer_obj:
         :return:
         """
@@ -996,15 +997,16 @@ class IosUtils(object):
         status, result = app_api_obj.active()
         if status:
             cert_is_exists = True
-            for cert_obj in result.get('data', []):
+            for cert_obj in result:
                 if cert_obj.id == developer_obj.certid:
                     developer_obj.cert_expire_time = format_apple_date(cert_obj.expirationDate)
                     cert_is_exists = False
                     break
-            if developer_obj.certid and len(developer_obj.certid) > 3 and cert_is_exists and len(
-                    result.get('data', [])) > 0:
+            if developer_obj.certid and len(developer_obj.certid) > 3 and cert_is_exists and len(result) > 0:
                 # 数据库证书id和苹果开发id不一致，可认为被用户删掉，需要执行清理开发者操作
-                IosUtils.clean_developer(developer_obj, developer_obj.user_id)
+                if auto_clean:
+                    logger.warning(f"clean developer {developer_obj}")
+                    IosUtils.clean_developer(developer_obj, developer_obj.user_id)
                 developer_obj.certid = None
                 developer_obj.cert_expire_time = None
             developer_obj.status = 1

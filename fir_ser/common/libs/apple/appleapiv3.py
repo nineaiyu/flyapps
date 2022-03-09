@@ -30,11 +30,12 @@ logger = logging.getLogger(__name__)
 # timeout = settings.APPLE_DEVELOPER_API_TIMEOUT if settings.APPLE_DEVELOPER_API_TIMEOUT else 120
 
 
-def request_format_log(req):
+def request_format_log(self, req):
     try:
-        logger.info(f"url:{req.url} header:{req.headers} code:{req.status_code} body:{req.content}")
+        logger.info(
+            f"issuer_id:{self.issuer_id} url:{req.url} method:{req.request.method} header:{req.headers} code:{req.status_code} body:{req.content}")
     except Exception as e:
-        logger.error(e)
+        logger.error(f"issuer_id:{self.issuer_id} url:{req.url} method:{req.request.method} Exception:{e}")
     return req
 
 
@@ -100,9 +101,10 @@ class DevicesAPI(object):
         if query_parameters:
             for k, v in query_parameters.items():
                 params[k] = v
-        return request_format_log(
-            requests.get(self.devices_url, params=params, headers=self.headers, proxies=self.proxies,
-                         timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.get(self.devices_url, params=params, headers=self.headers,
+                                               proxies=self.proxies,
+                                               timeout=self.timeout))
 
     def list_enabled_devices(self):
         return self.list_devices({"filter[status]": "ENABLED"})
@@ -135,9 +137,9 @@ class DevicesAPI(object):
                 }
             }
         }
-        return request_format_log(
-            requests.post(self.devices_url, json=json, headers=self.headers, proxies=self.proxies,
-                          timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.post(self.devices_url, json=json, headers=self.headers, proxies=self.proxies,
+                                                timeout=self.timeout))
 
     def read_device_information(self, device_id):
         """
@@ -152,8 +154,9 @@ class DevicesAPI(object):
         params = {
             "fields[devices]": "addedDate, deviceClass, model, name, platform, status, udid",
         }
-        return request_format_log(
-            requests.get(base_url, params=params, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.get(base_url, params=params, headers=self.headers, proxies=self.proxies,
+                                               timeout=self.timeout))
 
     def enabled_device(self, device_id, device_name):
         return self.modify_registered_device(device_id, device_name, 'ENABLED')
@@ -184,8 +187,9 @@ class DevicesAPI(object):
                 }
             }
         }
-        return request_format_log(
-            requests.patch(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.patch(base_url, json=json, headers=self.headers, proxies=self.proxies,
+                                                 timeout=self.timeout))
 
 
 class BundleIDsAPI(object):
@@ -217,9 +221,10 @@ class BundleIDsAPI(object):
                 }
             }
         }
-        return request_format_log(
-            requests.post(self.bundle_ids_url, json=json, headers=self.headers, proxies=self.proxies,
-                          timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.post(self.bundle_ids_url, json=json, headers=self.headers,
+                                                proxies=self.proxies,
+                                                timeout=self.timeout))
 
     def delete_bundle_id_by_id(self, bundle_id):
         """
@@ -233,8 +238,9 @@ class BundleIDsAPI(object):
         """
         base_url = '%s/%s' % (self.bundle_ids_url, bundle_id)
         json = {}
-        return request_format_log(
-            requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies,
+                                                  timeout=self.timeout))
 
     def list_bundle_ids(self, query_parameters=None):
         """
@@ -252,9 +258,10 @@ class BundleIDsAPI(object):
         if query_parameters:
             for k, v in query_parameters.items():
                 params[k] = v
-        return request_format_log(
-            requests.get(self.bundle_ids_url, params=params, headers=self.headers, proxies=self.proxies,
-                         timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.get(self.bundle_ids_url, params=params, headers=self.headers,
+                                               proxies=self.proxies,
+                                               timeout=self.timeout))
 
     def list_bundle_id_by_identifier(self, identifier):
         return self.list_bundle_ids({"filter[identifier]": identifier})
@@ -283,8 +290,9 @@ class BundleIDsAPI(object):
                 }
             }
         }
-        return request_format_log(
-            requests.patch(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.patch(base_url, json=json, headers=self.headers, proxies=self.proxies,
+                                                 timeout=self.timeout))
 
 
 class BundleIDsCapabilityAPI(object):
@@ -306,8 +314,9 @@ class BundleIDsCapabilityAPI(object):
         """
         base_url = '%s/%s_%s' % (self.bundle_ids_capability_url, bundle_id, capability_type)
         json = {}
-        return request_format_log(
-            requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies,
+                                                  timeout=self.timeout))
 
     def enable_capability(self, bundle_id, capability_type):
         """
@@ -336,9 +345,10 @@ class BundleIDsCapabilityAPI(object):
                 }
             }
         }
-        return request_format_log(
-            requests.post(self.bundle_ids_capability_url, json=json, headers=self.headers, proxies=self.proxies,
-                          timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.post(self.bundle_ids_capability_url, json=json, headers=self.headers,
+                                                proxies=self.proxies,
+                                                timeout=self.timeout))
 
 
 class ProfilesAPI(object):
@@ -390,9 +400,10 @@ class ProfilesAPI(object):
                 }
             }
         }
-        return request_format_log(
-            requests.post(self.profiles_url, json=json, headers=self.headers, proxies=self.proxies,
-                          timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.post(self.profiles_url, json=json, headers=self.headers,
+                                                proxies=self.proxies,
+                                                timeout=self.timeout))
 
     def delete_profile(self, profile_id):
         """
@@ -406,8 +417,9 @@ class ProfilesAPI(object):
         """
         base_url = '%s/%s' % (self.profiles_url, profile_id)
         json = {}
-        return request_format_log(
-            requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies,
+                                                  timeout=self.timeout))
 
     def download_profile(self, profile_id):
         # n=base64.b64decode(profileContent)
@@ -432,9 +444,10 @@ class ProfilesAPI(object):
         if query_parameters:
             for k, v in query_parameters.items():
                 params[k] = v
-        return request_format_log(
-            requests.get(self.profiles_url, params=params, headers=self.headers, proxies=self.proxies,
-                         timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.get(self.profiles_url, params=params, headers=self.headers,
+                                               proxies=self.proxies,
+                                               timeout=self.timeout))
 
     def list_profile_by_profile_id(self, profile_id):
         return self.list_profiles({"filter[id]": profile_id, "include": ""})
@@ -469,9 +482,10 @@ class CertificatesAPI(object):
                 }
             }
         }
-        return request_format_log(
-            requests.post(self.certificates_url, json=json, headers=self.headers, proxies=self.proxies,
-                          timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.post(self.certificates_url, json=json, headers=self.headers,
+                                                proxies=self.proxies,
+                                                timeout=self.timeout))
 
     def download_certificate(self, certificate_id):
         # req.json()['data'][0]['attributes']['certificateContent']
@@ -496,9 +510,10 @@ class CertificatesAPI(object):
         if query_parameters:
             for k, v in query_parameters.items():
                 params[k] = v
-        return request_format_log(
-            requests.get(self.certificates_url, params=params, headers=self.headers, proxies=self.proxies,
-                         timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.get(self.certificates_url, params=params, headers=self.headers,
+                                               proxies=self.proxies,
+                                               timeout=self.timeout))
 
     def list_certificate_by_certificate_id(self, certificate_id):
         return self.list_certificate({"filter[id]": certificate_id, })
@@ -515,8 +530,9 @@ class CertificatesAPI(object):
         """
         base_url = '%s/%s' % (self.certificates_url, certificate_id)
         json = {}
-        return request_format_log(
-            requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies, timeout=self.timeout))
+        return request_format_log(self,
+                                  requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies,
+                                                  timeout=self.timeout))
 
 
 class BaseInfoObj(object):
@@ -745,6 +761,18 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         CertificatesAPI.__init__(self, self.BASE_URI, self.headers)
         self.rate_limit_info = {}
 
+    def __getattribute__(self, name):
+        attr = object.__getattribute__(self, name)
+        if hasattr(attr, '__call__'):
+            def func(*args, **kwargs):
+                res = attr(*args, **kwargs)
+                logger.info(f"issuer_id:{self.issuer_id} calling {attr.__name__} result:{res}")
+                return res
+
+            return func
+        else:
+            return attr
+
     def __set_rate_limit_info(self, req_headers):
         for par in req_headers.get('X-Rate-Limit').split(";"):
             if par:
@@ -796,6 +824,8 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
                     obj = Certificates.from_json_list(data)
                 if len(obj) == 1:
                     return obj[0]
+                if obj is None:
+                    raise Exception(f'None object: {req.text}')
                 return obj
             else:
                 # self.__init_jwt_headers()

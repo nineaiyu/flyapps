@@ -43,7 +43,7 @@ class EmailMsgSender(object):
 
     def send_email_msg(self, email, text):
         try:
-            response = send_mail("重要消息通知", text, self.form, [email], )
+            response = send_mail("重要消息通知", text, self.form, [email], html_message=text)
         except Exception as e:
             return -1, e
         return response, text

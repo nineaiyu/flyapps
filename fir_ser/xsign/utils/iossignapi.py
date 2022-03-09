@@ -18,7 +18,7 @@ from OpenSSL.crypto import (load_pkcs12, dump_certificate_request, dump_privatek
 from common.base.baseutils import get_format_time, format_apple_date, make_app_uuid
 from common.cache.state import CleanErrorBundleIdSignDataState
 from common.core.sysconfig import Config
-from common.libs.apple.appleapiv3 import AppStoreConnectApi
+from common.libs.apple.appleapiv3 import AppStoreConnectApi, Certificates, Devices, BundleIds, Profiles
 from fir_ser.settings import SUPER_SIGN_ROOT
 from xsign.models import AppIOSDeveloperInfo
 
@@ -260,60 +260,78 @@ class AppDeveloperApiV2(object):
                     if AppIOSDeveloperInfo.objects.filter(pk=self.developer_pk,
                                                           status__in=Config.DEVELOPER_WRITE_STATUS).first():
                         start_time = time.time()
-                        logger.info(f'{self.issuer_id} calling {attr.__name__} time:{start_time}')
+                        logger.info(f'issuer_id:{self.issuer_id}  calling {attr.__name__} time:{start_time}')
                         result = attr(*args, **kwargs)
-                        logger.info(f'{self.issuer_id} done {attr.__name__} used time:{time.time() - start_time}')
+                        logger.info(
+                            f'issuer_id:{self.issuer_id}  done {attr.__name__} used time:{time.time() - start_time}')
                         return result
                     else:
                         result = False, {'return_info': '开发者状态异常'}
-                        logger.warning(f'{self.issuer_id} can not calling {attr.__name__} {result}')
+                        logger.warning(f'issuer_id:{self.issuer_id}  can not calling {attr.__name__} {result}')
                         return result
 
             return func
         else:
             return attr
 
-    def active(self):
-        result = {'data': []}
-        try:
-            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            certificates = apple_obj.get_all_certificates()
-            if not isinstance(certificates, list):
-                certificates = [certificates]
-            result['data'] = certificates
-            logger.info(f"ios developer active result:{certificates}")
-            if len(certificates) >= 0:
-                return True, result
-        except Exception as e:
-            logger.error(f"ios developer active Failed Exception:{e}")
-            result['return_info'] = check_error_call_back(str(e), self.developer_pk)
-        return False, result
-
-    def file_format_path_name(self, user_obj):
+    def __file_format_path_name(self, user_obj):
         cert_dir_name = make_app_uuid(user_obj, self.issuer_id)
         cert_dir_path = os.path.join(SUPER_SIGN_ROOT, cert_dir_name)
         if not os.path.isdir(cert_dir_path):
             os.makedirs(cert_dir_path)
         return os.path.join(cert_dir_path, cert_dir_name)
 
+    def __result_format(self, result, is_instance):
+        return_flag = False
+        if isinstance(result, list):
+            if len(result) == 0:
+                return_flag = True
+            else:
+                if isinstance(result[0], is_instance):
+                    return_flag = True
+        else:
+            if isinstance(result, is_instance):
+                result = [result]
+                return_flag = True
+        if return_flag:
+            logger.info(f"issuer_id:{self.issuer_id} {is_instance} result:{result}")
+            return True, result
+        raise Exception(f'{result} is not {is_instance}')
+
+    def active(self):
+        """
+        :return:  结果为空列表，或者是 object 或者是 [object,object] 其他为 false
+        """
+        result = {}
+        try:
+            apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
+            certificates = apple_obj.get_all_certificates()
+            return self.__result_format(certificates, Certificates)
+        except Exception as e:
+            logger.error(f"issuer_id:{self.issuer_id} ios developer active Failed Exception:{e}")
+            result['return_info'] = check_error_call_back(str(e), self.developer_pk)
+        return False, result
+
     def create_cert(self, user_obj):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            csr_path = self.file_format_path_name(user_obj)
+            csr_path = self.__file_format_path_name(user_obj)
             if not os.path.isdir(os.path.dirname(csr_path)):
                 os.makedirs(os.path.dirname(csr_path))
             csr_content = make_csr_content(csr_path + ".csr", csr_path + ".key")
             certificates = apple_obj.create_certificate(csr_content.decode("utf-8"))
-            if certificates:
+            if certificates and isinstance(certificates, Certificates):
                 n = base64.b64decode(certificates.certificateContent)
                 with open(csr_path + ".cer", 'wb') as f:
                     f.write(n)
                 make_pem(n, csr_path + ".pem")
-                logger.info(f"ios developer create cert result:{certificates.certificateContent}")
+                logger.info(
+                    f"issuer_id:{self.issuer_id} ios developer create cert result:{certificates.certificateContent}")
                 return True, certificates
+            raise Exception(str(certificates))
         except Exception as e:
-            logger.error(f"ios developer create cert Failed Exception:{e}")
+            logger.error(f"issuer_id:{self.issuer_id} ios developer create cert Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
         return False, result
 
@@ -322,13 +340,13 @@ class AppDeveloperApiV2(object):
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             cert_obj = apple_obj.get_certificate_by_cid(self.cert_id)
-            if cert_obj and cert_obj.id:
-                return True, result
+            if cert_obj and isinstance(cert_obj, Certificates):
+                return True, cert_obj
             else:
-                logger.info(f"ios developer get cert {self.cert_id} failed")
+                logger.info(f"issuer_id:{self.issuer_id} ios developer get cert {self.cert_id} failed")
                 return False, result
         except Exception as e:
-            logger.error(f"ios developer get cert {self.cert_id} Failed Exception:{e}")
+            logger.error(f"issuer_id:{self.issuer_id} ios developer get cert {self.cert_id} Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
         return False, result
 
@@ -337,17 +355,19 @@ class AppDeveloperApiV2(object):
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             cert_obj = apple_obj.get_certificate_by_cid(self.cert_id)
-            if cert_obj:
+            if cert_obj and isinstance(cert_obj, Certificates):
                 s_date = format_apple_date(cert_obj.expirationDate)
                 if s_date.timestamp() - datetime.datetime.now().timestamp() < 3600 * 24 * 3:
                     if apple_obj.revoke_certificate(self.cert_id):
-                        logger.info(f"ios developer cert {self.cert_id} revoke")
+                        logger.info(f"issuer_id:{self.issuer_id} ios developer cert {self.cert_id} revoke")
                         return True, result
                 else:
-                    logger.info(f"ios developer cert {self.cert_id} not revoke.because expire time < 3 day ")
+                    logger.info(
+                        f"issuer_id:{self.issuer_id} ios developer cert {self.cert_id} not revoke.because expire time < 3 day ")
                     return True, result
+            raise Exception(str(cert_obj))
         except Exception as e:
-            logger.error(f"ios developer cert {self.cert_id} revoke Failed Exception:{e}")
+            logger.error(f"issuer_id:{self.issuer_id} ios developer cert {self.cert_id} revoke Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
         return False, result
 
@@ -358,16 +378,17 @@ class AppDeveloperApiV2(object):
             not_after = datetime.datetime.strptime(cer.get_notAfter().decode('utf-8'), "%Y%m%d%H%M%SZ")
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             certificates = apple_obj.get_all_certificates()
-            if not isinstance(certificates, list):
-                certificates = [certificates]
-            for cert_obj in certificates:
-                f_date = format_apple_date(cert_obj.expirationDate)
-                logger.info(f"{cert_obj.id}-{not_after.timestamp()} - {f_date.timestamp()} ")
-                if not_after.timestamp() == f_date.timestamp():
-                    return True, cert_obj
-            return False, result
+            status, result = self.__result_format(certificates, Certificates)
+            if status:
+                for cert_obj in result:
+                    f_date = format_apple_date(cert_obj.expirationDate)
+                    logger.info(
+                        f"issuer_id:{self.issuer_id} {cert_obj.id}-{not_after.timestamp()} - {f_date.timestamp()} ")
+                    if not_after.timestamp() == f_date.timestamp():
+                        return True, cert_obj
+            raise Exception(str(certificates))
         except Exception as e:
-            logger.error(f"ios developer cert {app_dev_pem} auto get Failed Exception:{e}")
+            logger.error(f"issuer_id:{self.issuer_id} ios developer cert {app_dev_pem} auto get Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
         return False, result
 
@@ -378,7 +399,7 @@ class AppDeveloperApiV2(object):
             if apple_obj.delete_profile_by_id(profile_id, profile_name):
                 return True
         except Exception as e:
-            logger.error(f"ios developer delete profile Failed Exception:{e}")
+            logger.error(f"issuer_id:{self.issuer_id} ios developer delete profile Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
             return False, result
 
@@ -391,18 +412,20 @@ class AppDeveloperApiV2(object):
                 device_obj = apple_obj.enabled_device(device_id, device_name, device_udid)
             else:
                 device_obj = apple_obj.disabled_device(device_id, device_name, device_udid)
-            logger.info("device_obj %s result:%s" % (device_obj, status))
-            if device_obj and device_obj.id:
+            logger.info(f"issuer_id:{self.issuer_id} device_obj:{device_obj} result:{status}")
+            if device_obj and isinstance(device_obj, Devices):
                 return True, result
+            raise Exception(str(device_obj))
         except Exception as e:
-            logger.error("ios developer set devices status Failed Exception:%s" % e)
+            logger.error(f"issuer_id:{self.issuer_id} ios developer set devices status Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
             if device_err_callback and ("There are no current ios devices" in str(e) or "Device obj is None" in str(e)):
                 with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
                     if state:
                         device_err_callback()
                     else:
-                        logger.warning(f'{device_err_callback}-{failed_call_prefix} is running')
+                        logger.warning(
+                            f'issuer_id:{self.issuer_id} {device_err_callback}-{failed_call_prefix} is running')
         return False, result
 
     def get_device(self):
@@ -410,12 +433,9 @@ class AppDeveloperApiV2(object):
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             devices_obj_list = apple_obj.get_all_devices()
-            if not isinstance(devices_obj_list, list):
-                devices_obj_list = [devices_obj_list]
-            if devices_obj_list is not None:
-                return True, devices_obj_list
+            return self.__result_format(devices_obj_list, Devices)
         except Exception as e:
-            logger.error("ios developer get device Failed Exception:%s" % e)
+            logger.error(f"issuer_id:{self.issuer_id} ios developer get device Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
             return False, result
 
@@ -424,10 +444,10 @@ class AppDeveloperApiV2(object):
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             if apple_obj.delete_bundle_by_identifier(identifier_id, f"{bundle_id}.{self.issuer_id}.{app_id}"):
-                return True, {}
+                return True, result
 
         except Exception as e:
-            logger.error("ios developer delete app Failed Exception:%s" % e)
+            logger.error(f"issuer_id:{self.issuer_id} ios developer delete app Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
             return False, result
 
@@ -444,11 +464,12 @@ class AppDeveloperApiV2(object):
                 bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id,
                                                                             f"{bundle_id}.{self.issuer_id}.{app_id}",
                                                                             s_type)
-            result['aid'] = bundle_obj.id
-            return True, result
-
+            if bundle_obj and isinstance(bundle_obj, BundleIds):
+                result['aid'] = bundle_obj.id
+                return True, result
+            raise Exception(str(bundle_obj))
         except Exception as e:
-            logger.error("ios developer create app Failed Exception:%s" % e)
+            logger.error(f"issuer_id:{self.issuer_id} ios developer create app Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
             if app_id_err_callback and "There is no App ID with ID" in str(e):
                 for call_fun in app_id_err_callback:
@@ -459,18 +480,27 @@ class AppDeveloperApiV2(object):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            return True, apple_obj.register_device(device_name, device_udid)
+            device_obj = apple_obj.register_device(device_name, device_udid)
+            if device_obj and isinstance(device_obj, Devices):
+                return True, device_obj
+            raise Exception(str(device_obj))
         except Exception as e:
-            logger.error("ios developer register device Failed Exception:%s" % e)
+            logger.error(f"issuer_id:{self.issuer_id} ios developer register device Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
-            if device_err_callback and "There are no current ios devices" in str(e):
-
-                with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
-                    if state:
-                        device_err_callback()
-                    else:
-                        logger.warning(f'{device_err_callback}-{failed_call_prefix} is running')
-
+            err_msg_list = [
+                "There are no current ios devices",
+                "Your development team has reached the maximum number of registered iPhone devices"
+            ]
+            if device_err_callback:
+                for err_msg in err_msg_list:
+                    if err_msg in str(e):
+                        with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
+                            if state:
+                                device_err_callback()
+                            else:
+                                logger.warning(
+                                    f'issuer_id:{self.issuer_id} {device_err_callback}-{failed_call_prefix} is running')
+                        break
             return False, result
 
     def make_and_download_profile(self, app_obj, provision_name, auth, developer_app_id, device_id_list, profile_id,
@@ -483,7 +513,7 @@ class AppDeveloperApiV2(object):
             profile_obj = apple_obj.create_profile(profile_id, developer_app_id, auth.get('cert_id'),
                                                    provision_name.split("/")[-1],
                                                    device_id_list)
-            if profile_obj:
+            if profile_obj and isinstance(profile_obj, Profiles):
                 result['profile_id'] = profile_obj.id
                 n = base64.b64decode(profile_obj.profileContent)
                 if not os.path.isdir(os.path.dirname(provision_name)):
@@ -491,8 +521,10 @@ class AppDeveloperApiV2(object):
                 with open(provision_name, 'wb') as f:
                     f.write(n)
                 return True, result
+            raise Exception(str(profile_obj))
         except Exception as e:
-            logger.error(f"app_id {app_obj.app_id} ios developer make profile Failed Exception:{e}")
+            logger.error(f"issuer_id:{self.issuer_id} app_id {app_obj.app_id} ios developer make profile Failed "
+                         f"Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
             if app_id_err_callback and "There is no App ID with ID" in str(e):
                 with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
@@ -500,7 +532,8 @@ class AppDeveloperApiV2(object):
                         for call_fun in app_id_err_callback:
                             call_fun()
                     else:
-                        logger.warning(f'{app_id_err_callback}-{failed_call_prefix} is running')
+                        logger.warning(
+                            f'issuer_id:{self.issuer_id} {app_id_err_callback}-{failed_call_prefix} is running')
             return False, result
 
     def modify_capability(self, app_obj, developer_app_id):
@@ -522,10 +555,13 @@ class AppDeveloperApiV2(object):
                     bundle_obj = apple_obj.register_bundle_id_enable_capability(app_id,
                                                                                 f"{bundle_id}.{self.issuer_id}.{app_id}",
                                                                                 s_type)
-                developer_app_id = bundle_obj.id
-                result['aid'] = developer_app_id
+                if bundle_obj and isinstance(bundle_obj, BundleIds):
+                    developer_app_id = bundle_obj.id
+                    result['aid'] = developer_app_id
+                else:
+                    raise Exception(str(bundle_obj))
             return True, result
         except Exception as e:
-            logger.error("ios developer modify_capability Failed Exception:%s" % e)
+            logger.error(f"issuer_id:{self.issuer_id} ios developer modify_capability Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
             return False, result
