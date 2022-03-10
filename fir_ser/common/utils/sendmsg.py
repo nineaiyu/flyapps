@@ -65,12 +65,14 @@ class SendMessage(object):
 
 def get_sender_token(sender, user_id, target, action, msg=None):
     code = generate_numeric_token_of_length(6)
-    if msg:
-        code = msg
+
     if target in Config.WHITE_SENDER_LIST:
         code = str(Config.WHITE_SENDER_CODE)
-    token = make_token(code, time_limit=300, key=user_id)
-    TempCache(user_id, token).set_storage_cache(target, 60 * 5)
+    if msg:
+        token = code = msg
+    else:
+        token = make_token(code, time_limit=300, key=user_id)
+        TempCache(user_id, token).set_storage_cache(target, 60 * 5)
     if target in Config.WHITE_SENDER_LIST:
         return token, code
     if action in ('change', 'password', 'register', 'login', 'common'):

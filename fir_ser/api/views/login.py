@@ -72,7 +72,7 @@ def check_register_userinfo(target, act, key, ftype=None):
                     res.code = 1005
                     res.msg = "手机号已经存在"
                 else:
-                    token, code = get_sender_sms_token(act, target, 'register')
+                    token, code = get_sender_sms_token(act, target, key)
                     if token:
                         res.data["auth_token"] = token
                     else:
@@ -93,7 +93,7 @@ def check_register_userinfo(target, act, key, ftype=None):
                     res.code = 1005
                     res.msg = "邮箱已经存在"
                 else:
-                    token, code = get_sender_email_token(act, target, 'register')
+                    token, code = get_sender_email_token(act, target, key)
                     if token:
                         res.data["auth_token"] = token
                     else:
@@ -298,7 +298,7 @@ class LoginView(APIView):
                                 response.msg = "验证码有误，请检查或者重新尝试"
 
                         else:
-                            res = check_register_userinfo(username, act, 'change', 'reset')
+                            res = check_register_userinfo(username, act, 'common', 'reset')
                             return Response(res.dict)
 
                     else:
