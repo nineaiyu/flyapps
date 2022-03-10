@@ -52,7 +52,7 @@ short_list = [
 def postudid(short=short_list[0], udid=udid_lists[0]):
     data = '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n\t<key>PRODUCT</key>\n\t<string>iPhone9,1</string>\n\t<key>SERIAL</key>\n\t<string>F71YD58GHG74</string>\n\t<key>UDID</key>\n\t<string>%s</string>\n\t<key>VERSION</key>\n\t<string>17E262</string>\n</dict>\n</plist>\n' % (
         udid)
-    uri = "https://app.hehelucky.cn/udid/%s" % (short)
+    uri = "https://app.hehelucky.cn/api/v1/fir/xsign/udid/%s" % (short)
     req = requests.post(uri, data=data)
     print(req.status_code, req.text)
 
@@ -93,9 +93,8 @@ udid_test_s = [
     "00008030-000E6CC122D2402E"
 ]
 
-
-# postudid(udid="760862a7367dea986542dae17ee31cd139e454ad", short='semi')
-# exit()
+postudid(udid="41d1b77e3a831f82a0ca306beaceeb955280b57a", short='vcdp')
+exit()
 
 
 def call_function_try_attempts(try_attempts=3):
