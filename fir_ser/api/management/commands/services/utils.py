@@ -39,6 +39,7 @@ class ServicesUtil(object):
     def start(self):
         if 'uwsgi' in [service.name for service in self._services]:
             prepare()
+            clean_cache()
 
         for service in self._services:
             service: BaseService

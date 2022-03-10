@@ -12,6 +12,8 @@ celery multi start 4 -A fir_ser -l INFO -c4  --pidfile=/var/run/celery/%n.pid --
 启动beat
 nohup celery -A fir_ser beat --uid=1000 --pidfile=logs/beat.pid --scheduler django -l INFO --logfile=logs/beat.log &
 
+# 启动uwsgi 建议修改  /proc/sys/net/core/somaxconn 为512
+# 或者在 /etc/sysctl.conf  底部加入 net.core.somaxconn = 512  ,然后 sysctl -p
 
 #开发测试
 celery -A fir_ser worker --uid=1000 --beat --scheduler django --loglevel=debug

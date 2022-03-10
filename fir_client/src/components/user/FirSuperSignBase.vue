@@ -139,7 +139,7 @@
           <el-input v-model="editdeveloperinfo.certid" :disabled='isedit'/>
         </el-form-item>
         <el-form-item label="备注" label-width="110px">
-          <el-input v-model="editdeveloperinfo.description"/>
+          <el-input v-model="editdeveloperinfo.description" :rows="3" type="textarea"/>
         </el-form-item>
         <div style="">
           <el-button v-if="isedit && editdeveloperinfo.certid" size="small"
@@ -164,7 +164,7 @@
           <el-button v-if="isedit && editdeveloperinfo.status!==0" size="small" type="success"
                      @click="activedeveloperFun(editdeveloperinfo,'checkauth')">账户激活检测
           </el-button>
-          <el-divider/>
+          <el-divider v-if="isedit && editdeveloperinfo.certid"/>
           <el-tooltip content="清理发布证书，如果发布证书过期时间大于3天，将不会删除开发者发布证书，发布证书只能同时创建两个，请谨慎操作">
             <div>
               <el-button v-if="isedit &&  editdeveloperinfo.certid"
@@ -399,9 +399,9 @@
           <el-table-column
               align="center"
               fixed
-              label="开发者ID issuer_id"
+              label="开发者 ID issuer_id"
               prop="issuer_id"
-              width="160">
+              width="180">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
                 <el-tooltip content="点击复制到剪贴板">
@@ -430,21 +430,6 @@
           </el-table-column>
           <el-table-column
               align="center"
-              label="是否激活"
-              prop="status"
-              width="105">
-            <template slot-scope="scope">
-              <el-tooltip v-if="scope.row.status!==0" content="点击禁用">
-                <el-button size="small" type="success" @click="disabledeveloperFun(scope.row,'disable')">已激活</el-button>
-              </el-tooltip>
-              <el-button v-else size="small" type="danger"
-                         @click="activedeveloperFun(scope.row,'checkauth')">点击激活
-              </el-button>
-
-            </template>
-          </el-table-column>
-          <el-table-column
-              align="center"
               label="账户状态"
               prop="certid"
               sortable
@@ -452,20 +437,38 @@
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
                 <p v-if="!scope.row.certid && scope.row.status!==0">
-                  开发证书不可用，请在编辑中导入或手动创建发布证书</p>
-                <p v-if="!scope.row.certid && scope.row.status=== 0">请先激活开发者账户</p>
+                  开发证书不可用，请在
+                  <el-link :underline="false" type="primary" @click="handleEditDeveloper(scope.row)">编辑</el-link>
+                  中导入或手动创建发布证书
+                </p>
+                <p v-if="scope.row.status=== 0">请
+                  <el-link :underline="false" type="primary" @click="activedeveloperFun(scope.row,'checkauth')">点击激活
+                  </el-link>
+                  开发者账户
+                </p>
                 <p v-if="scope.row.certid && scope.row.status!==0">{{ format_status(scope.row.status) }}</p>
                 <div slot="reference" class="name-wrapper">
-                  <div v-if="scope.row.certid">
-                    <el-button v-if="scope.row.status === 1" size="small" type="success">
-                      {{ format_status(scope.row.status) }}
-                    </el-button>
-                    <el-button v-else size="small" type="warning" @click="activedeveloperFun(scope.row,'checkauth')">
-                      {{ format_status(scope.row.status) }}
+                  <div v-if="scope.row.status=== 0">
+                    <el-button size="small" type="danger"
+                               @click="activedeveloperFun(scope.row,'checkauth')">点击激活
                     </el-button>
                   </div>
+                  <div v-else-if="scope.row.status === 1">
+                    <el-tooltip v-if="scope.row.status!==0" content="点击禁用">
 
-                  <el-button v-else size="small" type="danger">不可用</el-button>
+                      <el-button v-if="scope.row.certid" size="small" type="success"
+                                 @click="disabledeveloperFun(scope.row,'disable')">
+                        {{ format_status(scope.row.status) }}
+                      </el-button>
+                      <el-button v-else size="small" type="warning" @click="disabledeveloperFun(scope.row,'disable')">
+                        不可用
+                      </el-button>
+
+                    </el-tooltip>
+                  </div>
+                  <el-button v-else size="small" type="warning" @click="activedeveloperFun(scope.row,'checkauth')">
+                    {{ format_status(scope.row.status) }}
+                  </el-button>
                 </div>
               </el-popover>
 
@@ -559,18 +562,20 @@
               <el-tag v-else size="medium" type="info">否</el-tag>
             </template>
           </el-table-column>
+
+          <el-table-column
+              align="center"
+              label="备注"
+              min-width="160"
+              prop="description"
+          >
+          </el-table-column>
           <el-table-column
               :formatter="formatter"
               align="center"
               label="证书到期时间"
               prop="cert_expire_time"
-              width="160">
-          </el-table-column>
-          <el-table-column
-              align="center"
-              label="备注"
-              prop="description"
-          >
+              width="100">
           </el-table-column>
           <el-table-column
               align="center"

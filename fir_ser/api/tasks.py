@@ -8,7 +8,7 @@ import logging
 
 from captcha.models import CaptchaStore
 
-from api.utils.ctasks import sync_download_times, auto_clean_upload_tmp_file
+from api.utils.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_clean_remote_client_log
 from api.views.login import get_login_type
 from common.core.sysconfig import Config, invalid_config_cache
 from common.libs.geetest.geetest_utils import check_bypass_status
@@ -64,3 +64,8 @@ def auto_delete_tmp_file_job():
 def sync_wx_access_token_job():
     if get_login_type().get('third', '').get('wxp'):
         sync_wx_access_token()
+
+
+@app.task
+def auto_clean_remote_client_job():
+    auto_clean_remote_client_log()

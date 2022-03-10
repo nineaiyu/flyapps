@@ -7,8 +7,10 @@ import time
 import psutil
 from django.conf import settings
 
+from api.tasks import start_api_sever_do_clean
 from config import BASECONF
 from config import BASE_DIR
+from xsign.utils.iproxy import clean_ip_proxy_infos
 
 try:
     __version__ = BASECONF.VERSION
@@ -67,6 +69,11 @@ def prepare():
     check_database_connection()
     check_migrations()
     perform_db_migrate()
+
+
+def clean_cache():
+    start_api_sever_do_clean()
+    clean_ip_proxy_infos()
 
 
 def get_sys_thread_num():

@@ -254,7 +254,7 @@ class AppDeveloperApiV2(object):
         attr = object.__getattribute__(self, name)
         if hasattr(attr, '__call__'):
             def func(*args, **kwargs):
-                if attr.__name__ in ['active', 'get_device']:
+                if attr.__name__ in ['active', 'get_device', '__result_format']:
                     return attr(*args, **kwargs)
                 else:
                     if AppIOSDeveloperInfo.objects.filter(pk=self.developer_pk,

@@ -459,18 +459,12 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': SYNC_CACHE_TO_DATABASE.get("auto_clean_captcha_store_times"),
         'args': ()
     },
-    'auto_check_ios_developer_active_job': {
-        'task': 'xsign.tasks.auto_check_ios_developer_active_job',
+    'auto_clean_remote_client_job': {
+        'task': 'api.tasks.auto_clean_remote_client_job',
         # 'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
         'schedule': crontab(hour=1, minute=1),
         'args': ()
     },
-    # 'start_api_sever_do_clean': {
-    #     'task': 'api.tasks.start_api_sever_do_clean',
-    #     'schedule': 6,
-    #     'args': (),
-    #     'one_off': True
-    # },
     'sync_wx_access_token_job': {
         'task': 'api.tasks.sync_wx_access_token_job',
         'schedule': SYNC_CACHE_TO_DATABASE.get("wx_get_access_token_times"),
@@ -480,6 +474,12 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'xsign.tasks.get_best_proxy_ips_job',
         'schedule': SYNC_CACHE_TO_DATABASE.get("best_proxy_ips_times"),
         'args': (),
+    },
+    'auto_check_ios_developer_active_job': {
+        'task': 'xsign.tasks.auto_check_ios_developer_active_job',
+        # 'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
+        'schedule': crontab(hour=1, minute=1),
+        'args': ()
     },
 }
 

@@ -3,13 +3,13 @@
 # project: 4月
 # author: liuyu
 # date: 2020/4/7
-
+import datetime
 import logging
 import time
 
 from django.core.cache import cache
 
-from api.models import Apps, UserInfo
+from api.models import Apps, UserInfo, RemoteClientInfo
 from common.utils.storage import Storage
 from fir_ser.settings import CACHE_KEY_TEMPLATE
 
@@ -45,3 +45,8 @@ def auto_clean_upload_tmp_file():
 
                 cache.delete(upload_tem_file_key)
                 logger.info(f"auto_clean_upload_tmp_file upload_tem_file_key :{upload_tem_file_key}")
+
+
+def auto_clean_remote_client_log(clean_day=30):
+    clean_time = datetime.datetime.now() - datetime.timedelta(days=clean_day)
+    return RemoteClientInfo.objects.filter(created_time__lt=clean_time).delete()

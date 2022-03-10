@@ -141,6 +141,8 @@ class BaseService(object):
         uid = get_user_id(self.uid)
         gid = get_user_id(self.gid)
         u_gid = uid if uid else gid
+        if u_gid is None:
+            u_gid = os.getuid()
         if u_gid is not None:
             for (dir_path, dir_names, filenames) in os.walk(LOG_DIR):
                 for filename in filenames + dir_names:

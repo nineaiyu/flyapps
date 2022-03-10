@@ -129,8 +129,7 @@ class DeveloperView(APIView):
                 if act == "checkauth":
                     status, result = IosUtils.active_developer(developer_obj)
                     if status:
-                        if not developer_obj.certid:
-                            IosUtils.get_device_from_developer(developer_obj)
+                        IosUtils.get_device_from_developer(developer_obj)
                         return Response(res.dict)
                     else:
                         res.code = 1008

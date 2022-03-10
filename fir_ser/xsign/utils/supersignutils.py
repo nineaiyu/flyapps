@@ -1071,6 +1071,10 @@ class IosUtils(object):
     def get_device_from_developer(developer_obj):
         app_api_obj = get_api_obj(developer_obj)
         status, result = app_api_obj.get_device()
+        # 获取设备列表的时候，有时候会发生灵异事件，尝试多次获取 【也可能是未知bug导致】
+        if status and isinstance(result, list) and len(result) == 0:
+            time.sleep(2)
+            status, result = app_api_obj.get_device()
         if status and developer_obj.issuer_id:
 
             udid_developer_obj_list = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).values_list('udid')
