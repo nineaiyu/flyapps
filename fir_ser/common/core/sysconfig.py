@@ -320,6 +320,10 @@ class AppleDeveloperConfCache(ConfigCacheBase):
         return super().get_value('DEVELOPER_USE_STATUS', APPLEDEVELOPERCONF.DEVELOPER_USE_STATUS)
 
     @property
+    def DEVELOPER_SIGN_STATUS(self):
+        return super().get_value('DEVELOPER_SIGN_STATUS', APPLEDEVELOPERCONF.DEVELOPER_SIGN_STATUS)
+
+    @property
     def DEVELOPER_AUTO_CHECK_STATUS(self):
         return super().get_value('DEVELOPER_AUTO_CHECK_STATUS', APPLEDEVELOPERCONF.DEVELOPER_AUTO_CHECK_STATUS)
 

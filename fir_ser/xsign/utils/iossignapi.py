@@ -254,7 +254,7 @@ class AppDeveloperApiV2(object):
         attr = object.__getattribute__(self, name)
         if hasattr(attr, '__call__'):
             def func(*args, **kwargs):
-                if attr.__name__ in ['active', 'get_device', '__result_format']:
+                if attr.__name__ in ['active', 'get_device', '__result_format', '__callback_run']:
                     return attr(*args, **kwargs)
                 else:
                     if AppIOSDeveloperInfo.objects.filter(pk=self.developer_pk,
@@ -297,6 +297,21 @@ class AppDeveloperApiV2(object):
             logger.info(f"issuer_id:{self.issuer_id} {is_instance} result:{result}")
             return True, result
         raise Exception(f'{result} is not {is_instance}')
+
+    def __callback_run(self, err_msg, failed_call_prefix, callback_info=None):
+        if callback_info is None:
+            callback_info = []
+        for callback in callback_info:
+            for match_msg in callback.get('err_match_msg', []):
+                if match_msg in err_msg:
+                    with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
+                        if state:
+                            for func in callback.get('func_list', []):
+                                logger.info(f'issuer_id:{self.issuer_id} run callback func {func}')
+                                func()
+                        else:
+                            logger.warning(
+                                f'issuer_id:{self.issuer_id} {callback_info}-{failed_call_prefix} is running')
 
     def active(self):
         """
@@ -417,15 +432,11 @@ class AppDeveloperApiV2(object):
                 return True, result
             raise Exception(str(device_obj))
         except Exception as e:
+            err_msg = str(e)
             logger.error(f"issuer_id:{self.issuer_id} ios developer set devices status Failed Exception:{e}")
-            result['return_info'] = check_error_call_back(str(e), self.developer_pk)
-            if device_err_callback and ("There are no current ios devices" in str(e) or "Device obj is None" in str(e)):
-                with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
-                    if state:
-                        device_err_callback()
-                    else:
-                        logger.warning(
-                            f'issuer_id:{self.issuer_id} {device_err_callback}-{failed_call_prefix} is running')
+            result['return_info'] = check_error_call_back(err_msg, self.developer_pk)
+            self.__callback_run(err_msg, failed_call_prefix, device_err_callback)
+
         return False, result
 
     def get_device(self):
@@ -451,9 +462,7 @@ class AppDeveloperApiV2(object):
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)
             return False, result
 
-    def create_app(self, bundle_id, app_id, s_type, app_id_err_callback=None):
-        if app_id_err_callback is None:
-            app_id_err_callback = []
+    def create_app(self, bundle_id, app_id, s_type, failed_call_prefix, app_id_err_callback=None):
         result = {}
         try:
             result = {}
@@ -469,11 +478,10 @@ class AppDeveloperApiV2(object):
                 return True, result
             raise Exception(str(bundle_obj))
         except Exception as e:
+            err_msg = str(e)
             logger.error(f"issuer_id:{self.issuer_id} ios developer create app Failed Exception:{e}")
-            result['return_info'] = check_error_call_back(str(e), self.developer_pk)
-            if app_id_err_callback and "There is no App ID with ID" in str(e):
-                for call_fun in app_id_err_callback:
-                    call_fun()
+            result['return_info'] = check_error_call_back(err_msg, self.developer_pk)
+            self.__callback_run(err_msg, failed_call_prefix, app_id_err_callback)
             return False, result
 
     def register_device(self, device_udid, device_name, failed_call_prefix, device_err_callback=None):
@@ -485,28 +493,14 @@ class AppDeveloperApiV2(object):
                 return True, device_obj
             raise Exception(str(device_obj))
         except Exception as e:
+            err_msg = str(e)
             logger.error(f"issuer_id:{self.issuer_id} ios developer register device Failed Exception:{e}")
-            result['return_info'] = check_error_call_back(str(e), self.developer_pk)
-            err_msg_list = [
-                "There are no current ios devices",
-                "Your development team has reached the maximum number of registered iPhone devices"
-            ]
-            if device_err_callback:
-                for err_msg in err_msg_list:
-                    if err_msg in str(e):
-                        with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
-                            if state:
-                                device_err_callback()
-                            else:
-                                logger.warning(
-                                    f'issuer_id:{self.issuer_id} {device_err_callback}-{failed_call_prefix} is running')
-                        break
+            result['return_info'] = check_error_call_back(err_msg, self.developer_pk)
+            self.__callback_run(err_msg, failed_call_prefix, device_err_callback)
             return False, result
 
     def make_and_download_profile(self, app_obj, provision_name, auth, developer_app_id, device_id_list, profile_id,
-                                  failed_call_prefix, app_id_err_callback=None):
-        if app_id_err_callback is None:
-            app_id_err_callback = []
+                                  failed_call_prefix, callback_info=None):
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
@@ -523,17 +517,11 @@ class AppDeveloperApiV2(object):
                 return True, result
             raise Exception(str(profile_obj))
         except Exception as e:
+            err_msg = str(e)
             logger.error(f"issuer_id:{self.issuer_id} app_id {app_obj.app_id} ios developer make profile Failed "
                          f"Exception:{e}")
-            result['return_info'] = check_error_call_back(str(e), self.developer_pk)
-            if app_id_err_callback and "There is no App ID with ID" in str(e):
-                with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
-                    if state:
-                        for call_fun in app_id_err_callback:
-                            call_fun()
-                    else:
-                        logger.warning(
-                            f'issuer_id:{self.issuer_id} {app_id_err_callback}-{failed_call_prefix} is running')
+            result['return_info'] = check_error_call_back(err_msg, self.developer_pk)
+            self.__callback_run(err_msg, failed_call_prefix, callback_info)
             return False, result
 
     def modify_capability(self, app_obj, developer_app_id):

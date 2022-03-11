@@ -297,7 +297,7 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True,
     if read_only:
         status_choice = Config.DEVELOPER_USE_STATUS
     else:
-        status_choice = [1]
+        status_choice = Config.DEVELOPER_SIGN_STATUS
     status_filter = {'developerid__certid__isnull': False, 'developerid__status__in': status_choice}
 
     developer_udid_queryset = UDIDsyncDeveloper.objects.filter(developerid__user_id__in=user_objs,
@@ -576,6 +576,26 @@ class IosUtils(object):
         if not device_udid:
             logger.error("device udid is not exists. so return and exit")
             return True, 'continue'
+
+        register_failed_callback = [
+            {
+                'func_list': [err_callback(IosUtils.get_device_from_developer, developer_obj)],
+                'err_match_msg': [
+                    "There are no current ios devices",
+                    "Your development team has reached the maximum number of registered iPhone devices"
+                ]
+            }
+        ]
+        set_failed_callback = [
+            {
+                'func_list': [err_callback(IosUtils.get_device_from_developer, developer_obj)],
+                'err_match_msg': [
+                    "There are no current ios devices",
+                    "Device obj is None"
+                ]
+            }
+        ]
+
         sync_device_obj = UDIDsyncDeveloper.objects.filter(udid=device_udid,
                                                            developerid=developer_obj).first()
         # auth = get_auth_form_developer(developer_obj)
@@ -588,9 +608,7 @@ class IosUtils(object):
                                                                               sync_device_obj.product,
                                                                               sync_device_obj.udid,
                                                                               failed_call_prefix,
-                                                                              err_callback(
-                                                                                  IosUtils.get_device_from_developer,
-                                                                                  developer_obj))
+                                                                              set_failed_callback)
                 if not status:  # 已经包含异常操作，暂定
                     return status, result
                 sync_device_obj.status = True
@@ -599,9 +617,7 @@ class IosUtils(object):
             # 库里面不存在，注册设备，新设备注册默认就是启用状态
             status, device_obj = get_api_obj(developer_obj).register_device(device_udid, device_name,
                                                                             failed_call_prefix,
-                                                                            err_callback(
-                                                                                IosUtils.get_device_from_developer,
-                                                                                developer_obj))
+                                                                            register_failed_callback)
             if not status:
                 return status, device_obj
 
@@ -641,18 +657,23 @@ class IosUtils(object):
 
     @staticmethod
     @call_function_try_attempts()
-    def check_or_add_new_bundles(app_obj, developer_obj, failed_callback=None):
+    def check_or_add_new_bundles(app_obj, developer_obj, add_new_bundles_prefix, failed_callback=None):
         if failed_callback is None:
             failed_callback = []
-        failed_callback.append(err_callback(IosUtils.clean_super_sign_things_by_app_obj,
-                                            app_obj, developer_obj))
+        failed_callback.extend([
+            {
+                'func_list': [err_callback(IosUtils.clean_super_sign_things_by_app_obj, app_obj, developer_obj)],
+                'err_match_msg': ["There is no App ID with ID"]
+            }
+        ])
         developer_app_id_obj = DeveloperAppID.objects.filter(developerid=developer_obj,
                                                              app_id=app_obj).first()
         if not developer_app_id_obj:
             bundle_id = app_obj.bundle_id
             app_id = app_obj.app_id
             s_type = app_obj.supersign_type
-            status, result = get_api_obj(developer_obj).create_app(bundle_id, app_id, s_type, failed_callback)
+            status, result = get_api_obj(developer_obj).create_app(bundle_id, app_id, s_type, add_new_bundles_prefix,
+                                                                   failed_callback)
             if status and result.get('aid'):
                 developer_app_id_obj = DeveloperAppID.objects.create(aid=result.get('aid'), developerid=developer_obj,
                                                                      app_id=app_obj)
@@ -671,8 +692,17 @@ class IosUtils(object):
 
         if failed_callback is None:
             failed_callback = []
-        failed_callback.append(err_callback(IosUtils.clean_super_sign_things_by_app_obj,
-                                            app_obj, developer_obj))
+
+        failed_callback.extend([
+            {
+                'func_list': [err_callback(IosUtils.clean_super_sign_things_by_app_obj, app_obj, developer_obj)],
+                'err_match_msg': ["There is no App ID with ID"]
+            },
+            {
+                'func_list': [err_callback(IosUtils.active_developer, developer_obj)],
+                'err_match_msg': ["There are no current certificates on this team matching the provided certificate"]
+            }
+        ])
         device_id_list = DeveloperDevicesID.objects.filter(app_id=app_obj,
                                                            developerid=developer_obj).values_list('did')
         device_id_lists = [did[0] for did in device_id_list]
@@ -764,7 +794,8 @@ class IosUtils(object):
                     if status and 'continue' in [str(did_udid_result)]:
                         return True, True
                 with cache.lock(add_new_bundles_prefix, timeout=360):
-                    status, bundle_result = IosUtils.check_or_add_new_bundles(self.app_obj, self.developer_obj)
+                    status, bundle_result = IosUtils.check_or_add_new_bundles(self.app_obj, self.developer_obj,
+                                                                              add_new_bundles_prefix)
                     if not status:
                         if 'UNEXPECTED_ERROR' in str(bundle_result):
                             return False, {}

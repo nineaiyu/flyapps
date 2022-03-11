@@ -355,8 +355,9 @@ class DOWNLOADTIMESCONF(object):
 
 class APPLEDEVELOPERCONF(object):
     # (-1, '疑似被封'), (0, '未激活'), (1, '已激活'), (2, '协议待同意'), (3, '维护中'), (4, '证书过期'), (5, '状态异常')
+    DEVELOPER_SIGN_STATUS = [1]  # 开发者可用于签名的查询
     DEVELOPER_USE_STATUS = [1, 2, 3, 4, 5]  # 开发者可用状态，详情查看 model.AppIOSDeveloperInfo
-    DEVELOPER_AUTO_CHECK_STATUS = [1, 2]  # 定时认证自动检测
+    DEVELOPER_AUTO_CHECK_STATUS = [1, 2, 5]  # 定时认证自动检测
     DEVELOPER_WRITE_STATUS = [1, 3, 4]  # 开发者api写操作查询
     DEVELOPER_DISABLED_STATUS = [2, 4, 5]  # 开发者不可 修改为状态，用户前端控制
     DEVELOPER_UID_KEY = "T:"  # 开发者共享给其他第三方用户， 中间必须包含 : 前端需要根据 : 进行分割
