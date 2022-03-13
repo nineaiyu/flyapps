@@ -405,7 +405,7 @@ class RegistView(APIView):
                     new_data = {
                         "username": random_username,
                         "password": password,
-                        "first_name": random_username[:8],
+                        "first_name": str(username)[:130],
                         "default_domain_name": get_min_default_domain_cname_obj(True)
                     }
                     if is_valid_email(username):
