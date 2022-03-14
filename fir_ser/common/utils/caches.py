@@ -34,15 +34,19 @@ def sync_download_times_by_app_id(app_ids):
 
 def del_cache_response_by_short(app_id, udid=''):
     app_obj = Apps.objects.filter(app_id=app_id).first()
-    invalid_app_cache(app_obj)
-    invalid_app_cache(app_obj.has_combo)
+    if app_obj:
+        invalid_app_cache(app_obj)
+        if app_obj.has_combo:
+            invalid_app_cache(app_obj.has_combo)
 
 
 def del_cache_by_delete_app(app_id):
     invalid_app_download_times_cache(app_id)
     app_obj = Apps.objects.filter(app_id=app_id).first()
-    invalid_app_cache(app_obj)
-    invalid_app_cache(app_obj.has_combo)
+    if app_obj:
+        invalid_app_cache(app_obj)
+        if app_obj.has_combo:
+            invalid_app_cache(app_obj.has_combo)
 
 
 def del_cache_by_app_id(app_id, user_obj):
