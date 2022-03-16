@@ -339,16 +339,8 @@
 <script>
 import QRCode from 'qrcodejs2'
 
-import {
-  appReport,
-  checkEmail,
-  checkphone,
-  geetest,
-  getAuthTokenFun,
-  getdownloadurl,
-  getShortAppinfo,
-  gettask
-} from '@/restful/download'
+import {appReport, geetest, getAuthTokenFun, getdownloadurl, getShortAppinfo, gettask} from '@/restful/download'
+import {checkEmail, checkphone, getRandomStr} from "@/utils/base/utils";
 
 export default {
   name: "ShortDownload",
@@ -414,7 +406,7 @@ export default {
       mobileprovision: '',
       ad_info: {ad_pic: '', ad_uri: ''},
       task_spend_time: 0,
-      task_msg: ''
+      task_msg: '执行中'
     }
   },
   beforeDestroy() {
@@ -518,7 +510,7 @@ export default {
       this.msg = msg;
       alert(this.msg)
     },
-    loop_check_task(c_count = 1, loop_t) {
+    loop_check_task(c_count = 1, loop_t, unique_key = getRandomStr()) {
       if (c_count === 1) {
         // eslint-disable-next-line no-unused-vars
         loop_t = window.setInterval(res => {
@@ -548,12 +540,12 @@ export default {
             this.task_msg = data.msg;
           }
           if (data.code === 1001) {
-            this.loop_check_task(c_count, loop_t)
+            this.loop_check_task(c_count, loop_t, unique_key)
           }
         }
       }, {
         "short": this.$route.params.short,
-        data: {"task_id": this.$route.query.task_id}
+        data: {"task_id": this.$route.query.task_id, "unique_key": unique_key}
       })
     },
     jiaocheng(act) {

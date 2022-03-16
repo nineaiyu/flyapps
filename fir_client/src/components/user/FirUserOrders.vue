@@ -250,6 +250,7 @@
 import {my_order, order_sync} from "@/restful";
 import {format_choices, getUserInfoFun} from '@/utils'
 import VueQr from 'vue-qr';
+import {getRandomStr} from "@/utils/base/utils";
 
 export default {
   name: "FirUserOrders",
@@ -279,6 +280,7 @@ export default {
       show_order_info: false,
       current_order_info: {},
       loading: false,
+      unique_key: ''
     }
   },
   methods: {
@@ -298,10 +300,11 @@ export default {
       })
     },
 
-    loop_get_order_info(order_number, c_count = 1) {
+    loop_get_order_info(order_number, c_count = 1, unique_key = getRandomStr()) {
       if (!this.wx_pay) {
         return
       }
+      this.unique_key = unique_key;
       order_sync(data => {
         c_count += 1;
         if (c_count > 30) {
@@ -311,12 +314,17 @@ export default {
           this.$message.success(data.msg);
           this.get_data_from_tabname();
           this.wx_pay = false;
+        } else if (data.code === 1004) {
+          this.loop_flag = false;
+          if (this.unique_key === unique_key) {
+            this.wx_pay = false;
+          }
         } else if (data.code === 1001) {
-          return this.loop_get_order_info(order_number, c_count)
+          return this.loop_get_order_info(order_number, c_count, unique_key)
         }
       }, {
         "methods": "POST",
-        data: {"order_number": order_number}
+        data: {"order_number": order_number, 'unique_key': unique_key}
       })
     },
 
@@ -454,6 +462,7 @@ export default {
       this.order_id_seach = out_trade_no;
     }
     this.get_data_from_tabname();
+    this.unique_key = getRandomStr();
   }, filters: {}
 }
 </script>

@@ -305,6 +305,7 @@
 import {changeInfoFun, getAuthcTokenFun, userinfos, wxBindFun, wxLoginFun, wxutils, wxWebScanFun} from '@/restful'
 import {deepCopy, geetest} from "@/utils";
 import VueQr from 'vue-qr';
+import {getRandomStr} from "@/utils/base/utils";
 
 export default {
   name: "FirUserProfileInfo",
@@ -340,6 +341,7 @@ export default {
       wx_web_login_url: '',
       wx_user_list: [],
       pagination: {"currentPage": 1, "total": 0, "pagesize": 999},
+      unique_key: ''
     }
   }, methods: {
     wx_web_login_fun() {
@@ -397,7 +399,7 @@ export default {
         }
       })
     },
-    loop_get_wx_info(wx_login_ticket, c_count = 1) {
+    loop_get_wx_info(wx_login_ticket, c_count = 1, unique_key = getRandomStr()) {
       if (wx_login_ticket && wx_login_ticket.length < 3) {
         this.$message.error("获取登陆码失败，请稍后再试");
         return
@@ -421,12 +423,14 @@ export default {
             type: 'error',
             duration: 30000
           });
+        } else if (data.code === 1004) {
+          this.loop_flag = false;
         } else if (data.code === 1006) {
-          return this.loop_get_wx_info(wx_login_ticket, c_count)
+          return this.loop_get_wx_info(wx_login_ticket, c_count, unique_key)
         }
       }, {
         "methods": "POST",
-        data: {"ticket": wx_login_ticket}
+        data: {"ticket": wx_login_ticket, "unique_key": unique_key}
       })
     },
     wxLogin() {
@@ -442,7 +446,7 @@ export default {
             this.wx_visible = false;
           }
         }, {
-          "methods": "POST",
+          "methods": "POST", "data": {"unique_key": this.unique_key}
         })
       }
     },
@@ -615,7 +619,7 @@ export default {
     // this.updateUserInfo({"methods":false});
     this.userinfo = this.$store.state.userinfo;
     this.orguserinfo = deepCopy(this.$store.state.userinfo);
-
+    this.unique_key = getRandomStr();
 
   }, watch: {
     '$store.state.userinfo': function () {

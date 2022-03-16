@@ -215,3 +215,15 @@ class TaskStateCache(RedisCacheBase):
     def __init__(self, app_pk, task_id):
         self.cache_key = f"{CACHE_KEY_TEMPLATE.get('task_state_key')}_{app_pk}_{task_id}"
         super().__init__(self.cache_key)
+
+
+class PendingStateCache(RedisCacheBase):
+    def __init__(self, locker_key):
+        self.cache_key = f"{CACHE_KEY_TEMPLATE.get('pending_state_key')}_{locker_key}"
+        super().__init__(self.cache_key)
+
+
+class WxLoginBindCache(RedisCacheBase):
+    def __init__(self, unique_key):
+        self.cache_key = f"{CACHE_KEY_TEMPLATE.get('wx_login_bind_key')}_{unique_key}"
+        super().__init__(self.cache_key)

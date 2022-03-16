@@ -16,11 +16,11 @@ from api.utils.modelutils import get_redirect_server_domain, add_remote_info_fro
     get_app_download_uri
 from api.utils.response import BaseResponse
 from common.base.baseutils import get_real_ip_address, make_random_uuid, get_server_domain_from_request
-from common.base.magic import get_pending_result
 from common.cache.storage import TaskStateCache
 from common.core.sysconfig import Config
 from common.core.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
 from common.utils.caches import check_app_permission
+from common.utils.pending import get_pending_result
 from fir_ser.celery import app
 from xsign.tasks import run_sign_task
 from xsign.utils.supersignutils import udid_bytes_to_dict, make_sign_udid_mobile_config
@@ -108,12 +108,14 @@ class TaskView(APIView):
     def get(self, request, short):
         res = BaseResponse()
         task_id = request.query_params.get('task_id', None)
-        if task_id:
+        unique_key = request.query_params.get('unique_key', task_id)
+        if task_id and unique_key:
             app_info = Apps.objects.filter(short=short).first()
             if app_info:
                 status, result = get_pending_result(task_func, expect_func, task_id=task_id,
-                                                    locker_key=task_id, app_info=app_info)
-                if status:
+                                                    locker_key=task_id, app_info=app_info, unique_key=unique_key)
+                if status and result.get('data'):
+                    result = result.get('data')
                     if result.successful():
                         res.msg = result.get(propagate=False)
                         return Response(res.dict)

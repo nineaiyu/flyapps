@@ -72,7 +72,8 @@
 
 <script>
 import {loginFun} from "@/restful";
-import {checkEmail, checkphone, geetest} from "@/utils";
+import {geetest} from "@/utils";
+import {checkEmail, checkphone} from "@/utils/base/utils";
 
 export default {
   name: "FirResetPwd",

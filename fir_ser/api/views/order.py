@@ -14,10 +14,10 @@ from api.utils.modelutils import PageNumber
 from api.utils.response import BaseResponse
 from api.utils.serializer import PriceSerializer, OrdersSerializer
 from common.base.baseutils import get_order_num, get_choices_dict
-from common.base.magic import get_pending_result
 from common.core.auth import ExpiringTokenAuthentication
 from common.libs.pay.util import get_pay_obj_form_name, get_enable_pay_choices, get_payment_type
 from common.utils.caches import update_order_status
+from common.utils.pending import get_pending_result
 
 logger = logging.getLogger(__name__)
 
@@ -134,12 +134,18 @@ class OrderSyncView(APIView):
     def post(self, request):
         res = BaseResponse()
         order_number = request.data.get("order_number", None)
+        unique_key = request.data.get("unique_key", None)
         if order_number:
-            status, result = get_pending_result(get_order_obj, expect_func, order_number=order_number,
-                                                locker_key=order_number, user_obj=request.user)
+            status, result = get_pending_result(get_order_obj, expect_func, order_number=order_number, run_func_count=1,
+                                                locker_key=order_number, unique_key=unique_key, user_obj=request.user)
             if not status and result:
                 res.code = 1001
-            res.msg = result.get_status_display()
+            if status and result.get('err_msg'):
+                res.code = 1004
+            if result.get('err_msg'):
+                res.msg = result.get('err_msg')
+            else:
+                res.msg = result.get('data', {}).get_status_display()
         return Response(res.dict)
 
 

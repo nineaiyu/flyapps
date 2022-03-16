@@ -73,12 +73,12 @@ class THIRDLOGINCONF(object):
     wx_official = {
         'name': 'wx_official',
         'auth': {
-            'app_id': 'we6',
-            'app_secret': '5bfb678',
-            'token': 'f0ae1b879b8',
-            'encoding_aes_key': '7b9URovp83gG',
+            'app_id': 'wx390e5985fd3699e6',
+            'app_secret': '5b1796722172a902d019f43e4a2fb678',
+            'token': 'f0ae76c1559cacf72a99db6a41b879b8',
+            'encoding_aes_key': '7b9U60tCXk3f4yOFideTN5ithh4Y8X3Xl9pRovp83gG',
         },
-        'active': False
+        'active': True
     }
 
 
@@ -119,8 +119,8 @@ class AUTHCONF(object):
     }
     REPORT = {
         "enable": True,
-        "captcha": True,  # 是否开启注册字母验证码
-        "geetest": False,  # 是否开启geetest验证，如要开启请先配置geetest
+        "captcha": False,  # 是否开启注册字母验证码
+        "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
         "report_type": {
             'sms': False,  # 短信举报
             'email': True,  # 邮件举报

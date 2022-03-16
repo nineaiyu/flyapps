@@ -1,4 +1,5 @@
 import Axios from 'axios'
+import {geetestbase} from "@/utils/base/utils";
 
 Axios.defaults.withCredentials = true;
 
@@ -150,46 +151,11 @@ export function getAuthTokenFun(callBack, params) {
     );
 }
 
-export function checkEmail(email) {
-    let re = /^(\w-*\.*)+@(\w-?)+(\.\w{2,})+$/;
-    return re.test(email);
-}
-
-export function checkphone(email) {
-    let re = /^1\d{10}$/;
-    return re.test(email);
-}
 
 export function geetest(self, uid, params, callback) {
-    loginFun(res => {
-        if (res.code === 1000) {
-            let data = res.data;
-            // eslint-disable-next-line no-undef
-            initGeetest({
-                gt: data.gt,
-                challenge: data.challenge,
-                new_captcha: data.new_captcha, // 用于宕机时表示是新验证码的宕机
-                offline: !data.success, // 表示用户后台检测极验服务器是否宕机，一般不需要关注
-                product: "float", // 产品形式，包括：float，popup
-                width: "100%"
-            }, (captchaObj) => {
-                self.$refs.captcha.innerHTML = '';
-                captchaObj.appendTo("#captcha");
-                captchaObj.onReady(() => {
-                }).onSuccess(() => {
-                    params.geetest = captchaObj.getValidate();
-                    callback(params);
-                }).onError(() => {
-                    captchaObj.destroy();
-                });
-            });
-        } else {
-            alert(res.msg);
-        }
-    }, {
-        "methods": "PUT",
-        "data": {user_id: uid}
-    });
+    return geetestbase(self, loginFun, uid, params, callback, res => {
+        alert(res.msg);
+    })
 }
 
 /** 超级签名************************************************相关api */

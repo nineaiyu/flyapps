@@ -1,5 +1,8 @@
 //滚动条在Y轴上的滚动距离
 
+import {geetestbase} from "@/utils/base/utils";
+import {getuploadurl, loginFun, uploadimgs, uploadstorage, userinfos} from '@/restful'
+
 export function getScrollTop() {
     let scrollTop = 0, bodyScrollTop = 0, documentScrollTop = 0;
     if (document.body) {
@@ -234,16 +237,14 @@ export function uploadaliyunoss(file, certinfo, app, successcallback, processcal
 }
 
 
-import {getuploadurl, loginFun, uploadimgs, uploadstorage, userinfos} from '@/restful'
-
 export function uploadlocalstorage(file, certinfo, app, successcallback, processcallback) {
     uploadstorage(certinfo, file, successcallback, processcallback)
 
 }
 
 export function removeAaary(_arr, _obj) {
-    var length = _arr.length;
-    for (var i = 0; i < length; i++) {
+    let length = _arr.length;
+    for (let i = 0; i < length; i++) {
         if (_arr[i] == _obj) {
             if (i == 0) {
                 _arr.shift(); //删除并返回数组的第一个元素
@@ -326,15 +327,6 @@ export function deepCopy(data) {
     return obj;
 }
 
-export function checkEmail(email) {
-    let re = /^(\w-*\.*)+@(\w-?)+(\.\w{2,})+$/;
-    return re.test(email);
-}
-
-export function checkphone(email) {
-    let re = /^1\d{10}$/;
-    return re.test(email);
-}
 
 export function ImgToBase64(url, callback) {
     let Img = new Image(),
@@ -359,41 +351,15 @@ export function geetest(self, uid, params, callback) {
         text: 'Loading',
         spinner: 'el-icon-loading',
     });
-    loginFun(res => {
-        if (res.code === 1000) {
-            let data = res.data;
-            // eslint-disable-next-line no-undef
-            initGeetest({
-                gt: data.gt,
-                challenge: data.challenge,
-                new_captcha: data.new_captcha, // 用于宕机时表示是新验证码的宕机
-                offline: !data.success, // 表示用户后台检测极验服务器是否宕机，一般不需要关注
-                product: "float", // 产品形式，包括：float，popup
-                width: "100%"
-            }, (captchaObj) => {
-                self.$refs.captcha.innerHTML = '';
-                captchaObj.appendTo("#captcha");
-                captchaObj.onReady(() => {
-                    loading.close()
-                }).onSuccess(() => {
-                    params.geetest = captchaObj.getValidate();
-                    callback(params);
-                }).onError(() => {
-                    captchaObj.destroy();
-                });
-            });
-
-        } else {
-
-            self.$message({
-                message: res.msg,
-                type: 'error'
-            });
-        }
-    }, {
-        "methods": "PUT",
-        "data": {user_id: uid} //self.form.email
-    });
+    return geetestbase(self, loginFun, uid, params, callback, res => {
+        self.$message({
+            message: res.msg,
+            type: 'error'
+        });
+        // eslint-disable-next-line no-unused-vars
+    }, _ => {
+        loading.close()
+    })
 }
 
 export function format_money(s, n = 2) {

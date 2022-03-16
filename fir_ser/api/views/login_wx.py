@@ -8,12 +8,13 @@ from api.utils.response import BaseResponse
 from api.utils.serializer import UserInfoSerializer
 from api.utils.utils import set_user_token
 from common.base.baseutils import get_real_ip_address
-from common.base.magic import get_pending_result
+from common.cache.storage import WxLoginBindCache
 from common.core.auth import ExpiringTokenAuthentication
 from common.core.sysconfig import Config
 from common.core.throttle import VisitRegister1Throttle, VisitRegister2Throttle
 from common.libs.mp.wechat import make_wx_login_qrcode, show_qrcode_url, WxWebLogin
 from common.utils.caches import set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache
+from common.utils.pending import get_pending_result
 
 logger = logging.getLogger(__name__)
 
@@ -42,19 +43,37 @@ class WeChatLoginView(APIView):
     def get(self, request):
         ret = BaseResponse()
         if Config.LOGIN.get("login_type").get('third', '').get('wxp'):
-            code, qr_info = make_wx_login_qrcode()
-            return wx_qr_code_response(ret, code, qr_info, get_real_ip_address(request))
+            unique_key = request.query_params.get('unique_key')
+            if unique_key:
+                cache_obj = WxLoginBindCache(unique_key)
+                cache_data = cache_obj.get_storage_cache()
+                if cache_data:
+                    code, qr_info = cache_data
+                else:
+                    code, qr_info = cache_data = make_wx_login_qrcode()
+                    cache_obj.set_storage_cache(cache_data, qr_info.get('expire_seconds', 600))
+                return wx_qr_code_response(ret, code, qr_info, get_real_ip_address(request))
         return Response(ret.dict)
 
 
 class WeChatBindView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
+    throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
 
     def post(self, request):
         ret = BaseResponse()
         uid = request.user.uid
-        code, qr_info = make_wx_login_qrcode(f"web.bind.{uid}")
-        return wx_qr_code_response(ret, code, qr_info, get_real_ip_address(request))
+        unique_key = request.data.get('unique_key')
+        if unique_key:
+            cache_obj = WxLoginBindCache(unique_key)
+            cache_data = cache_obj.get_storage_cache()
+            if cache_data:
+                code, qr_info = cache_data
+            else:
+                code, qr_info = cache_data = make_wx_login_qrcode(f"web.bind.{uid}")
+                cache_obj.set_storage_cache(cache_data, qr_info.get('expire_seconds', 600))
+            return wx_qr_code_response(ret, code, qr_info, get_real_ip_address(request))
+        return Response(ret.dict)
 
 
 def expect_func(result, *args, **kwargs):
@@ -67,10 +86,16 @@ class WeChatLoginCheckView(APIView):
         if not Config.LOGIN.get("login_type").get('third', '').get('wxp'):
             return Response(ret.dict)
         ticket = request.data.get("ticket")
-        if ticket:
-            status, wx_ticket_data = get_pending_result(get_wx_ticket_login_info_cache, expect_func, ticket=ticket,
-                                                        locker_key=ticket)
+        unique_key = request.data.get("unique_key")
+        if ticket and unique_key:
+            status, result = get_pending_result(get_wx_ticket_login_info_cache, expect_func, ticket=ticket,
+                                                locker_key=ticket, unique_key=unique_key, run_func_count=1)
             if status:
+                if result.get('err_msg'):
+                    ret.msg = result.get('err_msg')
+                    ret.code = 1004
+                    return Response(ret.dict)
+                wx_ticket_data = result.get('data', {})
                 if wx_ticket_data.get('pk', -1) == -1:
                     ret.msg = "还未绑定用户，请通过手机或者邮箱登录账户之后进行绑定"
                     ret.code = 1005
@@ -94,6 +119,7 @@ class WeChatLoginCheckView(APIView):
 
 
 class WeChatWebLoginView(APIView):
+    throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
 
     def get(self, request):
         logger.error(request.query_params)

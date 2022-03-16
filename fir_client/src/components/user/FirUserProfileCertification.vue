@@ -222,7 +222,8 @@
 
 <script>
 import {changeInfoFun, getAuthcTokenFun, user_certification} from "@/restful";
-import {AvatarUploadUtils, checkphone, geetest, getUserInfoFun} from "@/utils";
+import {AvatarUploadUtils, geetest, getUserInfoFun} from "@/utils";
+import {checkphone} from "@/utils/base/utils";
 
 export default {
   name: "FirUserProfileCertification",

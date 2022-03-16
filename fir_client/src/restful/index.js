@@ -8,6 +8,11 @@ Axios.defaults.withCredentials = true;
 // Axios.defaults.httpsAgent = new https.Agent({
 //     keepAlive: true
 // });
+const controller = new AbortController();
+
+export function requestAbort() {
+    controller.abort();
+}
 
 // eslint-disable-next-line no-console
 console.log("flyapps js version:" + process.env.base_env.version);
@@ -138,7 +143,7 @@ function getData(methods, url, params = {}, callBack, load, isCode = false) {
 
     if (methods === "DELETE") {
         Axios
-            .delete(url, {params: params})
+            .delete(url, {params: params, signal: controller.signal})
             .then(function (response) {
                 if (isCode) {
                     callBack(response.data);
@@ -153,7 +158,7 @@ function getData(methods, url, params = {}, callBack, load, isCode = false) {
 
     } else if (methods === "PUT") {
         Axios
-            .put(url, params)
+            .put(url, params, {signal: controller.signal})
             .then(function (response) {
                 if (isCode) {
                     callBack(response.data);
@@ -168,7 +173,7 @@ function getData(methods, url, params = {}, callBack, load, isCode = false) {
 
     } else if (methods === 'POST') {
         Axios
-            .post(url, params)
+            .post(url, params, {signal: controller.signal})
             .then(function (response) {
                 if (isCode) {
                     callBack(response.data);
@@ -183,7 +188,7 @@ function getData(methods, url, params = {}, callBack, load, isCode = false) {
             });
     } else if (methods === 'FILE') {
         Axios
-            .get(url, {params: params, responseType: 'blob'})
+            .get(url, {params: params, responseType: 'blob', signal: controller.signal})
             .then(function (response) {
                 convertRes2Blob(response)
             })
@@ -193,7 +198,7 @@ function getData(methods, url, params = {}, callBack, load, isCode = false) {
             });
     } else {
         Axios
-            .get(url, {params: params})
+            .get(url, {params: params, signal: controller.signal})
             .then(function (response) {
                 callBack(response.data);
             })

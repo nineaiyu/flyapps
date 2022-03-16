@@ -63,21 +63,3 @@ def call_function_try_attempts(try_attempts=3, sleep_time=2, failed_callback=Non
         return wrapper
 
     return decorator
-
-
-def get_pending_result(func, expect_func, loop_count=10, sleep_time=3, *args, **kwargs):
-    try:
-        with cache.lock("%s_%s" % ('get_pending_result', kwargs.get('locker_key')), timeout=loop_count * sleep_time):
-            count = 1
-            del kwargs['locker_key']
-            while True:
-                result = func(*args, **kwargs)
-                if expect_func(result, *args, **kwargs):
-                    return True, result
-                time.sleep(sleep_time)
-                if loop_count < count:
-                    return False, result
-                count += 1
-    except Exception as e:
-        logger.warning(f'get pending result exception: {e}')
-        return False, result

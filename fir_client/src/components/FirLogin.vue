@@ -104,7 +104,8 @@
 
 <script>
 import {loginFun, set_auth_token, wxLoginFun} from "@/restful";
-import {checkEmail, checkphone, geetest} from "@/utils";
+import {geetest} from "@/utils";
+import {checkEmail, checkphone, getRandomStr} from "@/utils/base/utils";
 
 export default {
   name: "FirLogin",
@@ -126,6 +127,7 @@ export default {
       wx_login_qr_url: '',
       wx_visible: false,
       loop_flag: false,
+      unique_key: ''
     }
   },
   methods: {
@@ -139,7 +141,7 @@ export default {
       set_auth_token();
       this.$router.push({name: 'FirApps'})
     },
-    loop_get_wx_info(wx_login_ticket, c_count = 1) {
+    loop_get_wx_info(wx_login_ticket, c_count = 1, unique_key = getRandomStr()) {
       if (wx_login_ticket && wx_login_ticket.length < 3) {
         this.$message.error("获取登陆码失败，请稍后再试");
         return
@@ -162,12 +164,14 @@ export default {
             type: 'error',
             duration: 30000
           });
+        } else if (data.code === 1004) {
+          this.loop_flag = false;
         } else if (data.code === 1006) {
-          return this.loop_get_wx_info(wx_login_ticket, c_count)
+          return this.loop_get_wx_info(wx_login_ticket, c_count, unique_key)
         }
       }, {
         "methods": "POST",
-        data: {"ticket": wx_login_ticket}
+        data: {"ticket": wx_login_ticket, "unique_key": unique_key}
       })
       // }, 3000)
 
@@ -187,7 +191,7 @@ export default {
             this.loop_flag = false;
           }
         }, {
-          "methods": "GET",
+          "methods": "GET", "data": {"unique_key": this.unique_key}
         })
       } else {
         this.loop_flag = false;
@@ -337,6 +341,7 @@ export default {
   },
   mounted() {
     this.get_auth_code();
+    this.unique_key = getRandomStr();
   }, created() {
   }
 }
