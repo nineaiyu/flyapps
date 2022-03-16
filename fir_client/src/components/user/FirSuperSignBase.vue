@@ -1774,7 +1774,7 @@ export default {
     },
     canceledit() {
       this.dialogaddDeveloperVisible = false;
-      this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100};
+      this.editdeveloperinfo =  {auth_type: 0, usable_number: 100, app_limit_number: 100, p8key: ''};
       this.isedit = false;
       this.placeholder = ""
     },
@@ -1944,12 +1944,12 @@ export default {
             this.canceledit();
             this.$message.success("操作成功");
             this.activeName = "iosdeveloper";
-            this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100};
+            this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100, p8key: ''}
           }
           if (params.methods === 'POST') {
             this.$message.success("添加成功");
             this.activeName = "iosdeveloper";
-            this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100};
+            this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100, p8key: ''}
           }
         } else if (data.code === 1008) {
           this.$message.error(data.msg);

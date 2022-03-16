@@ -56,7 +56,8 @@ def call_function_try_attempts(try_attempts=3, sleep_time=2, failed_callback=Non
             if not res[0]:
                 logger.error(f'exec {func} failed after the maximum number of attempts. Failed:{res[1]}')
                 if failed_callback:
-                    failed_callback()
+                    logger.error(f'exec {func} failed and exec failed callback {failed_callback.__name__}')
+                    failed_callback(*args, **kwargs)
             logger.info(f"exec {func} finished. time:{time.time() - start_time}")
             return res
 

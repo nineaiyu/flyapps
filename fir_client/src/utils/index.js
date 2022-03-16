@@ -351,7 +351,7 @@ export function geetest(self, uid, params, callback) {
         text: 'Loading',
         spinner: 'el-icon-loading',
     });
-    return geetestbase(self, loginFun, uid, params, callback, res => {
+    return geetestbase(loginFun, self, uid, params, callback, res => {
         self.$message({
             message: res.msg,
             type: 'error'

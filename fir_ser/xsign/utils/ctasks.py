@@ -6,7 +6,9 @@
 
 import logging
 import os
+import random
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from django.template import loader
 
@@ -34,23 +36,32 @@ def auto_delete_ios_mobile_tmp_file():
 
 
 def auto_check_ios_developer_active():
-    all_ios_developer = AppIOSDeveloperInfo.objects.filter(status__in=Config.DEVELOPER_AUTO_CHECK_STATUS,
-                                                           auto_check=True)
     error_issuer_id = {}
-    for ios_developer in all_ios_developer:
-        userinfo = ios_developer.user_id
-        err_issuer_id = error_issuer_id.get(userinfo.uid, [])
-        if userinfo.supersign_active:
-            status, result = IosUtils.active_developer(ios_developer)
-            msg = f"auto_check_ios_developer_active  user:{userinfo}  ios.developer:{ios_developer}  status:{status}  result:{result}"
-            err_issuer_id.append(ios_developer)
-            error_issuer_id[userinfo.uid] = list(set(err_issuer_id))
+
+    def check_active_task(developer_obj):
+        time.sleep(random.randint(1, 5))
+        user_obj = developer_obj.user_id
+        err_issuer_id = error_issuer_id.get(user_obj.uid, [])
+        if user_obj.supersign_active:
+            status, result = IosUtils.active_developer(developer_obj, False)
+            msg = f"auto_check_ios_developer_active  user:{user_obj}  ios.developer:{developer_obj}  status:{status}  result:{result}"
+            err_issuer_id.append(developer_obj)
+            error_issuer_id[user_obj.uid] = list(set(err_issuer_id))
 
             if status:
-                IosUtils.get_device_from_developer(ios_developer)
+                IosUtils.get_device_from_developer(developer_obj)
                 logger.info(msg)
             else:
                 logger.error(msg)
+
+    ios_developer_queryset = AppIOSDeveloperInfo.objects.filter(status__in=Config.DEVELOPER_AUTO_CHECK_STATUS,
+                                                                auto_check=True, user_id__is_active=True,
+                                                                user_id__supersign_active=True)
+    pools = ThreadPoolExecutor(10)
+
+    for ios_developer_obj in ios_developer_queryset:
+        pools.submit(check_active_task, ios_developer_obj)
+    pools.shutdown()
 
     for uid, developer_obj_list in error_issuer_id.items():
         userinfo = UserInfo.objects.filter(uid=uid).first()

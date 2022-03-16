@@ -406,6 +406,18 @@ def check_sign_is_exists(user_obj, app_obj, udid, developer_obj, sign=True):
     logger.warning(f"udid {udid} not exist app_id {app_obj} . start find developer and sign")
 
 
+def active_failed_callback(*args, **kwargs):
+    developer_obj, auto_clean = args
+    if auto_clean:
+        logger.warning(f"clean developer {developer_obj}")
+        IosUtils.clean_developer(developer_obj, developer_obj.user_id)
+        developer_obj.certid = None
+        developer_obj.cert_expire_time = None
+    else:
+        developer_obj.status = 4
+    developer_obj.save(update_fields=['certid', 'cert_expire_time', 'status'])
+
+
 class IosUtils(object):
     def __init__(self, udid_info, user_obj, app_obj=None):
         self.developer_obj = None
@@ -699,7 +711,7 @@ class IosUtils(object):
                 'err_match_msg': ["There is no App ID with ID"]
             },
             {
-                'func_list': [err_callback(IosUtils.active_developer, developer_obj)],
+                'func_list': [err_callback(IosUtils.active_developer, developer_obj, True)],
                 'err_match_msg': ["There are no current certificates on this team matching the provided certificate"]
             }
         ])
@@ -882,6 +894,10 @@ class IosUtils(object):
                 d_result['msg'] = '数据更新失败，请稍后重试'
                 return status, d_result
         else:
+            # 导致签名问题：
+            # 1.描述文件下载失败,也就是描述文件不存在
+            # 2.IPA 包打包编码有误，非utf-8编码打包
+            # 3.签名证书有误或者不存在
             d_result['code'] = 1004
             d_result['msg'] = '签名失败，请检查包是否正常'
             return status, d_result
@@ -1017,6 +1033,7 @@ class IosUtils(object):
             return False, {'err_info': str(e)}
 
     @staticmethod
+    @call_function_try_attempts(failed_callback=active_failed_callback)
     def active_developer(developer_obj, auto_clean=True):
         """
         激活开发者账户
@@ -1033,14 +1050,13 @@ class IosUtils(object):
                     developer_obj.cert_expire_time = format_apple_date(cert_obj.expirationDate)
                     cert_is_exists = False
                     break
+            developer_obj.status = 1
             if developer_obj.certid and len(developer_obj.certid) > 3 and cert_is_exists and len(result) > 0:
                 # 数据库证书id和苹果开发id不一致，可认为被用户删掉，需要执行清理开发者操作
                 if auto_clean:
-                    logger.warning(f"clean developer {developer_obj}")
-                    IosUtils.clean_developer(developer_obj, developer_obj.user_id)
-                developer_obj.certid = None
-                developer_obj.cert_expire_time = None
-            developer_obj.status = 1
+                    # 捕获失败结果，三次重试之后，执行callback 方法，避免一次执行失败直接清理数据
+                    return False, {'return_info': '证书检测有误'}
+                developer_obj.status = 4
             developer_obj.save(update_fields=['certid', 'cert_expire_time', 'status'])
         return status, result
 

@@ -108,7 +108,7 @@ class DeveloperView(APIView):
                 if issuer_ids:
                     for developer_s_obj in AppIOSDeveloperInfo.objects.filter(user_id=request.user,
                                                                               issuer_id__in=issuer_ids).all():
-                        status, result = IosUtils.active_developer(developer_s_obj)
+                        status, result = IosUtils.active_developer(developer_s_obj, False)
                         if status:
                             IosUtils.get_device_from_developer(developer_s_obj)
             elif act == "setstatus":
@@ -127,7 +127,7 @@ class DeveloperView(APIView):
             if act:
                 logger.info(f"user {request.user} ios developer {developer_obj} act {act}")
                 if act == "checkauth":
-                    status, result = IosUtils.active_developer(developer_obj)
+                    status, result = IosUtils.active_developer(developer_obj, False)
                     if status:
                         IosUtils.get_device_from_developer(developer_obj)
                         return Response(res.dict)
@@ -258,7 +258,7 @@ class DeveloperView(APIView):
             logger.error(f"user {request.user} add new developer {data.get('issuer_id', '')} data {data_info}")
             developer_obj = AppIOSDeveloperInfo.objects.create(user_id=request.user, **data_info)
             IosUtils.create_developer_space(developer_obj, request.user)
-            status, result = IosUtils.active_developer(developer_obj)
+            status, result = IosUtils.active_developer(developer_obj, False)
             if not status:
                 res.code = 1008
                 res.msg = result.get("return_info", "未知错误")

@@ -56,7 +56,7 @@ def exec_shell(cmd, timeout=None):
     result = shell_command(cmd, timeout)
     logger.info(f"exec_shell cmd:{cmd}  result:{result}")
     if result.get("exit_code") != 0:
-        err_info = result.get("err_info", None)
+        err_info = result.get("err_info", result.get("return_info", None))
         if err_info:
             logger.error(f"exec_shell cmd:{cmd}  failed: {err_info}")
             result["err_info"] = "Unknown Error"

@@ -153,7 +153,7 @@ export function getAuthTokenFun(callBack, params) {
 
 
 export function geetest(self, uid, params, callback) {
-    return geetestbase(self, loginFun, uid, params, callback, res => {
+    return geetestbase(loginFun, self, uid, params, callback, res => {
         alert(res.msg);
     })
 }
