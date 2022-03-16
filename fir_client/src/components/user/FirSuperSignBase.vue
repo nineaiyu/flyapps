@@ -1774,7 +1774,7 @@ export default {
     },
     canceledit() {
       this.dialogaddDeveloperVisible = false;
-      this.editdeveloperinfo =  {auth_type: 0, usable_number: 100, app_limit_number: 100, p8key: ''};
+      this.editdeveloperinfo = {auth_type: 0, usable_number: 100, app_limit_number: 100, p8key: ''};
       this.isedit = false;
       this.placeholder = ""
     },
