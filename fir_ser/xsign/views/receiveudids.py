@@ -18,7 +18,7 @@ from api.utils.response import BaseResponse
 from common.base.baseutils import get_real_ip_address, make_random_uuid, get_server_domain_from_request
 from common.cache.storage import TaskStateCache
 from common.core.sysconfig import Config
-from common.core.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2
+from common.core.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2, VisitShortThrottle, InstallShortThrottle
 from common.utils.caches import check_app_permission
 from common.utils.pending import get_pending_result
 from fir_ser.celery import app
@@ -104,6 +104,7 @@ def task_func(task_id, *args, **kwargs):
 
 
 class TaskView(APIView):
+    throttle_classes = [VisitShortThrottle, InstallShortThrottle]
 
     def get(self, request, short):
         res = BaseResponse()

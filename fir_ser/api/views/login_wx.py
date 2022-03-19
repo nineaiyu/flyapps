@@ -86,7 +86,7 @@ class WeChatLoginCheckView(APIView):
         if not Config.LOGIN.get("login_type").get('third', '').get('wxp'):
             return Response(ret.dict)
         ticket = request.data.get("ticket")
-        unique_key = request.data.get("unique_key")
+        unique_key = request.data.get("unique_key", ticket)
         if ticket and unique_key:
             status, result = get_pending_result(get_wx_ticket_login_info_cache, expect_func, ticket=ticket,
                                                 locker_key=ticket, unique_key=unique_key, run_func_count=1)

@@ -134,7 +134,7 @@ class OrderSyncView(APIView):
     def post(self, request):
         res = BaseResponse()
         order_number = request.data.get("order_number", None)
-        unique_key = request.data.get("unique_key", None)
+        unique_key = request.data.get("unique_key", order_number)
         if order_number:
             status, result = get_pending_result(get_order_obj, expect_func, order_number=order_number, run_func_count=1,
                                                 locker_key=order_number, unique_key=unique_key, user_obj=request.user)
