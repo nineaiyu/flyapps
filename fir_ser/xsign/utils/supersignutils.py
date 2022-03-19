@@ -406,18 +406,6 @@ def check_sign_is_exists(user_obj, app_obj, udid, developer_obj, sign=True):
     logger.warning(f"udid {udid} not exist app_id {app_obj} . start find developer and sign")
 
 
-def active_failed_callback(*args, **kwargs):
-    developer_obj, auto_clean = args
-    if auto_clean:
-        logger.warning(f"clean developer {developer_obj}")
-        IosUtils.clean_developer(developer_obj, developer_obj.user_id)
-        developer_obj.certid = None
-        developer_obj.cert_expire_time = None
-    else:
-        developer_obj.status = 4
-    developer_obj.save(update_fields=['certid', 'cert_expire_time', 'status'])
-
-
 class IosUtils(object):
     def __init__(self, udid_info, user_obj, app_obj=None):
         self.developer_obj = None
@@ -1033,10 +1021,10 @@ class IosUtils(object):
             return False, {'err_info': str(e)}
 
     @staticmethod
-    @call_function_try_attempts(failed_callback=active_failed_callback)
-    def active_developer(developer_obj, auto_clean=True):
+    def active_developer(developer_obj, auto_clean=True, loop_count=1):
         """
         激活开发者账户
+        :param loop_count:
         :param auto_clean:
         :param developer_obj:
         :return:
@@ -1052,11 +1040,25 @@ class IosUtils(object):
                     break
             developer_obj.status = 1
             if developer_obj.certid and len(developer_obj.certid) > 3 and cert_is_exists and len(result) > 0:
-                # 数据库证书id和苹果开发id不一致，可认为被用户删掉，需要执行清理开发者操作
-                if auto_clean:
-                    # 捕获失败结果，三次重试之后，执行callback 方法，避免一次执行失败直接清理数据
-                    return False, {'return_info': '证书检测有误'}
-                developer_obj.status = 4
+                # 多次判断数据库证书id和苹果开发id不一致，可认为被用户删掉，需要执行清理开发者操作
+                if loop_count > 3:
+                    if auto_clean:
+                        logger.warning(f"clean developer {developer_obj}")
+                        IosUtils.clean_developer(developer_obj, developer_obj.user_id)
+                        developer_obj.certid = None
+                        developer_obj.cert_expire_time = None
+                        # 捕获失败结果，三次重试之后，执行callback 方法，避免一次执行失败直接清理数据
+                        return False, {'return_info': '证书检测有误'}
+                    else:
+                        developer_obj.status = 4
+                    developer_obj.save(update_fields=['certid', 'cert_expire_time', 'status'])
+
+                else:
+                    loop_count += 1
+                    logger.info(
+                        f"{developer_obj} loop check developer cert.auto_clean:{auto_clean} loop_count:{loop_count}")
+                    return IosUtils.active_developer(developer_obj, auto_clean, loop_count)
+
             developer_obj.save(update_fields=['certid', 'cert_expire_time', 'status'])
         return status, result
 
