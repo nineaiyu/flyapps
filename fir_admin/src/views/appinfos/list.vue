@@ -40,7 +40,11 @@
       </el-table-column>
       <el-table-column label="应用名称">
         <template slot-scope="scope">
-          {{ scope.row.name }}
+          <el-tooltip content="点击访问下载页">
+            <el-link :underline="false" @click="go_download_url(scope.row)">
+              {{ scope.row.name }}
+            </el-link>
+          </el-tooltip>
         </template>
       </el-table-column>
       <el-table-column label="Bundle_Id" align="center">
@@ -202,6 +206,9 @@ export default {
     this.fetchData()
   },
   methods: {
+    go_download_url(app_info) {
+      window.open(app_info.preview_url + '/' + app_info.short, '_blank', '')
+    },
     deleteApp(app_id) {
       this.$confirm('此操作将永久删除该应用, 是否继续?', '提示', {
         confirmButtonText: '确定',
