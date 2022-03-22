@@ -119,30 +119,48 @@ def usable_number(developer_obj):
     return d_count if d_count > u_count else u_count
 
 
-def get_developer_devices(developer_obj_lists):
-    other_used_sum = 0
-    flyapp_used_sum = 0
-    max_total = 0
-    for dev_obj in developer_obj_lists.filter(status__in=Config.DEVELOPER_USE_STATUS):
-        other_used, flyapp_used, _ = get_developer_udided(dev_obj)
-        other_used_sum += other_used
-        flyapp_used_sum += flyapp_used
-        max_total += 100
+def get_use_number(developer_obj):
+    return DeveloperDevicesID.objects.filter(developerid=developer_obj).values('udid').distinct().count()
 
-    use_number_obj_list = developer_obj_lists.filter(status__in=Config.DEVELOPER_USE_STATUS)
-    all_use_number = 0
-    all_usable_number = 0
-    for use_number_obj in use_number_obj_list:
-        all_usable_number += usable_number(use_number_obj)
-        all_use_number += DeveloperDevicesID.objects.filter(developerid=use_number_obj).values(
-            'udid').distinct().count()
+
+def get_developer_devices(developer_obj_lists):
+    developer_obj_lists = developer_obj_lists.filter(status__in=Config.DEVELOPER_USE_STATUS).all()
+    result_info = []
+    for dev_obj in developer_obj_lists:
+        other_used, flyapp_used, _ = get_developer_udided(dev_obj)
+        result_info.append({
+            'other_used': other_used,
+            'flyapp_used': flyapp_used,
+            'usable_number': usable_number(dev_obj),
+            'use_number': get_use_number(dev_obj),
+            'status': dev_obj.status
+        })
+
     use_num = {
-        "all_usable_number": all_usable_number,
-        "all_use_number": all_use_number,
-        "other_used_sum": other_used_sum,
-        "flyapp_used_sum": flyapp_used_sum,
-        "max_total": max_total
+        "all_usable_number": 0,  # 可用的设备数
+        "all_use_number": 0,  # 已经使用的设备数 【通过设备ID】
+        "other_used_sum": 0,  # 开发者已经使用，但是平台未使用设备数
+        "flyapp_used_sum": 0,  # 平台已经使用的设备数【通过设备安装详情】
+        "can_sign_number": 0,  # 可以被用来签名数【状态为1】
+        "used_sign_number": 0,  # 已被用来签名数【状态为1】
+        "may_sign_number": 0,  # 可以被用来签名数
+        "can_other_used": 0,  # 开发者已经使用，但是平台未使用设备数【状态为1】
+        "used_number": 0,  # 可用的设备数【状态为1】
+        "max_total": 100 * len(result_info)
     }
+
+    for info in result_info:
+        use_num['other_used_sum'] += info['other_used']
+        use_num['flyapp_used_sum'] += info['flyapp_used']
+        use_num['all_usable_number'] += info['usable_number']
+        use_num['all_use_number'] += info['use_number']
+        if info['status'] in Config.DEVELOPER_SIGN_STATUS:
+            use_num['can_sign_number'] += (info['usable_number'] - info['flyapp_used'] - info['other_used'])
+            use_num['used_sign_number'] += info['usable_number']
+            use_num['can_other_used'] += info['other_used']
+            use_num['used_number'] += info['use_number']
+        use_num['may_sign_number'] += (info['usable_number'] - info['flyapp_used'] - info['other_used'])
+
     return use_num
 
 

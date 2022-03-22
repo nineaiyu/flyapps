@@ -6,7 +6,7 @@ from rest_framework import serializers
 from common.base.baseutils import AppleDeveloperUid, get_choices_dict
 from common.core.sysconfig import Config
 from xsign import models
-from xsign.utils.modelutils import get_developer_udided
+from xsign.utils.modelutils import get_developer_udided, get_use_number
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
             'udid').distinct().count()
 
     def get_use_number(self, obj):
-        return models.DeveloperDevicesID.objects.filter(developerid=obj).values('udid').distinct().count()
+        return get_use_number(obj)
 
     def get_app_used_count(self, obj):
         return models.DeveloperAppID.objects.filter(developerid=obj).count()

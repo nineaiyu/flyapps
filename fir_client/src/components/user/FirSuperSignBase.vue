@@ -346,13 +346,36 @@
         </el-select>
 
         <div style="width: 45%;margin-right: 20px;float:right;margin-bottom: 10px">
-          <el-link :underline="false">总设备量：{{ developer_used_info.all_usable_number }} 已使用：【平台：{{
-              developer_used_info.all_use_number
-            }} 】【其他：{{ developer_used_info.other_used_sum }}】
-            还剩：{{
-              developer_used_info.all_usable_number - developer_used_info.flyapp_used_sum - developer_used_info.other_used_sum
-            }} 可用
-          </el-link>
+
+          <el-popover
+              placement="top-start"
+              trigger="hover"
+              width="200">
+            <div>
+              <el-link :underline="false">全部设备总数： {{ developer_used_info.all_usable_number }}</el-link>
+              <el-link :underline="false">平台总使用设备数： {{ developer_used_info.all_use_number }}</el-link>
+              <el-link :underline="false">其他设备数： {{ developer_used_info.other_used_sum }}</el-link>
+            </div>
+            <el-link slot="reference" :underline="false">正常设备总量：{{ developer_used_info.used_sign_number }}
+              已使用：【平台：{{ developer_used_info.used_number }} 】【其他：{{ developer_used_info.can_other_used }}】
+            </el-link>
+          </el-popover>
+
+          <el-popover
+              placement="top-start"
+              trigger="hover"
+              width="230">
+            <div>
+              <el-link :underline="false">最大使用设备总数： {{ developer_used_info.may_sign_number }}</el-link>
+              <el-link :underline="false">将可能使用设备数：
+                {{ developer_used_info.may_sign_number - developer_used_info.can_sign_number }}
+              </el-link>
+              <el-link :underline="false">当前可签名设备数： {{ developer_used_info.can_sign_number }}</el-link>
+            </div>
+            <el-link slot="reference" :underline="false">
+              还剩：{{ developer_used_info.can_sign_number }} 可用
+            </el-link>
+          </el-popover>
           <el-progress
               :color="developer_usedColor"
               :percentage="percentage"
@@ -1326,7 +1349,16 @@ export default {
       placeholder: "",
       pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
       billpagination: {"currentPage": 1, "total": 0, "pagesize": 10},
-      developer_used_info: {"all_usable_number": 0, "other_used_sum": 0, "all_use_number": 0},
+      developer_used_info: {
+        'all_usable_number': 0,
+        'all_use_number': 0,
+        'other_used_sum': 0,
+        'flyapp_used_sum': 0,
+        'can_sign_number': 0,
+        'may_sign_number': 0,
+        'used_sign_number': 0,
+        'max_total': 0
+      },
       percentage: 0,
       apple_auth_list: [],
       apple_auth_type: 0,
@@ -1924,8 +1956,9 @@ export default {
             this.status_choices = data.status_choices;
             if (data.use_num) {
               this.developer_used_info = data.use_num;
-              if (this.developer_used_info.all_usable_number !== 0) {
-                let p = parseInt((this.developer_used_info.flyapp_used_sum + this.developer_used_info.other_used_sum) * 100 / this.developer_used_info.all_usable_number);
+              let all_usable_number = this.developer_used_info.used_sign_number + this.developer_used_info.can_sign_number;
+              if (all_usable_number !== 0) {
+                let p = parseInt((all_usable_number - this.developer_used_info.can_sign_number) * 100 / all_usable_number);
                 if (p < 0 || p >= 100) {
                   p = 100
                 }
