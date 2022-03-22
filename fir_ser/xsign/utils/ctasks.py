@@ -3,7 +3,7 @@
 # project: 4月
 # author: liuyu
 # date: 2020/4/7
-
+import datetime
 import logging
 import os
 import random
@@ -14,7 +14,8 @@ from django.template import loader
 
 from common.core.sysconfig import Config
 from fir_ser.settings import SUPER_SIGN_ROOT, SYNC_CACHE_TO_DATABASE
-from xsign.models import UserInfo, AppIOSDeveloperInfo
+from xsign.models import UserInfo, AppIOSDeveloperInfo, APPSuperSignUsedInfo
+from xsign.utils.modelutils import get_developer_devices
 from xsign.utils.supersignutils import IosUtils
 from xsign.utils.utils import send_ios_developer_active_status
 
@@ -65,6 +66,17 @@ def auto_check_ios_developer_active():
 
     for uid, developer_obj_list in error_issuer_id.items():
         userinfo = UserInfo.objects.filter(uid=uid).first()
+        developer_used_info = get_developer_devices(AppIOSDeveloperInfo.objects.filter(user_id=userinfo))
+
+        end_time = datetime.datetime.now().date()
+        start_time = end_time - datetime.timedelta(days=1)
+        yesterday_used_number = APPSuperSignUsedInfo.objects.filter(developerid__user_id=userinfo,
+                                                                    created_time__range=[start_time, end_time]).count()
         content = loader.render_to_string('check_developer.html',
-                                          {'username': userinfo.first_name, 'developer_obj_list': developer_obj_list})
+                                          {
+                                              'username': userinfo.first_name,
+                                              'developer_obj_list': developer_obj_list,
+                                              'developer_used_info': developer_used_info,
+                                              'yesterday_used_number': yesterday_used_number,
+                                          })
         send_ios_developer_active_status(userinfo, content)

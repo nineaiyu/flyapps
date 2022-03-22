@@ -577,25 +577,6 @@ class DeviceTransferBillView(APIView):
         }
         return Response(res.dict)
 
-    def put(self, request):
-        res = BaseResponse()
-        uid = request.data.get('uid')
-        if uid:
-            user_obj = UserInfo.objects.filter(uid=uid, is_active=True, supersign_active=True).first()
-            if user_obj:
-                bill_obj = IosDeveloperBill.objects.filter(user_id=request.user, to_user_id__uid=uid, status=2).first()
-                number = 0
-                if bill_obj:
-                    number = bill_obj.number
-                res.data = {'uid': user_obj.uid, 'name': user_obj.first_name, "number": number}
-            else:
-                res.msg = '用户信息不存在'
-                res.code = 1003
-        else:
-            res.msg = '参数有误'
-            res.code = 1003
-        return Response(res.dict)
-
     def post(self, request):
         res = BaseResponse()
         uid = request.data.get('uid')

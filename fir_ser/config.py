@@ -7,7 +7,7 @@ import os
 
 API_DOMAIN = "https://app.hehelucky.cn"
 WEB_DOMAIN = "https://app.hehelucky.cn"
-MOBILEPROVISION = "https://ali-static.jappstore.com/embedded5.mobileprovision"
+MOBILEPROVISION = "https://static.flyapps.top/embedded1.mobileprovision"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -358,6 +358,6 @@ class APPLEDEVELOPERCONF(object):
     DEVELOPER_SIGN_STATUS = [1]  # 开发者可用于签名的查询
     DEVELOPER_USE_STATUS = [1, 2, 3, 4, 5]  # 开发者可用状态，详情查看 model.AppIOSDeveloperInfo
     DEVELOPER_AUTO_CHECK_STATUS = [1, 2, 4, 5]  # 定时认证自动检测
-    DEVELOPER_WRITE_STATUS = [1, 3, 4]  # 开发者api写操作查询
+    DEVELOPER_WRITE_STATUS = [1, 3, 4]  # 开发者api写操作查询[该状态用于苹果api接口]
     DEVELOPER_DISABLED_STATUS = [2, 4, 5]  # 开发者不可 修改为状态，用户前端控制
     DEVELOPER_UID_KEY = "T:"  # 开发者共享给其他第三方用户， 中间必须包含 : 前端需要根据 : 进行分割

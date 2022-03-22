@@ -136,6 +136,20 @@
         <h3>
             尊敬的用户 {{ username }} 你好，苹果开发者状态监测如下：
         </h3>
+        <div>
+            <p>
+                当前正常设备总量：{{ developer_used_info.used_sign_number }}
+            </p>
+            <p>
+                已使用：【平台：{{ developer_used_info.used_number }} 】【其他：{{ developer_used_info.can_other_used }}】
+            </p>
+            <p>
+                还剩：{{ developer_used_info.can_sign_number }} 可用
+            </p>
+        </div>
+        <div>
+            昨天消耗设备数：{{ yesterday_used_number }}
+        </div>
         <table class="table table-bordered table-striped">
             <thead>
             <tr>
