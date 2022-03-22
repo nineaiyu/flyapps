@@ -593,7 +593,13 @@ class IosUtils(object):
                     "There are no current ios devices",
                     "Device obj is None"
                 ]
-            }
+            },
+            {
+                'func_list': [err_callback(IosUtils.check_device_status, developer_obj)],
+                'err_match_msg': [
+                    "ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE",
+                ]
+            },
         ]
 
         sync_device_obj = UDIDsyncDeveloper.objects.filter(udid=device_udid,
@@ -620,6 +626,10 @@ class IosUtils(object):
                                                                             register_failed_callback)
             if not status:
                 return status, device_obj
+
+            if device_obj and device_obj.status not in ['ENABLED', 'DISABLED']:
+                if not IosUtils.check_device_status(developer_obj)[0]:
+                    return False, 'UNEXPECTED_ERROR'
 
             sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
 
@@ -683,6 +693,20 @@ class IosUtils(object):
         return True, developer_app_id_obj
 
     @staticmethod
+    @call_function_try_attempts(try_attempts=2)
+    def check_device_status(developer_obj, device_obj_list=None):
+        status = True
+        if device_obj_list is None:
+            status, device_obj_list = get_api_obj(developer_obj).get_device()
+        if status:
+            for device_obj in device_obj_list:
+                if device_obj.status not in ['ENABLED', 'DISABLED']:
+                    developer_obj.status = 5
+                    developer_obj.save(update_fields=['status'])
+                    return False, f'device status unexpected. device_obj:{device_obj}'
+        return True, ''
+
+    @staticmethod
     @call_function_try_attempts()
     def make_and_download_profile(app_obj, developer_obj, failed_call_prefix, developer_app_id_obj=None,
                                   new_did_list=None,
@@ -701,6 +725,10 @@ class IosUtils(object):
             {
                 'func_list': [err_callback(IosUtils.active_developer, developer_obj, True)],
                 'err_match_msg': ["There are no current certificates on this team matching the provided certificate"]
+            },
+            {
+                'func_list': [err_callback(IosUtils.check_device_status, developer_obj)],
+                'err_match_msg': ["There are no current ios devices on this team matching the provided device IDs"]
             }
         ])
         device_id_list = DeveloperDevicesID.objects.filter(app_id=app_obj,
@@ -926,16 +954,20 @@ class IosUtils(object):
     @staticmethod
     def do_enable_device_by_sync(developer_obj, udid_sync_obj):
         app_api_obj = get_api_obj(developer_obj)
-        app_api_obj.set_device_status("enable", udid_sync_obj.serial, udid_sync_obj.product, udid_sync_obj.udid,
-                                      udid_sync_obj.udid)
-        UDIDsyncDeveloper.objects.filter(pk=udid_sync_obj.pk, developerid=developer_obj).update(status=True)
+        status, result = app_api_obj.set_device_status("enable", udid_sync_obj.serial, udid_sync_obj.product,
+                                                       udid_sync_obj.udid,
+                                                       udid_sync_obj.udid)
+        if status:
+            UDIDsyncDeveloper.objects.filter(pk=udid_sync_obj.pk, developerid=developer_obj).update(status=True)
 
     @staticmethod
     def do_disable_device_by_sync(developer_obj, udid_sync_obj):
         app_api_obj = get_api_obj(developer_obj)
-        app_api_obj.set_device_status("disable", udid_sync_obj.serial, udid_sync_obj.product, udid_sync_obj.udid,
-                                      udid_sync_obj.udid)
-        UDIDsyncDeveloper.objects.filter(pk=udid_sync_obj.pk, developerid=developer_obj).update(status=False)
+        status, result = app_api_obj.set_device_status("disable", udid_sync_obj.serial, udid_sync_obj.product,
+                                                       udid_sync_obj.udid,
+                                                       udid_sync_obj.udid)
+        if status:
+            UDIDsyncDeveloper.objects.filter(pk=udid_sync_obj.pk, developerid=developer_obj).update(status=False)
 
     @staticmethod
     def clean_udid_by_app_obj(app_obj, developer_obj):
@@ -1125,6 +1157,8 @@ class IosUtils(object):
             time.sleep(2)
             status, result = app_api_obj.get_device()
         if status and developer_obj.issuer_id:
+
+            IosUtils.check_device_status(developer_obj, result)
 
             udid_developer_obj_list = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).values_list('udid')
             udid_developer_list = [x[0] for x in udid_developer_obj_list if len(x) > 0]

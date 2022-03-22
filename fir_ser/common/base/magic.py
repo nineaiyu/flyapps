@@ -30,7 +30,7 @@ def run_function_by_locker(timeout=60 * 5):
                     res = func(*args, **kwargs)
             else:
                 res = func(*args, **kwargs)
-            logger.info(f"{new_locker_key} exec {func} finished. used time:{time.time() - start_time}")
+            logger.info(f"{new_locker_key} exec {func} finished. used time:{time.time() - start_time} result:{res}")
             return res
 
         return wrapper
@@ -58,7 +58,7 @@ def call_function_try_attempts(try_attempts=3, sleep_time=2, failed_callback=Non
                 if failed_callback:
                     logger.error(f'exec {func} failed and exec failed callback {failed_callback.__name__}')
                     failed_callback(*args, **kwargs, result=res)
-            logger.info(f"exec {func} finished. time:{time.time() - start_time}")
+            logger.info(f"exec {func} finished. time:{time.time() - start_time} result:{res}")
             return res
 
         return wrapper

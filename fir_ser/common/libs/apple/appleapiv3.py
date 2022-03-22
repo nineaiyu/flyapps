@@ -723,10 +723,10 @@ def call_function_try_attempts(try_attempts=3, sleep_time=3):
                     if 'FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED' in str(e):
                         raise Exception(res)
                     time.sleep(sleep_time)
-            logger.info(f"exec {func} finished. time:{time.time() - start_time}")
             if not flag:
                 logger.error(f'exec {func} failed after the maximum number of attempts. Failed:{res}')
                 raise Exception(res)
+            logger.info(f"exec {func} finished. time:{time.time() - start_time} result:{res}")
             return res
 
         return wrapper
@@ -900,7 +900,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
             req = super().register_device(device_name, device_udid, platform)
             return self.__device_store(req, 201)
 
-    @call_function_try_attempts()
+    # @call_function_try_attempts()
     def enabled_device(self, device_id, device_name, udid):
         if device_id and device_name:
             req = super().enabled_device(device_id, device_name)
@@ -912,7 +912,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
                 req = self.modify_registered_device(device_obj.id, device_obj.name, 'ENABLED')
                 return self.__device_store(req)
 
-    @call_function_try_attempts()
+    # @call_function_try_attempts()
     def disabled_device(self, device_id, device_name, udid):
         if device_id and device_name:
             req = super().disabled_device(device_id, device_name)
