@@ -23,7 +23,7 @@ from common.utils.download import get_app_download_url
 from xsign.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, \
     UDIDsyncDeveloper, AppleDeveloperToAppUse, DeveloperAppID, APPToDeveloper, DeveloperDevicesID, \
     IosDeveloperBill
-from xsign.tasks import run_resign_task_do
+from xsign.tasks import run_resign_task_do, run_resign_task
 from xsign.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, check_uid_has_relevant, \
     get_developer_devices
 from xsign.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, \
@@ -141,6 +141,15 @@ class DeveloperView(APIView):
                         status, result = IosUtils.create_developer_cert(developer_obj, request.user)
                         if status:
                             IosUtils.get_device_from_developer(developer_obj)
+                        else:
+                            res.code = 1008
+                            res.msg = result.get("return_info")
+                            return Response(res.dict)
+                elif act == "checkcert":
+                    if developer_obj.certid:
+                        status, result = IosUtils.get_developer_cert_info(developer_obj)
+                        if status:
+                            res.data = result
                         else:
                             res.code = 1008
                             res.msg = result.get("return_info")
@@ -408,6 +417,24 @@ class AppUDIDUsedView(APIView):
                 res.msg = '数据异常，删除失败'
         return Response(res.dict)
 
+    def post(self, request):
+        res = BaseResponse()
+        pk = request.data.get("id", None)
+        other_uid = request.data.get("uid", None)
+        app_id = request.data.get("aid", None)
+        app_udid_obj = AppUDID.objects.filter(pk=pk, app_id__user_id=request.user)
+        if not app_udid_obj and check_uid_has_relevant(request.user.uid, other_uid):
+            app_udid_obj = AppUDID.objects.filter(pk=pk, app_id__user_id__uid=other_uid)
+        if app_udid_obj:
+            super_sign_used_obj = APPSuperSignUsedInfo.objects.filter(udid=app_udid_obj.first()).first()
+            if super_sign_used_obj:
+                run_resign_task(app_id, need_download_profile=True, force=True,
+                                developers_filter=[super_sign_used_obj.developerid])
+            else:
+                res.code = 10003
+                res.msg = '数据异常，重签名失败'
+        return Response(res.dict)
+
 
 class DeveloperDeviceView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
@@ -491,12 +518,12 @@ class SuperSignCertView(APIView):
                 status, result = resign_app_obj.make_cert_from_p12(request.data.get('cert_pwd', ''),
                                                                    request.data.get('cert_content', None))
                 if status:
-                    status, result = IosUtils.auto_get_cert_id_by_p12(developer_obj, request.user)
+                    status, _ = IosUtils.auto_get_cert_id_by_p12(developer_obj, request.user)
                     if status:
                         resign_app_obj.write_cert()
                     else:
                         res.code = 1003
-                        res.msg = '证书未在开发者账户找到，请检查推送证书是否属于该开发者'
+                        res.msg = '证书未在开发者账户找到，请检查证书是否属于该开发者'
                 else:
                     res.code = 1002
                     res.msg = str(result['err_info'])

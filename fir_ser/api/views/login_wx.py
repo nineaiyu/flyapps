@@ -1,5 +1,6 @@
 import logging
 
+from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -134,13 +135,13 @@ class WeChatWebLoginView(APIView):
                 'openid': wx_user_info.get('openid'),
                 'nickname': wx_user_info.get('nickname'),
                 'sex': wx_user_info.get('sex'),
-                'subscribe_time': wx_user_info.get('subscribe_time', 0),
+                # 'subscribe_time': wx_user_info.get('subscribe_time', 0),
                 'head_img_url': wx_user_info.get('headimgurl', ''),
                 'address': f"{wx_user_info.get('country')}-{wx_user_info.get('province')}-{wx_user_info.get('city')}",
-                'subscribe': wx_user_info.get('subscribe', 0),
+                # 'subscribe': wx_user_info.get('subscribe', 0),
             }
             logger.info(f'{wx_user_info}')
             ThirdWeChatUserInfo.objects.filter(openid=wx_user_info.get('openid')).update(**wx_user_info)
-            return Response('更新成功')
+            return HttpResponse('<h2>更新成功</h2>')
         ret.data = wx_login_obj.make_auth_uri()
         return Response(ret.dict)

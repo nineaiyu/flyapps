@@ -870,8 +870,8 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         return self.__profile_store(req)
 
     @call_function_try_attempts(try_attempts=2)
-    def get_all_certificates(self):
-        req = self.list_certificate()
+    def get_all_certificates(self, query_parameters=None):
+        req = self.list_certificate(query_parameters)
         return self.__certificates_store(req)
 
     @call_function_try_attempts()

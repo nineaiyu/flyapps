@@ -64,3 +64,11 @@ def call_function_try_attempts(try_attempts=3, sleep_time=2, failed_callback=Non
         return wrapper
 
     return decorator
+
+
+def magic_wrapper(func, *args, **kwargs):
+    @wraps(func)
+    def wrapper():
+        return func(*args, **kwargs)
+
+    return wrapper

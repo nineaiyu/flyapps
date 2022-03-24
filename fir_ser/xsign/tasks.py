@@ -48,12 +48,18 @@ def run_sign_task(format_udid_info, short, client_ip):
     return msg
 
 
-def run_resign_task(app_id, need_download_profile=True, force=True):
+def run_resign_task(app_id, need_download_profile=True, force=True, developers_filter=None):
+    if developers_filter is None:
+        developers_filter = []
     app_obj = Apps.objects.filter(pk=app_id).first()
     if app_obj.issupersign and app_obj.user_id.supersign_active:
+        developer_app_id_queryset = DeveloperAppID.objects.filter(app_id=app_obj)
+        if developers_filter:
+            developer_app_id_queryset = developer_app_id_queryset.filter(developerid__in=developers_filter)
+
         with cache.lock("%s_%s" % ('task_resign', app_obj.app_id), timeout=60 * 60):
             task_list = []
-            for developer_app_id_obj in DeveloperAppID.objects.filter(app_id=app_obj).all():
+            for developer_app_id_obj in developer_app_id_queryset.all():
                 c_task = run_resign_task_do.apply_async((app_id, developer_app_id_obj.developerid.pk,
                                                          developer_app_id_obj.aid, need_download_profile, force))
                 task_list.append(c_task)

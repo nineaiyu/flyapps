@@ -254,7 +254,7 @@ class AppDeveloperApiV2(object):
         attr = object.__getattribute__(self, name)
         if hasattr(attr, '__call__'):
             def func(*args, **kwargs):
-                if attr.__name__ in ['active', 'get_device', '__result_format', '__callback_run']:
+                if attr.__name__ in ['get_developer_cert_info', 'get_device', '__result_format', '__callback_run']:
                     return attr(*args, **kwargs)
                 else:
                     if AppIOSDeveloperInfo.objects.filter(pk=self.developer_pk,
@@ -313,14 +313,14 @@ class AppDeveloperApiV2(object):
                             logger.warning(
                                 f'issuer_id:{self.issuer_id} {callback_info}-{failed_call_prefix} is running')
 
-    def active(self):
+    def get_developer_cert_info(self, query_parameters=None):
         """
         :return:  结果为空列表，或者是 object 或者是 [object,object] 其他为 false
         """
         result = {}
         try:
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            certificates = apple_obj.get_all_certificates()
+            certificates = apple_obj.get_all_certificates(query_parameters)
             return self.__result_format(certificates, Certificates)
         except Exception as e:
             logger.error(f"issuer_id:{self.issuer_id} ios developer active Failed Exception:{e}")
@@ -392,16 +392,18 @@ class AppDeveloperApiV2(object):
             cer = load_certificate(FILETYPE_PEM, open(app_dev_pem, 'rb').read())
             not_after = datetime.datetime.strptime(cer.get_notAfter().decode('utf-8'), "%Y%m%d%H%M%SZ")
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
-            certificates = apple_obj.get_all_certificates()
+            certificates = apple_obj.get_all_certificates({'filter[certificateType]': 'IOS_DISTRIBUTION'})
             status, result = self.__result_format(certificates, Certificates)
             if status:
                 for cert_obj in result:
                     f_date = format_apple_date(cert_obj.expirationDate)
                     logger.info(
-                        f"issuer_id:{self.issuer_id} {cert_obj.id}-{not_after.timestamp()} - {f_date.timestamp()} ")
-                    if not_after.timestamp() == f_date.timestamp():
+                        f"issuer_id:{self.issuer_id} {cert_obj.id}-{not_after.timestamp()} - {f_date.timestamp()} - {cer.get_serial_number()} - {cert_obj.serialNumber} ")
+                    # if not_after.timestamp() == f_date.timestamp(): # 比较证书的序列号来判断是否为同一个证书
+                    if cer.get_serial_number() == int(cert_obj.serialNumber, 16):
                         return True, cert_obj
-            raise Exception(str(certificates))
+            result = {}
+            raise Exception(str('证书不匹配，请更换其他开发证书重新导入'))
         except Exception as e:
             logger.error(f"issuer_id:{self.issuer_id} ios developer cert {app_dev_pem} auto get Failed Exception:{e}")
             result['return_info'] = check_error_call_back(str(e), self.developer_pk)

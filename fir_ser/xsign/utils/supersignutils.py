@@ -9,7 +9,6 @@ import os
 import time
 import uuid
 import zipfile
-from functools import wraps
 
 import xmltodict
 from django.core.cache import cache
@@ -20,7 +19,7 @@ from api.utils.response import BaseResponse
 from api.utils.utils import delete_local_files, download_files_form_oss
 from common.base.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
     get_format_time, make_app_uuid, make_from_user_uuid
-from common.base.magic import run_function_by_locker, call_function_try_attempts
+from common.base.magic import run_function_by_locker, call_function_try_attempts, magic_wrapper
 from common.cache.state import CleanErrorBundleIdSignDataState
 from common.core.sysconfig import Config
 from common.utils.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
@@ -212,14 +211,6 @@ def get_apple_udid_key(auth):
     if auth.get("issuer_id"):
         m_key = auth.get("issuer_id")
     return m_key
-
-
-def err_callback(func, *args, **kwargs):
-    @wraps(func)
-    def wrapper():
-        return func(*args, **kwargs)
-
-    return wrapper
 
 
 def disable_developer_and_send_email(app_obj, developer_obj):
@@ -579,7 +570,7 @@ class IosUtils(object):
 
         register_failed_callback = [
             {
-                'func_list': [err_callback(IosUtils.get_device_from_developer, developer_obj)],
+                'func_list': [magic_wrapper(IosUtils.get_device_from_developer, developer_obj)],
                 'err_match_msg': [
                     "There are no current ios devices",
                     "Your development team has reached the maximum number of registered iPhone devices"
@@ -588,14 +579,14 @@ class IosUtils(object):
         ]
         set_failed_callback = [
             {
-                'func_list': [err_callback(IosUtils.get_device_from_developer, developer_obj)],
+                'func_list': [magic_wrapper(IosUtils.get_device_from_developer, developer_obj)],
                 'err_match_msg': [
                     "There are no current ios devices",
                     "Device obj is None"
                 ]
             },
             {
-                'func_list': [err_callback(IosUtils.check_device_status, developer_obj)],
+                'func_list': [magic_wrapper(IosUtils.check_device_status, developer_obj)],
                 'err_match_msg': [
                     "ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE",
                 ]
@@ -672,7 +663,7 @@ class IosUtils(object):
             failed_callback = []
         failed_callback.extend([
             {
-                'func_list': [err_callback(IosUtils.clean_super_sign_things_by_app_obj, app_obj, developer_obj)],
+                'func_list': [magic_wrapper(IosUtils.clean_super_sign_things_by_app_obj, app_obj, developer_obj)],
                 'err_match_msg': ["There is no App ID with ID"]
             }
         ])
@@ -719,15 +710,15 @@ class IosUtils(object):
 
         failed_callback.extend([
             {
-                'func_list': [err_callback(IosUtils.clean_super_sign_things_by_app_obj, app_obj, developer_obj)],
+                'func_list': [magic_wrapper(IosUtils.clean_super_sign_things_by_app_obj, app_obj, developer_obj)],
                 'err_match_msg': ["There is no App ID with ID"]
             },
             {
-                'func_list': [err_callback(IosUtils.active_developer, developer_obj, True)],
+                'func_list': [magic_wrapper(IosUtils.active_developer, developer_obj)],
                 'err_match_msg': ["There are no current certificates on this team matching the provided certificate"]
             },
             {
-                'func_list': [err_callback(IosUtils.check_device_status, developer_obj)],
+                'func_list': [magic_wrapper(IosUtils.check_device_status, developer_obj)],
                 'err_match_msg': ["There are no current ios devices on this team matching the provided device IDs"]
             }
         ])
@@ -1053,6 +1044,43 @@ class IosUtils(object):
             return False, {'err_info': str(e)}
 
     @staticmethod
+    def get_developer_cert_info(developer_obj):
+        """
+        获取开发者证书信息
+        :param developer_obj:
+        :return:
+        """
+        app_api_obj = get_api_obj(developer_obj)
+        # status, result = app_api_obj.get_developer_cert_info({'filter[certificateType]': 'IOS_DISTRIBUTION'})
+        status, result = app_api_obj.get_developer_cert_info()
+        if status:
+            cert_info = []
+            cert_is_exists = True
+            for cert_obj in result:
+                c_info = {
+                    'certid': cert_obj.id,
+                    'serial_number': cert_obj.serialNumber,
+                    'name': cert_obj.name,
+                    'display_name': cert_obj.displayName,
+                    'platform': cert_obj.platform,
+                    'cert_expire_time': format_apple_date(cert_obj.expirationDate),
+                    'c_type': cert_obj.certificateType,
+                    'exist': False}
+                if cert_obj.id == developer_obj.certid and cert_is_exists:
+                    developer_obj.cert_expire_time = format_apple_date(cert_obj.expirationDate)
+                    cert_is_exists = False
+                    c_info['exist'] = True
+                cert_info.append(c_info)
+                cert_info.sort(key=lambda x: x['exist'] == False)
+            if developer_obj.certid and len(developer_obj.certid) > 3 and cert_is_exists and len(result) > 0:
+                # 多次判断数据库证书id和苹果开发id不一致，可认为被用户删掉，需要执行清理开发者操作
+                return status, {'return_info': '证书异常，苹果开发者证书与平台记录ID不一致', 'cert_info': cert_info}
+            if developer_obj.certid and len(developer_obj.certid) > 3 and len(result) == 0:
+                return status, {'return_info': '证书异常，苹果开发者证书为空，疑似证书在苹果开发平台被删除', 'cert_info': cert_info}
+            return status, {'cert_info': cert_info}
+        return status, result
+
+    @staticmethod
     def active_developer(developer_obj, auto_clean=True, loop_count=1):
         """
         激活开发者账户
@@ -1062,7 +1090,7 @@ class IosUtils(object):
         :return:
         """
         app_api_obj = get_api_obj(developer_obj)
-        status, result = app_api_obj.active()
+        status, result = app_api_obj.get_developer_cert_info({'filter[certificateType]': 'IOS_DISTRIBUTION'})
         if status:
             cert_is_exists = True
             for cert_obj in result:
@@ -1091,6 +1119,8 @@ class IosUtils(object):
                         f"{developer_obj} loop check developer cert.auto_clean:{auto_clean} loop_count:{loop_count}")
                     return IosUtils.active_developer(developer_obj, auto_clean, loop_count)
 
+            if developer_obj.certid and len(developer_obj.certid) > 3 and len(result) == 0:
+                return False, {'return_info': '证书异常，苹果开发者证书为空，疑似证书在苹果开发平台被删除'}
             developer_obj.save(update_fields=['certid', 'cert_expire_time', 'status'])
         return status, result
 

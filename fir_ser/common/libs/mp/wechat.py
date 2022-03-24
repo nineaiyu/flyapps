@@ -27,6 +27,7 @@ def format_req_json(j_data, func, *args, **kwargs):
         if not status:
             return result
         return func(*args, **kwargs)[1]
+    logger.info(f'j_data:{j_data}')
     return j_data
 
 
@@ -174,6 +175,8 @@ class WxMsgCrypt(WxMsgCryptBase):
 class WxTemplateMsg(object):
 
     def send_msg(self, to_user, template_id, content):
+        if not Config.THIRDLOGINCONF.get('active'):
+            return False, f'weixin status is disabled'
         msg_uri = f'https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={get_wx_access_token_cache()}'
         data = {
             "touser": to_user,
@@ -184,7 +187,7 @@ class WxTemplateMsg(object):
         }
         req = requests.post(msg_uri, json=data)
         if req.status_code == 200:
-            return True, format_req_json(req.json(), get_userinfo_from_openid, to_user)
+            return True, format_req_json(req.json(), self.send_msg, to_user, template_id, content)
         logger.error(f"send msg from openid failed {req.status_code} {req.text}")
         return False, req.text
 

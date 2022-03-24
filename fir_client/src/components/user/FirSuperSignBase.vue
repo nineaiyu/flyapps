@@ -106,7 +106,7 @@
         <el-form-item label="维护模式" label-width="110px" style="text-align: left">
           <el-switch
               v-model="read_only_mode"
-              :disabled="read_only_mode==='on'"
+              :disabled="editdeveloperinfo.status !== 1"
               active-color="#13ce66"
               active-value="on"
               inactive-color="#ff4949"
@@ -144,6 +144,9 @@
         <div style="">
           <el-button v-if="isedit && editdeveloperinfo.certid" size="small"
                      @click="exportcert">导出证书
+          </el-button>
+          <el-button v-if="isedit && editdeveloperinfo.status!==0 || editdeveloperinfo.certid" size="small"
+                     @click="checkcert">证书检测
           </el-button>
           <el-button v-if="isedit && !editdeveloperinfo.certid" size="small"
                      @click="importcertDeveloperVisible=true">导入p12证书
@@ -324,6 +327,68 @@
           <el-col :span="8">当前状态：{{ format_status(isid.status) }}</el-col>
         </el-row>
       </div>
+    </el-dialog>
+    <el-dialog :close-on-click-modal="false" :destroy-on-close="true" :visible.sync="certinfovisible"
+               center title="苹果开发证书信息" width="750px">
+      <el-tag style="margin: 10px">期望的证书ID：{{ editdeveloperinfo.certid }}</el-tag>
+      <el-tag v-if="certinfo_err" style="margin: 10px" type="danger">{{ certinfo_err }}</el-tag>
+      <el-table
+          v-loading="loading"
+          :data="certinfo"
+          border
+          stripe
+          style="width: 100%">
+        <el-table-column
+            align="center"
+            label="证书ID"
+            prop="certid"
+        >
+          <template slot-scope="scope">
+            <el-popover placement="top" trigger="hover">
+              <p>证书ID: {{ scope.row.certid }}</p>
+              <p>证书序列号: {{ scope.row.serial_number }}</p>
+              <p>证书平台: {{ scope.row.platform }}</p>
+              <p>证书名称: {{ scope.row.name }}</p>
+              <p>证书显示名字: {{ scope.row.display_name }}</p>
+              <div slot="reference" class="name-wrapper">
+                <el-tag>{{ scope.row.certid }}</el-tag>
+              </div>
+            </el-popover>
+          </template>
+        </el-table-column>
+
+
+        <el-table-column
+            align="center"
+            label="证书类型"
+            prop="c_type"
+        >
+        </el-table-column>
+        <el-table-column
+            align="center"
+            label="是否本属于本平台"
+            prop="c_type"
+        >
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row.exist">属于</el-tag>
+            <el-tag v-else type="info">
+              其他
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+            :formatter="formatter"
+            align="center"
+            label="到期时间"
+            prop="expire"
+            width="160">
+        </el-table-column>
+
+      </el-table>
+      <span slot="footer">
+            <el-button @click="certinfovisible=false,certinfo=[]">关闭</el-button>
+            </span>
     </el-dialog>
 
 
@@ -519,6 +584,7 @@
               align="center"
               label="设备消耗"
               prop="use_number"
+              sortable
               width="60">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
@@ -535,6 +601,7 @@
               align="center"
               label="应用签名"
               prop="app_used_count"
+              sortable
               width="60">
             <template slot-scope="scope">
 
@@ -555,7 +622,8 @@
           <el-table-column
               align="center"
               label="专属账户"
-              prop="is_private"
+              prop="app_private_number"
+              sortable
               width="60">
             <template slot-scope="scope">
               <el-popover placement="top"
@@ -579,6 +647,7 @@
               align="center"
               label="自动检测"
               prop="auto_check"
+              sortable
               width="60">
             <template slot-scope="scope">
               <el-tag v-if="scope.row.auto_check" size="medium">是</el-tag>
@@ -598,6 +667,7 @@
               align="center"
               label="证书到期时间"
               prop="cert_expire_time"
+              sortable
               width="100">
           </el-table-column>
           <el-table-column
@@ -985,6 +1055,11 @@
                 <p>开发者ID: {{ get_developer_uid(scope.row.issuer_id) }}</p>
                 <p>开发者备注: {{ scope.row.developer_description }}</p>
                 <p>开发者状态: {{ scope.row.developer_status }}</p>
+                <p>安装异常???
+                  <el-button :disabled="scope.row.developer_status!=='已激活'" size="small" @click="resign(scope.row)">
+                    尝试重新签包
+                  </el-button>
+                </p>
                 <div slot="reference" class="name-wrapper">
                   <span>{{ get_developer_uid(scope.row.issuer_id) }}</span>
                 </div>
@@ -1315,6 +1390,9 @@ export default {
   components: {AppleDeveloperBindApp},
   data() {
     return {
+      certinfovisible: false,
+      certinfo: [],
+      certinfo_err: '',
       dialogShowDeviceBillInfo: false,
       currentudid: '',
       balance_info: {all_balance: 0, used_balance: 0},
@@ -1692,6 +1770,18 @@ export default {
         return '#F50346';
       }
     },
+    resign(row_info) {
+      let other_uid = row_info.other_uid
+      let uid = ''
+      if (other_uid && other_uid.uid) {
+        uid = other_uid.uid
+      }
+      this.iosdevicesudidFun('POST', {
+        id: row_info.id,
+        aid: row_info.app_id,
+        uid: uid
+      }, null)
+    },
     udidDeleteFun(scope, disabled) {
       this.$confirm('此操作会禁用该苹果开发者账户下面的该设备,可能会导致超级签包的闪退, 是否继续?', '警告', {
         confirmButtonText: '确定',
@@ -1767,6 +1857,12 @@ export default {
       // eslint-disable-next-line no-unused-vars
       developercert(data => {
       }, {methods: 'FILE', data: {issuer_id: this.editdeveloperinfo.issuer_id}})
+    },
+    checkcert() {
+      this.iosdeveloperFun({
+        "methods": "PUT",
+        "data": {"issuer_id": this.editdeveloperinfo.issuer_id, "act": 'checkcert'}
+      });
     },
     isorenewcert(act) {
       this.$confirm('此操作将永久删除该发布证书, 建议先导出证书。是否继续删除?', '提示', {
@@ -1943,7 +2039,7 @@ export default {
       } else {
         this.loading = true
       }
-      if (params.methods === 'PUT') {
+      if (params.methods === 'PUT' && params.data.act !== 'checkcert') {
         params.data.size = this.pagination.pagesize
         params.data.page = this.pagination.currentPage
       }
@@ -1972,6 +2068,13 @@ export default {
           if (params.data.act === 'setstatus') {
             this.setdeveloperstatusVisible = false
             this.change_developer_status = ''
+          }
+          if (params.data.act === 'checkcert') {
+            this.certinfo = data.data.cert_info;
+            this.certinfo_err = data.data.return_info;
+            this.loadingfun.close();
+            this.certinfovisible = true
+            return
           }
           if (this.dialogaddDeveloperVisible) {
             this.canceledit();
@@ -2071,13 +2174,15 @@ export default {
       }
       iosdevicesudid(data => {
         if (data.code === 1000) {
-          if (action !== "DELETE") {
+          if (action === "GET") {
             this.app_udid_lists = data.data;
             this.pagination.total = data.count;
-          } else {
+          } else if (action === "DELETE") {
             if (scope) {
               this.app_udid_lists = removeAaary(this.app_udid_lists, scope.row)
             }
+          } else if (action === 'POST') {
+            this.$message.success("操作成功");
           }
         } else {
           this.$message.error("操作失败了 " + data.msg);
