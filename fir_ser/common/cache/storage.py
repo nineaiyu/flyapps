@@ -227,3 +227,9 @@ class WxLoginBindCache(RedisCacheBase):
     def __init__(self, unique_key):
         self.cache_key = f"{CACHE_KEY_TEMPLATE.get('wx_login_bind_key')}_{unique_key}"
         super().__init__(self.cache_key)
+
+
+class NotifyLoopCache(RedisCacheBase):
+    def __init__(self, uid, unique_key):
+        self.cache_key = f"{CACHE_KEY_TEMPLATE.get('notify_loop_msg_key')}_{uid}_{unique_key}"
+        super().__init__(self.cache_key)

@@ -694,7 +694,7 @@ class IosUtils(object):
                 if device_obj.status not in ['ENABLED', 'DISABLED']:
                     developer_obj.status = 5
                     developer_obj.save(update_fields=['status'])
-                    return False, f'device status unexpected. device_obj:{device_obj}'
+                    return False, f'issuer_id:{developer_obj.issuer_id} device status unexpected. device_obj:{device_obj}'
         return True, ''
 
     @staticmethod
@@ -1179,19 +1179,29 @@ class IosUtils(object):
         return status, result
 
     @staticmethod
-    def get_device_from_developer(developer_obj):
+    def get_device_from_developer(developer_obj, err_return=False):
         app_api_obj = get_api_obj(developer_obj)
         status, result = app_api_obj.get_device()
-        # 获取设备列表的时候，有时候会发生灵异事件，尝试多次获取 【也可能是未知bug导致】
-        if status and isinstance(result, list) and len(result) == 0:
+        udid_developer_obj_list = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).values_list('udid')
+        udid_developer_list = [x[0] for x in udid_developer_obj_list if len(x) > 0]
+        udid_result_list = []
+        if status:
+            udid_result_list = [device.udid for device in result]
+
+        udid_same = set(udid_result_list) & set(udid_developer_list)
+        same_p = (len(udid_same) / len(udid_result_list) + len(udid_same) / len(udid_developer_list)) / 2
+        # 获取设备列表的时候，有时候会发生灵异事件，尝试多次获取 【也可能是未知bug导致】【已经存在，获取的数据并不是该用户数据】
+        if status and ((isinstance(result, list) and len(result) == 0) or same_p < 0.8):
             time.sleep(2)
+            logger.warning(f'{developer_obj.issuer_id} get device may be wrong. try again. online result {result}')
+            logger.warning(f'{developer_obj.issuer_id} get device may be wrong. db result {udid_developer_list}')
             status, result = app_api_obj.get_device()
         if status and developer_obj.issuer_id:
 
-            IosUtils.check_device_status(developer_obj, result)
+            status1, msg = IosUtils.check_device_status(developer_obj, result)
+            if not status1 and err_return:
+                return status1, {'return_info': msg}
 
-            udid_developer_obj_list = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).values_list('udid')
-            udid_developer_list = [x[0] for x in udid_developer_obj_list if len(x) > 0]
             udid_result_list = [device.udid for device in result]
             udid_enabled_result_list = [device.udid for device in result if device.status == 'ENABLED']
 

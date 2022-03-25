@@ -174,12 +174,16 @@ class WxMsgCrypt(WxMsgCryptBase):
 
 class WxTemplateMsg(object):
 
-    def send_msg(self, to_user, template_id, content):
+    def __init__(self, to_user, wx_nick_name):
+        self.to_user = to_user
+        self.wx_nick_name = wx_nick_name
+
+    def send_msg(self, template_id, content):
         if not Config.THIRDLOGINCONF.get('active'):
             return False, f'weixin status is disabled'
         msg_uri = f'https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={get_wx_access_token_cache()}'
         data = {
-            "touser": to_user,
+            "touser": self.to_user,
             "template_id": template_id,
             # "url": "http://weixin.qq.com/download",
             "topcolor": "#FF0000",
@@ -187,11 +191,11 @@ class WxTemplateMsg(object):
         }
         req = requests.post(msg_uri, json=data)
         if req.status_code == 200:
-            return True, format_req_json(req.json(), self.send_msg, to_user, template_id, content)
+            return True, format_req_json(req.json(), self.send_msg, self.to_user, template_id, content)
         logger.error(f"send msg from openid failed {req.status_code} {req.text}")
         return False, req.text
 
-    def login_success_msg(self, to_user, wx_nick_name, username):
+    def login_success_msg(self, username):
         """
         您进行了微信扫一扫登录操作
         系统帐号：yin.xiaogang
@@ -207,7 +211,7 @@ class WxTemplateMsg(object):
         msg_id = 'EJhBbxJvHdWnwwexaqb0lCC2sM7D7WMex5-yJvTL5sU'
         content_data = {
             "first": {
-                "value": f"您的微信账户“{wx_nick_name}”进行了网站登录操作",
+                "value": f"您的微信账户“{self.wx_nick_name}”进行了网站登录操作",
                 "color": "#173177"
             },
             "keyword1": {
@@ -227,14 +231,14 @@ class WxTemplateMsg(object):
                 "color": "#173177"
             },
         }
-        return self.send_msg(to_user, msg_id, content_data)
+        return self.send_msg(msg_id, content_data)
 
-    def login_failed_msg(self, to_user, wx_nick_name):
+    def login_failed_msg(self):
         now_time = get_format_time()
         msg_id = '9rChJFw6nR0Wbp7SXsImh99qm6Dj1hrRWJo1NpEJ_3g'
         content_data = {
             "first": {
-                "value": f"您的微信账户“{wx_nick_name}”登录失败",
+                "value": f"您的微信账户“{self.wx_nick_name}”登录失败",
                 "color": "#173177"
             },
             "keyword1": {
@@ -250,14 +254,14 @@ class WxTemplateMsg(object):
                 "color": "#173177"
             },
         }
-        return self.send_msg(to_user, msg_id, content_data)
+        return self.send_msg(msg_id, content_data)
 
-    def bind_success_msg(self, to_user, wx_nick_name, username):
+    def bind_success_msg(self, username):
         now_time = get_format_time()
         msg_id = 'twMMQn9AKZKevbZBYh8EcFMk7BnC5Y09FmDkZQEH43w'
         content_data = {
             "first": {
-                "value": f"您的微信账户“{wx_nick_name}”绑定成功",
+                "value": f"您的微信账户“{self.wx_nick_name}”绑定成功",
                 "color": "#173177"
             },
             "keyword1": {
@@ -273,14 +277,14 @@ class WxTemplateMsg(object):
                 "color": "#173177"
             },
         }
-        return self.send_msg(to_user, msg_id, content_data)
+        return self.send_msg(msg_id, content_data)
 
-    def bind_failed_msg(self, to_user, wx_nick_name, msg):
+    def bind_failed_msg(self, msg):
         now_time = get_format_time()
         msg_id = 'WIrRuHiDG0f976seBAmY-rjSil0AiT9E5l0PHrPnsfs'
         content_data = {
             "first": {
-                "value": f"您的微信账户“{wx_nick_name}”绑定失败",
+                "value": f"您的微信账户“{self.wx_nick_name}”绑定失败",
                 "color": "#173177"
             },
             "keyword1": {
@@ -296,14 +300,14 @@ class WxTemplateMsg(object):
                 "color": "#173177"
             },
         }
-        return self.send_msg(to_user, msg_id, content_data)
+        return self.send_msg(msg_id, content_data)
 
-    def unbind_success_msg(self, to_user, wx_nick_name, username):
+    def unbind_success_msg(self, username):
         now_time = get_format_time()
         msg_id = 'RabYMg8-jPGhonk957asbW17iLHSLp8BfEXnyesRZ60'
         content_data = {
             "first": {
-                "value": f"您的微信账户“{wx_nick_name}”已经解除绑定",
+                "value": f"您的微信账户“{self.wx_nick_name}”已经解除绑定",
                 "color": "#173177"
             },
             "keyword1": {
@@ -323,13 +327,13 @@ class WxTemplateMsg(object):
                 "color": "#173177"
             },
         }
-        return self.send_msg(to_user, msg_id, content_data)
+        return self.send_msg(msg_id, content_data)
 
-    def bind_query_success_msg(self, to_user, wx_nick_name, username, name, mobile, email):
+    def bind_query_success_msg(self, username, name, mobile, email):
         msg_id = 'yU15jLNSULagJTff01X67mDtDytBSs3iBpOBi8c7dvs'
         content_data = {
             "first": {
-                "value": f"您的微信账户“{wx_nick_name}”绑定信息结果",
+                "value": f"您的微信账户“{self.wx_nick_name}”绑定信息结果",
                 "color": "#173177"
             },
             "keyword1": {
@@ -353,18 +357,18 @@ class WxTemplateMsg(object):
                 "color": "#173177"
             },
         }
-        return self.send_msg(to_user, msg_id, content_data)
+        return self.send_msg(msg_id, content_data)
 
-    def query_bind_info_failed_msg(self, to_user, wx_nick_name, action_msg, failed_msg):
+    def query_bind_info_failed_msg(self, action_msg, failed_msg):
         now_time = get_format_time()
         msg_id = 'uCxjYt216zRAv_sPZihKk4xp7-6pLmRW1oNLLW7L3oI'
         content_data = {
             "first": {
-                "value": f"您的微信账户“{wx_nick_name}” {action_msg}失败了",
+                "value": f"您的微信账户“{self.wx_nick_name}” {action_msg}失败了",
                 "color": "#173177"
             },
             "keyword1": {
-                "value": wx_nick_name,
+                "value": self.wx_nick_name,
                 "color": "#173177"
             },
             "keyword2": {
@@ -384,13 +388,13 @@ class WxTemplateMsg(object):
                 "color": "#173177"
             },
         }
-        return self.send_msg(to_user, msg_id, content_data)
+        return self.send_msg(msg_id, content_data)
 
-    def auth_code_msg(self, to_user, wx_nick_name, code, expire_date):
+    def auth_code_msg(self, code, expire_date):
         msg_id = 'vRCegZatP18LAe9ytLirwfL1CFyzaCQwM89hMAKsUAA'
         content_data = {
             "first": {
-                "value": f"您好，“{wx_nick_name}”",
+                "value": f"您好，“{self.wx_nick_name}”",
                 "color": "#173177"
             },
             "keyword1": {
@@ -406,7 +410,97 @@ class WxTemplateMsg(object):
                 "color": "#173177"
             },
         }
-        return self.send_msg(to_user, msg_id, content_data)
+        return self.send_msg(msg_id, content_data)
+
+    def something_not_enough_msg(self, title, username, balance_msg, desc_msg):
+        msg_id = '34UZQuncRei2t6kRN6k4FGRiwzxU8GyvufnrV3hqEHI'
+        content_data = {
+            "first": {
+                "value": title,
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": username,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": balance_msg,
+                "color": "#173177"
+            },
+            "remark": {
+                "value": desc_msg,
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(msg_id, content_data)
+
+    def download_times_not_enough_msg(self, username, download_times, desc_msg="感谢您的关注"):
+        return self.something_not_enough_msg(f"您好，“{self.wx_nick_name}”，您当前账户下载次数不足，望您尽快充值!", username,
+                                             f"{download_times} 下载次数", desc_msg)
+
+    def apple_developer_devices_not_enough_msg(self, username, devices_count, desc_msg="感谢您的关注"):
+        return self.something_not_enough_msg(f"您好，“{self.wx_nick_name}”，您当前账户签名余额不足，望您尽快添加!", username,
+                                             f"{devices_count} 设备数", desc_msg)
+
+    def cert_expired_msg(self, developer_id, cert_id, expired_time):
+        msg_id = '59sF_30TZ3gB6ugE7BHzv2-LDBnh_3cOn6R-85bvZ0E'
+        content_data = {
+            "first": {
+                "value": f'你好，“{self.wx_nick_name}“，您苹果开发者证书即将到期',
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": developer_id,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": cert_id,
+                "color": "#173177"
+            },
+            "keyword3": {
+                "value": expired_time,
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "为了保证您开发者可用，请您尽快更新开发者证书，感谢您的关注",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(msg_id, content_data)
+
+    def pay_success_msg(self, product_name, price, pay_type, pay_time, order, description):
+        msg_id = 'LjlbeavVnGk5j2BhSblPudt_ts3gw9b_ydXS_C1uW6g'
+        content_data = {
+            "first": {
+                "value": f'你好，“{self.wx_nick_name}“，下载次数充值成功',
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": product_name,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": price,
+                "color": "#173177"
+            },
+            "keyword3": {
+                "value": pay_type,
+                "color": "#173177"
+            },
+            "keyword4": {
+                "value": pay_time,
+                "color": "#173177"
+            },
+            "keyword5": {
+                "value": order,
+                "color": "#173177"
+            },
+            "remark": {
+                "value": f"{description}，感谢您的关注",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(msg_id, content_data)
 
 
 class WxWebLogin(object):

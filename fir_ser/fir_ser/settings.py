@@ -263,6 +263,7 @@ CACHE_KEY_TEMPLATE = {
     'task_state_key': 'task_state',
     'pending_state_key': 'pending_state',
     'wx_login_bind_key': 'wx_login_bind',
+    'notify_loop_msg_key': 'notify_loop_msg',
     'user_can_download_key': 'user_can_download',
     'download_times_key': 'app_download_times',
     'make_token_key': 'make_token',
