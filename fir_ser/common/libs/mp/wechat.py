@@ -502,6 +502,36 @@ class WxTemplateMsg(object):
         }
         return self.send_msg(msg_id, content_data)
 
+    def operate_failed_msg(self, first_name, operate_context, failed_msg, operate_time, description):
+        msg_id = 'Hnrk5iXRjbaCTVpSIyC5KC8cwFNDgplNUzPsnyDXRLo'
+        content_data = {
+            "first": {
+                "value": f'你好，“{self.wx_nick_name}“，操作失败了',
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": first_name,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": operate_context,
+                "color": "#173177"
+            },
+            "keyword3": {
+                "value": failed_msg,
+                "color": "#173177"
+            },
+            "keyword4": {
+                "value": operate_time,
+                "color": "#173177"
+            },
+            "remark": {
+                "value": f"{description}，感谢您的关注",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(msg_id, content_data)
+
 
 class WxWebLogin(object):
     """

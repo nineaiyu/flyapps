@@ -65,13 +65,14 @@ class WeChatBindView(APIView):
         ret = BaseResponse()
         uid = request.user.uid
         unique_key = request.data.get('unique_key')
+        w_type = request.data.get('w_type', 'xxxx')
         if unique_key:
             cache_obj = WxLoginBindCache(unique_key)
             cache_data = cache_obj.get_storage_cache()
             if cache_data:
                 code, qr_info = cache_data
             else:
-                code, qr_info = cache_data = make_wx_login_qrcode(f"web.bind.{uid}")
+                code, qr_info = cache_data = make_wx_login_qrcode(f"web.bind.{uid}.{w_type}")
                 cache_obj.set_storage_cache(cache_data, qr_info.get('expire_seconds', 600))
             return wx_qr_code_response(ret, code, qr_info, get_real_ip_address(request))
         return Response(ret.dict)
@@ -101,14 +102,19 @@ class WeChatLoginCheckView(APIView):
                     ret.msg = "还未绑定用户，请通过手机或者邮箱登录账户之后进行绑定"
                     ret.code = 1005
                 else:
+                    w_type = wx_ticket_data.get('w_type', '')
+                    to_user = wx_ticket_data.get('to_user', '')
                     user = UserInfo.objects.filter(pk=wx_ticket_data['pk']).first()
                     if user.is_active:
-                        key, user_info = set_user_token(user, request)
-                        serializer = UserInfoSerializer(user_info)
-                        data = serializer.data
+                        if to_user and w_type:
+                            ret.data = {'uid': user.uid, 'to_user': to_user, 'w_type': w_type}
+                        else:
+                            key, user_info = set_user_token(user, request)
+                            serializer = UserInfoSerializer(user_info)
+                            data = serializer.data
+                            ret.userinfo = data
+                            ret.token = key
                         ret.msg = "验证成功!"
-                        ret.userinfo = data
-                        ret.token = key
                     else:
                         ret.msg = "用户被禁用"
                         ret.code = 1005

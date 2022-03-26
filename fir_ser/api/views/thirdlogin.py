@@ -54,56 +54,62 @@ def reply_login_msg(rec_msg, to_user, from_user, ):
         content = f'用户 {wx_user_obj.user_id.first_name} 登录成功'
         WxTemplateMsg(to_user, wx_user_obj.nickname).login_success_msg(wx_user_obj.user_id.first_name)
     else:
-        wx_user_info = update_or_create_wx_userinfo(to_user, None, False)
+        wx_user_info = update_or_create_wx_userinfo(to_user)
         WxTemplateMsg(to_user, wx_user_info.get('nickname', '')).login_failed_msg()
 
     if wx_ticket_info and wx_ticket_info.get('ip_addr'):
         ip_addr = wx_ticket_info.get('ip_addr')
         logger.info(f"{content} ip:{ip_addr}")
 
-    set_wx_ticket_login_info_cache(rec_msg.Ticket, {'pk': u_data_id})
+    set_wx_ticket_login_info_cache(rec_msg.Ticket, {'pk': u_data_id, 'to_user': to_user})
     reply_msg = reply.TextMsg(to_user, from_user, content)
     return reply_msg.send()
 
 
-def update_or_create_wx_userinfo(to_user, user_obj, create=True):
+def update_or_create_wx_userinfo(to_user, user_obj=None, w_type=''):
     code, wx_user_info = get_userinfo_from_openid(to_user)
     logger.info(f"get openid:{to_user} info:{to_user} code:{code}")
     if code:
         wx_user_info = {
             'openid': wx_user_info.get('openid'),
-            'nickname': wx_user_info.get('nickname'),  # 最新微信接口已经取消该字段
-            'sex': wx_user_info.get('sex'),  # 最新微信接口已经取消该字段
+            # 'nickname': wx_user_info.get('nickname'),  # 最新微信接口已经取消该字段
+            # 'sex': wx_user_info.get('sex'),  # 最新微信接口已经取消该字段
             'subscribe_time': wx_user_info.get('subscribe_time'),
-            'head_img_url': wx_user_info.get('headimgurl'),  # 最新微信接口已经取消该字段
+            # 'head_img_url': wx_user_info.get('headimgurl'),  # 最新微信接口已经取消该字段
             'address': f"{wx_user_info.get('country')}-{wx_user_info.get('province')}-{wx_user_info.get('city')}",
             'subscribe': wx_user_info.get('subscribe'),
         }
-    if create:
+    if user_obj:
+        if w_type == 'login':
+            wx_user_info['enable_login'] = True
+        if w_type == 'notify':
+            wx_user_info['enable_notify'] = True
+
         ThirdWeChatUserInfo.objects.update_or_create(user_id=user_obj, openid=to_user, defaults=wx_user_info)
     return wx_user_info
 
 
 def wx_bind_utils(rec_msg, to_user, from_user, content):
-    uid = rec_msg.Eventkey.split('.')[-1]
+    w_type = rec_msg.Eventkey.split('.')[-1]
+    uid = rec_msg.Eventkey.split('.')[-2]
     wx_user_obj = ThirdWeChatUserInfo.objects.filter(openid=to_user).first()
     user_obj = UserInfo.objects.filter(uid=uid).first()
     if wx_user_obj:
         wx_template_msg_obj = WxTemplateMsg(to_user, wx_user_obj.nickname)
         if user_obj and user_obj.uid == wx_user_obj.user_id.uid:
             content = f'账户 {wx_user_obj.user_id.first_name} 已经绑定成功，感谢您的使用'
-            update_or_create_wx_userinfo(to_user, user_obj)
+            update_or_create_wx_userinfo(to_user, user_obj, w_type)
             wx_template_msg_obj.bind_success_msg(user_obj.first_name)
         else:
             content = f'账户已经被 {wx_user_obj.user_id.first_name} 绑定'
             wx_template_msg_obj.bind_failed_msg(content)
     else:
         if user_obj:
-            wx_user_info = update_or_create_wx_userinfo(to_user, user_obj)
+            wx_user_info = update_or_create_wx_userinfo(to_user, user_obj, w_type)
             content = f'账户绑定 {user_obj.first_name} 成功'
             WxTemplateMsg(to_user, wx_user_info.get('nickname', '')).bind_success_msg(user_obj.first_name)
     if user_obj:
-        set_wx_ticket_login_info_cache(rec_msg.Ticket, {'pk': user_obj.pk})
+        set_wx_ticket_login_info_cache(rec_msg.Ticket, {'pk': user_obj.pk, 'w_type': w_type, 'to_user': to_user})
     reply_msg = reply.TextMsg(to_user, from_user, content)
     return reply_msg.send()
 
@@ -180,7 +186,7 @@ class ValidWxChatToken(APIView):
                                                                                                     user_obj.email)
                             else:
                                 content = '暂无登录绑定信息'
-                                wx_user_info = update_or_create_wx_userinfo(to_user, None, False)
+                                wx_user_info = update_or_create_wx_userinfo(to_user)
                                 WxTemplateMsg(to_user, wx_user_info.get('nickname')).query_bind_info_failed_msg(
                                     "查询登录绑定", content)
 
@@ -192,7 +198,7 @@ class ValidWxChatToken(APIView):
                                 ThirdWeChatUserInfo.objects.filter(openid=to_user).delete()
                             else:
                                 content = f'暂无登录绑定信息'
-                                wx_user_info = update_or_create_wx_userinfo(to_user, None, False)
+                                wx_user_info = update_or_create_wx_userinfo(to_user)
                                 WxTemplateMsg(to_user, wx_user_info.get('nickname')).query_bind_info_failed_msg(
                                     "解除登录绑定", content)
 
@@ -228,7 +234,7 @@ class ThirdWxAccount(APIView):
     def get(self, request):
         res = BaseResponse()
         if get_login_type().get('third', '').get('wxp'):
-            wx_obj_lists = ThirdWeChatUserInfo.objects.filter(user_id=request.user)
+            wx_obj_lists = ThirdWeChatUserInfo.objects.filter(user_id=request.user, enable_login=True)
             page_obj = PageNumber()
             info_serializer = page_obj.paginate_queryset(queryset=wx_obj_lists.order_by("-subscribe_time"),
                                                          request=request,
@@ -243,7 +249,7 @@ class ThirdWxAccount(APIView):
         openid = data.get("openid")
         if get_login_type().get('third', '').get('wxp') and openid:
             if request.user.check_password(data.get('confirm_pwd', '')):
-                ThirdWeChatUserInfo.objects.filter(user_id=request.user, openid=openid).delete()
+                ThirdWeChatUserInfo.objects.filter(user_id=request.user, openid=openid).update(enable_login=False)
             else:
                 res = BaseResponse()
                 res.code = 1001

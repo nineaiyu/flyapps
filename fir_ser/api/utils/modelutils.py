@@ -13,7 +13,7 @@ from django.db.models import Count
 from rest_framework.pagination import PageNumberPagination
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
-    AppBundleIdBlackList
+    AppBundleIdBlackList, NotifyReceiver, ThirdWeChatUserInfo
 from common.base.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name
 
@@ -202,3 +202,20 @@ def check_bundle_id_legal(user_uid, bundle_id):
             if app_black_obj:
                 return app_black_obj.status == 0
     return False
+
+
+def get_notify_wx_queryset(user_obj, message_type):
+    notify_weixin_ids = NotifyReceiver.objects.filter(notifyconfig__user_id=user_obj,
+                                                      notifyconfig__message_type=message_type,
+                                                      notifyconfig__enable_weixin=True, weixin__isnull=False,
+                                                      user_id=user_obj).values('weixin').distinct()
+
+    return ThirdWeChatUserInfo.objects.filter(subscribe=True, user_id=user_obj, enable_notify=True,
+                                              pk__in=notify_weixin_ids).all()
+
+
+def get_notify_email_queryset(user_obj, message_type):
+    return NotifyReceiver.objects.filter(notifyconfig__user_id=user_obj,
+                                         notifyconfig__message_type=message_type,
+                                         notifyconfig__enable_email=True, email__isnull=False,
+                                         user_id=user_obj).values('email').distinct()

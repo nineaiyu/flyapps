@@ -456,3 +456,25 @@ class AppReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppReportInfo
         exclude = ["id"]
+
+
+class NotifyReceiverSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.NotifyReceiver
+        exclude = ["user_id"]
+
+    weixin = serializers.SerializerMethodField()
+
+    def get_weixin(self, obj):
+        return ThirdWxSerializer(obj.weixin).data
+
+
+class NotifyConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.NotifyConfig
+        exclude = ["user_id", "sender"]
+
+    senders = serializers.SerializerMethodField()
+
+    def get_senders(self, obj):
+        return NotifyReceiverSerializer(obj.sender, many=True).data

@@ -413,7 +413,7 @@ export default {
           return;
         }
         if (data.code === 1000) {
-          if (this.userinfo.uid === data.userinfo.uid) {
+          if (this.userinfo.uid === data.data.uid) {
             this.$message.success("绑定成功");
             this.wx_visible = false;
           }
@@ -446,7 +446,7 @@ export default {
             this.wx_visible = false;
           }
         }, {
-          "methods": "POST", "data": {"unique_key": this.unique_key}
+          "methods": "POST", "data": {"unique_key": this.unique_key, "w_type": 'login'}
         })
       }
     },

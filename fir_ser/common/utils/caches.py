@@ -20,6 +20,7 @@ from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCac
     UploadTmpFileNameCache, RedisCacheBase, UserCanDownloadCache, UserFreeDownloadTimesCache, WxTicketCache, \
     SignUdidQueueCache, CloudStorageCache
 from common.core.sysconfig import Config
+from common.notify.notify import pay_success_notify
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE
 
 logger = logging.getLogger(__name__)
@@ -289,6 +290,7 @@ def update_order_info(user_id, out_trade_no, payment_number, payment_type, descr
                                            "description"])
                         add_user_download_times(user_id, download_times)
                         logger.info(f"{user_obj} 订单 {out_trade_no} msg：{order_obj.description}")
+                        pay_success_notify(user_obj, order_obj)
                         return True
                     except Exception as e:
                         logger.error(f"{user_obj} 订单 {out_trade_no} 更新失败 Exception：{e}")

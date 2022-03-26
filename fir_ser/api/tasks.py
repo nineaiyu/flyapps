@@ -8,7 +8,8 @@ import logging
 
 from captcha.models import CaptchaStore
 
-from api.utils.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_clean_remote_client_log
+from api.utils.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_clean_remote_client_log, \
+    notify_check_user_download_times, notify_check_apple_developer_devices, notify_check_apple_developer_cert
 from api.views.login import get_login_type
 from common.core.sysconfig import Config, invalid_config_cache
 from common.libs.geetest.geetest_utils import check_bypass_status
@@ -69,3 +70,18 @@ def sync_wx_access_token_job():
 @app.task
 def auto_clean_remote_client_job():
     auto_clean_remote_client_log()
+
+
+@app.task
+def download_times_notify_check_job():
+    notify_check_user_download_times()
+
+
+@app.task
+def apple_developer_devices_check_job():
+    notify_check_apple_developer_devices()
+
+
+@app.task
+def apple_developer_cert_notify_check_job():
+    notify_check_apple_developer_cert()

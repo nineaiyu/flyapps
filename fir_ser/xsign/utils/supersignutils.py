@@ -22,6 +22,7 @@ from common.base.baseutils import file_format_path, delete_app_profile_file, get
 from common.base.magic import run_function_by_locker, call_function_try_attempts, magic_wrapper
 from common.cache.state import CleanErrorBundleIdSignDataState
 from common.core.sysconfig import Config
+from common.notify.notify import sign_failed_notify, sign_unavailable_developer
 from common.utils.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
     consume_user_download_times_by_app_obj, add_udid_cache_queue, get_and_clean_udid_cache_queue
 from common.utils.storage import Storage
@@ -33,7 +34,7 @@ from xsign.utils.iossignapi import ResignApp, AppDeveloperApiV2
 from xsign.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign, \
     update_or_create_developer_udid_info, check_uid_has_relevant, get_developer_udided
 from xsign.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
-from xsign.utils.utils import delete_app_to_dev_and_file, send_ios_developer_active_status
+from xsign.utils.utils import delete_app_to_dev_and_file
 
 logger = logging.getLogger(__name__)
 
@@ -217,10 +218,7 @@ def disable_developer_and_send_email(app_obj, developer_obj):
     logger.error(f"app {app_obj} developer {developer_obj} sign failed. so disabled")
     developer_obj.status = 5
     developer_obj.save(update_fields=['status'])
-    send_ios_developer_active_status(developer_obj.user_id,
-                                     Config.MSG_ERROR_DEVELOPER % (
-                                         developer_obj.user_id.first_name, app_obj.name,
-                                         developer_obj.issuer_id))
+    sign_failed_notify(developer_obj.user_id, developer_obj, app_obj)
 
 
 def get_new_developer_by_app_obj(app_obj, obj_base_filter, apple_to_app=False):
@@ -416,9 +414,8 @@ class IosUtils(object):
             if self.user_obj.email:
                 if send_msg_over_limit("get", self.user_obj.email):
                     send_msg_over_limit("set", self.user_obj.email)
-                    send_ios_developer_active_status(self.user_obj, Config.MSG_NOT_EXIST_DEVELOPER
-                                                     % (
-                                                         self.user_obj.first_name, self.app_obj.name))
+                    sign_unavailable_developer(self.user_obj, self.app_obj)
+
                 else:
                     logger.error(f"user {self.user_obj} send msg failed. over limit")
 

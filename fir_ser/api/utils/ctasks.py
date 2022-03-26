@@ -10,6 +10,7 @@ import time
 from django.core.cache import cache
 
 from api.models import Apps, UserInfo, RemoteClientInfo
+from common.notify.ntasks import check_user_download_times, check_apple_developer_devices, check_apple_developer_cert
 from common.utils.storage import Storage
 from fir_ser.settings import CACHE_KEY_TEMPLATE
 
@@ -50,3 +51,18 @@ def auto_clean_upload_tmp_file():
 def auto_clean_remote_client_log(clean_day=30):
     clean_time = datetime.datetime.now() - datetime.timedelta(days=clean_day)
     return RemoteClientInfo.objects.filter(created_time__lt=clean_time).delete()
+
+
+def notify_check_user_download_times():
+    for user_obj in UserInfo.objects.filter(is_active=True).all():
+        check_user_download_times(user_obj, days=[0, 3, 7])
+
+
+def notify_check_apple_developer_devices():
+    for user_obj in UserInfo.objects.filter(is_active=True, supersign_active=True).all():
+        check_apple_developer_devices(user_obj, days=[0, 3, 7])
+
+
+def notify_check_apple_developer_cert():
+    for user_obj in UserInfo.objects.filter(is_active=True, supersign_active=True).all():
+        check_apple_developer_cert(user_obj, expire_day=7)

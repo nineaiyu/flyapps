@@ -46,6 +46,8 @@ class UserInfo(AbstractUser):
     storage = models.OneToOneField(to='AppStorage', related_name='app_storage',
                                    on_delete=models.SET_NULL, verbose_name="存储", null=True, blank=True)
     api_token = models.CharField(max_length=256, verbose_name='api访问密钥', default='')
+    notify_available_downloads = models.IntegerField(default=0, verbose_name="下载余额不足通知", blank=True, null=True)
+    notify_available_signs = models.IntegerField(default=0, verbose_name="签名余额不足通知", blank=True, null=True)
 
     class Meta:
         verbose_name = '账户信息'
@@ -77,6 +79,8 @@ class ThirdWeChatUserInfo(models.Model):
     head_img_url = models.CharField(max_length=256, verbose_name="用户头像", blank=True, null=True)
     address = models.CharField(max_length=128, verbose_name="地址", blank=True, null=True)
     subscribe = models.BooleanField(verbose_name="是否订阅公众号", default=0)
+    enable_login = models.BooleanField(verbose_name="是否允许登录", default=0)
+    enable_notify = models.BooleanField(verbose_name="是否允许推送消息", default=0)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="授权时间")
 
     def __str__(self):
@@ -469,3 +473,41 @@ class SystemConfig(models.Model):
 
     def __str__(self):
         return "%s-%s" % (self.key, self.description)
+
+
+class NotifyReceiver(models.Model):
+    receiver_name = models.CharField(max_length=128, unique=True, verbose_name="姓名")
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
+    weixin = models.ForeignKey(to=ThirdWeChatUserInfo, verbose_name="微信ID", on_delete=models.CASCADE, null=True)
+    email = models.EmailField(verbose_name='邮箱', max_length=255, blank=True, null=True)
+    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+
+    class Meta:
+        verbose_name = '信息接收配置'
+        verbose_name_plural = "信息接收配置"
+        unique_together = (('user_id', 'email',), ('user_id', 'weixin'))
+
+    def __str__(self):
+        return "%s-%s-%s" % (self.user_id, self.receiver_name, self.description)
+
+
+class NotifyConfig(models.Model):
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
+    config_name = models.CharField(max_length=128, unique=True, verbose_name="通知名称")
+    message_type_choices = (
+        (0, '签名余额不足'), (1, '下载次数不足'), (2, '应用签名限额'), (3, '应用签名失败'),
+        (4, '充值到账提醒'), (5, '优惠活动通知'), (6, '证书到期消息'))
+    message_type = models.SmallIntegerField(choices=message_type_choices, default=5, verbose_name="消息类型")
+    sender = models.ManyToManyField(to=NotifyReceiver, verbose_name="通知接受者方式")
+    enable_weixin = models.BooleanField(default=True, verbose_name="是否启用该配置项")
+    enable_email = models.BooleanField(default=True, verbose_name="是否启用该配置项")
+    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+
+    class Meta:
+        verbose_name = '信息接收配置'
+        verbose_name_plural = "信息接收配置"
+
+    def __str__(self):
+        return "%s-%s-%s" % (self.user_id, self.get_message_type_display(), self.sender)

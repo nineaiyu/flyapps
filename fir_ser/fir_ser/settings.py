@@ -468,6 +468,24 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=1, minute=1),
         'args': ()
     },
+    'download_times_notify_check_job': {
+        'task': 'api.tasks.download_times_notify_check_job',
+        # 'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
+        'schedule': crontab(hour=1, minute=10),
+        'args': ()
+    },
+    'apple_developer_devices_check_job': {
+        'task': 'api.tasks.apple_developer_devices_check_job',
+        # 'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
+        'schedule': crontab(hour=1, minute=20),
+        'args': ()
+    },
+    'apple_developer_cert_notify_check_job': {
+        'task': 'api.tasks.apple_developer_cert_notify_check_job',
+        # 'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
+        'schedule': crontab(hour=2, minute=1),
+        'args': ()
+    },
     'sync_wx_access_token_job': {
         'task': 'api.tasks.sync_wx_access_token_job',
         'schedule': SYNC_CACHE_TO_DATABASE.get("wx_get_access_token_times"),

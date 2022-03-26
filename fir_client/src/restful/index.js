@@ -717,6 +717,36 @@ export function appReport(callBack, params, load = true) {
     );
 }
 
+/**消息接收人配置 */
+export function notifyReceiverInfo(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/notify/receiver',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
+/**消息配置 */
+export function notifyConfigInfo(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/notify/config',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 /** 超级签名************************************************相关api */
 
 let SIGNSEVER = DOMAIN + '/api/v1/fir/xsign';

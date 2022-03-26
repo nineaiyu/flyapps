@@ -25,6 +25,8 @@ import {
     Checkbox,
     CheckboxGroup,
     Col,
+    Collapse,
+    CollapseItem,
     Container,
     DatePicker,
     Dialog,
@@ -158,6 +160,8 @@ Vue.use(InputNumber);
 Vue.use(Radio);
 Vue.use(Backtop);
 Vue.use(Transfer);
+Vue.use(Collapse);
+Vue.use(CollapseItem);
 Vue.prototype.$message = Message;
 Vue.prototype.$notify = Notification;
 Vue.prototype.$loading = Loading.service;

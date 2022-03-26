@@ -147,6 +147,17 @@ const router = new VueRouter({
                     ]
                 },
                 {
+                    path: 'notify',
+                    component: () => import("@/components/user/FirUserNotify"),
+                    children: [
+                        {
+                            path: ':act',
+                            name: 'FirUserNotify',
+                            meta: {label: '消息中心'},
+                        }
+                    ]
+                },
+                {
                     path: 'orders',
                     name: 'FirUserOrders',
                     meta: {label: '订单详情'},

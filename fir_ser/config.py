@@ -341,8 +341,8 @@ bIX1aWjPxirQX9mzaL3oEQI=
 
 
 class MSGCONF(object):
-    MSG_NOT_EXIST_DEVELOPER = '用户 %s 你好，应用 %s 签名失败了，苹果开发者总设备量已经超限，请添加新的苹果开发者或者修改开发者设备数量。感谢有你!'
-    MSG_ERROR_DEVELOPER = '用户 %s 你好，应用 %s 签名失败了，苹果开发者 %s 信息异常，请重新检查苹果开发者状态是否正常。感谢有你!'
+    MSG_NOT_EXIST_DEVELOPER = '用户 %s 你好，应用 %s 在 %s 签名失败了，苹果开发者总设备量已经超限，请添加新的苹果开发者或者修改开发者设备数量。感谢有你!'
+    MSG_ERROR_DEVELOPER = '用户 %s 你好，应用 %s 在 %s 签名失败了，苹果开发者 %s 信息异常，请重新检查苹果开发者状态是否正常。感谢有你!'
     MSG_AUTO_CHECK_DEVELOPER = '用户 %s 你好，苹果开发者 %s 信息异常，请重新检查苹果开发者状态是否正常。感谢有你!'
 
 

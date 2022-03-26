@@ -51,6 +51,7 @@
               <el-dropdown-item command="userinfo">个人资料</el-dropdown-item>
               <el-dropdown-item command="apitoken">API token</el-dropdown-item>
               <el-dropdown-item command="setdomian">设置域名</el-dropdown-item>
+              <el-dropdown-item command="setnotify">消息中心</el-dropdown-item>
               <el-dropdown-item v-if="$store.state.userinfo.role>1" command="setadvert">宣传广告
               </el-dropdown-item>
               <el-dropdown-item v-if="$store.state.userinfo.storage_active" command="storage">存储管理
@@ -138,6 +139,8 @@ export default {
         this.$router.push({"name": 'FirUserAdvert'})
       } else if (command === 'myorder') {
         this.$router.push({"name": 'FirUserOrders'})
+      } else if (command === 'setnotify') {
+        this.$router.push({"name": 'FirUserNotify'})
       } else if (command === 'qrcode') {
         this.$router.push({"name": 'FirUserQrcode'})
       } else if (command === 'contact') {
