@@ -624,6 +624,20 @@ export function changeInfoFun(callBack, params, load = true) {
     );
 }
 
+/**用户接收者验证 */
+export function NotifyInfoFun(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/notify/notify',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
 
 /**用户绑定域名*/
 export function domainFun(callBack, params, load = true) {

@@ -18,6 +18,6 @@ def common_exception_handler(exc, context):
     logger.error(f'{context["view"].__class__.__name__} ERROR: {exc} ret:{ret}')
 
     if not ret:  # drf内置处理不了，丢给django 的，我们自己来处理
-        return ApiResponse(msg='error', result=str(exc), code=500)
+        return ApiResponse(msg='error', result=str(exc), code=5000)
     else:
         return ApiResponse(msg='error', status=ret.status_code, **ret.data, )

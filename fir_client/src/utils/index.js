@@ -345,13 +345,13 @@ export function ImgToBase64(url, callback) {
     };
 }
 
-export function geetest(self, uid, params, callback) {
+export function geetest(self, uid, params, callback, http_func = loginFun) {
     const loading = self.$loading({
         lock: true,
         text: 'Loading',
         spinner: 'el-icon-loading',
     });
-    return geetestbase(loginFun, self, uid, params, callback, res => {
+    return geetestbase(http_func, self, uid, params, callback, res => {
         self.$message({
             message: res.msg,
             type: 'error'

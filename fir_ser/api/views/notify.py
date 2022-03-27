@@ -12,11 +12,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import NotifyReceiver, ThirdWeChatUserInfo, NotifyConfig, UserInfo
+from api.utils.auth.util import AuthInfo
 from api.utils.modelutils import PageNumber
 from api.utils.response import BaseResponse
 from api.utils.serializer import NotifyReceiverSerializer, NotifyConfigSerializer
-from common.base.baseutils import get_choices_dict, get_choices_name_from_key
+from api.views.login import check_common_info
+from common.base.baseutils import get_choices_dict, get_choices_name_from_key, is_valid_email, is_valid_phone
 from common.core.auth import ExpiringTokenAuthentication
+from common.core.sysconfig import Config
+from common.utils.caches import login_auth_failed
+from common.utils.sendmsg import is_valid_sender_code
 
 logger = logging.getLogger(__name__)
 
@@ -155,8 +160,23 @@ class NotifyReceiverView(APIView):
                 if wx_obj:
                     data_info['weixin'] = wx_obj
             if email:
-                data_info['email'] = email
+                if is_valid_email(email):
+                    act = 'email'
+                elif is_valid_phone(email):
+                    act = 'sms'
+                else:
+                    res.code = 1001
+                    res.msg = "邮箱或手机校验有误"
+                    return Response(res.dict)
+
+                is_valid, target = is_valid_sender_code(act, data.get("auth_token", None),
+                                                        data.get("seicode", None))
+                if is_valid and str(target) == str(email):
+                    if login_auth_failed("get", email):
+                        data_info['email'] = email
             try:
+                if not data_info.get('email') and not data_info.get('weixin'):
+                    raise Exception('至少存在一个联系方式')
                 NotifyReceiver.objects.create(user_id=request.user, **data_info)
                 if wx_obj:
                     wx_obj.enable_notify = True
@@ -172,4 +192,54 @@ class NotifyReceiverView(APIView):
         pk = request.query_params.get('id')
         if pk:
             NotifyReceiver.objects.filter(user_id=request.user, pk=pk).delete()
+        return Response(res.dict)
+
+
+class NotifyInfoView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+
+    def get(self, request):
+        response = BaseResponse()
+        response.data = {}
+        allow_f = Config.NOTIFY.get("enable")
+        if allow_f:
+            auth_obj = AuthInfo(Config.NOTIFY.get("captcha"), Config.NOTIFY.get("geetest"))
+            response.data['auth_rules'] = auth_obj.make_rules_info()
+            response.data['notify_type'] = Config.NOTIFY.get("notify_type")
+        response.data['enable'] = allow_f
+        return Response(response.dict)
+
+    def put(self, request):
+        response = BaseResponse()
+        user_id = request.data.get('user_id', None)
+        if user_id:
+            auth_obj = AuthInfo(Config.NOTIFY.get("captcha"), Config.NOTIFY.get("geetest"))
+            response.data = auth_obj.make_geetest_info(user_id, request.META.get('REMOTE_ADDR'))
+        else:
+            response.code = 1002
+            response.msg = '参数错误'
+        return Response(response.dict)
+
+    def post(self, request):
+        res = BaseResponse()
+        res.data = {}
+        target = request.data.get("target", None)
+        p_data = Config.NOTIFY
+        auth_obj = AuthInfo(p_data.get("captcha"), p_data.get("geetest"))
+        is_valid, msg = auth_obj.valid(request.data)
+        if not is_valid:
+            res.code = 1001
+            res.msg = msg
+            return Response(res.dict)
+
+        if is_valid_email(target):
+            act = 'email'
+        elif is_valid_phone(target):
+            act = 'sms'
+        else:
+            res.code = 1001
+            res.msg = "邮箱或手机校验有误"
+            return Response(res.dict)
+
+        res = check_common_info(target, act, 'notify')
         return Response(res.dict)

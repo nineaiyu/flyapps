@@ -42,10 +42,10 @@ class TextXMLParser(XMLParser):
     media_type = 'text/xml'  # 微信解析的是 text/xml
 
 
-def reply_login_msg(rec_msg, to_user, from_user, ):
+def reply_login_msg(rec_msg, to_user, from_user):
     content = f'还未绑定用户，请通过手机或者邮箱登录账户之后进行绑定'
     u_data_id = -1
-    wx_user_obj = ThirdWeChatUserInfo.objects.filter(openid=to_user).first()
+    wx_user_obj = ThirdWeChatUserInfo.objects.filter(openid=to_user, enable_login=True).first()
 
     wx_ticket_info = get_wx_ticket_login_info_cache(rec_msg.Ticket)
 
@@ -219,7 +219,7 @@ class ValidWxChatToken(APIView):
 
                 elif rec_msg.Event == 'SCAN':
                     if rec_msg.Eventkey == 'web.login':  # 已经关注，然后再次扫码，登录认证操作
-                        result = reply_login_msg(rec_msg, to_user, from_user, )
+                        result = reply_login_msg(rec_msg, to_user, from_user)
                     elif rec_msg.Eventkey.startswith('web.bind.'):
                         result = wx_bind_utils(rec_msg, to_user, from_user, content)
         else:

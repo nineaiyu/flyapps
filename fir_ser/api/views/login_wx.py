@@ -105,6 +105,13 @@ class WeChatLoginCheckView(APIView):
                     w_type = wx_ticket_data.get('w_type', '')
                     to_user = wx_ticket_data.get('to_user', '')
                     user = UserInfo.objects.filter(pk=wx_ticket_data['pk']).first()
+                    wx_obj = ThirdWeChatUserInfo.objects.filter(user_id=user, openid=to_user,
+                                                                enable_login=True).filter()
+                    if not wx_obj:
+                        ret.msg = "还未绑定用户，请通过手机或者邮箱登录账户之后进行绑定"
+                        ret.code = 1005
+                        return Response(ret.dict)
+
                     if user.is_active:
                         if to_user and w_type:
                             ret.data = {'uid': user.uid, 'to_user': to_user, 'w_type': w_type}

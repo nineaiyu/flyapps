@@ -126,6 +126,16 @@ class AUTHCONF(object):
             'email': True,  # 邮件举报
         }
     }
+    NOTIFY = {
+        "enable": True,
+        "captcha": False,  # 是否开启注册字母验证码
+        "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
+        "notify_type": {
+            'sms': False,  # 短信通知
+            'email': True,  # 邮件通知
+            'weixin': True,  # 微信通知
+        }
+    }
 
 
 class STORAGEKEYCONF(object):

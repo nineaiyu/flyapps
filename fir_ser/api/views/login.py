@@ -198,11 +198,11 @@ def check_change_userinfo(target, act, key, user, ftype=None):
     return res
 
 
-def check_common_info(target, act):
+def check_common_info(target, act, k_type):
     res = BaseResponse()
     res.data = {}
 
-    times_key = "%s_%s_%s" % ('report', act, target)
+    times_key = f"{k_type}_{act}_{target}"
     if act == "sms":
         if is_valid_phone(target):
             if login_auth_failed("get", times_key):
@@ -592,7 +592,7 @@ class AuthorizationView(APIView):
         if ext and ext.get('report'):
             app_obj = Apps.objects.filter(app_id=ext.get('report')).first()
             if app_obj:
-                res = check_common_info(target, act)
+                res = check_common_info(target, act, 'report')
             else:
                 res.code = 1003
                 res.msg = '未授权，请重新提交'

@@ -198,6 +198,11 @@ class AuthConfCache(WechatConfCache):
         return super().get_value('CHANGER', AUTHCONF.CHANGER)
 
     @property
+    def NOTIFY(self):
+        # return super().get_value('NOTIFY', AUTHCONF.NOTIFY)
+        return AUTHCONF.NOTIFY
+
+    @property
     def LOGIN(self):
         return super().get_value('LOGIN', AUTHCONF.LOGIN)
 

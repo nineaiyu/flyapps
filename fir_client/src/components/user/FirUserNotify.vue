@@ -16,39 +16,39 @@
         </el-form-item>
 
 
-        <!--        <el-form-item v-if="captcha.captcha_image" style="height: 40px" >-->
-        <!--          <el-row style="height: 40px">-->
-        <!--            <el-col :span="16">-->
-        <!--              <el-input v-model="addreceiverinfo.verify_code" clearable maxlength="6"-->
-        <!--                        placeholder="请输入验证码" @keyup.enter.native="onSubmit"/>-->
-        <!--            </el-col>-->
-        <!--            <el-col :span="8">-->
-        <!--              <el-image-->
-        <!--                  :src="captcha.captcha_image"-->
-        <!--                  fit="contain"-->
-        <!--                  style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px" @click="get_auth_code">-->
-        <!--              </el-image>-->
-        <!--            </el-col>-->
-        <!--          </el-row>-->
-        <!--        </el-form-item>-->
+        <el-form-item v-if="captcha.captcha_image" style="height: 40px">
+          <el-row style="height: 40px">
+            <el-col :span="16">
+              <el-input v-model="addreceiverinfo.verify_code" clearable maxlength="6"
+                        placeholder="请输入验证码" @keyup.enter.native="onSubmit"/>
+            </el-col>
+            <el-col :span="8">
+              <el-image
+                  :src="captcha.captcha_image"
+                  fit="contain"
+                  style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px" @click="get_auth_code">
+              </el-image>
+            </el-col>
+          </el-row>
+        </el-form-item>
 
-        <!--        <el-form-item>-->
-        <!--          <el-row>-->
-        <!--            <el-col :span="16">-->
-        <!--              <el-input v-model="addreceiverinfo.seicode" clearable-->
-        <!--                        placeholder="邮箱验证码" prefix-icon="el-icon-mobile"/>-->
-        <!--            </el-col>-->
-        <!--            <el-col :span="8">-->
-        <!--              <el-button plain style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px" type="info"-->
-        <!--                         @click="onGetCode">获取验证码-->
-        <!--              </el-button>-->
-        <!--            </el-col>-->
-        <!--          </el-row>-->
-        <!--        </el-form-item>-->
+        <el-form-item>
+          <el-row>
+            <el-col :span="16">
+              <el-input v-model="addreceiverinfo.seicode" clearable
+                        placeholder="邮箱验证码" prefix-icon="el-icon-mobile"/>
+            </el-col>
+            <el-col :span="8">
+              <el-button plain style="margin:0 4px;border-radius:4px;cursor:pointer;height: 40px" type="info"
+                         @click="onGetCode">获取验证码
+              </el-button>
+            </el-col>
+          </el-row>
+        </el-form-item>
 
-        <!--        <el-form-item>-->
-        <!--          <div id="captcha" ref="captcha"></div>-->
-        <!--        </el-form-item>-->
+        <el-form-item>
+          <div id="captcha" ref="captcha"></div>
+        </el-form-item>
 
 
         <el-form-item label="微信">
@@ -341,9 +341,9 @@
 </template>
 
 <script>
-import {notifyConfigInfo, notifyReceiverInfo, wxBindFun, wxLoginFun} from "@/restful";
-import {getUserInfoFun} from "@/utils";
-import {getRandomStr} from "@/utils/base/utils";
+import {notifyConfigInfo, NotifyInfoFun, notifyReceiverInfo, wxBindFun, wxLoginFun} from "@/restful";
+import {geetest, getUserInfoFun} from "@/utils";
+import {checkEmail, checkphone, getRandomStr} from "@/utils/base/utils";
 
 export default {
   name: "FirUserNotify",
@@ -351,11 +351,12 @@ export default {
     return {
       dialogReceiverVisible: false,
       captcha: {"captcha_image": '', "captcha_key": '', "length": 8},
+      change_type: {email: false, sms: false},
       wx_visible: false,
       wx_login_qr_url: '',
       unique_key: '',
       userinfo: {},
-      addreceiverinfo: {description: '', wxopenid: '', email: '', receiver_name: ''},
+      addreceiverinfo: {description: '', wxopenid: '', email: '', receiver_name: '', verify_code: '', seicode: ''},
       message_type_choices: [],
       activeConfig: [],
       dialogChangeReceiverVisible: false,
@@ -369,10 +370,98 @@ export default {
       threshold: {}
     }
   }, methods: {
+    onGetCode() {
+      this.addreceiverinfo.auth_token = '';
+      this.addreceiverinfo.seicode = '';
+      this.onSubmit();
+    },
+    onSubmit() {
+      let email = this.addreceiverinfo.email;
+      let verify_code = this.addreceiverinfo.verify_code;
+      let captcha_flag = this.addreceiverinfo.verify_code.length === this.captcha.length;
+      if (this.captcha.captcha_key === '' || !this.captcha.captcha_key) {
+        captcha_flag = true
+      }
+      if (captcha_flag) {
+        let checke = checkEmail(this.addreceiverinfo.email);
+        let checkp = checkphone(this.addreceiverinfo.email);
+        if (checke || checkp) {
+          let params = {
+            "target": email,
+            "verify_code": verify_code,
+            "captcha_key": this.captcha.captcha_key,
+            "n_type": 'notify',
+          };
+          let seicode = this.addreceiverinfo.seicode;
+          let auth_token = this.addreceiverinfo.auth_token;
+          if (seicode && seicode.length > 3) {
+            params['seicode'] = seicode
+          }
+          if (auth_token && auth_token.length > 3) {
+            params['auth_token'] = auth_token
+          }
+          if (this.auth_rules.geetest) {
+            geetest(this, this.addreceiverinfo.email, params, (n_params) => {
+              this.do_notify_sender(n_params)
+            }, NotifyInfoFun)
+          } else {
+            this.do_notify_sender(params)
+          }
+        } else {
+          this.$message({
+            message: '邮箱或手机号输入有误',
+            type: 'error'
+          });
+        }
+
+      } else {
+        this.$message({
+          message: '验证码有误',
+          type: 'warning'
+        });
+      }
+    },
+    do_notify_sender(params) {
+      NotifyInfoFun(data => {
+        if (data.code === 1000) {
+          this.$message.success("验证码发送成功")
+          this.addreceiverinfo.auth_token = data.data.auth_token;
+        } else {
+          this.$message.error(data.msg)
+
+        }
+      }, {
+        'methods': 'POST',
+        'data': params
+      })
+    },
+
+    get_auth_code() {
+      NotifyInfoFun(data => {
+        if (data.code === 1000) {
+          this.auth_rules = data.data.auth_rules;
+          this.captcha = this.auth_rules.captcha;
+          this.change_type = data.data.change_type;
+          this.addreceiverinfo.captcha_key = this.captcha.captcha_key;
+          if (this.addreceiverinfo.verify_code) {
+            this.addreceiverinfo.verify_code = '';
+          }
+        } else {
+          this.$message({
+            message: data.msg,
+            type: 'error'
+          });
+        }
+      }, {
+        "methods": "GET",
+        "data": {}
+      });
+    },
     addRecevier() {
-      this.addreceiverinfo = {description: '', wxopenid: '', email: '', receiver_name: ''}
+      this.addreceiverinfo = {description: '', wxopenid: '', email: '', receiver_name: '', verify_code: '', seicode: ''}
       this.dialogReceiverVisible = true
       this.title = '新增消息接收人'
+      this.get_auth_code()
     },
     editReceiver(receiver) {
       this.title = '编辑 ' + receiver.receiver_name + ' 消息接收人'
@@ -442,7 +531,7 @@ export default {
     },
     cancelReceiver() {
       this.dialogReceiverVisible = false;
-      this.addreceiverinfo = {description: '', wxopenid: '', email: '', receiver_name: ''}
+      this.addreceiverinfo = {description: '', wxopenid: '', email: '', receiver_name: '', verify_code: '', seicode: ''}
     },
     saveReceiver() {
       notifyReceiverInfo(data => {
