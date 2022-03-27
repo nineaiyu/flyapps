@@ -21,6 +21,7 @@ from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCac
     SignUdidQueueCache, CloudStorageCache
 from common.core.sysconfig import Config
 from common.notify.notify import pay_success_notify
+from common.notify.ntasks import download_times_not_enough
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE
 
 logger = logging.getLogger(__name__)
@@ -196,6 +197,8 @@ def consume_user_download_times(user_id, app_id, amount=1, auth_status=False):
                 logger.error(f"{user_id} download_times less then 0. Exception:{e}")
                 disable_user_download_times_flag(user_id)
                 del_cache_response_by_short(app_id)
+                msg = f"您当前账户下载次数不足，应用已经无法下载安装。为了避免业务使用，望您尽快充值!"
+                download_times_not_enough(UserInfo.objects.filter(pk=user_id).first(), msg)
                 return False
         return True
 

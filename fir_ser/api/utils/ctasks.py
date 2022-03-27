@@ -54,12 +54,12 @@ def auto_clean_remote_client_log(clean_day=30):
 
 
 def notify_check_user_download_times():
-    for user_obj in UserInfo.objects.filter(is_active=True).all():
+    for user_obj in UserInfo.objects.filter(is_active=True, notify_available_downloads__gt=0).all():
         check_user_download_times(user_obj, days=[0, 3, 7])
 
 
 def notify_check_apple_developer_devices():
-    for user_obj in UserInfo.objects.filter(is_active=True, supersign_active=True).all():
+    for user_obj in UserInfo.objects.filter(is_active=True, supersign_active=True, notify_available_signs__gt=0).all():
         check_apple_developer_devices(user_obj, days=[0, 3, 7])
 
 

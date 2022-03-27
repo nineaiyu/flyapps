@@ -19,14 +19,14 @@ from xsign.utils.modelutils import get_developer_devices
 logger = logging.getLogger(__name__)
 
 
-def download_times_not_enough(user_obj):
+def download_times_not_enough(user_obj, msg):
     """
     1, '下载次数不足'
+    :param msg:
     :param user_obj:
     :return:
     """
     message_type = 1
-    msg = f"您当前账户下载次数仅剩 {user_obj.download_times}，已超过您设置的阈值 {user_obj.notify_available_downloads}，为了避免业务使用，望您尽快充值!"
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
         res = WxTemplateMsg(wx_user_obj.openid, wx_user_obj.nickname).download_times_not_enough_msg(
             user_obj.first_name, user_obj.download_times, msg)
@@ -83,12 +83,13 @@ def check_user_download_times(user_obj, days=None):
         days = [0, 3, 7]
     if user_obj.notify_available_downloads == 0 or user_obj.notify_available_downloads < user_obj.download_times:
         return
+    msg = f"您当前账户下载次数仅剩 {user_obj.download_times}，已超过您设置的阈值 {user_obj.notify_available_downloads}，为了避免业务使用，望您尽快充值!"
     notify_rules = [
         {
             'func': magic_wrapper(lambda obj: obj.download_times < obj.notify_available_downloads, user_obj),
             'notify': days,
             'cache': NotifyLoopCache(user_obj.uid, 'download_times'),
-            'notify_func': [magic_wrapper(download_times_not_enough, user_obj)]
+            'notify_func': [magic_wrapper(download_times_not_enough, user_obj, msg)]
         }
     ]
     magic_notify(notify_rules)

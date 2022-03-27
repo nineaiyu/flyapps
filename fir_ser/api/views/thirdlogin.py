@@ -6,6 +6,7 @@
 import logging
 import random
 
+from django.db.models import Q
 from django.http.response import HttpResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -165,7 +166,8 @@ class ValidWxChatToken(APIView):
                         logger.info(f"replay msg: {result}")
                         return HttpResponse(result)
                     elif rec_msg.Eventkey in ['query_bind', 'unbind']:
-                        wx_user_obj = ThirdWeChatUserInfo.objects.filter(openid=to_user).first()
+                        wx_user_obj = ThirdWeChatUserInfo.objects.filter(openid=to_user).filter(
+                            Q(enable_login=True) | Q(enable_notify=True)).first()
                         if rec_msg.Eventkey == 'query_bind':
                             if wx_user_obj:
                                 user_obj = wx_user_obj.user_id
@@ -180,10 +182,18 @@ class ValidWxChatToken(APIView):
                                     name = user_cert_obj.name
                                 else:
                                     name = user_obj.first_name
+                                description = f'绑定了'
+                                if wx_user_obj.enable_login:
+                                    description += " 微信登录 "
+                                if wx_user_obj.enable_notify:
+                                    description += " 消息通知 "
+                                description += "功能。"
+
                                 WxTemplateMsg(to_user, wx_user_obj.nickname).bind_query_success_msg(user_obj.first_name,
                                                                                                     name,
                                                                                                     user_obj.mobile,
-                                                                                                    user_obj.email)
+                                                                                                    user_obj.email,
+                                                                                                    description)
                             else:
                                 content = '暂无登录绑定信息'
                                 wx_user_info = update_or_create_wx_userinfo(to_user)

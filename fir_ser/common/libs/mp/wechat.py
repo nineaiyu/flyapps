@@ -329,7 +329,7 @@ class WxTemplateMsg(object):
         }
         return self.send_msg(msg_id, content_data)
 
-    def bind_query_success_msg(self, username, name, mobile, email):
+    def bind_query_success_msg(self, username, name, mobile, email, description):
         msg_id = 'yU15jLNSULagJTff01X67mDtDytBSs3iBpOBi8c7dvs'
         content_data = {
             "first": {
@@ -353,7 +353,7 @@ class WxTemplateMsg(object):
                 "color": "#173177"
             },
             "remark": {
-                "value": "感谢您的关注",
+                "value": f"{description}感谢您的关注",
                 "color": "#173177"
             },
         }
@@ -506,7 +506,7 @@ class WxTemplateMsg(object):
         msg_id = 'Hnrk5iXRjbaCTVpSIyC5KC8cwFNDgplNUzPsnyDXRLo'
         content_data = {
             "first": {
-                "value": f'你好，“{self.wx_nick_name}“，操作失败了',
+                "value": f'你好，“{self.wx_nick_name}“，签名失败了',
                 "color": "#173177"
             },
             "keyword1": {

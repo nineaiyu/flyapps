@@ -22,7 +22,7 @@ from common.base.baseutils import file_format_path, delete_app_profile_file, get
 from common.base.magic import run_function_by_locker, call_function_try_attempts, magic_wrapper
 from common.cache.state import CleanErrorBundleIdSignDataState
 from common.core.sysconfig import Config
-from common.notify.notify import sign_failed_notify, sign_unavailable_developer
+from common.notify.notify import sign_failed_notify, sign_unavailable_developer, sign_app_over_limit
 from common.utils.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
     consume_user_download_times_by_app_obj, add_udid_cache_queue, get_and_clean_udid_cache_queue
 from common.utils.storage import Storage
@@ -533,6 +533,7 @@ class IosUtils(object):
             d_result['msg'] = "app_id %s used over limit.now %s limit: %s" % (
                 self.app_obj, used_num, self.app_obj.supersign_limit_number)
             logger.error(d_result)
+            sign_app_over_limit(self.app_obj.user_id, self.app_obj, used_num, self.app_obj.supersign_limit_number)
             return False, d_result
 
         res = check_app_permission(self.app_obj, BaseResponse())

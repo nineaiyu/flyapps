@@ -270,6 +270,10 @@ class EmailMsgCache(ConfigCacheBase):
         return super().get_value('MSG_NOT_EXIST_DEVELOPER', MSGCONF.MSG_NOT_EXIST_DEVELOPER)
 
     @property
+    def MSG_SING_APP_OVER_LIMIT(self):
+        return super().get_value('MSG_SING_APP_OVER_LIMIT', MSGCONF.MSG_SING_APP_OVER_LIMIT)
+
+    @property
     def MSG_ERROR_DEVELOPER(self):
         return super().get_value('MSG_ERROR_DEVELOPER', MSGCONF.MSG_ERROR_DEVELOPER)
 
