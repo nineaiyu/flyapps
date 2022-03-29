@@ -13,11 +13,11 @@ from concurrent.futures import ThreadPoolExecutor
 from django.template import loader
 
 from common.core.sysconfig import Config
+from common.notify.notify import check_developer_status_notify
 from fir_ser.settings import SUPER_SIGN_ROOT, SYNC_CACHE_TO_DATABASE
 from xsign.models import UserInfo, AppIOSDeveloperInfo, APPSuperSignUsedInfo
 from xsign.utils.modelutils import get_developer_devices
 from xsign.utils.supersignutils import IosUtils
-from xsign.utils.utils import send_ios_developer_active_status
 
 logger = logging.getLogger(__name__)
 
@@ -79,4 +79,5 @@ def auto_check_ios_developer_active():
                                               'developer_used_info': developer_used_info,
                                               'yesterday_used_number': yesterday_used_number,
                                           })
-        send_ios_developer_active_status(userinfo, content)
+        # send_ios_developer_active_status(userinfo, content)
+        check_developer_status_notify(userinfo, developer_obj_list, content)

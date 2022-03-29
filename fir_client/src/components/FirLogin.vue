@@ -75,27 +75,27 @@
         <div v-if="allow_ways.third && JSON.stringify(allow_ways.third).indexOf('true')!==-1" class="other-way">
           <hr>
           <el-popover
+              v-model="showuserlist"
               placement="top"
               title="该微信绑定了多个用户，请选择账户，并点击登录"
-              width="400"
               trigger="manual"
-              v-model="showuserlist">
+              width="400">
 
             <el-row style="margin-top: 20px">
-                <el-col v-for="userinfo in userinfo_list" :key="userinfo.uid" :span="8" style="margin-left: 40px">
-                  <div @click="weixinlogin(userinfo)">
-                    <el-card :body-style="{textAlign:'center',padding:'8px',width:'120px'}" shadow="hover" >
-                      <!--                    <el-image :src="userinfo.head_img"></el-image>-->
-                      <el-avatar :src="userinfo.head_img" :size="100"></el-avatar>
-                      <div style="margin: 5px 0 5px">
-                        <span>{{ userinfo.first_name }}</span>
-                      </div>
-                    </el-card>
-                  </div>
-                </el-col>
+              <el-col v-for="userinfo in userinfo_list" :key="userinfo.uid" :span="8" style="margin-left: 40px">
+                <div @click="weixinlogin(userinfo)">
+                  <el-card :body-style="{textAlign:'center',padding:'8px',width:'120px'}" shadow="hover">
+                    <!--                    <el-image :src="userinfo.head_img"></el-image>-->
+                    <el-avatar :size="100" :src="userinfo.head_img"></el-avatar>
+                    <div style="margin: 5px 0 5px">
+                      <span>{{ userinfo.first_name }}</span>
+                    </div>
+                  </el-card>
+                </div>
+              </el-col>
             </el-row>
 
-            <span class="info" slot="reference">或使用以下账户登录</span>
+            <span slot="reference" class="info">或使用以下账户登录</span>
           </el-popover>
 
           <el-popover
@@ -150,25 +150,25 @@ export default {
       wx_visible: false,
       loop_flag: false,
       unique_key: '',
-      userinfo_list:[],
-      unique_wid:'',
-      showuserlist:false
+      userinfo_list: [],
+      unique_wid: '',
+      showuserlist: false
     }
   },
   methods: {
-    weixinlogin(userinfo){
-      wxLoginFun(data=>{
-        if(data.code === 1000){
+    weixinlogin(userinfo) {
+      wxLoginFun(data => {
+        if (data.code === 1000) {
           this.set_cookie_and_token(data);
-        }else if(data.code ===1005) {
+        } else if (data.code === 1005) {
           this.$message.error(data.msg)
-        }else {
-          this.showuserlist=false
+        } else {
+          this.showuserlist = false
           this.$message.error(data.msg)
         }
-      },{
-        'methods':'PUT',
-        'data':{uid:userinfo.uid,token:userinfo.token,'wid':this.unique_wid}
+      }, {
+        'methods': 'PUT',
+        'data': {uid: userinfo.uid, token: userinfo.token, 'wid': this.unique_wid}
       })
     },
     set_cookie_and_token(data) {
@@ -207,12 +207,12 @@ export default {
           this.loop_flag = false;
         } else if (data.code === 1006) {
           return this.loop_get_wx_info(wx_login_ticket, c_count, unique_key)
-        } else if (data.code === 2000){
+        } else if (data.code === 2000) {
           this.wx_visible = false;
           this.loop_flag = false;
           this.userinfo_list = data.data;
           this.unique_wid = data.wid;
-          this.showuserlist=true
+          this.showuserlist = true
         }
       }, {
         "methods": "POST",

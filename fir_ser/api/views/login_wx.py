@@ -4,7 +4,8 @@ from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import UserInfo, ThirdWeChatUserInfo
+from api.models import UserInfo, ThirdWeChatUserInfo, WeChatInfo
+from api.utils.modelutils import get_wx_nickname
 from api.utils.response import BaseResponse
 from api.utils.serializer import UserInfoSerializer, UserInfoWeiXinSerializer
 from api.utils.utils import set_user_token
@@ -70,7 +71,7 @@ class WeChatLoginView(APIView):
                 user = UserInfo.objects.filter(uid=uid).first()
 
                 if user and user.is_active:
-                    wx_user_obj = ThirdWeChatUserInfo.objects.filter(openid=wid, enable_login=True,
+                    wx_user_obj = ThirdWeChatUserInfo.objects.filter(weixin__openid=wid, enable_login=True,
                                                                      user_id=user).first()
                     if wx_user_obj:
                         key, user_info = set_user_token(user, request)
@@ -79,7 +80,7 @@ class WeChatLoginView(APIView):
                         ret.userinfo = data
                         ret.token = key
                         ret.msg = "验证成功!"
-                        WxTemplateMsg(wid, wx_user_obj.nickname).login_success_msg(user.first_name)
+                        WxTemplateMsg(wid, get_wx_nickname(wid)).login_success_msg(user.first_name)
                     else:
                         ret.msg = "微信状态异常，请重新登录"
                         ret.code = 1006
@@ -153,23 +154,23 @@ class WeChatLoginCheckView(APIView):
                             return Response(ret.dict)
 
                     user = UserInfo.objects.filter(pk=wx_ticket_data['pk']).first()
-                    wx_obj = ThirdWeChatUserInfo.objects.filter(user_id=user, openid=to_user,
-                                                                enable_login=True).filter()
-                    if not wx_obj:
-                        ret.msg = "还未绑定用户，请通过手机或者邮箱登录账户之后进行绑定"
-                        ret.code = 1005
-                        return Response(ret.dict)
 
                     if user.is_active:
                         if to_user and w_type:
                             ret.data = {'uid': user.uid, 'to_user': to_user, 'w_type': w_type}
                         else:
-                            key, user_info = set_user_token(user, request)
-                            serializer = UserInfoSerializer(user_info)
-                            data = serializer.data
-                            ret.userinfo = data
-                            ret.token = key
-                        ret.msg = "验证成功!"
+                            wx_obj = ThirdWeChatUserInfo.objects.filter(user_id=user, weixin__openid=to_user,
+                                                                        enable_login=True).filter()
+                            if not wx_obj:
+                                ret.msg = "还未绑定用户，请通过手机或者邮箱登录账户之后进行绑定"
+                                ret.code = 1005
+                            else:
+                                key, user_info = set_user_token(user, request)
+                                serializer = UserInfoSerializer(user_info)
+                                data = serializer.data
+                                ret.userinfo = data
+                                ret.token = key
+                                ret.msg = "验证成功!"
                     else:
                         ret.msg = "用户被禁用"
                         ret.code = 1005
@@ -202,7 +203,7 @@ class WeChatWebLoginView(APIView):
                 # 'subscribe': wx_user_info.get('subscribe', 0),
             }
             logger.info(f'{wx_user_info}')
-            ThirdWeChatUserInfo.objects.filter(openid=wx_user_info.get('openid')).update(**wx_user_info)
+            WeChatInfo.objects.filter(openid=wx_user_info.get('openid')).update(**wx_user_info)
             return HttpResponse('<h2>更新成功</h2>')
         ret.data = wx_login_obj.make_auth_uri()
         return Response(ret.dict)

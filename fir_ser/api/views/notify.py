@@ -156,7 +156,7 @@ class NotifyReceiverView(APIView):
             }
             wx_obj = None
             if wxopenid:
-                wx_obj = ThirdWeChatUserInfo.objects.filter(user_id=request.user, openid=wxopenid).first()
+                wx_obj = ThirdWeChatUserInfo.objects.filter(user_id=request.user, weixin__openid=wxopenid).first()
                 if wx_obj:
                     data_info['weixin'] = wx_obj
             if email:

@@ -13,7 +13,7 @@ from django.db.models import Count
 from rest_framework.pagination import PageNumberPagination
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
-    AppBundleIdBlackList, NotifyReceiver, ThirdWeChatUserInfo
+    AppBundleIdBlackList, NotifyReceiver, WeChatInfo
 from common.base.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name
 
@@ -210,8 +210,9 @@ def get_notify_wx_queryset(user_obj, message_type):
                                                       notifyconfig__enable_weixin=True, weixin__isnull=False,
                                                       user_id=user_obj).values('weixin').distinct()
 
-    return ThirdWeChatUserInfo.objects.filter(subscribe=True, user_id=user_obj, enable_notify=True,
-                                              pk__in=notify_weixin_ids).all()
+    return WeChatInfo.objects.filter(subscribe=True, thirdwechatuserinfo__enable_notify=True,
+                                     thirdwechatuserinfo__user_id=user_obj,
+                                     thirdwechatuserinfo__pk__in=notify_weixin_ids).all().distinct()
 
 
 def get_notify_email_queryset(user_obj, message_type):
@@ -219,3 +220,11 @@ def get_notify_email_queryset(user_obj, message_type):
                                          notifyconfig__message_type=message_type,
                                          notifyconfig__enable_email=True, email__isnull=False,
                                          user_id=user_obj).values('email').distinct()
+
+
+def get_wx_nickname(openid):
+    nickname = ''
+    obj = WeChatInfo.objects.filter(openid=openid).first()
+    if obj:
+        nickname = obj.nickname
+    return nickname if nickname else '亲爱哒'

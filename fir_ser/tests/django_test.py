@@ -55,16 +55,53 @@ django.setup()
 #                                           order_obj.get_payment_type_display(),
 #                                           order_obj.pay_time.strftime("%Y/%m/%d %H:%M:%S"),
 #                                           order_obj.order_number, order_obj.description)
-from api.models import UserInfo, NotifyReceiver, NotifyConfig
+#
+# a = WeChatInfo.objects.filter(openid='11').values('nickname')
+# print(a)
+from xsign.utils.ctasks import auto_check_ios_developer_active
 
+auto_check_ios_developer_active()
 # from common.notify.wx import check_apple_developer_devices
 #
-user_obj = UserInfo.objects.filter(uid='47ed855a8e6411ec83f100163e1bfc45').first()
+# user_obj = UserInfo.objects.filter(uid='47ed855a8e6411ec83f100163e1bfc45').first()
+# wx_user_obj_queryset = ThirdWeChatUserInfo.objects.filter(enable_login=True).all()
+# print(wx_user_obj_queryset.values('user_id__id'))
+# wx_user_obj_queryset = ThirdWeChatUserInfo.objects.filter(openid='opTae6mrV-MY1UOLahIVXaCDJhUU').filter(
+#     Q(enable_login=True) | Q(enable_notify=True)).all()
+# for wx_obj in wx_user_obj_queryset:
+#     print(wx_obj.__dict__)
+# ThirdWeChatUserInfo.objects.filter().delete()
+# class AesBaseCrypt(object):
+#
+#     def __init__(self):
+#         print(self.__class__.__name__)
+#         self.cipher = AESCipher(self.__class__.__name__)
+#
+#     def get_encrypt_uid(self, raw):
+#         return self.cipher.encrypt(raw.encode('utf-8')).decode('utf-8')
+#
+#     def get_decrypt_uid(self, enc):
+#         return self.cipher.decrypt(enc)
+#
+#
+# class AppleDeveloperUid(AesBaseCrypt):
+#     pass
+# class aaaa():
+#     def __init__(self):
+#         self.a=11
+#
+# obj = aaaa()
+# def cc(obj):
+#     obj.a = 222
+#
+# cc(obj)
+# print(obj.a)
+# print(AppleDeveloperUid().cipher)
 # check_apple_developer_devices(user_obj)
-notify_config_obj = NotifyConfig.objects.create(user_id=user_obj, message_type=0,
-                                                config_name='下载次数不足3323',
-                                                enable_email=True, enable_weixin=True, description='次数不足')
-notify_config_obj.sender.set(NotifyReceiver.objects.filter(user_id=user_obj).all())
+# notify_config_obj = NotifyConfig.objects.create(user_id=user_obj, message_type=0,
+#                                                 config_name='下载次数不足3323',
+#                                                 enable_email=True, enable_weixin=True, description='次数不足')
+# notify_config_obj.sender.set(NotifyReceiver.objects.filter(user_id=user_obj).all())
 #
 # developer_obj = AppIOSDeveloperInfo.objects.filter(issuer_id='69a6de96-c16e-47e3-e053-5b8c7c11a4d1').first()
 #

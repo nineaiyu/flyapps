@@ -421,10 +421,24 @@ class UserCertificationSerializer(serializers.ModelSerializer):
         exclude = ["id", "user_id", "created_time"]
 
 
+class WeixinInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.WeChatInfo
+        exclude = ["id", "sex", "address"]
+
+
 class ThirdWxSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ThirdWeChatUserInfo
-        exclude = ["id", "sex", "address", "user_id"]
+        exclude = ["id", "user_id", "weixin"]
+
+    openid = serializers.CharField(source="weixin.openid", read_only=True)
+    nickname = serializers.CharField(source="weixin.nickname", read_only=True)
+    address = serializers.CharField(source="weixin.address", read_only=True)
+    subscribe_time = serializers.IntegerField(source="weixin.subscribe_time", read_only=True)
+    head_img_url = serializers.CharField(source="weixin.head_img_url", read_only=True)
+    subscribe = serializers.BooleanField(source="weixin.subscribe", read_only=True)
+    created_time = serializers.DateTimeField(source="weixin.created_time", read_only=True)
 
 
 class DomainNameSerializer(serializers.ModelSerializer):

@@ -106,6 +106,9 @@ class UserCertificationInfoView(APIView):
 
 class ThirdWxAccountFilter(filters.FilterSet):
     user_id = filters.NumberFilter(field_name="user_id__id")
+    openid = filters.CharFilter(field_name="weixin__openid")
+    nickname = filters.CharFilter(field_name="weixin__nickname")
+    subscribe = filters.BooleanFilter(field_name="weixin__subscribe")
 
     class Meta:
         model = ThirdWeChatUserInfo

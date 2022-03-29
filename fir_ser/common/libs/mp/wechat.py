@@ -345,33 +345,8 @@ class WxTemplateMsg(object):
 
     def bind_query_success_msg(self, username, name, mobile, email, description):
         msg_id = 'yU15jLNSULagJTff01X67mDtDytBSs3iBpOBi8c7dvs'
-        content_data = {
-            "first": {
-                "value": f"您的微信账户“{self.wx_nick_name}”绑定信息结果",
-                "color": "#173177"
-            },
-            "keyword1": {
-                "value": username,
-                "color": "#173177"
-            },
-            "keyword2": {
-                "value": name,
-                "color": "#173177"
-            },
-            "keyword3": {
-                "value": mobile,
-                "color": "#173177"
-            },
-            "keyword4": {
-                "value": email,
-                "color": "#173177"
-            },
-            "remark": {
-                "value": f"{description}感谢您的关注",
-                "color": "#173177"
-            },
-        }
-        return self.send_msg(msg_id, content_data)
+        title = f"您的微信账户“{self.wx_nick_name}”绑定信息结果"
+        return self.__operate_base_msg(msg_id, title, username, name, mobile, email, description)
 
     def query_bind_info_failed_msg(self, action_msg, failed_msg):
         now_time = get_format_time()
@@ -516,11 +491,46 @@ class WxTemplateMsg(object):
         }
         return self.send_msg(msg_id, content_data)
 
-    def operate_failed_msg(self, first_name, operate_context, failed_msg, operate_time, description):
-        msg_id = 'Hnrk5iXRjbaCTVpSIyC5KC8cwFNDgplNUzPsnyDXRLo'
+    def __operate_base_msg(self, msg_id, title, username, context, key1, key2, description):
         content_data = {
             "first": {
-                "value": f'你好，“{self.wx_nick_name}“，签名失败了',
+                "value": title,
+                "color": "#173177"
+            },
+            "keyword1": {
+                "value": username,
+                "color": "#173177"
+            },
+            "keyword2": {
+                "value": context,
+                "color": "#173177"
+            },
+            "keyword3": {
+                "value": key1,
+                "color": "#173177"
+            },
+            "keyword4": {
+                "value": key2,
+                "color": "#173177"
+            },
+            "remark": {
+                "value": f"{description}，感谢您的关注",
+                "color": "#173177"
+            },
+        }
+        return self.send_msg(msg_id, content_data)
+
+    def operate_failed_msg(self, first_name, operate_context, failed_msg, operate_time, description):
+        msg_id = 'Hnrk5iXRjbaCTVpSIyC5KC8cwFNDgplNUzPsnyDXRLo'
+        title = f'你好，“{self.wx_nick_name}“，签名失败了'
+        return self.__operate_base_msg(msg_id, title, first_name, operate_context, failed_msg, operate_time,
+                                       description)
+
+    def task_finished_msg(self, title, first_name, task_status, task_time, description):
+        msg_id = 'ILQYHzrHSleN4sSbKZTQVLWk_7_EwZZDcDJWlIvNwiQ'
+        content_data = {
+            "first": {
+                "value": title,
                 "color": "#173177"
             },
             "keyword1": {
@@ -528,15 +538,11 @@ class WxTemplateMsg(object):
                 "color": "#173177"
             },
             "keyword2": {
-                "value": operate_context,
+                "value": task_status,
                 "color": "#173177"
             },
             "keyword3": {
-                "value": failed_msg,
-                "color": "#173177"
-            },
-            "keyword4": {
-                "value": operate_time,
+                "value": task_time,
                 "color": "#173177"
             },
             "remark": {

@@ -6,7 +6,7 @@
 # data: 2022/3/26
 import logging
 
-from api.utils.modelutils import get_notify_wx_queryset
+from api.utils.modelutils import get_notify_wx_queryset, get_wx_nickname
 from common.base.baseutils import get_format_time
 from common.core.sysconfig import Config
 from common.libs.mp.wechat import WxTemplateMsg
@@ -29,7 +29,7 @@ def pay_success_notify(user_obj, order_obj):
         title = f'{title} 【赠送 {order_obj.actual_download_gift_times}】'
     msg = f"用户 {user_obj.first_name} 您好，{order_obj.description}。您购买了 {title}。感谢有你!"
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
-        res = WxTemplateMsg(wx_user_obj.openid, wx_user_obj.nickname).pay_success_msg(
+        res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).pay_success_msg(
             title,
             f'{str(order_obj.actual_amount / 100)} 元',
             order_obj.get_payment_type_display(),
@@ -52,7 +52,7 @@ def sign_failed_notify(user_obj, developer_obj, app_obj):
         user_obj.first_name, app_obj.name, now_time, developer_obj.issuer_id, developer_obj.description)
 
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
-        res = WxTemplateMsg(wx_user_obj.openid, wx_user_obj.nickname).operate_failed_msg(
+        res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).operate_failed_msg(
             user_obj.first_name, f'应用 {app_obj.name} 签名失败了',
             f'开发者{developer_obj.issuer_id} 状态 {developer_obj.get_status_dispaly()}', now_time,
             f'开发者备注：{developer_obj.description}，请登录后台查看具体信息')
@@ -61,7 +61,7 @@ def sign_failed_notify(user_obj, developer_obj, app_obj):
     notify_by_email(user_obj, message_type, msg)
 
 
-def sign_unavailable_developer(user_obj, app_obj):
+def sign_unavailable_developer_notify(user_obj, app_obj):
     """
     3, '应用签名失败'
     :return:
@@ -70,7 +70,7 @@ def sign_unavailable_developer(user_obj, app_obj):
     now_time = get_format_time().replace('_', ' ')
     msg = Config.MSG_NOT_EXIST_DEVELOPER % (user_obj.first_name, app_obj.name, now_time)
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
-        res = WxTemplateMsg(wx_user_obj.openid, wx_user_obj.nickname).operate_failed_msg(
+        res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).operate_failed_msg(
             user_obj.first_name, f'应用 {app_obj.name} 签名失败了',
             f'苹果开发者总设备量已经超限', now_time, '添加新的苹果开发者或者修改开发者设备数量')
         logger.info(f'user_obj {user_obj} weixin notify pay success result: {res}')
@@ -78,7 +78,7 @@ def sign_unavailable_developer(user_obj, app_obj):
     notify_by_email(user_obj, message_type, msg)
 
 
-def sign_app_over_limit(user_obj, app_obj, used_num, limit_number):
+def sign_app_over_limit_notify(user_obj, app_obj, used_num, limit_number):
     """
     0, '签名余额不足'
     :param limit_number:
@@ -91,8 +91,34 @@ def sign_app_over_limit(user_obj, app_obj, used_num, limit_number):
     now_time = get_format_time().replace('_', ' ')
     msg = Config.MSG_SING_APP_OVER_LIMIT % (user_obj.first_name, app_obj.name, now_time, used_num, limit_number)
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
-        res = WxTemplateMsg(wx_user_obj.openid, wx_user_obj.nickname).operate_failed_msg(
+        res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).operate_failed_msg(
             user_obj.first_name, f'应用 {app_obj.name} 签名失败了', f'超过该应用的签名限额 {limit_number}', now_time,
             f'该应用已经使用设备数 {used_num}，已超过您设置该应用的签名限额 {limit_number}，当前已经无法安装新设备，为了避免业务使用，您可以修改该应用签名限额')
         logger.info(f'user_obj {user_obj} sign devices not enough result: {res}')
     notify_by_email(user_obj, message_type, msg)
+
+
+def check_developer_status_notify(user_obj, developer_obj_list, content):
+    """
+    7, '系统提醒'
+
+    :return:
+    """
+    message_type = 7
+    now_time = get_format_time().replace('_', ' ')
+    status_msg = {}
+    for developer_obj in developer_obj_list:
+        status = developer_obj.get_status_display()
+        status_msg[status] = status_msg.get(status, 0) + 1
+
+    msg = []
+    for key, value in status_msg.items():
+        msg.append(f'{value}个{key}状态')
+    description = f'开发者状态 {",".join(msg)}。详细信息请查看邮件通知或者登录后台查看'
+    for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
+        nick_name = get_wx_nickname(wx_user_obj.openid)
+        title = f'你好，“{nick_name}“，苹果开发者状态检测结果'
+        res = WxTemplateMsg(wx_user_obj.openid, nick_name).task_finished_msg(title, '苹果开发者状态检测', '完成',
+                                                                             now_time, description)
+        logger.info(f'user_obj {user_obj} sign devices not enough result: {res}')
+    notify_by_email(user_obj, message_type, html=content)

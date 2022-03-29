@@ -7,7 +7,7 @@
 import datetime
 import logging
 
-from api.utils.modelutils import get_notify_wx_queryset
+from api.utils.modelutils import get_notify_wx_queryset, get_wx_nickname
 from common.base.magic import magic_wrapper, magic_notify
 from common.cache.storage import NotifyLoopCache
 from common.core.sysconfig import Config
@@ -28,7 +28,7 @@ def download_times_not_enough(user_obj, msg):
     """
     message_type = 1
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
-        res = WxTemplateMsg(wx_user_obj.openid, wx_user_obj.nickname).download_times_not_enough_msg(
+        res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).download_times_not_enough_msg(
             user_obj.first_name, user_obj.download_times, msg)
         logger.info(f'user_obj {user_obj} download times not enough result: {res}')
     notify_by_email(user_obj, message_type, msg)
@@ -43,7 +43,8 @@ def apple_developer_devices_not_enough(user_obj, device_count):
     message_type = 0
     msg = f"您当前账户超级签名可用设备仅剩 {device_count}，已超过您设置的阈值 {user_obj.notify_available_signs}，为了避免业务使用，望您尽快添加苹果开发者!"
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
-        res = WxTemplateMsg(wx_user_obj.openid, wx_user_obj.nickname).apple_developer_devices_not_enough_msg(
+        res = WxTemplateMsg(wx_user_obj.openid,
+                            get_wx_nickname(wx_user_obj.openid)).apple_developer_devices_not_enough_msg(
             user_obj.first_name, device_count, msg)
         logger.info(f'user_obj {user_obj} sign devices not enough result: {res}')
     notify_by_email(user_obj, message_type, msg)
@@ -70,9 +71,9 @@ def apple_developer_cert_expired(user_obj, developer_queryset):
         msg = f"用户 {user_obj.first_name} 您好，您苹果开发者 {issuer_id} ，证书 {cert_id} 即将到期，到期时间 {expired_time}，为了保证您开发者可用，请您尽快更新开发者证书，感谢您的关注 "
 
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
-        res = WxTemplateMsg(wx_user_obj.openid, wx_user_obj.nickname).cert_expired_msg(issuer_id,
-                                                                                       cert_id,
-                                                                                       expired_time)
+        res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).cert_expired_msg(issuer_id,
+                                                                                                      cert_id,
+                                                                                                      expired_time)
         logger.info(f'user_obj {user_obj} apple developer cert expired result: {res}')
 
     notify_by_email(user_obj, message_type, msg)

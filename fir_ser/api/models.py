@@ -70,26 +70,38 @@ class UserInfo(AbstractUser):
         super(UserInfo, self).save(*args, **kwargs)
 
 
-class ThirdWeChatUserInfo(models.Model):
-    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
-    openid = models.CharField(max_length=64, null=False, verbose_name="普通用户的标识，对当前公众号唯一")
+class WeChatInfo(models.Model):
+    openid = models.CharField(max_length=64, unique=True, verbose_name="普通用户的标识，对当前公众号唯一")
     nickname = models.CharField(max_length=64, verbose_name="昵称", blank=True)
     sex = models.SmallIntegerField(default=0, verbose_name="性别", help_text="值为1时是男性，值为2时是女性，值为0时是未知")
     subscribe_time = models.BigIntegerField(verbose_name="订阅时间")
     head_img_url = models.CharField(max_length=256, verbose_name="用户头像", blank=True, null=True)
     address = models.CharField(max_length=128, verbose_name="地址", blank=True, null=True)
     subscribe = models.BooleanField(verbose_name="是否订阅公众号", default=0)
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="授权时间")
+
+    class Meta:
+        verbose_name = '微信信息'
+        verbose_name_plural = "微信信息"
+
+    def __str__(self):
+        return f"{self.nickname}-{self.openid}"
+
+
+class ThirdWeChatUserInfo(models.Model):
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
+    weixin = models.ForeignKey(to=WeChatInfo, verbose_name="微信信息", on_delete=models.CASCADE)
     enable_login = models.BooleanField(verbose_name="是否允许登录", default=0)
     enable_notify = models.BooleanField(verbose_name="是否允许推送消息", default=0)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="授权时间")
 
     class Meta:
-        verbose_name = '微信相关信息'
-        verbose_name_plural = "微信相关信息"
-        unique_together = (('user_id', 'openid'),)
+        verbose_name = '微信登录通知相关信息'
+        verbose_name_plural = "微信登录通知相关信息"
+        unique_together = (('user_id', 'weixin'),)
 
     def __str__(self):
-        return f"{self.user_id}-{self.nickname}-{self.openid}"
+        return f"{self.user_id}-{self.weixin} enable_notify:{self.enable_notify} enable_login:{self.enable_login}"
 
 
 class Token(models.Model):
@@ -502,7 +514,7 @@ class NotifyConfig(models.Model):
     config_name = models.CharField(max_length=128, unique=True, verbose_name="通知名称")
     message_type_choices = (
         (0, '签名余额不足'), (1, '下载次数不足'), (2, '应用签名限额'), (3, '应用签名失败'),
-        (4, '充值到账提醒'), (5, '优惠活动通知'), (6, '证书到期消息'))
+        (4, '充值到账提醒'), (5, '优惠活动通知'), (6, '证书到期消息'), (7, '系统提醒'))
     message_type = models.SmallIntegerField(choices=message_type_choices, default=5, verbose_name="消息类型")
     sender = models.ManyToManyField(to=NotifyReceiver, verbose_name="通知接受者方式")
     enable_weixin = models.BooleanField(default=True, verbose_name="是否启用该配置项")
