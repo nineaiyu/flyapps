@@ -56,16 +56,24 @@ class AESCipher(object):
         return data
 
 
-class AppleDeveloperUid(object):
+class AesBaseCrypt(object):
 
     def __init__(self):
         self.cipher = AESCipher(self.__class__.__name__)
 
-    def get_encrypt_uid(self, raw):
-        return self.cipher.encrypt(raw.encode('utf-8')).decode('utf-8')
+    def get_encrypt_uid(self, key):
+        return self.cipher.encrypt(key.encode('utf-8')).decode('utf-8')
 
     def get_decrypt_uid(self, enc):
         return self.cipher.decrypt(enc)
+
+
+class AppleDeveloperUid(AesBaseCrypt):
+    ...
+
+
+class WeixinLoginUid(AesBaseCrypt):
+    ...
 
 
 def make_from_user_uuid(uid):

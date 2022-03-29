@@ -72,7 +72,7 @@ class UserInfo(AbstractUser):
 
 class ThirdWeChatUserInfo(models.Model):
     user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
-    openid = models.CharField(max_length=64, unique=True, verbose_name="普通用户的标识，对当前公众号唯一")
+    openid = models.CharField(max_length=64, null=False, verbose_name="普通用户的标识，对当前公众号唯一")
     nickname = models.CharField(max_length=64, verbose_name="昵称", blank=True)
     sex = models.SmallIntegerField(default=0, verbose_name="性别", help_text="值为1时是男性，值为2时是女性，值为0时是未知")
     subscribe_time = models.BigIntegerField(verbose_name="订阅时间")
@@ -82,6 +82,11 @@ class ThirdWeChatUserInfo(models.Model):
     enable_login = models.BooleanField(verbose_name="是否允许登录", default=0)
     enable_notify = models.BooleanField(verbose_name="是否允许推送消息", default=0)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="授权时间")
+
+    class Meta:
+        verbose_name = '微信相关信息'
+        verbose_name_plural = "微信相关信息"
+        unique_together = (('user_id', 'openid'),)
 
     def __str__(self):
         return f"{self.user_id}-{self.nickname}-{self.openid}"

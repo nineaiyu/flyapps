@@ -17,8 +17,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_best_proxy_ips(url='https://api.appstoreconnect.apple.com/agreement'):
-    active_proxy_ips = [proxy_info['proxy'] for proxy_info in Config.APPLE_DEVELOPER_API_PROXY_LIST if
-                        proxy_info.get('active')]
+    try:
+        active_proxy_ips = [proxy_info['proxy'] for proxy_info in Config.APPLE_DEVELOPER_API_PROXY_LIST if
+                            proxy_info.get('active')]
+    except Exception as e:
+        logger.error(f'get_best_proxy_ips failed Exception:{e}')
+        return
     access_ip_info = []
     if not active_proxy_ips:
         return
@@ -39,7 +43,7 @@ def get_best_proxy_ips(url='https://api.appstoreconnect.apple.com/agreement'):
     pools.shutdown()
     best_sorted_ips = sorted(access_ip_info, key=lambda x: x.get('time'))[:8]
     best_sorted_ips = [ip_proxy['ip'] for ip_proxy in best_sorted_ips]
-    IpProxyListCache().set_storage_cache(best_sorted_ips, 24 * 60 * 60)
+    IpProxyListCache().set_storage_cache(best_sorted_ips, 6 * 60 * 60)
     return best_sorted_ips
 
 
@@ -73,7 +77,7 @@ def get_proxy_ip_from_cache(change_ip=False):
     else:
         proxy_info = Config.APPLE_DEVELOPER_API_PROXY
     logger.info(f"make ip proxy cache {proxy_info}")
-    active_proxy_cache.set_storage_cache(proxy_info, 24 * 60 * 60)
+    active_proxy_cache.set_storage_cache(proxy_info, 60 * 60)
     return proxy_info
 
 

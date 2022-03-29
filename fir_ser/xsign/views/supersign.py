@@ -265,13 +265,16 @@ class DeveloperView(APIView):
             }
         try:
             logger.error(f"user {request.user} add new developer {data.get('issuer_id', '')} data {data_info}")
-            developer_obj = AppIOSDeveloperInfo.objects.create(user_id=request.user, **data_info)
+            developer_obj, created = AppIOSDeveloperInfo.objects.update_or_create(user_id=request.user,
+                                                                                  issuer_id=data_info.get('issuer_id'),
+                                                                                  defaults=data_info)
             IosUtils.create_developer_space(developer_obj, request.user)
             status, result = IosUtils.active_developer(developer_obj, False)
             if not status:
                 res.code = 1008
                 res.msg = result.get("return_info", "未知错误")
-                delete_developer_and_clean(developer_obj, request.user)
+                if created:
+                    delete_developer_and_clean(developer_obj, request.user)
                 return Response(res.dict)
             else:
                 IosUtils.get_device_from_developer(developer_obj)
@@ -279,7 +282,7 @@ class DeveloperView(APIView):
         except Exception as e:
             logger.error(f"user {request.user} create developer {data_info} failed Exception:{e}")
             res.code = 1005
-            res.msg = "添加失败"
+            res.msg = f"添加失败 {e}"
             return Response(res.dict)
 
         return self.get(request)

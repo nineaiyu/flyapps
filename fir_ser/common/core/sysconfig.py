@@ -199,8 +199,7 @@ class AuthConfCache(WechatConfCache):
 
     @property
     def NOTIFY(self):
-        # return super().get_value('NOTIFY', AUTHCONF.NOTIFY)
-        return AUTHCONF.NOTIFY
+        return super().get_value('NOTIFY', AUTHCONF.NOTIFY)
 
     @property
     def LOGIN(self):

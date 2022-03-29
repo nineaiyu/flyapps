@@ -292,7 +292,7 @@ FILE_UPLOAD_TMP_KEY = ".tmp"
 
 SYNC_CACHE_TO_DATABASE = {
     'download_times': 10,  # 下载次数同步时间
-    'best_proxy_ips_times': 60 * 60,  # 代理ip 自动获取时间
+    'best_proxy_ips_times': 6 * 60 * 60,  # 代理ip 自动获取时间
     'wx_get_access_token_times': 60 * 10,  # 微信access_token 自动获取时间
     'try_login_times': (10, 12 * 60 * 60),  # 当天登录失败次数，超过该失败次数，锁定24小时
     'auto_clean_tmp_file_times': 60 * 30,  # 定时清理上传失误生成的临时文件
@@ -471,13 +471,13 @@ CELERY_BEAT_SCHEDULE = {
     'download_times_notify_check_job': {
         'task': 'api.tasks.download_times_notify_check_job',
         # 'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
-        'schedule': crontab(hour=1, minute=10),
+        'schedule': crontab(hour='6,12,18', minute=10),
         'args': ()
     },
     'apple_developer_devices_check_job': {
         'task': 'api.tasks.apple_developer_devices_check_job',
         # 'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),
-        'schedule': crontab(hour=1, minute=20),
+        'schedule': crontab(hour='6,12,18', minute=20),
         'args': ()
     },
     'apple_developer_cert_notify_check_job': {
@@ -491,11 +491,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': SYNC_CACHE_TO_DATABASE.get("wx_get_access_token_times"),
         'args': (),
     },
-    'get_best_proxy_ips_job': {
-        'task': 'xsign.tasks.get_best_proxy_ips_job',
-        'schedule': SYNC_CACHE_TO_DATABASE.get("best_proxy_ips_times"),
-        'args': (),
-    },
+    # 'get_best_proxy_ips_job': {
+    #     'task': 'xsign.tasks.get_best_proxy_ips_job',
+    #     'schedule': SYNC_CACHE_TO_DATABASE.get("best_proxy_ips_times"),
+    #     'args': (),
+    # },
     'auto_check_ios_developer_active_job': {
         'task': 'xsign.tasks.auto_check_ios_developer_active_job',
         # 'schedule': SYNC_CACHE_TO_DATABASE.get("auto_check_ios_developer_active_times"),

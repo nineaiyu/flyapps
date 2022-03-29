@@ -19,6 +19,7 @@ from api.views.advert import UserAdInfoView
 from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView, AppsQrcodeShowView
 from api.views.domain import DomainCnameView, DomainInfoView
 from api.views.download import ShortDownloadView, InstallView, DownloadView
+from api.views.getip import GetRemoteIp
 from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, \
     UserApiTokenView, CertificationView, ChangeInfoView
 from api.views.login_wx import WeChatLoginView, WeChatLoginCheckView, WeChatBindView, WeChatWebLoginView
@@ -35,6 +36,7 @@ from api.views.uploads import AppAnalyseView, UploadView
 
 urlpatterns = [
     # path("",include(router.urls)),
+    re_path("^rip", GetRemoteIp.as_view()),
     re_path("^login", LoginView.as_view()),
     re_path("^auth$", AuthorizationView.as_view()),
     re_path("^authc$", ChangeAuthorizationView.as_view()),

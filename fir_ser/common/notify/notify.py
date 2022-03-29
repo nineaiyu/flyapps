@@ -68,7 +68,7 @@ def sign_unavailable_developer(user_obj, app_obj):
     """
     message_type = 3
     now_time = get_format_time().replace('_', ' ')
-    msg = Config.MSG_NOT_EXIST_DEVELOPER % (user_obj.first_name, now_time, app_obj.name)
+    msg = Config.MSG_NOT_EXIST_DEVELOPER % (user_obj.first_name, app_obj.name, now_time)
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
         res = WxTemplateMsg(wx_user_obj.openid, wx_user_obj.nickname).operate_failed_msg(
             user_obj.first_name, f'应用 {app_obj.name} 签名失败了',

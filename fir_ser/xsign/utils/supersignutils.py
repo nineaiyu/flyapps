@@ -617,7 +617,7 @@ class IosUtils(object):
                 return status, device_obj
 
             if device_obj and device_obj.status not in ['ENABLED', 'DISABLED']:
-                if not IosUtils.check_device_status(developer_obj)[0]:
+                if not IosUtils.check_device_status(developer_obj, org_device_obj=device_obj)[0]:
                     return False, 'UNEXPECTED_ERROR'
 
             sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
@@ -683,7 +683,7 @@ class IosUtils(object):
 
     @staticmethod
     @call_function_try_attempts(try_attempts=2)
-    def check_device_status(developer_obj, device_obj_list=None):
+    def check_device_status(developer_obj, device_obj_list=None, org_device_obj=None):
         status = True
         if device_obj_list is None:
             status, device_obj_list = get_api_obj(developer_obj).get_device()
@@ -693,6 +693,9 @@ class IosUtils(object):
                     developer_obj.status = 5
                     developer_obj.save(update_fields=['status'])
                     return False, f'issuer_id:{developer_obj.issuer_id} device status unexpected. device_obj:{device_obj}'
+                else:
+                    if org_device_obj and org_device_obj.id == device_obj.id:
+                        org_device_obj.status = True if device_obj.status == 'ENABLED' else False
         return True, ''
 
     @staticmethod
@@ -1187,7 +1190,10 @@ class IosUtils(object):
             udid_result_list = [device.udid for device in result]
 
         udid_same = set(udid_result_list) & set(udid_developer_list)
-        same_p = (len(udid_same) / len(udid_result_list) + len(udid_same) / len(udid_developer_list)) / 2
+        if len(udid_result_list) > 0 and len(udid_developer_list) > 0:
+            same_p = (len(udid_same) / len(udid_result_list) + len(udid_same) / len(udid_developer_list)) / 2
+        else:
+            same_p = 0
         # 获取设备列表的时候，有时候会发生灵异事件，尝试多次获取 【也可能是未知bug导致】【已经存在，获取的数据并不是该用户数据】
         if status and ((isinstance(result, list) and len(result) == 0) or same_p < 0.8):
             time.sleep(2)

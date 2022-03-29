@@ -56,8 +56,8 @@ def get_wx_access_token_cache(c_count=1, ):
     return get_wx_access_token_cache(c_count + 1)
 
 
-def create_menu():
-    menu_json = {
+def create_menu(menu_json=None):
+    default_menu_json = {
         "button": [
             {
                 "type": "click",
@@ -79,14 +79,19 @@ def create_menu():
                     },
                     {
                         "type": "click",
-                        "name": "查询登录绑定",
+                        "name": "查询当前绑定",
                         "key": "query_bind"
                     },
                     {
                         "type": "click",
-                        "name": "解除登录绑定",
-                        "key": "unbind"
+                        "name": "解除所有绑定",
+                        "key": "unbind_all"
                     },
+                    {
+                        "type": "click",
+                        "name": "账户解绑管理",
+                        "key": "unbind"
+                    }
                 ]
             },
             {
@@ -96,6 +101,17 @@ def create_menu():
             }
         ]
     }
+    if menu_json is None:
+        menu_json = default_menu_json
+    try:
+        if isinstance(menu_json, str):
+            menu_json = json.loads(menu_json)
+        if not isinstance(menu_json, dict):
+            logger.error(f"menu json check failed menu_json:{menu_json}")
+            return
+    except Exception as e:
+        logger.error(f"menu json check failed menu_json:{menu_json} Exception:{e}")
+        return
     p_url = f"https://api.weixin.qq.com/cgi-bin/menu/create?access_token={get_wx_access_token_cache()}"
     req = requests.post(url=p_url, data=json.dumps(menu_json, ensure_ascii=False).encode('utf-8'))
     print(req.json())
@@ -202,8 +218,6 @@ class WxTemplateMsg(object):
         登录系统：OA系统
         登录时间：2014-11-28 10:06:32
         如有疑问，请致电IT服务台400-888-8888 或 关注公众号在线反馈
-        :param to_user:
-        :param wx_nick_name:    微信昵称
         :param username:  flyapps 用户昵称
         :return:
         """
@@ -302,7 +316,7 @@ class WxTemplateMsg(object):
         }
         return self.send_msg(msg_id, content_data)
 
-    def unbind_success_msg(self, username):
+    def unbind_success_msg(self, username, context, description):
         now_time = get_format_time()
         msg_id = 'RabYMg8-jPGhonk957asbW17iLHSLp8BfEXnyesRZ60'
         content_data = {
@@ -319,11 +333,11 @@ class WxTemplateMsg(object):
                 "color": "#173177"
             },
             "keyword3": {
-                "value": "解除绑定成功，您将无法使用微信扫描登录平台",
+                "value": context,
                 "color": "#173177"
             },
             "remark": {
-                "value": "如需重新绑定，请登陆平台，在个人资料进行绑定。感谢您的关注",
+                "value": description,
                 "color": "#173177"
             },
         }

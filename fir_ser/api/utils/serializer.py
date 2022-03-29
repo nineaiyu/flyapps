@@ -6,7 +6,7 @@ from rest_framework import serializers
 from api import models
 from api.utils.apputils import bytes2human
 from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_app_download_uri
-from common.base.baseutils import get_choices_dict
+from common.base.baseutils import get_choices_dict, WeixinLoginUid
 from common.cache.storage import AdPicShowCache
 from common.utils.caches import get_user_free_download_times, get_user_cert_auth_status
 from common.utils.storage import Storage
@@ -92,6 +92,22 @@ class UserInfoSerializer(serializers.ModelSerializer):
     def get_qrcode_domain_name(self, obj):
         if obj.role and obj.role > 1:
             return get_user_domain_name(obj, 0)
+
+
+class UserInfoWeiXinSerializer(UserInfoSerializer):
+    class Meta:
+        model = models.UserInfo
+        fields = ["uid", "first_name", 'head_img', 'storage_active', 'token']
+
+    uid = serializers.SerializerMethodField()
+    token = serializers.SerializerMethodField()
+
+    def get_uid(self, obj):
+        return WeixinLoginUid().get_encrypt_uid(obj.uid)
+
+    def get_token(self, obj):
+        access_token = make_token(obj.uid, 600, key=self.context.get('ticket', 'weixin_login'), force_new=True)
+        return access_token
 
 
 class AppsSerializer(serializers.ModelSerializer):
