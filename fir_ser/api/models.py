@@ -493,7 +493,7 @@ class SystemConfig(models.Model):
 
 
 class NotifyReceiver(models.Model):
-    receiver_name = models.CharField(max_length=128, unique=True, verbose_name="姓名")
+    receiver_name = models.CharField(max_length=128, verbose_name="姓名")
     user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
     weixin = models.ForeignKey(to=ThirdWeChatUserInfo, verbose_name="微信ID", on_delete=models.CASCADE, null=True)
     email = models.EmailField(verbose_name='邮箱', max_length=255, blank=True, null=True)
@@ -503,7 +503,7 @@ class NotifyReceiver(models.Model):
     class Meta:
         verbose_name = '信息接收配置'
         verbose_name_plural = "信息接收配置"
-        unique_together = (('user_id', 'email',), ('user_id', 'weixin'))
+        unique_together = (('user_id', 'email',), ('user_id', 'weixin'), ('user_id', 'receiver_name'))
 
     def __str__(self):
         return "%s-%s-%s" % (self.user_id, self.receiver_name, self.description)
@@ -511,7 +511,7 @@ class NotifyReceiver(models.Model):
 
 class NotifyConfig(models.Model):
     user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
-    config_name = models.CharField(max_length=128, unique=True, verbose_name="通知名称")
+    config_name = models.CharField(max_length=128, verbose_name="通知名称")
     message_type_choices = (
         (0, '签名余额不足'), (1, '下载次数不足'), (2, '应用签名限额'), (3, '应用签名失败'),
         (4, '充值到账提醒'), (5, '优惠活动通知'), (6, '证书到期消息'), (7, '系统提醒'))
@@ -525,6 +525,7 @@ class NotifyConfig(models.Model):
     class Meta:
         verbose_name = '信息接收配置'
         verbose_name_plural = "信息接收配置"
+        unique_together = (('user_id', 'config_name',),)
 
     def __str__(self):
         return "%s-%s-%s" % (self.user_id, self.get_message_type_display(), self.sender)
