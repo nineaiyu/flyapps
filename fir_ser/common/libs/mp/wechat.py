@@ -6,6 +6,7 @@
 import json
 import logging
 import urllib
+from urllib.parse import quote
 from hashlib import sha1
 
 import requests
@@ -572,9 +573,12 @@ class WxWebLogin(object):
         :return:
         """
         # url = 'https://app.hehelucky.cn/api/v1/fir/server/wxweb'  # 该url是前端页面，用户微信跳转，后端页面也行
-        local_storage = LocalStorage(**Config.IOS_PMFILE_DOWNLOAD_DOMAIN)
-        url = f'{local_storage.get_base_url()}{reverse("mp.web.login")}'
-        encode_url = urllib.parse.quote(url, safe='/', encoding=None, errors=None)
+        redirect_domain = Config.WECHAT_WEB_LOGIN_REDIRECT_DOMAIN
+        if not redirect_domain:
+            local_storage = LocalStorage(**Config.IOS_PMFILE_DOWNLOAD_DOMAIN)
+            redirect_domain = local_storage.get_base_url()
+        url = f'{redirect_domain}{reverse("mp.web.login")}'
+        encode_url = quote(url, safe='/', encoding=None, errors=None)
         code_url = f'https://open.weixin.qq.com/connect/oauth2/authorize?appid={self.app_id}&redirect_uri={encode_url}&response_type=code&scope=snsapi_userinfo&state={state}#wechat_redirect '
         return code_url
 

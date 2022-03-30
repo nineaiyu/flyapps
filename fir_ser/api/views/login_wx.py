@@ -206,7 +206,7 @@ class WeChatWebLoginView(APIView):
             if info and isinstance(info, dict):
                 info.update({'w_type': 'web', 'to_user': wx_user_info.get('openid')})
                 set_wx_ticket_login_info_cache(state, info)
-            return redirect(Config.WEB_DOMAIN)
+            return redirect(Config.WECHAT_WEB_SUCCESS_REDIRECT_URI)
         return Response(ret.dict)
 
 

@@ -64,7 +64,7 @@ class ConfigCacheBase(object):
     def get_value_from_db(self, key):
         data = SystemConfigSerializer(SystemConfig.objects.filter(enable=True, key=key).first()).data
         if re.findall('{{.*%s.*}}' % data['key'], data['value']):
-            logger.warning(f"get same render key. so get default value")
+            logger.warning(f"get same render key:{key}. so get default value")
             data['key'] = ''
         return data
 
@@ -120,6 +120,14 @@ class ConfigCacheBase(object):
     @property
     def FILE_UPLOAD_DOMAIN(self):
         return self.get_value('FILE_UPLOAD_DOMAIN', self.API_DOMAIN)
+
+    @property
+    def WECHAT_WEB_SUCCESS_REDIRECT_URI(self):
+        return self.get_value('WECHAT_WEB_SUCCESS_REDIRECT_URI', self.WEB_DOMAIN)
+
+    @property
+    def WECHAT_WEB_LOGIN_REDIRECT_DOMAIN(self):
+        return self.get_value('WECHAT_WEB_LOGIN_REDIRECT_DOMAIN')
 
 
 class BaseConfCache(ConfigCacheBase):
