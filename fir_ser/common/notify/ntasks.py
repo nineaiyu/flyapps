@@ -99,13 +99,16 @@ def check_user_download_times(user_obj, days=None):
 def check_apple_developer_devices(user_obj, days=None):
     if days is None:
         days = [0, 3, 7]
-    developer_used_info = get_developer_devices(AppIOSDeveloperInfo.objects.filter(user_id=user_obj))
+    developer_queryset = AppIOSDeveloperInfo.objects.filter(user_id=user_obj)
+    if developer_queryset.count() == 0:
+        return
+    developer_used_info = get_developer_devices(developer_queryset)
     device_count = developer_used_info.get('can_sign_number', 0)
-    if user_obj.notify_available_signs == 0 or user_obj.notify_available_signs < device_count:
+    if user_obj.notify_available_signs == 0 or device_count > user_obj.notify_available_signs:
         return
     notify_rules = [
         {
-            'func': magic_wrapper(lambda obj: device_count < obj.notify_available_downloads, user_obj),
+            'func': magic_wrapper(lambda obj: device_count < obj.notify_available_signs, user_obj),
             'notify': days,
             'cache': NotifyLoopCache(user_obj.uid, 'sign_device_times'),
             'notify_func': [magic_wrapper(apple_developer_devices_not_enough, user_obj, device_count)]
@@ -124,7 +127,7 @@ def check_apple_developer_cert(user_obj, expire_day=7):
 
     notify_rules = [
         {
-            'func': magic_wrapper(lambda obj: obj.download_times < obj.notify_available_downloads, user_obj),
+            'func': magic_wrapper(lambda: True),
             'notify': [0, 3, 7],
             'cache': NotifyLoopCache(user_obj.uid, 'developer_cert'),
             'notify_func': [magic_wrapper(apple_developer_cert_expired, user_obj, developer_queryset)]

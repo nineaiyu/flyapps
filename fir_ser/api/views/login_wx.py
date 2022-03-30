@@ -1,6 +1,6 @@
 import logging
 
-from django.http import HttpResponse
+from django.shortcuts import redirect
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -17,7 +17,7 @@ from common.core.throttle import VisitRegister1Throttle, VisitRegister2Throttle
 from common.libs.mp.wechat import make_wx_login_qrcode, show_qrcode_url, WxWebLogin, WxTemplateMsg
 from common.utils.caches import set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache
 from common.utils.pending import get_pending_result
-from common.utils.token import verify_token
+from common.utils.token import verify_token, generate_alphanumeric_token_of_length
 
 logger = logging.getLogger(__name__)
 
@@ -185,11 +185,11 @@ class WeChatWebLoginView(APIView):
     throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
 
     def get(self, request):
-        logger.error(request.query_params)
         wx_login_obj = WxWebLogin()
         ret = BaseResponse()
         code = request.query_params.get('code')
         if code:
+            state = request.query_params.get('state', 'FLYAPPS')
             wx_login_obj.get_wx_token(code)
             wx_user_info = wx_login_obj.get_user_info()
             logger.info(f'{wx_user_info}')
@@ -197,13 +197,29 @@ class WeChatWebLoginView(APIView):
                 'openid': wx_user_info.get('openid'),
                 'nickname': wx_user_info.get('nickname'),
                 'sex': wx_user_info.get('sex'),
-                # 'subscribe_time': wx_user_info.get('subscribe_time', 0),
                 'head_img_url': wx_user_info.get('headimgurl', ''),
                 'address': f"{wx_user_info.get('country')}-{wx_user_info.get('province')}-{wx_user_info.get('city')}",
-                # 'subscribe': wx_user_info.get('subscribe', 0),
             }
             logger.info(f'{wx_user_info}')
             WeChatInfo.objects.filter(openid=wx_user_info.get('openid')).update(**wx_user_info)
-            return HttpResponse('<h2>更新成功</h2>')
-        ret.data = wx_login_obj.make_auth_uri()
+            info = WxLoginBindCache(state).get_storage_cache()
+            if info and isinstance(info, dict):
+                info.update({'w_type': 'web', 'to_user': wx_user_info.get('openid')})
+                set_wx_ticket_login_info_cache(state, info)
+            return redirect(Config.WEB_DOMAIN)
+        return Response(ret.dict)
+
+
+class WeChatWebSyncView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+    throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
+
+    def get(self, request):
+        logger.error(request.query_params)
+        wx_login_obj = WxWebLogin()
+        ret = BaseResponse()
+        ticket = generate_alphanumeric_token_of_length(32)
+        WxLoginBindCache(ticket).set_storage_cache({'ip_addr': get_real_ip_address(request), 'pk': request.user.pk})
+        ret.data = wx_login_obj.make_auth_uri(ticket)
+        ret.ticket = ticket
         return Response(ret.dict)

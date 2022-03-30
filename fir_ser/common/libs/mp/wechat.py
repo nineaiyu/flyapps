@@ -566,7 +566,7 @@ class WxWebLogin(object):
         self.app_id = auth_info.get('app_id')
         self.app_secret = auth_info.get('app_secret')
 
-    def make_auth_uri(self):
+    def make_auth_uri(self, state):
         """
         第一步： 用户通过微信客户端打开该URI
         :return:
@@ -575,7 +575,7 @@ class WxWebLogin(object):
         local_storage = LocalStorage(**Config.IOS_PMFILE_DOWNLOAD_DOMAIN)
         url = f'{local_storage.get_base_url()}{reverse("mp.web.login")}'
         encode_url = urllib.parse.quote(url, safe='/', encoding=None, errors=None)
-        code_url = f'https://open.weixin.qq.com/connect/oauth2/authorize?appid={self.app_id}&redirect_uri={encode_url}&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect'
+        code_url = f'https://open.weixin.qq.com/connect/oauth2/authorize?appid={self.app_id}&redirect_uri={encode_url}&response_type=code&scope=snsapi_userinfo&state={state}#wechat_redirect '
         return code_url
 
     def get_wx_token(self, code):

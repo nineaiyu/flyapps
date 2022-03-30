@@ -263,7 +263,7 @@ export function wxBindFun(callBack, params, load = true) {
 export function wxWebScanFun(callBack, params, load = true) {
     getData(
         params.methods,
-        USERSEVER + '/mp.web.login',
+        USERSEVER + '/mp.web.sync',
         params.data,
         data => {
             callBack(data);

@@ -344,11 +344,49 @@ export default {
       unique_key: ''
     }
   }, methods: {
+
+    loop_get_wx_web_info(wx_login_ticket, c_count = 1, unique_key = getRandomStr()) {
+      if (wx_login_ticket && wx_login_ticket.length < 3) {
+        this.$message.error("获取登陆码失败，请稍后再试");
+        return
+      }
+      if (!this.show_web_visible) {
+        return;
+      }
+      wxLoginFun(data => {
+        c_count += 1;
+        if (c_count > 30) {
+          return;
+        }
+        if (data.code === 1000) {
+          if (this.userinfo.uid === data.data.uid) {
+            this.$message.success("更新成功");
+            this.show_web_visible = false;
+            this.get_wx_user_list();
+          }
+        } else if (data.code === 1006) {
+          return this.loop_get_wx_web_info(wx_login_ticket, c_count, unique_key)
+        } else {
+          this.$message({
+            message: data.msg,
+            type: 'error',
+            duration: 30000
+          });
+          this.show_web_visible = false;
+        }
+      }, {
+        "methods": "POST",
+        data: {"ticket": wx_login_ticket, "unique_key": unique_key}
+      })
+    },
+
+
     wx_web_login_fun() {
       wxWebScanFun(data => {
         if (data.code === 1000) {
           this.show_web_visible = true;
           this.wx_web_login_url = data.data;
+          this.loop_get_wx_web_info(data.ticket)
         } else {
           this.$message.error("信息获取失败")
         }
