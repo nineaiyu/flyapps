@@ -54,9 +54,9 @@ def sign_failed_notify(user_obj, developer_obj, app_obj):
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
         res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).operate_failed_msg(
             user_obj.first_name, f'应用 {app_obj.name} 签名失败了',
-            f'开发者{developer_obj.issuer_id} 状态 {developer_obj.get_status_dispaly()}', now_time,
+            f'开发者{developer_obj.issuer_id} 状态 {developer_obj.get_status_display()}', now_time,
             f'开发者备注：{developer_obj.description}，请登录后台查看具体信息')
-        logger.info(f'user_obj {user_obj} weixin notify pay success result: {res}')
+        logger.info(f'user_obj {user_obj} sign_failed_notify result: {res}')
 
     notify_by_email(user_obj, message_type, msg)
 
@@ -73,7 +73,7 @@ def sign_unavailable_developer_notify(user_obj, app_obj):
         res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).operate_failed_msg(
             user_obj.first_name, f'应用 {app_obj.name} 签名失败了',
             f'苹果开发者总设备量已经超限', now_time, '添加新的苹果开发者或者修改开发者设备数量')
-        logger.info(f'user_obj {user_obj} weixin notify pay success result: {res}')
+        logger.info(f'user_obj {user_obj} sign_unavailable_developer result: {res}')
 
     notify_by_email(user_obj, message_type, msg)
 
