@@ -222,7 +222,7 @@ class ValidWxChatToken(APIView):
                                         description += " 微信登录 "
                                     if wx_user_obj.enable_notify:
                                         description += " 消息通知 "
-                                    description += "功能。"
+                                    description += "功能"
 
                                     WxTemplateMsg(to_user, get_wx_nickname(to_user)).bind_query_success_msg(
                                         user_obj.first_name,
