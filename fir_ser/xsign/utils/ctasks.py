@@ -42,14 +42,12 @@ def auto_check_ios_developer_active():
     def check_active_task(developer_obj):
         time.sleep(random.randint(1, 5))
         user_obj = developer_obj.user_id
-        err_issuer_id = error_issuer_id.get(user_obj.uid, [])
         if user_obj.supersign_active:
             status, result = IosUtils.active_developer(developer_obj, False)
             msg = f"auto_check_ios_developer_active  user:{user_obj}  ios.developer:{developer_obj}  status:{status}  result:{result}"
             if not status:
                 add_sign_message(user_obj, developer_obj, None, '开发者状态自动检测', result.get('return_info'), False)
-            err_issuer_id.append(developer_obj)
-            error_issuer_id[user_obj.uid] = list(set(err_issuer_id))
+            error_issuer_id[user_obj.uid].append(developer_obj)
 
             if status:
                 IosUtils.get_device_from_developer(developer_obj)
@@ -61,6 +59,9 @@ def auto_check_ios_developer_active():
                                                                 auto_check=True, user_id__is_active=True,
                                                                 user_id__supersign_active=True)
     pools = ThreadPoolExecutor(10)
+
+    for user_uid in ios_developer_queryset.values('user_id__uid').all().distinct():
+        error_issuer_id[user_uid.get('user_id__uid', 'default')] = []
 
     for ios_developer_obj in ios_developer_queryset:
         pools.submit(check_active_task, ios_developer_obj)
@@ -74,6 +75,7 @@ def auto_check_ios_developer_active():
         start_time = end_time - datetime.timedelta(days=1)
         yesterday_used_number = APPSuperSignUsedInfo.objects.filter(developerid__user_id=userinfo,
                                                                     created_time__range=[start_time, end_time]).count()
+        developer_obj_list = sorted(developer_obj_list, key=lambda obj: obj.status)
         content = loader.render_to_string('check_developer.html',
                                           {
                                               'username': userinfo.first_name,

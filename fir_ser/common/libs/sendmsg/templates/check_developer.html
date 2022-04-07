@@ -150,37 +150,39 @@
         <div>
             昨天消耗设备数：{{ yesterday_used_number }}
         </div>
-        <table class="table table-bordered table-striped">
-            <thead>
-            <tr>
-                <th>
-                    苹果开发者ID
-                </th>
-                <th>
-                    苹果开发者备注
-                </th>
-                <th>
-                    苹果开发者状态
-                </th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for developer_obj in developer_obj_list %}
-                <tr class="{% if developer_obj.status == 2 %}table-warning{% elif developer_obj.status == 1 %}table-success{% else %}table-danger{% endif %}">
-                    <td>
-                        {{ developer_obj.issuer_id }}
-                    </td>
-                    <td>
-                        {{ developer_obj.description }}
-                    </td>
-                    <td>
-                        {{ developer_obj.get_status_display }}
-                    </td>
-
+        <div style="margin-top: 10px">
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>
+                        苹果开发者ID
+                    </th>
+                    <th>
+                        苹果开发者备注
+                    </th>
+                    <th>
+                        苹果开发者状态
+                    </th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for developer_obj in developer_obj_list %}
+                    <tr class="{% if developer_obj.status == 2 %}table-warning{% elif developer_obj.status == 1 %}table-success{% else %}table-danger{% endif %}">
+                        <td>
+                            {{ developer_obj.issuer_id }}
+                        </td>
+                        <td>
+                            {{ developer_obj.description }}
+                        </td>
+                        <td>
+                            {{ developer_obj.get_status_display }}
+                        </td>
+
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 </body>
