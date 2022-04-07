@@ -15,8 +15,8 @@ from django.template import loader
 from common.core.sysconfig import Config
 from common.notify.notify import check_developer_status_notify
 from fir_ser.settings import SUPER_SIGN_ROOT, SYNC_CACHE_TO_DATABASE
-from xsign.models import UserInfo, AppIOSDeveloperInfo, APPSuperSignUsedInfo
-from xsign.utils.modelutils import get_developer_devices
+from xsign.models import UserInfo, AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppleSignMessage
+from xsign.utils.modelutils import get_developer_devices, add_sign_message
 from xsign.utils.supersignutils import IosUtils
 
 logger = logging.getLogger(__name__)
@@ -46,6 +46,8 @@ def auto_check_ios_developer_active():
         if user_obj.supersign_active:
             status, result = IosUtils.active_developer(developer_obj, False)
             msg = f"auto_check_ios_developer_active  user:{user_obj}  ios.developer:{developer_obj}  status:{status}  result:{result}"
+            if not status:
+                add_sign_message(user_obj, developer_obj, None, '开发者状态自动检测', result.get('return_info'), False)
             err_issuer_id.append(developer_obj)
             error_issuer_id[user_obj.uid] = list(set(err_issuer_id))
 
@@ -81,3 +83,8 @@ def auto_check_ios_developer_active():
                                           })
         # send_ios_developer_active_status(userinfo, content)
         check_developer_status_notify(userinfo, developer_obj_list, content)
+
+
+def auto_clean_sign_log(clean_day=30 * 6):
+    clean_time = datetime.datetime.now() - datetime.timedelta(days=clean_day)
+    return AppleSignMessage.objects.filter(operate_time__lt=clean_time).delete()

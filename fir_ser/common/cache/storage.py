@@ -94,8 +94,8 @@ class IpProxyListCache(RedisCacheBase):
 
 
 class IpProxyActiveCache(RedisCacheBase):
-    def __init__(self):
-        self.cache_key = CACHE_KEY_TEMPLATE.get("ip_proxy_store_active_key")
+    def __init__(self, issuer_id):
+        self.cache_key = f"{CACHE_KEY_TEMPLATE.get('ip_proxy_store_active_key')}_{issuer_id}"
         super().__init__(self.cache_key)
 
 

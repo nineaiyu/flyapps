@@ -933,6 +933,21 @@ export function developercert(callBack, params, load = true) {
     );
 }
 
+/**签名证书 */
+export function signoperatemessage(callBack, params, load = true) {
+    getData(
+        params.methods,
+        SIGNSEVER + '/message',
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 /**获取签名任务状态 */
 export function gettask(callBack, params, load = true) {
     getData(

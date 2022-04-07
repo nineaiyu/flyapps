@@ -714,7 +714,7 @@ def call_function_try_attempts(try_attempts=3, sleep_time=3):
                     if 'Cannot connect to proxy' in str(e) or 'Read timed out' in str(
                             e) or 'Max retries exceeded with' in str(e):
                         logger.error('access apple api failed . change proxy ip again')
-                        get_proxy_ip_from_cache(True)
+                        get_proxy_ip_from_cache(args[0].issuer_id, True)
                     logger.warning(
                         f'exec {func} failed. Failed:{e} {try_attempts} times in total. now {sleep_time} later try '
                         f'again...{i}')
@@ -751,7 +751,7 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         self.private_key_id = private_key_id
         self.p8_private_key = p8_private_key
         self.exp_seconds = exp_seconds
-        self.proxies = get_proxy_ip_from_cache()
+        self.proxies = get_proxy_ip_from_cache(issuer_id)
         self.timeout = Config.APPLE_DEVELOPER_API_TIMEOUT if Config.APPLE_DEVELOPER_API_TIMEOUT else 120
         self.__make_jwt_headers()
         DevicesAPI.__init__(self, self.BASE_URI, self.headers)

@@ -778,6 +778,10 @@
             clearable
             placeholder="输入开发者用户ID"
             style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+        <el-select v-if="status_choices" v-model="devicestatus" clearable placeholder="设备状态"
+                   style="width: 120px;margin-right: 30px" @change="handleCurrentChange(1)">
+          <el-option v-for="item in device_status_choices" :key="item.id" :label="item.name" :value="item.id"/>
+        </el-select>
         <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
@@ -837,15 +841,18 @@
               label="设备状态"
               width="110">
             <template slot-scope="scope">
-              <el-tooltip v-if="!scope.row.status" content="点击启用">
+              <el-tooltip v-if="scope.row.status === 'DISABLED'" content="点击启用">
                 <el-link :underline="false" type="info" @click="changeDevice(scope.row,1)">
                   <el-tag type="info">禁用</el-tag>
                 </el-link>
               </el-tooltip>
-              <el-tooltip v-else content="点击禁用，禁用会自动清理已经安装的数据">
+              <el-tooltip v-else-if="scope.row.status === 'ENABLED'" content="点击禁用，禁用会自动清理已经安装的数据">
                 <el-link :underline="false" @click="changeDevice(scope.row,0)">
                   <el-tag>启用</el-tag>
                 </el-link>
+              </el-tooltip>
+              <el-tooltip v-else :content="`当设备状态为 ${scope.row.device_status} 时，意味着该开发者不可用`">
+                <el-tag type="danger">{{ scope.row.device_status }}</el-tag>
               </el-tooltip>
             </template>
           </el-table-column>
@@ -1354,6 +1361,92 @@
         </el-table>
 
       </el-tab-pane>
+      <el-tab-pane label="操作日志" name="operatemsg">
+        <el-input
+            v-model="appidseach"
+            clearable
+            placeholder="输入开发者用户ID"
+            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+        <el-select v-if="status_choices" v-model="operatestatus" clearable placeholder="操作状态"
+                   style="width: 120px;margin-right: 30px" @change="handleCurrentChange(1)">
+          <el-option v-for="item in operate_status_choices" :key="item.id" :label="item.name" :value="item.id"/>
+        </el-select>
+        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
+          搜索
+        </el-button>
+        <el-table
+            v-loading="loading"
+            :data="operate_message_lists"
+            border
+            stripe
+            style="width: 100%">
+
+          <el-table-column
+              align="center"
+              label="操作标题"
+              prop="title"
+              width="120">
+          </el-table-column>
+          <el-table-column
+              :formatter="operateformatter"
+              align="center"
+              label="操作时间"
+              prop="operate_time"
+              width="100">
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="签名应用"
+              prop="app_info"
+              width="100">
+            <template slot-scope="scope">
+              <el-popover v-if="scope.row.app_info.bundle_id" placement="top" trigger="hover">
+                <p>应用名称: {{ scope.row.app_info.bundle_name }}</p>
+                <p>应用ID: {{ scope.row.app_info.bundle_id }}</p>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.app_info.bundle_name }}</span>
+                </div>
+              </el-popover>
+              <span v-else>/</span>
+
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="操作状态"
+              width="80">
+            <template slot-scope="scope">
+              <el-tag v-if="scope.row.operate_status === 1">成功</el-tag>
+              <el-tag v-else type="danger">失败</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="操作日志"
+              prop="message">
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="开发者ID"
+              prop="developer_id"
+              width="166">
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <p>开发者ID: {{ scope.row.developer_id }}</p>
+                <p>开发者备注: {{ scope.row.developer_description }}</p>
+                <p>开发者状态: {{ scope.row.developer_status }}</p>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.developer_id }}</span>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
+
+        </el-table>
+
+
+      </el-tab-pane>
+
       <div v-if="activeName!== 'adddeveloper'" style="margin-top: 20px">
         <el-pagination
             :current-page.sync="pagination.currentPage"
@@ -1380,10 +1473,12 @@ import {
   iosdeveloper,
   iosdevices,
   iosdevicesudid,
-  iosudevices
+  iosudevices,
+  signoperatemessage
 } from "@/restful";
 import {format_choices, getUserInfoFun, removeAaary} from "@/utils";
 import AppleDeveloperBindApp from "@/components/base/AppleDeveloperBindApp";
+import {format_time} from "@/utils/base/utils";
 
 export default {
   name: "FirSuperSignBase",
@@ -1399,6 +1494,7 @@ export default {
       bill_percent: 0,
       fileList: [],
       developer_udevices_lists: [],
+      operate_message_lists: [],
       app_developer_lists: [],
       app_devices_lists: [],
       app_bill_lists: [],
@@ -1411,6 +1507,9 @@ export default {
       udidsearch: "",
       Bundleidsearch: "",
       appidseach: "",
+      devicestatus: "",
+      operatestatus: "",
+      operate_status_choices: [],
       uidsearch: "",
       appnamesearch: "",
       timerangesearch: [],
@@ -1490,6 +1589,7 @@ export default {
       bind_appletoapp_sure: false,
       appletoapp_title: '',
       status_choices: [],
+      device_status_choices: [],
       read_only_mode: 'off',
       developer_status_choice: [],
       multipleSelection: [],
@@ -1989,7 +2089,11 @@ export default {
         data.appnamesearch = this.appnamesearch.replace(/^\s+|\s+$/g, "");
         this.iosdevicerankFun({"methods": "GET", "data": data})
       } else if (tabname === "iosudevices") {
+        data.devicestatus = this.devicestatus;
         this.iosudevicesFun("GET", data)
+      } else if (tabname === 'operatemsg') {
+        data.operate_status = this.operatestatus;
+        this.operateMessageFun({"methods": "GET", "data": data})
       }
 
     },
@@ -2000,21 +2104,15 @@ export default {
     },
     // eslint-disable-next-line no-unused-vars
     deviceformatter(row, column) {
-      let stime = row.created_time;
-      if (stime) {
-        stime = stime.split(".")[0].split("T");
-        return stime[0] + " " + stime[1]
-      } else
-        return '';
+      return format_time(row.created_time)
     },
     // eslint-disable-next-line no-unused-vars
     formatter(row, column) {
-      let stime = row.cert_expire_time;
-      if (stime) {
-        stime = stime.split(".")[0].split("T");
-        return stime[0] + " " + stime[1]
-      } else
-        return '';
+      return format_time(row.cert_expire_time)
+    },
+    // eslint-disable-next-line no-unused-vars
+    operateformatter(row, column) {
+      return format_time(row.operate_time)
     },
     iosdevicesFun(methods, data) {
       this.loading = true;
@@ -2063,7 +2161,21 @@ export default {
             }
           }
           if (params.methods === 'PUT') {
-            this.$message.success("操作成功");
+            if (data.data && data.data.length > 0) {
+              let html_msg = ''
+              for (let e_msg of data.data) {
+                html_msg += `${e_msg.msg} <br/>`
+              }
+              this.$message({
+                dangerouslyUseHTMLString: true,
+                message: html_msg,
+                duration: 60000,
+                type: 'warning',
+                showClose: true
+              });
+            } else {
+              this.$message.success("操作成功");
+            }
           }
           if (params.data.act === 'setstatus') {
             this.setdeveloperstatusVisible = false
@@ -2196,6 +2308,17 @@ export default {
         "methods": action, "data": data
       })
     },
+    operateMessageFun(params) {
+      signoperatemessage(data => {
+        if (data.code === 1000) {
+          this.operate_message_lists = data.data;
+          this.pagination.total = data.count;
+          this.operate_status_choices = data.status_choices
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, params)
+    },
     iosudevicesFun(action, data) {
       if (action !== 'GET') {
         this.loadingfun = this.$loading({
@@ -2212,6 +2335,7 @@ export default {
           if (action !== "PUT") {
             this.developer_udevices_lists = data.data;
             this.pagination.total = data.count;
+            this.device_status_choices = data.status_choices;
           } else {
             this.refreshactiveFun()
           }
@@ -2231,7 +2355,7 @@ export default {
     getUserInfoFun(this);
     if (this.$route.params.act) {
       let activeName = this.$route.params.act;
-      let activeName_list = ["iosdeveloper", "adddeveloper", "iosudevices", "useddevices", "devicesudid", "devicesbill", "transferbill", "devicesrank"];
+      let activeName_list = ["iosdeveloper", "adddeveloper", "iosudevices", "useddevices", "devicesudid", "devicesbill", "transferbill", "devicesrank", "operatemsg"];
       for (let index in activeName_list) {
         if (activeName_list[index] === activeName) {
           this.activeName = activeName;

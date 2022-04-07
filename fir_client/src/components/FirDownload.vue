@@ -353,7 +353,7 @@
 import QRCode from 'qrcodejs2'
 
 import {appReport, geetest, getAuthTokenFun, getdownloadurl, getShortAppinfo, gettask} from '@/restful/download'
-import {checkEmail, checkphone, getRandomStr} from "@/utils/base/utils";
+import {checkEmail, checkphone, format_time, getRandomStr} from "@/utils/base/utils";
 
 export default {
   name: "FirDownload",
@@ -923,10 +923,7 @@ export default {
       return ftype
     },
     formatTime: function (stime) {
-      if (stime) {
-        stime = stime.split(".")[0].split("T");
-        return stime[0] + " " + stime[1]
-      }
+      return format_time(stime)
     }
   }
 };

@@ -12,8 +12,9 @@ from django.core.cache import cache
 from common.cache.state import MigrateStorageState
 from fir_ser.celery import app
 from xsign.models import Apps, DeveloperAppID
-from xsign.utils.ctasks import auto_check_ios_developer_active
+from xsign.utils.ctasks import auto_check_ios_developer_active, auto_clean_sign_log
 from xsign.utils.iproxy import get_best_proxy_ips
+from xsign.utils.modelutils import add_sign_message
 from xsign.utils.supersignutils import IosUtils, resign_by_app_id_and_developer
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,12 @@ def run_sign_task(format_udid_info, short, client_ip):
 
     ios_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
     status, msg = ios_obj.sign_ipa(client_ip)
+    if ios_obj.developer_obj:
+        if not status:
+            add_sign_message(app_obj.user_id, ios_obj.developer_obj, app_obj, '签名失败了', msg, False)
+        else:
+            add_sign_message(app_obj.user_id, ios_obj.developer_obj, app_obj, '签名成功', msg, True)
+
     if not status:
         code = msg.get("code", -1)
         if code == 0:
@@ -84,3 +91,8 @@ def auto_check_ios_developer_active_job():
 @app.task
 def get_best_proxy_ips_job():
     get_best_proxy_ips()
+
+
+@app.task
+def auto_clean_sign_log_job():
+    auto_clean_sign_log()

@@ -250,7 +250,7 @@
 import {my_order, order_sync} from "@/restful";
 import {format_choices, getUserInfoFun} from '@/utils'
 import VueQr from 'vue-qr';
-import {getRandomStr} from "@/utils/base/utils";
+import {format_time, getRandomStr} from "@/utils/base/utils";
 
 export default {
   name: "FirUserOrders",
@@ -424,11 +424,7 @@ export default {
     },
 
     format_time(stime) {
-      if (stime) {
-        stime = stime.split(".")[0].split("T");
-        return stime[0] + " " + stime[1]
-      } else
-        return '';
+      return format_time(stime)
     },
     MyOrderFun(params) {
       this.loading = true;

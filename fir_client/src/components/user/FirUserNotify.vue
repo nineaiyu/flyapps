@@ -343,7 +343,7 @@
 <script>
 import {notifyConfigInfo, NotifyInfoFun, notifyReceiverInfo, wxBindFun, wxLoginFun} from "@/restful";
 import {geetest, getUserInfoFun} from "@/utils";
-import {checkEmail, checkphone, getRandomStr} from "@/utils/base/utils";
+import {checkEmail, checkphone, format_time, getRandomStr} from "@/utils/base/utils";
 
 export default {
   name: "FirUserNotify",
@@ -672,12 +672,7 @@ export default {
 
     // eslint-disable-next-line no-unused-vars
     formatter(row, column) {
-      let stime = row.create_time;
-      if (stime) {
-        stime = stime.split(".")[0].split("T");
-        return stime[0] + " " + stime[1]
-      } else
-        return '';
+      return format_time(row.create_time)
     },
     // eslint-disable-next-line no-unused-vars
     get_data_from_tabname(tabname, data = {}) {

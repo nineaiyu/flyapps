@@ -41,17 +41,21 @@ def get_best_proxy_ips(url='https://api.appstoreconnect.apple.com/agreement'):
     for proxy_ip in active_proxy_ips:
         pools.submit(task, proxy_ip)
     pools.shutdown()
-    best_sorted_ips = sorted(access_ip_info, key=lambda x: x.get('time'))[:8]
+
+    best_count = len(active_proxy_ips)
+    if len(active_proxy_ips) > 8:
+        best_count = int(best_count * 0.8)
+    best_sorted_ips = sorted(access_ip_info, key=lambda x: x.get('time'))[:best_count]
     best_sorted_ips = [ip_proxy['ip'] for ip_proxy in best_sorted_ips]
     IpProxyListCache().set_storage_cache(best_sorted_ips, 6 * 60 * 60)
     return best_sorted_ips
 
 
-def get_proxy_ip_from_cache(change_ip=False):
-    active_proxy_cache = IpProxyActiveCache()
+def get_proxy_ip_from_cache(issuer_id, change_ip=False):
+    active_proxy_cache = IpProxyActiveCache(issuer_id)
     active_ip_proxy = active_proxy_cache.get_storage_cache()
     if not change_ip and active_ip_proxy:
-        logger.info(f"get ip proxy cache {active_ip_proxy}")
+        logger.info(f"issuer_id:{issuer_id} get ip proxy cache {active_ip_proxy}")
         return active_ip_proxy
 
     list_proxy_cache = IpProxyListCache()
@@ -84,4 +88,4 @@ def get_proxy_ip_from_cache(change_ip=False):
 def clean_ip_proxy_infos():
     logger.info("clean ip proxy infos")
     IpProxyListCache().del_storage_cache()
-    IpProxyActiveCache().del_storage_cache()
+    IpProxyActiveCache('*').del_many()

@@ -133,7 +133,7 @@ class DeveloperDeviceSerializer(serializers.ModelSerializer):
     developer_id = serializers.CharField(source="developerid.issuer_id")
     developer_description = serializers.CharField(source="developerid.description")
     developer_status = serializers.CharField(source="developerid.get_status_display")
-
+    device_status = serializers.CharField(source="get_status_display")
     app_used_count = serializers.SerializerMethodField()
 
     def get_app_used_count(self, obj):
@@ -361,3 +361,19 @@ class AppSignSerializer(serializers.ModelSerializer):
 
     def get_developer_used_count(self, obj):
         return models.DeveloperAppID.objects.filter(app_id=obj).all().count()
+
+
+class AppleSignMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.AppleSignMessage
+        exclude = ["user_id", "id", "developerid", "app_id"]
+
+    developer_id = serializers.CharField(source="developerid.issuer_id")
+    developer_description = serializers.CharField(source="developerid.description")
+    developer_status = serializers.CharField(source="developerid.get_status_display")
+    app_info = serializers.SerializerMethodField()
+
+    def get_app_info(self, obj):
+        if obj.app_id:
+            return {'bundle_name': obj.app_id.name, 'bundle_id': obj.app_id.bundle_id}
+        return {}

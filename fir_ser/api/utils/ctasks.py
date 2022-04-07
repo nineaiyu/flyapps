@@ -48,7 +48,7 @@ def auto_clean_upload_tmp_file():
                 logger.info(f"auto_clean_upload_tmp_file upload_tem_file_key :{upload_tem_file_key}")
 
 
-def auto_clean_remote_client_log(clean_day=30):
+def auto_clean_remote_client_log(clean_day=30 * 6):
     clean_time = datetime.datetime.now() - datetime.timedelta(days=clean_day)
     return RemoteClientInfo.objects.filter(created_time__lt=clean_time).delete()
 

@@ -19,11 +19,13 @@ from xsign.views.appinfo import AppCanSignView, AppSignInfoView
 from xsign.views.download import XsignDownloadView
 from xsign.views.receiveudids import IosUDIDView, TaskView, ShowUdidView
 from xsign.views.supersign import DeveloperView, SuperSignUsedView, AppUDIDUsedView, SuperSignCertView, \
-    DeviceUsedBillView, DeveloperDeviceView, DeviceUsedRankInfoView, AppleDeveloperBindAppsView, DeviceTransferBillView
+    DeviceUsedBillView, DeveloperDeviceView, DeviceUsedRankInfoView, AppleDeveloperBindAppsView, DeviceTransferBillView, \
+    SignOperateMessageView
 
 urlpatterns = [
     re_path(r"^developer$", DeveloperView.as_view()),
     re_path(r"^devices$", SuperSignUsedView.as_view()),
+    re_path(r"^message$", SignOperateMessageView.as_view()),
     re_path(r"^udid$", AppUDIDUsedView.as_view()),
     re_path(r"^udevices$", DeveloperDeviceView.as_view()),
     re_path(r"^cert$", SuperSignCertView.as_view()),

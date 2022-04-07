@@ -321,6 +321,7 @@
 <script>
 import {cleanStorageData, getStorageinfo} from "@/restful";
 import {deepCopy, getUserInfoFun} from "@/utils";
+import {format_time} from "@/utils/base/utils";
 
 export default {
   name: "FirUserStorage",
@@ -534,12 +535,7 @@ export default {
     },
     // eslint-disable-next-line no-unused-vars
     formatter(row, column) {
-      let stime = row.updated_time;
-      if (stime) {
-        stime = stime.split(".")[0].split("T");
-        return stime[0] + " " + stime[1]
-      } else
-        return '';
+      return format_time(row.updated_time)
     },
     // eslint-disable-next-line no-unused-vars
     get_data_from_tabname(tabname, data = {}) {

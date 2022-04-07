@@ -6,6 +6,7 @@
 import datetime
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 from django.db.models import Count, Q, Sum
 from django.http.response import FileResponse
@@ -17,19 +18,20 @@ from api.utils.modelutils import PageNumber
 from api.utils.response import BaseResponse
 from common.base.baseutils import get_choices_dict, get_choices_name_from_key, AppleDeveloperUid, get_real_ip_address
 from common.cache.state import CleanSignDataState, MigrateStorageState
+from common.constants import SignStatus, AppleDeveloperStatus
 from common.core.auth import ExpiringTokenAuthentication, SuperSignPermission
 from common.core.sysconfig import Config
 from common.utils.download import get_app_download_url
 from xsign.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, \
     UDIDsyncDeveloper, AppleDeveloperToAppUse, DeveloperAppID, APPToDeveloper, DeveloperDevicesID, \
-    IosDeveloperBill
+    IosDeveloperBill, AppleSignMessage
 from xsign.tasks import run_resign_task_do, run_resign_task
 from xsign.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, check_uid_has_relevant, \
     get_developer_devices
 from xsign.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, \
     BillInfoSerializer, \
     DeveloperDeviceSerializer, AppleDeveloperToAppUseSerializer, AppleDeveloperToAppUseAppsSerializer, \
-    BillTransferSerializer
+    BillTransferSerializer, AppleSignMessageSerializer
 from xsign.utils.supersignutils import IosUtils
 
 logger = logging.getLogger(__name__)
@@ -92,25 +94,49 @@ class DeveloperView(APIView):
             developer_obj = AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id=issuer_id).first()
         else:
             act = data.get("act", '').strip()
+            pools = ThreadPoolExecutor(10)
+
             if act == "syncalldevice":
                 res = BaseResponse()
                 result_list = []
+
+                def run_task(developer_obj):
+                    status, result = IosUtils.get_device_from_developer(developer_obj)
+                    if not status:
+                        result_list.append({'issuer_id': developer_obj.issuer_id, 'msg': result.get("return_info")})
+
                 for developer_s_obj in AppIOSDeveloperInfo.objects.filter(user_id=request.user,
                                                                           status__in=Config.DEVELOPER_USE_STATUS).all():
-                    status, result = IosUtils.get_device_from_developer(developer_s_obj)
-                    if not status:
-                        result_list.append(result.get("err_info"))
+                    pools.submit(run_task, developer_s_obj)
+                pools.shutdown()
+
                 if len(result_list):
                     logger.warning(result_list)
+                res.data = result_list
                 return Response(res.dict)
             elif act == "checkauth":
                 issuer_ids = data.get("issuer_ids", [])
                 if issuer_ids:
+                    result_list = []
+
+                    def run_task(developer_obj):
+                        status, result = IosUtils.active_developer(developer_obj, False)
+                        if status:
+                            status, result = IosUtils.get_device_from_developer(developer_obj, True)
+                            if not status:
+                                result_list.append(
+                                    {'issuer_id': developer_obj.issuer_id, 'msg': result.get("return_info")})
+
+                        else:
+                            result_list.append({'issuer_id': developer_obj.issuer_id, 'msg': result.get("return_info")})
+
                     for developer_s_obj in AppIOSDeveloperInfo.objects.filter(user_id=request.user,
                                                                               issuer_id__in=issuer_ids).all():
-                        status, result = IosUtils.active_developer(developer_s_obj, False)
-                        if status:
-                            IosUtils.get_device_from_developer(developer_s_obj)
+                        pools.submit(run_task, developer_s_obj)
+                    pools.shutdown()
+                    if len(result_list):
+                        logger.warning(result_list)
+                    res.data = result_list
             elif act == "setstatus":
                 issuer_ids = data.get("issuer_ids", [])
                 status = data.get("status", None)
@@ -169,7 +195,7 @@ class DeveloperView(APIView):
                         if status:
                             if act == 'renewcert':
                                 AppUDID.objects.filter(udid__developerid=developer_obj).update(
-                                    sign_status=2)
+                                    sign_status=SignStatus.APP_REGISTRATION_COMPLETE)
 
                                 status, result = IosUtils.create_developer_cert(developer_obj, request.user)
                             # if status:
@@ -200,7 +226,7 @@ class DeveloperView(APIView):
                             res.msg = "数据清理中,请耐心等待"
                     return Response(res.dict)
                 elif act == 'disable':
-                    developer_obj.status = 0
+                    developer_obj.status = AppleDeveloperStatus.INACTIVATED
                     developer_obj.save(update_fields=['status'])
                     return Response(res.dict)
             else:
@@ -233,16 +259,16 @@ class DeveloperView(APIView):
                 p8key = data.get("p8key", developer_obj.p8key)
                 if private_key_id != "" and private_key_id != developer_obj.private_key_id:
                     developer_obj.private_key_id = private_key_id
-                    developer_obj.status = 0
+                    developer_obj.status = AppleDeveloperStatus.INACTIVATED
                     update_fields.append("private_key_id")
                 if p8key != "" and p8key != developer_obj.p8key:
                     developer_obj.p8key = p8key
-                    developer_obj.status = 0
+                    developer_obj.status = AppleDeveloperStatus.INACTIVATED
                     update_fields.append("p8key")
 
                 read_only_mode = data.get("read_only_mode", '')
-                if developer_obj.status == 1 and read_only_mode == 'on':
-                    developer_obj.status = 3
+                if developer_obj.status == AppleDeveloperStatus.ACTIVATED and read_only_mode == 'on':
+                    developer_obj.status = AppleDeveloperStatus.MAINTENANCE
                     update_fields.append("status")
 
                 try:
@@ -362,7 +388,8 @@ class SuperSignUsedView(APIView):
                 appudid_obj = AppUDID.objects.filter(app_id=app_obj, udid__udid=device_udid,
                                                      udid__developerid__issuer_id=developer_id).last()
                 need_download_profile = True
-                if appudid_obj.sign_status in [3, 4]:
+                if appudid_obj.sign_status in [SignStatus.PROFILE_DOWNLOAD_COMPLETE,
+                                               SignStatus.SIGNATURE_PACKAGE_COMPLETE]:
                     need_download_profile = False
                 c_task = run_resign_task_do.apply_async((app_obj.pk, app_to_dev_obj.developerid.pk,
                                                          developer_app_id_obj.aid, need_download_profile, False))
@@ -454,7 +481,10 @@ class DeveloperDeviceView(APIView):
 
         udid = request.query_params.get("udid", None)
         issuer_id = request.query_params.get("issuer_id", None)
+        device_status = request.query_params.get("devicestatus", None)
         super_sign_used_objs = UDIDsyncDeveloper.objects.filter(developerid__user_id=request.user, )
+        if device_status:
+            super_sign_used_objs = super_sign_used_objs.filter(status=device_status)
         if issuer_id:
             super_sign_used_objs = super_sign_used_objs.filter(developerid__issuer_id=issuer_id)
         if udid:
@@ -465,6 +495,8 @@ class DeveloperDeviceView(APIView):
                                                          view=self)
         app_serializer = DeveloperDeviceSerializer(app_page_serializer, many=True)
         res.data = app_serializer.data
+        res.status_choices = get_choices_dict(UDIDsyncDeveloper.status_choices)
+
         res.count = super_sign_used_objs.count()
         return Response(res.dict)
 
@@ -484,9 +516,10 @@ class DeveloperDeviceView(APIView):
                 app_udid_obj_list = AppUDID.objects.filter(udid__udid=udid, app_id__user_id=request.user,
                                                            udid__developerid=developer_obj).all()
                 for app_udid_obj in app_udid_obj_list:
-                    for app_id_info in DeveloperDevicesID.objects.filter(udid=app_udid_obj.udid,
-                                                                         developerid=developer_obj).values(
-                        'app_id').all().distinct():
+                    q_infos = DeveloperDevicesID.objects.filter(udid=app_udid_obj.udid,
+                                                                developerid=developer_obj).values(
+                        'app_id').all().distinct()
+                    for app_id_info in q_infos:
                         logger.error(f"user {request.user} delete devices {app_udid_obj}")
                         IosUtils.disable_udid(app_udid_obj, app_id_info.get('app_id'), True)
                         AppUDID.objects.filter(pk=app_udid_obj.pk).delete()
@@ -877,4 +910,32 @@ class AppleDeveloperBindAppsView(APIView):
 
             except Exception as e:
                 logger.error(f'update app developer used failed infos:{infos} Exception:{e}')
+        return Response(res.dict)
+
+
+class SignOperateMessageView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [SuperSignPermission, ]
+
+    def get(self, request):
+        res = BaseResponse()
+
+        issuer_id = request.query_params.get("issuer_id", None)
+        operate_status = request.query_params.get("operate_status", None)
+
+        sign_message_queryset = AppleSignMessage.objects.filter(user_id=request.user)
+        if issuer_id:
+            sign_message_queryset = sign_message_queryset.filter(developerid__issuer_id=issuer_id)
+        if operate_status:
+            sign_message_queryset = sign_message_queryset.filter(operate_status=operate_status)
+
+        page_obj = PageNumber()
+        page_serializer = page_obj.paginate_queryset(queryset=sign_message_queryset.order_by("-operate_time"),
+                                                     request=request,
+                                                     view=self)
+        message_serializer = AppleSignMessageSerializer(page_serializer, many=True, )
+        res.data = message_serializer.data
+        res.count = sign_message_queryset.count()
+        res.status_choices = get_choices_dict(AppleSignMessage.status_choices)
+
         return Response(res.dict)

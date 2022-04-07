@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 
 from api.models import Apps
 from common.cache.state import MigrateStorageState, CleanAppSignDataState
+from common.constants import SignStatus
 from common.core.auth import ExpiringTokenAuthentication
 from common.core.response import ApiResponse
 from common.core.sysconfig import Config
@@ -107,15 +108,17 @@ class AppSignInfoView(APIView):
                 if app_obj.issupersign:
                     c_task = None
                     if do_sign_flag == 1:
-                        AppUDID.objects.filter(app_id=app_obj).update(sign_status=2)
+                        AppUDID.objects.filter(app_id=app_obj).update(sign_status=SignStatus.APP_REGISTRATION_COMPLETE)
                         if app_obj.change_auto_sign:
                             c_task = run_resign_task(app_obj.pk, True)
 
                     if do_sign_flag == 2:
-                        AppUDID.objects.filter(app_id=app_obj, sign_status__gte=3).update(sign_status=3)
+                        sign_status = SignStatus.PROFILE_DOWNLOAD_COMPLETE
+                        AppUDID.objects.filter(app_id=app_obj, sign_status__gte=sign_status).update(
+                            sign_status=sign_status)
                         if app_obj.change_auto_sign:
                             flag = False
-                            if AppUDID.objects.filter(app_id=app_obj, sign_status=2,
+                            if AppUDID.objects.filter(app_id=app_obj, sign_status=SignStatus.APP_REGISTRATION_COMPLETE,
                                                       udid__developerid__status__in=Config.DEVELOPER_WRITE_STATUS).first():
                                 flag = True
                             c_task = run_resign_task(app_obj.pk, flag)
@@ -123,7 +126,7 @@ class AppSignInfoView(APIView):
                     if do_sign_flag == 3:
                         if app_obj.change_auto_sign:
                             flag = False
-                            if AppUDID.objects.filter(app_id=app_obj, sign_status=2,
+                            if AppUDID.objects.filter(app_id=app_obj, sign_status=SignStatus.APP_REGISTRATION_COMPLETE,
                                                       udid__developerid__status__in=Config.DEVELOPER_WRITE_STATUS).first():
                                 flag = True
                             c_task = run_resign_task(app_obj.pk, flag, False)

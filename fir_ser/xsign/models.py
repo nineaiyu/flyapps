@@ -2,6 +2,7 @@ from django.db import models
 
 from api.models import Apps, UserInfo
 from common.base.daobase import AESCharField
+from common.constants import DeviceStatus, AppleDeveloperStatus, SignStatus
 
 
 class AppIOSDeveloperInfo(models.Model):
@@ -23,8 +24,16 @@ class AppIOSDeveloperInfo(models.Model):
     auth_type = models.SmallIntegerField(choices=auth_type_choices, default=0, verbose_name="认证类型")
 
     # 协议待同意和维护中：代表只读，不可创建和注册新设备号
-    status_choices = ((-1, '疑似被封'), (0, '未激活'), (1, '已激活'), (2, '协议待同意'), (3, '维护中'), (4, '证书过期'), (5, '状态异常'))
-    status = models.SmallIntegerField(choices=status_choices, verbose_name="账户状态", default=0)
+    status_choices = ((AppleDeveloperStatus.BAN, '疑似被封'), (AppleDeveloperStatus.INACTIVATED, '未激活'),
+                      (AppleDeveloperStatus.ACTIVATED, '已激活'),
+                      (AppleDeveloperStatus.AGREEMENT_NOT_AGREED, '协议待同意'),
+                      (AppleDeveloperStatus.MAINTENANCE, '维护中'),
+                      (AppleDeveloperStatus.CERTIFICATE_EXPIRED, '证书过期'),
+                      (AppleDeveloperStatus.CERTIFICATE_MISSING, '证书丢失'),
+                      (AppleDeveloperStatus.DEVICE_ABNORMAL, '设备异常'),
+                      (AppleDeveloperStatus.ABNORMAL_STATUS, '状态异常'))
+    status = models.SmallIntegerField(choices=status_choices, verbose_name="账户状态",
+                                      default=AppleDeveloperStatus.INACTIVATED)
 
     clean_status = models.BooleanField(verbose_name="清理是否同时禁用设备ID", default=False)
     auto_check = models.BooleanField(verbose_name="是否自动检测开发者状态", default=False)
@@ -60,8 +69,10 @@ class UDIDsyncDeveloper(models.Model):
     product = models.CharField(max_length=64, verbose_name="产品", blank=True, null=True, )
     serial = models.CharField(max_length=64, verbose_name="序列号", blank=True, null=True, )
     version = models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间"),
-    status = models.BooleanField(verbose_name="设备在开发者平台状态", default=False)
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")  # django.utils.timezone.now()
+    status_choices = ((DeviceStatus.DISABLED, '禁用'), (DeviceStatus.ENABLED, '启用'),
+                      (DeviceStatus.PROCESSING, '处理中'), (DeviceStatus.INELIGIBLE, '不合格'))
+    status = models.CharField(choices=status_choices, verbose_name="设备状态", default=DeviceStatus.DISABLED, max_length=16)
 
     class Meta:
         verbose_name = 'iOS开发平台同步设备信息'
@@ -69,7 +80,7 @@ class UDIDsyncDeveloper(models.Model):
         unique_together = ('udid', 'developerid',)
 
     def __str__(self):
-        return "%s-%s-%s" % (self.product, self.udid, self.developerid)
+        return "%s-%s-%s-%s" % (self.product, self.udid, self.developerid, self.status)
 
 
 class AppUDID(models.Model):
@@ -85,8 +96,14 @@ class AppUDID(models.Model):
     iccid = models.CharField(max_length=64, verbose_name="型号", blank=True, null=True, )
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-    sign_status_choices = ((0, '新设备入库准备'), (1, '设备ID已经注册'), (2, 'bundelid已经注册'), (3, '描述文件已经下载'), (4, '已经完成签名打包'))
-    sign_status = models.SmallIntegerField(choices=sign_status_choices, default=0, verbose_name="签名状态")
+
+    sign_status_choices = ((SignStatus.SIGNATURE_PREPARE, '新设备入库准备'),
+                           (SignStatus.DEVICE_REGISTRATION_COMPLETE, '设备ID已经注册'),
+                           (SignStatus.APP_REGISTRATION_COMPLETE, 'bundelid已经注册'),
+                           (SignStatus.PROFILE_DOWNLOAD_COMPLETE, '描述文件已经下载'),
+                           (SignStatus.SIGNATURE_PACKAGE_COMPLETE, '已经完成签名打包'))
+    sign_status = models.SmallIntegerField(choices=sign_status_choices, default=SignStatus.SIGNATURE_PREPARE,
+                                           verbose_name="签名状态")
 
     class Meta:
         verbose_name = '设备详情'
@@ -239,3 +256,30 @@ class AppleDeveloperToAppUse(models.Model):
 
     def __str__(self):
         return "%s-%s" % (self.app_id.name, self.developerid.issuer_id)
+
+
+class OperateMessageBase(models.Model):
+    """
+    操作详细记录，一般为失败的记录
+    """
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="操作用户", on_delete=models.CASCADE)
+    title = models.CharField(verbose_name="操作功能", max_length=256, default='', blank=True)
+    status_choices = ((0, '失败'), (1, '成功'))
+    operate_status = models.SmallIntegerField(choices=status_choices, default=0, verbose_name="状态")
+    message = models.TextField(verbose_name="操作详细日志", default='', blank=True)
+    operate_time = models.DateTimeField(auto_now_add=True, verbose_name="操作时间")
+
+    class Meta:
+        abstract = True
+
+
+class AppleSignMessage(OperateMessageBase):
+    app_id = models.ForeignKey(to=Apps, on_delete=models.CASCADE, null=True, blank=True)
+    developerid = models.ForeignKey(to=AppIOSDeveloperInfo, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = '应用签名操作记录'
+        verbose_name_plural = "应用签名操作记录"
+
+    def __str__(self):
+        return "%s-%s-%s" % (self.app_id.name, self.developerid.issuer_id, self.title)

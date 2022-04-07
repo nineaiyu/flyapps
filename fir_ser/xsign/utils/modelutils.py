@@ -11,9 +11,11 @@ from django.db.models import Count, Sum, Q
 
 from api.models import AppReleaseInfo, UserInfo
 from common.base.baseutils import is_valid_phone
+from common.constants import SignStatus
 from common.core.sysconfig import Config
 from xsign.models import APPSuperSignUsedInfo, UDIDsyncDeveloper, AppUDID, APPToDeveloper, AppIOSDeveloperInfo, \
-    IosDeveloperPublicPoolBill, IosDeveloperBill, DeveloperDevicesID, AppleDeveloperToAppUse, DeveloperAppID
+    IosDeveloperPublicPoolBill, IosDeveloperBill, DeveloperDevicesID, AppleDeveloperToAppUse, DeveloperAppID, \
+    AppleSignMessage
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +71,8 @@ def check_super_sign_permission(user_obj):
 
 
 def check_ipa_is_latest_sign(app_obj, developer_obj=None):
-    if AppUDID.objects.filter(app_id=app_obj, udid__developerid=developer_obj, sign_status__lt=4).first():
+    if AppUDID.objects.filter(app_id=app_obj, udid__developerid=developer_obj,
+                              sign_status__lt=SignStatus.SIGNATURE_PACKAGE_COMPLETE).first():
         return
     release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
     all_app_to_dev = APPToDeveloper.objects.filter(app_id=app_obj)
@@ -103,7 +106,7 @@ def update_or_create_developer_udid_info(device_obj, developer_obj):
         "product": device_obj.name,
         "udid": device_obj.udid,
         "version": device_obj.model,
-        "status": True if device_obj.status == 'ENABLED' else False
+        "status": device_obj.status
     }
     return UDIDsyncDeveloper.objects.update_or_create(developerid=developer_obj, udid=device_obj.udid, defaults=device)
 
@@ -197,3 +200,10 @@ def get_filename_form_file(filename):
             filename = f"{app_obj.name}-sign-{app_obj.short}{f_type}"
             check = True
     return check, filename
+
+
+def add_sign_message(user_obj, developer_obj, app_obj, title, message, is_success):
+    if app_obj:
+        title = f'应用【{app_obj.name}】 {title}'
+    AppleSignMessage.objects.create(user_id=user_obj, developerid=developer_obj, app_id=app_obj,
+                                    title=title, message=message, operate_status=is_success)

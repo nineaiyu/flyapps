@@ -63,3 +63,11 @@ export function geetestbase(func, self, uid, params, callback, errback, readybac
         "data": {user_id: uid}
     });
 }
+
+export function format_time(stime) {
+    if (stime) {
+        stime = stime.split(".")[0].split("T");
+        return stime[0] + " " + stime[1]
+    } else
+        return '';
+}

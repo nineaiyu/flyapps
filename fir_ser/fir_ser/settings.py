@@ -502,6 +502,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=1, minute=1),
         'args': ()
     },
+    'auto_clean_sign_log_job': {
+        'task': 'xsign.tasks.auto_clean_sign_log_job',
+        'schedule': crontab(hour=2, minute=2),
+        'args': ()
+    },
 }
 
 # listen port

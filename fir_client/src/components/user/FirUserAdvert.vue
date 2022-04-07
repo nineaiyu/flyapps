@@ -204,6 +204,7 @@
 import {advertinfo} from "@/restful";
 import {VueCropper} from 'vue-cropper'
 import {AvatarUploadUtils, dataURLtoFile, getUserInfoFun} from '@/utils'
+import {format_time} from "@/utils/base/utils";
 
 export default {
   name: "FirUserAdvert",
@@ -389,11 +390,7 @@ export default {
     },
 
     format_time(stime) {
-      if (stime) {
-        stime = stime.split(".")[0].split("T");
-        return stime[0] + " " + stime[1]
-      } else
-        return '';
+      return format_time(stime)
     },
   }, mounted() {
     getUserInfoFun(this);

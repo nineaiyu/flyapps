@@ -5,9 +5,8 @@
 # date: 2021/9/6
 import json
 import logging
-import urllib
-from urllib.parse import quote
 from hashlib import sha1
+from urllib.parse import quote
 
 import requests
 from django.urls import reverse

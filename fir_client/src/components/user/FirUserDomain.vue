@@ -248,13 +248,7 @@ export default {
       return this.format_time(row.created_time)
     },
 
-    format_time(stime) {
-      if (stime) {
-        stime = stime.split(".")[0].split("T");
-        return stime[0] + " " + stime[1]
-      } else
-        return '';
-    },
+
   }, mounted() {
     getUserInfoFun(this);
     this.get_data_from_tabname();

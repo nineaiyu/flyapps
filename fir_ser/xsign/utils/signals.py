@@ -8,6 +8,7 @@ from django.dispatch import receiver
 
 from api.models import AppReleaseInfo
 from api.utils.utils import migrating_storage_file_data, get_filename_from_apptype
+from common.constants import SignStatus
 from common.core.signals import run_resign_task_signal, delete_app_signal, xsign_app_download_url_signal, \
     xsign_migrate_data_signal, xsign_clean_data_signal, xsign_app_release_obj_signal
 from common.core.sysconfig import Config
@@ -28,7 +29,8 @@ logger = logging.getLogger(__name__)
 def run_resign_task_callback(sender, **kwargs):
     app_obj = kwargs.get('app_obj')
     if app_obj:
-        AppUDID.objects.filter(app_id=app_obj, sign_status__gte=3).update(sign_status=3)
+        sign_status = SignStatus.PROFILE_DOWNLOAD_COMPLETE
+        AppUDID.objects.filter(app_id=app_obj, sign_status__gte=sign_status).update(sign_status=sign_status)
         if app_obj.change_auto_sign:
             c_task = run_resign_task(app_obj.pk, False, False)
             logger.info(f"app {app_obj} run_resign_task end msg:{c_task}")
@@ -63,7 +65,8 @@ def xsign_app_download_url_callback(sender, **kwargs):
     app_pk = kwargs.get('app_pk')
 
     local_storage = LocalStorage(**Config.IOS_PMFILE_DOWNLOAD_DOMAIN)
-    appudid_obj = AppUDID.objects.filter(app_id_id=app_pk, udid__udid=udid, sign_status=4).last()
+    appudid_obj = AppUDID.objects.filter(app_id_id=app_pk, udid__udid=udid,
+                                         sign_status=SignStatus.SIGNATURE_PACKAGE_COMPLETE).last()
     if appudid_obj:
         super_sign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid__udid=udid,
                                                              app_id_id=app_pk,

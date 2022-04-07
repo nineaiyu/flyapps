@@ -17,10 +17,12 @@ from OpenSSL.crypto import (load_pkcs12, dump_certificate_request, dump_privatek
 
 from common.base.baseutils import get_format_time, format_apple_date, make_app_uuid
 from common.cache.state import CleanErrorBundleIdSignDataState
+from common.constants import AppleDeveloperStatus
 from common.core.sysconfig import Config
 from common.libs.apple.appleapiv3 import AppStoreConnectApi, Certificates, Devices, BundleIds, Profiles
 from fir_ser.settings import SUPER_SIGN_ROOT
 from xsign.models import AppIOSDeveloperInfo
+from xsign.utils.modelutils import add_sign_message
 
 logger = logging.getLogger(__name__)
 
@@ -225,30 +227,31 @@ def check_error_call_back(error, developer_pk):
         msg = "代理网络错误，请稍后重试或联系管理员处理"
     if 'it may be encrypted with an unsupported algorithm' in error:
         msg = "数据校验失败，请检查p8key内容是否正常"
-        status = 5
+        status = AppleDeveloperStatus.ABNORMAL_STATUS
     if 'Authentication credentials are missing or invalid' in error:
         msg = '认证失败，请检查开发者信息填写是否正确'
-        status = 5
+        status = AppleDeveloperStatus.ABNORMAL_STATUS
     if 'FORBIDDEN.REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED' in error:
         msg = '请登录 https://developer.apple.com/account/ 并同意最新协议'
-        status = 2
+        status = AppleDeveloperStatus.AGREEMENT_NOT_AGREED
     if status is not None:
         developer_obj = AppIOSDeveloperInfo.objects.filter(pk=developer_pk).first()
         if developer_obj:
-            if developer_obj.status == -1 and status == 5:
-                status = -1
+            if developer_obj.status == AppleDeveloperStatus.BAN and status == AppleDeveloperStatus.ABNORMAL_STATUS:
+                status = AppleDeveloperStatus.BAN
         AppIOSDeveloperInfo.objects.filter(pk=developer_pk).update(status=status)
     logger.error(f"{msg} {error}")
     return msg if msg else error
 
 
 class AppDeveloperApiV2(object):
-    def __init__(self, issuer_id, private_key_id, p8key, cert_id, developer_pk):
+    def __init__(self, issuer_id, private_key_id, p8key, cert_id, developer_pk, app_obj):
         self.issuer_id = issuer_id
         self.private_key_id = private_key_id
         self.p8key = p8key
         self.cert_id = cert_id
         self.developer_pk = developer_pk
+        self.app_obj = app_obj
 
     def __getattribute__(self, name):
         attr = object.__getattribute__(self, name)
@@ -307,7 +310,13 @@ class AppDeveloperApiV2(object):
                     with CleanErrorBundleIdSignDataState(failed_call_prefix) as state:
                         if state:
                             for func in callback.get('func_list', []):
-                                logger.info(f'issuer_id:{self.issuer_id} run callback func {func}')
+                                msg = f'issuer_id:{self.issuer_id} run callback func {func.__name__}.err_msg:{err_msg}'
+                                logger.warning(msg)
+                                developer_obj = AppIOSDeveloperInfo.objects.filter(pk=self.developer_pk).first()
+                                if developer_obj:
+                                    add_sign_message(developer_obj.user_id, developer_obj, self.app_obj,
+                                                     '操作失败，执行失败回调方法',
+                                                     msg, False)
                                 func()
                         else:
                             logger.warning(
