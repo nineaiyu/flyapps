@@ -506,11 +506,12 @@
                         ? scope.row.usable_number - scope.row.developer_used_number : 0
                   }}</p>
 
+                <el-tag @click="show_operate_info(scope.row.issuer_id)">
+                  查看最近的操作日志
+                </el-tag>
+
                 <div slot="reference" class="name-wrapper">
-                  <el-tag v-if="scope.row.issuer_id" size="medium"><i class="el-icon-key"/> {{
-                      scope.row.issuer_id
-                    }}
-                  </el-tag>
+                  <el-tag v-if="scope.row.issuer_id" size="medium"> {{ scope.row.issuer_id }}</el-tag>
                 </div>
               </el-popover>
             </template>
@@ -2048,6 +2049,11 @@ export default {
           message: '已取消删除'
         });
       });
+    },
+    show_operate_info(issuer_id) {
+      this.appidseach = issuer_id;
+      this.activeName = 'operatemsg'
+      this.get_data_from_tabname(this.activeName);
     },
     show_device_uinfo(bundle_id) {
       this.Bundleidsearch = bundle_id;
