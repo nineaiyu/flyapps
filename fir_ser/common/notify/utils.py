@@ -12,8 +12,8 @@ from common.utils.sendmsg import get_sender_email_token
 logger = logging.getLogger(__name__)
 
 
-def notify_by_email(user_obj, message_type, msg='', html=None):
+def notify_by_email(user_obj, message_type, html):
     for notify_email in get_notify_email_queryset(user_obj, message_type):
         email = notify_email.get('email')
         if email:
-            get_sender_email_token('email', email, 'msg', html if html else f'您好，{user_obj.first_name}，{msg}')
+            get_sender_email_token('email', email, 'msg', html)

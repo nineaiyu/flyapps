@@ -1,0 +1,37 @@
+<mjml>
+
+    <mj-body>
+        <mj-section background-color="#f0f0f0">
+            <mj-column>
+                <mj-text align="center"
+                         color="#626262"
+                         font-size="20px"
+                         font-style="italic">
+                    验证码通知
+                </mj-text>
+            </mj-column>
+        </mj-section>
+
+        <mj-wrapper border="1px dashed lightgrey" padding="20px 20px">
+            <mj-section>
+                <mj-column width="100%">
+                    <mj-text color="#525252">
+                        您的验证码：【{{ code }}】
+                    </mj-text>
+                    <mj-text color="#525252">
+                        操作时间：{{ now_time }}
+                    </mj-text>
+                    <mj-text color="#525252">
+                        备注：若非本人操作，请忽略
+                    </mj-text>
+
+                </mj-column>
+
+            </mj-section>
+
+        </mj-wrapper>
+
+        <mj-include path="./base/footer.mjml"/>
+
+    </mj-body>
+</mjml>

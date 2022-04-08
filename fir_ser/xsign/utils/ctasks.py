@@ -10,8 +10,6 @@ import random
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from django.template import loader
-
 from common.core.sysconfig import Config
 from common.notify.notify import check_developer_status_notify
 from fir_ser.settings import SUPER_SIGN_ROOT, SYNC_CACHE_TO_DATABASE
@@ -76,15 +74,7 @@ def auto_check_ios_developer_active():
         yesterday_used_number = APPSuperSignUsedInfo.objects.filter(developerid__user_id=userinfo,
                                                                     created_time__range=[start_time, end_time]).count()
         developer_obj_list = sorted(developer_obj_list, key=lambda obj: obj.status)
-        content = loader.render_to_string('check_developer.html',
-                                          {
-                                              'username': userinfo.first_name,
-                                              'developer_obj_list': developer_obj_list,
-                                              'developer_used_info': developer_used_info,
-                                              'yesterday_used_number': yesterday_used_number,
-                                          })
-        # send_ios_developer_active_status(userinfo, content)
-        check_developer_status_notify(userinfo, developer_obj_list, content)
+        check_developer_status_notify(userinfo, developer_obj_list, developer_used_info, yesterday_used_number)
 
 
 def auto_clean_sign_log(clean_day=30 * 6):

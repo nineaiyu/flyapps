@@ -12,6 +12,9 @@ from common.base.magic import magic_wrapper, magic_notify
 from common.cache.storage import NotifyLoopCache
 from common.core.sysconfig import Config
 from common.libs.mp.wechat import WxTemplateMsg
+from common.libs.sendmsg.template_content import get_user_download_times_not_enough_html_content, \
+    get_developer_devices_not_enough_html_content, get_developer_cert_expired_html_content, \
+    get_user_download_times_over_limit_html_content
 from common.notify.utils import notify_by_email
 from xsign.models import AppIOSDeveloperInfo
 from xsign.utils.modelutils import get_developer_devices
@@ -31,7 +34,7 @@ def download_times_not_enough(user_obj, msg):
         res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).download_times_not_enough_msg(
             user_obj.first_name, user_obj.download_times, msg)
         logger.info(f'user_obj {user_obj} download times not enough result: {res}')
-    notify_by_email(user_obj, message_type, msg)
+    notify_by_email(user_obj, message_type, get_user_download_times_not_enough_html_content(user_obj))
 
 
 def apple_developer_devices_not_enough(user_obj, device_count):
@@ -47,7 +50,7 @@ def apple_developer_devices_not_enough(user_obj, device_count):
                             get_wx_nickname(wx_user_obj.openid)).apple_developer_devices_not_enough_msg(
             user_obj.first_name, device_count, msg)
         logger.info(f'user_obj {user_obj} sign devices not enough result: {res}')
-    notify_by_email(user_obj, message_type, msg)
+    notify_by_email(user_obj, message_type, get_developer_devices_not_enough_html_content(user_obj, device_count))
 
 
 def apple_developer_cert_expired(user_obj, developer_queryset):
@@ -64,11 +67,9 @@ def apple_developer_cert_expired(user_obj, developer_queryset):
     if developer_count == 1:
         issuer_id = developer_obj.issuer_id
         cert_id = developer_obj.certid
-        msg = f"用户 {user_obj.first_name} 您好，您苹果开发者 {issuer_id} ，证书 {cert_id} 即将到期，到期时间 {expired_time}，为了保证您开发者可用，请您尽快更新开发者证书，感谢您的关注"
     else:
         issuer_id = f'{developer_obj.issuer_id} 等 {developer_count} 个开发者ID'
         cert_id = f'{developer_obj.certid} 等 {developer_count} 个证书ID'
-        msg = f"用户 {user_obj.first_name} 您好，您苹果开发者 {issuer_id} ，证书 {cert_id} 即将到期，到期时间 {expired_time}，为了保证您开发者可用，请您尽快更新开发者证书，感谢您的关注 "
 
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
         res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).cert_expired_msg(issuer_id,
@@ -76,7 +77,7 @@ def apple_developer_cert_expired(user_obj, developer_queryset):
                                                                                                       expired_time)
         logger.info(f'user_obj {user_obj} apple developer cert expired result: {res}')
 
-    notify_by_email(user_obj, message_type, msg)
+    notify_by_email(user_obj, message_type, get_developer_cert_expired_html_content(user_obj, developer_queryset))
 
 
 def check_user_download_times(user_obj, days=None):
@@ -84,7 +85,7 @@ def check_user_download_times(user_obj, days=None):
         days = [0, 3, 7]
     if user_obj.notify_available_downloads == 0 or user_obj.notify_available_downloads < user_obj.download_times:
         return
-    msg = f"您当前账户下载次数仅剩 {user_obj.download_times}，已超过您设置的阈值 {user_obj.notify_available_downloads}，为了避免业务使用，望您尽快充值!"
+    msg = get_user_download_times_over_limit_html_content(user_obj)
     notify_rules = [
         {
             'func': magic_wrapper(lambda obj: obj.download_times < obj.notify_available_downloads, user_obj),

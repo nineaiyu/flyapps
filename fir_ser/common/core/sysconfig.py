@@ -14,7 +14,7 @@ from rest_framework import serializers
 
 from api.models import SystemConfig
 from common.cache.storage import SystemConfigCache
-from config import BASECONF, API_DOMAIN, MOBILEPROVISION, WEB_DOMAIN, THIRDLOGINCONF, AUTHCONF, IPACONF, MSGCONF, \
+from config import BASECONF, API_DOMAIN, MOBILEPROVISION, WEB_DOMAIN, THIRDLOGINCONF, AUTHCONF, IPACONF, \
     DOWNLOADTIMESCONF, PAYCONF, STORAGEKEYCONF, SENDERCONF, APPLEDEVELOPERCONF
 
 logger = logging.getLogger(__name__)
@@ -268,27 +268,6 @@ class UserDownloadTimesCache(ConfigCacheBase):
         return super().get_value('AUTH_USER_GIVE_DOWNLOAD_TIMES', DOWNLOADTIMESCONF.AUTH_USER_GIVE_DOWNLOAD_TIMES)
 
 
-class EmailMsgCache(ConfigCacheBase):
-    def __init__(self):
-        super(EmailMsgCache, self).__init__()
-
-    @property
-    def MSG_NOT_EXIST_DEVELOPER(self):
-        return super().get_value('MSG_NOT_EXIST_DEVELOPER', MSGCONF.MSG_NOT_EXIST_DEVELOPER)
-
-    @property
-    def MSG_SING_APP_OVER_LIMIT(self):
-        return super().get_value('MSG_SING_APP_OVER_LIMIT', MSGCONF.MSG_SING_APP_OVER_LIMIT)
-
-    @property
-    def MSG_ERROR_DEVELOPER(self):
-        return super().get_value('MSG_ERROR_DEVELOPER', MSGCONF.MSG_ERROR_DEVELOPER)
-
-    @property
-    def MSG_AUTO_CHECK_DEVELOPER(self):
-        return super().get_value('MSG_AUTO_CHECK_DEVELOPER', MSGCONF.MSG_AUTO_CHECK_DEVELOPER)
-
-
 class PayConfCache(ConfigCacheBase):
     def __init__(self):
         super(PayConfCache, self).__init__()
@@ -356,8 +335,8 @@ class AppleDeveloperConfCache(ConfigCacheBase):
         return super().get_value('DEVELOPER_UID_KEY', APPLEDEVELOPERCONF.DEVELOPER_UID_KEY)
 
 
-class ConfigCache(BaseConfCache, IpaConfCache, AuthConfCache, EmailMsgCache, UserDownloadTimesCache, GeeTestConfCache,
-                  PayConfCache, ThirdPartConfCache, AppleDeveloperConfCache):
+class ConfigCache(BaseConfCache, IpaConfCache, AuthConfCache, UserDownloadTimesCache, GeeTestConfCache, PayConfCache,
+                  ThirdPartConfCache, AppleDeveloperConfCache):
     def __init__(self):
         super(ConfigCache, self).__init__()
 

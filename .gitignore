@@ -9,3 +9,6 @@ fir_client/yarn.lock
 fir_download/package-lock.json
 fir_client/src/assets/down_left.png
 fir_client/src/assets/down_right.png
+mailhtml/build/
+mailhtml/node_modules/
+mailhtml/.idea/

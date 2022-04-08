@@ -1,0 +1,8 @@
+
+<mj-section>
+    <mj-column width="100%" padding="10px 0 20px">
+        <mj-text font-style="italic" font-size="20px" font-family="Helvetica Neue" color="#626262">尊敬的用户{{
+            username }}，您好：
+        </mj-text>
+    </mj-column>
+</mj-section>

@@ -1,0 +1,56 @@
+<mjml>
+
+    <mj-body>
+        <mj-section background-color="#f0f0f0">
+            <mj-column>
+                <mj-text align="center"
+                         color="#626262"
+                         font-size="20px"
+                         font-style="italic">
+                    苹果开发者证书即将到期通知
+                </mj-text>
+            </mj-column>
+        </mj-section>
+        <mj-include path="./base/username.mjml"/>
+
+        <mj-wrapper border="1px dashed lightgrey" padding="20px 20px">
+            <mj-section>
+                <mj-column width="100%">
+                    <mj-text color="#525252">
+                        你以下苹果开发者账号证书即将到期
+                    </mj-text>
+
+                </mj-column>
+
+                <mj-column width="100%">
+
+                    <mj-table>
+                        <tr style="border:1px solid #c7ecb8;text-align:center;padding:15px 0;">
+                            <th style="border: 1px solid #c7ecb8;">苹果开发者ID</th>
+                            <th style="border: 1px solid #c7ecb8;">苹果开发者备注</th>
+                            <th style="border: 1px solid #c7ecb8;">证书到期时间</th>
+                        </tr>
+
+                        {% for developer_obj in developer_obj_list %}
+
+                        <tr style="border:1px solid #c7ecb8;text-align:center;">
+                            <td style="border: 1px solid #c7ecb8;">{{ developer_obj.issuer_id }}</td>
+                            <td style="border: 1px solid #c7ecb8;">{{ developer_obj.description }}</td>
+                            <td style="border: 1px solid #c7ecb8;">{{ developer_obj.cert_expire_time }}</td>
+                        </tr>
+                        {% endfor %}
+
+
+                    </mj-table>
+
+                </mj-column>
+
+
+            </mj-section>
+
+        </mj-wrapper>
+
+        <mj-include path="./base/footer.mjml"/>
+
+    </mj-body>
+</mjml>

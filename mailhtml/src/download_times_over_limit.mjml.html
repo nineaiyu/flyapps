@@ -1,0 +1,37 @@
+<mjml>
+
+    <mj-body>
+        <mj-section background-color="#f0f0f0">
+            <mj-column>
+                <mj-text align="center"
+                         color="#626262"
+                         font-size="20px"
+                         font-style="italic">
+                    账户下载余额超过阈值通知
+                </mj-text>
+            </mj-column>
+        </mj-section>
+        <mj-include path="./base/username.mjml"/>
+
+        <mj-wrapper border="1px dashed lightgrey" padding="20px 20px">
+            <mj-section>
+                <mj-column width="100%">
+                    <mj-text color="#525252">
+                        您当前账户下载次数仅剩 {{user_obj.download_times}}
+                    </mj-text>
+                    <mj-text color="#525252">
+                        已超过您设置的阈值 {{user_obj.notify_available_downloads}}
+                    </mj-text>
+                    <mj-text color="#525252">
+                        为了避免业务使用，望您尽快充值!
+                    </mj-text>
+
+                </mj-column>
+            </mj-section>
+
+        </mj-wrapper>
+
+        <mj-include path="./base/footer.mjml"/>
+
+    </mj-body>
+</mjml>

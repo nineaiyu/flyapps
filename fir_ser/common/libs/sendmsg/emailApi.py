@@ -7,6 +7,8 @@
 from django.conf import settings
 from django.core.mail import send_mail
 
+from common.base.magic import import_from_string
+
 
 class EmailMsgSender(object):
     def __init__(self, email_host, email_port, use_tls, use_ssl, subject, username, password, form, template_code):
@@ -33,7 +35,9 @@ class EmailMsgSender(object):
 
     def send_msg(self, template_code, email, code):
         try:
-            response = send_mail(self.subject % {'code': ''}, template_code % {'code': code}, self.form, [email], )
+            html_content_obj = import_from_string(template_code)
+            content = html_content_obj(code)
+            response = send_mail(self.subject % {'code': ''}, content, self.form, [email], html_message=content)
             if response == 1:
                 return True, 'OK'
             else:

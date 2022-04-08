@@ -1,0 +1,47 @@
+<mjml>
+
+    <mj-body>
+        <mj-section background-color="#f0f0f0">
+            <mj-column>
+                <mj-text align="center"
+                         color="#626262"
+                         font-size="20px"
+                         font-style="italic">
+                    充值到账通知
+                </mj-text>
+            </mj-column>
+        </mj-section>
+        <mj-include path="./base/username.mjml"/>
+
+        <mj-wrapper border="1px dashed lightgrey" padding="20px 20px">
+            <mj-section>
+                <mj-column width="100%">
+                    <mj-text color="#525252">
+                        您已经成功充值，订单信息如下
+                    </mj-text>
+                    <mj-text color="#525252">
+                        订单号：{{order_obj.order_number}}
+                    </mj-text>
+                    <mj-text color="#525252">
+                        支付时间：{{order_obj.pay_time}}
+                    </mj-text>
+                    <mj-text color="#525252">
+                        支付方式：{{order_obj.get_payment_type_display}}
+                    </mj-text>
+                    <mj-text color="#525252">
+                        订单信息：您充值了 {{order_obj.actual_download_times}} 下载次数，【赠送 {{order_obj.actual_download_gift_times}}】
+                    </mj-text>
+                    <mj-text color="#525252">
+                        备注：{{order_obj.description}}
+                    </mj-text>
+
+                </mj-column>
+
+            </mj-section>
+
+        </mj-wrapper>
+
+        <mj-include path="./base/footer.mjml"/>
+
+    </mj-body>
+</mjml>

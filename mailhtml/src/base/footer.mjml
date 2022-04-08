@@ -1,0 +1,7 @@
+<mj-section background-color="#f0f0f0">
+    <mj-column width="100%">
+        <mj-button font-family="Helvetica" background-color="#1f72ee" color="white" href="https://flyapps.cn">
+            FLY 应用分发平台
+        </mj-button>
+    </mj-column>
+</mj-section>

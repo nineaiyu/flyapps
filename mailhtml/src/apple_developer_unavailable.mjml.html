@@ -1,0 +1,38 @@
+<mjml>
+
+    <mj-body>
+        <mj-section background-color="#f0f0f0">
+            <mj-column>
+                <mj-text align="center"
+                         color="#626262"
+                         font-size="20px"
+                         font-style="italic">
+                    超级签名设备余额不足-签名失败通知
+                </mj-text>
+            </mj-column>
+        </mj-section>
+        <mj-include path="./base/username.mjml"/>
+
+        <mj-wrapper border="1px dashed lightgrey" padding="20px 20px">
+            <mj-section>
+                <mj-column width="100%">
+                    <mj-text color="#525252">
+                        应用【{{app_obj.name}}】签名失败了
+                    </mj-text>
+                    <mj-text color="#525252">
+                        签名时间：{{ now_time }}
+                    </mj-text>
+                    <mj-text color="#525252">
+                        失败原因：可用设备量已经不足或超限，请添加新的苹果开发者或修改开发者设备数量
+                    </mj-text>
+
+                </mj-column>
+
+            </mj-section>
+
+        </mj-wrapper>
+
+        <mj-include path="./base/footer.mjml"/>
+
+    </mj-body>
+</mjml>

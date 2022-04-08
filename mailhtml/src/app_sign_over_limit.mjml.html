@@ -1,0 +1,38 @@
+<mjml>
+
+    <mj-body>
+        <mj-section background-color="#f0f0f0">
+            <mj-column>
+                <mj-text align="center"
+                         color="#626262"
+                         font-size="20px"
+                         font-style="italic">
+                    应用限额-签名失败通知
+                </mj-text>
+            </mj-column>
+        </mj-section>
+        <mj-include path="./base/username.mjml"/>
+
+        <mj-wrapper border="1px dashed lightgrey" padding="20px 20px">
+            <mj-section>
+                <mj-column width="100%">
+                    <mj-text color="#525252">
+                        应用【{{app_obj.name}}】签名失败了
+                    </mj-text>
+                    <mj-text color="#525252">
+                        签名时间：{{ now_time }}
+                    </mj-text>
+                    <mj-text color="#525252">
+                        失败原因：该应用已经使用设备数 {{used_num}}，已超过您设置该应用的签名限额 {{limit_number}}，当前已经无法安装新设备，为了避免业务使用，您可以修改该应用签名限额
+                    </mj-text>
+
+                </mj-column>
+
+            </mj-section>
+
+        </mj-wrapper>
+
+        <mj-include path="./base/footer.mjml"/>
+
+    </mj-body>
+</mjml>

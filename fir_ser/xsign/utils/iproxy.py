@@ -9,6 +9,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 import requests
+from django.core.cache import cache
 
 from common.cache.storage import IpProxyListCache, IpProxyActiveCache
 from common.core.sysconfig import Config
@@ -61,7 +62,10 @@ def get_proxy_ip_from_cache(issuer_id, change_ip=False):
     list_proxy_cache = IpProxyListCache()
     ip_proxy_result = list_proxy_cache.get_storage_cache()
     if not ip_proxy_result:
-        ip_proxy_result = get_best_proxy_ips()
+        with cache.lock('get_best_proxy_ips_locker', timeout=360):
+            ip_proxy_result = list_proxy_cache.get_storage_cache()
+            if not ip_proxy_result:
+                ip_proxy_result = get_best_proxy_ips()
 
     if change_ip and ip_proxy_result:
         try:

@@ -1,0 +1,41 @@
+<mjml>
+
+    <mj-body>
+        <mj-section background-color="#f0f0f0">
+            <mj-column>
+                <mj-text align="center"
+                         color="#626262"
+                         font-size="20px"
+                         font-style="italic">
+                    应用【{{app_obj.name}}】签名失败通知
+                </mj-text>
+            </mj-column>
+        </mj-section>
+        <mj-include path="./base/username.mjml"/>
+
+        <mj-wrapper border="1px dashed lightgrey" padding="20px 20px">
+            <mj-section>
+                <mj-column width="100%">
+                    <mj-text color="#525252">
+                        应用【{{app_obj.name}}】签名失败了
+                    </mj-text>
+                    <mj-text color="#525252">
+                        签名时间：{{ now_time }}
+                    </mj-text>
+                    <mj-text color="#525252">
+                        失败原因：开发者 {{developer_obj.issuer_id}} 状态 {developer_obj.get_status_display()}
+                    </mj-text>
+                    <mj-text color="#525252">
+                        开发者备注：{{developer_obj.description}}。请登录后台查看具体失败信息
+                    </mj-text>
+
+                </mj-column>
+
+            </mj-section>
+
+        </mj-wrapper>
+
+        <mj-include path="./base/footer.mjml"/>
+
+    </mj-body>
+</mjml>

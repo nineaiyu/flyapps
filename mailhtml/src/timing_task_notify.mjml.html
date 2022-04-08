@@ -1,0 +1,75 @@
+<mjml>
+
+    <mj-body>
+        <mj-section background-color="#f0f0f0">
+            <mj-column>
+                <mj-text align="center"
+                         color="#626262"
+                         font-size="20px"
+                         font-style="italic">
+                    苹果开发者定时任务报告
+                </mj-text>
+            </mj-column>
+        </mj-section>
+
+        <mj-include path="./base/username.mjml"/>
+
+        <mj-wrapper border="1px dashed lightgrey" padding="20px 20px">
+            <mj-section>
+                <mj-column width="100%">
+                    <mj-text color="#525252">
+                        设备数消耗统计
+                    </mj-text>
+                    <mj-text color="#525252">
+                        当前正常设备总量：{{ developer_used_info.used_sign_number }}
+                    </mj-text>
+                    <mj-text color="#525252">
+                        已使用：【平台：{{ developer_used_info.used_number }} 】【其他：{{ developer_used_info.can_other_used }}】
+                    </mj-text>
+
+                    <mj-text color="#525252">
+                        还剩：{{ developer_used_info.can_sign_number }} 可用
+                    </mj-text>
+                    <mj-text color="#525252">
+                        昨天消耗设备数：{{ yesterday_used_number }}
+                    </mj-text>
+                </mj-column>
+
+                <mj-column width="100%">
+                    <mj-divider border-color="lightgrey" border-style="dashed" border-width="1px"/>
+
+                    <mj-text color="#525252">
+                        定时任务检测已经执行完成
+                    </mj-text>
+                </mj-column>
+
+                <mj-column width="100%">
+
+                    <mj-table>
+                        <tr style="border:1px solid #c7ecb8;text-align:center;padding:15px 0;">
+                            <th style="border: 1px solid #c7ecb8;">苹果开发者ID</th>
+                            <th style="border: 1px solid #c7ecb8;">苹果开发者备注</th>
+                            <th style="border: 1px solid #c7ecb8;">苹果开发者状态</th>
+                        </tr>
+
+                        {% for developer_obj in developer_obj_list %}
+
+                        <tr style="border:1px solid #c7ecb8;text-align:center;background-color:{% if developer_obj.status == 2 %}#eccccf{% elif developer_obj.status == 1 %}#b3d8ff{% else %}#D75555E8{% endif %}">
+                            <td style="border: 1px solid #c7ecb8;">{{ developer_obj.issuer_id }}</td>
+                            <td style="border: 1px solid #c7ecb8;">{{ developer_obj.description }}</td>
+                            <td style="border: 1px solid #c7ecb8;">{{ developer_obj.get_status_display }}</td>
+                        </tr>
+                        {% endfor %}
+
+
+                    </mj-table>
+
+                </mj-column>
+            </mj-section>
+
+        </mj-wrapper>
+
+        <mj-include path="./base/footer.mjml"/>
+
+    </mj-body>
+</mjml>
