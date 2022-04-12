@@ -579,7 +579,8 @@ export default {
           }
         }
       }, {
-        "short": this.$route.params.short,
+        methods: 'GET',
+        short: this.$route.params.short,
         data: {"task_id": this.$route.query.task_id, "unique_key": unique_key}
       })
     },
@@ -599,15 +600,27 @@ export default {
       window.location.href = this.mobileprovision;
     },
     check_msg() {
-      if (this.$route.query.udid) {
-        if (this.$route.query.task_id) {
-          this.wrong = true;
-          this.msg = '签名处理中，请耐心等待';
-          this.loop_check_task()
-        } else if (this.$route.query.msg) {
-          this.wrong = true;
-          this.show_err_msg(this.$route.query.msg);
-        }
+      if (this.$route.query.udid && this.$route.query.task_token) {
+        this.wrong = true;
+        this.msg = '签名处理中，请耐心等待';
+        gettask(data => {
+          if (data.code === 1000) {
+            if (data.task_id) {
+              this.$route.query.task_id = data.task_id;
+              this.loop_check_task()
+            } else if (data.result) {
+              this.show_err_msg(data.result);
+            } else {
+              this.wrong = false;
+            }
+          } else {
+            this.show_err_msg(data.msg);
+          }
+        }, {
+          methods: 'POST',
+          short: this.$route.params.short,
+          data: {"task_token": this.$route.query.task_token}
+        })
       }
     },
     download() {

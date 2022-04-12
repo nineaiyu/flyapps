@@ -72,3 +72,24 @@ def generate_numeric_token_of_length(length, random_str=''):
 def generate_alphanumeric_token_of_length(length):
     return "".join(
         [random.choice(string.digits + string.ascii_lowercase + string.ascii_uppercase) for _ in range(length)])
+
+
+def generate_good_token_of_length(length):
+    ascii_uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+    digits = '23456789'
+    return "".join([random.choice(digits + ascii_uppercase) for _ in range(length)])
+
+
+def get_random_download_token(token_length=4, token_number=1024, exist_token=None):
+    if exist_token is None:
+        exist_token = []
+    count = 256
+    random_list = []
+    while count > 0:
+        random_list.append(generate_good_token_of_length(token_length))
+        count -= 1
+    exist_token.extend(random_list)
+    exist_token = list(set(exist_token))
+    if len(exist_token) >= token_number:
+        return exist_token
+    return get_random_download_token(token_length, token_number, exist_token)

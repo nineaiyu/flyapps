@@ -169,7 +169,6 @@ class InstallView(APIView):
         downtoken = query_params.get("token", None)
         short = query_params.get("short", None)
         release_id = query_params.get("release_id", None)
-        isdownload = query_params.get("isdownload", None)
         password = query_params.get("password", None)
         udid = query_params.get("udid", None)
 
@@ -179,7 +178,7 @@ class InstallView(APIView):
             return Response(res.dict)
 
         if verify_token(downtoken, release_id):
-            res = get_app_download_url(request, res, app_id, short, password, release_id, isdownload, udid)
+            res = get_app_download_url(request, res, app_id, short, password, release_id, False, udid)
         else:
             res.code = 1004
             res.msg = "token校验失败"

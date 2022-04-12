@@ -267,13 +267,6 @@ class AppsShortSerializer(serializers.ModelSerializer):
     def get_domain_name(self, obj):
         return get_app_domain_name(obj)
 
-    need_password = serializers.SerializerMethodField()
-
-    def get_need_password(self, obj):
-        if obj.password != '':
-            return True
-        return False
-
     has_combo = serializers.SerializerMethodField()
 
     def get_has_combo(self, obj):
@@ -508,3 +501,9 @@ class NotifyConfigSerializer(serializers.ModelSerializer):
 
     def get_senders(self, obj):
         return NotifyReceiverSerializer(obj.sender, many=True).data
+
+
+class AppDownloadTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.AppDownloadToken
+        exclude = ["id", "app_id"]

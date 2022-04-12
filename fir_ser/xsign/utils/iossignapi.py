@@ -75,8 +75,10 @@ class ResignApp(object):
         self.cmd = "zsign  -c '%s'  -k '%s' " % (self.app_dev_pem, self.my_local_key)
 
     @staticmethod
-    def sign_mobile_config(sign_data, ssl_pem_path, ssl_key_path):
+    def sign_mobile_config(sign_data, ssl_pem_path, ssl_key_path, ssl_pem_data=None, ssl_key_data=None):
         """
+        :param ssl_key_data:
+        :param ssl_pem_data:
         :param sign_data:  签名的数据
         :param ssl_pem_path:    pem证书的绝对路径
         :param ssl_key_path:    key证书的绝对路径
@@ -92,8 +94,14 @@ class ResignApp(object):
         from cryptography.hazmat.primitives.serialization import pkcs7
         from cryptography import x509
         try:
+            if not ssl_key_data:
+                ssl_key_data = open(ssl_key_path, 'rb').read()
+
+            if not ssl_pem_data:
+                ssl_pem_data = open(ssl_pem_path, 'rb').read()
+
             cert_list = re.findall('-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----',
-                                   open(ssl_pem_path, 'r').read(), re.S)
+                                   ssl_pem_data.decode('utf-8'), re.S)
             if len(cert_list) == 0:
                 raise Exception('load cert failed')
             else:
@@ -101,7 +109,7 @@ class ResignApp(object):
                 cas = [cert]
                 if len(cert_list) > 1:
                     cas.extend([x509.load_pem_x509_certificate(x.encode('utf-8')) for x in cert_list[1:]])
-                key = serialization.load_pem_private_key(open(ssl_key_path, 'rb').read(), None)
+                key = serialization.load_pem_private_key(ssl_key_data, None)
                 result['data'] = pkcs7.PKCS7SignatureBuilder(
                     data=sign_data.encode('utf-8'),
                     signers=[

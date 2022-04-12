@@ -153,7 +153,7 @@ class Apps(models.Model):
                                      verbose_name="关联应用", on_delete=models.SET_NULL, null=True, blank=True)
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     count_hits = models.BigIntegerField(verbose_name="下载次数", default=0)
-    password = models.CharField(verbose_name="访问密码", blank=True, help_text='默认 没有密码', max_length=32)
+    need_password = models.BooleanField(verbose_name="访问密码", help_text='默认 没有密码', default=False)
     isshow = models.BooleanField(verbose_name="下载页可见", default=True)
     issupersign = models.BooleanField(verbose_name="是否超级签名包", default=False)
     change_auto_sign = models.BooleanField(verbose_name="签名相关的数据更新自动签名", default=False)
@@ -529,3 +529,21 @@ class NotifyConfig(models.Model):
 
     def __str__(self):
         return "%s-%s-%s" % (self.user_id, self.get_message_type_display(), self.sender)
+
+
+class AppDownloadToken(models.Model):
+    app_id = models.ForeignKey(to=Apps, on_delete=models.CASCADE, verbose_name="应用信息")
+    token = models.CharField(max_length=64, verbose_name='授权码')
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+    update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    used_count = models.BigIntegerField(verbose_name="已经使用次数", default=0)
+    max_limit_count = models.BigIntegerField(verbose_name="最大可使用次数，0表示不限制", default=0)
+    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
+
+    class Meta:
+        verbose_name = '应用下载授权token'
+        verbose_name_plural = "应用下载授权token"
+        unique_together = (('app_id', 'token',),)
+
+    def __str__(self):
+        return "%s-%s-%s" % (self.app_id, self.token, self.description)

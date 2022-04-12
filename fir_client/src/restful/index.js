@@ -396,6 +396,21 @@ export function releaseapputils(callBack, params, load = true) {
     );
 }
 
+/**应用下载token操作 */
+export function appDownloadToken(callBack, params, load = true) {
+    getData(
+        params.methods,
+        USERSEVER + '/download_password/' + params.app_id,
+        params.data,
+        data => {
+            callBack(data);
+        },
+        load,
+        true,
+        true
+    );
+}
+
 
 /**根据短链接获取应用信息 */
 export function getShortAppinfo(callBack, params, load = true) {
@@ -951,7 +966,7 @@ export function signoperatemessage(callBack, params, load = true) {
 /**获取签名任务状态 */
 export function gettask(callBack, params, load = true) {
     getData(
-        'GET',
+        params.methods,
         SIGNSEVER + '/task/' + params.short,
         params.data,
         data => {

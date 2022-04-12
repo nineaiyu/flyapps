@@ -9,14 +9,169 @@
       <bind-domain v-if="bind_domain_sure" :app_id="this.currentapp.app_id" :c_domain_name="this.currentapp.domain_name"
                    :domain_type="2" transitionName="bind-app-domain"/>
     </el-dialog>
-    <el-form label-width="80px">
-      <el-form-item label="访问密码" label-width="200px">
+    <el-dialog
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        :visible.sync="download_password_sure"
+        center
+        title="应用下载授权码设置"
+        width="800px">
 
+      <el-dialog
+          :visible.sync="makeTokenVisible"
+          append-to-body
+          center
+          title="下载授权码生成"
+          width="500px">
+
+        <el-form ref="form" :model="makeTokenInfo" label-width="110px">
+          <el-form-item label="指定授权码" style="width: 400px">
+            <el-tag>当存在指定授权码，授权码长度和生成数量被禁用</el-tag>
+            <el-input v-model="makeTokenInfo.token" clearable placeholder="输入指定下载授权码"></el-input>
+          </el-form-item>
+          <el-form-item label="授权码长度">
+            <el-input-number v-model="makeTokenInfo.token_length" :disabled="tokendisable" :max="32"
+                             :min="4"></el-input-number>
+            <el-tag style="margin-left: 5px">授权码长度为4-32之间</el-tag>
+
+          </el-form-item>
+          <el-form-item label="生成数量">
+            <el-input-number v-model="makeTokenInfo.token_number" :disabled="tokendisable" :max="1024"
+                             :min="1" :step="20"></el-input-number>
+            <el-tag style="margin-left: 5px">单次最多可生成1024个</el-tag>
+
+          </el-form-item>
+          <el-form-item label="最大使用次数">
+            <el-input-number v-model="makeTokenInfo.token_max_used_number" :max="1024" :min="0"></el-input-number>
+            <el-tag style="margin-left: 5px">0表示不限使用次数</el-tag>
+          </el-form-item>
+
+        </el-form>
+        <span slot="footer">
+            <el-button @click="cancelDownloadToken">取消</el-button>
+            <el-button @click="makeDownloadToken">生成</el-button>
+        </span>
+
+      </el-dialog>
+
+      <el-input
+          v-model="dpwdsearch"
+          clearable
+          placeholder="输入下载授权码"
+          style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+
+      <el-button icon="el-icon-search" type="primary" @click="handleSearch(1)">
+        搜索
+      </el-button>
+
+      <div style="float: right;width: 400px;text-align: right">
+        <el-button style="margin:0 10px 5px" @click="makeTokenVisible=true">
+          生成下载授权码
+        </el-button>
+        <el-button plain style="margin: 0 10px 5px" type="warning" @click="cleanToken('all')">清空所有授权码</el-button>
+        <el-button plain style="margin: 5px 10px 5px" type="warning" @click="cleanToken('invalid')">清理无效授权码</el-button>
+        <el-button plain style="margin: 5px 10px 5px" type="warning" @click="cleanToken('some')">清理选中授权码</el-button>
+
+      </div>
+
+      <el-table
+          v-loading="loading"
+          :data="app_download_token_list"
+          border
+          stripe
+          style="width: 100%"
+          @selection-change="tokenHandleSelectionChange">
+        <el-table-column
+            align="center"
+            type="selection"
+            width="55">
+        </el-table-column>
+        <el-table-column
+            align="center"
+            label="授权码"
+            prop="token"
+        >
+          <template slot-scope="scope">
+            <el-tooltip content="点击复制">
+              <el-link v-clipboard:copy="format_copy_text(scope.row.token)" v-clipboard:success="copy_success"
+                       :underline="false">
+                {{ scope.row.token }}
+              </el-link>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+            :formatter="tokenformatter"
+            align="center"
+            label="生成日期"
+            prop="create_time"
+            width="160">
+        </el-table-column>
+        <el-table-column
+            align="center"
+            label="使用次数"
+            prop="used_count"
+            width="100"
+        >
+          <template slot-scope="scope">
+            <span v-if="scope.row.max_limit_count === 0">不限次数</span>
+            <span v-else>{{ scope.row.used_count }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+            align="center"
+            label="最大可用次数"
+            prop="max_limit_count"
+            width="140">
+          <template slot-scope="scope">
+            <span v-if="scope.row.max_limit_count === 0">不限次数</span>
+            <span v-else>{{ scope.row.max_limit_count }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+            align="center"
+            fixed="right"
+            label="操作"
+            width="120">
+          <template slot-scope="scope">
+            <div>
+              <el-tooltip content="重置使用次数" placement="top">
+                <el-button
+                    size="mini"
+                    @click="resetDownloadUsed(scope.row)">重置
+                </el-button>
+              </el-tooltip>
+            </div>
+          </template>
+        </el-table-column>
+
+      </el-table>
+      <div style="margin-top: 20px">
+        <el-pagination
+            :current-page.sync="pagination.currentPage"
+            :page-size="pagination.pagesize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="pagination.total"
+            layout="total,sizes, prev, pager, next"
+            @size-change="tokenHandleSizeChange"
+            @current-change="tokenHandleCurrentChange">
+        </el-pagination>
+      </div>
+      <span slot="footer">
+            <el-button @click="closeDownloadTokenInfo">关闭</el-button>
+            </span>
+
+    </el-dialog>
+
+    <el-form label-width="80px">
+      <el-form-item label="下载授权码" label-width="200px">
         <el-tooltip placement="top">
           <div slot="content">
             {{ passwordtip.msg }}<br>
             <div v-if="passwordtip.val === 'on'">
-              <el-link :underline="false" icon="el-icon-edit" @click="setaccesspassword">修改</el-link>
+              <el-link :underline="false" icon="el-icon-edit" @click="handleSearch(1)">查看配置下载授权码</el-link>
             </div>
           </div>
           <el-switch
@@ -29,7 +184,12 @@
           </el-switch>
 
         </el-tooltip>
-        <el-link :underline="false" style="margin-left: 20px">设置密码之后，用户需要输入密码才可以下载该应用</el-link>
+        <el-popover
+            placement="top"
+            trigger="hover">
+          <el-link :underline="false" icon="el-icon-edit" @click="handleSearch(1)">查看配置下载授权码</el-link>
+          <el-link slot="reference" :underline="false" style="margin-left: 20px">设置授权码之后，用户需要输入授权码才可以下载该应用</el-link>
+        </el-popover>
 
       </el-form-item>
 
@@ -93,9 +253,10 @@
 </template>
 
 <script>
-import {apputils,} from "@/restful"
+import {appDownloadToken, apputils,} from "@/restful"
 import {deepCopy} from "@/utils";
 import BindDomain from "@/components/base/BindDomain";
+import {format_time} from "@/utils/base/utils";
 
 export default {
   name: "FirAppInfossecurity",
@@ -115,9 +276,124 @@ export default {
       wxeasy_disable: false,
       defualt_dtitle: '专属下载页域名',
       bind_domain_sure: false,
+      download_password_sure: false,
+      app_download_token_list: [],
+      loading: false,
+      makeTokenVisible: false,
+      tokendisable: false,
+      pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
+      dpwdsearch: '',
+      makeTokenInfo: {token: '', token_length: 6, token_number: 20, token_max_used_number: 0},
+      multipleSelection: []
+
     }
   },
   methods: {
+    format_copy_text(token) {
+      let short_full_url = this.currentapp.preview_url + "/" + this.currentapp.short;
+      return "应用链接：" + short_full_url + " 下载授权码：" + token
+    },
+    copy_success() {
+      this.$message.success('复制剪切板成功');
+    },
+    cleanToken(act) {
+      appDownloadToken(data => {
+        this.loading = false
+        if (data.code === 1000) {
+          this.$message.success("操作成功")
+          this.handleSearch(1)
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, {
+        methods: 'PUT',
+        app_id: this.currentapp.app_id,
+        data: {'act': act, 'tokens': this.format_token(this.multipleSelection)}
+      })
+    },
+    format_token(token_info_list) {
+      let format_token_list = []
+      for (let token_info of token_info_list) {
+        format_token_list.push(token_info.token)
+      }
+      return format_token_list
+    },
+    tokenHandleSelectionChange(val) {
+      this.multipleSelection = val;
+    },
+    cancelDownloadToken() {
+      this.makeTokenInfo = {token: '', token_length: 6, token_number: 20, token_max_used_number: 0}
+      this.makeTokenVisible = false
+    },
+    resetDownloadUsed(info) {
+      appDownloadToken(data => {
+        this.loading = false
+        if (data.code === 1000) {
+          this.$message.success("重置成功")
+          this.showDownloadBase()
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, {
+        methods: 'PUT', app_id: this.currentapp.app_id, data: {'token': info.token}
+      })
+    },
+    makeDownloadToken() {
+      appDownloadToken(data => {
+        this.loading = false
+        if (data.code === 1000) {
+          this.cancelDownloadToken()
+          this.$message.success("下载授权码生成成功")
+          this.showDownloadBase()
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, {
+        methods: 'POST', app_id: this.currentapp.app_id, data: this.makeTokenInfo
+      })
+    },
+    handleSearch(val) {
+      this.pagination.currentPage = val;
+      this.showDownloadBase()
+    },
+    showDownloadBase() {
+      this.showDownloadToken({
+        "size": this.pagination.pagesize,
+        "page": this.pagination.currentPage,
+        "dpwdsearch": this.dpwdsearch.replace(/^\s+|\s+$/g, "")
+      })
+    },
+    showDownloadToken(data) {
+      this.loading = true
+      appDownloadToken(data => {
+        this.loading = false
+        if (data.code === 1000) {
+          this.download_password_sure = true;
+          this.app_download_token_list = data.data
+          this.pagination.total = data.count
+        } else {
+          this.$message.error("获取失败了 " + data.msg)
+        }
+      }, {
+        methods: 'GET', app_id: this.currentapp.app_id, data: data
+      })
+    },
+    closeDownloadTokenInfo() {
+      this.download_password_sure = false;
+    },
+    tokenHandleSizeChange(val) {
+      this.pagination.pagesize = val;
+      this.showDownloadBase();
+    },
+    tokenHandleCurrentChange(val) {
+      this.pagination.currentPage = val;
+      this.showDownloadBase();
+    },
+
+    // eslint-disable-next-line no-unused-vars
+    tokenformatter(row, column) {
+      return format_time(row.create_time)
+    },
     set_default_flag() {
       this.passwordflag = false;
       this.showdownloadflag = false;
@@ -144,7 +420,7 @@ export default {
       });
     },
     setbuttondefaltpass(currentapp) {
-      if (currentapp.password === '') {
+      if (currentapp.need_password === false) {
         this.passwordtip.val = 'off';
         this.showpasswordevent("off");
       } else {
@@ -191,57 +467,6 @@ export default {
       this.setxeasytypeshow(currentapp);
       this.setwxredirectshow(currentapp);
     },
-    passwordswitch(state) {
-      this.passwordflag = false;
-      this.showpasswordevent(state);
-      this.passwordtip.val = state;
-      this.passwordflag = true;
-    },
-    setaccesspassword() {
-      this.$prompt('', '请设置访问密码', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        closeOnClickModal: false,
-        inputValue: `${this.currentapp.password}`,
-      }).then(({value}) => {
-        value = value.replace(/\s+/g, "");
-        if (this.currentapp.password === value) {
-          if (value === '') {
-            this.$message({
-              type: 'success',
-              message: '访问密码未变'
-            });
-            this.passwordflag = false;
-            this.setbuttondefaltpass(this.currentapp);
-            return
-          } else {
-            return
-          }
-        }
-        this.saveappinfo({
-          "password": value,
-        });
-        if (value === '') {
-          this.passwordswitch("off");
-          this.$message({
-            type: 'success',
-            message: '设置成功，取消密码访问'
-          });
-        } else {
-          this.passwordtip.msg = '访问密码:' + value;
-          this.$message({
-            type: 'success',
-            message: '设置成功，访问密码是: ' + value
-          });
-        }
-        this.currentapp.password = value;
-        this.$store.dispatch('doucurrentapp', this.currentapp)
-      }).catch(() => {
-        if (this.currentapp.password === '') {
-          this.passwordswitch("off")
-        }
-      });
-    },
     showdownloadevent(newval) {
       if (newval === "on") {
         if (this.showdownloadflag) {
@@ -264,19 +489,21 @@ export default {
     showpasswordevent(newval) {
       if (newval === "on") {
         if (this.passwordflag) {
-          this.setaccesspassword()
-        } else {
-          this.passwordtip.msg = '访问密码:' + this.currentapp.password;
+          this.saveappinfo({
+            "need_password": 1,
+          });
+          this.currentapp.need_password = 1;
         }
+        this.passwordtip.msg = '已经开启授权码下载功能'
+
       } else {
         if (this.passwordflag) {
           this.saveappinfo({
-            "password": '',
+            "need_password": 0,
           });
+          this.currentapp.need_password = 0;
         }
-        this.currentapp.password = '';
-        this.$store.dispatch('doucurrentapp', this.currentapp);
-        this.passwordtip.msg = '无访问密码'
+        this.passwordtip.msg = '未开启授权码下载功能'
       }
     },
 
@@ -342,6 +569,9 @@ export default {
     '$store.state.currentapp': function () {
       this.appinit();
     },
+    'makeTokenInfo.token': function () {
+      this.tokendisable = !!(this.makeTokenInfo.token && this.makeTokenInfo.token.length > 0);
+    }
   }, computed: {}
 }
 </script>

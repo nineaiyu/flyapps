@@ -330,11 +330,6 @@ class AdminBillInfoSerializer(BillInfoSerializer):
         read_only_fields = ["id", "user_id", "to_user_id", "action", "number", "app_info", "udid",
                             "udid_sync_info", "app_id", "remote_addr"]
 
-    action_choices = serializers.SerializerMethodField()
-
-    def get_action_choices(self, obj):
-        return get_choices_dict(obj.action_choices)
-
 
 class AppSignSerializer(serializers.ModelSerializer):
     class Meta:

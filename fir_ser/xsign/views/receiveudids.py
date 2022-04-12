@@ -3,7 +3,9 @@
 # project: 3月
 # author: liuyu
 # date: 2020/3/6
+import json
 import logging
+from urllib.parse import quote
 
 from celery.exceptions import TimeoutError
 from django.http import HttpResponsePermanentRedirect, FileResponse, HttpResponse
@@ -15,12 +17,13 @@ from api.models import Apps
 from api.utils.modelutils import get_redirect_server_domain, add_remote_info_from_request, \
     get_app_download_uri
 from api.utils.response import BaseResponse
-from common.base.baseutils import get_real_ip_address, make_random_uuid, get_server_domain_from_request
+from common.base.baseutils import get_real_ip_address, make_random_uuid, get_server_domain_from_request, AesBaseCrypt
 from common.cache.storage import TaskStateCache
 from common.core.sysconfig import Config
 from common.core.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2, VisitShortThrottle, InstallShortThrottle
 from common.utils.caches import check_app_permission
 from common.utils.pending import get_pending_result
+from common.utils.token import verify_token, make_token
 from fir_ser.celery import app
 from xsign.tasks import run_sign_task
 from xsign.utils.supersignutils import udid_bytes_to_dict, make_sign_udid_mobile_config
@@ -32,52 +35,55 @@ class IosUDIDView(APIView):
     throttle_classes = [ReceiveUdidThrottle1, ReceiveUdidThrottle2]
 
     def post(self, request, short):
+        p_info = request.query_params.get('p')
+        p_token = app_id = ''
+        if p_info:
+            p_token = p_info[:52]
+            app_id = p_info[55:len(p_info) - 3]
+
+        if not p_token or not app_id:
+            return HttpResponsePermanentRedirect(Config.WEB_DOMAIN)
         stream_f = str(request.body)
         format_udid_info = udid_bytes_to_dict(stream_f)
         logger.info(f"short {short} receive new udid {format_udid_info}")
         server_domain = get_redirect_server_domain(request)
         try:
-            app_obj = Apps.objects.filter(short=short).first()
+            app_obj = Apps.objects.filter(short=short, app_id=app_id).first()
             if app_obj:
-                server_domain = get_app_download_uri(request, app_obj.user_id, app_obj, preview=False)
-                if app_obj.issupersign and app_obj.user_id.supersign_active:
-                    res = check_app_permission(app_obj, BaseResponse())
-                    if res.code != 1000:
-                        msg = "&msg=%s" % res.msg
-                    else:
-                        client_ip = get_real_ip_address(request)
-                        logger.info(f"client_ip {client_ip} short {short} app_info {app_obj}")
-
-                        # from api.utils.app.supersignutils import IosUtils
-                        # ios_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
-                        # ios_obj.sign_ipa(client_ip)
-                        # return Response('ok')
-                        c_task = run_sign_task.apply_async((format_udid_info, short, client_ip))
-                        add_remote_info_from_request(request, f'{app_obj}-{format_udid_info}')
-                        task_id = c_task.id
-                        logger.info(f"sign app {app_obj} task_id:{task_id}")
-                        try:
-                            result = c_task.get(propagate=False, timeout=3)
-                        except TimeoutError:
-                            logger.error(f"get task task_id:{task_id} result timeout")
-                            result = ''
-                        if c_task.successful():
-                            c_task.forget()
-                            msg = "&msg=%s" % result
+                if p_token and verify_token(p_token, app_obj.app_id, True):
+                    server_domain = get_app_download_uri(request, app_obj.user_id, app_obj, preview=False)
+                    if app_obj.issupersign and app_obj.user_id.supersign_active:
+                        res = check_app_permission(app_obj, BaseResponse())
+                        if res.code != 1000:
+                            msg = "&msg=%s" % res.msg
                         else:
-                            msg = "&task_id=%s" % task_id
+                            client_ip = get_real_ip_address(request)
+                            logger.info(f"client_ip {client_ip} short {short} app_info {app_obj}")
+
+                            # from api.utils.app.supersignutils import IosUtils
+                            # ios_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
+                            # ios_obj.sign_ipa(client_ip)
+                            # return Response('ok')
+                            data = {
+                                'format_udid_info': format_udid_info,
+                                'short': short,
+                                'app_id': app_id,
+                                'client_ip': client_ip,
+                                'r_token': make_token(app_obj.app_id, time_limit=30, key='receive_udid', force_new=True)
+                            }
+                            encrypt_data = AesBaseCrypt().get_encrypt_uid(json.dumps(data))
+                            msg = "&task_token=%s" % quote(encrypt_data, safe='/', encoding=None, errors=None)
+                    else:
+                        return HttpResponsePermanentRedirect(f"{server_domain}/{short}")
                 else:
-                    return HttpResponsePermanentRedirect(
-                        "%s/%s" % (server_domain, short))
+                    return HttpResponsePermanentRedirect(f"{server_domain}/{short}")
             else:
-                return HttpResponsePermanentRedirect(
-                    "%s/%s" % (server_domain, short))
+                return HttpResponsePermanentRedirect(f"{server_domain}/{short}")
         except Exception as e:
             msg = "&msg=系统内部错误"
             logger.error(f"short {short} receive udid Exception:{e}")
 
-        return HttpResponsePermanentRedirect(
-            "%s/%s?udid=%s%s" % (server_domain, short, format_udid_info.get("udid"), msg))
+        return HttpResponsePermanentRedirect(f"{server_domain}/{short}?udid={format_udid_info.get('udid')}{msg}")
 
 
 def expect_func(result, *args, **kwargs):
@@ -131,6 +137,53 @@ class TaskView(APIView):
         res.code = 1002
         return Response(res.dict)
 
+    def post(self, request, short):
+        res = BaseResponse()
+        task_token = request.data.get('task_token', None)
+        client_ip = get_real_ip_address(request)
+        if task_token:
+            data = json.loads(AesBaseCrypt().get_decrypt_uid(task_token))
+            if client_ip != data.get('client_ip', ''):
+                res.msg = '检测到网络异常，请重试'
+                res.code = 1001
+            if short != data.get('short', ''):
+                res.msg = '数据异常，请重试'
+                res.code = 1002
+
+            app_obj = Apps.objects.filter(short=short, app_id=data.get('app_id')).first()
+            if not app_obj:
+                res.msg = '错误，数据异常，请重试'
+                res.code = 1003
+
+            if not verify_token(data.get('r_token', ''), app_obj.app_id, True):
+                res.msg = '非法，数据异常，请重试'
+                res.code = 1004
+
+            if res.code != 1000:
+                return Response(res.dict)
+
+            format_udid_info = data.get('format_udid_info')
+
+            c_task = run_sign_task.apply_async((format_udid_info, short, client_ip))
+            add_remote_info_from_request(request, f'{app_obj}-{format_udid_info}')
+            task_id = c_task.id
+            logger.info(f"sign app {app_obj} task_id:{task_id}")
+            try:
+                result = c_task.get(propagate=False, timeout=3)
+            except TimeoutError:
+                logger.error(f"get task task_id:{task_id} result timeout")
+                result = ''
+            if c_task.successful():
+                c_task.forget()
+                res.result = result
+            else:
+                res.task_id = task_id
+            return Response(res.dict)
+        else:
+            res.code = 1001
+            res.msg = '数据异常，请重试'
+        return Response(res.dict)
+
 
 class ShowUdidView(View):
     def get(self, request):
@@ -140,7 +193,7 @@ class ShowUdidView(View):
         server_domain = get_server_domain_from_request(request, Config.POST_UDID_DOMAIN)
         path_info_lists = [server_domain, "show_udid"]
         udid_url = "/".join(path_info_lists)
-        ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, 'show_udid_info', 'flyapps.cn', '查询设备udid')
+        ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, 'flyapps.cn', '查询设备udid')
         response = FileResponse(ios_udid_mobile_config)
         response['Content-Type'] = "application/x-apple-aspen-config"
         response['Content-Disposition'] = 'attachment; filename=' + make_random_uuid() + '.mobileconfig'

@@ -35,23 +35,6 @@ function ErrorMsg(error) {
 
 function getData(methods = 'GET', url, params = {}, callBack) {
 
-
-    var uri = '';
-    var keys = Object.keys(params);
-    var values = Object.values(params);
-    for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        var value = values[i];
-        uri = uri + key + "=" + value;
-        if (i < keys.length - 1) {
-            uri = uri + "&"
-        }
-    }
-    if (uri !== "") {
-        uri = "?" + uri
-    }
-    url = url + uri;
-
     if (methods === "PUT") {
         Axios
             .put(url, params)
@@ -74,7 +57,7 @@ function getData(methods = 'GET', url, params = {}, callBack) {
             });
     } else
         Axios
-            .get(url, params)
+            .get(url, {params: params})
             .then(function (response) {
                 callBack(response.data);
                 let x = '';
@@ -165,7 +148,7 @@ let SIGNSEVER = DOMAIN + '/api/v1/fir/xsign';
 
 export function gettask(callBack, params) {
     getData(
-        'GET',
+        params.methods,
         SIGNSEVER + '/task/' + params.short,
         params.data,
         data => {

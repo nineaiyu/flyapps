@@ -103,7 +103,7 @@
 </template>
 
 <script>
-import {getdownloadurl, releaseapputils} from "@/restful"
+import {releaseapputils} from "@/restful"
 
 export default {
   name: "FirAppInfostimeline",
@@ -126,22 +126,20 @@ export default {
       }
     },
     downloadPackage(app) {
-      getdownloadurl(res => {
-        if (res.code === 1000) {
-          window.location.href = res.data.download_url;
-        } else {
-          this.$message.error(res.msg);
-        }
-      }, {
-        'data': {
-          'token': app.download_token,
-          'short': this.currentapp.short,
-          'release_id': app.release_id,
-          "password": this.currentapp.password,
-          "isdownload": true,
-        },
-        'app_id': this.currentapp.app_id
-      })
+
+      releaseapputils(res => {
+            if (res.code === 1000) {
+              window.location.href = res.data.download_url;
+            } else {
+              this.$message.error(res.msg);
+            }
+          }, {
+            methods: 'POST',
+            app_id: this.currentapp.app_id,
+            release_id: app.release_id,
+            data: {'token': app.download_token, 'short': this.currentapp.short}
+          }
+      );
     },
     previewRelease(app) {
       let routeData = this.$router.resolve({

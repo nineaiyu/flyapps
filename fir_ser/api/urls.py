@@ -16,7 +16,7 @@ Including another URLconf
 from django.urls import re_path
 
 from api.views.advert import UserAdInfoView
-from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView, AppsQrcodeShowView
+from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView, AppsQrcodeShowView, AppDownloadTokenView
 from api.views.domain import DomainCnameView, DomainInfoView
 from api.views.download import ShortDownloadView, InstallView, DownloadView
 from api.views.getip import GetRemoteIp
@@ -48,6 +48,7 @@ urlpatterns = [
     re_path("^storage$", StorageView.as_view()),
     re_path("^storage/clean$", CleanStorageView.as_view()),
     re_path(r"^apps/(?P<app_id>\w+)", AppInfoView.as_view()),
+    re_path(r"^download_password/(?P<app_id>\w+)", AppDownloadTokenView.as_view()),
     re_path(r"^appinfos/(?P<app_id>\w+)/(?P<act>\w+)", AppReleaseInfoView.as_view()),
     re_path("^upload$", UploadView.as_view()),
     re_path("^userinfo", UserInfoView.as_view()),

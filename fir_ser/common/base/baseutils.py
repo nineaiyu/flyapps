@@ -276,15 +276,6 @@ def get_format_time():
     return now.strftime('%Y-%m-%d_%H:%M:%S')
 
 
-def check_app_password(app_password, password):
-    if app_password != '':
-        if password is None:
-            return None
-    if app_password.lower() != password.strip().lower():
-        return None
-    return True
-
-
 def get_real_ip_address(request):
     if request.META.get('HTTP_X_FORWARDED_FOR', None):
         return request.META.get('HTTP_X_FORWARDED_FOR')

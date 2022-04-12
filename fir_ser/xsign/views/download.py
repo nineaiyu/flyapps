@@ -6,6 +6,7 @@
 
 import logging
 import os
+import random
 
 from django.urls import reverse
 from rest_framework.views import APIView
@@ -15,7 +16,7 @@ from common.base.baseutils import get_profile_full_path, make_random_uuid, get_s
 from common.core.response import ApiResponse, file_response, mobileprovision_file_response
 from common.core.sysconfig import Config
 from common.utils.storage import Storage, get_local_storage
-from common.utils.token import verify_token
+from common.utils.token import verify_token, make_token
 from fir_ser import settings
 from xsign.models import APPToDeveloper, APPSuperSignUsedInfo
 from xsign.utils.supersignutils import make_sign_udid_mobile_config
@@ -23,9 +24,11 @@ from xsign.utils.supersignutils import make_sign_udid_mobile_config
 logger = logging.getLogger(__name__)
 
 
-def get_post_udid_url(request, short):
+def get_post_udid_url(request, app_obj):
     server_domain = get_server_domain_from_request(request, Config.POST_UDID_DOMAIN)
-    return f'{server_domain}{reverse("xudid", kwargs={"short": short})}'
+    p_token = make_token(app_obj.app_id, time_limit=120, key='post_udid', force_new=True)
+    token = f'{p_token}{"".join(random.sample(p_token, 3))}{app_obj.app_id}{"".join(random.sample(p_token, 3))}'
+    return f'{server_domain}{reverse("xudid", kwargs={"short": app_obj.short})}?p={token}'
 
 
 class XsignDownloadView(APIView):
@@ -69,10 +72,8 @@ class XsignDownloadView(APIView):
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
                 if release_obj:
                     app_obj = release_obj.app_id
-                    udid_url = get_post_udid_url(request, app_obj.short)
-                    ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, f'{app_obj.app_id}_{app_obj.short}',
-                                                                          app_obj.bundle_id,
-                                                                          app_obj.name)
+                    udid_url = get_post_udid_url(request, app_obj)
+                    ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, app_obj.bundle_id, app_obj.name)
                     return file_response(ios_udid_mobile_config, make_random_uuid() + '.mobileconfig',
                                          "application/x-apple-aspen-config")
                 return ApiResponse(code=1004, msg="mobile_config release_id error")

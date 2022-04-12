@@ -13,7 +13,7 @@ from django.db.models import Count
 from rest_framework.pagination import PageNumberPagination
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
-    AppBundleIdBlackList, NotifyReceiver, WeChatInfo
+    AppBundleIdBlackList, NotifyReceiver, WeChatInfo, AppDownloadToken
 from common.base.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name
 
@@ -228,3 +228,15 @@ def get_wx_nickname(openid):
     if obj:
         nickname = obj.nickname
     return nickname if nickname else '亲爱哒'
+
+
+def check_app_access_token(app_id, access_token):
+    download_token_obj = AppDownloadToken.objects.filter(app_id__app_id=app_id,
+                                                         token=access_token.upper()).first()
+    if download_token_obj:
+        if download_token_obj.max_limit_count == 0:
+            return True
+        download_token_obj.used_count += 1
+        if download_token_obj.used_count <= download_token_obj.max_limit_count:
+            download_token_obj.save(update_fields=['used_count'])
+            return True

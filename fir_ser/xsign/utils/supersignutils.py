@@ -9,6 +9,7 @@ import os
 import time
 import uuid
 import zipfile
+from io import BytesIO
 
 import xmltodict
 from django.core.cache import cache
@@ -18,9 +19,10 @@ from api.models import UserInfo, AppReleaseInfo, Apps
 from api.utils.response import BaseResponse
 from api.utils.utils import delete_local_files, download_files_form_oss
 from common.base.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
-    get_format_time, make_app_uuid, make_from_user_uuid
+    get_format_time, make_app_uuid, make_from_user_uuid, AesBaseCrypt
 from common.base.magic import run_function_by_locker, call_function_try_attempts, magic_wrapper
 from common.cache.state import CleanErrorBundleIdSignDataState
+from common.cache.storage import RedisCacheBase
 from common.constants import DeviceStatus, AppleDeveloperStatus, SignStatus
 from common.core.sysconfig import Config
 from common.notify.notify import sign_failed_notify, sign_unavailable_developer_notify, sign_app_over_limit_notify
@@ -109,30 +111,27 @@ def udid_bytes_to_dict(xml_stream):
     return new_uuid_info
 
 
-def make_sign_udid_mobile_config(udid_url, short, bundle_id, app_name):
+def make_sign_udid_mobile_config(udid_url, bundle_id, app_name):
     if Config.MOBILE_CONFIG_SIGN_SSL.get("open"):
         ssl_key_path = Config.MOBILE_CONFIG_SIGN_SSL.get("ssl_key_path", None)
         ssl_pem_path = Config.MOBILE_CONFIG_SIGN_SSL.get("ssl_pem_path", None)
+        ssl_key_cache = RedisCacheBase(AesBaseCrypt().get_encrypt_uid(ssl_key_path))
+        ssl_pem_cache = RedisCacheBase(AesBaseCrypt().get_encrypt_uid(ssl_pem_path))
+        ssl_key_data = ssl_key_cache.get_storage_cache()
+        ssl_pem_data = ssl_pem_cache.get_storage_cache()
+        if not ssl_key_data or not ssl_pem_data:
+            if ssl_key_path and ssl_pem_path and os.path.isfile(ssl_key_path) and os.path.isfile(ssl_pem_path):
+                ssl_key_cache.set_storage_cache(open(ssl_key_path, 'rb').read(), 24 * 3600)
+                ssl_pem_cache.set_storage_cache(open(ssl_pem_path, 'rb').read(), 24 * 3600)
+                ssl_key_data = ssl_key_cache.get_storage_cache()
+                ssl_pem_data = ssl_pem_cache.get_storage_cache()
 
-        if ssl_key_path and ssl_pem_path and os.path.isfile(ssl_key_path) and os.path.isfile(ssl_pem_path):
-            mobile_config_tmp_dir = os.path.join(SUPER_SIGN_ROOT, 'tmp', 'mobile_config')
-            if not os.path.exists(mobile_config_tmp_dir):
-                os.makedirs(mobile_config_tmp_dir)
-
-            sign_mobile_config_path = os.path.join(mobile_config_tmp_dir, 'sign_' + short)
-            logger.info(f"make sing mobile config {sign_mobile_config_path}")
-            if os.path.isfile(sign_mobile_config_path):
-                return open(sign_mobile_config_path, 'rb')
-
-            status, result = ResignApp.sign_mobile_config(
-                make_udid_mobile_config(udid_url, bundle_id, app_name),
-                ssl_pem_path,
-                ssl_key_path)
-
+        if ssl_key_data and ssl_pem_data:
+            status, result = ResignApp.sign_mobile_config(make_udid_mobile_config(udid_url, bundle_id, app_name),
+                                                          ssl_pem_path, ssl_key_path, ssl_pem_data, ssl_key_data)
             if status and result.get('data'):
-                with open(sign_mobile_config_path, 'wb') as f:
-                    f.write(result.get('data'))
-                return open(sign_mobile_config_path, 'rb')
+                buffer = BytesIO(result.get("data"))
+                return buffer
             else:
                 logger.error(
                     f"{bundle_id} {app_name} sign_mobile_config failed ERROR:{result.get('err_info')}")
@@ -397,7 +396,6 @@ class IosUtils(object):
         self.udid = udid_info.get('udid')
         self.app_obj = app_obj
         self.user_obj = user_obj
-        self.get_developer_auth()
 
     def get_developer_auth(self, read_only=True):
         self.developer_obj = get_developer_obj_by_others(self.user_obj, self.udid, self.app_obj, read_only)
@@ -537,7 +535,7 @@ class IosUtils(object):
         res = check_app_permission(self.app_obj, BaseResponse())
         if res.code != 1000:
             return False, {'code': res.code, 'msg': res.msg}
-
+        self.get_developer_auth(True)
         if not self.developer_obj:
             msg = "udid %s app %s not exists apple developer" % (self.udid, self.app_obj)
             d_result['code'] = 1005

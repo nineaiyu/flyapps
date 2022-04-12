@@ -3,25 +3,29 @@
 # project: 3月 
 # author: liuyu
 # date: 2020/3/4
-
+import copy
 import logging
 
-from django.db.models import Sum
+from django.db.models import Sum, F
+from django.db.models.functions import Length
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.base_views import app_delete
-from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot
+from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, AppDownloadToken
 from api.utils.modelutils import get_user_domain_name, get_app_domain_name
 from api.utils.response import BaseResponse
-from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer, AppsQrListSerializer
+from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer, AppsQrListSerializer, \
+    AppDownloadTokenSerializer
 from api.utils.signalutils import run_delete_app_signal
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
 from common.cache.state import MigrateStorageState
 from common.core.auth import ExpiringTokenAuthentication
 from common.utils.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
+from common.utils.download import get_app_download_url
 from common.utils.storage import Storage
+from common.utils.token import verify_token, get_random_download_token
 
 logger = logging.getLogger(__name__)
 
@@ -172,9 +176,9 @@ class AppInfoView(APIView):
                     app_obj.description = data.get("description", app_obj.description)
                     app_obj.short = data.get("short", app_obj.short)
                     app_obj.name = data.get("name", app_obj.name)
-                    app_obj.password = data.get("password", app_obj.password)
+                    app_obj.need_password = data.get("need_password", app_obj.need_password)
                     app_obj.isshow = data.get("isshow", app_obj.isshow)
-                    update_fields = ["description", "short", "name", "password", "isshow"]
+                    update_fields = ["description", "short", "name", "need_password", "isshow"]
                     if get_user_domain_name(request.user) or get_app_domain_name(app_obj):
                         app_obj.wxeasytype = data.get("wxeasytype", app_obj.wxeasytype)
                     else:
@@ -313,6 +317,23 @@ class AppReleaseInfoView(APIView):
 
         return Response(res.dict)
 
+    def post(self, request, app_id, act):
+        res = BaseResponse()
+        downtoken = request.data.get("token", '')
+        short = request.data.get("short", '')
+
+        if not downtoken or not short or not act or not app_id:
+            res.code = 1004
+            res.msg = "参数丢失"
+            return Response(res.dict)
+
+        if verify_token(downtoken, act):
+            res = get_app_download_url(request, res, app_id, short, None, act, True, '')
+        else:
+            res.code = 1004
+            res.msg = "token校验失败"
+        return Response(res.dict)
+
 
 class AppsQrcodeShowView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
@@ -329,4 +350,81 @@ class AppsQrcodeShowView(APIView):
 
         res.data = app_serializer.data
         res.has_next = page_obj.page.has_next()
+        return Response(res.dict)
+
+
+class AppDownloadTokenView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+
+    def get(self, request, app_id):
+        res = BaseResponse()
+        dpwdsearch = request.query_params.get('dpwdsearch')
+        app_token_queryset = AppDownloadToken.objects.filter(app_id__user_id=request.user, app_id__app_id=app_id)
+        if dpwdsearch:
+            app_token_queryset = app_token_queryset.filter(token=dpwdsearch)
+        page_obj = AppsPageNumber()
+        app_token_page_serializer = page_obj.paginate_queryset(queryset=app_token_queryset.order_by("-create_time"),
+                                                               request=request, view=self)
+
+        app_token_serializer = AppDownloadTokenSerializer(app_token_page_serializer, many=True)
+
+        res.data = app_token_serializer.data
+        res.count = app_token_queryset.count()
+        return Response(res.dict)
+
+    def post(self, request, app_id):
+        res = BaseResponse()
+        data = request.data
+        token = data.get('token')
+        token_length = data.get('token_length')
+        token_number = data.get('token_number')
+        token_max_used_number = data.get('token_max_used_number')
+        app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
+        if token and isinstance(token, str) and len(token) >= 4:
+            AppDownloadToken.objects.update_or_create(app_id=app_obj, token=token,
+                                                      defaults={"max_limit_count": token_max_used_number})
+        else:
+            if isinstance(token_length, int) and 4 <= token_length <= 32:
+                pass
+            else:
+                token_length = 6
+            if isinstance(token_number, int) and 1 <= token_number <= 1024:
+                pass
+            else:
+                token_number = 20
+
+            download_token_queryset = AppDownloadToken.objects.filter(app_id=app_obj).annotate(
+                token_len=Length('token')).filter(token_len=token_length).values('token').all()
+            exist_token = [d_token['token'] for d_token in download_token_queryset]
+            make_token_list = get_random_download_token(token_length=token_length,
+                                                        token_number=token_number + download_token_queryset.count(),
+                                                        exist_token=copy.deepcopy(exist_token))
+            bulk_list = []
+            for d_token in list(set(make_token_list) - set(exist_token))[:token_number]:
+                bulk_list.append(
+                    AppDownloadToken(token=d_token, max_limit_count=token_max_used_number, app_id=app_obj))
+            AppDownloadToken.objects.bulk_create(bulk_list)
+
+        return Response(res.dict)
+
+    def put(self, request, app_id):
+        res = BaseResponse()
+        token = request.data.get('token')
+        act = request.data.get('act')
+        if token is not None:
+            AppDownloadToken.objects.filter(app_id__user_id=request.user,
+                                            app_id__app_id=app_id, token=token).update(used_count=0)
+        if act:
+            if act == 'all':
+                AppDownloadToken.objects.filter(app_id__user_id=request.user, app_id__app_id=app_id).delete()
+            elif act == 'invalid':
+                AppDownloadToken.objects.filter(app_id__user_id=request.user,
+                                                app_id__app_id=app_id,
+                                                used_count__gte=F('max_limit_count'), max_limit_count__gt=0).delete()
+            elif act == 'some':
+                tokens = request.data.get('tokens')
+                if tokens and isinstance(tokens, list):
+                    AppDownloadToken.objects.filter(app_id__user_id=request.user,
+                                                    app_id__app_id=app_id, token__in=tokens).delete()
+
         return Response(res.dict)

@@ -18,6 +18,7 @@ from api.utils.response import BaseResponse
 from api.utils.serializer import NotifyReceiverSerializer, NotifyConfigSerializer
 from api.views.login import check_common_info
 from common.base.baseutils import get_choices_dict, get_choices_name_from_key, is_valid_email, is_valid_phone
+from common.cache.storage import NotifyLoopCache
 from common.core.auth import ExpiringTokenAuthentication
 from common.core.sysconfig import Config
 from common.utils.caches import login_auth_failed
@@ -74,6 +75,8 @@ class NotifyConfigView(APIView):
                     request.user.notify_available_signs = notify_available_signs
                 if notify_available_downloads is not None or notify_available_signs is not None:
                     request.user.save(update_fields=['notify_available_downloads', 'notify_available_signs'])
+                    NotifyLoopCache(request.user.uid, 'download_times').del_storage_cache()
+                    NotifyLoopCache(request.user.uid, 'sign_device_times').del_storage_cache()
 
         res.data = UserInfo.objects.filter(pk=request.user.pk).values('notify_available_downloads',
                                                                       'notify_available_signs').first()
@@ -105,6 +108,12 @@ class NotifyConfigView(APIView):
                 notify_config_obj.enable_email = enable_email
             if enable_weixin is not None or enable_email is not None:
                 notify_config_obj.save(update_fields=['enable_email', 'enable_weixin'])
+                if notify_config_obj.message_type == 0:
+                    NotifyLoopCache(request.user.uid, 'sign_device_times').del_storage_cache()
+                elif notify_config_obj.message_type == 1:
+                    NotifyLoopCache(request.user.uid, 'download_times').del_storage_cache()
+                elif notify_config_obj.message_type == 6:
+                    NotifyLoopCache(request.user.uid, 'developer_cert').del_storage_cache()
 
         return Response(res.dict)
 
