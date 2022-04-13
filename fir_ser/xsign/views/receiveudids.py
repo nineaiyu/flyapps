@@ -13,7 +13,7 @@ from django.views import View
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import Apps
+from api.models import Apps, AppDownloadToken
 from api.utils.modelutils import get_redirect_server_domain, add_remote_info_from_request, \
     get_app_download_uri
 from api.utils.response import BaseResponse
@@ -22,6 +22,7 @@ from common.cache.storage import TaskStateCache
 from common.core.sysconfig import Config
 from common.core.throttle import ReceiveUdidThrottle1, ReceiveUdidThrottle2, VisitShortThrottle, InstallShortThrottle
 from common.utils.caches import check_app_permission
+from common.utils.download import check_app_download_token
 from common.utils.pending import get_pending_result
 from common.utils.token import verify_token, make_token
 from fir_ser.celery import app
@@ -73,6 +74,10 @@ class IosUDIDView(APIView):
                             }
                             encrypt_data = AesBaseCrypt().get_encrypt_uid(json.dumps(data))
                             msg = "&task_token=%s" % quote(encrypt_data, safe='/', encoding=None, errors=None)
+                            token_obj = AppDownloadToken.objects.filter(app_id__app_id=app_id,
+                                                                        bind_udid=format_udid_info.get('udid')).first()
+                            if token_obj:
+                                msg = f"{msg}&password={token_obj.token}"
                     else:
                         return HttpResponsePermanentRedirect(f"{server_domain}/{short}")
                 else:
@@ -140,6 +145,7 @@ class TaskView(APIView):
     def post(self, request, short):
         res = BaseResponse()
         task_token = request.data.get('task_token', None)
+        password = request.data.get('password', None)
         client_ip = get_real_ip_address(request)
         if task_token:
             data = json.loads(AesBaseCrypt().get_decrypt_uid(task_token))
@@ -155,21 +161,26 @@ class TaskView(APIView):
                 res.msg = '错误，数据异常，请重试'
                 res.code = 1003
 
-            if not verify_token(data.get('r_token', ''), app_obj.app_id, True):
-                res.msg = '非法，数据异常，请重试'
+            format_udid_info = data.get('format_udid_info')
+            udid = format_udid_info.get('udid')
+
+            if not verify_token(data.get('r_token', ''), app_obj.app_id, False):
+                res.msg = '授权过期，请重试'
                 res.code = 1004
+
+            if not check_app_download_token(app_obj.need_password, False, app_obj.app_id, password, False, udid):
+                res.code = 1006
+                res.msg = '下载授权码有误'
 
             if res.code != 1000:
                 return Response(res.dict)
-
-            format_udid_info = data.get('format_udid_info')
 
             c_task = run_sign_task.apply_async((format_udid_info, short, client_ip))
             add_remote_info_from_request(request, f'{app_obj}-{format_udid_info}')
             task_id = c_task.id
             logger.info(f"sign app {app_obj} task_id:{task_id}")
             try:
-                result = c_task.get(propagate=False, timeout=3)
+                result = c_task.get(propagate=False, timeout=1)
             except TimeoutError:
                 logger.error(f"get task task_id:{task_id} result timeout")
                 result = ''

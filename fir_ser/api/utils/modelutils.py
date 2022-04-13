@@ -230,13 +230,20 @@ def get_wx_nickname(openid):
     return nickname if nickname else '亲爱哒'
 
 
-def check_app_access_token(app_id, access_token):
-    download_token_obj = AppDownloadToken.objects.filter(app_id__app_id=app_id,
-                                                         token=access_token.upper()).first()
-    if download_token_obj:
-        if download_token_obj.max_limit_count == 0:
-            return True
-        download_token_obj.used_count += 1
-        if download_token_obj.used_count <= download_token_obj.max_limit_count:
-            download_token_obj.save(update_fields=['used_count'])
-            return True
+def check_app_access_token(app_id, access_token, only_check, udid):
+    if access_token:
+        download_token_obj = AppDownloadToken.objects.filter(app_id__app_id=app_id,
+                                                             token=access_token.upper()).first()
+        if download_token_obj:
+            if download_token_obj.max_limit_count == 0:
+                return True
+            if not only_check:
+                download_token_obj.used_count += 1
+            if download_token_obj.used_count <= download_token_obj.max_limit_count:
+                if download_token_obj.bind_status and udid:
+                    download_token_obj.bind_udid = udid
+                if not only_check:
+                    download_token_obj.save(update_fields=['used_count', 'bind_udid'])
+                return True
+    if udid:
+        return AppDownloadToken.objects.filter(app_id__app_id=app_id, bind_udid=udid).count()

@@ -15,7 +15,7 @@
         :visible.sync="download_password_sure"
         center
         title="应用下载授权码设置"
-        width="800px">
+        width="900px">
 
       <el-dialog
           :visible.sync="makeTokenVisible"
@@ -42,10 +42,27 @@
 
           </el-form-item>
           <el-form-item label="最大使用次数">
-            <el-input-number v-model="makeTokenInfo.token_max_used_number" :max="1024" :min="0"></el-input-number>
+            <el-input-number v-model="makeTokenInfo.token_max_used_number" :disabled="makeTokenInfo.bind_status"
+                             :max="1024"
+                             :min="0"></el-input-number>
             <el-tag style="margin-left: 5px">0表示不限使用次数</el-tag>
           </el-form-item>
-
+          <el-form-item v-if="currentapp.type===1 && currentapp.issupersign" label="是否绑定设备">
+            <el-tooltip placement="top">
+              <div slot="content">
+                <span v-if="makeTokenInfo.bind_status"> 开启绑定设备</span>
+                <span v-else> 关闭绑定设备</span>
+              </div>
+              <el-switch
+                  v-model="makeTokenInfo.bind_status"
+                  :active-value="true"
+                  :inactive-value="false"
+                  active-color="#13ce66"
+                  inactive-color="#ff4949">
+              </el-switch>
+            </el-tooltip>
+            <el-tag style="margin-left: 5px">绑定设备之后，二次自动进行设备授权下载应用</el-tag>
+          </el-form-item>
         </el-form>
         <span slot="footer">
             <el-button @click="cancelDownloadToken">取消</el-button>
@@ -56,8 +73,8 @@
 
       <el-input
           v-model="dpwdsearch"
+          :placeholder="dpwdtitle"
           clearable
-          placeholder="输入下载授权码"
           style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
 
       <el-button icon="el-icon-search" type="primary" @click="handleSearch(1)">
@@ -123,13 +140,29 @@
             align="center"
             label="最大可用次数"
             prop="max_limit_count"
-            width="140">
+            width="130">
           <template slot-scope="scope">
             <span v-if="scope.row.max_limit_count === 0">不限次数</span>
             <span v-else>{{ scope.row.max_limit_count }}</span>
           </template>
         </el-table-column>
-
+        <div v-if="currentapp.type===1 && currentapp.issupersign">
+          <el-table-column
+              align="center"
+              label="绑定设备"
+              prop="bind_status"
+              width="60">
+            <template slot-scope="scope">
+              <el-tag v-if="scope.row.bind_status">是</el-tag>
+              <el-tag v-else type="info">否</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="设备ID"
+              prop="bind_udid">
+          </el-table-column>
+        </div>
         <el-table-column
             align="center"
             fixed="right"
@@ -283,7 +316,8 @@ export default {
       tokendisable: false,
       pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
       dpwdsearch: '',
-      makeTokenInfo: {token: '', token_length: 6, token_number: 20, token_max_used_number: 0},
+      dpwdtitle: '输入下载授权码',
+      makeTokenInfo: {token: '', token_length: 6, token_number: 20, token_max_used_number: 0, bind_status: false},
       multipleSelection: []
 
     }
@@ -291,7 +325,11 @@ export default {
   methods: {
     format_copy_text(token) {
       let short_full_url = this.currentapp.preview_url + "/" + this.currentapp.short;
-      return "应用链接：" + short_full_url + " 下载授权码：" + token
+      if (this.currentapp.type === 1 && this.currentapp.issupersign) {
+        return "应用下载链接：" + short_full_url + " 下载授权码：" + token
+      } else {
+        return "应用下载链接：" + short_full_url + "?password=" + token
+      }
     },
     copy_success() {
       this.$message.success('复制剪切板成功');
@@ -322,7 +360,7 @@ export default {
       this.multipleSelection = val;
     },
     cancelDownloadToken() {
-      this.makeTokenInfo = {token: '', token_length: 6, token_number: 20, token_max_used_number: 0}
+      this.makeTokenInfo = {token: '', token_length: 6, token_number: 20, token_max_used_number: 0, bind_status: false}
       this.makeTokenVisible = false
     },
     resetDownloadUsed(info) {
@@ -551,12 +589,12 @@ export default {
       this.currentapp = this.$store.state.currentapp;
       this.set_default_flag();
       this.orgcurrentapp = deepCopy(this.currentapp);
-      // if (!this.currentapp.domain_name || this.currentapp.domain_name.length < 3) {
-      //   if (this.$store.state.userinfo.domain_name && this.$store.state.userinfo.domain_name.length > 3) {
-      //     this.defualt_dtitle = this.$store.state.userinfo.domain_name;
-      //   }
-      // }
       this.setbuttondefault(this.currentapp);
+      if (this.currentapp.type === 1 && this.currentapp.issupersign) {
+        this.dpwdtitle = '输入下载授权码或者设备udid'
+      } else {
+        this.dpwdtitle = '输入下载授权码'
+      }
     }
   },
   mounted() {
@@ -571,6 +609,11 @@ export default {
     },
     'makeTokenInfo.token': function () {
       this.tokendisable = !!(this.makeTokenInfo.token && this.makeTokenInfo.token.length > 0);
+    },
+    'makeTokenInfo.bind_status': function () {
+      if (this.makeTokenInfo.bind_status) {
+        this.makeTokenInfo.token_max_used_number = 1;
+      }
     }
   }, computed: {}
 }

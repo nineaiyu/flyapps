@@ -6,7 +6,7 @@
 import copy
 import logging
 
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Q
 from django.db.models.functions import Length
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -361,7 +361,7 @@ class AppDownloadTokenView(APIView):
         dpwdsearch = request.query_params.get('dpwdsearch')
         app_token_queryset = AppDownloadToken.objects.filter(app_id__user_id=request.user, app_id__app_id=app_id)
         if dpwdsearch:
-            app_token_queryset = app_token_queryset.filter(token=dpwdsearch)
+            app_token_queryset = app_token_queryset.filter(Q(token=dpwdsearch) | Q(bind_udid=dpwdsearch))
         page_obj = AppsPageNumber()
         app_token_page_serializer = page_obj.paginate_queryset(queryset=app_token_queryset.order_by("-create_time"),
                                                                request=request, view=self)
@@ -378,11 +378,19 @@ class AppDownloadTokenView(APIView):
         token = data.get('token')
         token_length = data.get('token_length')
         token_number = data.get('token_number')
+        bind_status = data.get('bind_status')
         token_max_used_number = data.get('token_max_used_number')
+
+        if not isinstance(bind_status, bool):
+            bind_status = False
+        if bind_status:
+            token_max_used_number = 1
+
         app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
         if token and isinstance(token, str) and len(token) >= 4:
             AppDownloadToken.objects.update_or_create(app_id=app_obj, token=token,
-                                                      defaults={"max_limit_count": token_max_used_number})
+                                                      defaults={"max_limit_count": token_max_used_number,
+                                                                "bind_status": bind_status})
         else:
             if isinstance(token_length, int) and 4 <= token_length <= 32:
                 pass
@@ -401,8 +409,8 @@ class AppDownloadTokenView(APIView):
                                                         exist_token=copy.deepcopy(exist_token))
             bulk_list = []
             for d_token in list(set(make_token_list) - set(exist_token))[:token_number]:
-                bulk_list.append(
-                    AppDownloadToken(token=d_token, max_limit_count=token_max_used_number, app_id=app_obj))
+                bulk_list.append(AppDownloadToken(token=d_token, max_limit_count=token_max_used_number, app_id=app_obj,
+                                                  bind_status=bind_status))
             AppDownloadToken.objects.bulk_create(bulk_list)
 
         return Response(res.dict)
@@ -413,14 +421,15 @@ class AppDownloadTokenView(APIView):
         act = request.data.get('act')
         if token is not None:
             AppDownloadToken.objects.filter(app_id__user_id=request.user,
-                                            app_id__app_id=app_id, token=token).update(used_count=0)
+                                            app_id__app_id=app_id, token=token).update(used_count=0, bind_udid=None)
         if act:
             if act == 'all':
                 AppDownloadToken.objects.filter(app_id__user_id=request.user, app_id__app_id=app_id).delete()
             elif act == 'invalid':
                 AppDownloadToken.objects.filter(app_id__user_id=request.user,
                                                 app_id__app_id=app_id,
-                                                used_count__gte=F('max_limit_count'), max_limit_count__gt=0).delete()
+                                                used_count__gte=F('max_limit_count'),
+                                                max_limit_count__gt=0, bind_udid__isnull=False).delete()
             elif act == 'some':
                 tokens = request.data.get('tokens')
                 if tokens and isinstance(tokens, list):

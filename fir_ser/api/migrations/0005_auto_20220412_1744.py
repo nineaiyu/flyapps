@@ -27,6 +27,8 @@ class Migration(migrations.Migration):
                 ('create_time', models.DateTimeField(auto_now_add=True, verbose_name='添加时间')),
                 ('update_time', models.DateTimeField(auto_now=True, verbose_name='更新时间')),
                 ('used_count', models.BigIntegerField(default=0, verbose_name='已经使用次数')),
+                ('bind_status', models.BooleanField(default=False, verbose_name='是否绑定设备udid')),
+                ('bind_udid', models.CharField(blank=True, max_length=64, null=True, verbose_name='设备udid')),
                 ('max_limit_count', models.BigIntegerField(default=0, verbose_name='最大可使用次数，0表示不限制')),
                 ('description', models.CharField(blank=True, default='', max_length=256, verbose_name='备注')),
                 ('app_id',

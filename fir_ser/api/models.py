@@ -537,6 +537,8 @@ class AppDownloadToken(models.Model):
     create_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     used_count = models.BigIntegerField(verbose_name="已经使用次数", default=0)
+    bind_status = models.BooleanField(verbose_name="是否绑定设备udid", default=False)
+    bind_udid = models.CharField(max_length=64, verbose_name='设备udid', null=True, blank=True)
     max_limit_count = models.BigIntegerField(verbose_name="最大可使用次数，0表示不限制", default=0)
     description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
 

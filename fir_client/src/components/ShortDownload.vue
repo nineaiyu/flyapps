@@ -406,7 +406,8 @@ export default {
       mobileprovision: '',
       ad_info: {ad_pic: '', ad_uri: ''},
       task_spend_time: 0,
-      task_msg: '执行中'
+      task_msg: '执行中',
+      err_password: false
     }
   },
   beforeDestroy() {
@@ -530,6 +531,7 @@ export default {
             this.show_err_msg(data.msg);
           } else {
             this.wrong = false;
+            this.binary_download();
           }
         } else {
           if (data.code === 1002) {
@@ -565,6 +567,22 @@ export default {
       window.location.href = this.mobileprovision;
     },
     check_msg() {
+      if (this.currentappinfo.need_password) {
+        if (this.currentappinfo.issupersign && !this.$route.query.udid) {
+          this.currentappinfo.need_password = false
+        }
+        if (this.$route.query.password && !this.err_password) {
+          this.currentappinfo.need_password = false
+          this.password = this.$route.query.password;
+          this.download()
+        }
+      } else {
+        if (this.$route.query.udid && this.$route.query.task_token) {
+          this.download()
+        }
+      }
+    },
+    download() {
       if (this.$route.query.udid && this.$route.query.task_token) {
         this.wrong = true;
         this.msg = '签名处理中，请耐心等待';
@@ -577,18 +595,32 @@ export default {
               this.show_err_msg(data.result);
             } else {
               this.wrong = false;
+              this.currentappinfo.need_password = false
+              this.binary_download()
             }
+          } else if (data.code === 1006) {
+            this.msg = data.msg;
+            this.show_err_msg(data.msg);
+            this.wrong = false;
+            this.err_password = true;
+            this.currentappinfo.need_password = true;
           } else {
             this.show_err_msg(data.msg);
+            // eslint-disable-next-line no-unused-vars
+            this.timer = setTimeout(data => {
+              window.location.href = location.href.replace(location.search, '');
+            }, 3000);
           }
         }, {
           methods: 'POST',
           short: this.$route.params.short,
-          data: {"task_token": this.$route.query.task_token}
+          data: {"task_token": this.$route.query.task_token, 'password': this.password}
         })
+      } else {
+        this.binary_download()
       }
     },
-    download() {
+    binary_download() {
       if (this.currentappinfo.app_id) {
         this.isdownload = true;
         getdownloadurl(res => {
@@ -652,6 +684,8 @@ export default {
               window.location.reload();
             }
             this.password = '';
+            this.err_password = true;
+            this.currentappinfo.need_password = true;
           }
         }, {
           'data': {

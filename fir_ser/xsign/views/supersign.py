@@ -118,7 +118,7 @@ class DeveloperView(APIView):
                 if devicestatus:
                     run_queryset = run_queryset.filter(udidsyncdeveloper__status=devicestatus)
 
-                for developer_s_obj in run_queryset:
+                for developer_s_obj in run_queryset.distinct():
                     pools.submit(run_task, developer_s_obj)
                 pools.shutdown()
 
@@ -419,7 +419,7 @@ class SuperSignUsedView(APIView):
                 app_to_dev_obj = APPToDeveloper.objects.filter(app_id=app_obj,
                                                                developerid__issuer_id=developer_id).first()
 
-                res = get_app_download_url(request, res, app_obj.app_id, app_obj.short, app_obj.password,
+                res = get_app_download_url(request, res, app_obj.app_id, app_obj.short, None,
                                            app_to_dev_obj.binary_file, True, device_udid)
 
         return Response(res.dict)
