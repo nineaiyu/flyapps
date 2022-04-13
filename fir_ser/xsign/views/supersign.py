@@ -83,6 +83,10 @@ class DeveloperView(APIView):
         res.data = developer_serializer.data
         res.count = developer_obj.count()
         res.status_choices = get_choices_dict(AppIOSDeveloperInfo.status_choices, Config.DEVELOPER_DISABLED_STATUS)
+        res.status_choices.extend([
+            {'id': 'open_auto_check', 'name': '开启自动检测', 'disabled': False},
+            {'id': 'close_auto_check', 'name': '关闭自动检测', 'disabled': False},
+        ])
         res.apple_auth_list = get_choices_dict(AppIOSDeveloperInfo.auth_type_choices)
         return Response(res.dict)
 
@@ -105,8 +109,16 @@ class DeveloperView(APIView):
                     if not status:
                         result_list.append({'issuer_id': developer_obj.issuer_id, 'msg': result.get("return_info")})
 
-                for developer_s_obj in AppIOSDeveloperInfo.objects.filter(user_id=request.user,
-                                                                          status__in=Config.DEVELOPER_USE_STATUS).all():
+                run_queryset = AppIOSDeveloperInfo.objects.filter(user_id=request.user,
+                                                                  status__in=Config.DEVELOPER_USE_STATUS).all()
+                devicestatus = data.get("devicestatus", '').strip()
+                udidsearch = data.get("udidsearch", '').strip()
+                if udidsearch:
+                    run_queryset = run_queryset.filter(udidsyncdeveloper__udid=udidsearch)
+                if devicestatus:
+                    run_queryset = run_queryset.filter(udidsyncdeveloper__status=devicestatus)
+
+                for developer_s_obj in run_queryset:
                     pools.submit(run_task, developer_s_obj)
                 pools.shutdown()
 
@@ -140,6 +152,13 @@ class DeveloperView(APIView):
             elif act == "setstatus":
                 issuer_ids = data.get("issuer_ids", [])
                 status = data.get("status", None)
+                if status and status in ['open_auto_check', 'close_auto_check']:
+                    auto_check = False
+                    if status == 'open_auto_check':
+                        auto_check = True
+                    AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id__in=issuer_ids).update(
+                        auto_check=auto_check)
+                    return Response(res.dict)
                 if issuer_ids and status is not None and status not in Config.DEVELOPER_DISABLED_STATUS:
                     status_text = get_choices_name_from_key(AppIOSDeveloperInfo.status_choices, status)
                     if status_text:

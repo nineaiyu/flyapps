@@ -66,7 +66,7 @@ def get_user_download_times_over_limit_html_content(user_obj):
                                    })
 
 
-def get_developer_devices_not_enough_html_content(user_obj, device_count):
+def get_developer_devices_over_limit_html_content(user_obj, device_count):
     return loader.render_to_string('xsign/apple_developer_devices_over_limit.html',
                                    {
                                        'username': user_obj.first_name,

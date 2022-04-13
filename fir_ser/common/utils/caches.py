@@ -20,8 +20,7 @@ from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCac
     UploadTmpFileNameCache, RedisCacheBase, UserCanDownloadCache, UserFreeDownloadTimesCache, WxTicketCache, \
     SignUdidQueueCache, CloudStorageCache
 from common.core.sysconfig import Config
-from common.notify.notify import pay_success_notify
-from common.notify.ntasks import download_times_not_enough
+from common.notify.notify import pay_success_notify, download_times_not_enough
 from fir_ser.settings import CACHE_KEY_TEMPLATE, SYNC_CACHE_TO_DATABASE
 
 logger = logging.getLogger(__name__)

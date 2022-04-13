@@ -12,9 +12,8 @@ from common.base.magic import magic_wrapper, magic_notify
 from common.cache.storage import NotifyLoopCache
 from common.core.sysconfig import Config
 from common.libs.mp.wechat import WxTemplateMsg
-from common.libs.sendmsg.template_content import get_user_download_times_not_enough_html_content, \
-    get_developer_devices_not_enough_html_content, get_developer_cert_expired_html_content, \
-    get_user_download_times_over_limit_html_content
+from common.libs.sendmsg.template_content import get_developer_devices_over_limit_html_content, \
+    get_developer_cert_expired_html_content, get_user_download_times_over_limit_html_content
 from common.notify.utils import notify_by_email
 from xsign.models import AppIOSDeveloperInfo
 from xsign.utils.modelutils import get_developer_devices
@@ -22,7 +21,7 @@ from xsign.utils.modelutils import get_developer_devices
 logger = logging.getLogger(__name__)
 
 
-def download_times_not_enough(user_obj, msg):
+def download_times_over_limit(user_obj):
     """
     1, '下载次数不足'
     :param msg:
@@ -30,16 +29,18 @@ def download_times_not_enough(user_obj, msg):
     :return:
     """
     message_type = 1
+    msg = f"您当前账户下载次数仅剩 {user_obj.download_times}，已超过您设置的阈值 {user_obj.notify_available_downloads}，为了避免业务使用，望您尽快充值!"
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
         res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).download_times_not_enough_msg(
             user_obj.first_name, user_obj.download_times, msg)
         logger.info(f'user_obj {user_obj} download times not enough result: {res}')
-    notify_by_email(user_obj, message_type, get_user_download_times_not_enough_html_content(user_obj))
+    notify_by_email(user_obj, message_type, get_user_download_times_over_limit_html_content(user_obj))
 
 
-def apple_developer_devices_not_enough(user_obj, device_count):
+def apple_developer_devices_over_limit(user_obj, device_count):
     """
     0, '签名余额不足'
+    :param device_count:
     :param user_obj:
     :return:
     """
@@ -50,7 +51,7 @@ def apple_developer_devices_not_enough(user_obj, device_count):
                             get_wx_nickname(wx_user_obj.openid)).apple_developer_devices_not_enough_msg(
             user_obj.first_name, device_count, msg)
         logger.info(f'user_obj {user_obj} sign devices not enough result: {res}')
-    notify_by_email(user_obj, message_type, get_developer_devices_not_enough_html_content(user_obj, device_count))
+    notify_by_email(user_obj, message_type, get_developer_devices_over_limit_html_content(user_obj, device_count))
 
 
 def apple_developer_cert_expired(user_obj, developer_queryset):
@@ -85,13 +86,12 @@ def check_user_download_times(user_obj, days=None):
         days = [0, 3, 7]
     if user_obj.notify_available_downloads == 0 or user_obj.notify_available_downloads < user_obj.download_times:
         return
-    msg = get_user_download_times_over_limit_html_content(user_obj)
     notify_rules = [
         {
             'func': magic_wrapper(lambda obj: obj.download_times < obj.notify_available_downloads, user_obj),
             'notify': days,
             'cache': NotifyLoopCache(user_obj.uid, 'download_times'),
-            'notify_func': [magic_wrapper(download_times_not_enough, user_obj, msg)]
+            'notify_func': [magic_wrapper(download_times_over_limit, user_obj)]
         }
     ]
     magic_notify(notify_rules)
@@ -112,13 +112,15 @@ def check_apple_developer_devices(user_obj, days=None):
             'func': magic_wrapper(lambda obj: device_count < obj.notify_available_signs, user_obj),
             'notify': days,
             'cache': NotifyLoopCache(user_obj.uid, 'sign_device_times'),
-            'notify_func': [magic_wrapper(apple_developer_devices_not_enough, user_obj, device_count)]
+            'notify_func': [magic_wrapper(apple_developer_devices_over_limit, user_obj, device_count)]
         }
     ]
     magic_notify(notify_rules)
 
 
-def check_apple_developer_cert(user_obj, expire_day=7):
+def check_apple_developer_cert(user_obj, expire_day=7, days=None):
+    if days is None:
+        days = [0, 3, 7]
     expire_time = datetime.datetime.now() + datetime.timedelta(days=expire_day)
     developer_queryset = AppIOSDeveloperInfo.objects.filter(user_id=user_obj, status__in=Config.DEVELOPER_USE_STATUS,
                                                             cert_expire_time__lte=expire_time).order_by(
@@ -129,7 +131,7 @@ def check_apple_developer_cert(user_obj, expire_day=7):
     notify_rules = [
         {
             'func': magic_wrapper(lambda: True),
-            'notify': [0, 3, 7],
+            'notify': days,
             'cache': NotifyLoopCache(user_obj.uid, 'developer_cert'),
             'notify_func': [magic_wrapper(apple_developer_cert_expired, user_obj, developer_queryset)]
         }

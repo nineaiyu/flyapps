@@ -11,7 +11,7 @@ from common.base.baseutils import get_format_time
 from common.libs.mp.wechat import WxTemplateMsg
 from common.libs.sendmsg.template_content import get_pay_success_html_content, get_sign_failed_html_content, \
     get_sign_unavailable_developer_html_content, get_sign_app_over_limit_html_content, \
-    get_check_developer_report_html_content
+    get_check_developer_report_html_content, get_user_download_times_not_enough_html_content
 from common.notify.utils import notify_by_email
 
 logger = logging.getLogger(__name__)
@@ -121,3 +121,18 @@ def check_developer_status_notify(user_obj, developer_obj_list, developer_used_i
     notify_by_email(user_obj, message_type,
                     get_check_developer_report_html_content(user_obj, developer_obj_list, developer_used_info,
                                                             yesterday_used_number))
+
+
+def download_times_not_enough(user_obj, msg):
+    """
+    1, '下载次数不足'
+    :param msg:
+    :param user_obj:
+    :return:
+    """
+    message_type = 1
+    for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
+        res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).download_times_not_enough_msg(
+            user_obj.first_name, user_obj.download_times, msg)
+        logger.info(f'user_obj {user_obj} download times not enough result: {res}')
+    notify_by_email(user_obj, message_type, get_user_download_times_not_enough_html_content(user_obj))

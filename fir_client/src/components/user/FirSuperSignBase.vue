@@ -1927,7 +1927,12 @@ export default {
     syncalldevices() {
       this.iosdeveloperFun({
         "methods": "PUT",
-        "data": {"issuer_id": this.appidseach, "act": "syncalldevice"}
+        "data": {
+          "issuer_id": this.appidseach,
+          "act": "syncalldevice",
+          "devicestatus": this.devicestatus,
+          "udidsearch": this.udidsearch
+        }
       });
     },
     cleandevices() {
