@@ -11,7 +11,7 @@ import time
 from api.models import Apps, UserInfo
 from api.utils.modelutils import get_app_d_count_by_app_id, add_remote_info_from_request, check_app_access_token
 from api.utils.signalutils import run_xsign_app_download_url
-from common.base.baseutils import get_real_ip_address
+from common.base.baseutils import get_real_ip_address, AesBaseCrypt
 from common.cache.storage import AppDownloadTodayTimesCache, AppDownloadTimesCache, DownloadUrlCache, AppInstanceCache
 from common.core.sysconfig import Config
 from common.utils.caches import consume_user_download_times
@@ -117,8 +117,9 @@ def get_app_download_url(request, res, app_id, short, password, release_id, is_d
             app_type = '.ipa'
             download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600, is_download,
                                                                 udid=udid)
-
-        res.data = {"download_url": download_url, "extra_url": extra_url}
+        encrypt_password = AesBaseCrypt().get_encrypt_uid(password)
+        res.data = {"download_url": download_url, "extra_url": extra_url, "password": encrypt_password}
+        logger.info(f'app download url :{res.data}')
         if download_url != "" and "mobileconifg" not in download_url:
 
             if not check_app_download_token(app_obj.get("need_password"), is_download, app_id, password):

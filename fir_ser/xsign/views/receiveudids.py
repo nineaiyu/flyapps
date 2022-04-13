@@ -37,11 +37,13 @@ class IosUDIDView(APIView):
 
     def post(self, request, short):
         p_info = request.query_params.get('p')
-        p_token = app_id = ''
+        p_token = app_id = pwd = ''
+        token_length = 52
+        app_id_length = 32
         if p_info:
-            p_token = p_info[:52]
-            app_id = p_info[55:len(p_info) - 3]
-
+            p_token = p_info[:token_length]
+            app_id = p_info[token_length + 3:token_length + 3 + app_id_length]
+            pwd = p_info[token_length + app_id_length + 3 + 3:]
         if not p_token or not app_id:
             return HttpResponsePermanentRedirect(Config.WEB_DOMAIN)
         stream_f = str(request.body)
@@ -78,6 +80,9 @@ class IosUDIDView(APIView):
                                                                         bind_udid=format_udid_info.get('udid')).first()
                             if token_obj:
                                 msg = f"{msg}&password={token_obj.token}"
+                            elif pwd:
+                                msg = f"{msg}&password={AesBaseCrypt().get_decrypt_uid(pwd)}"
+                            logger.info(f"msg:{msg}")
                     else:
                         return HttpResponsePermanentRedirect(f"{server_domain}/{short}")
                 else:

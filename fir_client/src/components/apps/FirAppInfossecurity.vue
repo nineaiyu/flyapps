@@ -325,11 +325,7 @@ export default {
   methods: {
     format_copy_text(token) {
       let short_full_url = this.currentapp.preview_url + "/" + this.currentapp.short;
-      if (this.currentapp.type === 1 && this.currentapp.issupersign) {
-        return "应用下载链接：" + short_full_url + " 下载授权码：" + token
-      } else {
-        return "应用下载链接：" + short_full_url + "?password=" + token
-      }
+        return  short_full_url + "?password=" + token
     },
     copy_success() {
       this.$message.success('复制剪切板成功');
@@ -421,6 +417,7 @@ export default {
     },
     tokenHandleSizeChange(val) {
       this.pagination.pagesize = val;
+      this.pagination.currentPage=1;
       this.showDownloadBase();
     },
     tokenHandleCurrentChange(val) {

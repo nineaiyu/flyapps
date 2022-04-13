@@ -609,7 +609,10 @@ export default {
         if (this.$route.query.password && !this.err_password) {
           this.currentappinfo.need_password = false
           this.password = this.$route.query.password;
-          this.download()
+          // eslint-disable-next-line no-unused-vars
+          this.timer = setTimeout(data => {
+            this.download();
+          }, 1000);
         }
       } else {
         if (this.$route.query.udid && this.$route.query.task_token) {
@@ -678,7 +681,11 @@ export default {
                 } else {
                   if (this.agent !== '') {
                     this.downloadurl = res.data.download_url;
-                    window.location.href = this.downloadurl;
+                    let pwd = ''
+                    if(res.data.password && res.data.password.length>4){
+                      pwd = '&password=' + encodeURIComponent(res.data.password)
+                    }
+                    window.location.href = this.downloadurl + pwd;
                     if (res.data.extra_url !== "") {
                       // eslint-disable-next-line no-unused-vars
                       this.timer = setTimeout(data => {

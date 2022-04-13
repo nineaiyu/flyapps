@@ -24,10 +24,12 @@ from xsign.utils.supersignutils import make_sign_udid_mobile_config
 logger = logging.getLogger(__name__)
 
 
-def get_post_udid_url(request, app_obj):
+def get_post_udid_url(request, app_obj, pwd):
     server_domain = get_server_domain_from_request(request, Config.POST_UDID_DOMAIN)
     p_token = make_token(app_obj.app_id, time_limit=120, key='post_udid', force_new=True)
-    token = f'{p_token}{"".join(random.sample(p_token, 3))}{app_obj.app_id}{"".join(random.sample(p_token, 3))}'
+    token = f'{p_token}{"".join(random.sample(p_token, 3))}{app_obj.app_id}{"".join(random.sample(p_token, 3))}{pwd}'
+    logger.info(f'p_token:{p_token} app_id:{app_obj.app_id} pwd:{pwd}')
+    logger.info(f'token:{token}')
     return f'{server_domain}{reverse("xudid", kwargs={"short": app_obj.short})}?p={token}'
 
 
@@ -38,6 +40,7 @@ class XsignDownloadView(APIView):
 
     def get(self, request, filename):
         down_token = request.query_params.get(settings.DATA_DOWNLOAD_KEY, None)
+        password = request.query_params.get('password', '')
         f_type = filename.split(".")[-1]
         flag = True
         storage_obj = get_local_storage()
@@ -72,7 +75,7 @@ class XsignDownloadView(APIView):
                 release_obj = AppReleaseInfo.objects.filter(release_id=filename.split('.')[0]).first()
                 if release_obj:
                     app_obj = release_obj.app_id
-                    udid_url = get_post_udid_url(request, app_obj)
+                    udid_url = get_post_udid_url(request, app_obj, password)
                     ios_udid_mobile_config = make_sign_udid_mobile_config(udid_url, app_obj.bundle_id, app_obj.name)
                     return file_response(ios_udid_mobile_config, make_random_uuid() + '.mobileconfig',
                                          "application/x-apple-aspen-config")
