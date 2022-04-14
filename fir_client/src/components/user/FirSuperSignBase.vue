@@ -858,10 +858,17 @@
             </template>
           </el-table-column>
           <el-table-column
+              :formatter="deviceformatter"
+              align="center"
+              label="添加时间"
+              prop="created_time"
+              width="100">
+          </el-table-column>
+          <el-table-column
               align="center"
               label="开发者ID"
               prop="developer_id"
-              width="200">
+              width="170">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
                 <p>开发者ID: {{ scope.row.developer_id }}</p>
@@ -941,7 +948,7 @@
               align="center"
               label="开发者ID"
               prop="developer_id"
-              width="200">
+              width="170">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
                 <p>开发者ID: {{ get_developer_uid(scope.row.developer_id) }}</p>
@@ -972,7 +979,7 @@
               align="center"
               label="授权时间"
               prop="created_time"
-              width="160">
+              width="100">
           </el-table-column>
         </el-table>
 
@@ -1019,7 +1026,7 @@
                 <p>UDID: {{ scope.row.udid }}</p>
                 <p>开发者ID: {{ scope.row.issuer_id }}</p>
                 <div slot="reference" class="name-wrapper">
-                  <el-tag size="medium">{{ scope.row.udid }}</el-tag>
+                  {{ scope.row.udid }}
                 </div>
               </el-popover>
             </template>
@@ -1057,6 +1064,7 @@
           <el-table-column
               align="center"
               label="开发者ID"
+              width="170"
               prop="issuer_id">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
@@ -1093,7 +1101,7 @@
               align="center"
               label="添加时间"
               prop="created_time"
-              width="160">
+              width="100">
           </el-table-column>
           <el-table-column
               align="center"
@@ -1106,6 +1114,7 @@
                   <el-button
                       size="mini"
                       type="danger"
+                      plain
                       @click="udidDeleteFun(scope,0)">仅删除
                   </el-button>
                 </el-tooltip>
@@ -1115,6 +1124,7 @@
                   <el-button
                       size="mini"
                       type="danger"
+                      plain
                       @click="udidDeleteFun(scope,1)">删除并禁用设备
                   </el-button>
                 </el-tooltip>

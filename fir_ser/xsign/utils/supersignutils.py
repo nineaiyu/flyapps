@@ -612,11 +612,12 @@ class IosUtils(object):
                 return status, device_obj
 
             if device_obj and device_obj.status not in ['ENABLED', 'DISABLED']:
-                if not IosUtils.check_device_status(developer_obj, org_device_obj=device_obj)[0]:
+                status, sync_device_obj = IosUtils.check_device_status(developer_obj, org_device_obj=device_obj)
+                if not status:
                     update_or_create_developer_udid_info(device_obj, developer_obj)
                     return False, 'UNEXPECTED_ERROR'
-
-            sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
+            else:
+                sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
 
         # 更新设备状态
         # 1. UDIDsyncDeveloper 库，通过udid 更新或创建设备信息
@@ -698,7 +699,8 @@ class IosUtils(object):
                     return False, err_msg
                 else:
                     if org_device_obj and org_device_obj.id == device_obj.id:
-                        org_device_obj.status = device_obj.status
+                        sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
+                        return True, sync_device_obj
         return True, ''
 
     @staticmethod
