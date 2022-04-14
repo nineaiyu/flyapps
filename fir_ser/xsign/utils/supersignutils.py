@@ -613,6 +613,7 @@ class IosUtils(object):
 
             if device_obj and device_obj.status not in ['ENABLED', 'DISABLED']:
                 if not IosUtils.check_device_status(developer_obj, org_device_obj=device_obj)[0]:
+                    update_or_create_developer_udid_info(device_obj, developer_obj)
                     return False, 'UNEXPECTED_ERROR'
 
             sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
