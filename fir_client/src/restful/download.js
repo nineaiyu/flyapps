@@ -29,7 +29,17 @@ function ErrorMsg(error) {
         error.message = '连接服务器失败!';
     }
     if (error.message === 'Network Error') {
-        alert('网络连接失败')
+        window.alert('网络连接失败')
+    } else {
+        window.alert(error.message)
+    }
+}
+
+function responseMiddleware(data, callBack) {
+    if (data.code === 999) {
+        window.alert(data.detail)
+    } else {
+        callBack(data);
     }
 }
 
@@ -39,35 +49,31 @@ function getData(methods = 'GET', url, params = {}, callBack) {
         Axios
             .put(url, params)
             .then(function (response) {
-                callBack(response.data);
+                responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
                 ErrorMsg(error);
-                callBack({"code": -1});
+                // callBack({"code": -1});
             });
     } else if (methods === 'POST') {
         Axios
             .post(url, params)
             .then(function (response) {
-                callBack(response.data);
+                responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
                 ErrorMsg(error);
-                callBack({"code": -1});
+                // callBack({"code": -1});
             });
     } else
         Axios
             .get(url, {params: params})
             .then(function (response) {
-                callBack(response.data);
-                let x = '';
-                if (x !== '') {
-                    alert(x)
-                }
+                responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
                 ErrorMsg(error);
-                callBack({"code": -1});
+                // callBack({"code": -1});
             });
 }
 
@@ -137,7 +143,7 @@ export function getAuthTokenFun(callBack, params) {
 
 export function geetest(self, uid, params, callback) {
     return geetestbase(loginFun, self, uid, params, callback, res => {
-        alert(res.msg);
+        window.alert(res.msg);
     })
 }
 

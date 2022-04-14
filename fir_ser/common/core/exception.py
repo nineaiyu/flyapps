@@ -20,7 +20,7 @@ def common_exception_handler(exc, context):
 
     if isinstance(exc, Throttled):
         second = f' {exc.wait} 秒之后'
-        if not second:
+        if not exc.wait:
             second = '稍后'
         ret.data = {
             'code': 999,

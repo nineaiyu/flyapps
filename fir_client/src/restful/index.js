@@ -1,6 +1,7 @@
 import Axios from 'axios'
 import VueCookies from 'vue-cookies'
 import router from "@/router";
+import {geetestbase} from "@/utils/base/utils";
 
 const Base64 = require('js-base64').Base64;
 Axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -78,10 +79,7 @@ export function set_auth_token() {
 
 set_auth_token();
 
-function ErrorMsg(error, load) {
-    if (!load) {
-        return
-    }
+function ErrorMsg(error) {
     if (error && error.response) {
         switch (error.response.status) {
             case 400:
@@ -132,59 +130,54 @@ function ErrorMsg(error, load) {
         router.push({name: 'FirLogin'});
     } else {
         if (error.message === 'Network Error') {
-            alert('网络连接失败');
+            window.alert('网络连接失败');
         } else {
-            alert(error)
+            window.alert(error)
         }
     }
 }
 
-function getData(methods, url, params = {}, callBack, load, isCode = false) {
+function responseMiddleware(data, callBack) {
+    if (data.code === 999) {
+        window.alert(data.detail)
+    } else {
+        callBack(data);
+    }
+}
+
+function getData(methods, url, params = {}, callBack) {
 
     if (methods === "DELETE") {
         Axios
             .delete(url, {params: params, signal: controller.signal})
             .then(function (response) {
-                if (isCode) {
-                    callBack(response.data);
-                } else {
-                    callBack(response.data.data);
-                }
+                responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error, load);
-                callBack({"code": -1});
+                ErrorMsg(error);
+                // callBack({"code": -1});
             });
 
     } else if (methods === "PUT") {
         Axios
             .put(url, params, {signal: controller.signal})
             .then(function (response) {
-                if (isCode) {
-                    callBack(response.data);
-                } else {
-                    callBack(response.data.data);
-                }
+                responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error, load);
-                callBack({"code": -1});
+                ErrorMsg(error);
+                // callBack({"code": -1});
             });
 
     } else if (methods === 'POST') {
         Axios
             .post(url, params, {signal: controller.signal})
             .then(function (response) {
-                if (isCode) {
-                    callBack(response.data);
-                } else {
-                    callBack(response.data.data);
-                }
-
+                responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error, load);
-                callBack({"code": -1});
+                ErrorMsg(error);
+                // callBack({"code": -1});
             });
     } else if (methods === 'FILE') {
         Axios
@@ -193,39 +186,36 @@ function getData(methods, url, params = {}, callBack, load, isCode = false) {
                 convertRes2Blob(response)
             })
             .catch(function (error) {
-                ErrorMsg(error, load);
-                callBack({"code": -1});
+                ErrorMsg(error);
+                // callBack({"code": -1});
             });
     } else {
         Axios
             .get(url, {params: params, signal: controller.signal})
             .then(function (response) {
-                callBack(response.data);
+                responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error, load);
-                callBack({"code": -1});
+                ErrorMsg(error);
+                // callBack({"code": -1});
             });
     }
 }
 
 /**用户登录 */
-export function loginFun(callBack, params, load = true) {
+export function loginFun(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/login',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**微信公众号关注登录 */
-export function wxLoginFun(callBack, params, load = true) {
+export function wxLoginFun(callBack, params) {
     let g_url = 'third.wx.login';
     if (params.methods === 'POST') {
         g_url = 'third.wx.sync'
@@ -236,239 +226,191 @@ export function wxLoginFun(callBack, params, load = true) {
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 
 /**微信公众号关注绑定 */
-export function wxBindFun(callBack, params, load = true) {
+export function wxBindFun(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/third.wx.bind',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**微信web扫码授权 */
-export function wxWebScanFun(callBack, params, load = true) {
+export function wxWebScanFun(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/mp.web.sync',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**获取验证token */
-export function getAuthTokenFun(callBack, params, load = true) {
+export function getAuthTokenFun(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/auth',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**获取信息修改token */
-export function getAuthcTokenFun(callBack, params, load = true) {
+export function getAuthcTokenFun(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/authc',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**用户注册 */
-export function registerFun(callBack, params, load = true) {
+export function registerFun(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/register',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 
 /**用户退出 */
-export function logout(callBack, params, load = true) {
+export function logout(callBack, params) {
     getData(
         'DELETE',
         USERSEVER + '/logout',
         params,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**api token */
-export function apitoken(callBack, params, load = true) {
+export function apitoken(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/token',
         params,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**用户应用列表 */
-export function getapps(callBack, params, load = true) {
+export function getapps(callBack, params) {
     getData(
         'GET',
         USERSEVER + '/apps',
         params,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 
 /**app应用操作 */
-export function apputils(callBack, params, load = true) {
+export function apputils(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/apps/' + params.app_id,
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**release应用操作 */
-export function releaseapputils(callBack, params, load = true) {
+export function releaseapputils(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/appinfos/' + params.app_id + '/' + params.release_id,
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**应用下载token操作 */
-export function appDownloadToken(callBack, params, load = true) {
+export function appDownloadToken(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/download_password/' + params.app_id,
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 
 /**根据短链接获取应用信息 */
-export function getShortAppinfo(callBack, params, load = true) {
+export function getShortAppinfo(callBack, params) {
     getData(
         'GET',
         USERSEVER + '/short/' + params.short,
         params,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**用户app存储配置 */
-export function getStorageinfo(callBack, params, load = true) {
+export function getStorageinfo(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/storage',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**用户app清理操作 */
-export function cleanStorageData(callBack, params, load = true) {
+export function cleanStorageData(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/storage/clean',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**用户个人信息 */
-export function userinfos(callBack, params, load = true) {
+export function userinfos(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/userinfo',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
@@ -490,33 +432,27 @@ export function getuploadurl(domain_name = null) {
 
 
 /**分析应用并获取app上传token */
-export function analyseApps(callBack, params, load = true) {
+export function analyseApps(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/analyse',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 
 /**获取下载的url */
-export function getdownloadurl(callBack, params, load = true) {
+export function getdownloadurl(callBack, params) {
     getData(
         'GET',
         USERSEVER + '/install/' + params.app_id,
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
@@ -549,231 +485,192 @@ export function uploadstorage(certinfo, file, successCallback, processCallback) 
 }
 
 /**获取文件上传token */
-export function uploadimgs(callBack, params, load = true) {
+export function uploadimgs(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/upload',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 
 /**获取充值价格信息 */
-export function get_package_prices(callBack, params, load = true) {
+export function get_package_prices(callBack, params) {
     getData(
         'GET',
         USERSEVER + '/package_prices',
         params,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**用户订单 */
-export function my_order(callBack, params, load = true) {
+export function my_order(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/orders',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**用户订单支付同步 */
-export function order_sync(callBack, params, load = true) {
+export function order_sync(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/orders.sync',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**实名认证 */
-export function user_certification(callBack, params, load = true) {
+export function user_certification(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/certification',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**用户信息修改验证 */
-export function changeInfoFun(callBack, params, load = true) {
+export function changeInfoFun(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/change',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**用户接收者验证 */
-export function NotifyInfoFun(callBack, params, load = true) {
+export function NotifyInfoFun(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/notify/notify',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**用户绑定域名*/
-export function domainFun(callBack, params, load = true) {
+export function domainFun(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/cname_domain',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 
 /**微信用户绑定 */
-export function wxutils(callBack, params, load = true) {
+export function wxutils(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/twx/info',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**访问域名绑定 */
-export function domaininfo(callBack, params, load = true) {
+export function domaininfo(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/domain_info',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**自定义广告 */
-export function advertinfo(callBack, params, load = true) {
+export function advertinfo(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/advert',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**下载码大屏 */
-export function qrcodeinfo(callBack, params, load = true) {
+export function qrcodeinfo(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/qrcode',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 
 /**应用举报 */
-export function appReport(callBack, params, load = true) {
+export function appReport(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/report',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**消息接收人配置 */
-export function notifyReceiverInfo(callBack, params, load = true) {
+export function notifyReceiverInfo(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/notify/receiver',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**消息配置 */
-export function notifyConfigInfo(callBack, params, load = true) {
+export function notifyConfigInfo(callBack, params) {
     getData(
         params.methods,
         USERSEVER + '/notify/config',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
+}
+
+export function geetest(self, uid, params, callback) {
+    return geetestbase(loginFun, self, uid, params, callback, res => {
+        self.$message.error(res.msg)
+    })
 }
 
 /** 超级签名************************************************相关api */
@@ -781,128 +678,104 @@ export function notifyConfigInfo(callBack, params, load = true) {
 let SIGNSEVER = DOMAIN + '/api/v1/fir/xsign';
 
 /** 超级签名--检测该账户是否可开启超级签名 */
-export function checkCanSign(callBack, params, load = false) {
+export function checkCanSign(callBack, params) {
     getData(
         params.methods,
         SIGNSEVER + '/cansign',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /** 苹果签名应用操作 */
-export function appSignInfo(callBack, params, load = true) {
+export function appSignInfo(callBack, params) {
     getData(
         params.methods,
         SIGNSEVER + '/signinfo/' + params.app_id,
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**签名账单 */
-export function DeviceBillInfo(callBack, params, load = true) {
+export function DeviceBillInfo(callBack, params) {
     getData(
         params.methods,
         SIGNSEVER + '/bill',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**设备流转账单 */
-export function DeviceTransferBillInfo(callBack, params, load = true) {
+export function DeviceTransferBillInfo(callBack, params) {
     getData(
         params.methods,
         SIGNSEVER + '/devicebill',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**签名下载排行 */
-export function DeviceRankInfo(callBack, params, load = true) {
+export function DeviceRankInfo(callBack, params) {
     getData(
         params.methods,
         SIGNSEVER + '/rank',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**开发绑定应用*/
-export function developerBindAppFun(callBack, params, load = true) {
+export function developerBindAppFun(callBack, params) {
     getData(
         params.methods,
         SIGNSEVER + '/bind',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 
 /**超级签名 苹果开发者信息 */
-export function iosdeveloper(callBack, params, load = true) {
+export function iosdeveloper(callBack, params) {
     getData(
         params.methods,
         SIGNSEVER + '/developer',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**超级签名 设备消耗信息 */
-export function iosdevices(callBack, params, load = true) {
+export function iosdevices(callBack, params) {
     getData(
         params.methods,
         SIGNSEVER + '/devices',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**超级签名 设备udid信息 */
-export function iosdevicesudid(callBack, params, load = true) {
+export function iosdevicesudid(callBack, params) {
     // eslint-disable-next-line no-console
     getData(
         params.methods,
@@ -910,15 +783,12 @@ export function iosdevicesudid(callBack, params, load = true) {
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**超级签名 苹果开发设备udid信息 */
-export function iosudevices(callBack, params, load = true) {
+export function iosudevices(callBack, params) {
     // eslint-disable-next-line no-console
     getData(
         params.methods,
@@ -926,55 +796,43 @@ export function iosudevices(callBack, params, load = true) {
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**签名证书 */
-export function developercert(callBack, params, load = true) {
+export function developercert(callBack, params) {
     getData(
         params.methods,
         SIGNSEVER + '/cert',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**签名证书 */
-export function signoperatemessage(callBack, params, load = true) {
+export function signoperatemessage(callBack, params) {
     getData(
         params.methods,
         SIGNSEVER + '/message',
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 
 /**获取签名任务状态 */
-export function gettask(callBack, params, load = true) {
+export function gettask(callBack, params) {
     getData(
         params.methods,
         SIGNSEVER + '/task/' + params.short,
         params.data,
         data => {
             callBack(data);
-        },
-        load,
-        true,
-        true
+        }
     );
 }
 

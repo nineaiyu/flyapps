@@ -352,7 +352,7 @@
 <script>
 import QRCode from 'qrcodejs2'
 
-import {appReport, geetest, getAuthTokenFun, getdownloadurl, getShortAppinfo, gettask} from '@/restful/download'
+import {appReport, geetest, getAuthTokenFun, getdownloadurl, getShortAppinfo, gettask} from '@/restful'
 import {checkEmail, checkphone, format_time, getRandomStr} from "@/utils/base/utils";
 
 export default {
