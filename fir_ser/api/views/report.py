@@ -66,7 +66,7 @@ class ReportView(APIView):
                         res.code = 1005
             else:
                 res.code = 1006
-                logger.error("email:%s failed too try , locked" % (email,))
+                logger.error(f"email:{email} failed too try , locked")
                 res.msg = "失败次数过多，已被锁定，请1小时之后再次尝试"
         else:
             res.code = 1001

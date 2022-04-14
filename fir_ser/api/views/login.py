@@ -56,7 +56,7 @@ def get_authenticate(target, password, act, allow_type):
 def check_register_userinfo(target, act, key, ftype=None):
     res = BaseResponse()
     res.data = {}
-    times_key = "%s_%s_%s" % (key, act, target)
+    times_key = f"{key}_{act}_{target}"
 
     if key == "register":
         if not get_register_type()[act]:
@@ -137,7 +137,7 @@ def check_change_userinfo(target, act, key, user, ftype=None):
             res.code = 1002
             res.msg = "暂不允许该类型修改"
             return res
-    times_key = "%s_%s_%s" % (user.uid, act, target)
+    times_key = f"{user.uid}_{act}_{target}"
     if act == "sms":
         if is_valid_phone(target) and str(user.mobile) != str(target):
             if login_auth_failed("get", times_key):
@@ -429,7 +429,7 @@ class RegistView(APIView):
                     response.msg = "密码不一致"
             else:
                 response.code = 1006
-                logger.error("username:%s failed too try , locked" % (username,))
+                logger.error(f"username:{username} failed too try , locked")
                 response.msg = "用户注册失败次数过多，已被锁定，请1小时之后再次尝试"
         else:
             response.code = 1001
@@ -668,7 +668,7 @@ class CertificationView(APIView):
             res.data["usercert"] = {
                 'name': user_certification_obj.name,
                 'addr': user_certification_obj.addr,
-                'card': "%s%s%s" % (card[:4], '*' * (len(card) - 8), card[-4:]),
+                'card': f"{card[:4]}{'*' * (len(card) - 8)}{card[-4:]}",
                 'mobile': user_certification_obj.mobile,
                 'status': user_certification_obj.status,
                 'msg': user_certification_obj.msg,

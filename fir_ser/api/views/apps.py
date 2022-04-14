@@ -172,7 +172,7 @@ class AppInfoView(APIView):
             else:
                 try:
                     app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
-                    logger.info("app_id:%s update old data:%s" % (app_id, app_obj.__dict__))
+                    logger.info(f"app_id:{app_id} update old data:{app_obj.__dict__}")
                     app_obj.description = data.get("description", app_obj.description)
                     app_obj.short = data.get("short", app_obj.short)
                     app_obj.name = data.get("name", app_obj.name)
@@ -299,7 +299,7 @@ class AppReleaseInfoView(APIView):
                         if binary_url != '':
                             if binary_url:
                                 if not binary_url.startswith('http'):
-                                    binary_url = 'http://%s' % binary_url
+                                    binary_url = f'http://{binary_url}'
                             else:
                                 binary_url = app_release_objs.first().binary_url
 

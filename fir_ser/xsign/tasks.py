@@ -64,7 +64,7 @@ def run_resign_task(app_id, need_download_profile=True, force=True, developers_f
         if developers_filter:
             developer_app_id_queryset = developer_app_id_queryset.filter(developerid__in=developers_filter)
 
-        with cache.lock("%s_%s" % ('task_resign', app_obj.app_id), timeout=60 * 60):
+        with cache.lock(f"task_resign_{app_obj.app_id}", timeout=60 * 60):
             task_list = []
             for developer_app_id_obj in developer_app_id_queryset.all():
                 c_task = run_resign_task_do.apply_async((app_id, developer_app_id_obj.developerid.pk,

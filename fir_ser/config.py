@@ -294,8 +294,8 @@ class IPACONF(object):
     MOBILE_CONFIG_SIGN_SSL = {
         # 描述文件是否签名，默认是关闭状态；如果开启，并且ssl_key_path 和 ssl_pem_path 正常，则使用填写的ssl进行签名,否则默认不签名
         'open': True,
-        'ssl_key_path': '/data/cert/%s.key' % API_DOMAIN.split("://")[1],
-        'ssl_pem_path': '/data/cert/%s.pem' % API_DOMAIN.split("://")[1]
+        'ssl_key_path': f'/data/cert/{API_DOMAIN.split("://")[1]}.key',
+        'ssl_pem_path': f'/data/cert/{API_DOMAIN.split("://")[1]}.pem'
     }
     DEFAULT_MOBILEPROVISION = {
         # 默认描述文件路径或者下载路径，用户企业签名或者超级签名 跳转 [设置 - 通用 - 描述文件|设备管理] 页面

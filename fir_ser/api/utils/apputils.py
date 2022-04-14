@@ -25,7 +25,7 @@ def bytes2human(n):
         if float(n) >= prefix[s]:
             value = float(n) / prefix[s]
             return '%.1f%s' % (value, s)
-    return '%sB' % n
+    return f'{n}B'
 
 
 def get_release_type(app_file_name, app_info):

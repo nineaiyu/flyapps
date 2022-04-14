@@ -27,7 +27,7 @@ class Weixinpay(object):
                          parivate_key=self.wx_config.get('APP_PRIVATE_KEY'),
                          cert_serial_no=self.wx_config.get('SERIAL_NO'),
                          appid=self.wx_config.get('APP_ID'),
-                         notify_url="%s/%s" % (self.wx_config.get('APP_NOTIFY_URL'), self.name),
+                         notify_url=f"{self.wx_config.get('APP_NOTIFY_URL')}/{self.name}",
                          apiv3_key=self.wx_config.get('API_V3_KEY')
                          )
 

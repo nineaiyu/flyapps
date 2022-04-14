@@ -324,8 +324,7 @@ export default {
   },
   methods: {
     format_copy_text(token) {
-      let short_full_url = this.currentapp.preview_url + "/" + this.currentapp.short;
-        return  short_full_url + "?password=" + token
+      return this.currentapp.preview_url + "/" + this.currentapp.short + "?password=" + token
     },
     copy_success() {
       this.$message.success('复制剪切板成功');
@@ -417,7 +416,7 @@ export default {
     },
     tokenHandleSizeChange(val) {
       this.pagination.pagesize = val;
-      this.pagination.currentPage=1;
+      this.pagination.currentPage = 1;
       this.showDownloadBase();
     },
     tokenHandleCurrentChange(val) {

@@ -57,7 +57,7 @@ class AppSignInfoView(APIView):
             try:
                 do_sign_flag = 0
                 app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
-                logger.info("app_id:%s update old data:%s" % (app_id, app_obj.__dict__))
+                logger.info(f"app_id:{app_id} update old data:{app_obj.__dict__}")
                 update_fields = []
                 if app_obj.issupersign:
                     app_obj.supersign_limit_number = data.get("supersign_limit_number",

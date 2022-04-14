@@ -7,6 +7,7 @@
 import logging
 import os
 import random
+from urllib.parse import quote
 
 from django.urls import reverse
 from rest_framework.views import APIView
@@ -28,8 +29,9 @@ def get_post_udid_url(request, app_obj, pwd):
     server_domain = get_server_domain_from_request(request, Config.POST_UDID_DOMAIN)
     p_token = make_token(app_obj.app_id, time_limit=120, key='post_udid', force_new=True)
     token = f'{p_token}{"".join(random.sample(p_token, 3))}{app_obj.app_id}{"".join(random.sample(p_token, 3))}{pwd}'
-    logger.info(f'p_token:{p_token} app_id:{app_obj.app_id} pwd:{pwd}')
-    logger.info(f'token:{token}')
+    logger.info(f'make udid: p_token:{p_token} app_id:{app_obj.app_id} pwd:{pwd}')
+    logger.info(f'make udid: token:{token}')
+    token = quote(token, safe='/', encoding=None, errors=None)
     return f'{server_domain}{reverse("xudid", kwargs={"short": app_obj.short})}?p={token}'
 
 

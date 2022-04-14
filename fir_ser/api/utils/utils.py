@@ -82,7 +82,7 @@ def change_storage_and_change_advert_img(user_obj, new_storage_obj, clean_old_da
 
 
 def download_files_form_oss(storage_obj, org_file, force=False):
-    with cache.lock("%s_%s" % ('download_files_form_oss', org_file), timeout=60 * 30):
+    with cache.lock(f"download_files_form_oss_{org_file}", timeout=60 * 30):
         if os.path.isfile(org_file) and not force:
             return True
         if storage_obj.download_file(os.path.basename(org_file), org_file + ".check.tmp"):
@@ -142,7 +142,7 @@ def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_d
 
 
 def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
-    with cache.lock("%s_%s" % ('migrating_storage_data', user_obj.uid), timeout=60 * 60 * 24):
+    with cache.lock(f"migrating_storage_data_{user_obj.uid}", timeout=60 * 60 * 24):
 
         auth_status = False
         certification = getattr(user_obj, 'certification', None)

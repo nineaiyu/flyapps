@@ -567,6 +567,15 @@ export default {
       window.location.href = this.mobileprovision;
     },
     check_msg() {
+      if(this.agent === 'wxandroid' || this.agent === 'wxapple'){
+        return
+      }
+      if (this.$route.query.msg) {
+        this.wrong = true;
+        this.show_err_msg(this.$route.query.msg);
+        this.currentappinfo.need_password=false;
+        return;
+      }
       if (this.currentappinfo.need_password) {
         if (this.currentappinfo.issupersign && !this.$route.query.udid) {
           this.currentappinfo.need_password = false
@@ -607,6 +616,7 @@ export default {
             this.wrong = false;
             this.err_password = true;
             this.currentappinfo.need_password = true;
+            this.password=''
           } else {
             this.show_err_msg(data.msg);
             // eslint-disable-next-line no-unused-vars
@@ -647,7 +657,7 @@ export default {
                   if (this.agent !== '') {
                     this.downloadurl = res.data.download_url;
                     let pwd = ''
-                    if(res.data.password && res.data.password.length>4){
+                    if (res.data.password && res.data.password.length > 4) {
                       pwd = '&password=' + encodeURIComponent(res.data.password)
                     }
                     window.location.href = this.downloadurl + pwd;

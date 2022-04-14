@@ -54,7 +54,7 @@ class UserInfo(AbstractUser):
         verbose_name_plural = "账户信息"
 
     def __str__(self):
-        return "%s_%s_%s(%s)" % (self.uid, self.email, self.mobile, self.get_role_display())
+        return f"{self.uid}-{self.email}-{self.mobile}-{self.get_role_display()}"
 
     def save(self, *args, **kwargs):
         if len(self.uid) < 8:
@@ -175,7 +175,7 @@ class Apps(models.Model):
         indexes = [models.Index(fields=['app_id']), models.Index(fields=['id', 'user_id', 'type'])]
 
     def __str__(self):
-        return "%s %s-%s %s" % (self.name, self.get_type_display(), self.short, self.issupersign)
+        return f"{self.name}-{self.get_type_display()}-{self.short}-{self.issupersign}"
 
 
 class AppBundleIdBlackList(models.Model):
@@ -196,7 +196,7 @@ class AppBundleIdBlackList(models.Model):
         unique_together = ('user_uid', 'bundle_id')
 
     def __str__(self):
-        return "%s-%s-%s" % (self.user_uid, self.bundle_id, self.enable)
+        return f"{self.user_uid}-{self.bundle_id}-{self.enable}"
 
 
 class AppScreenShot(models.Model):
@@ -210,7 +210,7 @@ class AppScreenShot(models.Model):
         indexes = [models.Index(fields=['app_id'])]
 
     def __str__(self):
-        return "%s-%s" % (self.app_id, self.screenshot_url)
+        return f"{self.app_id}-{self.screenshot_url}"
 
 
 class AppReleaseInfo(models.Model):

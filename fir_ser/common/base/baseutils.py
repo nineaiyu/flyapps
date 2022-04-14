@@ -86,9 +86,8 @@ def make_from_user_uuid(uid):
 
 def make_app_uuid(userinfo, bundleid):
     user_id = userinfo.uid
-    app_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, "%s" % (user_id + bundleid)).__str__().split("-")
-    fapp_uuid = "".join(app_uuid)
-    return fapp_uuid
+    app_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, f"{user_id + bundleid}").__str__().split("-")
+    return "".join(app_uuid)
 
 
 def make_random_uuid():
@@ -254,7 +253,7 @@ def get_server_domain_from_request(request, server_domain):
         protocol = 'https'
         if server_protocol == 'HTTP/1.1':
             protocol = 'http'
-        server_domain = "%s://%s" % (protocol, http_host)
+        server_domain = f"{protocol}://{http_host}"
     return server_domain
 
 

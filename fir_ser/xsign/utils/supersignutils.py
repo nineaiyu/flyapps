@@ -71,8 +71,7 @@ def resign_by_app_id_and_developer(app_id, developer_id, developer_app_id, need_
         return False, '清理执行中，请等待'
     d_time = time.time()
     if need_download_profile:
-        with cache.lock("%s_%s_%s" % ('make_and_download_profile', developer_obj.issuer_id, app_obj.app_id),
-                        timeout=60):
+        with cache.lock(f"make_and_download_profile_{developer_obj.issuer_id}_{app_obj.app_id}", timeout=60):
             IosUtils.modify_capability(developer_obj, app_obj, developer_app_id)
             status, download_profile_result = IosUtils.make_and_download_profile(app_obj,
                                                                                  developer_obj,
@@ -524,8 +523,8 @@ class IosUtils(object):
         state, used_num = check_app_sign_limit(self.app_obj)
         if not state:
             d_result['code'] = 1003
-            d_result['msg'] = "app_id %s used over limit.now %s limit: %s" % (
-                self.app_obj, used_num, self.app_obj.supersign_limit_number)
+            d_result[
+                'msg'] = f"app_id {self.app_obj} used over limit.now {used_num} limit: {self.app_obj.supersign_limit_number}"
             logger.error(d_result)
             add_sign_message(self.user_obj, self.developer_obj, self.app_obj, '签名余额不足', d_result['msg'], False)
             sign_app_over_limit_notify(self.app_obj.user_id, self.app_obj, used_num,

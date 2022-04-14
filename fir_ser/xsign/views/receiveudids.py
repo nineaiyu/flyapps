@@ -5,7 +5,7 @@
 # date: 2020/3/6
 import json
 import logging
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 from celery.exceptions import TimeoutError
 from django.http import HttpResponsePermanentRedirect, FileResponse, HttpResponse
@@ -40,10 +40,17 @@ class IosUDIDView(APIView):
         p_token = app_id = pwd = ''
         token_length = 52
         app_id_length = 32
-        if p_info:
-            p_token = p_info[:token_length]
-            app_id = p_info[token_length + 3:token_length + 3 + app_id_length]
-            pwd = p_info[token_length + app_id_length + 3 + 3:]
+        try:
+            if p_info:
+                p_token = p_info[:token_length]
+                app_id = p_info[token_length + 3:token_length + 3 + app_id_length]
+                pwd = p_info[token_length + app_id_length + 3 + 3:]
+                logger.info(f'get udid: p_token:{p_token} app_id:{app_id} pwd:{pwd}')
+                logger.info(f'get udid: p_info:{p_info}')
+        except Exception as e:
+            logger.error(f'token app_id check failed Exception:{e}')
+            return HttpResponsePermanentRedirect(Config.WEB_DOMAIN)
+
         if not p_token or not app_id:
             return HttpResponsePermanentRedirect(Config.WEB_DOMAIN)
         stream_f = str(request.body)
@@ -58,7 +65,7 @@ class IosUDIDView(APIView):
                     if app_obj.issupersign and app_obj.user_id.supersign_active:
                         res = check_app_permission(app_obj, BaseResponse())
                         if res.code != 1000:
-                            msg = "&msg=%s" % res.msg
+                            msg = f"&msg={res.msg}"
                         else:
                             client_ip = get_real_ip_address(request)
                             logger.info(f"client_ip {client_ip} short {short} app_info {app_obj}")
@@ -72,16 +79,16 @@ class IosUDIDView(APIView):
                                 'short': short,
                                 'app_id': app_id,
                                 'client_ip': client_ip,
-                                'r_token': make_token(app_obj.app_id, time_limit=30, key='receive_udid', force_new=True)
+                                'r_token': make_token(app_obj.app_id, time_limit=60, key='receive_udid', force_new=True)
                             }
                             encrypt_data = AesBaseCrypt().get_encrypt_uid(json.dumps(data))
-                            msg = "&task_token=%s" % quote(encrypt_data, safe='/', encoding=None, errors=None)
+                            msg = f"&task_token={quote(encrypt_data, safe='/', encoding=None, errors=None)}"
                             token_obj = AppDownloadToken.objects.filter(app_id__app_id=app_id,
                                                                         bind_udid=format_udid_info.get('udid')).first()
                             if token_obj:
                                 msg = f"{msg}&password={token_obj.token}"
                             elif pwd:
-                                msg = f"{msg}&password={AesBaseCrypt().get_decrypt_uid(pwd)}"
+                                msg = f"{msg}&password={AesBaseCrypt().get_decrypt_uid(unquote(pwd))}"
                             logger.info(f"msg:{msg}")
                     else:
                         return HttpResponsePermanentRedirect(f"{server_domain}/{short}")
@@ -90,7 +97,7 @@ class IosUDIDView(APIView):
             else:
                 return HttpResponsePermanentRedirect(f"{server_domain}/{short}")
         except Exception as e:
-            msg = "&msg=系统内部错误"
+            msg = "&msg=系统内部错误，请重试"
             logger.error(f"short {short} receive udid Exception:{e}")
 
         return HttpResponsePermanentRedirect(f"{server_domain}/{short}?udid={format_udid_info.get('udid')}{msg}")
@@ -175,7 +182,7 @@ class TaskView(APIView):
 
             if not check_app_download_token(app_obj.need_password, False, app_obj.app_id, password, False, udid):
                 res.code = 1006
-                res.msg = '下载授权码有误'
+                res.msg = '下载授权码失效或有误'
 
             if res.code != 1000:
                 return Response(res.dict)
@@ -205,7 +212,7 @@ class ShowUdidView(View):
     def get(self, request):
         udid = request.GET.get("udid")
         if udid:
-            return HttpResponse("udid: %s" % udid)
+            return HttpResponse(f"udid:{udid}")
         server_domain = get_server_domain_from_request(request, Config.POST_UDID_DOMAIN)
         path_info_lists = [server_domain, "show_udid"]
         udid_url = "/".join(path_info_lists)
@@ -220,5 +227,4 @@ class ShowUdidView(View):
         format_udid_info = udid_bytes_to_dict(stream_f)
         logger.info(f"show_udid receive new udid {format_udid_info}")
         server_domain = get_server_domain_from_request(request, Config.POST_UDID_DOMAIN)
-        return HttpResponsePermanentRedirect(
-            "%s/show_udid?udid=%s" % (server_domain, format_udid_info.get("udid")))
+        return HttpResponsePermanentRedirect(f"{server_domain}/show_udid?udid={format_udid_info.get('udid')}")

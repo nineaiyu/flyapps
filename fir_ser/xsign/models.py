@@ -57,7 +57,7 @@ class AppIOSDeveloperInfo(models.Model):
         return super(AppIOSDeveloperInfo, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "%s-%s" % (self.user_id, self.issuer_id)
+        return f"{self.user_id}-{self.issuer_id}"
 
 
 class UDIDsyncDeveloper(models.Model):
@@ -80,7 +80,7 @@ class UDIDsyncDeveloper(models.Model):
         unique_together = ('udid', 'developerid',)
 
     def __str__(self):
-        return "%s-%s-%s-%s" % (self.product, self.udid, self.developerid, self.status)
+        return f"{self.product}-{self.udid}-{self.developerid}-{self.status}"
 
 
 class AppUDID(models.Model):
@@ -111,7 +111,7 @@ class AppUDID(models.Model):
         unique_together = ('app_id', 'udid',)
 
     def __str__(self):
-        return "%s-%s" % (self.app_id.name, self.udid)
+        return f"{self.app_id.name}-{self.udid}"
 
 
 class APPSuperSignUsedInfo(models.Model):
@@ -130,7 +130,7 @@ class APPSuperSignUsedInfo(models.Model):
         verbose_name_plural = "设备使用统计"
 
     def __str__(self):
-        return "%s-%s-%s" % (self.user_id, self.app_id, self.udid)
+        return f"{self.user_id}-{self.app_id}-{self.udid}"
 
 
 class APPToDeveloper(models.Model):
@@ -148,7 +148,7 @@ class APPToDeveloper(models.Model):
         verbose_name_plural = "应用开发者绑定"
 
     def __str__(self):
-        return "%s-%s-%s" % (self.developerid, self.app_id, self.binary_file)
+        return f"{self.developerid}-{self.app_id}-{self.binary_file}"
 
 
 class DeveloperAppID(models.Model):

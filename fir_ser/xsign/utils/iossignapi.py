@@ -72,7 +72,7 @@ class ResignApp(object):
         self.my_local_key = my_local_key
         self.app_dev_pem = app_dev_pem
         self.app_dev_p12 = app_dev_p12
-        self.cmd = "zsign  -c '%s'  -k '%s' " % (self.app_dev_pem, self.my_local_key)
+        self.cmd = f"zsign  -c '{self.app_dev_pem}'  -k '{self.my_local_key}' "
 
     @staticmethod
     def sign_mobile_config(sign_data, ssl_pem_path, ssl_key_path, ssl_pem_data=None, ssl_key_data=None):
@@ -192,9 +192,8 @@ class ResignApp(object):
             info_plist_properties = {}
         properties = ""
         for k, v in info_plist_properties.items():
-            properties += " %s '%s' " % (k, v)
-        self.cmd = self.cmd + " %s -m '%s' -o '%s' -z 9 '%s'" % (properties, new_profile, new_ipa, org_ipa)
-        return exec_shell(self.cmd)
+            properties = f"{properties} {k} '{v}' "
+        return exec_shell(f"{self.cmd} {properties} -m '{new_profile}' -o '{new_ipa}' -z 9 '{org_ipa}'")
 
 
 def make_csr_content(csr_file_path, private_key_path):
