@@ -602,13 +602,13 @@ export default {
       window.location.href = this.mobileprovision;
     },
     check_msg() {
-      if(this.agent === 'wxandroid' || this.agent === 'wxapple'){
+      if (this.agent === 'wxandroid' || this.agent === 'wxapple') {
         return
       }
       if (this.$route.query.msg) {
         this.wrong = true;
         this.show_err_msg(this.$route.query.msg);
-        this.currentappinfo.need_password=false;
+        this.currentappinfo.need_password = false;
         return;
       }
       if (this.currentappinfo.need_password) {
@@ -651,7 +651,7 @@ export default {
             this.wrong = false;
             this.err_password = true
             this.currentappinfo.need_password = true
-            this.password=''
+            this.password = ''
           } else {
             this.show_err_msg(data.msg);
             // eslint-disable-next-line no-unused-vars
