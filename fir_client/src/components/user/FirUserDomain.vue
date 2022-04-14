@@ -157,6 +157,7 @@
 import {domaininfo} from "@/restful";
 import BindDomain from "@/components/base/BindDomain";
 import {format_choices, getUserInfoFun} from '@/utils'
+import {format_time} from "@/utils/base/utils";
 
 export default {
   name: "FirUserDomain",
@@ -245,7 +246,7 @@ export default {
     },
 
     format_create_time(row) {
-      return this.format_time(row.created_time)
+      return format_time(row.created_time)
     },
 
 

@@ -412,19 +412,15 @@ export default {
     },
 
     format_create_time(row) {
-      return this.format_time(row.created_time)
+      return format_time(row.created_time)
     },
 
     format_pay_time(row) {
-      return this.format_time(row.pay_time)
+      return format_time(row.pay_time)
     },
 
     format_cancel_time(row) {
-      return this.format_time(row.cancel_time)
-    },
-
-    format_time(stime) {
-      return format_time(stime)
+      return format_time(row.cancel_time)
     },
     MyOrderFun(params) {
       this.loading = true;
