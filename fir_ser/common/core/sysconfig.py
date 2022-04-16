@@ -409,7 +409,7 @@ class ConfigDescriptionCache(ConfigCacheBase):
 
 class ConfigCache(BaseConfCache, DomainConfCache, IpaConfCache, AuthConfCache, UserDownloadTimesCache, GeeTestConfCache,
                   PayConfCache, ThirdStorageConfCache, ThirdPartConfCache, AppleDeveloperConfCache,
-                  UserPersonalConfKeyCache, ConfigDescriptionCache):
+                  UserPersonalConfKeyCache, ConfigDescriptionCache, WechatConfCache):
     def __init__(self, *args, **kwargs):
         super(ConfigCache, self).__init__(*args, **kwargs)
 
