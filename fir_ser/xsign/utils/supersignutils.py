@@ -336,57 +336,20 @@ def get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, abnormal_use_
     return developer_udid_queryset, False
 
 
-def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True, read_only=True):
-    """
-    :param read_only:
-    :param user_objs: [user_obj]
-    :param udid: udid
-    :param app_obj: app_obj
-    :param private_first: 专属应用优先使用专属开发者，而不是公共开发者
-    :return:  (developer_obj, is_exist_devices)
-    """
-
-    if read_only:
-        status_choice = Config.DEVELOPER_USE_STATUS
-    else:
-        status_choice = Config.DEVELOPER_SIGN_STATUS
-
-    developer_udid_queryset, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, status_choice)
-    if status:
-        return developer_udid_queryset, status
-    else:
-        logger.warning(
-            f"udid:{udid} app_obj:{app_obj} find normal developer failed. now find abnormal device developer")
-
-    obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, [AppleDeveloperStatus.DEVICE_ABNORMAL])
-    if status:
-        return obj, status
-    else:
-        logger.warning(f"udid:{udid} app_obj:{app_obj} find abnormal developer failed. now find can wait developer")
-
-    if UserConfig(app_obj.user_id).DEVELOPER_WAIT_ABNORMAL_STATE:
-        obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, Config.DEVELOPER_WAIT_STATUS)
-        if status:
-            return obj, status
-        else:
-            logger.warning(f"udid:{udid} app_obj:{app_obj} find abnormal developer failed. now find register developer")
-
+def get_developer_user_by_app_new_udid(user_objs, udid, app_obj, status_choice, private_first):
     # 新设备查找策略
     # 根据app查找开发者账户
     exist_app_developer_pk_list = []
-    developer_pk_list = developer_udid_queryset.filter(developerid__apptodeveloper__app_id=app_obj)
+    status_filter = {'developerid__certid__isnull': False, 'developerid__status__in': status_choice}
+    developer_pk_list = UDIDsyncDeveloper.objects.filter(developerid__user_id__in=user_objs,
+                                                         developerid__apptodeveloper__app_id=app_obj,
+                                                         **status_filter).values('developerid').all().distinct()
     if developer_pk_list:
-        # developer_obj_dict_queryset = filter_developer_by_pk_list(developer_pk_list, 'developerappid')
-        # developer_pk_list = [developer_obj_dict.get('pk') for developer_obj_dict in developer_obj_dict_queryset]
         for developer_obj in AppIOSDeveloperInfo.objects.filter(pk__in=developer_pk_list):
             if get_developer_udided(developer_obj)[2] < developer_obj.usable_number:
                 exist_app_developer_pk_list.append(developer_obj.pk)
 
-    if UserConfig(app_obj.user_id).DEVELOPER_WAIT_ABNORMAL_DEVICE and UserConfig(
-            app_obj.user_id).DEVELOPER_ABNORMAL_DEVICE_WRITE:
-        status_choice.append(AppleDeveloperStatus.DEVICE_ABNORMAL)
     # 查询状态正常的专属开发者信息，判断是否为专属应用
-    status_filter = {'developerid__certid__isnull': False, 'developerid__status__in': status_choice}
     apple_to_app = AppleDeveloperToAppUse.objects.filter(app_id=app_obj, **status_filter).first()
 
     # 存在专属开发者账户，但是也同时存在已经安装的设备，优先选择已经安装设备的开发者账户？是or否
@@ -416,6 +379,56 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True,
             logger.info(f"udid:{udid} is a new device. app_obj:{app_obj} find {developer_obj} and return")
             return developer_obj, False
     return None, None
+
+
+def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True, read_only=True):
+    """
+    :param read_only:
+    :param user_objs: [user_obj]
+    :param udid: udid
+    :param app_obj: app_obj
+    :param private_first: 专属应用优先使用专属开发者，而不是公共开发者
+    :return:  (developer_obj, is_exist_devices)
+    """
+
+    if read_only:
+        status_choice = Config.DEVELOPER_USE_STATUS
+    else:
+        status_choice = Config.DEVELOPER_SIGN_STATUS
+
+    # 已经存在设备查找策略
+    obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, status_choice)
+    if status:
+        return obj, status
+    else:
+        logger.warning(
+            f"udid:{udid} app_obj:{app_obj} find normal developer failed. now find abnormal device developer")
+
+    obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, [AppleDeveloperStatus.DEVICE_ABNORMAL])
+    if status:
+        return obj, status
+    else:
+        logger.warning(f"udid:{udid} app_obj:{app_obj} find abnormal developer failed. now find can wait developer")
+
+    if UserConfig(app_obj.user_id).DEVELOPER_WAIT_ABNORMAL_STATE:
+        obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, Config.DEVELOPER_WAIT_STATUS)
+        if status:
+            return obj, status
+        else:
+            logger.warning(f"udid:{udid} app_obj:{app_obj} find abnormal developer failed. now find register developer")
+
+    # 新设备查找策略
+    # 查询开发者正常的状态
+    obj, status = get_developer_user_by_app_new_udid(user_objs, udid, app_obj, status_choice, private_first)
+    if obj:
+        return obj, status
+
+    # 个人配置允许查询异常设备
+    if UserConfig(app_obj.user_id).DEVELOPER_WAIT_ABNORMAL_DEVICE and UserConfig(
+            app_obj.user_id).DEVELOPER_ABNORMAL_DEVICE_WRITE:
+        status_choice = [AppleDeveloperStatus.DEVICE_ABNORMAL]
+        obj, status = get_developer_user_by_app_new_udid(user_objs, udid, app_obj, status_choice, private_first)
+    return obj, status
 
 
 def get_developer_obj_by_others(user_obj, udid, app_obj, read_only):
