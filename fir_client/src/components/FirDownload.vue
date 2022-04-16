@@ -793,7 +793,17 @@ export default {
       getShortAppinfo(data => {
         if (data.code === 1000) {
           if (data.redirect && data.data) {
-            window.location.href = data.data;
+            let href = data.data;
+            if (this.$route.query.password) {
+              if (href.indexOf('?') !== -1) {
+                if (href.indexOf('password=') === -1) {
+                  href = href + '&password=' + this.$route.query.password
+                }
+              } else {
+                href = href + '?password=' + this.$route.query.password
+              }
+            }
+            window.location.href = href;
             return
           }
           if (data.ad && data.ad.ad_uri) {
