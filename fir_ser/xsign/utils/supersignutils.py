@@ -10,6 +10,7 @@ import time
 import uuid
 import zipfile
 from io import BytesIO
+from wsgiref.util import FileWrapper
 
 import xmltodict
 from django.core.cache import cache
@@ -166,8 +167,8 @@ def make_sign_udid_mobile_config(udid_url, bundle_id, app_name):
             status, result = ResignApp.sign_mobile_config(make_udid_mobile_config(udid_url, bundle_id, app_name),
                                                           ssl_pem_path, ssl_key_path, ssl_pem_data, ssl_key_data)
             if status and result.get('data'):
-                buffer = BytesIO(result.get("data"))
-                return buffer
+                buffer = BytesIO(result.get("data"))  # uwsgi 无法解析该类型，需求加上 FileWrapper 包装
+                return FileWrapper(buffer)
             else:
                 logger.error(
                     f"{bundle_id} {app_name} sign_mobile_config failed ERROR:{result.get('err_info')}")

@@ -79,7 +79,7 @@ export function set_auth_token() {
 
 set_auth_token();
 
-function ErrorMsg(error,callBack) {
+function ErrorMsg(error, callBack) {
     if (error && error.response) {
         switch (error.response.status) {
             case 400:
@@ -127,7 +127,7 @@ function ErrorMsg(error,callBack) {
     if (error.response && error.response.status === 403) {
         router.push({name: 'FirLogin'});
     }
-    callBack({code:-1, msg:error.message})
+    callBack({code: -1, msg: error.message})
 }
 
 function responseMiddleware(data, callBack) {
@@ -147,7 +147,7 @@ function getData(methods, url, params = {}, callBack) {
                 responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error,callBack);
+                ErrorMsg(error, callBack);
             });
 
     } else if (methods === "PUT") {
@@ -157,7 +157,7 @@ function getData(methods, url, params = {}, callBack) {
                 responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error,callBack);
+                ErrorMsg(error, callBack);
             });
 
     } else if (methods === 'POST') {
@@ -167,7 +167,7 @@ function getData(methods, url, params = {}, callBack) {
                 responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error,callBack);
+                ErrorMsg(error, callBack);
             });
     } else if (methods === 'FILE') {
         Axios
@@ -176,7 +176,7 @@ function getData(methods, url, params = {}, callBack) {
                 convertRes2Blob(response)
             })
             .catch(function (error) {
-                ErrorMsg(error,callBack);
+                ErrorMsg(error, callBack);
             });
     } else {
         Axios
@@ -185,7 +185,7 @@ function getData(methods, url, params = {}, callBack) {
                 responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error,callBack);
+                ErrorMsg(error, callBack);
             });
     }
 }
