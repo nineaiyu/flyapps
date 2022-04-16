@@ -468,6 +468,11 @@ def check_sign_is_exists(user_obj, app_obj, udid, developer_obj, sign=True):
     logger.warning(f"udid {udid} not exist app_id {app_obj} . start find developer and sign")
 
 
+def change_developer_abnormal_status(developer_status, user_obj, developer_obj, app_obj):
+    if developer_status == AppleDeveloperStatus.ACTIVATED and developer_obj.status != developer_status:
+        sign_failed_notify(user_obj, developer_obj, app_obj)
+
+
 class IosUtils(object):
     def __init__(self, udid_info, user_obj, app_obj=None):
         self.developer_obj = None
@@ -638,6 +643,7 @@ class IosUtils(object):
         """
         device_udid = udid_info.get('udid')
         device_name = udid_info.get('product')
+        developer_status = developer_obj.status
         if not device_udid:
             logger.error("device udid is not exists. so return and exit")
             return True, 'continue'
@@ -687,6 +693,7 @@ class IosUtils(object):
                                                                                    DeviceStatus.INELIGIBLE]).first()
                     if sync_device_obj:
                         msg = result
+                        change_developer_abnormal_status(developer_status, user_obj, developer_obj, app_obj)
                         if UserConfig(user_obj).DEVELOPER_WAIT_ABNORMAL_DEVICE:
                             update_or_create_abnormal_device(sync_device_obj, user_obj, app_obj, client_ip)
                             msg = 'DEVELOPER_WAIT_ABNORMAL_DEVICE'
@@ -707,6 +714,7 @@ class IosUtils(object):
                 if not status:
                     sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
                     msg = '设备状态异常'
+                    change_developer_abnormal_status(developer_status, user_obj, developer_obj, app_obj)
                     if UserConfig(user_obj).DEVELOPER_WAIT_ABNORMAL_DEVICE:
                         update_or_create_abnormal_device(sync_device_obj, user_obj, app_obj, client_ip)
                         msg = 'DEVELOPER_WAIT_ABNORMAL_DEVICE'
