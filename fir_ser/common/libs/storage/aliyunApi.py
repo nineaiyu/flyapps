@@ -147,7 +147,7 @@ class AliYunOss(object):
                     {
                         "Action": p_action,
                         "Effect": "Allow",
-                        "Resource": ["acs:oss:*:*:%s/%s" % (self.bucket_name, name), ]
+                        "Resource": [f"acs:oss:*:*:{self.bucket_name}/{name}"]
                     }
                 ],
                 "Version": "1"
@@ -203,7 +203,7 @@ class AliYunOss(object):
         if os.path.isfile(local_file_full_path):
             filename = os.path.basename(local_file_full_path)
             headers = {
-                'Content-Disposition': 'attachment; filename="%s"' % filename,
+                'Content-Disposition': f'attachment; filename="{filename}"',
                 'Cache-Control': ''
             }
             self.bucket.put_object_from_file(filename, local_file_full_path, headers)

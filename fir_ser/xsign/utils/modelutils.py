@@ -15,7 +15,7 @@ from common.constants import SignStatus
 from common.core.sysconfig import Config
 from xsign.models import APPSuperSignUsedInfo, UDIDsyncDeveloper, AppUDID, APPToDeveloper, AppIOSDeveloperInfo, \
     IosDeveloperPublicPoolBill, IosDeveloperBill, DeveloperDevicesID, AppleDeveloperToAppUse, DeveloperAppID, \
-    AppleSignMessage
+    AppleSignMessage, DeviceAbnormalUDID
 
 logger = logging.getLogger(__name__)
 
@@ -207,3 +207,14 @@ def add_sign_message(user_obj, developer_obj, app_obj, title, message, is_succes
         title = f'应用【{app_obj.name}】 {title}'
     AppleSignMessage.objects.create(user_id=user_obj, developerid=developer_obj, app_id=app_obj,
                                     title=title, message=message, operate_status=is_success)
+
+
+def sync_abnormal_device(developer_obj, udid):
+    DeviceAbnormalUDID.objects.filter(auto_remove=True, udid__udid=udid, udid__developerid=developer_obj).delete()
+
+
+def update_or_create_abnormal_device(sync_device_obj, user_obj, app_obj, client_ip):
+    defaults = {
+        "description": f"签名应用【{app_obj.name}】 客户端IP地址:【{client_ip}】",
+    }
+    return DeviceAbnormalUDID.objects.update_or_create(user_id=user_obj, udid=sync_device_obj, defaults=defaults)

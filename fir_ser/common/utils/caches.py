@@ -184,7 +184,7 @@ def get_user_free_download_times(user_id, act='get', amount=1, auth_status=False
 
 
 def consume_user_download_times(user_id, app_id, amount=1, auth_status=False):
-    with cache.lock("%s_%s" % ('consume_user_download_times', user_id), timeout=10, blocking_timeout=6):
+    with cache.lock(f"consume_user_download_times_{user_id}", timeout=10, blocking_timeout=6):
         if get_user_free_download_times(user_id, 'get', amount, auth_status) - amount >= 0:
             get_user_free_download_times(user_id, 'set', amount, auth_status)
         else:
@@ -210,7 +210,7 @@ def enable_user_download(user_id):
 
 
 def add_user_download_times(user_id, download_times=0):
-    with cache.lock("%s_%s" % ('consume_user_download_times', user_id), timeout=10, blocking_timeout=6):
+    with cache.lock(f"consume_user_download_times_{user_id}", timeout=10, blocking_timeout=6):
         try:
             UserInfo.objects.filter(pk=user_id).update(download_times=F('download_times') + download_times)
             return enable_user_download(user_id)
@@ -259,7 +259,7 @@ def user_auth_success(user_id):
 
 
 def update_order_status(out_trade_no, status):
-    with cache.lock("%s_%s" % ('user_order_', out_trade_no), timeout=10, blocking_timeout=6):
+    with cache.lock(f"user_order_{out_trade_no}", timeout=10, blocking_timeout=6):
         order_obj = Order.objects.filter(order_number=out_trade_no).first()
         if order_obj:
             order_obj.status = status

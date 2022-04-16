@@ -11,7 +11,7 @@ from captcha.models import CaptchaStore
 from api.utils.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_clean_remote_client_log, \
     notify_check_user_download_times, notify_check_apple_developer_devices, notify_check_apple_developer_cert
 from api.views.login import get_login_type
-from common.core.sysconfig import Config, invalid_config_cache
+from common.core.sysconfig import Config, ConfigCacheBase
 from common.libs.geetest.geetest_utils import check_bypass_status
 from common.libs.mp.wechat import sync_wx_access_token
 from common.utils.storage import get_local_storage
@@ -27,11 +27,11 @@ def start_api_sever_do_clean():
     logger.info("clean local storage cache")
     get_local_storage(clean_cache=True)
     check_bypass_status()
-    invalid_config_cache()
+    ConfigCacheBase().invalid_config_cache()
 
 
 def clean_config_cache(key):
-    invalid_config_cache(key)
+    ConfigCacheBase().invalid_config_cache(key)
 
 
 @app.task

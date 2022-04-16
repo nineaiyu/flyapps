@@ -8,7 +8,7 @@ from django.dispatch import receiver
 
 from api.models import AppReleaseInfo
 from api.utils.utils import migrating_storage_file_data, get_filename_from_apptype
-from common.constants import SignStatus
+from common.constants import SignStatus, DeviceStatus
 from common.core.signals import run_resign_task_signal, delete_app_signal, xsign_app_download_url_signal, \
     xsign_migrate_data_signal, xsign_clean_data_signal, xsign_app_release_obj_signal
 from common.core.sysconfig import Config
@@ -65,10 +65,11 @@ def xsign_app_download_url_callback(sender, **kwargs):
     app_pk = kwargs.get('app_pk')
 
     local_storage = LocalStorage(**Config.IOS_PMFILE_DOWNLOAD_DOMAIN)
-    appudid_obj = AppUDID.objects.filter(app_id_id=app_pk, udid__udid=udid,
+    appudid_obj = AppUDID.objects.filter(app_id_id=app_pk, udid__udid=udid, udid__status=DeviceStatus.ENABLED,
                                          sign_status=SignStatus.SIGNATURE_PACKAGE_COMPLETE).last()
     if appudid_obj:
         super_sign_obj = APPSuperSignUsedInfo.objects.filter(udid__udid__udid=udid,
+                                                             udid__udid__status=DeviceStatus.ENABLED,
                                                              app_id_id=app_pk,
                                                              developerid__status__in=Config.DEVELOPER_USE_STATUS).last()
         if super_sign_obj and super_sign_obj.user_id.supersign_active:

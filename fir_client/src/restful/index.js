@@ -667,6 +667,18 @@ export function notifyConfigInfo(callBack, params) {
     );
 }
 
+/**消息配置 */
+export function personalConfigInfo(callBack, params) {
+    getData(
+        params.methods,
+        USERSEVER + '/personal/config',
+        params.data,
+        data => {
+            callBack(data);
+        }
+    );
+}
+
 export function geetest(self, uid, params, callback) {
     return geetestbase(loginFun, self, uid, params, callback, res => {
         self.$message.error(res.msg)
@@ -812,7 +824,7 @@ export function developercert(callBack, params) {
     );
 }
 
-/**签名证书 */
+/**操作日志 */
 export function signoperatemessage(callBack, params) {
     getData(
         params.methods,
@@ -823,6 +835,31 @@ export function signoperatemessage(callBack, params) {
         }
     );
 }
+
+/**异常设备管理 */
+export function abnormalDeviceUtil(callBack, params) {
+    getData(
+        params.methods,
+        SIGNSEVER + '/abnormal/device',
+        params.data,
+        data => {
+            callBack(data);
+        }
+    );
+}
+
+/**异常设备管理 */
+export function blackDeviceUtil(callBack, params) {
+    getData(
+        params.methods,
+        SIGNSEVER + '/black/device',
+        params.data,
+        data => {
+            callBack(data);
+        }
+    );
+}
+
 
 /**获取签名任务状态 */
 export function gettask(callBack, params) {

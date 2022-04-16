@@ -8,6 +8,7 @@ from api.utils.apputils import bytes2human
 from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_app_download_uri
 from common.base.baseutils import get_choices_dict, WeixinLoginUid
 from common.cache.storage import AdPicShowCache
+from common.core.sysconfig import Config
 from common.utils.caches import get_user_free_download_times, get_user_cert_auth_status
 from common.utils.storage import Storage
 from common.utils.token import make_token
@@ -507,3 +508,14 @@ class AppDownloadTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AppDownloadToken
         exclude = ["id", "app_id"]
+
+
+class PersonalConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserPersonalConfig
+        exclude = ["user_id", "id"]
+
+    title = serializers.SerializerMethodField()
+
+    def get_title(self, obj):
+        return getattr(Config, f'{obj.key}_DES')

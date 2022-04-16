@@ -24,14 +24,14 @@ from common.core.sysconfig import Config
 from common.utils.download import get_app_download_url
 from xsign.models import AppIOSDeveloperInfo, APPSuperSignUsedInfo, AppUDID, IosDeveloperPublicPoolBill, \
     UDIDsyncDeveloper, AppleDeveloperToAppUse, DeveloperAppID, APPToDeveloper, DeveloperDevicesID, \
-    IosDeveloperBill, AppleSignMessage
+    IosDeveloperBill, AppleSignMessage, DeviceAbnormalUDID, DeviceBlackUDID
 from xsign.tasks import run_resign_task_do, run_resign_task
 from xsign.utils.modelutils import get_user_public_used_sign_num, get_user_public_sign_num, check_uid_has_relevant, \
     get_developer_devices
 from xsign.utils.serializer import DeveloperSerializer, SuperSignUsedSerializer, DeviceUDIDSerializer, \
     BillInfoSerializer, \
     DeveloperDeviceSerializer, AppleDeveloperToAppUseSerializer, AppleDeveloperToAppUseAppsSerializer, \
-    BillTransferSerializer, AppleSignMessageSerializer
+    BillTransferSerializer, AppleSignMessageSerializer, AbnormalDeviceSerializer, BlackDeviceSerializer
 from xsign.utils.supersignutils import IosUtils
 
 logger = logging.getLogger(__name__)
@@ -197,14 +197,13 @@ class DeveloperView(APIView):
                             res.msg = result.get("return_info")
                             return Response(res.dict)
                 elif act == "checkcert":
-                    if developer_obj.certid:
-                        status, result = IosUtils.get_developer_cert_info(developer_obj)
-                        if status:
-                            res.data = result
-                        else:
-                            res.code = 1008
-                            res.msg = result.get("return_info")
-                            return Response(res.dict)
+                    status, result = IosUtils.get_developer_cert_info(developer_obj)
+                    if status:
+                        res.data = result
+                    else:
+                        res.code = 1008
+                        res.msg = result.get("return_info")
+                        return Response(res.dict)
                 elif act in ["renewcert", "cleancert"]:
                     if developer_obj.certid:
                         # clean developer somethings. remove profile and  revoke cert
@@ -957,4 +956,95 @@ class SignOperateMessageView(APIView):
         res.count = sign_message_queryset.count()
         res.status_choices = get_choices_dict(AppleSignMessage.status_choices)
 
+        return Response(res.dict)
+
+
+class AbnormalDeviceInfoView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [SuperSignPermission, ]
+
+    def get(self, request):
+        res = BaseResponse()
+
+        udid = request.query_params.get("udid", None)
+        issuer_id = request.query_params.get("issuer_id", None)
+
+        abnormal_udid_queryset = DeviceAbnormalUDID.objects.filter(user_id=request.user)
+        if issuer_id:
+            abnormal_udid_queryset = abnormal_udid_queryset.filter(udid__developerid__issuer_id=issuer_id)
+        if udid:
+            abnormal_udid_queryset = abnormal_udid_queryset.filter(udid__udid=udid)
+
+        page_obj = PageNumber()
+        page_serializer = page_obj.paginate_queryset(queryset=abnormal_udid_queryset.order_by("-created_time"),
+                                                     request=request,
+                                                     view=self)
+        abnormal_udid_serializer = AbnormalDeviceSerializer(page_serializer, many=True, )
+        res.data = abnormal_udid_serializer.data
+        res.count = abnormal_udid_queryset.count()
+
+        return Response(res.dict)
+
+    def put(self, request):
+        res = BaseResponse()
+        pk = request.data.get("pk", None)
+        state = request.data.get("state", None)
+        if pk is not None and state is not None and isinstance(state, int):
+            DeviceAbnormalUDID.objects.filter(user_id=request.user, pk=pk).update(auto_remove=True if state else False)
+        return Response(res.dict)
+
+    def delete(self, request):
+        res = BaseResponse()
+        pk = request.query_params.get("pk", None)
+        if pk is not None:
+            DeviceAbnormalUDID.objects.filter(user_id=request.user, pk=pk).delete()
+        return Response(res.dict)
+
+
+class BlackDeviceInfoView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [SuperSignPermission, ]
+
+    def get(self, request):
+        res = BaseResponse()
+
+        udid = request.query_params.get("udid", None)
+
+        black_udid_queryset = DeviceBlackUDID.objects.filter(user_id=request.user)
+        if udid:
+            black_udid_queryset = black_udid_queryset.filter(udid=udid)
+
+        page_obj = PageNumber()
+        page_serializer = page_obj.paginate_queryset(queryset=black_udid_queryset.order_by("-created_time"),
+                                                     request=request,
+                                                     view=self)
+        black_udid_serializer = BlackDeviceSerializer(page_serializer, many=True, )
+        res.data = black_udid_serializer.data
+        res.count = black_udid_queryset.count()
+
+        return Response(res.dict)
+
+    def put(self, request):
+        res = BaseResponse()
+        pk = request.data.get("pk", None)
+        state = request.data.get("state", None)
+        if pk is not None and state is not None and isinstance(state, int):
+            DeviceBlackUDID.objects.filter(user_id=request.user, pk=pk).update(enable=True if state else False)
+        return Response(res.dict)
+
+    def post(self, request):
+        res = BaseResponse()
+        udid = request.data.get("udid")
+        description = request.data.get("description")
+        enable = request.data.get("enable", True)
+        if udid:
+            DeviceBlackUDID.objects.update_or_create(user_id=request.user, udid=udid,
+                                                     defaults={'description': description, 'enable': enable})
+        return Response(res.dict)
+
+    def delete(self, request):
+        res = BaseResponse()
+        pk = request.query_params.get("pk", None)
+        if pk is not None:
+            DeviceBlackUDID.objects.filter(user_id=request.user, pk=pk).delete()
         return Response(res.dict)

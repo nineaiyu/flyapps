@@ -27,7 +27,7 @@ from common.utils.pending import get_pending_result
 from common.utils.token import verify_token, make_token
 from fir_ser.celery import app
 from xsign.tasks import run_sign_task
-from xsign.utils.supersignutils import udid_bytes_to_dict, make_sign_udid_mobile_config
+from xsign.utils.supersignutils import udid_bytes_to_dict, make_sign_udid_mobile_config, check_user_udid_black
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +70,9 @@ class IosUDIDView(APIView):
                             client_ip = get_real_ip_address(request)
                             logger.info(f"client_ip {client_ip} short {short} app_info {app_obj}")
 
-                            # from api.utils.app.supersignutils import IosUtils
-                            # ios_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
-                            # ios_obj.sign_ipa(client_ip)
+                            # from xsign.utils.supersignutils import IosUtils
+                            # ios_sign_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
+                            # ios_sign_obj.sign_ipa(client_ip)
                             # return Response('ok')
                             data = {
                                 'format_udid_info': format_udid_info,
@@ -183,6 +183,10 @@ class TaskView(APIView):
             if not check_app_download_token(app_obj.need_password, False, app_obj.app_id, password, False, udid):
                 res.code = 1006
                 res.msg = '下载授权码失效或有误'
+
+            if check_user_udid_black(app_obj.user_id, udid):
+                res.code = 1007
+                res.msg = '设备注册中，请耐心等待'
 
             if res.code != 1000:
                 return Response(res.dict)

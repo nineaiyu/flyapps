@@ -235,7 +235,7 @@ class AppReleaseInfo(models.Model):
         verbose_name_plural = "应用详情"
 
     def __str__(self):
-        return "%s-%s" % (self.app_id, self.release_id)
+        return f"{self.app_id}-{self.release_id}"
 
 
 class AppStorage(models.Model):
@@ -279,7 +279,7 @@ class AppStorage(models.Model):
         return super(AppStorage, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "%s %s" % (self.user_id.get_username(), self.name)
+        return f"{self.user_id.get_username()}-{self.name}"
 
 
 class Order(models.Model):
@@ -303,7 +303,7 @@ class Order(models.Model):
     description = models.TextField('备注', blank=True, null=True, default='')
 
     def __str__(self):
-        return "%s-%s-%s元" % (self.user_id, self.order_number, self.actual_amount / 100)
+        return f"{self.user_id}-{self.order_number}-{self.actual_amount / 100}元"
 
 
 class Price(models.Model):
@@ -477,21 +477,6 @@ class AppReportInfo(models.Model):
         return "%s-%s" % (self.app_name, self.report_reason)
 
 
-class SystemConfig(models.Model):
-    key = models.CharField(max_length=128, unique=True, verbose_name="配置名称")
-    value = models.TextField(max_length=10240, verbose_name="配置值")
-    enable = models.BooleanField(default=True, verbose_name="是否启用该配置项")
-    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
-    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
-
-    class Meta:
-        verbose_name = '系统配置项'
-        verbose_name_plural = "系统配置项"
-
-    def __str__(self):
-        return "%s-%s" % (self.key, self.description)
-
-
 class NotifyReceiver(models.Model):
     receiver_name = models.CharField(max_length=128, verbose_name="姓名")
     user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
@@ -549,3 +534,39 @@ class AppDownloadToken(models.Model):
 
     def __str__(self):
         return "%s-%s-%s" % (self.app_id, self.token, self.description)
+
+
+class BaseConfig(models.Model):
+    value = models.TextField(max_length=10240, verbose_name="配置值")
+    enable = models.BooleanField(default=True, verbose_name="是否启用该配置项")
+    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = '基础配置'
+        verbose_name_plural = "基础配置"
+        abstract = True
+
+
+class SystemConfig(BaseConfig):
+    key = models.CharField(max_length=128, unique=True, verbose_name="配置名称")
+
+    class Meta:
+        verbose_name = '系统配置项'
+        verbose_name_plural = "系统配置项"
+
+    def __str__(self):
+        return "%s-%s" % (self.key, self.description)
+
+
+class UserPersonalConfig(BaseConfig):
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
+    key = models.CharField(max_length=128, verbose_name="配置名称")
+
+    class Meta:
+        verbose_name = '个人配置项'
+        verbose_name_plural = "个人配置项"
+        unique_together = (('user_id', 'key'),)
+
+    def __str__(self):
+        return "%s-%s" % (self.key, self.description)

@@ -18,10 +18,10 @@ from api.utils.response import BaseResponse
 from api.utils.serializer import WeixinInfoSerializer
 from api.views.login import get_login_type
 from common.core.auth import ExpiringTokenAuthentication
+from common.core.sysconfig import Config
 from common.libs.mp.chat import reply, receive
 from common.libs.mp.wechat import check_signature, WxMsgCrypt, get_userinfo_from_openid, WxTemplateMsg
 from common.utils.caches import set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache
-from config import WEB_DOMAIN
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +195,7 @@ class ValidWxChatToken(APIView):
                         logger.info(f"replay msg: {result}")
                         return HttpResponse(result)
                     elif rec_msg.Eventkey == 'flyapps':
-                        reply_msg = reply.TextMsg(to_user, from_user, WEB_DOMAIN)
+                        reply_msg = reply.TextMsg(to_user, from_user, Config.WEB_DOMAIN)
                         result = reply_msg.send()
                         logger.info(f"replay msg: {result}")
                         return HttpResponse(result)

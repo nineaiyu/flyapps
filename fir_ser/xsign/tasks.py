@@ -23,19 +23,21 @@ logger = logging.getLogger(__name__)
 @shared_task
 def run_sign_task(format_udid_info, short, client_ip):
     app_obj = Apps.objects.filter(short=short).first()
-
-    if MigrateStorageState(app_obj.user_id.uid).get_state():
+    user_obj = app_obj.user_id
+    if MigrateStorageState(user_obj.uid).get_state():
         msg = "数据迁移中，无法处理该操作"
         return msg
-
-    ios_obj = IosUtils(format_udid_info, app_obj.user_id, app_obj)
-    status, msg = ios_obj.sign_ipa(client_ip)
-    if ios_obj.developer_obj:
-        if not status:
-            add_sign_message(app_obj.user_id, ios_obj.developer_obj, app_obj, '签名失败了', msg, False)
-        else:
-            add_sign_message(app_obj.user_id, ios_obj.developer_obj, app_obj, '签名成功', msg, True)
-
+    try:
+        ios_sign_obj = IosUtils(format_udid_info, user_obj, app_obj)
+        status, msg = ios_sign_obj.sign_ipa(client_ip)
+        if ios_sign_obj.developer_obj:
+            if not status:
+                add_sign_message(user_obj, ios_sign_obj.developer_obj, app_obj, '签名失败了', msg, False)
+            else:
+                add_sign_message(user_obj, ios_sign_obj.developer_obj, app_obj, '签名成功', msg, True)
+    except Exception as e:
+        logger.error(f"run_sign_task failed. udid_info:{format_udid_info} app_obj:{app_obj} Exception:{e}")
+        return '系统内部错误,请稍后再试或联系管理员'
     if not status:
         code = msg.get("code", -1)
         if code == 0:
@@ -46,6 +48,8 @@ def run_sign_task(format_udid_info, short, client_ip):
             msg = "维护中"
         elif code == 1003:
             msg = "应用余额不足"
+        elif code == 1007:
+            msg = "设备注册中，请耐心等待"
         elif code in [1004, 1001, 1009]:
             msg = msg.get('msg', '未知错误')
         else:

@@ -82,7 +82,7 @@ class DevicesAPI(object):
     # https://developer.apple.com/documentation/appstoreconnectapi/devices
     def __init__(self, base_uri, jwt_headers):
         self.headers = jwt_headers
-        self.devices_url = '%s/devices' % base_uri
+        self.devices_url = f'{base_uri}/devices'
 
     def list_devices(self, query_parameters=None):
         """
@@ -150,7 +150,7 @@ class DevicesAPI(object):
             403 ErrorResponse Forbidden Request not authorized. Content-Type: application/json
             404 ErrorResponse Not Found Resource not found. Content-Type: application/json
         """
-        base_url = '%s/%s' % (self.devices_url, device_id)
+        base_url = f'{self.devices_url}/{device_id}'
         params = {
             "fields[devices]": "addedDate, deviceClass, model, name, platform, status, udid",
         }
@@ -176,7 +176,7 @@ class DevicesAPI(object):
             404 ErrorResponse Not Found Resource not found. Content-Type: application/json
             409 ErrorResponse Conflict The provided resource data is not valid. Content-Type: application/json
         """
-        base_url = '%s/%s' % (self.devices_url, device_id)
+        base_url = f'{self.devices_url}/{device_id}'
         json = {
             'data': {
                 'type': 'devices',
@@ -196,7 +196,7 @@ class BundleIDsAPI(object):
     # https://developer.apple.com/documentation/appstoreconnectapi/bundle_ids
     def __init__(self, base_uri, jwt_headers):
         self.headers = jwt_headers
-        self.bundle_ids_url = '%s/bundleIds' % base_uri
+        self.bundle_ids_url = f'{base_uri}/bundleIds'
 
     def register_bundle_id(self, bundle_id_name, bundle_id_identifier, platform="IOS", seed_id=''):
         """
@@ -236,7 +236,7 @@ class BundleIDsAPI(object):
             404 ErrorResponse Not Found Resource not found. Content-Type: application/json
             409 ErrorResponse Conflict The provided resource data is not valid. Content-Type: application/json
         """
-        base_url = '%s/%s' % (self.bundle_ids_url, bundle_id)
+        base_url = f'{self.bundle_ids_url}/{bundle_id}'
         json = {}
         return request_format_log(self,
                                   requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies,
@@ -280,7 +280,7 @@ class BundleIDsAPI(object):
             404 ErrorResponse Not Found Resource not found. Content-Type: application/json
             409 ErrorResponse Conflict The provided resource data is not valid. Content-Type: application/json
         """
-        base_url = '%s/%s' % (self.bundle_ids_url, bundle_id)
+        base_url = f'{self.bundle_ids_url}/{bundle_id}'
         json = {
             'data': {
                 'type': 'bundleIds',
@@ -299,7 +299,7 @@ class BundleIDsCapabilityAPI(object):
     # https://developer.apple.com/documentation/appstoreconnectapi/bundle_id_capabilities
     def __init__(self, base_uri, jwt_headers):
         self.headers = jwt_headers
-        self.bundle_ids_capability_url = '%s/bundleIdCapabilities' % base_uri
+        self.bundle_ids_capability_url = f'{base_uri}/bundleIdCapabilities'
 
     def disable_capability(self, bundle_id, capability_type):
         """
@@ -312,7 +312,7 @@ class BundleIDsCapabilityAPI(object):
             404 ErrorResponse Not Found Resource not found. Content-Type: application/json
             409 ErrorResponse Conflict The provided resource data is not valid. Content-Type: application/json
         """
-        base_url = '%s/%s_%s' % (self.bundle_ids_capability_url, bundle_id, capability_type)
+        base_url = f'{self.bundle_ids_capability_url}/{bundle_id}_{capability_type}'
         json = {}
         return request_format_log(self,
                                   requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies,
@@ -355,7 +355,7 @@ class ProfilesAPI(object):
     # https://developer.apple.com/documentation/appstoreconnectapi/profiles
     def __init__(self, base_uri, jwt_headers):
         self.headers = jwt_headers
-        self.profiles_url = '%s/profiles' % base_uri
+        self.profiles_url = f'{base_uri}/profiles'
 
     def create_profile(self, bundle_id, certificate_id_list, profile_name, device_id_list,
                        profile_type='IOS_APP_ADHOC'):
@@ -415,7 +415,7 @@ class ProfilesAPI(object):
             404 ErrorResponse Not Found Resource not found. Content-Type: application/json
             409 ErrorResponse Conflict The provided resource data is not valid. Content-Type: application/json
         """
-        base_url = '%s/%s' % (self.profiles_url, profile_id)
+        base_url = f'{self.profiles_url}/{profile_id}'
         json = {}
         return request_format_log(self,
                                   requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies,
@@ -460,7 +460,7 @@ class CertificatesAPI(object):
     # https://developer.apple.com/documentation/appstoreconnectapi/certificates
     def __init__(self, base_uri, jwt_headers):
         self.headers = jwt_headers
-        self.certificates_url = '%s/certificates' % base_uri
+        self.certificates_url = f'{base_uri}/certificates'
 
     def create_certificate(self, csr_content, certificate_type='IOS_DISTRIBUTION'):
         """
@@ -528,7 +528,7 @@ class CertificatesAPI(object):
             404 ErrorResponse Not Found Resource not found. Content-Type: application/json
             409 ErrorResponse Conflict The provided resource data is not valid. Content-Type: application/json
         """
-        base_url = '%s/%s' % (self.certificates_url, certificate_id)
+        base_url = f'{self.certificates_url}/{certificate_id}'
         json = {}
         return request_format_log(self,
                                   requests.delete(base_url, json=json, headers=self.headers, proxies=self.proxies,

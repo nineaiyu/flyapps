@@ -12,10 +12,10 @@ from django.template import Context, Template
 from django.template.base import VariableNode
 from rest_framework import serializers
 
-from api.models import SystemConfig
-from common.cache.storage import SystemConfigCache
-from config import BASECONF, API_DOMAIN, MOBILEPROVISION, WEB_DOMAIN, THIRDLOGINCONF, AUTHCONF, IPACONF, \
-    DOWNLOADTIMESCONF, PAYCONF, STORAGEKEYCONF, SENDERCONF, APPLEDEVELOPERCONF
+from api.models import SystemConfig, UserPersonalConfig
+from common.cache.storage import UserSystemConfigCache
+from config import BASECONF, THIRDLOGINCONF, AUTHCONF, IPACONF, DOWNLOADTIMESCONF, PAYCONF, STORAGEKEYCONF, SENDERCONF, \
+    APPLEDEVELOPERCONF, DOMAINCONF, USERPERSONALCONFIGKEY, CONFIGDESCRIPTION
 
 logger = logging.getLogger(__name__)
 
@@ -37,41 +37,48 @@ def get_render_context(tmp: str, context: dict) -> str:
     return template.render(context)
 
 
-def invalid_config_cache(key='*'):
-    SystemConfigCache(key).del_many()
-
-
-def get_render_value(value):
-    if value:
-        try:
-            context_dict = {}
-            for sys_obj_dict in SystemConfig.objects.filter(enable=True).values().all():
-                if re.findall('{{.*%s.*}}' % sys_obj_dict['key'], sys_obj_dict['value']):
-                    logger.warning(f"get same render key. so continue")
-                    continue
-                context_dict[sys_obj_dict['key']] = sys_obj_dict['value']
-
-            value = get_render_context(value, context_dict)
-        except Exception as e:
-            logger.warning(f"db config - render failed {e}")
-    return value
-
-
 class ConfigCacheBase(object):
-    def __init__(self, px=''):
+    def __init__(self, px='system', model=SystemConfig, cache=UserSystemConfigCache, serializer=SystemConfigSerializer,
+                 timeout=60 * 60 * 24 * 30):
         self.px = px
+        self.model = model
+        self.cache = cache
+        self.timeout = timeout
+        self.serializer = serializer
+
+    def invalid_config_cache(self, key='*'):
+        UserSystemConfigCache(f'{self.px}_{key}').del_many()
+
+    def get_render_value(self, value):
+        if value:
+            try:
+                context_dict = {}
+                for sys_obj_dict in self.model.objects.filter(enable=True).values().all():
+                    if re.findall('{{.*%s.*}}' % sys_obj_dict['key'], sys_obj_dict['value']):
+                        logger.warning(f"get same render key. so continue")
+                        continue
+                    context_dict[sys_obj_dict['key']] = sys_obj_dict['value']
+
+                value = get_render_context(value, context_dict)
+            except Exception as e:
+                logger.warning(f"db config - render failed {e}")
+        return value
 
     def get_value_from_db(self, key):
-        data = SystemConfigSerializer(SystemConfig.objects.filter(enable=True, key=key).first()).data
+        data = self.serializer(self.model.objects.filter(enable=True, key=key).first()).data
         if re.findall('{{.*%s.*}}' % data['key'], data['value']):
             logger.warning(f"get same render key:{key}. so get default value")
             data['key'] = ''
         return data
 
+    def get_default_data(self, key, default_data):
+        if default_data is None:
+            default_data = {}
+        return default_data
+
     def get_value(self, key, data=None):
-        if data is None:
-            data = {}
-        cache = SystemConfigCache(key)
+        data = self.get_default_data(key, data)
+        cache = self.cache(f'{self.px}_{key}')
         cache_data = cache.get_storage_cache()
         if cache_data is not None and cache_data.get('key', '') == key:
             return cache_data.get('value')
@@ -80,19 +87,37 @@ class ConfigCacheBase(object):
         if d_key != key and data is not None:
             db_data['value'] = json.dumps(data)
             db_data['key'] = key
-        db_data['value'] = get_render_value(db_data['value'])
+        db_data['value'] = self.get_render_value(db_data['value'])
         try:
             db_data['value'] = json.loads(db_data['value'])
         except Exception as e:
             logger.warning(f"db config - json loads failed {e}")
-        cache.set_storage_cache(db_data, timeout=60 * 60 * 24 * 30)
+        cache.set_storage_cache(db_data, timeout=self.timeout)
         return db_data.get('value')
 
-    def set_value(self, key, value):
+    def save_db(self, key, value, enable, description, **kwargs):
+        defaults = {'value': value}
+        if enable is not None:
+            defaults['enable'] = enable
+        if description is not None:
+            defaults['description'] = description
+        self.model.objects.update_or_create(key=key, defaults=defaults, **kwargs)
+
+    def delete_db(self, key, **kwargs):
+        self.model.objects.filter(key=key, **kwargs).delete()
+
+    def set_value(self, key, value, enable=None, description=None, **kwargs):
         if not isinstance(value, str):
             value = json.dumps(value)
-        SystemConfig.objects.update_or_create(key=key, defaults={'value': value})
-        SystemConfigCache(key).del_storage_cache()
+        self.save_db(key, value, enable, description, **kwargs)
+        self.cache(f'{self.px}_{key}').del_storage_cache()
+
+    def set_default_value(self, key, **kwargs):
+        self.set_value(key, self.get_value(key, None), **kwargs)
+
+    def del_value(self, key, **kwargs):
+        self.delete_db(key, **kwargs)
+        self.cache(f'{self.px}_{key}').del_storage_cache()
 
     def __getattribute__(self, name):
         try:
@@ -101,17 +126,27 @@ class ConfigCacheBase(object):
             logger.error(f"__getattribute__ Error  {e}  {name}")
             return self.get_value(name)
 
-    @property
-    def MOBILEPROVISION(self):
-        return self.get_value('MOBILEPROVISION', MOBILEPROVISION)
+
+class DomainConfCache(ConfigCacheBase):
+    def __init__(self, *args, **kwargs):
+        super(DomainConfCache, self).__init__(*args, **kwargs)
 
     @property
     def API_DOMAIN(self):
-        return self.get_value('API_DOMAIN', API_DOMAIN)
+        return self.get_value('API_DOMAIN', DOMAINCONF.API_DOMAIN)
+
+    @property
+    def MOBILEPROVISION(self):
+        return self.get_value('MOBILEPROVISION', DOMAINCONF.MOBILEPROVISION)
 
     @property
     def WEB_DOMAIN(self):
-        return self.get_value('WEB_DOMAIN', WEB_DOMAIN)
+        return self.get_value('WEB_DOMAIN', DOMAINCONF.WEB_DOMAIN)
+
+
+class BaseConfCache(ConfigCacheBase):
+    def __init__(self, *args, **kwargs):
+        super(BaseConfCache, self).__init__(*args, **kwargs)
 
     @property
     def POST_UDID_DOMAIN(self):
@@ -127,12 +162,7 @@ class ConfigCacheBase(object):
 
     @property
     def WECHAT_WEB_LOGIN_REDIRECT_DOMAIN(self):
-        return self.get_value('WECHAT_WEB_LOGIN_REDIRECT_DOMAIN')
-
-
-class BaseConfCache(ConfigCacheBase):
-    def __init__(self):
-        super(BaseConfCache, self).__init__()
+        return self.get_value('WECHAT_WEB_LOGIN_REDIRECT_DOMAIN', self.API_DOMAIN)
 
     @property
     def IOS_PMFILE_DOWNLOAD_DOMAIN(self):
@@ -142,18 +172,10 @@ class BaseConfCache(ConfigCacheBase):
             'is_https': True if self.API_DOMAIN.split("://")[0] == "https" else False,
         }
 
-    @property
-    def DEFAULT_THROTTLE_RATES(self):
-        """
-        暂时无用
-        :return:
-        """
-        return super().get_value('DEFAULT_THROTTLE_RATES', BASECONF.DEFAULT_THROTTLE_RATES)
-
 
 class IpaConfCache(ConfigCacheBase):
-    def __init__(self):
-        super(IpaConfCache, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(IpaConfCache, self).__init__(*args, **kwargs)
 
     @property
     def MOBILE_CONFIG_SIGN_SSL(self):
@@ -177,21 +199,21 @@ class IpaConfCache(ConfigCacheBase):
         访问苹果api超时时间，默认2分钟
         :return:
         """
-        return super().get_value('APPLE_DEVELOPER_API_TIMEOUT', 2 * 60)
+        return super().get_value('APPLE_DEVELOPER_API_TIMEOUT', IPACONF.APPLE_DEVELOPER_API_TIMEOUT)
 
 
 class WechatConfCache(ConfigCacheBase):
-    def __init__(self):
-        super(WechatConfCache, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(WechatConfCache, self).__init__(*args, **kwargs)
 
     @property
     def THIRDLOGINCONF(self):
         return super().get_value('THIRDLOGINCONF', THIRDLOGINCONF.wx_official)
 
 
-class AuthConfCache(WechatConfCache):
-    def __init__(self):
-        super(AuthConfCache, self).__init__()
+class AuthConfCache(ConfigCacheBase):
+    def __init__(self, *args, **kwargs):
+        super(AuthConfCache, self).__init__(*args, **kwargs)
 
     @property
     def REGISTER(self):
@@ -219,8 +241,8 @@ class AuthConfCache(WechatConfCache):
 
 
 class GeeTestConfCache(ConfigCacheBase):
-    def __init__(self):
-        super(GeeTestConfCache, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(GeeTestConfCache, self).__init__(*args, **kwargs)
 
     @property
     def GEETEST_ID(self):
@@ -248,8 +270,8 @@ class GeeTestConfCache(ConfigCacheBase):
 
 
 class UserDownloadTimesCache(ConfigCacheBase):
-    def __init__(self):
-        super(UserDownloadTimesCache, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(UserDownloadTimesCache, self).__init__(*args, **kwargs)
 
     @property
     def USER_FREE_DOWNLOAD_TIMES(self):
@@ -269,8 +291,8 @@ class UserDownloadTimesCache(ConfigCacheBase):
 
 
 class PayConfCache(ConfigCacheBase):
-    def __init__(self):
-        super(PayConfCache, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(PayConfCache, self).__init__(*args, **kwargs)
 
     @property
     def PAY_SUCCESS_URL(self):
@@ -285,13 +307,18 @@ class PayConfCache(ConfigCacheBase):
         return super().get_value('PAY_CONFIG_KEY_INFO', PAYCONF.PAY_CONFIG_KEY_INFO)
 
 
-class ThirdPartConfCache(ConfigCacheBase):
-    def __init__(self):
-        super(ThirdPartConfCache, self).__init__()
+class ThirdStorageConfCache(ConfigCacheBase):
+    def __init__(self, *args, **kwargs):
+        super(ThirdStorageConfCache, self).__init__(*args, **kwargs)
 
     @property
     def STORAGE(self):
         return super().get_value('STORAGE', STORAGEKEYCONF.STORAGE)
+
+
+class ThirdPartConfCache(ConfigCacheBase):
+    def __init__(self, *args, **kwargs):
+        super(ThirdPartConfCache, self).__init__(*args, **kwargs)
 
     @property
     def SENDER(self):
@@ -307,8 +334,8 @@ class ThirdPartConfCache(ConfigCacheBase):
 
 
 class AppleDeveloperConfCache(ConfigCacheBase):
-    def __init__(self):
-        super(AppleDeveloperConfCache, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(AppleDeveloperConfCache, self).__init__(*args, **kwargs)
 
     @property
     def DEVELOPER_USE_STATUS(self):
@@ -334,11 +361,87 @@ class AppleDeveloperConfCache(ConfigCacheBase):
     def DEVELOPER_UID_KEY(self):
         return super().get_value('DEVELOPER_UID_KEY', APPLEDEVELOPERCONF.DEVELOPER_UID_KEY)
 
+    @property
+    def DEVELOPER_WAIT_ABNORMAL_DEVICE(self):
+        return super().get_value('DEVELOPER_WAIT_ABNORMAL_DEVICE', APPLEDEVELOPERCONF.DEVELOPER_WAIT_ABNORMAL_DEVICE)
 
-class ConfigCache(BaseConfCache, IpaConfCache, AuthConfCache, UserDownloadTimesCache, GeeTestConfCache, PayConfCache,
-                  ThirdPartConfCache, AppleDeveloperConfCache):
-    def __init__(self):
-        super(ConfigCache, self).__init__()
+    @property
+    def DEVELOPER_ABNORMAL_DEVICE_WRITE(self):
+        return super().get_value('DEVELOPER_ABNORMAL_DEVICE_WRITE', APPLEDEVELOPERCONF.DEVELOPER_ABNORMAL_DEVICE_WRITE)
+
+    @property
+    def DEVELOPER_WAIT_STATUS(self):
+        return super().get_value('DEVELOPER_WAIT_STATUS', APPLEDEVELOPERCONF.DEVELOPER_WAIT_STATUS)
+
+    @property
+    def DEVELOPER_WAIT_ABNORMAL_STATE(self):
+        return super().get_value('DEVELOPER_WAIT_ABNORMAL_STATE', APPLEDEVELOPERCONF.DEVELOPER_WAIT_ABNORMAL_STATE)
+
+
+class UserPersonalConfKeyCache(ConfigCacheBase):
+    def __init__(self, *args, **kwargs):
+        super(UserPersonalConfKeyCache, self).__init__(*args, **kwargs)
+
+    @property
+    def DEVELOPER_STATUS_CONFIG(self):
+        return super().get_value('DEVELOPER_STATUS_CONFIG', USERPERSONALCONFIGKEY.DEVELOPER_STATUS_CONFIG)
+
+
+class ConfigDescriptionCache(ConfigCacheBase):
+    def __init__(self, *args, **kwargs):
+        super(ConfigDescriptionCache, self).__init__(*args, **kwargs)
+
+    @property
+    def DEVELOPER_WAIT_ABNORMAL_DEVICE_DES(self):
+        return super().get_value('DEVELOPER_WAIT_ABNORMAL_DEVICE_DES',
+                                 CONFIGDESCRIPTION.DEVELOPER_WAIT_ABNORMAL_DEVICE_DES)
+
+    @property
+    def DEVELOPER_ABNORMAL_DEVICE_WRITE_DES(self):
+        return super().get_value('DEVELOPER_ABNORMAL_DEVICE_WRITE_DES',
+                                 CONFIGDESCRIPTION.DEVELOPER_ABNORMAL_DEVICE_WRITE_DES)
+
+    @property
+    def DEVELOPER_WAIT_ABNORMAL_STATE_DES(self):
+        return super().get_value('DEVELOPER_WAIT_ABNORMAL_STATE_DES',
+                                 CONFIGDESCRIPTION.DEVELOPER_WAIT_ABNORMAL_STATE_DES)
+
+
+class ConfigCache(BaseConfCache, DomainConfCache, IpaConfCache, AuthConfCache, UserDownloadTimesCache, GeeTestConfCache,
+                  PayConfCache, ThirdStorageConfCache, ThirdPartConfCache, AppleDeveloperConfCache,
+                  UserPersonalConfKeyCache, ConfigDescriptionCache):
+    def __init__(self, *args, **kwargs):
+        super(ConfigCache, self).__init__(*args, **kwargs)
 
 
 Config = ConfigCache()
+
+
+class UserConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserPersonalConfig
+        fields = "__all__"
+
+
+class UserPersonalConfigCache(ConfigCache):
+    def __init__(self, user_obj):
+        self.user_obj = user_obj
+        super().__init__(f'user_{user_obj.uid}', UserPersonalConfig, UserSystemConfigCache, UserConfigSerializer)
+
+    def get_default_data(self, key, default_data):
+        n_data = getattr(Config, key)
+        if n_data is None:
+            n_data = {}
+        return n_data
+
+    def delete_db(self, key, **kwargs):
+        super(UserPersonalConfigCache, self).delete_db(key, user_id=self.user_obj)
+
+    def save_db(self, key, value, enable=None, description=None, **kwargs):
+        super(UserPersonalConfigCache, self).save_db(key, value, enable, description, user_id=self.user_obj)
+
+    def set_default_value(self, key, **kwargs):
+        super(UserPersonalConfigCache, self).set_default_value(key, user_id=self.user_obj)
+
+
+UserConfig = UserPersonalConfigCache

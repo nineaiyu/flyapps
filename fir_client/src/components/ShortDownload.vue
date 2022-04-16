@@ -617,6 +617,10 @@ export default {
             this.err_password = true;
             this.currentappinfo.need_password = true;
             this.password = ''
+          } else if (data.code === 1007) {
+            this.msg = data.msg;
+            this.show_err_msg(data.msg);
+            this.wrong = true;
           } else {
             this.show_err_msg(data.msg);
             // eslint-disable-next-line no-unused-vars

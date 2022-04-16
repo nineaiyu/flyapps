@@ -299,6 +299,12 @@ export default {
       }
     },
     beforeAvatarUpload(file, id, act) {
+      if (!file) {
+        this.$message.warning("展示图片不存在")
+        this.bind_advert_sure = false;
+        this.handleCurrentChange(1)
+        return
+      }
       return AvatarUploadUtils(this, file, {
         'app_id': this.$store.state.userinfo.uid,
         'upload_key': file.name,

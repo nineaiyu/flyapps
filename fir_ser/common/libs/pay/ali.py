@@ -26,7 +26,7 @@ class Alipay(object):
     def __get_ali_pay(self):
         return AliPay(
             appid=self.ali_config.get("APP_ID"),
-            app_notify_url="%s/%s" % (self.ali_config.get("APP_NOTIFY_URL"), self.name),
+            app_notify_url=f"{self.ali_config.get('APP_NOTIFY_URL')}/{self.name}",
             app_private_key_string=self.ali_config.get("APP_PRIVATE_KEY"),
             alipay_public_key_string=self.ali_config.get("ALI_PUBLIC_KEY"),
             sign_type="RSA2",  # RSA 或者 RSA2
@@ -42,12 +42,12 @@ class Alipay(object):
             out_trade_no=out_trade_no,
             total_amount=total_amount / 100,
             subject=self.ali_config.get("SUBJECT"),
-            body="充值 %s 元" % str(total_amount / 100),
+            body=f"充值 {total_amount / 100} 元",
             time_expire=time_expire,
             return_url=self.ali_config.get("RETURN_URL"),
             passback_params=json.dumps(passback_params)
         )
-        result = {'type': self.p_type, 'url': "https://openapi.alipay.com/gateway.do?%s" % order_string,
+        result = {'type': self.p_type, 'url': f"https://openapi.alipay.com/gateway.do?{order_string}",
                   'out_trade_no': out_trade_no}
         logger.info(f"支付宝支付连接生成成功 {result}")
         return result

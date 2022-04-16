@@ -205,9 +205,9 @@ class SignUdidQueueCache(RedisCacheBase):
         super().__init__(self.cache_key)
 
 
-class SystemConfigCache(RedisCacheBase):
+class UserSystemConfigCache(RedisCacheBase):
     def __init__(self, prefix_key):
-        self.cache_key = f"{CACHE_KEY_TEMPLATE.get('sysconfig_key')}_{prefix_key}"
+        self.cache_key = f"{CACHE_KEY_TEMPLATE.get('config_key')}_{prefix_key}"
         super().__init__(self.cache_key)
 
 

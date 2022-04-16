@@ -24,7 +24,7 @@ from common.base.magic import run_function_by_locker, call_function_try_attempts
 from common.cache.state import CleanErrorBundleIdSignDataState
 from common.cache.storage import RedisCacheBase
 from common.constants import DeviceStatus, AppleDeveloperStatus, SignStatus
-from common.core.sysconfig import Config
+from common.core.sysconfig import Config, UserConfig
 from common.notify.notify import sign_failed_notify, sign_unavailable_developer_notify, sign_app_over_limit_notify
 from common.utils.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
     consume_user_download_times_by_app_obj, add_udid_cache_queue, get_and_clean_udid_cache_queue
@@ -32,10 +32,11 @@ from common.utils.storage import Storage
 from fir_ser.settings import SUPER_SIGN_ROOT, MEDIA_ROOT
 from xsign.models import APPSuperSignUsedInfo, AppUDID, AppIOSDeveloperInfo, APPToDeveloper, \
     UDIDsyncDeveloper, DeveloperAppID, DeveloperDevicesID, IosDeveloperPublicPoolBill, AppleDeveloperToAppUse, \
-    IosDeveloperBill
+    IosDeveloperBill, DeviceAbnormalUDID, DeviceBlackUDID
 from xsign.utils.iossignapi import ResignApp, AppDeveloperApiV2
 from xsign.utils.modelutils import get_ios_developer_public_num, check_ipa_is_latest_sign, \
-    update_or_create_developer_udid_info, check_uid_has_relevant, get_developer_udided, add_sign_message
+    update_or_create_developer_udid_info, check_uid_has_relevant, get_developer_udided, add_sign_message, \
+    update_or_create_abnormal_device
 from xsign.utils.serializer import BillAppInfoSerializer, BillDeveloperInfoSerializer
 from xsign.utils.utils import delete_app_to_dev_and_file
 
@@ -51,6 +52,42 @@ def check_org_file(user_obj, org_file):
 
     storage_obj = Storage(user_obj)
     return download_files_form_oss(storage_obj, org_file)
+
+
+def get_abnormal_queryset(user_obj, udid):
+    return DeviceAbnormalUDID.objects.filter(user_id=user_obj,
+                                             udid__udid=udid,
+                                             udid__developerid__status__in=Config.DEVELOPER_USE_STATUS)
+
+
+def check_user_udid_black(user_obj, udid):
+    if DeviceBlackUDID.objects.filter(user_id=user_obj, udid=udid, enable=True).count():
+        return True
+
+
+def get_developer_queryset_by_udidsync(user_obj, udid, status_list):
+    return AppIOSDeveloperInfo.objects.filter(user_id=user_obj,
+                                              status__in=Config.DEVELOPER_USE_STATUS,
+                                              certid__isnull=False,
+                                              udidsyncdeveloper__udid=udid,
+                                              udidsyncdeveloper__status__in=status_list)
+
+
+def check_udid_black(user_obj, udid):
+    if check_user_udid_black(user_obj, udid):
+        return True
+    if UserConfig(user_obj).DEVELOPER_WAIT_ABNORMAL_DEVICE:
+        if get_abnormal_queryset(user_obj, udid).filter(auto_remove=False).count():
+            return True
+
+        if get_developer_queryset_by_udidsync(user_obj, udid, [DeviceStatus.ENABLED, DeviceStatus.DISABLED]).count():
+            get_abnormal_queryset(user_obj, udid).delete()
+            return False
+
+        for developer_obj in get_developer_queryset_by_udidsync(user_obj, udid,
+                                                                [DeviceStatus.PROCESSING, DeviceStatus.INELIGIBLE]):
+            IosUtils.get_device_from_developer(developer_obj)
+        return get_abnormal_queryset(user_obj, udid).count()
 
 
 def resign_by_app_id_and_developer(app_id, developer_id, developer_app_id, need_download_profile=True, force=True):
@@ -265,21 +302,9 @@ def get_developer_by_pk_list(developer_pk_list, f_key, app_search_flag=True):
         return developer_obj
 
 
-def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True, read_only=True):
-    """
-    :param read_only:
-    :param user_objs: [user_obj]
-    :param udid: udid
-    :param app_obj: app_obj
-    :param private_first: 专属应用优先使用专属开发者，而不是公共开发者
-    :return:  (developer_obj, is_exist_devices)
-    """
-
-    if read_only:
-        status_choice = Config.DEVELOPER_USE_STATUS
-    else:
-        status_choice = Config.DEVELOPER_SIGN_STATUS
-    status_filter = {'developerid__certid__isnull': False, 'developerid__status__in': status_choice}
+def get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, abnormal_use_status):
+    status_filter = {'developerid__certid__isnull': False, 'developerid__status__in': abnormal_use_status,
+                     'status__in': [DeviceStatus.ENABLED, DeviceStatus.DISABLED]}
 
     developer_udid_queryset = UDIDsyncDeveloper.objects.filter(developerid__user_id__in=user_objs,
                                                                **status_filter).values('developerid').all().distinct()
@@ -307,6 +332,44 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True,
     else:
         logger.info(f"udid:{udid} is a new device. app_obj:{app_obj} will find a suitable developer and register it")
 
+    return developer_udid_queryset, False
+
+
+def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True, read_only=True):
+    """
+    :param read_only:
+    :param user_objs: [user_obj]
+    :param udid: udid
+    :param app_obj: app_obj
+    :param private_first: 专属应用优先使用专属开发者，而不是公共开发者
+    :return:  (developer_obj, is_exist_devices)
+    """
+
+    if read_only:
+        status_choice = Config.DEVELOPER_USE_STATUS
+    else:
+        status_choice = Config.DEVELOPER_SIGN_STATUS
+
+    developer_udid_queryset, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, status_choice)
+    if status:
+        return developer_udid_queryset, status
+    else:
+        logger.warning(
+            f"udid:{udid} app_obj:{app_obj} find normal developer failed. now find abnormal device developer")
+
+    obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, [AppleDeveloperStatus.DEVICE_ABNORMAL])
+    if status:
+        return obj, status
+    else:
+        logger.warning(f"udid:{udid} app_obj:{app_obj} find abnormal developer failed. now find can wait developer")
+
+    if UserConfig(app_obj.user_id).DEVELOPER_WAIT_ABNORMAL_STATE:
+        obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, Config.DEVELOPER_WAIT_STATUS)
+        if status:
+            return obj, status
+        else:
+            logger.warning(f"udid:{udid} app_obj:{app_obj} find abnormal developer failed. now find register developer")
+
     # 新设备查找策略
     # 根据app查找开发者账户
     exist_app_developer_pk_list = []
@@ -318,7 +381,11 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True,
             if get_developer_udided(developer_obj)[2] < developer_obj.usable_number:
                 exist_app_developer_pk_list.append(developer_obj.pk)
 
+    if UserConfig(app_obj.user_id).DEVELOPER_WAIT_ABNORMAL_DEVICE and UserConfig(
+            app_obj.user_id).DEVELOPER_ABNORMAL_DEVICE_WRITE:
+        status_choice.append(AppleDeveloperStatus.DEVICE_ABNORMAL)
     # 查询状态正常的专属开发者信息，判断是否为专属应用
+    status_filter = {'developerid__certid__isnull': False, 'developerid__status__in': status_choice}
     apple_to_app = AppleDeveloperToAppUse.objects.filter(app_id=app_obj, **status_filter).first()
 
     # 存在专属开发者账户，但是也同时存在已经安装的设备，优先选择已经安装设备的开发者账户？是or否
@@ -536,7 +603,7 @@ class IosUtils(object):
             return False, {'code': res.code, 'msg': res.msg}
         self.get_developer_auth(True)
         if not self.developer_obj:
-            msg = "udid %s app %s not exists apple developer" % (self.udid, self.app_obj)
+            msg = f"udid {self.udid} app {self.app_obj} not exists apple developer"
             d_result['code'] = 1005
             d_result['msg'] = msg
             logger.error(d_result)
@@ -592,7 +659,7 @@ class IosUtils(object):
         # 库里面存在，并且设备是可用状态，因此无需api注册
         if sync_device_obj:
             logger.info(f"app {app_obj} device {sync_device_obj.serial} already in developer {developer_obj}")
-            if not sync_device_obj.status:
+            if sync_device_obj.status != DeviceStatus.ENABLED:
                 # 库里面存在，并且设备是禁用状态，需要调用api启用
                 status, result = get_api_obj(developer_obj, app_obj).set_device_status("enable", sync_device_obj.serial,
                                                                                        sync_device_obj.product,
@@ -600,9 +667,19 @@ class IosUtils(object):
                                                                                        failed_call_prefix,
                                                                                        set_failed_callback)
                 if not status:  # 已经包含异常操作，暂定
-                    return status, result
+                    sync_device_obj = UDIDsyncDeveloper.objects.filter(udid=device_udid,
+                                                                       developerid=developer_obj,
+                                                                       status__in=[DeviceStatus.PROCESSING,
+                                                                                   DeviceStatus.INELIGIBLE]).first()
+                    if sync_device_obj:
+                        msg = result
+                        if UserConfig(user_obj).DEVELOPER_WAIT_ABNORMAL_DEVICE:
+                            update_or_create_abnormal_device(sync_device_obj, user_obj, app_obj, client_ip)
+                            msg = 'DEVELOPER_WAIT_ABNORMAL_DEVICE'
+                        return False, msg
                 sync_device_obj.status = True
                 sync_device_obj.save(update_fields=['status'])
+
         else:
             # 库里面不存在，注册设备，新设备注册默认就是启用状态
             status, device_obj = get_api_obj(developer_obj, app_obj).register_device(device_udid, device_name,
@@ -611,11 +688,15 @@ class IosUtils(object):
             if not status:
                 return status, device_obj
 
-            if device_obj and device_obj.status not in ['ENABLED', 'DISABLED']:
-                status, sync_device_obj = IosUtils.check_device_status(developer_obj, org_device_obj=device_obj)
+            if device_obj and device_obj.status not in [DeviceStatus.ENABLED, DeviceStatus.DISABLED]:
+                status, sync_device_obj = IosUtils.check_device_status(developer_obj, serial=device_obj.id)
                 if not status:
-                    update_or_create_developer_udid_info(device_obj, developer_obj)
-                    return False, 'UNEXPECTED_ERROR'
+                    sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
+                    msg = '设备状态异常'
+                    if UserConfig(user_obj).DEVELOPER_WAIT_ABNORMAL_DEVICE:
+                        update_or_create_abnormal_device(sync_device_obj, user_obj, app_obj, client_ip)
+                        msg = 'DEVELOPER_WAIT_ABNORMAL_DEVICE'
+                    return False, msg
             else:
                 sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
 
@@ -684,7 +765,7 @@ class IosUtils(object):
 
     @staticmethod
     @call_function_try_attempts(try_attempts=2)
-    def check_device_status(developer_obj, device_obj_list=None, org_device_obj=None):
+    def check_device_status(developer_obj, device_obj_list=None, serial=None):
         status = True
         if device_obj_list is None:
             status, device_obj_list = get_api_obj(developer_obj).get_device()
@@ -698,13 +779,13 @@ class IosUtils(object):
                                      err_msg, False)
                     return False, err_msg
                 else:
-                    if org_device_obj and org_device_obj.id == device_obj.id:
+                    if serial and serial == device_obj.id:
                         sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
                         return True, sync_device_obj
         return True, ''
 
     @staticmethod
-    @call_function_try_attempts()
+    @call_function_try_attempts(try_attempts=2)
     def make_and_download_profile(app_obj, developer_obj, failed_call_prefix, developer_app_id_obj=None,
                                   new_did_list=None,
                                   failed_callback=None):
@@ -716,16 +797,22 @@ class IosUtils(object):
 
         failed_callback.extend([
             {
-                'func_list': [magic_wrapper(IosUtils.clean_super_sign_things_by_app_obj, app_obj, developer_obj)],
-                'err_match_msg': ["There is no App ID with ID"]
-            },
-            {
-                'func_list': [magic_wrapper(IosUtils.active_developer, developer_obj)],
-                'err_match_msg': ["There are no current certificates on this team matching the provided certificate"]
+                'func_list': [magic_wrapper(IosUtils.active_developer, developer_obj, False)],
+                'err_match_msg': [
+                    "There are no current certificates on this team matching the provided certificate",
+                    "MUST contain type and id members"
+                ]
             },
             {
                 'func_list': [magic_wrapper(IosUtils.check_device_status, developer_obj)],
                 'err_match_msg': ["There are no current ios devices on this team matching the provided device IDs"]
+            },
+            {
+                'func_list': [magic_wrapper(IosUtils.clean_super_sign_things_by_app_obj, app_obj, developer_obj)],
+                'err_match_msg': [
+                    "There is no App ID with ID",
+                    "There are no current certificates on this team matching the provided certificate"
+                ]
             }
         ])
         device_id_list = DeveloperDevicesID.objects.filter(app_id=app_obj,
@@ -737,7 +824,7 @@ class IosUtils(object):
         if not developer_app_id_obj:
             developer_app_id_obj = DeveloperAppID.objects.filter(developerid=developer_obj, app_id=app_obj).first()
             if not developer_app_id_obj:
-                logger.error("bundle id not found. so return and exit")
+                logger.error(f"app {app_obj} developer {developer_obj} .bundle id not found. so return and exit")
                 return True, 'continue'
         developer_app_id = developer_app_id_obj.aid
         profile_id = developer_app_id_obj.profile_id
@@ -782,9 +869,19 @@ class IosUtils(object):
         if result:
             return result
 
+        if check_udid_black(self.user_obj, self.udid):
+            msg = {'code': 1007}
+            return False, msg
+
         self.get_developer_auth(False)
 
-        logger.info("udid %s not exists app_id %s ,need sign" % (self.udid, self.app_obj))
+        if self.developer_obj:
+            if UserConfig(
+                    self.user_obj).DEVELOPER_WAIT_ABNORMAL_STATE and self.developer_obj.status in Config.DEVELOPER_WAIT_STATUS:
+                msg = {'code': 1007}
+                return False, msg
+
+        logger.info(f"udid {self.udid} not exists app_id {self.app_obj}")
 
         if consume_user_download_times_by_app_obj(self.app_obj):
             d_result['code'] = 1009
@@ -800,7 +897,7 @@ class IosUtils(object):
             if count > 3:
                 break
             logger.warning(
-                "call_loop download_profile appid:%s developer:%s count:%s" % (self.app_obj, self.developer_obj, count))
+                f"call_loop download_profile appid:{self.app_obj} developer:{self.developer_obj} count:{count}")
             if self.developer_obj:
                 # register_devices_prefix = f"check_or_register_devices_{self.developer_obj.issuer_id}_{self.udid}"
                 issuer_id = self.developer_obj.issuer_id
@@ -821,6 +918,8 @@ class IosUtils(object):
                     if not status:
                         if 'UNEXPECTED_ERROR' in str(did_udid_result):
                             return False, {}
+                        if 'DEVELOPER_WAIT_ABNORMAL_DEVICE' in str(did_udid_result):
+                            return False, {'code': 1007, 'msg': '设备注册中，请耐心等待'}
                         msg = f"app_id {self.app_obj} register devices failed. {did_udid_result}"
                         self.sign_failed_fun(d_result, msg)
                         continue
@@ -1273,5 +1372,11 @@ class IosUtils(object):
                     delete_app_profile_file(developer_obj, app_obj)
 
             UDIDsyncDeveloper.objects.filter(udid__in=will_del_udid_list, developerid=developer_obj).delete()
+
+            # 清理
+            udids = [device.udid for device in result if device.status in [DeviceStatus.ENABLED, DeviceStatus.DISABLED]]
+            DeviceAbnormalUDID.objects.filter(auto_remove=True,
+                                              udid__developerid__user_id=developer_obj.user_id,
+                                              udid__udid__in=udids).delete()
 
         return status, result

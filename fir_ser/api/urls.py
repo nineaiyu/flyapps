@@ -27,6 +27,7 @@ from api.views.login_wx import WeChatLoginView, WeChatLoginCheckView, WeChatBind
 from api.views.logout import LogoutView
 from api.views.notify import NotifyReceiverView, NotifyConfigView, NotifyInfoView
 from api.views.order import PriceView, OrderView, PaySuccess, OrderSyncView
+from api.views.personalconfig import PersonalConfigView
 from api.views.report import ReportView
 from api.views.storage import StorageView, CleanStorageView
 from api.views.thirdlogin import ValidWxChatToken, ThirdWxAccount
@@ -62,6 +63,7 @@ urlpatterns = [
     re_path("^orders$", OrderView.as_view()),
     re_path("^notify/receiver$", NotifyReceiverView.as_view()),
     re_path("^notify/config$", NotifyConfigView.as_view()),
+    re_path("^personal/config$", PersonalConfigView.as_view()),
     re_path("^notify/notify$", NotifyInfoView.as_view()),
     re_path("^orders.sync$", OrderSyncView.as_view()),
     re_path("^certification$", CertificationView.as_view()),

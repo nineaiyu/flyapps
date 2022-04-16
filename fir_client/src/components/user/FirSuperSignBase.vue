@@ -391,6 +391,80 @@
             </span>
     </el-dialog>
 
+    <el-dialog
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        :visible.sync="addblackDeviceVisible"
+        center
+        title="设备黑名单手动添加"
+        width="666px">
+
+      <el-form :model="blackdeviceinfo"
+               label-width="100px" style="margin:0 auto;">
+
+        <el-form-item label="设备UDID">
+          <el-input v-model="blackdeviceinfo.udid" clearable/>
+        </el-form-item>
+
+        <el-form-item label="是否生效">
+          <el-switch
+              v-model="blackdeviceinfo.enable"
+              active-color="#13ce66"
+              active-text="生效"
+              inactive-color="#ff4949"
+              inactive-text="失效">
+          </el-switch>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="blackdeviceinfo.description" :autosize="{ minRows: 3, maxRows: 6}"
+                    type="textarea"/>
+        </el-form-item>
+      </el-form>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="saveblackdevice">保存</el-button>
+        <el-button @click="addblackDeviceVisible=false">取消</el-button>
+      </div>
+
+    </el-dialog>
+    <el-dialog
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        :visible.sync="signConfigVisible"
+        center
+        title="签名高级配置"
+        width="666px">
+
+
+      <el-card v-for="info in sign_config_lists" :key="info.key" class="box-card" shadow="hover"
+               style="margin-bottom: 10px">
+        <div slot="header" class="clearfix">
+          <span><el-tag size="medium" type="info">配置KEY</el-tag> <el-tag size="medium">{{ info.key }}</el-tag></span>
+          <div style="float: right">
+            <el-switch
+                v-model="info.value"
+                active-color="#13ce66"
+                active-text="启用"
+                active-value="true"
+                inactive-color="#ff4949"
+                inactive-text="关闭"
+                inactive-value="false"
+                @change="changeSignConfig(info)">
+            </el-switch>
+          </div>
+        </div>
+        <el-tag size="medium" type="info">描述信息</el-tag>
+        {{ info.title }}
+      </el-card>
+
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="updateSignConfig">恢复默认值</el-button>
+        <el-button @click="signConfigVisible=false">取消</el-button>
+      </div>
+
+    </el-dialog>
+
 
     <el-tabs v-model="activeName" tab-position="top" type="border-card" @tab-click="handleClick">
       <el-tab-pane label="开发者账户" name="iosdeveloper">
@@ -468,6 +542,9 @@
               </el-button>
               <el-button type="plain" @click="setdeveloperstatusFun">
                 批量设置账户状态
+              </el-button>
+              <el-button type="plain" @click="signConfigFun">
+                签名高级配置
               </el-button>
             </div>
           </el-col>
@@ -1064,8 +1141,8 @@
           <el-table-column
               align="center"
               label="开发者ID"
-              width="170"
-              prop="issuer_id">
+              prop="issuer_id"
+              width="170">
             <template slot-scope="scope">
               <el-popover placement="top" trigger="hover">
                 <p>开发者ID: {{ get_developer_uid(scope.row.issuer_id) }}</p>
@@ -1112,9 +1189,9 @@
               <div>
                 <el-tooltip content="仅仅删除数据库数据，不操作苹果开发者设备" placement="top">
                   <el-button
+                      plain
                       size="mini"
                       type="danger"
-                      plain
                       @click="udidDeleteFun(scope,0)">仅删除
                   </el-button>
                 </el-tooltip>
@@ -1122,9 +1199,9 @@
               <div v-if="!(scope.row.issuer_id && scope.row.issuer_id.indexOf(':')> -1)" style="margin-top: 5px">
                 <el-tooltip content="删除的同时，会检测并同时禁用苹果开发者设备" placement="bottom">
                   <el-button
+                      plain
                       size="mini"
                       type="danger"
-                      plain
                       @click="udidDeleteFun(scope,1)">删除并禁用设备
                   </el-button>
                 </el-tooltip>
@@ -1457,6 +1534,215 @@
 
 
       </el-tab-pane>
+      <el-tab-pane label="异常设备" name="abnormaldevice">
+        <el-input
+            v-model="udidsearch"
+            clearable
+            placeholder="输入UDID"
+            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+        <el-input
+            v-model="appidseach"
+            clearable
+            placeholder="输入开发者用户ID"
+            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
+          搜索
+        </el-button>
+        <el-table
+            v-loading="loading"
+            :data="abnormal_device_lists"
+            border
+            stripe
+            style="width: 100%">
+
+          <el-table-column
+              align="center"
+              label="设备UDID"
+              width="200">
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <p>设备序列号: {{ scope.row.udid_info.serial }}</p>
+                <p>设备产品: {{ scope.row.udid_info.product }}</p>
+                <p>设备状态: {{ scope.row.udid_info.device_status }}</p>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.udid_info.udid }}</span>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+              align="center"
+              label="设备状态"
+              width="80">
+            <template slot-scope="scope">
+              <el-tag v-if="scope.row.udid_info.status === 'ENABLED'">{{ scope.row.udid_info.device_status }}</el-tag>
+              <el-tag v-else type="danger">{{ scope.row.udid_info.device_status }}</el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+              align="center"
+              label="添加备注"
+              prop="description">
+          </el-table-column>
+          <el-table-column
+              :formatter="deviceformatter"
+              align="center"
+              label="添加时间"
+              prop="operate_time"
+              width="100">
+          </el-table-column>
+
+          <el-table-column
+              align="center"
+              label="开发者ID"
+              prop="developer_id"
+              width="166">
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <p>开发者ID: {{ scope.row.udid_info.developer_id }}</p>
+                <p>开发者备注: {{ scope.row.udid_info.developer_description }}</p>
+                <p>开发者状态: {{ scope.row.udid_info.developer_status }}</p>
+                <div slot="reference" class="name-wrapper">
+                  <span>{{ scope.row.udid_info.developer_id }}</span>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="自动移除"
+              width="80">
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <div v-if="scope.row.auto_remove">
+                  <p>已经开启自动移除，当设备重新注册或同步设备信息时，会自动判断并进行操作</p>
+                  <p>若想要手动操作，可点击
+                    <el-button plain size="small" type="warning" @click="changeAbnormalState(scope.row,0)">关闭
+                    </el-button>
+                  </p>
+                </div>
+                <div v-else>
+                  <p>已经关闭自动移除，该异常设备只能手动进行操作</p>
+                  <p>若想要设备重新注册或同步设备信息时，自动操作，可点击
+                    <el-button plain size="small" @click="changeAbnormalState(scope.row,1)">开启</el-button>
+                  </p>
+                </div>
+                <div slot="reference" class="name-wrapper">
+                  <el-tag v-if="scope.row.auto_remove">开启</el-tag>
+                  <el-tag v-else type="danger">关闭</el-tag>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+              align="center"
+              fixed="right"
+              label="操作"
+              width="100">
+            <template slot-scope="scope">
+              <el-tooltip content="删除该异常设备信息" placement="top">
+                <el-button
+                    plain
+                    size="mini"
+                    type="danger"
+                    @click="changeAbnormalState(scope.row,-1)">删除
+                </el-button>
+              </el-tooltip>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
+      <el-tab-pane label="设备黑名单" name="blackdevice">
+        <el-input
+            v-model="udidsearch"
+            clearable
+            placeholder="输入UDID"
+            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+        <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
+          搜索
+        </el-button>
+
+        <div style="float: right">
+          <el-button plain type="primary" @click="addblackDeviceVisible=true">
+            添加设备
+          </el-button>
+        </div>
+
+        <el-table
+            v-loading="loading"
+            :data="black_device_lists"
+            border
+            stripe
+            style="width: 100%">
+
+          <el-table-column
+              align="center"
+              label="设备UDID"
+              prop="udid"
+              width="200">
+          </el-table-column>
+
+          <el-table-column
+              align="center"
+              label="备注"
+              prop="description">
+          </el-table-column>
+          <el-table-column
+              :formatter="deviceformatter"
+              align="center"
+              label="添加时间"
+              prop="operate_time"
+              width="100">
+          </el-table-column>
+
+          <el-table-column
+              align="center"
+              label="是否生效"
+              width="80">
+            <template slot-scope="scope">
+              <el-popover placement="top" trigger="hover">
+                <div v-if="scope.row.enable">
+                  <p>已经生效，设备注册安装，会进行拦截操作</p>
+                  <p>若想要关闭，可点击
+                    <el-button plain size="small" type="warning" @click="changeAbnormalBlackState(scope.row,0)">失效
+                    </el-button>
+                  </p>
+                </div>
+                <div v-else>
+                  <p>已经失效，设备注册安装，不会进行拦截操作</p>
+                  <p>若想要拦截该设备，可点击
+                    <el-button plain size="small" @click="changeAbnormalBlackState(scope.row,1)">生效</el-button>
+                  </p>
+                </div>
+                <div slot="reference" class="name-wrapper">
+                  <el-tag v-if="scope.row.enable">生效中</el-tag>
+                  <el-tag v-else type="danger">已失效</el-tag>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+              align="center"
+              fixed="right"
+              label="操作"
+              width="100">
+            <template slot-scope="scope">
+              <el-tooltip content="删除该设备信息" placement="top">
+                <el-button
+                    plain
+                    size="mini"
+                    type="danger"
+                    @click="changeAbnormalBlackState(scope.row,-1)">删除
+                </el-button>
+              </el-tooltip>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
 
       <div v-if="activeName!== 'adddeveloper'" style="margin-top: 20px">
         <el-pagination
@@ -1477,6 +1763,8 @@
 <script>
 
 import {
+  abnormalDeviceUtil,
+  blackDeviceUtil,
   developercert,
   DeviceBillInfo,
   DeviceRankInfo,
@@ -1485,6 +1773,7 @@ import {
   iosdevices,
   iosdevicesudid,
   iosudevices,
+  personalConfigInfo,
   signoperatemessage
 } from "@/restful";
 import {format_choices, getUserInfoFun, removeAaary} from "@/utils";
@@ -1514,6 +1803,9 @@ export default {
       app_rank_number: 0,
       app_bill_info_lists: [],
       app_udid_lists: [],
+      abnormal_device_lists: [],
+      black_device_lists: [],
+      sign_config_lists: [],
       activeName: "iosdeveloper",
       udidsearch: "",
       Bundleidsearch: "",
@@ -1526,6 +1818,8 @@ export default {
       timerangesearch: [],
       dialogaddDeveloperVisible: false,
       importcertDeveloperVisible: false,
+      addblackDeviceVisible: false,
+      signConfigVisible: false,
       target_uid: '',
       target_number: 1,
       transferVisible: false,
@@ -1533,6 +1827,7 @@ export default {
       transferInfo: {uid: '', name: '', number: 0},
       title: "",
       editdeveloperinfo: {auth_type: 0, usable_number: 100, app_limit_number: 100, p8key: ''},
+      blackdeviceinfo: {udid: '', enable: true, description: ''},
       isedit: false,
       placeholder: "",
       pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
@@ -1617,6 +1912,79 @@ export default {
     }
   },
   methods: {
+    changeSignConfig(info) {
+      personalConfigInfo(data => {
+        if (data.code === 1000) {
+          this.$message.success("操作成功")
+          this.signConfigFun()
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, {
+        methods: 'PUT', data: {config_key: info.key, config_value: info.value}
+      })
+    },
+    updateSignConfig() {
+      personalConfigInfo(data => {
+        if (data.code === 1000) {
+          this.$message.success("操作成功")
+          this.signConfigFun()
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, {
+        methods: 'DELETE'
+      })
+    },
+    signConfigFun() {
+      personalConfigInfo(data => {
+        if (data.code === 1000) {
+          this.sign_config_lists = data.data
+          this.signConfigVisible = true
+        } else {
+          this.$message.error("获取数据失败了 " + data.msg)
+        }
+      }, {
+        methods: 'GET'
+      })
+    },
+    saveblackdevice() {
+      blackDeviceUtil(data => {
+        if (data.code === 1000) {
+          this.$message.success("添加成功")
+          this.addblackDeviceVisible = false
+          this.get_data_from_tabname(this.activeName);
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, {methods: 'POST', data: this.blackdeviceinfo})
+    },
+    changeAbnormalBlackState(info, state) {
+      if (state === -1) {
+        this.DeviceBase(blackDeviceUtil, {methods: 'DELETE', data: {pk: info.id, state: state}})
+
+      } else {
+        this.DeviceBase(blackDeviceUtil, {methods: 'PUT', data: {pk: info.id, state: state}})
+      }
+    },
+    DeviceBase(func, params) {
+      func(data => {
+        if (data.code === 1000) {
+          this.$message.success("操作成功")
+          this.get_data_from_tabname(this.activeName);
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, params)
+    },
+    changeAbnormalState(info, state) {
+      if (state === -1) {
+        this.DeviceBase(abnormalDeviceUtil, {methods: 'DELETE', data: {pk: info.id, state: state}})
+
+      } else {
+        this.DeviceBase(abnormalDeviceUtil, {methods: 'PUT', data: {pk: info.id, state: state}})
+      }
+    },
     refreshactiveFun() {
       this.get_data_from_tabname(this.activeName, {
         "size": this.pagination.pagesize,
@@ -2115,6 +2483,10 @@ export default {
       } else if (tabname === 'operatemsg') {
         data.operate_status = this.operatestatus;
         this.operateMessageFun({"methods": "GET", "data": data})
+      } else if (tabname === 'abnormaldevice') {
+        this.abnormalDeviceFun({"methods": "GET", "data": data})
+      } else if (tabname === 'blackdevice') {
+        this.blackDeviceFun({"methods": "GET", "data": data})
       }
 
     },
@@ -2340,6 +2712,26 @@ export default {
         }
       }, params)
     },
+    abnormalDeviceFun(params) {
+      abnormalDeviceUtil(data => {
+        if (data.code === 1000) {
+          this.abnormal_device_lists = data.data;
+          this.pagination.total = data.count;
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, params)
+    },
+    blackDeviceFun(params) {
+      blackDeviceUtil(data => {
+        if (data.code === 1000) {
+          this.black_device_lists = data.data;
+          this.pagination.total = data.count;
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, params)
+    },
     iosudevicesFun(action, data) {
       if (action !== 'GET') {
         this.loadingfun = this.$loading({
@@ -2376,7 +2768,7 @@ export default {
     getUserInfoFun(this);
     if (this.$route.params.act) {
       let activeName = this.$route.params.act;
-      let activeName_list = ["iosdeveloper", "adddeveloper", "iosudevices", "useddevices", "devicesudid", "devicesbill", "transferbill", "devicesrank", "operatemsg"];
+      let activeName_list = ["iosdeveloper", "adddeveloper", "iosudevices", "useddevices", "devicesudid", "devicesbill", "transferbill", "devicesrank", "operatemsg", "abnormaldevice", "blackdevice"];
       for (let index in activeName_list) {
         if (activeName_list[index] === activeName) {
           this.activeName = activeName;
@@ -2401,7 +2793,7 @@ export default {
 <style scoped>
 .el-main {
   margin: 20px auto 100px;
-  width: 1188px;
+  width: 1255px;
   position: relative;
   padding-bottom: 1px;
   color: #9b9b9b;

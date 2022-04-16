@@ -57,7 +57,7 @@ class AppIOSDeveloperInfo(models.Model):
         return super(AppIOSDeveloperInfo, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.user_id}-{self.issuer_id}"
+        return f"{self.user_id}-{self.issuer_id}-{self.get_status_display()}-{self.description}"
 
 
 class UDIDsyncDeveloper(models.Model):
@@ -166,7 +166,7 @@ class DeveloperAppID(models.Model):
         unique_together = ('aid', 'developerid', 'app_id')
 
     def __str__(self):
-        return "%s-%s-%s" % (self.aid, self.app_id, self.developerid)
+        return f"{self.aid}-{self.app_id}-{self.developerid}"
 
 
 class DeveloperDevicesID(models.Model):
@@ -184,7 +184,7 @@ class DeveloperDevicesID(models.Model):
         unique_together = ('did', 'developerid', 'app_id')
 
     def __str__(self):
-        return "%s-%s-%s-%s" % (self.id, self.app_id, self.developerid, self.udid)
+        return f"{self.id}-{self.app_id}-{self.developerid}-{self.udid}"
 
 
 class IosDeveloperPublicPoolBill(models.Model):
@@ -210,7 +210,7 @@ class IosDeveloperPublicPoolBill(models.Model):
         verbose_name_plural = "设备消耗账单"
 
     def __str__(self):
-        return "%s-%s" % (self.user_id, self.description)
+        return f"{self.user_id}-{self.description}"
 
 
 class IosDeveloperBill(models.Model):
@@ -236,7 +236,7 @@ class IosDeveloperBill(models.Model):
         verbose_name_plural = "设备划转账单"
 
     def __str__(self):
-        return "%s-%s—%s" % (self.user_id, self.to_user_id, self.description)
+        return f"{self.user_id}-{self.to_user_id}—{self.description}"
 
 
 class AppleDeveloperToAppUse(models.Model):
@@ -255,7 +255,7 @@ class AppleDeveloperToAppUse(models.Model):
         unique_together = ('app_id', 'developerid')
 
     def __str__(self):
-        return "%s-%s" % (self.app_id.name, self.developerid.issuer_id)
+        return f"{self.app_id.name}-{self.developerid.issuer_id}"
 
 
 class OperateMessageBase(models.Model):
@@ -282,4 +282,41 @@ class AppleSignMessage(OperateMessageBase):
         verbose_name_plural = "应用签名操作记录"
 
     def __str__(self):
-        return "%s-%s-%s" % (self.app_id.name, self.developerid.issuer_id, self.title)
+        return f"{self.app_id.name}-{self.developerid.issuer_id}-{self.title}"
+
+
+class DeviceBlackUDID(models.Model):
+    """
+    设备黑名单
+    """
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="操作用户", on_delete=models.CASCADE)
+    udid = models.CharField(max_length=64, verbose_name='手动添加设备udid', unique=True)
+    enable = models.BooleanField(verbose_name="是否生效", default=True)
+    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
+    created_time = models.DateTimeField(auto_now=True, verbose_name="添加时间")
+
+    class Meta:
+        verbose_name = '设备黑名单'
+        verbose_name_plural = "设备黑名单"
+
+    def __str__(self):
+        return f"{self.udid}-{self.description}-{self.created_time}"
+
+
+class DeviceAbnormalUDID(models.Model):
+    """
+    异常设备
+    系统根据 【异常状态等待】 判断是否等待，等待的数据将会插入该库，并在下次注册或者设备检测 根据是否自动移除进行操作
+    """
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="操作用户", on_delete=models.CASCADE)
+    udid = models.ForeignKey(to=UDIDsyncDeveloper, verbose_name="自动添加设备udid", on_delete=models.CASCADE)
+    auto_remove = models.BooleanField(verbose_name="是否自动移除", default=True)
+    description = models.CharField(verbose_name="备注", max_length=256, default='', blank=True)
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+
+    class Meta:
+        verbose_name = '异常设备信息'
+        verbose_name_plural = "异常设备信息"
+
+    def __str__(self):
+        return f"{self.udid}-{self.description}-{self.created_time}"

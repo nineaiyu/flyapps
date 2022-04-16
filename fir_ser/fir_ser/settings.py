@@ -259,7 +259,7 @@ CORS_ALLOW_HEADERS = (
 )
 
 CACHE_KEY_TEMPLATE = {
-    'sysconfig_key': 'sysconfig',
+    'config_key': 'config',
     'task_state_key': 'task_state',
     'pending_state_key': 'pending_state',
     'wx_login_bind_key': 'wx_login_bind',

@@ -7,10 +7,13 @@ import os
 
 from common.constants import AppleDeveloperStatus
 
-API_DOMAIN = "https://app.hehelucky.cn"
-WEB_DOMAIN = "https://app.hehelucky.cn"
-MOBILEPROVISION = "https://static.flyapps.top/embedded1.mobileprovision"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+class DOMAINCONF(object):
+    API_DOMAIN = "https://app.hehelucky.cn"
+    WEB_DOMAIN = "https://app.hehelucky.cn"
+    MOBILEPROVISION = "https://static.flyapps.top/embedded2.mobileprovision"
 
 
 class BASECONF(object):
@@ -146,10 +149,10 @@ class STORAGEKEYCONF(object):
             'name': 'local',
             'type': 0,
             'auth': {
-                'domain_name': API_DOMAIN.split("://")[1],
+                'domain_name': DOMAINCONF.API_DOMAIN.split("://")[1],
                 # 正式环境需要填写正式的访问域名,如果配置cdn，可以填写cdn的域名，仅支持阿里云 cdn,
                 # 开启cdn之后，如果该域名和服务器域名不相同，需要设置阿里云cdn 缓存配置，自定义HTTP响应头 添加 Access-Control-Allow-Origin * 才可以
-                'is_https': True if API_DOMAIN.split("://")[0] == "https" else False,
+                'is_https': True if DOMAINCONF.API_DOMAIN.split("://")[0] == "https" else False,
                 'download_auth_type': 1,  # 0:不开启token 1:本地token 2:cdn 开启cdn，并且使用本地存储，使用阿里云cdn进行url鉴权，
                 'cnd_auth_key': '',  # 当cdn为阿里云并且 download_auth_type=2 的时候 生效,需要 开启阿里云OSS私有Bucket回源
             },
@@ -290,12 +293,12 @@ class IPACONF(object):
         # 'http': '47.243.172.202:17897',
         # 'https': '47.243.172.202:17897'
     }
-    APPLE_DEVELOPER_API_TIMEOUT = 60  # 访问苹果api超时时间，默认3分钟
+    APPLE_DEVELOPER_API_TIMEOUT = 2 * 60  # 访问苹果api超时时间，默认3分钟
     MOBILE_CONFIG_SIGN_SSL = {
         # 描述文件是否签名，默认是关闭状态；如果开启，并且ssl_key_path 和 ssl_pem_path 正常，则使用填写的ssl进行签名,否则默认不签名
         'open': True,
-        'ssl_key_path': f'/data/cert/{API_DOMAIN.split("://")[1]}.key',
-        'ssl_pem_path': f'/data/cert/{API_DOMAIN.split("://")[1]}.pem'
+        'ssl_key_path': f'/data/cert/{DOMAINCONF.API_DOMAIN.split("://")[1]}.key',
+        'ssl_pem_path': f'/data/cert/{DOMAINCONF.API_DOMAIN.split("://")[1]}.pem'
     }
     DEFAULT_MOBILEPROVISION = {
         # 默认描述文件路径或者下载路径，用户企业签名或者超级签名 跳转 [设置 - 通用 - 描述文件|设备管理] 页面
@@ -403,10 +406,45 @@ class APPLEDEVELOPERCONF(object):
                                    AppleDeveloperStatus.DEVICE_ABNORMAL, AppleDeveloperStatus.ABNORMAL_STATUS]
     # 开发者api写操作查询[该状态用于苹果api接口]
     DEVELOPER_WRITE_STATUS = [AppleDeveloperStatus.ACTIVATED, AppleDeveloperStatus.MAINTENANCE,
-                              AppleDeveloperStatus.CERTIFICATE_EXPIRED, AppleDeveloperStatus.CERTIFICATE_MISSING,
-                              AppleDeveloperStatus.DEVICE_ABNORMAL]
+                              AppleDeveloperStatus.CERTIFICATE_EXPIRED, AppleDeveloperStatus.DEVICE_ABNORMAL]
 
     # 开发者不可 修改为状态，用户前端控制
     DEVELOPER_DISABLED_STATUS = [AppleDeveloperStatus.AGREEMENT_NOT_AGREED, AppleDeveloperStatus.CERTIFICATE_EXPIRED,
                                  AppleDeveloperStatus.CERTIFICATE_MISSING, AppleDeveloperStatus.DEVICE_ABNORMAL]
-    DEVELOPER_UID_KEY = "T:"  # 开发者共享给其他第三方用户， 中间必须包含 : 前端需要根据 : 进行分割
+
+    """
+    DEVELOPER_WAIT_STATUS 开发者等待状态，详情查看 model.AppIOSDeveloperInfo 和 DEVELOPER_WAIT_ABNORMAL_STATE 状态有关
+    
+    DEVELOPER_WAIT_ABNORMAL_STATE 开发者异常状态是否等待,True 表示等待直到开发者状态恢复正常，并且设备注册成功 ，False 表示忽略，
+                                    继续下一个新开发者账户
+    """
+    DEVELOPER_WAIT_STATUS = [AppleDeveloperStatus.MAINTENANCE, AppleDeveloperStatus.CERTIFICATE_EXPIRED,
+                             AppleDeveloperStatus.CERTIFICATE_MISSING, AppleDeveloperStatus.ABNORMAL_STATUS]
+
+    DEVELOPER_WAIT_ABNORMAL_STATE = True
+
+    # 开发者共享给其他第三方用户， 中间必须包含 : 前端需要根据 : 进行分割
+    DEVELOPER_UID_KEY = "T:"
+
+    """
+    DEVELOPER_WAIT_ABNORMAL_DEVICE  异常设备注册是否等待,True 表示等待直到注册成功，False 表示忽略，继续下一个新开发者账户
+    DEVELOPER_ABNORMAL_DEVICE_WRITE 受DEVELOPER_WAIT_ABNORMAL_DEVICE影响，当DEVELOPER_WAIT_ABNORMAL_DEVICE 为True 才生效
+                                    异常设备注册等待中是否还继续注册新设备, True 表示设备异常下继续注册新设备
+    """
+    DEVELOPER_WAIT_ABNORMAL_DEVICE = True
+    DEVELOPER_ABNORMAL_DEVICE_WRITE = False
+
+
+class CONFIGDESCRIPTION(object):
+    DEVELOPER_WAIT_ABNORMAL_DEVICE_DES = '【异常设备注册等待】：开启 表示等待直到注册成功，关闭 表示忽略。' \
+                                         'ps：异常设备指 设备注册到开发者，但是设备状态为 “不合格”，“处理中” 时，既设备不可用，' \
+                                         '开启等待，则等待设备状态恢复正常，最大避免设备数重复消耗'
+    DEVELOPER_ABNORMAL_DEVICE_WRITE_DES = '【异常设备注册等待中继续注册新设备】：开启 表示新设备还可以注册该 设备异常 开发者中，关闭 表示忽略。 ' \
+                                          'ps：该配置仅当开启【异常设备注册等待】时生效'
+    DEVELOPER_WAIT_ABNORMAL_STATE_DES = '【开发者异常状态是否等待】：开启 表示等待直到开发者状态恢复正常，并且设备注册成功，关闭 表示忽略。 ps：当开发者状态为 ' \
+                                        '“维护”，“证书丢失”，“证书过期”，“异常状态时”，开启等待，可以最大的避免设备数重复消耗 '
+
+
+class USERPERSONALCONFIGKEY(object):
+    DEVELOPER_STATUS_CONFIG = ['DEVELOPER_WAIT_ABNORMAL_STATE', 'DEVELOPER_WAIT_ABNORMAL_DEVICE',
+                               'DEVELOPER_ABNORMAL_DEVICE_WRITE']

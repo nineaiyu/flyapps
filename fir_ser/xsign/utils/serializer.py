@@ -372,3 +372,20 @@ class AppleSignMessageSerializer(serializers.ModelSerializer):
         if obj.app_id:
             return {'bundle_name': obj.app_id.name, 'bundle_id': obj.app_id.bundle_id}
         return {}
+
+
+class AbnormalDeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.DeviceAbnormalUDID
+        exclude = ["user_id", "udid"]
+
+    udid_info = serializers.SerializerMethodField()
+
+    def get_udid_info(self, obj):
+        return DeveloperDeviceSerializer(obj.udid).data
+
+
+class BlackDeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.DeviceBlackUDID
+        exclude = ["user_id"]
