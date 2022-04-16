@@ -7,7 +7,7 @@ const DOMAIN = process.env.base_env.baseShortUrl;
 const APIPATH = '/api/v1/fir/server';
 let USERSEVER = DOMAIN + APIPATH;
 
-function ErrorMsg(error) {
+function ErrorMsg(error,callBack) {
     if (error && error.response) {
         switch (error.response.status) {
             case 400:
@@ -28,11 +28,7 @@ function ErrorMsg(error) {
     } else {
         error.message = '连接服务器失败!';
     }
-    if (error.message === 'Network Error') {
-        window.alert('网络连接失败')
-    } else {
-        window.alert(error.message)
-    }
+    callBack({code:-1,msg:error.message})
 }
 
 function responseMiddleware(data, callBack) {
@@ -52,8 +48,7 @@ function getData(methods = 'GET', url, params = {}, callBack) {
                 responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error);
-                // callBack({"code": -1});
+                ErrorMsg(error,callBack);
             });
     } else if (methods === 'POST') {
         Axios
@@ -62,8 +57,7 @@ function getData(methods = 'GET', url, params = {}, callBack) {
                 responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error);
-                // callBack({"code": -1});
+                ErrorMsg(error,callBack);
             });
     } else
         Axios
@@ -72,8 +66,7 @@ function getData(methods = 'GET', url, params = {}, callBack) {
                 responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error);
-                // callBack({"code": -1});
+                ErrorMsg(error,callBack);
             });
 }
 

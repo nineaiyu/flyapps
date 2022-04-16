@@ -79,7 +79,7 @@ export function set_auth_token() {
 
 set_auth_token();
 
-function ErrorMsg(error) {
+function ErrorMsg(error,callBack) {
     if (error && error.response) {
         switch (error.response.status) {
             case 400:
@@ -122,19 +122,12 @@ function ErrorMsg(error) {
                 error.message = `连接出错(${error.response.status}, ${JSON.stringify(error.response.data)})!`;
         }
     } else {
-        // eslint-disable-next-line no-console
-        console.log(error);
         error.message = '连接服务器失败!';
     }
     if (error.response && error.response.status === 403) {
         router.push({name: 'FirLogin'});
-    } else {
-        if (error.message === 'Network Error') {
-            window.alert('网络连接失败');
-        } else {
-            window.alert(error)
-        }
     }
+    callBack({code:-1, msg:error.message})
 }
 
 function responseMiddleware(data, callBack) {
@@ -154,8 +147,7 @@ function getData(methods, url, params = {}, callBack) {
                 responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error);
-                // callBack({"code": -1});
+                ErrorMsg(error,callBack);
             });
 
     } else if (methods === "PUT") {
@@ -165,8 +157,7 @@ function getData(methods, url, params = {}, callBack) {
                 responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error);
-                // callBack({"code": -1});
+                ErrorMsg(error,callBack);
             });
 
     } else if (methods === 'POST') {
@@ -176,8 +167,7 @@ function getData(methods, url, params = {}, callBack) {
                 responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error);
-                // callBack({"code": -1});
+                ErrorMsg(error,callBack);
             });
     } else if (methods === 'FILE') {
         Axios
@@ -186,8 +176,7 @@ function getData(methods, url, params = {}, callBack) {
                 convertRes2Blob(response)
             })
             .catch(function (error) {
-                ErrorMsg(error);
-                // callBack({"code": -1});
+                ErrorMsg(error,callBack);
             });
     } else {
         Axios
@@ -196,8 +185,7 @@ function getData(methods, url, params = {}, callBack) {
                 responseMiddleware(response.data, callBack);
             })
             .catch(function (error) {
-                ErrorMsg(error);
-                // callBack({"code": -1});
+                ErrorMsg(error,callBack);
             });
     }
 }
