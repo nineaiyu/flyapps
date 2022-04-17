@@ -114,6 +114,34 @@
         >保存
         </el-button>
       </el-form-item>
+      <el-divider/>
+      <el-form-item label="设备异常等待跳转"
+                    label-width="200px">
+        <el-switch
+            v-model="currentapp.abnormal_redirect"
+            :active-value="true"
+            :disabled="supersign_disable"
+            :inactive-value="false"
+            active-color="#13ce66"
+            inactive-color="#ff4949"
+            @change="saveappinfo({abnormal_redirect:currentapp.abnormal_redirect})">
+        </el-switch>
+
+        <el-link :underline="false" style="margin-left: 20px">该配置仅当开启“异常设备注册等待”有效，若启用该配置，根据规则会自动跳转链接</el-link>
+      </el-form-item>
+      <el-divider/>
+
+      <el-form-item label="签名不足跳转链接" label-width="200px">
+        <el-input v-model="currentapp.supersign_redirect_url" :disabled="supersign_disable"
+                  clearable prefix-icon="el-icon-s-promotion"
+                  style="width: 60%;margin-right: 10px"/>
+        <el-button :disabled="supersign_disable"
+                   @click="saveappinfo({supersign_redirect_url:currentapp.supersign_redirect_url})"
+        >保存
+        </el-button>
+        <el-link :underline="false">当设备余额不足，无法进行签名，可配置该链接跳转到第三方下载平台</el-link>
+      </el-form-item>
+      <el-divider/>
 
     </el-form>
     <el-link v-else :underline="false" type="warning"> 该用户暂未开通超级签权限,请联系管理员申请开通</el-link>

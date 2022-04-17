@@ -26,37 +26,46 @@ def run_sign_task(format_udid_info, short, client_ip):
     user_obj = app_obj.user_id
     if MigrateStorageState(user_obj.uid).get_state():
         msg = "数据迁移中，无法处理该操作"
-        return msg
+        code = 1000
+        return {'code': code, 'msg': msg}
     try:
         ios_sign_obj = IosUtils(format_udid_info, user_obj, app_obj)
-        status, msg = ios_sign_obj.sign_ipa(client_ip)
+        status, result = ios_sign_obj.sign_ipa(client_ip)
         if ios_sign_obj.developer_obj:
-            if not status:
-                add_sign_message(user_obj, ios_sign_obj.developer_obj, app_obj, '签名失败了', msg, False)
-            else:
-                add_sign_message(user_obj, ios_sign_obj.developer_obj, app_obj, '签名成功', msg, True)
+            if status:
+                add_sign_message(user_obj, ios_sign_obj.developer_obj, app_obj, '签名成功', result, True)
     except Exception as e:
         logger.error(f"run_sign_task failed. udid_info:{format_udid_info} app_obj:{app_obj} Exception:{e}")
-        return '系统内部错误,请稍后再试或联系管理员'
+        msg = '系统内部错误,请稍后再试或联系管理员'
+        code = 5000
+        return {'code': code, 'msg': msg}
     if not status:
-        code = msg.get("code", -1)
-        if code == 0:
+        code = result.get("code", -1)
+        if code == 1000:
             msg = ""
         elif code == 1005:
             msg = "签名余额不足"
-        elif code == 1002:
-            msg = "维护中"
         elif code == 1003:
             msg = "应用余额不足"
         elif code == 1007:
             msg = "设备注册中，请耐心等待"
         elif code in [1004, 1001, 1009]:
-            msg = msg.get('msg', '未知错误')
+            msg = result.get('msg', '未知错误')
         else:
+            code = 5000
             msg = '系统内部错误,请稍后再试或联系管理员'
+        message = f"return_info:[code:{code},msg:{msg}] raw_info:[{result}]"
+        if ios_sign_obj.developer_obj:
+            add_sign_message(user_obj, ios_sign_obj.developer_obj, app_obj, '签名失败了', message, False)
+        else:
+            logger.error(f"{user_obj} {app_obj} 签名失败了:{message}")
     else:
         msg = ""
-    return msg
+        code = 1000
+    result = {'code': code, 'msg': msg}
+    if app_obj.supersign_redirect_url and (code == 1005 or (code == 1007 and app_obj.abnormal_redirect)):
+        result['redirect'] = app_obj.supersign_redirect_url
+    return result
 
 
 def run_resign_task(app_id, need_download_profile=True, force=True, developers_filter=None):

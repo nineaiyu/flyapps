@@ -8,6 +8,7 @@ import logging
 
 from api.utils.modelutils import get_notify_wx_queryset, get_wx_nickname
 from common.base.baseutils import get_format_time
+from common.base.magic import magic_call_in_times
 from common.libs.mp.wechat import WxTemplateMsg
 from common.libs.sendmsg.template_content import get_pay_success_html_content, get_sign_failed_html_content, \
     get_sign_unavailable_developer_html_content, get_sign_app_over_limit_html_content, \
@@ -41,6 +42,11 @@ def pay_success_notify(user_obj, order_obj):
     notify_by_email(user_obj, message_type, get_pay_success_html_content(user_obj, order_obj))
 
 
+def get_magic_call_key(*args, **kwargs):
+    return args[0].uid
+
+
+@magic_call_in_times(key=get_magic_call_key)
 def sign_failed_notify(user_obj, developer_obj, app_obj):
     """
     3, '应用签名失败'
@@ -59,6 +65,7 @@ def sign_failed_notify(user_obj, developer_obj, app_obj):
     notify_by_email(user_obj, message_type, get_sign_failed_html_content(user_obj, app_obj, developer_obj, now_time))
 
 
+@magic_call_in_times(key=get_magic_call_key)
 def sign_unavailable_developer_notify(user_obj, app_obj):
     """
     3, '应用签名失败'
@@ -75,6 +82,7 @@ def sign_unavailable_developer_notify(user_obj, app_obj):
     notify_by_email(user_obj, message_type, get_sign_unavailable_developer_html_content(user_obj, app_obj, now_time))
 
 
+@magic_call_in_times(key=get_magic_call_key)
 def sign_app_over_limit_notify(user_obj, app_obj, used_num, limit_number):
     """
     0, '签名余额不足'
@@ -123,6 +131,7 @@ def check_developer_status_notify(user_obj, developer_obj_list, developer_used_i
                                                             yesterday_used_number))
 
 
+@magic_call_in_times(key=get_magic_call_key)
 def download_times_not_enough(user_obj, msg):
     """
     1, '下载次数不足'

@@ -134,3 +134,38 @@ def import_from_string(dotted_path):
         return getattr(module, class_name)
     except AttributeError as err:
         raise ImportError(f'Module "{module_path}" does not define a "{class_name}" attribute/class') from err
+
+
+def magic_call_in_times(call_time=24 * 3600, call_limit=6, key=None):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            cache_key = func.__name__
+            if key:
+                cache_key = f'magic_call_in_times_{cache_key}_{key(*args, **kwargs)}'
+            cache_data = cache.get(cache_key)
+            if cache_data:
+                if cache_data > call_limit:
+                    err_msg = f'{func} not yet started. cache_key:{cache_key} call over limit {call_limit} in {call_time}'
+                    logger.warning(err_msg)
+                    return False, err_msg
+                else:
+                    cache.incr(cache_key, 1)
+            else:
+                cache.set(cache_key, 1, call_time)
+            start_time = time.time()
+            try:
+                res = func(*args, **kwargs)
+                logger.info(
+                    f"exec {func} finished. time:{time.time() - start_time}  cache_key:{cache_key} result:{res}")
+                status = True
+            except Exception as e:
+                res = str(e)
+                logger.info(f"exec {func} failed. time:{time.time() - start_time}  cache_key:{cache_key} Exception:{e}")
+                status = False
+
+            return status, res
+
+        return wrapper
+
+    return decorator

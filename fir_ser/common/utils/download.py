@@ -117,7 +117,9 @@ def get_app_download_url(request, res, app_id, short, password, release_id, is_d
             app_type = '.ipa'
             download_url, extra_url = get_download_url_by_cache(app_obj, release_id + app_type, 600, is_download,
                                                                 udid=udid)
-        encrypt_password = AesBaseCrypt().get_encrypt_uid(password)
+        encrypt_password = ''
+        if password:
+            encrypt_password = AesBaseCrypt().get_encrypt_uid(password)
         res.data = {"download_url": download_url, "extra_url": extra_url, "password": encrypt_password}
         logger.info(f'app download url :{res.data}')
         if download_url != "" and "mobileconifg" not in download_url:

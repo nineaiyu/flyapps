@@ -141,7 +141,7 @@ class TaskView(APIView):
                 if status and result.get('data'):
                     result = result.get('data')
                     if result.successful():
-                        res.msg = result.get(propagate=False)
+                        res.data = result.get(propagate=False)
                         return Response(res.dict)
                     elif result.state in ['PENDING']:
                         res.msg = '签名队列中'
@@ -185,7 +185,7 @@ class TaskView(APIView):
                 res.msg = '下载授权码失效或有误'
 
             if check_user_udid_black(app_obj.user_id, udid):
-                res.code = 1007
+                res.code = 1005
                 res.msg = '设备注册中，请耐心等待'
 
             if res.code != 1000:
@@ -197,12 +197,13 @@ class TaskView(APIView):
             logger.info(f"sign app {app_obj} task_id:{task_id}")
             try:
                 result = c_task.get(propagate=False, timeout=1)
+                logger.info(f"sign app {app_obj} task_id:{task_id} result:{result}")
             except TimeoutError:
-                logger.error(f"get task task_id:{task_id} result timeout")
-                result = ''
+                logger.error(f"app {app_obj} get task task_id:{task_id} result timeout. udid {format_udid_info}")
+                result = {'task_id': task_id}
             if c_task.successful():
                 c_task.forget()
-                res.result = result
+                res.data = result
             else:
                 res.task_id = task_id
             return Response(res.dict)

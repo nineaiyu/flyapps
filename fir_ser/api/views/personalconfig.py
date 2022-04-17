@@ -48,6 +48,7 @@ class PersonalConfigView(APIView):
         config_value = request.data.get("config_value", None)
         if config_key is not None and config_value is not None and config_key in Config.DEVELOPER_STATUS_CONFIG:
             UserPersonalConfig.objects.filter(user_id=request.user, key=config_key).update(value=config_value)
+            UserConfig(request.user).invalid_config_cache(config_key)
         return Response(res.dict)
 
     def delete(self, request):

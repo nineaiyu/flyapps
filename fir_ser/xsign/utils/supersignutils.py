@@ -109,6 +109,8 @@ def resign_by_app_id_and_developer(app_id, developer_id, developer_app_id, need_
         return False, '清理执行中，请等待'
     d_time = time.time()
     if need_download_profile:
+        if developer_obj.status not in Config.DEVELOPER_RESIGN_STATUS:
+            return False, f'开发者状态 {developer_obj.get_status_display()}，无法下载描述文件'
         with cache.lock(f"make_and_download_profile_{developer_obj.issuer_id}_{app_obj.app_id}", timeout=60):
             IosUtils.modify_capability(developer_obj, app_obj, developer_app_id)
             status, download_profile_result = IosUtils.make_and_download_profile(app_obj,
@@ -402,28 +404,33 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True,
         return obj, status
     else:
         logger.warning(
-            f"udid:{udid} app_obj:{app_obj} find normal developer failed. now find abnormal device developer")
+            f"udid:{udid} app_obj:{app_obj} find udid from normal developer failed. now find abnormal device developer")
 
     obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, [AppleDeveloperStatus.DEVICE_ABNORMAL])
     if status:
         return obj, status
     else:
-        logger.warning(f"udid:{udid} app_obj:{app_obj} find abnormal developer failed. now find can wait developer")
+        logger.warning(
+            f"udid:{udid} app_obj:{app_obj} find udid from abnormal developer failed. now find can wait developer")
 
     if UserConfig(app_obj.user_id).DEVELOPER_WAIT_ABNORMAL_STATE:
         obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, Config.DEVELOPER_WAIT_STATUS)
         if status:
             return obj, status
         else:
-            logger.warning(f"udid:{udid} app_obj:{app_obj} find abnormal developer failed. now find register developer")
+            logger.warning(
+                f"udid:{udid} app_obj:{app_obj} find udid from abnormal developer failed. now find register developer")
 
     # 新设备查找策略
     # 查询开发者正常的状态
     obj, status = get_developer_user_by_app_new_udid(user_objs, udid, app_obj, status_choice, private_first)
     if obj:
         return obj, status
+    else:
+        logger.warning(
+            f"udid:{udid} app_obj:{app_obj} register udid from normal developer failed. now find abnormal device developer")
 
-    # 个人配置允许查询异常设备
+        # 个人配置允许查询异常设备
     if UserConfig(app_obj.user_id).DEVELOPER_WAIT_ABNORMAL_DEVICE and UserConfig(
             app_obj.user_id).DEVELOPER_ABNORMAL_DEVICE_WRITE:
         status_choice = [AppleDeveloperStatus.DEVICE_ABNORMAL]
@@ -446,7 +453,7 @@ def get_developer_obj_by_others(user_obj, udid, app_obj, read_only):
 
 
 def check_sign_is_exists(user_obj, app_obj, udid, developer_obj, sign=True):
-    d_result = {'code': 0, 'msg': 'success'}
+    d_result = {'code': 1000, 'msg': 'success'}
     app_udid_obj = AppUDID.objects.filter(app_id=app_obj, udid__udid=udid, udid__developerid=developer_obj).first()
     if app_udid_obj and app_udid_obj.sign_status >= SignStatus.PROFILE_DOWNLOAD_COMPLETE:
         if app_udid_obj.sign_status == SignStatus.SIGNATURE_PACKAGE_COMPLETE:
@@ -605,7 +612,7 @@ class IosUtils(object):
             return True
 
     def check_sign_permission(self):
-        d_result = {'code': 0, 'msg': 'success'}
+        d_result = {'code': 1000, 'msg': 'success'}
         state, used_num = check_app_sign_limit(self.app_obj)
         if not state:
             d_result['code'] = 1003
@@ -869,7 +876,6 @@ class IosUtils(object):
         return True, True
 
     def sign_failed_fun(self, d_result, msg):
-        d_result['code'] = 1002
         d_result['msg'] = msg
         logger.error(d_result)
         add_sign_message(self.user_obj, self.developer_obj, self.app_obj, '签名失败', msg, False)
@@ -885,7 +891,7 @@ class IosUtils(object):
         status, msg = self.check_sign_permission()
         if not status:
             return status, msg
-        d_result = {'code': 0, 'msg': 'success'}
+        d_result = {'code': 1000, 'msg': 'success'}
 
         result = check_sign_is_exists(self.user_obj, self.app_obj, self.udid, self.developer_obj)
         if result:
@@ -939,20 +945,20 @@ class IosUtils(object):
                                                                                  add_new_bundles_prefix)
                     if not status:
                         if 'UNEXPECTED_ERROR' in str(did_udid_result):
-                            return False, {}
+                            return False, {'code': 1002, 'msg': did_udid_result}
                         if 'DEVELOPER_WAIT_ABNORMAL_DEVICE' in str(did_udid_result):
                             return False, {'code': 1007, 'msg': '设备注册中，请耐心等待'}
                         msg = f"app_id {self.app_obj} register devices failed. {did_udid_result}"
                         self.sign_failed_fun(d_result, msg)
                         continue
                     if status and 'continue' in [str(did_udid_result)]:
-                        return True, True
+                        return True, 'device udid is not exists. so return and exit'
                 with cache.lock(add_new_bundles_prefix, timeout=360):
                     status, bundle_result = IosUtils.check_or_add_new_bundles(self.app_obj, self.developer_obj,
                                                                               add_new_bundles_prefix)
                     if not status:
                         if 'UNEXPECTED_ERROR' in str(bundle_result):
-                            return False, {}
+                            return False, {'code': 1002, 'msg': bundle_result}
                         msg = f"app_id {self.app_obj} create bundles failed. {bundle_result}"
                         self.sign_failed_fun(d_result, msg)
                         continue
@@ -970,7 +976,7 @@ class IosUtils(object):
                             new_did_list.append(did_udid[0])
                             new_udid_list.append(did_udid[1])
                     if not new_did_list:
-                        return True, True
+                        return True, f'udid {self.udid} not in new_did_list. {self.app_obj}'
                     logger.warning(
                         f'app {self.app_obj} receive {len(new_did_list)} did_udid_result: {new_did_list}')
                     status, download_profile_result = IosUtils.make_and_download_profile(self.app_obj,
@@ -979,13 +985,14 @@ class IosUtils(object):
                                                                                          new_did_list=new_did_list)
                     if not status:
                         if 'UNEXPECTED_ERROR' in str(download_profile_result):
-                            return False, {}
+                            return False, {'code': 1002, 'msg': download_profile_result}
                         msg = f"app_id {self.app_obj} download profile failed. {download_profile_result}"
                         self.sign_failed_fun(d_result, msg)
                         continue
                     else:
                         if 'continue' in [str(did_udid_result), str(download_profile_result)]:
-                            return True, True
+                            # 该情况估计是执行了回滚清理应用操作，导致异常，大概率是开发证书丢失或苹果开发平台数据被误删
+                            return True, f'{self.app_obj} developer {self.developer_obj} may be rollback'
                         locker = {
                             'locker_key': f"run_sign_{self.app_obj.app_id}_{self.developer_obj.issuer_id}",
                             "timeout": 60 * 5
@@ -1014,11 +1021,11 @@ class IosUtils(object):
                 if not check_sign_is_exists(user_obj, app_obj, did_udid, developer_obj, False):
                     new_did_list.append(did_udid)
             if not new_did_list:
-                return True, True
+                return True, f"{app_obj} not udid .so return, maybe it was deleted"
             else:
                 udid_list = new_did_list
         udid_list = list(set(udid_list))
-        d_result = {'code': 0, 'msg': 'success'}
+        d_result = {'code': 1000, 'msg': 'success'}
         AppUDID.objects.filter(app_id=app_obj, udid__udid__in=udid_list,
                                udid__developerid=developer_obj,
                                sign_status=SignStatus.APP_REGISTRATION_COMPLETE).update(

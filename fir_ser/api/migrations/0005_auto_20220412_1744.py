@@ -11,15 +11,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='apps',
-            name='password',
-        ),
-        migrations.AddField(
-            model_name='apps',
-            name='need_password',
-            field=models.BooleanField(default=False, help_text='默认 没有密码', verbose_name='访问密码'),
-        ),
         migrations.CreateModel(
             name='AppDownloadToken',
             fields=[

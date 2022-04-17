@@ -155,6 +155,10 @@ class DeviceUDIDSerializer(serializers.ModelSerializer):
     udid = serializers.CharField(source="udid.udid")
     is_mine = serializers.SerializerMethodField()
     other_uid = serializers.SerializerMethodField()
+    can_resign = serializers.SerializerMethodField()
+
+    def get_can_resign(self, obj):
+        return obj.udid.developerid.status in Config.DEVELOPER_RESIGN_STATUS
 
     def get_issuer_id(self, obj):
         issuer_id = obj.udid.developerid.issuer_id

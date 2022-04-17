@@ -412,6 +412,10 @@ class APPLEDEVELOPERCONF(object):
     DEVELOPER_DISABLED_STATUS = [AppleDeveloperStatus.AGREEMENT_NOT_AGREED, AppleDeveloperStatus.CERTIFICATE_EXPIRED,
                                  AppleDeveloperStatus.CERTIFICATE_MISSING, AppleDeveloperStatus.DEVICE_ABNORMAL]
 
+    # 重签状态
+    DEVELOPER_RESIGN_STATUS = [AppleDeveloperStatus.ACTIVATED, AppleDeveloperStatus.DEVICE_ABNORMAL,
+                               AppleDeveloperStatus.MAINTENANCE]
+
     """
     DEVELOPER_WAIT_STATUS 开发者等待状态，详情查看 model.AppIOSDeveloperInfo 和 DEVELOPER_WAIT_ABNORMAL_STATE 状态有关
     

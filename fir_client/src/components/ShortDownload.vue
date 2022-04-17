@@ -527,11 +527,17 @@ export default {
         }
         if (data.code === 1000) {
           window.clearInterval(loop_t);
-          if (data.msg) {
-            this.show_err_msg(data.msg);
-          } else {
-            this.wrong = false;
-            this.binary_download();
+          if (data.data) {
+            if (data.data.code === 1000) {
+              this.wrong = false;
+              this.binary_download();
+            } else {
+              if (data.data.redirect) {
+                window.location.href = data.data.redirect
+              } else if (data.data.msg) {
+                this.show_err_msg(data.data.msg);
+              }
+            }
           }
         } else {
           if (data.code === 1002) {
@@ -600,15 +606,21 @@ export default {
         this.msg = '签名处理中，请耐心等待';
         gettask(data => {
           if (data.code === 1000) {
-            if (data.task_id) {
+            if (data.data) {
+              if (data.data.code === 1000) {
+                this.wrong = false;
+                this.currentappinfo.need_password = false
+                this.binary_download()
+              } else {
+                if (data.data.redirect) {
+                  window.location.href = data.data.redirect
+                } else if (data.data.msg) {
+                  this.show_err_msg(data.data.msg);
+                }
+              }
+            } else if (data.task_id) {
               this.$route.query.task_id = data.task_id;
               this.loop_check_task()
-            } else if (data.result) {
-              this.show_err_msg(data.result);
-            } else {
-              this.wrong = false;
-              this.currentappinfo.need_password = false
-              this.binary_download()
             }
           } else if (data.code === 1006) {
             this.msg = data.msg;
@@ -617,7 +629,7 @@ export default {
             this.err_password = true;
             this.currentappinfo.need_password = true;
             this.password = ''
-          } else if (data.code === 1007) {
+          } else if (data.code === 1005) {
             this.msg = data.msg;
             this.show_err_msg(data.msg);
             this.wrong = true;

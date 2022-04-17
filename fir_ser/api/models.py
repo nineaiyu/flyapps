@@ -155,6 +155,12 @@ class Apps(models.Model):
     count_hits = models.BigIntegerField(verbose_name="下载次数", default=0)
     need_password = models.BooleanField(verbose_name="访问密码", help_text='默认 没有密码', default=False)
     isshow = models.BooleanField(verbose_name="下载页可见", default=True)
+    wxredirect = models.BooleanField(verbose_name="微信内第三方链接自动跳转", default=True)
+    wxeasytype = models.BooleanField(verbose_name="微信内简易模式，避免微信封停", default=True)
+    description = models.TextField('描述', blank=True, null=True, default=None, )
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    # 超级签名相关
     issupersign = models.BooleanField(verbose_name="是否超级签名包", default=False)
     change_auto_sign = models.BooleanField(verbose_name="签名相关的数据更新自动签名", default=False)
     supersign_type_choices = ((0, '普通权限'), (1, '推送权限，请上传adhoc包'), (2, 'network、vpn、推送权限，请上传adhoc包'), (3, '特殊权限'))
@@ -164,10 +170,8 @@ class Apps(models.Model):
     new_bundle_name = models.CharField(max_length=64, blank=True, null=True, verbose_name="new_bundle_name",
                                        help_text="应用新名称")
     supersign_limit_number = models.IntegerField(verbose_name="签名使用限额", default=0)
-    wxredirect = models.BooleanField(verbose_name="微信内第三方链接自动跳转", default=True)
-    wxeasytype = models.BooleanField(verbose_name="微信内简易模式，避免微信封停", default=True)
-    description = models.TextField('描述', blank=True, null=True, default=None, )
-    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    supersign_redirect_url = models.CharField(max_length=128, blank=True, verbose_name="签名失败跳转第三方URL", null=True)
+    abnormal_redirect = models.BooleanField(verbose_name="签名异常【一般为设备异常等待】跳转", default=False)
 
     class Meta:
         verbose_name = '应用信息'

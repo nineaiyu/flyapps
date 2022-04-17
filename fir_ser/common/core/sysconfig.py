@@ -377,6 +377,10 @@ class AppleDeveloperConfCache(ConfigCacheBase):
     def DEVELOPER_WAIT_ABNORMAL_STATE(self):
         return super().get_value('DEVELOPER_WAIT_ABNORMAL_STATE', APPLEDEVELOPERCONF.DEVELOPER_WAIT_ABNORMAL_STATE)
 
+    @property
+    def DEVELOPER_RESIGN_STATUS(self):
+        return super().get_value('DEVELOPER_RESIGN_STATUS', APPLEDEVELOPERCONF.DEVELOPER_RESIGN_STATUS)
+
 
 class UserPersonalConfKeyCache(ConfigCacheBase):
     def __init__(self, *args, **kwargs):

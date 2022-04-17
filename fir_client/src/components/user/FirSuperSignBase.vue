@@ -1149,7 +1149,7 @@
                 <p>开发者备注: {{ scope.row.developer_description }}</p>
                 <p>开发者状态: {{ scope.row.developer_status }}</p>
                 <p>安装异常???
-                  <el-button :disabled="scope.row.developer_status!=='已激活'" size="small" @click="resign(scope.row)">
+                  <el-button :disabled="!scope.row.can_resign" size="small" @click="resign(scope.row)">
                     尝试重新签包
                   </el-button>
                 </p>

@@ -60,9 +60,10 @@ class AppSignInfoView(APIView):
                 logger.info(f"app_id:{app_id} update old data:{app_obj.__dict__}")
                 update_fields = []
                 if app_obj.issupersign:
-                    app_obj.supersign_limit_number = data.get("supersign_limit_number",
-                                                              app_obj.supersign_limit_number)
-                    update_fields.append("supersign_limit_number")
+                    app_obj.supersign_limit_number = data.get("supersign_limit_number", app_obj.supersign_limit_number)
+                    app_obj.supersign_redirect_url = data.get("supersign_redirect_url", app_obj.supersign_redirect_url)
+                    app_obj.abnormal_redirect = data.get("abnormal_redirect", app_obj.abnormal_redirect)
+                    update_fields.extend(["supersign_limit_number", "supersign_redirect_url", "abnormal_redirect"])
                     if app_obj.supersign_type in [x[0] for x in list(app_obj.supersign_type_choices)]:
                         if app_obj.supersign_type != data.get("supersign_type", app_obj.supersign_type):
                             do_sign_flag = 1
