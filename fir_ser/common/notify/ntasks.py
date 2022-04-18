@@ -103,7 +103,7 @@ def check_apple_developer_devices(user_obj, days=None):
     developer_queryset = AppIOSDeveloperInfo.objects.filter(user_id=user_obj)
     if developer_queryset.count() == 0:
         return
-    developer_used_info = get_developer_devices(developer_queryset)
+    developer_used_info = get_developer_devices(developer_queryset, user_obj)
     device_count = developer_used_info.get('can_sign_number', 0)
     if user_obj.notify_available_signs == 0 or device_count > user_obj.notify_available_signs:
         return

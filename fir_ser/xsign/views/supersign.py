@@ -68,7 +68,7 @@ class DeveloperView(APIView):
         if status_choice is not None and isinstance(status_choice, list) and status_choice:
             developer_obj = developer_obj.filter(status__in=status_choice)
         developer_obj = developer_obj.distinct()
-        res.use_num = get_developer_devices(developer_obj)
+        res.use_num = get_developer_devices(developer_obj, request.user)
         if issuer_id:
             developer_obj = developer_obj.filter(
                 Q(developerappid__app_id__bundle_id=issuer_id, developerappid__app_id__user_id=request.user) | Q(
@@ -675,7 +675,8 @@ class DeviceTransferBillView(APIView):
                     user_obj = request.user
                     if user_obj.pk != to_user_obj.pk:
                         try:
-                            use_num = get_developer_devices(AppIOSDeveloperInfo.objects.filter(user_id=user_obj))
+                            use_num = get_developer_devices(AppIOSDeveloperInfo.objects.filter(user_id=user_obj),
+                                                            user_obj)
                             all_balance = use_num.get('max_total', 0)
                             if all_balance > 0 and number <= all_balance:
                                 bill_obj = IosDeveloperBill.objects.filter(user_id=user_obj, to_user_id=to_user_obj,

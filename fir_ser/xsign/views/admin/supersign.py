@@ -122,7 +122,7 @@ class SuperSignBillUserInfoView(APIView):
                     'used_balance': get_user_public_used_sign_num(user_obj),
                     'all_balance': get_user_public_sign_num(user_obj)
                 }
-                use_num = get_developer_devices(AppIOSDeveloperInfo.objects.filter(user_id=user_obj))
+                use_num = get_developer_devices(AppIOSDeveloperInfo.objects.filter(user_id=user_obj), user_obj)
                 private_balance_info = {
                     'used_balance': use_num.get('flyapp_used_sum', 0) + use_num.get('other_used_sum', 0),
                     'all_balance': use_num.get('max_total', 0)

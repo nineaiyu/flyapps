@@ -11,8 +11,8 @@ from django.db.models import Count, Sum, Q
 
 from api.models import AppReleaseInfo, UserInfo
 from common.base.baseutils import is_valid_phone
-from common.constants import SignStatus
-from common.core.sysconfig import Config
+from common.constants import SignStatus, AppleDeveloperStatus
+from common.core.sysconfig import Config, UserConfig
 from xsign.models import APPSuperSignUsedInfo, UDIDsyncDeveloper, AppUDID, APPToDeveloper, AppIOSDeveloperInfo, \
     IosDeveloperPublicPoolBill, IosDeveloperBill, DeveloperDevicesID, AppleDeveloperToAppUse, DeveloperAppID, \
     AppleSignMessage, DeviceAbnormalUDID
@@ -126,7 +126,7 @@ def get_use_number(developer_obj):
     return DeveloperDevicesID.objects.filter(developerid=developer_obj).values('udid').distinct().count()
 
 
-def get_developer_devices(developer_obj_lists):
+def get_developer_devices(developer_obj_lists, user_obj):
     developer_obj_lists = developer_obj_lists.filter(status__in=Config.DEVELOPER_USE_STATUS).all()
     result_info = []
     for dev_obj in developer_obj_lists:
@@ -152,12 +152,16 @@ def get_developer_devices(developer_obj_lists):
         "max_total": 100 * len(result_info)
     }
 
+    developer_status = Config.DEVELOPER_SIGN_STATUS
+    if UserConfig(user_obj).DEVELOPER_WAIT_ABNORMAL_DEVICE and UserConfig(user_obj).DEVELOPER_ABNORMAL_DEVICE_WRITE:
+        developer_status.append(AppleDeveloperStatus.DEVICE_ABNORMAL)
+
     for info in result_info:
         use_num['other_used_sum'] += info['other_used']
         use_num['flyapp_used_sum'] += info['flyapp_used']
         use_num['all_usable_number'] += info['usable_number']
         use_num['all_use_number'] += info['use_number']
-        if info['status'] in Config.DEVELOPER_SIGN_STATUS:
+        if info['status'] in developer_status:
             use_num['can_sign_number'] += (info['usable_number'] - info['flyapp_used'] - info['other_used'])
             use_num['used_sign_number'] += info['usable_number']
             use_num['can_other_used'] += info['other_used']

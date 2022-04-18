@@ -67,7 +67,7 @@ def auto_check_ios_developer_active():
 
     for uid, developer_obj_list in error_issuer_id.items():
         userinfo = UserInfo.objects.filter(uid=uid).first()
-        developer_used_info = get_developer_devices(AppIOSDeveloperInfo.objects.filter(user_id=userinfo))
+        developer_used_info = get_developer_devices(AppIOSDeveloperInfo.objects.filter(user_id=userinfo), userinfo)
 
         end_time = datetime.datetime.now().date()
         start_time = end_time - datetime.timedelta(days=1)
