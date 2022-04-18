@@ -447,7 +447,7 @@ class AppDeveloperApiV2(object):
                 device_obj = apple_obj.disabled_device(device_id, device_name, device_udid)
             logger.info(f"issuer_id:{self.issuer_id} device_obj:{device_obj} result:{status}")
             if device_obj and isinstance(device_obj, Devices):
-                return True, result
+                return True, device_obj
             raise Exception(str(device_obj))
         except Exception as e:
             err_msg = str(e)

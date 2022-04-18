@@ -694,18 +694,18 @@ class IosUtils(object):
                                                                                        failed_call_prefix,
                                                                                        set_failed_callback)
                 if not status:  # 已经包含异常操作，暂定
+                    msg = result
                     sync_device_obj = UDIDsyncDeveloper.objects.filter(udid=device_udid,
                                                                        developerid=developer_obj,
                                                                        status__in=[DeviceStatus.PROCESSING,
                                                                                    DeviceStatus.INELIGIBLE]).first()
                     if sync_device_obj:
-                        msg = result
                         change_developer_abnormal_status(developer_status, user_obj, developer_obj, app_obj)
                         if UserConfig(user_obj).DEVELOPER_WAIT_ABNORMAL_DEVICE:
                             update_or_create_abnormal_device(sync_device_obj, user_obj, app_obj, client_ip)
                             msg = 'DEVELOPER_WAIT_ABNORMAL_DEVICE'
-                        return False, msg
-                sync_device_obj.status = True
+                    return False, msg
+                sync_device_obj.status = result.statue
                 sync_device_obj.save(update_fields=['status'])
 
         else:
@@ -801,12 +801,17 @@ class IosUtils(object):
         if status:
             for device_obj in device_obj_list:
                 if device_obj.status not in [DeviceStatus.ENABLED, DeviceStatus.DISABLED]:
-                    developer_obj.status = AppleDeveloperStatus.DEVICE_ABNORMAL
-                    developer_obj.save(update_fields=['status'])
                     err_msg = f'issuer_id:{developer_obj.issuer_id} device status unexpected. device_obj:{device_obj}'
-                    add_sign_message(developer_obj.user_id, developer_obj, None, '开发者设备状态异常',
-                                     err_msg, False)
-                    return False, err_msg
+                    if developer_obj.status != AppleDeveloperStatus.DEVICE_ABNORMAL:
+                        developer_obj.status = AppleDeveloperStatus.DEVICE_ABNORMAL
+                        developer_obj.save(update_fields=['status'])
+                        add_sign_message(developer_obj.user_id, developer_obj, None, '开发者设备状态异常',
+                                         err_msg, False)
+                    if serial:
+                        if serial == device_obj.id:
+                            return False, err_msg
+                    else:
+                        return False, err_msg
                 else:
                     if serial and serial == device_obj.id:
                         sync_device_obj, _ = update_or_create_developer_udid_info(device_obj, developer_obj)
