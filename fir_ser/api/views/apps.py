@@ -45,17 +45,18 @@ def get_release_apps(request, res, app_serializer, apps_obj, storage):
 def apps_filter(request):
     app_type = request.query_params.get("type", None)
     act_type = request.query_params.get("act", None)
+    search = request.query_params.get("search", None)
+    filter_data = {"user_id": request.user}
     if app_type == "android":
-        filter_data = {"user_id": request.user, "type": 0}
-
+        filter_data["type"] = 0
     elif app_type == "ios":
-        filter_data = {"user_id": request.user, "type": 1}
-    else:
-        filter_data = {"user_id": request.user}
-
+        filter_data["type"] = 1
     if act_type == "combo":
         filter_data["has_combo"] = None
-    return Apps.objects.filter(**filter_data).all()
+    app_query_set = Apps.objects.filter(**filter_data)
+    if search:
+        app_query_set = app_query_set.filter(Q(short=search) | Q(name__contains=search))
+    return app_query_set.all()
 
 
 class AppsPageNumber(PageNumberPagination):

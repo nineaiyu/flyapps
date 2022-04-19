@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 def run_sign_task(format_udid_info, short, client_ip):
     app_obj = Apps.objects.filter(short=short).first()
     user_obj = app_obj.user_id
+    udid = format_udid_info.get('udid')
     if MigrateStorageState(user_obj.uid).get_state():
         msg = "数据迁移中，无法处理该操作"
         code = 1000
@@ -33,9 +34,11 @@ def run_sign_task(format_udid_info, short, client_ip):
         status, result = ios_sign_obj.sign_ipa(client_ip)
         if ios_sign_obj.developer_obj:
             if status:
-                add_sign_message(user_obj, ios_sign_obj.developer_obj, app_obj, '签名成功', result, True)
+                message = f"sign_info:[client_ip:{client_ip} udid:{udid}] raw_info:[{result}]"
+                add_sign_message(user_obj, ios_sign_obj.developer_obj, app_obj, '签名成功', message, True)
     except Exception as e:
-        logger.error(f"run_sign_task failed. udid_info:{format_udid_info} app_obj:{app_obj} Exception:{e}")
+        logger.error(
+            f"run_sign_task failed. client_ip:{client_ip} udid_info:{format_udid_info} app_obj:{app_obj} Exception:{e}")
         msg = '系统内部错误,请稍后再试或联系管理员'
         code = 5000
         return {'code': code, 'msg': msg}
@@ -54,11 +57,11 @@ def run_sign_task(format_udid_info, short, client_ip):
         else:
             code = 5000
             msg = '系统内部错误,请稍后再试或联系管理员'
-        message = f"return_info:[code:{code},msg:{msg}] raw_info:[{result}]"
+        message = f"return_info:[client_ip:{client_ip},code:{code},msg:{msg},udid:{udid}] raw_info:[{result}]"
         if ios_sign_obj.developer_obj:
             add_sign_message(user_obj, ios_sign_obj.developer_obj, app_obj, '签名失败了', message, False)
         else:
-            logger.error(f"{user_obj} {app_obj} 签名失败了:{message}")
+            logger.error(f"[client_ip:{client_ip}] {user_obj} {app_obj} 签名失败了:{message}")
     else:
         msg = ""
         code = 1000

@@ -135,6 +135,16 @@
           </el-switch>
           <el-tag style="margin-left: 10px" type="warning"> 开启之后，每天凌晨自动检测该开发者和设备使用状态，默认关闭</el-tag>
         </el-form-item>
+        <el-form-item label="异常状态注册" label-width="110px" style="text-align: left">
+          <el-switch
+              v-model="editdeveloperinfo.abnormal_register"
+              :active-value="true"
+              :inactive-value="false"
+              active-color="#13ce66"
+              inactive-color="#ff4949">
+          </el-switch>
+          <el-tag style="margin-left: 10px" type="warning"> 开启之后，当开发者出现设备异常状态时，新设备还是可以继续注册，默认开启</el-tag>
+        </el-form-item>
         <el-form-item label="证书id" label-width="110px">
           <el-input v-model="editdeveloperinfo.certid" :disabled='isedit'/>
         </el-form-item>
@@ -732,7 +742,17 @@
               <el-tag v-else size="medium" type="info">否</el-tag>
             </template>
           </el-table-column>
-
+          <el-table-column
+              align="center"
+              label="异常注册"
+              prop="abnormal_register"
+              sortable
+              width="60">
+            <template slot-scope="scope">
+              <el-tag v-if="scope.row.abnormal_register" size="medium">是</el-tag>
+              <el-tag v-else size="medium" type="info">否</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column
               align="center"
               label="备注"
@@ -752,7 +772,7 @@
               align="center"
               fixed="right"
               label="操作"
-              width="150">
+              width="145">
             <template slot-scope="scope">
 
               <el-button

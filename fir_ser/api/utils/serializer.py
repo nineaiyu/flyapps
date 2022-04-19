@@ -205,7 +205,7 @@ class AppsListSerializer(AppsSerializer):
     class Meta:
         model = models.Apps
         fields = ["app_id", "bundle_id", "issupersign", "name", "preview_url", "short", "type", "master_release",
-                  "has_combo"]
+                  "has_combo", "count_hits"]
 
     def get_master_release(self, obj):
         master_release_obj = get_app_master_obj_from_context(self, obj)

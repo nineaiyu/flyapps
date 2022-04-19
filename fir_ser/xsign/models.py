@@ -37,6 +37,7 @@ class AppIOSDeveloperInfo(models.Model):
 
     clean_status = models.BooleanField(verbose_name="清理是否同时禁用设备ID", default=False)
     auto_check = models.BooleanField(verbose_name="是否自动检测开发者状态", default=False)
+    abnormal_register = models.BooleanField(verbose_name="设备异常状态是否注册", default=True)
 
     class Meta:
         verbose_name = '苹果开发者账户'

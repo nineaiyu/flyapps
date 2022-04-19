@@ -491,12 +491,13 @@
 
           <div class=" app-animator">
             <div class="card app card-ios">
-
-              <i v-if="r.type === 1" class=" type-icon iconfont icon-ios"/>
+              <i class="down-icon el-icon-cloudy"> {{ r.count_hits }}</i>
+              <i v-if="r.type === 1" class="type-icon iconfont icon-ios"/>
               <i v-if="r.type === 0" class="type-icon iconfont icon-android2"/>
 
-              <div v-if="r.type === 1" class="type-mark"></div>
-              <div v-if="r.type === 0" class="type-mark" style="border-top: 48px solid #A4C639"></div>
+              <div v-if="r.type === 1 && r.issupersign" class="type-mark" style="border-top: 48px solid #a2b0f5"></div>
+              <div v-if="r.type === 1 && !r.issupersign" class="type-mark"></div>
+              <div v-if="r.type === 0" class="type-mark" style="border-top: 48px solid #a4c639"></div>
               <a class="appicon" @click="appInfos(r)">
                 <img :src="r.master_release.icon_url|make_icon_url" alt="" class="icon ng-isolate-scope"
                      height="100" width="100"></a>
@@ -1035,7 +1036,7 @@ export default {
         if (this.searchfromtype) {
           this.getappsFun({"type": this.searchfromtype, 'page': 1, size: 999});
         } else {
-          this.getappsFun({'page': 1, size: 999});
+          this.getappsFun({'page': 1, size: 999, 'search': keysearch});
         }
       }
     },
@@ -1062,7 +1063,7 @@ export default {
       let keysearch = this.keysearch.replace(/^\s+|\s+$/g, "");
       let newapplists = [];
       for (let i = 0; i < this.orgapplists.length; i++) {
-        if (this.orgapplists[i].name.search(keysearch) >= 0) {
+        if (this.orgapplists[i].name.search(keysearch) >= 0 || this.orgapplists[i].short.search(keysearch) >= 0) {
           newapplists.push(this.orgapplists[i]);
         }
       }
@@ -1362,6 +1363,16 @@ export default {
   right: 7px;
   z-index: 2;
   color: #fff;
+
+}
+
+.page-apps .card.app .down-icon {
+  position: absolute;
+  top: 9px;
+  left: 7px;
+  z-index: 2;
+  /*color: #1f72ee;*/
+  color: #B6BDC1;
 
 }
 

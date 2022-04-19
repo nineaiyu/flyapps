@@ -86,6 +86,8 @@ class DeveloperView(APIView):
         res.status_choices.extend([
             {'id': 'open_auto_check', 'name': '开启自动检测', 'disabled': False},
             {'id': 'close_auto_check', 'name': '关闭自动检测', 'disabled': False},
+            {'id': 'open_abnormal_register', 'name': '开启设备异常状态注册', 'disabled': False},
+            {'id': 'close_abnormal_register', 'name': '关闭设备异常状态注册', 'disabled': False},
         ])
         res.apple_auth_list = get_choices_dict(AppIOSDeveloperInfo.auth_type_choices)
         return Response(res.dict)
@@ -158,6 +160,13 @@ class DeveloperView(APIView):
                         auto_check = True
                     AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id__in=issuer_ids).update(
                         auto_check=auto_check)
+                    return Response(res.dict)
+                if status and status in ['open_abnormal_register', 'close_abnormal_register']:
+                    abnormal_register = True
+                    if status == 'close_abnormal_register':
+                        abnormal_register = False
+                    AppIOSDeveloperInfo.objects.filter(user_id=request.user, issuer_id__in=issuer_ids).update(
+                        abnormal_register=abnormal_register)
                     return Response(res.dict)
                 if issuer_ids and status is not None and status not in Config.DEVELOPER_DISABLED_STATUS:
                     status_text = get_choices_name_from_key(AppIOSDeveloperInfo.status_choices, status)
@@ -266,12 +275,10 @@ class DeveloperView(APIView):
                         f"developer {developer_obj} usable_number {data.get('usable_number', developer_obj.usable_number)} get failed Exception:{e}")
 
                 developer_obj.description = data.get("description", developer_obj.description)
-                update_fields.append("description")
-
                 developer_obj.clean_status = data.get("clean_status", developer_obj.clean_status)
-                update_fields.append("clean_status")
                 developer_obj.auto_check = data.get("auto_check", developer_obj.auto_check)
-                update_fields.append("auto_check")
+                developer_obj.abnormal_register = data.get("abnormal_register", developer_obj.abnormal_register)
+                update_fields.extend(["abnormal_register", "description", "clean_status", "auto_check"])
 
                 private_key_id = data.get("private_key_id", developer_obj.private_key_id)
                 p8key = data.get("p8key", developer_obj.p8key)

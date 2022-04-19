@@ -36,6 +36,7 @@ class Migration(migrations.Migration):
                     default=0, verbose_name='账户状态')),
                 ('clean_status', models.BooleanField(default=False, verbose_name='清理是否同时禁用设备ID')),
                 ('auto_check', models.BooleanField(default=False, verbose_name='是否自动检测开发者状态')),
+                ('abnormal_register', models.BooleanField(default=True, verbose_name='设备异常状态是否注册')),
                 ('user_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL,
                                               verbose_name='用户ID')),
             ],

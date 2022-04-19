@@ -338,11 +338,13 @@ def get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, abnormal_use_
     return developer_udid_queryset, False
 
 
-def get_developer_user_by_app_new_udid(user_objs, udid, app_obj, status_choice, private_first):
+def get_developer_user_by_app_new_udid(user_objs, udid, app_obj, status_choice, private_first, abnormal_register=False):
     # 新设备查找策略
     # 根据app查找开发者账户
     exist_app_developer_pk_list = []
     status_filter = {'developerid__certid__isnull': False, 'developerid__status__in': status_choice}
+    if abnormal_register:
+        status_filter['developerid__abnormal_register'] = abnormal_register
     developer_pk_list = UDIDsyncDeveloper.objects.filter(developerid__user_id__in=user_objs,
                                                          developerid__apptodeveloper__app_id=app_obj,
                                                          **status_filter).values('developerid').all().distinct()
@@ -361,6 +363,8 @@ def get_developer_user_by_app_new_udid(user_objs, udid, app_obj, status_choice, 
         return AppIOSDeveloperInfo.objects.filter(pk=exist_app_developer_pk_list[0]).first(), False
 
     status_filter = {'certid__isnull': False, 'status__in': status_choice}
+    if abnormal_register:
+        status_filter['abnormal_register'] = abnormal_register
     obj_base_filter = AppIOSDeveloperInfo.objects.filter(user_id__in=user_objs, **status_filter)
 
     can_used_developer_pk_list = get_new_developer_by_app_obj(app_obj, obj_base_filter, apple_to_app)
@@ -398,28 +402,30 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True,
     else:
         status_choice = Config.DEVELOPER_SIGN_STATUS
 
+    base_msg = f"{'read mode' if read_only else 'write mode'} did:{udid} app_obj:{app_obj}"
+
     # 已经存在设备查找策略
     obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, status_choice)
     if status:
         return obj, status
     else:
-        logger.warning(
-            f"udid:{udid} app_obj:{app_obj} find udid from normal developer failed. now find abnormal device developer")
+        logger.warning(f"{base_msg} find udid from normal developer failed. now find abnormal device developer")
 
     obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, [AppleDeveloperStatus.DEVICE_ABNORMAL])
     if status:
         return obj, status
     else:
-        logger.warning(
-            f"udid:{udid} app_obj:{app_obj} find udid from abnormal developer failed. now find can wait developer")
+        logger.warning(f"{base_msg} find udid from abnormal developer failed. now find can wait developer")
 
     if UserConfig(app_obj.user_id).DEVELOPER_WAIT_ABNORMAL_STATE:
         obj, status = get_developer_user_by_app_exist_udid(user_objs, udid, app_obj, Config.DEVELOPER_WAIT_STATUS)
         if status:
             return obj, status
         else:
-            logger.warning(
-                f"udid:{udid} app_obj:{app_obj} find udid from abnormal developer failed. now find register developer")
+            logger.warning(f"{base_msg} find udid from abnormal developer failed. now find register developer")
+
+    if read_only:
+        return None, None
 
     # 新设备查找策略
     # 查询开发者正常的状态
@@ -427,14 +433,13 @@ def get_developer_user_by_app_udid(user_objs, udid, app_obj, private_first=True,
     if obj:
         return obj, status
     else:
-        logger.warning(
-            f"udid:{udid} app_obj:{app_obj} register udid from normal developer failed. now find abnormal device developer")
+        logger.warning(f"{base_msg} register udid from normal developer failed. now find abnormal device developer")
 
         # 个人配置允许查询异常设备
     if UserConfig(app_obj.user_id).DEVELOPER_WAIT_ABNORMAL_DEVICE and UserConfig(
             app_obj.user_id).DEVELOPER_ABNORMAL_DEVICE_WRITE:
         status_choice = [AppleDeveloperStatus.DEVICE_ABNORMAL]
-        obj, status = get_developer_user_by_app_new_udid(user_objs, udid, app_obj, status_choice, private_first)
+        obj, status = get_developer_user_by_app_new_udid(user_objs, udid, app_obj, status_choice, private_first, True)
     return obj, status
 
 
@@ -627,13 +632,6 @@ class IosUtils(object):
         res = check_app_permission(self.app_obj, BaseResponse())
         if res.code != 1000:
             return False, {'code': res.code, 'msg': res.msg}
-        self.get_developer_auth(True)
-        if not self.developer_obj:
-            msg = f"udid {self.udid} app {self.app_obj} not exists apple developer"
-            d_result['code'] = 1005
-            d_result['msg'] = msg
-            logger.error(d_result)
-            return False, d_result
         return True, d_result
 
     @staticmethod
@@ -898,9 +896,11 @@ class IosUtils(object):
             return status, msg
         d_result = {'code': 1000, 'msg': 'success'}
 
-        result = check_sign_is_exists(self.user_obj, self.app_obj, self.udid, self.developer_obj)
-        if result:
-            return result
+        self.get_developer_auth(True)
+        if self.developer_obj:
+            result = check_sign_is_exists(self.user_obj, self.app_obj, self.udid, self.developer_obj)
+            if result:
+                return result
 
         if check_udid_black(self.user_obj, self.udid):
             msg = {'code': 1007}
