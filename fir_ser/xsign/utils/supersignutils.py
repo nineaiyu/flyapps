@@ -499,11 +499,12 @@ class IosUtils(object):
         if self.developer_obj:
             self.auth = get_auth_form_developer(self.developer_obj)
         else:
+            if read_only:
+                return
             logger.error(f"user {self.user_obj} has no active apple developer")
             if send_msg_over_limit("get", self.user_obj.email):
                 send_msg_over_limit("set", self.user_obj.email)
                 sign_unavailable_developer_notify(self.user_obj, self.app_obj)
-
             else:
                 logger.error(f"user {self.user_obj} send msg failed. over limit")
 
