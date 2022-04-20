@@ -14,7 +14,7 @@ from common.cache.storage import WxLoginBindCache
 from common.core.auth import ExpiringTokenAuthentication
 from common.core.sysconfig import Config
 from common.core.throttle import VisitRegister1Throttle, VisitRegister2Throttle
-from common.libs.mp.wechat import make_wx_login_qrcode, show_qrcode_url, WxWebLogin, WxTemplateMsg
+from common.libs.mp.wechat import make_wx_login_qrcode, show_qrcode_url, WxWebLogin, WxTemplateMsg, WxAppletLogin
 from common.utils.caches import set_wx_ticket_login_info_cache, get_wx_ticket_login_info_cache
 from common.utils.pending import get_pending_result
 from common.utils.token import verify_token, generate_alphanumeric_token_of_length
@@ -222,4 +222,18 @@ class WeChatWebSyncView(APIView):
         WxLoginBindCache(ticket).set_storage_cache({'ip_addr': get_real_ip_address(request), 'pk': request.user.pk})
         ret.data = wx_login_obj.make_auth_uri(ticket)
         ret.ticket = ticket
+        return Response(ret.dict)
+
+
+class WeChatAppletView(APIView):
+    throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
+
+    def post(self, request):
+        ret = BaseResponse()
+        auth_code = request.data.get('auth_code')
+        app_id = request.data.get('app_id')
+        if auth_code and app_id:
+            wx_login_obj = WxAppletLogin()
+            if app_id == wx_login_obj.app_id:
+                ret.data = wx_login_obj.get_session_from_code(auth_code)
         return Response(ret.dict)

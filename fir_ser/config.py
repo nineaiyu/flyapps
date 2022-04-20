@@ -78,10 +78,17 @@ class THIRDLOGINCONF(object):
     wx_official = {
         'name': 'wx_official',
         'auth': {
-            'app_id': 'wx390e5985fd3699e6',
+            'app_id': '1wx390e5985fd3699e6',
             'app_secret': '5b1796722172a902d019f43e4a2fb678',
             'token': 'f0ae76c1559cacf72a99db6a41b879b8',
             'encoding_aes_key': '7b9U60tCXk3f4yOFideTN5ithh4Y8X3Xl9pRovp83gG',
+        },
+        'active': False
+    }
+    wx_applet = {
+        'auth': {
+            'app_id': 'wxb65d1894331e9ff3',
+            'app_secret': 'e05b319562b3b123ffef1d9ce64dd665',
         },
         'active': True
     }

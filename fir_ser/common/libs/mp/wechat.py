@@ -170,12 +170,12 @@ class WxOfficialBase(object):
 
     @classmethod
     def make_wx_auth_obj(cls):
-        return cls(**Config.THIRDLOGINCONF.get('auth'))
+        return cls(**Config.WECHATOFFICIAL.get('auth'))
 
 
 def check_signature(params):
     tmp_list = sorted(
-        [Config.THIRDLOGINCONF.get('auth', {}).get('token'), params.get("timestamp"), params.get("nonce")])
+        [Config.WECHATOFFICIAL.get('auth', {}).get('token'), params.get("timestamp"), params.get("nonce")])
     tmp_str = "".join(tmp_list)
     tmp_str = sha1(tmp_str.encode("utf-8")).hexdigest()
     if tmp_str == params.get("signature"):
@@ -185,7 +185,7 @@ def check_signature(params):
 
 class WxMsgCrypt(WxMsgCryptBase):
     def __init__(self):
-        super().__init__(**Config.THIRDLOGINCONF.get('auth'))
+        super().__init__(**Config.WECHATOFFICIAL.get('auth'))
 
 
 class WxTemplateMsg(object):
@@ -195,7 +195,7 @@ class WxTemplateMsg(object):
         self.wx_nick_name = wx_nick_name
 
     def send_msg(self, template_id, content):
-        if not Config.THIRDLOGINCONF.get('active'):
+        if not Config.WECHATOFFICIAL.get('active'):
             return False, f'weixin status is disabled'
         msg_uri = f'https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={get_wx_access_token_cache()}'
         data = {
@@ -562,7 +562,7 @@ class WxWebLogin(object):
     def __init__(self):
         self.openid = None
         self.access_token = None
-        auth_info = Config.THIRDLOGINCONF.get('auth')
+        auth_info = Config.WECHATOFFICIAL.get('auth')
         self.app_id = auth_info.get('app_id')
         self.app_secret = auth_info.get('app_secret')
 
@@ -613,5 +613,52 @@ class WxWebLogin(object):
         req = requests.get(t_url)
         if req.status_code == 200:
             req.encoding = 'utf-8'
+            return req.json()
+        return {}
+
+
+class WxAppletLogin(object):
+    """
+    https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/login/auth.code2Session.html
+    """
+
+    def __init__(self):
+        self.openid = None
+        self.access_token = None
+        auth_info = Config.WECHATAPPLET.get('auth')
+        self.app_id = auth_info.get('app_id')
+        self.app_secret = auth_info.get('app_secret')
+
+    def get_session_from_code(self, js_code):
+        """
+        登录凭证校验。通过 wx.login 接口获得临时登录凭证 code 后传到开发者服务器调用此接口完成登录流程
+        :param js_code:
+        """
+        t_url = f'https://api.weixin.qq.com/sns/jscode2session?appid={self.app_id}&secret={self.app_secret}&js_code={js_code}&grant_type=authorization_code'
+        req = requests.get(t_url)
+        if req.status_code == 200:
+            logger.info(f"get wx applet session {req.status_code} {req.text}")
+            auth_info = req.json()
+            return auth_info
+        return {}
+
+    def get_access_token(self):
+        """
+        获取小程序全局唯一后台接口调用凭据（access_token）。调用绝大多数后台接口时都需使用 access_token，开发者需要进行妥善保存
+        """
+        t_url = f'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={self.app_id}&secret={self.app_secret}'
+        req = requests.get(t_url)
+        if req.status_code == 200:
+            logger.info(f"get access token {req.status_code} {req.text}")
+            auth_info = req.json()
+            self.access_token = auth_info.get('access_token')
+            return auth_info
+        return {}
+
+    def get_phone_number(self, access_token, js_code):
+        t_url = f'https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token={access_token}'
+        req = requests.post(t_url, json={'code': js_code})
+        if req.status_code == 200:
+            logger.info(f"get phone number {req.status_code} {req.text}")
             return req.json()
         return {}

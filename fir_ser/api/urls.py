@@ -23,7 +23,7 @@ from api.views.getip import GetRemoteIp
 from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, \
     UserApiTokenView, CertificationView, ChangeInfoView
 from api.views.login_wx import WeChatLoginView, WeChatLoginCheckView, WeChatBindView, WeChatWebLoginView, \
-    WeChatWebSyncView
+    WeChatWebSyncView, WeChatAppletView
 from api.views.logout import LogoutView
 from api.views.notify import NotifyReceiverView, NotifyConfigView, NotifyInfoView
 from api.views.order import PriceView, OrderView, PaySuccess, OrderSyncView
@@ -71,6 +71,7 @@ urlpatterns = [
     re_path("^cname_domain$", DomainCnameView.as_view()),
     re_path("^domain_info$", DomainInfoView.as_view()),
     re_path("^mp.weixin$", ValidWxChatToken.as_view()),
+    re_path("^mp.applet$", WeChatAppletView.as_view()),
     re_path("^mp.web.login$", WeChatWebLoginView.as_view(), name="mp.web.login"),
     re_path("^mp.web.sync$", WeChatWebSyncView.as_view(), name="mp.web.sync"),
     re_path("^third.wx.login$", WeChatLoginView.as_view()),

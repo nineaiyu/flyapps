@@ -207,8 +207,12 @@ class WechatConfCache(ConfigCacheBase):
         super(WechatConfCache, self).__init__(*args, **kwargs)
 
     @property
-    def THIRDLOGINCONF(self):
-        return super().get_value('THIRDLOGINCONF', THIRDLOGINCONF.wx_official)
+    def WECHATAPPLET(self):
+        return super().get_value('WECHATAPPLET', THIRDLOGINCONF.wx_applet)
+
+    @property
+    def WECHATOFFICIAL(self):
+        return super().get_value('WECHATOFFICIAL', THIRDLOGINCONF.wx_official)
 
 
 class AuthConfCache(ConfigCacheBase):
