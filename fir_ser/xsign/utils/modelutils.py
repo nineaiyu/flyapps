@@ -162,7 +162,8 @@ def get_developer_devices(developer_obj_lists, user_obj):
         use_num['flyapp_used_sum'] += info['flyapp_used']
         use_num['all_usable_number'] += info['usable_number']
         use_num['all_use_number'] += info['use_number']
-        if info['status'] in developer_status and info['abnormal_register']:
+        if info['status'] in Config.DEVELOPER_SIGN_STATUS or (
+                info['status'] in developer_status and info['abnormal_register']):
             use_num['can_sign_number'] += (info['usable_number'] - info['flyapp_used'] - info['other_used'])
             use_num['used_sign_number'] += info['usable_number']
             use_num['can_other_used'] += info['other_used']
