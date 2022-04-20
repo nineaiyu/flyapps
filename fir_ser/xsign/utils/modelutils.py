@@ -136,7 +136,8 @@ def get_developer_devices(developer_obj_lists, user_obj):
             'flyapp_used': flyapp_used,
             'usable_number': usable_number(dev_obj),
             'use_number': get_use_number(dev_obj),
-            'status': dev_obj.status
+            'status': dev_obj.status,
+            'abnormal_register': dev_obj.abnormal_register
         })
 
     use_num = {
@@ -161,7 +162,7 @@ def get_developer_devices(developer_obj_lists, user_obj):
         use_num['flyapp_used_sum'] += info['flyapp_used']
         use_num['all_usable_number'] += info['usable_number']
         use_num['all_use_number'] += info['use_number']
-        if info['status'] in developer_status:
+        if info['status'] in developer_status and info['abnormal_register']:
             use_num['can_sign_number'] += (info['usable_number'] - info['flyapp_used'] - info['other_used'])
             use_num['used_sign_number'] += info['usable_number']
             use_num['can_other_used'] += info['other_used']
