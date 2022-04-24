@@ -84,10 +84,10 @@ class DeveloperView(APIView):
         res.count = developer_obj.count()
         res.status_choices = get_choices_dict(AppIOSDeveloperInfo.status_choices, Config.DEVELOPER_DISABLED_STATUS)
         res.status_choices.extend([
-            {'id': 'open_auto_check', 'name': '开启自动检测', 'disabled': False},
-            {'id': 'close_auto_check', 'name': '关闭自动检测', 'disabled': False},
-            {'id': 'open_abnormal_register', 'name': '开启设备异常状态注册', 'disabled': False},
-            {'id': 'close_abnormal_register', 'name': '关闭设备异常状态注册', 'disabled': False},
+            {'id': 'open_auto_check', 'name': '开启自动检测', 'disabled': False, 'ext': True},
+            {'id': 'close_auto_check', 'name': '关闭自动检测', 'disabled': False, 'ext': True},
+            {'id': 'open_abnormal_register', 'name': '开启设备异常状态注册', 'disabled': False, 'ext': True},
+            {'id': 'close_abnormal_register', 'name': '关闭设备异常状态注册', 'disabled': False, 'ext': True},
         ])
         res.apple_auth_list = get_choices_dict(AppIOSDeveloperInfo.auth_type_choices)
         return Response(res.dict)
@@ -113,12 +113,12 @@ class DeveloperView(APIView):
 
                 run_queryset = AppIOSDeveloperInfo.objects.filter(user_id=request.user,
                                                                   status__in=Config.DEVELOPER_USE_STATUS).all()
-                devicestatus = data.get("devicestatus", '').strip()
+                devicestatus = data.get("devicestatus")
                 udidsearch = data.get("udidsearch", '').strip()
                 if udidsearch:
                     run_queryset = run_queryset.filter(udidsyncdeveloper__udid=udidsearch)
-                if devicestatus:
-                    run_queryset = run_queryset.filter(udidsyncdeveloper__status=devicestatus)
+                if devicestatus and isinstance(devicestatus, list):
+                    run_queryset = run_queryset.filter(udidsyncdeveloper__status__in=devicestatus)
 
                 for developer_s_obj in run_queryset.distinct():
                     pools.submit(run_task, developer_s_obj)
@@ -509,7 +509,12 @@ class DeveloperDeviceView(APIView):
         device_status = request.query_params.get("devicestatus", None)
         super_sign_used_objs = UDIDsyncDeveloper.objects.filter(developerid__user_id=request.user, )
         if device_status:
-            super_sign_used_objs = super_sign_used_objs.filter(status=device_status)
+            try:
+                device_status = json.loads(device_status)
+                if device_status is not None and isinstance(device_status, list) and device_status:
+                    super_sign_used_objs = super_sign_used_objs.filter(status__in=device_status)
+            except Exception as e:
+                logger.warning(f'device status json load failed. Exception:{e} .{device_status}')
         if issuer_id:
             super_sign_used_objs = super_sign_used_objs.filter(developerid__issuer_id=issuer_id)
         if udid:
