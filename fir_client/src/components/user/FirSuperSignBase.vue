@@ -485,8 +485,8 @@
             style="width: 30%;margin-right: 10px;margin-bottom: 10px"/>
 
         <el-select v-model="developer_choice" clearable placeholder="账户类型"
-                   @change="handleCurrentChange(1)"
-                   style="width: 18%;margin-right: 10px;margin-bottom: 10px">
+                   style="width: 18%;margin-right: 10px;margin-bottom: 10px"
+                   @change="handleCurrentChange(1)">
           <el-option
               v-for="item in developer_options"
               :key="item.value"
@@ -537,12 +537,12 @@
           <el-col :span="24">
             <div>
               <el-select v-model="developer_status_choice" clearable multiple
-                         @change="handleCurrentChange(1)"
-                         placeholder="账户状态" style="width: 49%;margin-right: 45px;margin-bottom: 10px">
+                         placeholder="账户状态"
+                         style="width: 49%;margin-right: 45px;margin-bottom: 10px" @change="handleCurrentChange(1)">
                 <el-option
                     v-for="item in status_choices"
-                    :hidden="item.ext"
                     :key="item.id"
+                    :hidden="item.ext"
                     :label="item.name"
                     :value="item.id">
                 </el-option>
@@ -879,8 +879,8 @@
             clearable
             placeholder="输入开发者用户ID"
             style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
-        <el-select v-if="status_choices" v-model="devicestatus" clearable placeholder="设备状态"
-                   multiple
+        <el-select v-if="status_choices" v-model="devicestatus" clearable multiple
+                   placeholder="设备状态"
                    style="width: 120px;margin-right: 30px" @change="handleCurrentChange(1)">
           <el-option v-for="item in device_status_choices" :key="item.id" :label="item.name" :value="item.id"/>
         </el-select>
