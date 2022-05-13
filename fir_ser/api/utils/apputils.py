@@ -9,6 +9,7 @@ import random
 from api.models import AppReleaseInfo, Apps
 from api.utils.modelutils import get_user_domain_name
 from common.base.baseutils import make_app_uuid
+from common.base.magic import MagicCacheData
 from common.cache.state import MigrateStorageState
 from common.utils.caches import del_cache_response_by_short
 from common.utils.storage import Storage
@@ -78,9 +79,10 @@ def clean_history_apps(app_obj, user_obj, history_release_limit=20):
                     storage_obj.delete_file(release_obj.release_id, app_obj.type)
                     storage_obj.delete_file(release_obj.icon_url)
                     release_obj.delete()
+    MagicCacheData.invalid_cache(app_obj.app_id)
 
 
-def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short, size, issupersign):
+def save_app_infos(app_tmp_filename, app_file_name, user_obj, app_info, bundle_id, app_img, short, size, issupersign):
     app_uuid = make_app_uuid(user_obj, bundle_id + app_file_name.split(".")[1])
     ##判断是否存在该app
     app_obj = Apps.objects.filter(app_id=app_uuid, user_id=user_obj).first()
@@ -123,8 +125,12 @@ def save_app_infos(app_file_name, user_obj, app_info, bundle_id, app_img, short,
             app_obj.name = app_info["labelname"]
             app_obj.save(update_fields=["name", "bundle_id", "issupersign"])
         del_cache_response_by_short(app_obj.app_id)
-
+        MagicCacheData.invalid_cache(app_obj.app_id)
     AppReleaseInfo.objects.filter(app_id=app_obj).update(is_master=False)
+
+    file_info = storage.get_file_info(app_tmp_filename)
+    logger.info(f'get file {app_tmp_filename} info:{file_info}')
+    size = file_info.get('content_length', size)
 
     release_data = {
         "app_id": app_obj,

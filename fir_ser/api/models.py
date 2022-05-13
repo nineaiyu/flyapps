@@ -40,11 +40,12 @@ class UserInfo(AbstractUser):
     memo = models.TextField('备注', blank=True, null=True, default=None, )
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name="注册时间")
     download_times = models.PositiveIntegerField(default=0, verbose_name="可用下载次数,需要用户充值")
+    storage_capacity = models.BigIntegerField(default=0, verbose_name="存储容量，单位byte")
     all_download_times = models.BigIntegerField(default=0, verbose_name="总共下载次数")
     default_domain_name = models.ForeignKey(to="DomainCnameInfo", verbose_name="默认下载页域名", on_delete=models.CASCADE)
     history_release_limit = models.IntegerField(default=10, verbose_name="app 历史记录版本", blank=True, null=True)
-    storage = models.OneToOneField(to='AppStorage', related_name='app_storage',
-                                   on_delete=models.SET_NULL, verbose_name="存储", null=True, blank=True)
+    storage = models.ForeignKey(to='AppStorage', related_name='app_storage',
+                                on_delete=models.SET_NULL, verbose_name="存储", null=True, blank=True)
     api_token = models.CharField(max_length=256, verbose_name='api访问密钥', default='')
     notify_available_downloads = models.IntegerField(default=0, verbose_name="下载余额不足通知", blank=True, null=True)
     notify_available_signs = models.IntegerField(default=0, verbose_name="签名余额不足通知", blank=True, null=True)
@@ -261,6 +262,8 @@ class AppStorage(models.Model):
                                                   verbose_name="阿里云下载授权方式")
     cnd_auth_key = models.CharField(max_length=128, blank=True, null=True, verbose_name="阿里云cnd_auth_key")
 
+    max_storage_capacity = models.BigIntegerField(verbose_name="存储最大使用容量,单位btype", default=0)
+
     created_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
     description = models.TextField('备注', blank=True, null=True, default='')
@@ -268,6 +271,7 @@ class AppStorage(models.Model):
     class Meta:
         verbose_name = '存储配置'
         verbose_name_plural = "存储配置"
+        unique_together = (('user_id', 'name'), ('user_id', 'bucket_name', 'endpoint'))
 
     def save(self, *args, **kwargs):
         if self.storage_type in (1, 2):
@@ -574,3 +578,29 @@ class UserPersonalConfig(BaseConfig):
 
     def __str__(self):
         return "%s-%s" % (self.key, self.description)
+
+
+class StorageShareInfo(models.Model):
+    """
+    用户共享存储空间，可将该用户私有存储共享给 其他用户使用
+    """
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE,
+                                related_name='storage_org_user_id')
+    to_user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE,
+                                   related_name='storage_to_user_id', null=True, blank=True)
+    storage_id = models.ForeignKey(to=AppStorage, verbose_name="存储ID", on_delete=models.CharField)
+    status_choices = ((1, '共享成功'), (2, '取消共享'))
+    status = models.SmallIntegerField(choices=status_choices, default=0, verbose_name="状态",
+                                      help_text="1 共享成功 2 取消共享")
+    number = models.BigIntegerField(verbose_name="容量大小，单位byte", default=0)
+    description = models.CharField(verbose_name="操作描述", max_length=128, default='', blank=True)
+    remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址")
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+    updated_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = '私有存储共享'
+        verbose_name_plural = "私有存储共享"
+
+    def __str__(self):
+        return f"{self.user_id}-{self.to_user_id}—{self.description}"

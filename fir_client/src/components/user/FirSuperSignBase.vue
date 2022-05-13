@@ -1310,15 +1310,18 @@
             v-model="uidsearch"
             clearable
             placeholder="输入用户UID"
-            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
-
+            style="width: 30%;margin-right: 20px;margin-bottom: 10px"/>
+        <el-select v-model="operatestatus" clearable placeholder="操作状态"
+                   style="width: 120px;margin-right: 20px" @change="handleCurrentChange(1)">
+          <el-option v-for="item in operate_status_choices" :key="item.id" :label="item.name" :value="item.id"/>
+        </el-select>
         <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
         </el-button>
         <el-button icon="el-icon-s-unfold" plain @click="transferVisible=true">
           设备共享
         </el-button>
-        <div style="width: 40%;margin-right: 30px;float:right">
+        <div style="width: 35%;margin-right: 10px;float:right">
           <el-link :underline="false">共享签名池设备数量：{{ balance_info.all_balance }} 已经使用：【 {{
               balance_info.used_balance
             }} 】
@@ -2071,9 +2074,10 @@ export default {
           this.cantransfer = false
         } else {
           this.cantransfer = true
+          this.transferInfo = {}
           this.$message.error("查询失败 " + data.msg)
         }
-      }, {'methods': 'PUT', data: {uid: uid}})
+      }, {'methods': 'PUT', data: {uid: uid, 'act': 'check'}})
     },
     get_developer_uid(uid) {
       if (uid && uid.indexOf(':') > -1) {
@@ -2493,6 +2497,7 @@ export default {
         this.iosdevicebillFun({"methods": "GET", "data": data})
       } else if (tabname === "transferbill") {
         data.uidsearch = this.uidsearch.replace(/^\s+|\s+$/g, "");
+        data.operatestatus = this.operatestatus;
         this.deviceTransferFun({"methods": "GET", "data": data})
       } else if (tabname === "devicesrank") {
         if (this.timerangesearch && this.timerangesearch.length === 2) {
@@ -2636,6 +2641,7 @@ export default {
       DeviceTransferBillInfo(data => {
         if (data.code === 1000) {
           this.transfer_bill_lists = data.data;
+          this.operate_status_choices = data.status_choices
           this.pagination.total = data.count;
           if (data.balance_info) {
             this.balance_info = data.balance_info;

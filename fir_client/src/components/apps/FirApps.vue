@@ -746,7 +746,11 @@ export default {
                 loading.close();
               }, {
                 'methods': 'POST',
-                'data': {"bundleid": analyseappinfo.bundleid, "type": analyseappinfo.type}
+                'data': {
+                  "bundleid": analyseappinfo.bundleid,
+                  "type": analyseappinfo.type,
+                  "filesize": analyseappinfo.filesize
+                }
               });
 
             } else {

@@ -120,25 +120,28 @@ def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_d
     if old_storage_obj.get_storage_type() == 3:
         if new_storage_obj.get_storage_type() == 3:
             # 都是本地存储，无需操作
-            pass
+            return True
         else:
             # 本地向云存储上传,并删除本地数据
-            new_storage_obj.upload_file(local_file_full_path)
+            res = new_storage_obj.upload_file(local_file_full_path)
             if clean_old_data:
-                delete_local_files(filename)
+                return delete_local_files(filename)
+            return res
     else:
         if new_storage_obj.get_storage_type() == 3:
             # 云存储下载 本地，并删除云存储
             if download_files_form_oss(old_storage_obj, local_file_full_path, True):
                 if clean_old_data:
-                    old_storage_obj.delete_file(filename)
+                    return old_storage_obj.delete_file(filename)
+                return True
         else:
             # 云存储互传，先下载本地，然后上传新云存储，删除本地和老云存储
             if download_files_form_oss(old_storage_obj, local_file_full_path, True):
-                new_storage_obj.upload_file(local_file_full_path)
-                delete_local_files(filename)
+                res1 = new_storage_obj.upload_file(local_file_full_path)
+                res2 = delete_local_files(filename)
                 if clean_old_data:
-                    old_storage_obj.delete_file(filename)
+                    return old_storage_obj.delete_file(filename)
+                return res1 and res2
 
 
 def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):

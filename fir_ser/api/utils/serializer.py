@@ -2,10 +2,11 @@ import logging
 import os
 
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from api import models
 from api.utils.apputils import bytes2human
-from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_app_download_uri
+from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_app_download_uri, get_user_storage_used
 from common.base.baseutils import get_choices_dict, WeixinLoginUid
 from common.cache.storage import AdPicShowCache
 from common.core.sysconfig import Config
@@ -62,7 +63,17 @@ class UserInfoSerializer(serializers.ModelSerializer):
         model = models.UserInfo
         fields = ["username", "uid", "mobile", "job", "email", "domain_name", "role", "first_name",
                   'head_img', 'storage_active', 'supersign_active', 'free_download_times', 'download_times',
-                  'certification', 'qrcode_domain_name']
+                  'certification', 'qrcode_domain_name', 'storage_used', 'storage_capacity', 'storage_used_capacity']
+
+    storage_used_capacity = serializers.SerializerMethodField()
+
+    def get_storage_used_capacity(self, obj):
+        return get_user_storage_used(obj)
+
+    storage_used = serializers.SerializerMethodField()
+
+    def get_storage_used(self, obj):
+        return bytes2human(self.get_storage_used_capacity(obj))
 
     head_img = serializers.SerializerMethodField()
 
@@ -128,13 +139,13 @@ class AppsSerializer(serializers.ModelSerializer):
     def get_preview_url(self, obj):
         return get_app_download_uri(None, obj.user_id, obj)
 
-    private_developer_number = serializers.IntegerField(default=0)
-    count = serializers.IntegerField(default=0)
+    # private_developer_number = serializers.IntegerField(default=0)
+    # count = serializers.IntegerField(default=0)
     #
     # def get_private_developer_number(self, obj):
     #     return models.AppleDeveloperToAppUse.objects.filter(app_id=obj).count()
     #
-    private_developer_used_number = serializers.IntegerField(default=0)
+    # private_developer_used_number = serializers.IntegerField(default=0)
     #
     # def get_private_developer_used_number(self, obj):
     #     return models.DeveloperDevicesID.objects.filter(app_id=obj,
@@ -150,12 +161,12 @@ class AppsSerializer(serializers.ModelSerializer):
     def get_sign_type_choice(self, obj):
         return get_choices_dict(obj.supersign_type_choices)
 
-    supersign_used_number = serializers.IntegerField(default=0)
+    # supersign_used_number = serializers.IntegerField(default=0)
     #
     # def get_supersign_used_number(self, obj):
     #     return models.APPSuperSignUsedInfo.objects.filter(app_id=obj).all().count()
     #
-    developer_used_count = serializers.IntegerField(default=0)
+    # developer_used_count = serializers.IntegerField(default=0)
     #
     # def get_developer_used_count(self, obj):
     #     return models.DeveloperAppID.objects.filter(app_id=obj).all().count()
@@ -354,9 +365,35 @@ class StorageSerializer(serializers.ModelSerializer):
         model = models.AppStorage
         exclude = ["user_id"]
 
+    def validate(self, attrs):
+        endpoint = attrs.get('endpoint', '')
+        storage_type = attrs.get('storage_type', '')
+        if storage_type == 2 and endpoint not in Config.STORAGE_ALLOW_ENDPOINT:
+            raise ValidationError(f'endpoint [{endpoint}] not in {Config.STORAGE_ALLOW_ENDPOINT}')
+        max_storage_capacity = attrs.get('max_storage_capacity', -1)
+        if max_storage_capacity != -1:
+            attrs['max_storage_capacity'] = max_storage_capacity * 1024 * 1024
+        elif max_storage_capacity == 0:
+            attrs['max_storage_capacity'] = Config.STORAGE_OSS_CAPACITY
+        else:
+            del attrs['max_storage_capacity']
+        return attrs
+
     storage_type_display = serializers.CharField(source="get_storage_type_display", read_only=True)
 
     download_auth_type_choices = serializers.SerializerMethodField()
+    used = serializers.SerializerMethodField()
+    used_number = serializers.SerializerMethodField()
+    shared = serializers.SerializerMethodField()
+
+    def get_used(self, obj):
+        return obj.app_storage.count()
+
+    def get_shared(self, obj):
+        return models.StorageShareInfo.objects.filter(status=1, storage_id=obj).count()
+
+    def get_used_number(self, obj):
+        return get_user_storage_used(obj.app_storage.all())
 
     # secret_key = serializers.SerializerMethodField()
     # 加上此选项，会导致update获取不到值
@@ -519,3 +556,27 @@ class PersonalConfigSerializer(serializers.ModelSerializer):
 
     def get_title(self, obj):
         return getattr(Config, f'{obj.key}_DES')
+
+
+class StorageShareSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.StorageShareInfo
+        exclude = ["id", "remote_addr", "user_id", "to_user_id"]
+
+    target_user = serializers.SerializerMethodField()
+    cancel = serializers.SerializerMethodField()
+    used = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display')
+    storage_name = serializers.CharField(source='storage_id.name')
+
+    def get_target_user(self, obj):
+        user_obj = obj.user_id
+        if self.get_cancel(obj):
+            user_obj = obj.to_user_id
+        return {'uid': user_obj.uid, 'name': user_obj.first_name}
+
+    def get_used(self, obj):
+        return obj.to_user_id.storage_id == obj.storage_id.id and obj.status == 1
+
+    def get_cancel(self, obj):
+        return self.context.get('user_obj').pk == obj.user_id.pk

@@ -390,6 +390,7 @@ bIX1aWjPxirQX9mzaL3oEQI=
 
 
 class DOWNLOADTIMESCONF(object):
+    SIGN_EXTRA_MULTIPLE = 2  # 超级签名消耗额外倍数，超级签名需要占用的服务大量资源
     USER_FREE_DOWNLOAD_TIMES = 5
     AUTH_USER_FREE_DOWNLOAD_TIMES = 10
     NEW_USER_GIVE_DOWNLOAD_TIMES = 100
@@ -459,3 +460,12 @@ class CONFIGDESCRIPTION(object):
 class USERPERSONALCONFIGKEY(object):
     DEVELOPER_STATUS_CONFIG = ['DEVELOPER_WAIT_ABNORMAL_STATE', 'DEVELOPER_WAIT_ABNORMAL_DEVICE',
                                'DEVELOPER_ABNORMAL_DEVICE_WRITE']
+
+
+class OSSSTORAGECONF(object):
+    STORAGE_FREE_CAPACITY = 2048 * 1024 * 1024  # 单位byte 2G
+    STORAGE_OSS_CAPACITY = 1024 * 1024 * 1024 * 1024  # 单位byte 1T
+    STORAGE_ALLOW_ENDPOINT = [
+        'oss-cn-beijing-internal.aliyuncs.com',
+        'oss-cn-zhangjiakou-internal.aliyuncs.com'
+    ]

@@ -15,7 +15,7 @@ from rest_framework import serializers
 from api.models import SystemConfig, UserPersonalConfig
 from common.cache.storage import UserSystemConfigCache
 from config import BASECONF, THIRDLOGINCONF, AUTHCONF, IPACONF, DOWNLOADTIMESCONF, PAYCONF, STORAGEKEYCONF, SENDERCONF, \
-    APPLEDEVELOPERCONF, DOMAINCONF, USERPERSONALCONFIGKEY, CONFIGDESCRIPTION
+    APPLEDEVELOPERCONF, DOMAINCONF, USERPERSONALCONFIGKEY, CONFIGDESCRIPTION, OSSSTORAGECONF
 
 logger = logging.getLogger(__name__)
 
@@ -293,6 +293,27 @@ class UserDownloadTimesCache(ConfigCacheBase):
     def AUTH_USER_GIVE_DOWNLOAD_TIMES(self):
         return super().get_value('AUTH_USER_GIVE_DOWNLOAD_TIMES', DOWNLOADTIMESCONF.AUTH_USER_GIVE_DOWNLOAD_TIMES)
 
+    @property
+    def SIGN_EXTRA_MULTIPLE(self):
+        return super().get_value('SIGN_EXTRA_MULTIPLE', DOWNLOADTIMESCONF.SIGN_EXTRA_MULTIPLE)
+
+
+class OssStorageConfCache(ConfigCacheBase):
+    def __init__(self, *args, **kwargs):
+        super(OssStorageConfCache, self).__init__(*args, **kwargs)
+
+    @property
+    def STORAGE_ALLOW_ENDPOINT(self):
+        return super().get_value('STORAGE_ALLOW_ENDPOINT', OSSSTORAGECONF.STORAGE_ALLOW_ENDPOINT)
+
+    @property
+    def STORAGE_FREE_CAPACITY(self):
+        return super().get_value('STORAGE_FREE_CAPACITY', OSSSTORAGECONF.STORAGE_FREE_CAPACITY)
+
+    @property
+    def STORAGE_OSS_CAPACITY(self):
+        return super().get_value('STORAGE_OSS_CAPACITY', OSSSTORAGECONF.STORAGE_OSS_CAPACITY)
+
 
 class PayConfCache(ConfigCacheBase):
     def __init__(self, *args, **kwargs):
@@ -417,7 +438,7 @@ class ConfigDescriptionCache(ConfigCacheBase):
 
 class ConfigCache(BaseConfCache, DomainConfCache, IpaConfCache, AuthConfCache, UserDownloadTimesCache, GeeTestConfCache,
                   PayConfCache, ThirdStorageConfCache, ThirdPartConfCache, AppleDeveloperConfCache,
-                  UserPersonalConfKeyCache, ConfigDescriptionCache, WechatConfCache):
+                  UserPersonalConfKeyCache, ConfigDescriptionCache, WechatConfCache, OssStorageConfCache):
     def __init__(self, *args, **kwargs):
         super(ConfigCache, self).__init__(*args, **kwargs)
 

@@ -12,7 +12,8 @@ from rest_framework.views import APIView
 
 from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, CertificationInfo, UserAdDisplayInfo
 from api.utils.apputils import get_random_short, save_app_infos
-from api.utils.modelutils import get_app_download_uri, check_bundle_id_legal
+from api.utils.modelutils import get_app_download_uri, check_bundle_id_legal, get_user_storage_used, \
+    get_user_storage_capacity
 from api.utils.response import BaseResponse
 from api.utils.signalutils import run_signal_resign_utils
 from common.base.baseutils import make_app_uuid, make_from_user_uuid
@@ -21,7 +22,7 @@ from common.core.auth import ExpiringTokenAuthentication
 from common.core.sysconfig import Config
 from common.utils.caches import upload_file_tmp_name, del_cache_response_by_short
 from common.utils.storage import Storage
-from common.utils.token import verify_token
+from common.utils.token import verify_token, make_token
 from fir_ser import settings
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,7 @@ class AppAnalyseView(APIView):
         # 1.接收 bundelid ，返回随机应用名称和短连接
         bundle_id = request.data.get("bundleid", None)
         app_type = request.data.get("type", None)
+        filesize = request.data.get("filesize", 0)
         if bundle_id:
             if check_bundle_id_legal(request.user.uid, bundle_id):
                 res.code = 1004
@@ -52,6 +54,17 @@ class AppAnalyseView(APIView):
             return Response(res.dict)
 
         if bundle_id and app_type:
+            storage_used = get_user_storage_used(request.user)
+            try:
+                filesize = abs(int(filesize))
+            except Exception as e:
+                logger.warning(f"filesize check failed {request.data} Exception:{e}")
+                filesize = 0
+            if filesize + storage_used > get_user_storage_capacity(request.user):
+                res.code = 1008
+                res.msg = "存储空间不足，请升级存储空间或清理无用的历史版本数据来释放空间"
+                return Response(res.dict)
+
             ap = 'apk'
             if app_type.lower() == 'iOS'.lower():
                 ap = 'ipa'
@@ -94,7 +107,8 @@ class AppAnalyseView(APIView):
                         "storage": storage_type,
                         "is_new": is_new,
                         "binary_url": binary_url,
-                        "enable_sign": enable_sign
+                        "enable_sign": enable_sign,
+                        "access_token": make_token(app_uuid, time_limit=60 * 5, key='update_app_info', force_new=True)
                         }
             if storage_type not in [1, 2]:
                 res.data['domain_name'] = Config.FILE_UPLOAD_DOMAIN
@@ -135,9 +149,21 @@ class AppAnalyseView(APIView):
 
             png_tmp_filename = data.get("png_key")
             png_new_filename = data.get("png_key").strip(settings.FILE_UPLOAD_TMP_KEY)
-            logger.info(f"user {request.user} create or update app  {data.get('bundleid')}  data:{data}")
-            if save_app_infos(app_new_filename, request.user, app_info,
-                              data.get("bundleid"), png_new_filename, data.get("short"), data.get('filesize'),
+
+            bundle_id = data.get("bundleid", "")
+            if not bundle_id:
+                raise KeyError('bundle_id not exist')
+            app_uuid = make_app_uuid(request.user, bundle_id + app_new_filename.split(".")[1])
+            if not verify_token(data.get('access_token', ''), app_uuid, False):
+                res.msg = '授权过期，请重试'
+                res.code = 1004
+                storage.delete_file(app_tmp_filename)
+                storage.delete_file(png_tmp_filename)
+                return Response(res.dict)
+
+            logger.info(f"user {request.user} create or update app  {bundle_id}  data:{data}")
+            if save_app_infos(app_tmp_filename, app_new_filename, request.user, app_info,
+                              bundle_id, png_new_filename, data.get("short"), data.get('filesize'),
                               data.get('enable_sign')):
                 # 需要将tmp 文件修改为正式文件
                 storage.rename_file(app_tmp_filename, app_new_filename)
@@ -274,7 +300,6 @@ class UploadView(APIView):
                 res.msg = "文件不存在"
             for file_obj in files:
                 try:
-
                     app_type = file_obj.name.split(".")[-1]
                     if app_type == "tmp":
                         app_type = file_obj.name.split(".")[-2]
@@ -285,6 +310,12 @@ class UploadView(APIView):
                     logger.error(f"user:{request.user} upload file type error Exception:{e}")
                     res.code = 1003
                     res.msg = "错误的类型"
+                    return Response(res.dict)
+
+                storage_used = get_user_storage_used(request.user)
+                if file_obj.size + storage_used > get_user_storage_capacity(request.user):
+                    res.code = 1008
+                    res.msg = "存储空间不足，请升级存储空间或清理无用的历史版本数据来释放空间"
                     return Response(res.dict)
 
                 random_file_name = make_from_user_uuid(request.user.uid)

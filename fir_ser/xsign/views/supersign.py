@@ -656,12 +656,17 @@ class DeviceTransferBillView(APIView):
     def get(self, request):
         res = BaseResponse()
         uidsearch = request.query_params.get("uidsearch", None)
-
+        status = request.query_params.get("operatestatus", '-1')
         user_used_list = IosDeveloperBill.objects.filter(
             Q(user_id=request.user) | Q(to_user_id=request.user)).distinct()
         page_obj = PageNumber()
         if uidsearch:
             user_used_list = user_used_list.filter(Q(user_id__uid=uidsearch) | Q(to_user_id__uid=uidsearch))
+        try:
+            if status != '' and get_choices_name_from_key(IosDeveloperBill.status_choices, int(status)):
+                user_used_list = user_used_list.filter(status=status)
+        except Exception as e:
+            logger.error(f'status {status} check failed  Exception:{e}')
 
         app_page_serializer = page_obj.paginate_queryset(queryset=user_used_list.order_by("-created_time"),
                                                          request=request,
@@ -674,6 +679,7 @@ class DeviceTransferBillView(APIView):
             'used_balance': get_user_public_used_sign_num(request.user),
             'all_balance': get_user_public_sign_num(request.user)
         }
+        res.status_choices = get_choices_dict(IosDeveloperBill.status_choices)
         return Response(res.dict)
 
     def post(self, request):
@@ -726,6 +732,24 @@ class DeviceTransferBillView(APIView):
         uid = request.data.get("uid", None)
         status = request.data.get("status", None)
         number = request.data.get("number", None)
+        act = request.data.get("act", '')
+        if act == 'check':
+            if uid:
+                user_obj = UserInfo.objects.filter(uid=uid, is_active=True, supersign_active=True).first()
+                if user_obj:
+                    bill_obj = IosDeveloperBill.objects.filter(user_id=request.user, to_user_id__uid=uid,
+                                                               status=2).first()
+                    number = 0
+                    if bill_obj:
+                        number = bill_obj.number
+                    res.data = {'uid': user_obj.uid, 'name': user_obj.first_name, "number": number}
+                else:
+                    res.msg = '用户信息不存在'
+                    res.code = 1003
+            else:
+                res.msg = '参数有误'
+                res.code = 1003
+            return Response(res.dict)
 
         if uid and status and number:
             if check_uid_has_relevant(uid, request.user.uid):

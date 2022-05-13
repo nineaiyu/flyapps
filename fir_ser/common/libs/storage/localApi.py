@@ -72,3 +72,13 @@ class LocalStorage(object):
         if os.path.isfile(local_file_full_path):
             return True
         return False
+
+    @staticmethod
+    def get_file_info(name):
+        file_path = os.path.join(settings.MEDIA_ROOT, name)
+        base_info = {}
+        if os.path.isfile(file_path):
+            stat_info = os.stat(file_path)
+            base_info['content_length'] = stat_info.st_size
+            base_info['last_modified'] = stat_info.st_mtime
+        return base_info

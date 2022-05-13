@@ -223,6 +223,15 @@ class AliYunOss(object):
             os.makedirs(dir_path)
         return self.bucket.get_object_to_file(name, local_file_full_path)
 
+    def get_file_info(self, name):
+        result = self.bucket.head_object(name)
+        base_info = {}
+        if result.content_length:
+            base_info['content_length'] = result.content_length
+        if result.last_modified:
+            base_info['last_modified'] = result.last_modified
+        return base_info
+
     def multipart_upload_file(self, local_file_full_path):
         if os.path.isfile(local_file_full_path):
             total_size = os.path.getsize(local_file_full_path)

@@ -21,7 +21,7 @@ from api.utils.response import BaseResponse
 from api.utils.utils import delete_local_files, download_files_form_oss
 from common.base.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
     get_format_time, make_app_uuid, make_from_user_uuid, AesBaseCrypt
-from common.base.magic import run_function_by_locker, call_function_try_attempts, magic_wrapper
+from common.base.magic import run_function_by_locker, call_function_try_attempts, magic_wrapper, MagicCacheData
 from common.cache.state import CleanErrorBundleIdSignDataState
 from common.cache.storage import RedisCacheBase
 from common.constants import DeviceStatus, AppleDeveloperStatus, SignStatus
@@ -615,6 +615,7 @@ class IosUtils(object):
                                            sign_status=SignStatus.PROFILE_DOWNLOAD_COMPLETE).update(
                         sign_status=SignStatus.SIGNATURE_PACKAGE_COMPLETE)
             del_cache_response_by_short(app_obj.app_id)
+            MagicCacheData.invalid_cache(app_obj.app_id)
             return True
 
     def check_sign_permission(self):

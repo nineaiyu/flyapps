@@ -12,9 +12,10 @@
             </el-button>
           </el-col>
         </el-row>
-
       </el-form-item>
-
+      <el-form-item label="使用空间" style="width: 56%">
+        <el-input v-model="currentapp.storage_used" :disabled="true" :value="currentapp.storage_used"/>
+      </el-form-item>
       <el-form-item label="应用名称" style="width: 56%">
         <el-input v-model="currentapp.name"/>
       </el-form-item>

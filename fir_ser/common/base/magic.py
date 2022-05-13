@@ -140,9 +140,9 @@ def magic_call_in_times(call_time=24 * 3600, call_limit=6, key=None):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            cache_key = func.__name__
+            cache_key = f'magic_call_in_times_{func.__name__}'
             if key:
-                cache_key = f'magic_call_in_times_{cache_key}_{key(*args, **kwargs)}'
+                cache_key = f'{cache_key}_{key(*args, **kwargs)}'
             cache_data = cache.get(cache_key)
             if cache_data:
                 if cache_data > call_limit:
@@ -169,3 +169,43 @@ def magic_call_in_times(call_time=24 * 3600, call_limit=6, key=None):
         return wrapper
 
     return decorator
+
+
+class MagicCacheData(object):
+    @staticmethod
+    def make_cache(cache_time=60 * 10, key=None):
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                cache_key = f'magic_cache_data'
+                if key:
+                    cache_key = f'{cache_key}_{key(*args, **kwargs)}'
+                else:
+                    cache_key = f'{cache_key}_{func.__name__}'
+
+                res = cache.get(cache_key)
+                if res:
+                    logger.info(f"exec {func} finished. cache_key:{cache_key}  cache data exist result:{res}")
+                    return res
+                else:
+                    start_time = time.time()
+                    try:
+                        res = func(*args, **kwargs)
+                        cache.set(cache_key, res, cache_time)
+                        logger.info(
+                            f"exec {func} finished. time:{time.time() - start_time}  cache_key:{cache_key} result:{res}")
+                    except Exception as e:
+                        logger.info(
+                            f"exec {func} failed. time:{time.time() - start_time}  cache_key:{cache_key} Exception:{e}")
+
+                    return res
+
+            return wrapper
+
+        return decorator
+
+    @staticmethod
+    def invalid_cache(key):
+        cache_key = f'magic_cache_data_{key}'
+        res = cache.delete(cache_key)
+        logger.warning(f"invalid_cache cache_key:{cache_key} result:{res}")

@@ -110,6 +110,13 @@ class Storage(object):
             except Exception as e:
                 logger.error(f"rename {old_filename} to {new_filename} failed  Exception {e}")
 
+    def get_file_info(self, name):
+        if self.storage:
+            try:
+                return self.storage.get_file_info(name)
+            except Exception as e:
+                logger.error(f"get file info {name} failed  Exception {e}")
+
     def upload_file(self, local_file_full_path):
         if self.storage:
             try:

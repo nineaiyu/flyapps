@@ -10,7 +10,8 @@ from api.models import AppReleaseInfo, UserInfo, AppScreenShot, AppStorage
 from api.utils.response import BaseResponse
 from api.utils.signalutils import run_delete_app_signal
 from api.utils.utils import delete_local_files, delete_app_screenshots_files, change_storage_and_change_head_img, \
-    migrating_storage_data, clean_storage_data, check_storage_is_new_storage
+    migrating_storage_data, clean_storage_data, check_storage_is_new_storage, migrating_storage_file_data
+from common.base.magic import MagicCacheData
 from common.cache.state import MigrateStorageState
 from common.utils.caches import del_cache_response_by_short, del_cache_by_delete_app, \
     del_cache_storage
@@ -50,6 +51,7 @@ def app_delete(app_obj):
         has_combo.has_combo = None
         has_combo.save(update_fields=['has_combo'])
 
+    MagicCacheData.invalid_cache(app_obj.app_id)
     app_obj.delete()
 
     return res
@@ -101,12 +103,19 @@ def app_release_delete(app_obj, release_id, storage):
     return res
 
 
+def check_storage_ok(user_obj, new_storage_obj):
+    if migrating_storage_file_data(user_obj, 'head_img.jpeg', new_storage_obj, False):
+        return True
+
+
 def storage_change(use_storage_id, user_obj, force):
     if use_storage_id:
         if user_obj.storage and use_storage_id == user_obj.storage.id:
             return True
     try:
         if use_storage_id == -1:
+            if not check_storage_ok(user_obj, None):
+                return False
             change_storage_and_change_head_img(user_obj, None)
             if migrating_storage_data(user_obj, None, False):
                 if check_storage_is_new_storage(user_obj, None):
@@ -114,6 +123,8 @@ def storage_change(use_storage_id, user_obj, force):
                 UserInfo.objects.filter(pk=user_obj.pk).update(storage=None)
         else:
             new_storage_obj = AppStorage.objects.filter(pk=use_storage_id).first()
+            if not check_storage_ok(user_obj, new_storage_obj):
+                return False
             change_storage_and_change_head_img(user_obj, new_storage_obj)
             if migrating_storage_data(user_obj, new_storage_obj, False):
                 if check_storage_is_new_storage(user_obj, new_storage_obj):

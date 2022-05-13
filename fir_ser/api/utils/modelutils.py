@@ -13,9 +13,11 @@ from django.db.models import Count
 from rest_framework.pagination import PageNumberPagination
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
-    AppBundleIdBlackList, NotifyReceiver, WeChatInfo, AppDownloadToken
+    AppBundleIdBlackList, NotifyReceiver, WeChatInfo, AppDownloadToken, Apps, StorageShareInfo, UserInfo
 from common.base.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name
+from common.base.magic import MagicCacheData
+from common.core.sysconfig import Config
 
 logger = logging.getLogger(__name__)
 
@@ -248,3 +250,47 @@ def check_app_access_token(app_id, access_token, only_check, udid):
                 return True
     if udid:
         return AppDownloadToken.objects.filter(app_id__app_id=app_id, bind_udid=udid).count()
+
+
+@MagicCacheData.make_cache(60 * 60 * 24, key=lambda x: x.app_id)
+def get_app_storage_used(app_obj):
+    binary_size_sum = 0
+    for release_obj in AppReleaseInfo.objects.filter(app_id=app_obj).all():
+        if release_obj.release_type == 0:
+            sign_count = 0
+        else:
+            sign_count = AppReleaseInfo.objects.filter(
+                app_id__apptodeveloper__release_file=release_obj.release_id).values(
+                'app_id__apptodeveloper__binary_file').distinct().count()
+        binary_size_sum += release_obj.binary_size * (sign_count + 1)
+    return binary_size_sum
+
+
+# @MagicCacheData.make_cache(3600, key=lambda x: x.uid)
+def get_user_storage_used(user_obj):
+    binary_size_sum = 0
+    if isinstance(user_obj, UserInfo):
+        user_obj = [user_obj]
+    for app_obj in Apps.objects.filter(user_id__in=user_obj).all():
+        binary_size_sum += get_app_storage_used(app_obj)
+    return binary_size_sum
+
+
+def get_user_storage_capacity(user_obj):
+    storage_obj = user_obj.storage
+    if not storage_obj:
+        user_storage_capacity = user_obj.storage_capacity
+        storage_capacity = user_storage_capacity if user_storage_capacity else Config.STORAGE_FREE_CAPACITY
+    else:
+        if storage_obj.user_id == user_obj:
+            max_storage_capacity = storage_obj.max_storage_capacity
+            storage_capacity = max_storage_capacity if max_storage_capacity else Config.STORAGE_OSS_CAPACITY
+        else:
+            share_obj = StorageShareInfo.objects.filter(to_user_id=user_obj, status=1, storage_id=storage_obj).first()
+            if share_obj:
+                can_use_number = storage_obj.max_storage_capacity - get_user_storage_used(storage_obj.app_storage.all())
+                storage_capacity = share_obj.number if share_obj.number < can_use_number else can_use_number
+            else:
+                storage_capacity = Config.STORAGE_FREE_CAPACITY
+
+    return storage_capacity

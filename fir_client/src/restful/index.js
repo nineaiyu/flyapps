@@ -390,6 +390,30 @@ export function cleanStorageData(callBack, params) {
     );
 }
 
+/**用户存储清理操作 */
+export function shareStorageData(callBack, params) {
+    getData(
+        params.methods,
+        USERSEVER + '/storage/share',
+        params.data,
+        data => {
+            callBack(data);
+        }
+    );
+}
+
+/**用户存储清理操作 */
+export function configStorageData(callBack, params) {
+    getData(
+        params.methods,
+        USERSEVER + '/storage/config',
+        params.data,
+        data => {
+            callBack(data);
+        }
+    );
+}
+
 /**用户个人信息 */
 export function userinfos(callBack, params) {
     getData(

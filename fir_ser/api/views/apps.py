@@ -14,12 +14,14 @@ from rest_framework.views import APIView
 
 from api.base_views import app_delete
 from api.models import Apps, AppReleaseInfo, UserInfo, AppScreenShot, AppDownloadToken
-from api.utils.modelutils import get_user_domain_name, get_app_domain_name
+from api.utils.apputils import bytes2human
+from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_app_storage_used
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsSerializer, AppReleaseSerializer, AppsListSerializer, AppsQrListSerializer, \
     AppDownloadTokenSerializer
 from api.utils.signalutils import run_delete_app_signal
 from api.utils.utils import delete_local_files, delete_app_screenshots_files
+from common.base.magic import MagicCacheData
 from common.cache.state import MigrateStorageState
 from common.core.auth import ExpiringTokenAuthentication
 from common.utils.caches import del_cache_response_by_short, get_app_today_download_times, del_cache_by_delete_app
@@ -63,7 +65,7 @@ class AppsPageNumber(PageNumberPagination):
     page_size = 20  # 每页显示多少条
     page_size_query_param = 'size'  # URL中每页显示条数的参数
     page_query_param = 'page'  # URL中页码的参数
-    max_page_size = None  # 最大页码数限制
+    max_page_size = 100  # 最大页码数限制
 
 
 class AppsView(APIView):
@@ -120,6 +122,7 @@ class AppInfoView(APIView):
             if app_obj:
                 app_serializer = AppsSerializer(app_obj, context={"storage": Storage(request.user)})
                 res.data = app_serializer.data
+                res.data['storage_used'] = bytes2human(get_app_storage_used(app_obj))
             else:
                 logger.error(f"app_id:{app_id} is not found in user:{request.user}")
                 res.msg = "未找到该应用"
@@ -268,10 +271,13 @@ class AppReleaseInfoView(APIView):
                             has_combo.has_combo = None
                             has_combo.save(update_fields=["has_combo"])
                             del_cache_response_by_short(has_combo.app_id)
+                        MagicCacheData.invalid_cache(app_obj.app_id)
                         app_obj.delete()
                     else:
                         pass
-                    del_cache_response_by_short(app_obj.app_id)
+                    if app_obj:
+                        MagicCacheData.invalid_cache(app_obj.app_id)
+                        del_cache_response_by_short(app_obj.app_id)
 
         return Response(res.dict)
 

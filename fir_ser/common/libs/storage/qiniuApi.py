@@ -85,3 +85,13 @@ class QiNiuOss(object):
         except Exception as e:
             logger.error(f"check download file and move file {local_file_full_path} failed Exception {e}")
             return False
+
+    def get_file_info(self, name):
+        bucket = BucketManager(self.qiniu_obj)
+        result = bucket.stat(self.bucket_name, name)
+        base_info = {}
+        if result.get('fsize', 0):
+            base_info['content_length'] = result.get('fsize', 0)
+        if result.get('putTime', 0):
+            base_info['last_modified'] = result.get('putTime', 0) // 10000000
+        return base_info
