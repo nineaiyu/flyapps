@@ -87,6 +87,26 @@ class StorageView(APIView):
         if act == 'storage_group':
             res.storage_group_list = get_storage_group(request, res, self.storage_type, is_default == 'true')
             return Response(res.dict)
+        if pk:
+            if pk == '-1':
+                storage_capacity = request.user.storage_capacity
+                default_storage = {
+                    'id': -1,
+                    'max_storage_capacity': storage_capacity if storage_capacity != 0 else Config.STORAGE_FREE_CAPACITY,
+                    'used_number': get_user_storage_used(request.user)
+                }
+                res.data = [default_storage]
+                return Response(res.dict)
+            else:
+                share_obj = StorageShareInfo.objects.filter(to_user_id=request.user, storage_id_id=pk, status=1).first()
+                if share_obj:
+                    default_storage = {
+                        'id': -1,
+                        'max_storage_capacity': share_obj.number,
+                        'used_number': get_user_storage_used(request.user)
+                    }
+                    res.data = [default_storage]
+                    return Response(res.dict)
 
         # [1,2] 表示七牛存储和阿里云存储
         storage_queruset = AppStorage.objects.filter(user_id=request.user, storage_type__in=self.storage_type)
@@ -308,7 +328,7 @@ class ShareStorageView(APIView):
                                                                             status=1, storage_id=storage_obj).first()
                                 if share_obj:
                                     # number += share_obj.number
-                                    share_obj.number = number if number < storage_capacity else storage_capacity
+                                    share_obj.number = number
                                     share_obj.remote_addr = get_real_ip_address(request)
                                     share_obj.description = f'{user_obj.first_name} 共享给 {to_user_obj.first_name} {share_obj.number} Mb存储空间 '
                                     share_obj.save(update_fields=['number', 'remote_addr', 'description'])
@@ -409,10 +429,15 @@ class StorageConfigView(APIView):
         history_release_limit = request.data.get('user_history_limit')
         if history_release_limit:
             try:
-                history_release_limit = int(history_release_limit)
+                history_release_limit = int(history_release_limit) if int(
+                    history_release_limit) > 0 else request.user.history_release_limit
             except Exception as e:
                 logger.warning(f"update user history_release_limit failed Exception:{e}")
                 history_release_limit = request.user.history_release_limit
 
             UserInfo.objects.filter(pk=request.user.pk).update(history_release_limit=abs(history_release_limit))
+            app_obj_lists = Apps.objects.filter(user_id=request.user).all()
+            for app_obj in app_obj_lists:
+                clean_history_apps(app_obj, request.user, abs(history_release_limit))
+
         return self.get(request)

@@ -700,9 +700,7 @@ class DeviceTransferBillView(APIView):
                                 bill_obj = IosDeveloperBill.objects.filter(user_id=user_obj, to_user_id=to_user_obj,
                                                                            status=2).first()
                                 if bill_obj:
-                                    bill_obj.number = number + bill_obj.number
-                                    if bill_obj.number >= all_balance:
-                                        bill_obj.number = all_balance
+                                    bill_obj.number = number if number < all_balance else all_balance
                                     bill_obj.remote_addr = get_real_ip_address(request)
                                     bill_obj.description = f'{user_obj.first_name} 共享给 {to_user_obj.first_name} {bill_obj.number} 设备数'
                                     bill_obj.save(update_fields=['number', 'remote_addr', 'description'])

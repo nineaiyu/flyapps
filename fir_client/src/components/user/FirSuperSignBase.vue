@@ -1373,7 +1373,13 @@
               label="设备数量"
               prop="number"
               width="100">
-
+            <template slot-scope="scope">
+              <el-popover content="点击修改共享设备数量" trigger="hover">
+                <el-link slot="reference" :underline="false" @click="editShareDevice(scope.row)">
+                  <span v-if="scope.row.cancel">-</span> {{ scope.row.number }}
+                </el-link>
+              </el-popover>
+            </template>
           </el-table-column>
           <el-table-column
               :formatter="deviceformatter"
@@ -1939,6 +1945,14 @@ export default {
     }
   },
   methods: {
+    editShareDevice(row) {
+      // if (row.status !== 2) return
+      if (!row.cancel) return
+      this.target_number = row.number;
+      this.target_uid = row.target_user.uid
+      this.checkuid(this.target_uid)
+      this.transferVisible = true
+    },
     changeSignConfig(info) {
       personalConfigInfo(data => {
         if (data.code === 1000) {
@@ -2071,6 +2085,9 @@ export default {
       DeviceTransferBillInfo(data => {
         if (data.code === 1000) {
           this.transferInfo = data.data
+          if (this.transferInfo.number) {
+            this.target_number = this.transferInfo.number
+          }
           this.cantransfer = false
         } else {
           this.cantransfer = true

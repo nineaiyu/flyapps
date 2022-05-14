@@ -240,7 +240,6 @@ class BillTransferSerializer(serializers.ModelSerializer):
 
     target_user = serializers.SerializerMethodField()
     cancel = serializers.SerializerMethodField()
-    number = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display')
 
     def get_target_user(self, obj):
@@ -251,12 +250,6 @@ class BillTransferSerializer(serializers.ModelSerializer):
 
     def get_cancel(self, obj):
         return self.context.get('user_obj').pk == obj.user_id.pk
-
-    def get_number(self, obj):
-        if self.get_cancel(obj):
-            return -obj.number
-        else:
-            return obj.number
 
 
 class AppleDeveloperToAppUseSerializer(serializers.ModelSerializer):

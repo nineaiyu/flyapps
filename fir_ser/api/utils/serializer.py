@@ -370,21 +370,22 @@ class StorageSerializer(serializers.ModelSerializer):
         storage_type = attrs.get('storage_type', '')
         if storage_type == 2 and endpoint not in Config.STORAGE_ALLOW_ENDPOINT:
             raise ValidationError(f'endpoint [{endpoint}] not in {Config.STORAGE_ALLOW_ENDPOINT}')
-        max_storage_capacity = attrs.get('max_storage_capacity', -1)
+        max_storage_capacity = attrs.get('storage_capacity', -1)
         if max_storage_capacity != -1:
             attrs['max_storage_capacity'] = max_storage_capacity * 1024 * 1024
         elif max_storage_capacity == 0:
             attrs['max_storage_capacity'] = Config.STORAGE_OSS_CAPACITY
         else:
-            del attrs['max_storage_capacity']
+            del attrs['storage_capacity']
         return attrs
 
     storage_type_display = serializers.CharField(source="get_storage_type_display", read_only=True)
-
+    storage_capacity = serializers.IntegerField(write_only=True)
     download_auth_type_choices = serializers.SerializerMethodField()
     used = serializers.SerializerMethodField()
     used_number = serializers.SerializerMethodField()
     shared = serializers.SerializerMethodField()
+    max_storage_capacity = serializers.SerializerMethodField()
 
     def get_used(self, obj):
         return obj.app_storage.count()
@@ -394,6 +395,9 @@ class StorageSerializer(serializers.ModelSerializer):
 
     def get_used_number(self, obj):
         return get_user_storage_used(obj.app_storage.all())
+
+    def get_max_storage_capacity(self, obj):
+        return obj.max_storage_capacity if obj.max_storage_capacity != 0 else Config.STORAGE_OSS_CAPACITY
 
     # secret_key = serializers.SerializerMethodField()
     # 加上此选项，会导致update获取不到值

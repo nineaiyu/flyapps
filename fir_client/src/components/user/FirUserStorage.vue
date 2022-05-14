@@ -193,22 +193,50 @@
     </el-dialog>
 
     <el-tabs v-model="activeName" tab-position="top" type="border-card" @tab-click="handleClick">
-      <el-tab-pane label="存储选择" name="change">
-        存储选择：
-        <el-select v-model="use_storage_id" :placeholder="selectlabel" filterable style="width: 400px"
-                   @change="select_storage">
-          <el-option-group
-              v-for="storage_group in fstorage_lists"
-              :key="storage_group.group_name"
-              :label="storage_group.group_name">
-            <el-option
-                v-for="storage in storage_group.storages"
-                :key="storage.id"
-                :label="format_s_name(storage)"
-                :value="storage.id">
-            </el-option>
-          </el-option-group>
-        </el-select>
+      <el-tab-pane label="存储选择" name="change">'
+        <el-row :gutter="24">
+          <el-col :span="14">
+            存储选择：
+            <el-select v-model="use_storage_id" :placeholder="selectlabel" filterable style="width: 400px"
+                       @change="select_storage">
+              <el-option-group
+                  v-for="storage_group in fstorage_lists"
+                  :key="storage_group.group_name"
+                  :label="storage_group.group_name">
+                <el-option
+                    v-for="storage in storage_group.storages"
+                    :key="storage.id"
+                    :label="format_s_name(storage)"
+                    :value="storage.id">
+                </el-option>
+              </el-option-group>
+            </el-select>
+          </el-col>
+          <el-col :span="10">
+            <el-popover
+                placement="top-start"
+                trigger="hover">
+              <div>
+                <el-link :underline="false">存储最大容量空间： {{ diskSize(storageinfo.max_storage_capacity) }}</el-link>
+                <el-link :underline="false">已经使用容量： {{ diskSize(storageinfo.used_number) }}</el-link>
+                <el-link :underline="false">当前可用容量：
+                  {{ diskSize(storageinfo.max_storage_capacity - storageinfo.used_number) }}
+                </el-link>
+              </div>
+              <el-link slot="reference" :underline="false" style="font-size: small">
+                还剩：{{ diskSize(storageinfo.max_storage_capacity - storageinfo.used_number) }} 可用
+              </el-link>
+            </el-popover>
+            <el-progress
+                :color="storage_usedColor"
+                :percentage="percentage"
+                :stroke-width="16"
+                :text-inside="true" status="success" style="width: 80%"
+                type="line"/>
+          </el-col>
+        </el-row>
+
+
         <div v-if="use_storage_id!==org_storage_id" style="margin-top: 20px">
           <el-button style="margin-left: 10px"
                      type="info"
@@ -234,7 +262,7 @@
           <!--          </el-button>-->
         </div>
         <el-divider/>
-        <el-form v-if="storageinfo.id && storageinfo.id !==-1" ref="storageinfoform" :model="storageinfo"
+        <el-form ref="storageinfoform" :model="storageinfo"
                  label-width="80px" style="width: 39%;margin:0 auto;">
 
           <el-form-item label="存储最大容量" label-width="110px" style="text-align: left">
@@ -245,64 +273,66 @@
               可用容量{{ diskSize(storageinfo.max_storage_capacity - storageinfo.used_number) }}
             </el-tag>
           </el-form-item>
-
-          <el-form-item label="存储类型" label-width="110px">
-            <el-select v-model="storageinfo.storage_type" :disabled='Sdisabled' placeholder="存储类型"
-                       style="margin-left: -60px">
-              <el-option v-for="st in storage_list" :key="st.id" :label="st.name"
-                         :value="st.id"/>
-            </el-select>
-          </el-form-item>
-
-          <div v-if="storageinfo.storage_type">
-
-            <el-form-item label="存储名称" label-width="110px">
-              <el-input v-model="storageinfo.name" :disabled='Sdisabled'/>
+          <div v-if="storageinfo.id && storageinfo.id !==-1">
+            <el-divider/>
+            <el-form-item label="存储类型" label-width="110px">
+              <el-select v-model="storageinfo.storage_type" :disabled='Sdisabled' placeholder="存储类型"
+                         style="margin-left: -60px">
+                <el-option v-for="st in storage_list" :key="st.id" :label="st.name"
+                           :value="st.id"/>
+              </el-select>
             </el-form-item>
 
-            <el-form-item label="key" label-width="110px">
-              <el-input v-model="storageinfo.access_key" :disabled='Sdisabled'/>
-            </el-form-item>
-            <el-form-item label="bucket_name" label-width="110px">
-              <el-input v-model="storageinfo.bucket_name" :disabled='Sdisabled'/>
-            </el-form-item>
-            <el-form-item label="下载域名" label-width="110px">
-              <el-input v-model="storageinfo.domain_name" :disabled='Sdisabled'/>
-            </el-form-item>
+            <div v-if="storageinfo.storage_type">
 
-            <div v-if="storageinfo.storage_type === 2">
-              <el-form-item label="sts_role_arn" label-width="110px">
-                <el-input v-model="storageinfo.sts_role_arn"
-                          :disabled='Sdisabled'/>
+              <el-form-item label="存储名称" label-width="110px">
+                <el-input v-model="storageinfo.name" :disabled='Sdisabled'/>
               </el-form-item>
 
-              <el-form-item label="endpoint" label-width="110px">
-                <el-input v-model="storageinfo.endpoint"
-                          :disabled='Sdisabled'/>
+              <el-form-item label="key" label-width="110px">
+                <el-input v-model="storageinfo.access_key" :disabled='Sdisabled'/>
+              </el-form-item>
+              <el-form-item label="bucket_name" label-width="110px">
+                <el-input v-model="storageinfo.bucket_name" :disabled='Sdisabled'/>
+              </el-form-item>
+              <el-form-item label="下载域名" label-width="110px">
+                <el-input v-model="storageinfo.domain_name" :disabled='Sdisabled'/>
               </el-form-item>
 
-              <el-form-item label="下载授权方式" label-width="110px">
-                <el-select v-model="storageinfo.download_auth_type"
-                           :disabled="disabled"
-                           placeholder="下载授权方式" style="width: 100%">
-                  <el-option v-for="st in storageinfo.download_auth_type_choices" :key="st.id"
-                             :label="st.name"
-                             :value="st.id"/>
-                </el-select>
-
-                <el-form-item v-if="storageinfo.download_auth_type === 2" label="CDN鉴权主KEY" label-width="120px"
-                              style="margin-top: 10px;width: 100%">
-                  <el-input v-model="storageinfo.cnd_auth_key" :disabled='disabled'
-                            placeholder="CDN鉴权主KEY"/>
+              <div v-if="storageinfo.storage_type === 2">
+                <el-form-item label="sts_role_arn" label-width="110px">
+                  <el-input v-model="storageinfo.sts_role_arn"
+                            :disabled='Sdisabled'/>
                 </el-form-item>
 
+                <el-form-item label="endpoint" label-width="110px">
+                  <el-input v-model="storageinfo.endpoint"
+                            :disabled='Sdisabled'/>
+                </el-form-item>
+
+                <el-form-item label="下载授权方式" label-width="110px">
+                  <el-select v-model="storageinfo.download_auth_type"
+                             :disabled="disabled"
+                             placeholder="下载授权方式" style="width: 100%">
+                    <el-option v-for="st in storageinfo.download_auth_type_choices" :key="st.id"
+                               :label="st.name"
+                               :value="st.id"/>
+                  </el-select>
+
+                  <el-form-item v-if="storageinfo.download_auth_type === 2" label="CDN鉴权主KEY" label-width="120px"
+                                style="margin-top: 10px;width: 100%">
+                    <el-input v-model="storageinfo.cnd_auth_key" :disabled='disabled'
+                              placeholder="CDN鉴权主KEY"/>
+                  </el-form-item>
+
+                </el-form-item>
+
+              </div>
+              <el-form-item label="备注" label-width="110px">
+                <el-input v-model="storageinfo.description" :disabled='Sdisabled'/>
               </el-form-item>
 
             </div>
-            <el-form-item label="备注" label-width="110px">
-              <el-input v-model="storageinfo.description" :disabled='Sdisabled'/>
-            </el-form-item>
-
           </div>
 
         </el-form>
@@ -719,7 +749,7 @@ export default {
       dialogstorageVisible: false,
       editstorageinfo: {},
       selectlabel: "",
-      storageinfo: {},
+      storageinfo: {'used_number': 0, 'max_storage_capacity': 1},
       storage_list: [],
       endpoint_list: [],
       disabled: true,
@@ -735,12 +765,36 @@ export default {
   }, methods: {
     format_time,
     diskSize,
+    storage_usedColor(percentage) {
+      if (percentage < 20) {
+        return '#6f7ad3';
+      } else if (percentage < 40) {
+        return '#1989fa';
+      } else if (percentage < 60) {
+        return '#5cb87a';
+
+      } else if (percentage < 80) {
+        return '#e6a23c';
+      } else if (percentage < 90) {
+        return '#E63918';
+      } else {
+        return '#F50346';
+      }
+    },
     updateConfig() {
+      const loading = this.$loading({
+        lock: true,
+        text: '执行中,请耐心等待...',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.7)'
+      });
       configStorageData(res => {
+        loading.close()
         if (res.code === 1000) {
+          this.$message.success("操作成功")
           this.storage_config = res.data
         } else {
-          this.$message.error("获取数据失败了，" + res.msg)
+          this.$message.error("操作失败了，" + res.msg)
         }
       }, {"methods": "PUT", "data": this.storage_config})
     },
@@ -767,8 +821,8 @@ export default {
             this.use_storage_id = row.storage_id;
           } else {
             this.use_storage_id = data.storage;
+            this.formatStorageId()
           }
-          this.formatStorageId()
           if (row && row.target_user) {
             this.target_uid = row.target_user.uid
             this.checkuid(this.target_uid)
@@ -781,7 +835,7 @@ export default {
       }, {"methods": 'GET', "data": {'act': 'storage_group', 'is_default': false}});
     },
     editShareStorage(row) {
-      if (row.status !== 1) return
+      // if (row.status !== 1) return
       if (!row.cancel) return
       this.shareStorage(row)
     },
@@ -938,6 +992,7 @@ export default {
           return
         }
       }
+      this.editstorageinfo.storage_capacity = this.editstorageinfo.max_storage_capacity
       getStorageinfo(data => {
         if (data.code === 1000) {
           this.$message.success('操作成功');
@@ -1039,10 +1094,10 @@ export default {
       this.getstorageinfobyid(a);
     },
     getstorageinfobyid(id) {
-      if (id === -1) {
-        this.storageinfo = {}
-        return
-      }
+      // if (id === -1) {
+      //   this.storageinfo = {}
+      //   return
+      // }
       this.target_number = parseInt(this.getSizeFromId() / 1024 / 1024)
       getStorageinfo(data => {
         if (data.code === 1000) {
@@ -1147,6 +1202,13 @@ export default {
   computed: {
     watchObj() {
       return [this.editstorageinfo.endpoint, this.editstorageinfo.bucket_name, this.editstorageinfo.download_auth_type]
+    },
+    percentage() {
+      let p = parseInt(this.storageinfo.used_number * 100 / this.storageinfo.max_storage_capacity);
+      if (p < 0 || p >= 100) {
+        p = 100
+      }
+      return p
     }
   }
 }
