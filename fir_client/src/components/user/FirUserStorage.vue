@@ -669,8 +669,6 @@
         <el-tag style="margin: 20px 0"> 应用版本数设置，当应用历史版本超过该限制，将会自动清理较老的版本</el-tag>
         <div style="margin: auto;width: 700px;height: 100%">
           <el-form ref="form" :model="storage_config" label-width="180px">
-
-
             <el-form-item label="应用历史版本数" style="text-align: left">
               <el-input-number v-model="storage_config.user_history_limit" :min="1"
                                style="width: 300px;margin: 0 10px"></el-input-number>
@@ -685,6 +683,18 @@
                 {{ diskSize(storage_config.user_max_storage_capacity - storage_config.user_used_storage_capacity) }}
               </el-tag>
             </el-form-item>
+
+
+            <el-form-item label="存储迁移状态" style="text-align: left">
+              <el-tag v-if="!storage_config.storage_status">未迁移，状态正常</el-tag>
+              <div v-else>
+                <el-tag>迁移中，迁移时间 {{ getFormatDate(storage_config.storage_status) }}</el-tag>
+                <el-tag type="warning">若存储状态长时间处于迁移中，可能是迁移卡死了，可以尝试
+                  <el-button plain size="mini" type="text" @click="cancelStorage">解除迁移锁</el-button>
+                  进行解除
+                </el-tag>
+              </div>
+            </el-form-item>
             <el-form-item label="清理所有应用数据" style="text-align: left">
               <el-button style="margin-left: 10px"
                          type="danger"
@@ -692,7 +702,6 @@
                 清理所有应用数据
               </el-button>
             </el-form-item>
-
             <el-form-item label="清理应用历史数据" style="text-align: left">
               <el-button style="margin-left: 10px"
                          type="danger"
@@ -700,7 +709,6 @@
                 清理应用历史版本数据，只保留最新版本数据
               </el-button>
             </el-form-item>
-
           </el-form>
         </div>
 
@@ -724,7 +732,7 @@
 
 <script>
 import {cleanStorageData, configStorageData, getStorageinfo, shareStorageData} from "@/restful";
-import {deepCopy, diskSize, getUserInfoFun} from "@/utils";
+import {deepCopy, diskSize, getFormatDate, getUserInfoFun} from "@/utils";
 import {format_time} from "@/utils/base/utils";
 
 export default {
@@ -734,7 +742,12 @@ export default {
       pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
       target_uid: '',
       shareInfo: '',
-      storage_config: {'user_history_limit': 0, 'user_max_storage_capacity': 0, 'user_used_storage_capacity': 0},
+      storage_config: {
+        'user_history_limit': 0,
+        'user_max_storage_capacity': 0,
+        'user_used_storage_capacity': 0,
+        'storage_status': 0
+      },
       target_number: '',
       fstorage_lists: [],
       share_bill_lists: [],
@@ -765,6 +778,29 @@ export default {
   }, methods: {
     format_time,
     diskSize,
+    getFormatDate,
+    cancelStorage() {
+
+      this.$confirm("确定要解除迁移锁么，在未完成迁移状态下解除迁移锁之后，可能会导致数据异常?", '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        configStorageData(res => {
+          if (res.code === 1000) {
+            this.$message.success("操作成功")
+            this.refreshactiveFun()
+          } else {
+            this.$message.error("操作失败了，" + res.msg)
+          }
+        }, {"methods": "POST", "data": this.storage_config})
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消撤回操作'
+        });
+      });
+    },
     storage_usedColor(percentage) {
       if (percentage < 20) {
         return '#6f7ad3';
@@ -792,7 +828,7 @@ export default {
         loading.close()
         if (res.code === 1000) {
           this.$message.success("操作成功")
-          this.storage_config = res.data
+          this.refreshactiveFun()
         } else {
           this.$message.error("操作失败了，" + res.msg)
         }
@@ -1048,6 +1084,7 @@ export default {
           loading.close();
           if (data.code === 1000) {
             this.$message.success('清理成功');
+            this.refreshactiveFun();
           } else {
             this.$message.error(data.msg)
           }

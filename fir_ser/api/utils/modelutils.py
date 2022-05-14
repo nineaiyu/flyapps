@@ -126,7 +126,8 @@ def base_random_weight(obj, key):
 
 
 def ad_random_weight(user_obj):
-    ad_info_list = UserAdDisplayInfo.objects.filter(user_id=user_obj, is_enable=True).order_by('-created_time')
+    ad_info_list = UserAdDisplayInfo.objects.filter(user_id=user_obj, is_enable=True, ad_pic__regex='.+').order_by(
+        '-created_time')
     return base_random_weight(ad_info_list, 'weight')
 
 

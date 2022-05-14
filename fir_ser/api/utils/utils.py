@@ -77,8 +77,9 @@ def change_storage_and_change_head_img(user_obj, new_storage_obj, clean_old_data
 
 
 def change_storage_and_change_advert_img(user_obj, new_storage_obj, clean_old_data=True):
-    for user_advert_obj in UserAdDisplayInfo.objects.filter(user_id=user_obj):
-        migrating_storage_file_data(user_obj, user_advert_obj.ad_pic, new_storage_obj, clean_old_data)
+    for user_advert_obj in UserAdDisplayInfo.objects.filter(user_id=user_obj, ad_pic__regex='.+'):
+        if len(user_advert_obj.ad_pic) > 5:
+            migrating_storage_file_data(user_obj, user_advert_obj.ad_pic, new_storage_obj, clean_old_data)
 
 
 def download_files_form_oss(storage_obj, org_file, force=False):

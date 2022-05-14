@@ -422,10 +422,12 @@ class StorageConfigView(APIView):
             'user_max_storage_capacity': get_user_storage_capacity(request.user),
             'user_used_storage_capacity': get_user_storage_used(request.user),
             'user_history_limit': UserInfo.objects.filter(pk=request.user.pk).first().history_release_limit,
+            'storage_status': MigrateStorageState(request.user.uid).get_state()
         }
         return Response(res.dict)
 
     def put(self, request):
+        res = BaseResponse()
         history_release_limit = request.data.get('user_history_limit')
         if history_release_limit:
             try:
@@ -440,4 +442,11 @@ class StorageConfigView(APIView):
             for app_obj in app_obj_lists:
                 clean_history_apps(app_obj, request.user, abs(history_release_limit))
 
-        return self.get(request)
+        return Response(res.dict)
+
+    def post(self, request):
+        res = BaseResponse()
+        migrate_obj = MigrateStorageState(request.user.uid)
+        if migrate_obj.get_state() == request.data.get('storage_status'):
+            migrate_obj.del_state()
+        return Response(res.dict)

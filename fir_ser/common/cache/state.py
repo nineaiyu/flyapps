@@ -22,6 +22,9 @@ class CacheBaseState(object):
     def get_state(self):
         return cache.get(self.key)
 
+    def del_state(self):
+        return cache.delete(self.key)
+
     def __enter__(self):
         if cache.get(self.key):
             return False

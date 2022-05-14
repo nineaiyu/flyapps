@@ -662,3 +662,11 @@ export function format_choices(key, obj) {
     }
     return "未知"
 }
+
+export function getFormatDate(timestamp) {
+    let now = new Date(timestamp * 1000)
+    let y = now.getFullYear()
+    let m = now.getMonth() + 1
+    let d = now.getDate()
+    return y + "-" + (m < 10 ? "0" + m : m) + "-" + (d < 10 ? "0" + d : d) + " " + now.toTimeString().substr(0, 8);
+}
