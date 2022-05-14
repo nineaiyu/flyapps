@@ -200,23 +200,6 @@ class AliYunOss(object):
     def upload_file(self, local_file_full_path):
         return self.multipart_upload_file(local_file_full_path)
 
-        if os.path.isfile(local_file_full_path):
-            filename = os.path.basename(local_file_full_path)
-            headers = {
-                'Content-Disposition': f'attachment; filename="{filename}"',
-                'Cache-Control': ''
-            }
-            self.bucket.put_object_from_file(filename, local_file_full_path, headers)
-            # with open(local_file_full_path, 'rb') as fileobj:
-            #     # Seek方法用于指定从第1000个字节位置开始读写。上传时会从您指定的第1000个字节位置开始上传，直到文件结束。
-            #     fileobj.seek(1000, os.SEEK_SET)
-            #     # Tell方法用于返回当前位置。
-            #     # current = fileobj.tell()
-            #     self.bucket.put_object(os.path.basename(local_file_full_path), fileobj)
-            return True
-        else:
-            logger.error(f"file {local_file_full_path} is not file")
-
     def download_file(self, name, local_file_full_path):
         dir_path = os.path.dirname(local_file_full_path)
         if not os.path.exists(dir_path):
@@ -236,7 +219,7 @@ class AliYunOss(object):
         if os.path.isfile(local_file_full_path):
             total_size = os.path.getsize(local_file_full_path)
             # determine_part_size方法用于确定分片大小。
-            part_size = determine_part_size(total_size, preferred_size=1024 * 1024 * 10)
+            part_size = determine_part_size(total_size, preferred_size=1024 * 1024 * 100)
             filename = os.path.basename(local_file_full_path)
             headers = {
                 'Content-Disposition': 'attachment; filename="%s"' % get_filename_form_file(filename).encode(

@@ -263,7 +263,7 @@
         </div>
         <el-divider/>
         <el-form ref="storageinfoform" :model="storageinfo"
-                 label-width="80px" style="width: 39%;margin:0 auto;">
+                 label-width="80px" style="width: 50%;margin:0 auto;">
 
           <el-form-item label="存储最大容量" label-width="110px" style="text-align: left">
             <el-tag>存储最大容量空间 {{ diskSize(storageinfo.max_storage_capacity) }}</el-tag>
@@ -1231,7 +1231,7 @@ export default {
   }, filters: {},
   watch: {
     watchObj: function () {
-      if (this.editstorageinfo.bucket_name && this.editstorageinfo.download_auth_type === 1) {
+      if (this.editstorageinfo.bucket_name && this.editstorageinfo.download_auth_type === 1 && this.isaddflag) {
         this.editstorageinfo.domain_name = this.editstorageinfo.bucket_name + '.' + this.editstorageinfo.endpoint.replace("-internal", "")
       }
     }

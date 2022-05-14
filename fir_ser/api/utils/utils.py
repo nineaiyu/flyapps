@@ -11,7 +11,7 @@ import os
 from django.core.cache import cache
 
 from api.models import UserInfo, AppReleaseInfo, AppScreenShot, Token, UserAdDisplayInfo
-from api.utils.modelutils import get_app_d_count_by_app_id
+from api.utils.modelutils import get_app_d_count_by_app_id, get_user_storage_obj
 from api.utils.signalutils import run_xsign_migrate_data, run_xsign_clean_data
 from common.base.baseutils import get_real_ip_address
 from common.cache.storage import UserTokenCache
@@ -108,40 +108,57 @@ def check_storage_is_new_storage(user_obj, new_storage_obj):
 
 def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data=True):
     local_file_full_path = os.path.join(MEDIA_ROOT, filename)
-    old_storage_obj = Storage(user_obj)
-    if not new_storage_obj:
-        new_storage_obj = Storage(user_obj, None, True)
+    if filename == 'head_img.jpeg':
+        return True
+    storage_obj = get_user_storage_obj(user_obj)
+    if storage_obj.storage_type == 2:
+        storage_obj.download_auth_type = 2
+        old_oss_storage_obj = Storage(user_obj, storage_obj, prefix='migrate_storage')
     else:
-        new_storage_obj = Storage(user_obj, new_storage_obj)
+        old_oss_storage_obj = Storage(user_obj, prefix='migrate_storage')
 
-    if old_storage_obj.get_storage_uuid() == new_storage_obj.get_storage_uuid():
+    if not new_storage_obj:
+        storage_obj = get_user_storage_obj(user_obj, default=True)
+        if storage_obj.storage_type == 2:
+            storage_obj.download_auth_type = 2
+            new_oss_storage_obj = Storage(user_obj, storage_obj, prefix='migrate_storage')
+        else:
+            new_oss_storage_obj = Storage(user_obj, None, True, prefix='migrate_storage')
+    else:
+        if new_storage_obj.storage_type == 2:
+            new_storage_obj.download_auth_type = 2
+            new_oss_storage_obj = Storage(user_obj, new_storage_obj, prefix='migrate_storage')
+        else:
+            new_oss_storage_obj = Storage(user_obj, new_storage_obj, prefix='migrate_storage')
+
+    if old_oss_storage_obj.get_storage_uuid() == new_oss_storage_obj.get_storage_uuid():
         # 同一个存储，无需迁移数据
         return True
 
-    if old_storage_obj.get_storage_type() == 3:
-        if new_storage_obj.get_storage_type() == 3:
+    if old_oss_storage_obj.get_storage_type() == 3:
+        if new_oss_storage_obj.get_storage_type() == 3:
             # 都是本地存储，无需操作
             return True
         else:
             # 本地向云存储上传,并删除本地数据
-            res = new_storage_obj.upload_file(local_file_full_path)
+            res = new_oss_storage_obj.upload_file(local_file_full_path)
             if clean_old_data:
                 return delete_local_files(filename)
             return res
     else:
-        if new_storage_obj.get_storage_type() == 3:
+        if new_oss_storage_obj.get_storage_type() == 3:
             # 云存储下载 本地，并删除云存储
-            if download_files_form_oss(old_storage_obj, local_file_full_path, True):
+            if download_files_form_oss(old_oss_storage_obj, local_file_full_path, True):
                 if clean_old_data:
-                    return old_storage_obj.delete_file(filename)
+                    return old_oss_storage_obj.delete_file(filename)
                 return True
         else:
             # 云存储互传，先下载本地，然后上传新云存储，删除本地和老云存储
-            if download_files_form_oss(old_storage_obj, local_file_full_path, True):
-                res1 = new_storage_obj.upload_file(local_file_full_path)
+            if download_files_form_oss(old_oss_storage_obj, local_file_full_path, True):
+                res1 = new_oss_storage_obj.upload_file(local_file_full_path)
                 res2 = delete_local_files(filename)
                 if clean_old_data:
-                    return old_storage_obj.delete_file(filename)
+                    return old_oss_storage_obj.delete_file(filename)
                 return res1 and res2
 
 

@@ -17,6 +17,7 @@ from django.core.cache import cache
 from django.db.models import Count, F
 
 from api.models import UserInfo, AppReleaseInfo, Apps
+from api.utils.modelutils import get_user_storage_obj
 from api.utils.response import BaseResponse
 from api.utils.utils import delete_local_files, download_files_form_oss
 from common.base.baseutils import file_format_path, delete_app_profile_file, get_profile_full_path, format_apple_date, \
@@ -44,6 +45,16 @@ from xsign.utils.utils import delete_app_to_dev_and_file
 logger = logging.getLogger(__name__)
 
 
+def get_sign_oss_storage(user_obj):
+    storage_obj = get_user_storage_obj(user_obj)
+    if storage_obj.storage_type == 2:
+        storage_obj.download_auth_type = 2
+        oss_storage_obj = Storage(user_obj, storage_obj, prefix='super_sign')
+    else:
+        oss_storage_obj = Storage(user_obj, prefix='super_sign')
+    return oss_storage_obj
+
+
 def check_org_file(user_obj, org_file):
     if not os.path.isdir(os.path.dirname(org_file)):
         os.makedirs(os.path.dirname(org_file))
@@ -51,8 +62,7 @@ def check_org_file(user_obj, org_file):
     if os.path.isfile(org_file):
         return True
 
-    storage_obj = Storage(user_obj)
-    return download_files_form_oss(storage_obj, org_file)
+    return download_files_form_oss(get_sign_oss_storage(user_obj), org_file)
 
 
 def get_abnormal_queryset(user_obj, udid):
@@ -581,26 +591,26 @@ class IosUtils(object):
     @staticmethod
     def update_sign_file_name(user_obj, app_obj, developer_obj_id, release_obj, random_file_name):
         apptodev_obj = APPToDeveloper.objects.filter(developerid_id=developer_obj_id, app_id=app_obj).first()
-        storage_obj = Storage(user_obj)
-
+        storage_obj = get_sign_oss_storage(user_obj)
         logger.info(f"update sign file end, now upload {storage_obj.storage} {random_file_name}.ipa file")
-        if storage_obj.upload_file(os.path.join(MEDIA_ROOT, random_file_name + ".ipa")):
-            if apptodev_obj:
-                delete_local_files(apptodev_obj.binary_file + ".ipa")
-                storage_obj.delete_file(apptodev_obj.binary_file + ".ipa")
-                apptodev_obj.binary_file = random_file_name
-                old_release_file = apptodev_obj.release_file
-                apptodev_obj.release_file = release_obj.release_id
-                apptodev_obj.save(update_fields=['binary_file', 'release_file', 'updated_time'])
-                if storage_obj.get_storage_type() in [1, 2] and old_release_file != release_obj.release_id:
-                    logger.warning(f"update sign file , now clean ole {old_release_file}.ipa file")
-                    delete_local_files(old_release_file + ".ipa")
-            else:
-                APPToDeveloper.objects.create(developerid_id=developer_obj_id, app_id=app_obj,
-                                              binary_file=random_file_name, release_file=release_obj.release_id)
-            if storage_obj.get_storage_type() in [1, 2]:
-                delete_local_files(random_file_name + ".ipa")
-            return True
+        with cache.lock(f"upload_files_form_oss_{random_file_name}", timeout=60 * 30):
+            if storage_obj.upload_file(os.path.join(MEDIA_ROOT, random_file_name + ".ipa")):
+                if apptodev_obj:
+                    delete_local_files(apptodev_obj.binary_file + ".ipa")
+                    storage_obj.delete_file(apptodev_obj.binary_file + ".ipa")
+                    apptodev_obj.binary_file = random_file_name
+                    old_release_file = apptodev_obj.release_file
+                    apptodev_obj.release_file = release_obj.release_id
+                    apptodev_obj.save(update_fields=['binary_file', 'release_file', 'updated_time'])
+                    if storage_obj.get_storage_type() in [1, 2] and old_release_file != release_obj.release_id:
+                        logger.warning(f"update sign file , now clean ole {old_release_file}.ipa file")
+                        delete_local_files(old_release_file + ".ipa")
+                else:
+                    APPToDeveloper.objects.create(developerid_id=developer_obj_id, app_id=app_obj,
+                                                  binary_file=random_file_name, release_file=release_obj.release_id)
+                if storage_obj.get_storage_type() in [1, 2]:
+                    delete_local_files(random_file_name + ".ipa")
+                return True
 
     @staticmethod
     def update_sign_data(user_obj, app_obj, developer_obj_id, random_file_name, release_obj, udid_list):

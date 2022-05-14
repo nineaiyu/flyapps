@@ -25,9 +25,9 @@ def get_storage_auth(storage_obj):
 
 
 @run_function_by_locker()
-def get_storage(user, assigned_storage_obj, use_default_storage):
+def get_oss_storage(user, assigned_storage_obj, use_default_storage, prefix):
     if use_default_storage:
-        return get_storage_form_conf(user)
+        return get_storage_form_conf(user, prefix)
     if assigned_storage_obj:
         storage_obj = assigned_storage_obj
     else:
@@ -36,7 +36,7 @@ def get_storage(user, assigned_storage_obj, use_default_storage):
     if storage_obj:
         auth = get_storage_auth(storage_obj)
         storage_type = storage_obj.storage_type
-        storage_cache = CloudStorageCache(auth, user.uid)
+        storage_cache = CloudStorageCache(auth, f'{user.uid}_{prefix}')
         storage_key, new_storage_obj = storage_cache.get_storage_key_and_cache()
 
         if new_storage_obj and not assigned_storage_obj:
@@ -56,16 +56,20 @@ def get_storage(user, assigned_storage_obj, use_default_storage):
     else:
         logger.info(f"user {user} has not storage obj, so get default")
         # 不需要管理存储，直接从配置文件获取默认存储
-        return get_storage_form_conf(user)
+        return get_storage_form_conf(user, prefix)
 
 
 class Storage(object):
-    def __init__(self, user, assigned_storage_obj=None, use_default_storage=False):
+    def __init__(self, user, assigned_storage_obj=None, use_default_storage=False, prefix='default'):
+        self.user = user
+        self.prefix = prefix
+        self.assigned_storage_obj = assigned_storage_obj
+        self.use_default_storage = use_default_storage
         try:
             locker = {
-                'locker_key': f"make_storage_cache_{user.uid}",
-                "timeout": 60 * 5, "blocking_timeout": 6}
-            self.storage = get_storage(user, assigned_storage_obj, use_default_storage, locker=locker)
+                'locker_key': f"make_storage_cache_{user.uid}_{prefix}",
+                "timeout": 60, "blocking_timeout": 6}
+            self.storage = get_oss_storage(user, assigned_storage_obj, use_default_storage, prefix, locker=locker)
         except Exception as e:
             logger.error(f"get {user} storage failed Exception:{e}")
             self.storage = None
@@ -167,12 +171,12 @@ def get_local_storage(clean_cache=False):
                 return new_storage_obj
 
 
-def get_storage_form_conf(user):
+def get_storage_form_conf(user, prefix):
     for storage in Config.STORAGE:
         if storage.get("active", None):
             storage_type = storage.get('type', None)
             auth = storage.get('auth', {})
-            storage_cache = CloudStorageCache(auth, 'default')
+            storage_cache = CloudStorageCache(auth, f'system_{prefix}')
             storage_key, new_storage_obj = storage_cache.get_storage_key_and_cache()
             if new_storage_obj:
                 logger.info(f"user {user} get default storage {storage_key} obj cache {new_storage_obj} ")

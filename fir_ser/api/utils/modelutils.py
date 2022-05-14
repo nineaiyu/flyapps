@@ -13,7 +13,7 @@ from django.db.models import Count
 from rest_framework.pagination import PageNumberPagination
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
-    AppBundleIdBlackList, NotifyReceiver, WeChatInfo, AppDownloadToken, Apps, StorageShareInfo, UserInfo
+    AppBundleIdBlackList, NotifyReceiver, WeChatInfo, AppDownloadToken, Apps, StorageShareInfo, UserInfo, AppStorage
 from common.base.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name
 from common.base.magic import MagicCacheData
@@ -295,3 +295,15 @@ def get_user_storage_capacity(user_obj):
                 storage_capacity = Config.STORAGE_FREE_CAPACITY
 
     return storage_capacity
+
+
+def get_user_storage_obj(user_obj, default=False):
+    storage = user_obj.storage
+    if storage and not default:
+        return storage
+    for storage in Config.STORAGE:
+        if storage.get("active", None):
+            storage_type = storage.get('type', None)
+            auth = storage.get('auth', {})
+            storage = AppStorage(user_id=user_obj, storage_type=storage_type, **auth)
+            return storage
