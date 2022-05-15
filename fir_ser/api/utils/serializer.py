@@ -70,6 +70,11 @@ class UserInfoSerializer(serializers.ModelSerializer):
     def get_storage_used_capacity(self, obj):
         return get_user_storage_used(obj)
 
+    download_times = serializers.SerializerMethodField()
+
+    def get_download_times(self, obj):
+        return obj.download_times // Config.APP_USE_BASE_DOWNLOAD_TIMES
+
     storage_used = serializers.SerializerMethodField()
 
     def get_storage_used(self, obj):
@@ -83,7 +88,8 @@ class UserInfoSerializer(serializers.ModelSerializer):
     free_download_times = serializers.SerializerMethodField()
 
     def get_free_download_times(self, obj):
-        return get_user_free_download_times(obj.id, auth_status=get_user_cert_auth_status(obj.id))
+        return get_user_free_download_times(obj.id, auth_status=get_user_cert_auth_status(
+            obj.id)) // Config.APP_USE_BASE_DOWNLOAD_TIMES
 
     certification = serializers.SerializerMethodField()
 

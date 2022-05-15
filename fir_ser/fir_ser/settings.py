@@ -261,6 +261,7 @@ CORS_ALLOW_HEADERS = (
 CACHE_KEY_TEMPLATE = {
     'config_key': 'config',
     'task_state_key': 'task_state',
+    'task_progress_key': 'task_progress',
     'pending_state_key': 'pending_state',
     'wx_login_bind_key': 'wx_login_bind',
     'notify_loop_msg_key': 'notify_loop_msg',

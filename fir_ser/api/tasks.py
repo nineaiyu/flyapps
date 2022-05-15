@@ -9,7 +9,8 @@ import logging
 from captcha.models import CaptchaStore
 
 from api.utils.ctasks import sync_download_times, auto_clean_upload_tmp_file, auto_clean_remote_client_log, \
-    notify_check_user_download_times, notify_check_apple_developer_devices, notify_check_apple_developer_cert
+    notify_check_user_download_times, notify_check_apple_developer_devices, notify_check_apple_developer_cert, \
+    migrate_user_oss_storage
 from api.views.login import get_login_type
 from common.core.sysconfig import Config, ConfigCacheBase
 from common.libs.geetest.geetest_utils import check_bypass_status
@@ -31,57 +32,62 @@ def start_api_sever_do_clean():
 
 
 def clean_config_cache(key):
-    ConfigCacheBase().invalid_config_cache(key)
+    return ConfigCacheBase().invalid_config_cache(key)
 
 
 @app.task
 def sync_download_times_job():
-    sync_download_times()
+    return sync_download_times()
 
 
 @app.task
 def check_bypass_status_job():
     if Config.LOGIN.get("geetest") or Config.CHANGER.get('geetest') or Config.REGISTER.get(
             'geetest') or Config.REPORT.get('geetest'):
-        check_bypass_status()
+        return check_bypass_status()
 
 
 @app.task
 def auto_clean_upload_tmp_file_job():
-    auto_clean_upload_tmp_file()
+    return auto_clean_upload_tmp_file()
 
 
 @app.task
 def auto_clean_captcha_store_job():
-    CaptchaStore.remove_expired()
+    return CaptchaStore.remove_expired()
 
 
 @app.task
 def auto_delete_tmp_file_job():
-    auto_delete_ios_mobile_tmp_file()
+    return auto_delete_ios_mobile_tmp_file()
 
 
 @app.task
 def sync_wx_access_token_job():
     if get_login_type().get('third', '').get('wxp'):
-        sync_wx_access_token()
+        return sync_wx_access_token()
 
 
 @app.task
 def auto_clean_remote_client_job():
-    auto_clean_remote_client_log()
+    return auto_clean_remote_client_log()
 
 
 @app.task
 def download_times_notify_check_job():
-    notify_check_user_download_times()
+    return notify_check_user_download_times()
 
 
 @app.task
 def apple_developer_devices_check_job():
-    notify_check_apple_developer_devices()
+    return notify_check_apple_developer_devices()
 
 
 @app.task
 def apple_developer_cert_notify_check_job():
-    notify_check_apple_developer_cert()
+    return notify_check_apple_developer_cert()
+
+
+@app.task
+def migrate_storage_job(use_storage_id, user_pk, force):
+    return migrate_user_oss_storage(use_storage_id, user_pk, force)

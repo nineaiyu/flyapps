@@ -230,10 +230,15 @@ def get_user_cert_auth_status(user_id):
 def check_user_has_all_download_times(app_obj, user_obj):
     if user_obj:
         user_id = user_obj.pk
+        storage = user_obj.storage
     else:
         user_id = app_obj.user_id_id
+        storage = app_obj.user_id.storage
     auth_status = get_user_cert_auth_status(user_id)
-    d_count = get_app_d_count_by_app_id(app_obj.app_id)
+    d_count = get_app_d_count_by_app_id(app_obj.app_id, storage)
+    a = get_user_free_download_times(user_id, auth_status=auth_status)
+    b = d_count
+    c = check_user_can_download(user_id)
     return get_user_free_download_times(user_id, auth_status=auth_status) - d_count >= 0 or check_user_can_download(
         user_id)
 
@@ -241,8 +246,9 @@ def check_user_has_all_download_times(app_obj, user_obj):
 def consume_user_download_times_by_app_obj(app_obj):
     user_id = app_obj.user_id_id
     auth_status = get_user_cert_auth_status(user_id)
-    amount = get_app_d_count_by_app_id(app_obj.app_id)
-    if consume_user_download_times(user_id, app_obj.app_id, int(amount * Config.SIGN_EXTRA_MULTIPLE), auth_status):
+    amount = get_app_d_count_by_app_id(app_obj.app_id, False)
+    if consume_user_download_times(user_id, app_obj.app_id, int(amount * (Config.SIGN_EXTRA_MULTIPLE - 1)),
+                                   auth_status):
         return False
     return True
 
@@ -290,7 +296,7 @@ def update_order_info(user_id, out_trade_no, payment_number, payment_type, descr
                         order_obj.save(
                             update_fields=["status", "payment_type", "payment_number", "pay_time",
                                            "description"])
-                        add_user_download_times(user_id, download_times)
+                        add_user_download_times(user_id, download_times * Config.APP_USE_BASE_DOWNLOAD_TIMES)
                         logger.info(f"{user_obj} 订单 {out_trade_no} msg：{order_obj.description}")
                         pay_success_notify(user_obj, order_obj)
                         return True
@@ -340,6 +346,8 @@ def get_wx_ticket_login_info_cache(ticket):
 
 
 def add_download_times_free_base(user_obj, amount, payment_name, description, order_type=1):
+    if amount <= 0:
+        return True
     order_number = get_order_num()
     order_obj = Order.objects.create(payment_type=2, order_number=order_number, payment_number=order_number,
                                      user_id=user_obj, status=1, order_type=order_type, actual_amount=0,

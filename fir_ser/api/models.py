@@ -39,7 +39,7 @@ class UserInfo(AbstractUser):
 
     memo = models.TextField('备注', blank=True, null=True, default=None, )
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name="注册时间")
-    download_times = models.PositiveIntegerField(default=0, verbose_name="可用下载次数,需要用户充值")
+    download_times = models.PositiveBigIntegerField(default=0, verbose_name="可用下载点次数,需要用户充值")
     storage_capacity = models.BigIntegerField(default=0, verbose_name="存储容量，单位byte")
     all_download_times = models.BigIntegerField(default=0, verbose_name="总共下载次数")
     default_domain_name = models.ForeignKey(to="DomainCnameInfo", verbose_name="默认下载页域名", on_delete=models.CASCADE)

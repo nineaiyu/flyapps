@@ -22,12 +22,12 @@ from common.core.sysconfig import Config
 logger = logging.getLogger(__name__)
 
 
-def get_app_d_count_by_app_id(app_id):
+def get_app_d_count_by_app_id(app_id, is_oss=False):
     d_count = 1
     binary_size = AppReleaseInfo.objects.filter(is_master=True, app_id__app_id=app_id).values('binary_size').first()
     if binary_size and binary_size.get('binary_size', 0) > 0:
         d_count += binary_size.get('binary_size') // 1024 // 1024 // 100
-    return d_count
+    return d_count * (Config.APP_USE_BASE_DOWNLOAD_TIMES if not is_oss else Config.PRIVATE_OSS_DOWNLOAD_TIMES)
 
 
 def get_user_domain_name(obj, domain_type=1):

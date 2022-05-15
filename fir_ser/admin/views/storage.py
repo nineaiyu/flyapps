@@ -14,8 +14,8 @@ from rest_framework.views import APIView
 
 from admin.utils.serializer import AdminStorageSerializer
 from admin.utils.utils import AppsPageNumber, BaseModelSet
-from api.base_views import storage_change
 from api.models import UserInfo, AppStorage
+from api.tasks import migrate_storage_job
 from common.base.baseutils import format_storage_selection
 from common.core.auth import AdminTokenAuthentication
 from common.core.response import ApiResponse
@@ -64,8 +64,13 @@ class StorageChangeView(APIView):
             use_storage_id = data.get("use_storage_id", None)
             force = data.get("force", None)
             if use_storage_id:
-                if not storage_change(use_storage_id, obj, force):
-                    ApiResponse(code=1006, msg="修改失败")
+                c_task = migrate_storage_job.apply_async((use_storage_id, obj.pk, force))
+                msg = c_task.get(propagate=False)
+                logger.info(f"run migrate storage task {obj} msg:{msg}")
+                if c_task.successful():
+                    c_task.forget()
+                else:
+                    ApiResponse(code=1006, msg=msg)
                 return ApiResponse()
 
         return ApiResponse(code=1004, msg="数据校验失败")

@@ -9,7 +9,9 @@ import time
 
 from django.core.cache import cache
 
+from api.base_views import storage_change
 from api.models import Apps, UserInfo, RemoteClientInfo
+from common.cache.state import MigrateStorageState
 from common.notify.ntasks import check_user_download_times, check_apple_developer_devices, check_apple_developer_cert
 from common.utils.storage import Storage
 from fir_ser.settings import CACHE_KEY_TEMPLATE
@@ -66,3 +68,16 @@ def notify_check_apple_developer_devices():
 def notify_check_apple_developer_cert():
     for user_obj in UserInfo.objects.filter(is_active=True, supersign_active=True).all():
         check_apple_developer_cert(user_obj, expire_day=7, days=[0, 1, 3, 7])
+
+
+def migrate_user_oss_storage(use_storage_id, user_pk, force):
+    msg = 'success'
+    user_obj = UserInfo.objects.filter(pk=user_pk).first()
+    if user_obj:
+        with MigrateStorageState(user_obj.uid) as state:
+            if state:
+                if not storage_change(use_storage_id, user_obj, force):
+                    msg = '数据迁移失败'
+            else:
+                msg = "数据迁移中,请耐心等待"
+    return msg

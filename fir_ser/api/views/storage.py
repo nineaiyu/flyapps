@@ -10,8 +10,9 @@ from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.base_views import storage_change, app_delete
+from api.base_views import app_delete
 from api.models import AppStorage, Apps, StorageShareInfo, UserInfo
+from api.tasks import migrate_storage_job
 from api.utils.apputils import clean_history_apps
 from api.utils.modelutils import PageNumber, get_user_storage_capacity, get_user_storage_used
 from api.utils.response import BaseResponse
@@ -19,6 +20,7 @@ from api.utils.serializer import StorageSerializer, StorageShareSerializer
 from api.utils.utils import upload_oss_default_head_img
 from common.base.baseutils import get_choices_dict, get_choices_name_from_key, get_real_ip_address
 from common.cache.state import MigrateStorageState
+from common.cache.storage import TaskProgressCache
 from common.core.auth import ExpiringTokenAuthentication, StoragePermission
 from common.core.sysconfig import Config
 from common.utils.caches import del_cache_storage
@@ -86,6 +88,8 @@ class StorageView(APIView):
 
         if act == 'storage_group':
             res.storage_group_list = get_storage_group(request, res, self.storage_type, is_default == 'true')
+            migrate_progress = TaskProgressCache('migrating_storage_data', request.user.uid).get_storage_cache()
+            res.migrate_progress = migrate_progress if migrate_progress else {}
             return Response(res.dict)
         if pk:
             if pk == '-1':
@@ -188,23 +192,24 @@ class StorageView(APIView):
                     res.msg = "数据异常，请重试"
                     return Response(res.dict)
 
-            with MigrateStorageState(request.user.uid) as state:
-                if state:
-                    if not storage_change(use_storage_id, request.user, force):
-                        res.code = 1006
-                        res.msg = '修改失败'
-                else:
-                    res.code = 1007
-                    res.msg = "数据迁移中,请耐心等待"
+            c_task = migrate_storage_job.apply_async((use_storage_id, request.user.pk, force))
+            msg = c_task.get(propagate=False)
+            logger.info(f"run migrate storage task {request.user} msg:{msg}")
+            if c_task.successful():
+                c_task.forget()
+            else:
+                res.code = 1006
+                res.msg = msg
 
             return Response(res.dict)
 
         storage_id = data.get("id", None)
         if storage_id:
-            # if request.user.storage and storage_id == request.user.storage.id:
-            #     res.msg = '存储正在使用中，无法修改'
-            #     res.code = 1007
-            #     return Response(res.dict)
+            if request.user.storage and storage_id == request.user.storage.id and MigrateStorageState(
+                    request.user.uid).get_state():
+                res.msg = '存储迁移中，无法修改'
+                res.code = 1007
+                return Response(res.dict)
             storage_obj = AppStorage.objects.filter(id=storage_id, user_id=request.user).first()
             storage_obj_bak = AppStorage.objects.filter(id=storage_id, user_id=request.user).first()
             serializer = StorageSerializer(instance=storage_obj, data=data, context={'user_obj': request.user},
@@ -241,6 +246,10 @@ class StorageView(APIView):
         storage_id = request.query_params.get("id", None)
         if storage_id:
             try:
+                if request.user.storage and storage_id == request.user.storage.id:
+                    res.msg = '存储使用中，无法删除'
+                    res.code = 1007
+                    return Response(res.dict)
                 AppStorage.objects.filter(user_id=request.user, id=storage_id).delete()
                 logger.error(f"user {request.user} delete storage id:{storage_id} success")
             except Exception as e:
@@ -418,12 +427,14 @@ class StorageConfigView(APIView):
 
     def get(self, request):
         res = BaseResponse()
+        migrate_progress = TaskProgressCache('migrating_storage_data', request.user.uid).get_storage_cache()
         res.data = {
             'user_max_storage_capacity': get_user_storage_capacity(request.user),
             'user_used_storage_capacity': get_user_storage_used(request.user),
             'user_history_limit': UserInfo.objects.filter(pk=request.user.pk).first().history_release_limit,
-            'storage_status': MigrateStorageState(request.user.uid).get_state()
+            'storage_status': MigrateStorageState(request.user.uid).get_state(),
         }
+        res.migrate_progress = migrate_progress if migrate_progress else {}
         return Response(res.dict)
 
     def put(self, request):

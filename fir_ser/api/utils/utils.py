@@ -7,6 +7,7 @@ import binascii
 import datetime
 import logging
 import os
+import time
 
 from django.core.cache import cache
 
@@ -14,7 +15,7 @@ from api.models import UserInfo, AppReleaseInfo, AppScreenShot, Token, UserAdDis
 from api.utils.modelutils import get_app_d_count_by_app_id, get_user_storage_obj
 from api.utils.signalutils import run_xsign_migrate_data, run_xsign_clean_data
 from common.base.baseutils import get_real_ip_address
-from common.cache.storage import UserTokenCache
+from common.cache.storage import UserTokenCache, TaskProgressCache
 from common.libs.storage.localApi import LocalStorage
 from common.utils.caches import consume_user_download_times
 from common.utils.storage import Storage
@@ -164,12 +165,24 @@ def migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_d
 
 def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
     with cache.lock(f"migrating_storage_data_{user_obj.uid}", timeout=60 * 60 * 24):
+        task_cache = TaskProgressCache('migrating_storage_data', user_obj.uid)
+        app_release_queryset = AppReleaseInfo.objects.filter(app_id__user_id=user_obj)
+        cache_data = task_cache.get_storage_cache()
+        if not cache_data:
+            cache_default_data = {
+                's_time': time.time(),
+                'release_num': app_release_queryset.count(),
+                'migrate_num': 0,
+                'target_oss_id': -1 if not new_storage_obj else new_storage_obj.pk
+            }
+        else:
+            logger.warning(f"migrate {user_obj} oss progress is exist. may be is migrating data {cache_data}")
 
         auth_status = False
         certification = getattr(user_obj, 'certification', None)
         if certification and certification.status == 1:
             auth_status = True
-        for app_release_obj in AppReleaseInfo.objects.filter(app_id__user_id=user_obj).all():
+        for app_release_obj in app_release_queryset.all():
             # 迁移APP数据
             filename = get_filename_from_apptype(app_release_obj.release_id, app_release_obj.release_type)
             migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data)
@@ -183,8 +196,11 @@ def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
             #     filename = get_filename_from_apptype(apptodev_obj.binary_file, app_release_obj.release_type)
             #     migrating_storage_file_data(user_obj, filename, new_storage_obj, clean_old_data)
             # 消费下载次数
-            amount = get_app_d_count_by_app_id(app_release_obj.app_id.app_id)
+            cache_default_data['migrate_num'] += 1
+            task_cache.set_storage_cache(cache_default_data)
+            amount = get_app_d_count_by_app_id(app_release_obj.app_id.app_id, False)
             consume_user_download_times(user_obj.pk, app_release_obj.app_id, amount, auth_status)
+        task_cache.del_storage_cache()
         return True
 
 

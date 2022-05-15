@@ -23,6 +23,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name='userinfo',
+            name='download_times',
+            field=models.PositiveBigIntegerField(default=0, verbose_name='可用下载点次数,需要用户充值'),
+        ),
+        migrations.AlterField(
+            model_name='userinfo',
             name='storage',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
                                     related_name='app_storage', to='api.appstorage', verbose_name='存储'),

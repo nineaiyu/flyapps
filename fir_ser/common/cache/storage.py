@@ -217,6 +217,12 @@ class TaskStateCache(RedisCacheBase):
         super().__init__(self.cache_key)
 
 
+class TaskProgressCache(RedisCacheBase):
+    def __init__(self, prefix, task_id):
+        self.cache_key = f"{CACHE_KEY_TEMPLATE.get('task_progress_key')}_{prefix}_{task_id}"
+        super().__init__(self.cache_key)
+
+
 class PendingStateCache(RedisCacheBase):
     def __init__(self, locker_key):
         self.cache_key = f"{CACHE_KEY_TEMPLATE.get('pending_state_key')}_{locker_key}"

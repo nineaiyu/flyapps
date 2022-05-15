@@ -65,44 +65,6 @@ def app_screen_delete(screen_id, apps_obj, storage):
         del_cache_response_by_short(apps_obj.app_id)
 
 
-def app_release_delete(app_obj, release_id, storage):
-    res = BaseResponse()
-    user_obj = app_obj.user_id
-    if app_obj:
-        apprelease_count = AppReleaseInfo.objects.filter(app_id=app_obj).values("release_id").count()
-        appreleaseobj = AppReleaseInfo.objects.filter(app_id=app_obj, release_id=release_id).first()
-        if not appreleaseobj.is_master:
-            logger.info(f"delete app release {appreleaseobj}")
-            storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
-            delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
-            storage.delete_file(appreleaseobj.icon_url)
-
-            appreleaseobj.delete()
-        elif appreleaseobj.is_master and apprelease_count < 2:
-            logger.info(f"delete app master release {appreleaseobj} and clean app {app_obj} ")
-            count = APPToDeveloper.objects.filter(app_id=app_obj).count()
-            if app_obj.issupersign or count > 0:
-                logger.info(f"app_id:{app_obj.app_id} is supersign ,delete this app need clean IOS developer")
-                IosUtils.clean_app_by_user_obj(app_obj)
-
-            storage.delete_file(appreleaseobj.release_id, appreleaseobj.release_type)
-            delete_local_files(appreleaseobj.release_id, appreleaseobj.release_type)
-            storage.delete_file(appreleaseobj.icon_url)
-            del_cache_by_delete_app(app_obj.app_id)
-
-            appreleaseobj.delete()
-            delete_app_screenshots_files(storage, app_obj)
-            has_combo = app_obj.has_combo
-            if has_combo:
-                app_obj.has_combo.has_combo = None
-            app_obj.delete()
-        else:
-            pass
-        del_cache_response_by_short(app_obj.app_id)
-
-    return res
-
-
 def check_storage_ok(user_obj, new_storage_obj):
     if migrating_storage_file_data(user_obj, 'head_img.jpeg', new_storage_obj, False):
         return True

@@ -193,8 +193,8 @@
     </el-dialog>
 
     <el-tabs v-model="activeName" tab-position="top" type="border-card" @tab-click="handleClick">
-      <el-tab-pane label="存储选择" name="change">'
-        <el-row :gutter="24">
+      <el-tab-pane label="存储选择" name="change">
+        <el-row :gutter="24" style="margin-top: 15px">
           <el-col :span="14">
             存储选择：
             <el-select v-model="use_storage_id" :placeholder="selectlabel" filterable style="width: 400px"
@@ -235,8 +235,6 @@
                 type="line"/>
           </el-col>
         </el-row>
-
-
         <div v-if="use_storage_id!==org_storage_id" style="margin-top: 20px">
           <el-button style="margin-left: 10px"
                      type="info"
@@ -262,7 +260,7 @@
           <!--          </el-button>-->
         </div>
         <el-divider/>
-        <el-form ref="storageinfoform" :model="storageinfo"
+        <el-form v-if="storageinfo" ref="storageinfoform" :model="storageinfo"
                  label-width="80px" style="width: 50%;margin:0 auto;">
 
           <el-form-item label="存储最大容量" label-width="110px" style="text-align: left">
@@ -666,26 +664,48 @@
         </el-table>
       </el-tab-pane>
       <el-tab-pane label="存储设置" name="setting" style="text-align: center">
-        <el-tag style="margin: 20px 0"> 应用版本数设置，当应用历史版本超过该限制，将会自动清理较老的版本</el-tag>
+        <div v-if="migrate_progress && migrate_progress.s_time" style="text-align: left">
+          <el-card>
+            <div slot="header">
+              <el-tag type="danger">存储迁移中，请耐心等待</el-tag>
+            </div>
+            <el-row :gutter="24">
+              <el-col :span="4">存储迁移进度</el-col>
+              <el-col :span="20">
+                <el-progress
+                    :color="storage_usedColor"
+                    :percentage="parseInt(migrate_progress.migrate_num*100/migrate_progress.release_num)"
+                    :stroke-width="18"
+                    :text-inside="true" status="success" style="width: 80%"
+                    type="line"/>
+              </el-col>
+            </el-row>
+            <el-row :gutter="24" style="margin-top: 30px">
+              <el-col :span="4">总迁移应用数</el-col>
+              <el-col :span="20">
+                <el-tag>{{ migrate_progress.release_num }}</el-tag>
+              </el-col>
+            </el-row>
+            <el-row :gutter="24" style="margin-top: 20px">
+              <el-col :span="4">已经迁移成功应用数</el-col>
+              <el-col :span="20">
+                <el-tag>{{ migrate_progress.migrate_num }}</el-tag>
+              </el-col>
+            </el-row>
+            <el-row :gutter="24" style="margin-top: 20px">
+              <el-col :span="4">存储迁移开始时间</el-col>
+              <el-col :span="20">
+                <el-tag>{{ getFormatDate(migrate_progress.s_time) }}</el-tag>
+              </el-col>
+            </el-row>
+          </el-card>
+
+          <el-divider/>
+        </div>
+
         <div style="margin: auto;width: 700px;height: 100%">
           <el-form ref="form" :model="storage_config" label-width="180px">
-            <el-form-item label="应用历史版本数" style="text-align: left">
-              <el-input-number v-model="storage_config.user_history_limit" :min="1"
-                               style="width: 300px;margin: 0 10px"></el-input-number>
-              <el-button @click="updateConfig('update')">保存修改</el-button>
-            </el-form-item>
-            <el-form-item label="当前存储空间大小" style="text-align: left">
-              <el-tag>{{ diskSize(storage_config.user_max_storage_capacity) }}</el-tag>
-              已经使用
-              <el-tag>{{ diskSize(storage_config.user_used_storage_capacity) }}</el-tag>
-              还剩
-              <el-tag>
-                {{ diskSize(storage_config.user_max_storage_capacity - storage_config.user_used_storage_capacity) }}
-              </el-tag>
-            </el-form-item>
-
-
-            <el-form-item label="存储迁移状态" style="text-align: left">
+            <el-form-item v-if="storage_config.storage_status" label="存储迁移状态" style="text-align: left">
               <el-tag v-if="!storage_config.storage_status">未迁移，状态正常</el-tag>
               <div v-else>
                 <el-tag>迁移中，迁移时间 {{ getFormatDate(storage_config.storage_status) }}</el-tag>
@@ -695,20 +715,39 @@
                 </el-tag>
               </div>
             </el-form-item>
-            <el-form-item label="清理所有应用数据" style="text-align: left">
-              <el-button style="margin-left: 10px"
-                         type="danger"
-                         @click="clean_storage_data('all')">
-                清理所有应用数据
-              </el-button>
-            </el-form-item>
-            <el-form-item label="清理应用历史数据" style="text-align: left">
-              <el-button style="margin-left: 10px"
-                         type="danger"
-                         @click="clean_storage_data('history')">
-                清理应用历史版本数据，只保留最新版本数据
-              </el-button>
-            </el-form-item>
+
+            <div v-if="!(migrate_progress && migrate_progress.s_time)">
+              <el-tag style="margin: 20px 0"> 应用版本数设置，当应用历史版本超过该限制，将会自动清理较老的版本</el-tag>
+              <el-form-item label="应用历史版本数" style="text-align: left">
+                <el-input-number v-model="storage_config.user_history_limit" :min="1"
+                                 style="width: 300px;margin: 0 10px"></el-input-number>
+                <el-button @click="updateConfig('update')">保存修改</el-button>
+              </el-form-item>
+              <el-form-item label="当前存储空间大小" style="text-align: left">
+                <el-tag>{{ diskSize(storage_config.user_max_storage_capacity) }}</el-tag>
+                已经使用
+                <el-tag>{{ diskSize(storage_config.user_used_storage_capacity) }}</el-tag>
+                还剩
+                <el-tag>
+                  {{ diskSize(storage_config.user_max_storage_capacity - storage_config.user_used_storage_capacity) }}
+                </el-tag>
+              </el-form-item>
+              <el-form-item label="清理所有应用数据" style="text-align: left">
+                <el-button style="margin-left: 10px"
+                           type="danger"
+                           @click="clean_storage_data('all')">
+                  清理所有应用数据
+                </el-button>
+              </el-form-item>
+              <el-form-item label="清理应用历史数据" style="text-align: left">
+                <el-button style="margin-left: 10px"
+                           type="danger"
+                           @click="clean_storage_data('history')">
+                  清理应用历史版本数据，只保留最新版本数据
+                </el-button>
+              </el-form-item>
+            </div>
+
           </el-form>
         </div>
 
@@ -761,6 +800,7 @@ export default {
       operatestatus: '',
       dialogstorageVisible: false,
       editstorageinfo: {},
+      migrate_progress: {},
       selectlabel: "",
       storageinfo: {'used_number': 0, 'max_storage_capacity': 1},
       storage_list: [],
@@ -993,6 +1033,13 @@ export default {
           this.fstorage_lists = data.storage_group_list;
           this.org_storage_id = this.use_storage_id = data.storage;
           this.storage_list = data.storage_list;
+          this.migrate_progress = data.migrate_progress;
+          if (this.migrate_progress && this.migrate_progress.s_time) {
+            this.activeName = 'setting'
+            this.$message.warning("存储迁移中，请耐心等待")
+            this.refreshactiveFun()
+            return
+          }
           this.getstorageinfobyid(this.use_storage_id)
         } else {
           this.$message.error('存储类别获取失败,' + data.msg);
@@ -1207,6 +1254,7 @@ export default {
         configStorageData(res => {
           if (res.code === 1000) {
             this.storage_config = res.data
+            this.migrate_progress = res.migrate_progress
           } else {
             this.$message.error("获取数据失败了，" + res.msg)
           }

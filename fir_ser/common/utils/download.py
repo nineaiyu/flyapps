@@ -68,10 +68,10 @@ def get_app_instance_by_cache(app_id, limit):
     app_obj_cache = app_instance_cache.get_storage_cache()
     if not app_obj_cache:
         app_obj_cache = Apps.objects.filter(app_id=app_id).values("pk", 'user_id', 'type', 'need_password',
-                                                                  'issupersign',
+                                                                  'issupersign', 'user_id__storage',
                                                                   'user_id__certification__status').first()
         if app_obj_cache:
-            app_obj_cache['d_count'] = get_app_d_count_by_app_id(app_id)
+            app_obj_cache['d_count'] = get_app_d_count_by_app_id(app_id, app_obj_cache.get('user_id__storage', False))
             app_instance_cache.set_storage_cache(app_obj_cache, limit)
     if not app_obj_cache:
         return False, '应用不存在'

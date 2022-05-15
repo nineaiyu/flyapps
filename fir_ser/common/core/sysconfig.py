@@ -8,7 +8,7 @@ import json
 import logging
 import re
 
-from django.template import Context, Template
+from django.template import Context, Template, TemplateSyntaxError
 from django.template.base import VariableNode
 from rest_framework import serializers
 
@@ -58,10 +58,24 @@ class ConfigCacheBase(object):
                         logger.warning(f"get same render key. so continue")
                         continue
                     context_dict[sys_obj_dict['key']] = sys_obj_dict['value']
-
-                value = get_render_context(value, context_dict)
+                try:
+                    value = get_render_context(value, context_dict)
+                except TemplateSyntaxError as e:
+                    res_list = re.findall("Could not parse the remainder: '{{(.*?)}}'", str(e))
+                    for res in res_list:
+                        r_value = get_render_context(f'{{{{{res}}}}}', context_dict)
+                        value = value.replace(f'{{{{{res}}}}}', r_value)
+                    value = get_render_context(value, context_dict)
+                except Exception as e:
+                    logger.warning(f"db config - render failed {e}")
             except Exception as e:
                 logger.warning(f"db config - render failed {e}")
+        if isinstance(value, str):
+            v_group = re.findall('"(.*?)"', value)
+            if v_group and len(v_group) == 1 and v_group[0].isdigit():
+                return int(v_group[0])
+        if value.isdigit():
+            return int(value)
         return value
 
     def get_value_from_db(self, key):
@@ -296,6 +310,14 @@ class UserDownloadTimesCache(ConfigCacheBase):
     @property
     def SIGN_EXTRA_MULTIPLE(self):
         return super().get_value('SIGN_EXTRA_MULTIPLE', DOWNLOADTIMESCONF.SIGN_EXTRA_MULTIPLE)
+
+    @property
+    def APP_USE_BASE_DOWNLOAD_TIMES(self):
+        return super().get_value('APP_USE_BASE_DOWNLOAD_TIMES', DOWNLOADTIMESCONF.APP_USE_BASE_DOWNLOAD_TIMES)
+
+    @property
+    def PRIVATE_OSS_DOWNLOAD_TIMES(self):
+        return super().get_value('PRIVATE_OSS_DOWNLOAD_TIMES', DOWNLOADTIMESCONF.PRIVATE_OSS_DOWNLOAD_TIMES)
 
 
 class OssStorageConfCache(ConfigCacheBase):

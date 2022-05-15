@@ -391,10 +391,14 @@ bIX1aWjPxirQX9mzaL3oEQI=
 
 class DOWNLOADTIMESCONF(object):
     SIGN_EXTRA_MULTIPLE = 2  # 超级签名消耗额外倍数，超级签名需要占用的服务大量资源
-    USER_FREE_DOWNLOAD_TIMES = 5
-    AUTH_USER_FREE_DOWNLOAD_TIMES = 10
-    NEW_USER_GIVE_DOWNLOAD_TIMES = 100
-    AUTH_USER_GIVE_DOWNLOAD_TIMES = 200
+
+    APP_USE_BASE_DOWNLOAD_TIMES = 100  # 单个应用下载消费点数
+    PRIVATE_OSS_DOWNLOAD_TIMES = 4  # 私有存储单个应用下载消费点数
+
+    USER_FREE_DOWNLOAD_TIMES = "{% widthratio 5 1 {{APP_USE_BASE_DOWNLOAD_TIMES}}  %}"  # 用户每日免费下载点数
+    AUTH_USER_FREE_DOWNLOAD_TIMES = '{% widthratio 10 1 {{APP_USE_BASE_DOWNLOAD_TIMES}}  %}'  # 认证用户每日免费下载点数
+    NEW_USER_GIVE_DOWNLOAD_TIMES = "{% widthratio 100 1 {{APP_USE_BASE_DOWNLOAD_TIMES}}  %}"  # 新用户注册赠送下载点数
+    AUTH_USER_GIVE_DOWNLOAD_TIMES = "{% widthratio 200 1 {{APP_USE_BASE_DOWNLOAD_TIMES}}  %}"  # 用户认证成功赠送下载点数
 
 
 class APPLEDEVELOPERCONF(object):

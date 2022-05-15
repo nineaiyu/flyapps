@@ -101,14 +101,14 @@ def run_resign_task_do(app_id, developer_id, developer_app_id, need_download_pro
 
 @app.task
 def auto_check_ios_developer_active_job():
-    auto_check_ios_developer_active()
+    return auto_check_ios_developer_active()
 
 
 @app.task
 def get_best_proxy_ips_job():
-    get_best_proxy_ips()
+    return get_best_proxy_ips()
 
 
 @app.task
 def auto_clean_sign_log_job():
-    auto_clean_sign_log()
+    return auto_clean_sign_log()

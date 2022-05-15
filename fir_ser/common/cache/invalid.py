@@ -48,16 +48,20 @@ def invalid_short_cache(app_obj, key='ShortDownloadView'.lower()):
     """
     if not app_obj:
         return
-    master_release_dict = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).values('icon_url',
-                                                                                               'release_id').first()
+    master_release_dict = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).values('icon_url', 'release_id',
+                                                                                               'release_type').first()
     if master_release_dict:
         # 1.清理图片缓存
         DownloadUrlCache(key, master_release_dict.get('icon_url')).del_storage_cache()
 
         release_id = master_release_dict.get('release_id')
+        release_type = master_release_dict.get('release_type')
         # 2.清理下载token缓存
         TokenManagerCache(key, release_id).del_storage_cache()
+        TokenManagerCache(key, f'{release_id}.{"apk" if release_type == 0 else "ipa"}').del_storage_cache()
+        DownloadUrlCache(key, f'{release_id}.{"apk" if release_type == 0 else "ipa"}').del_storage_cache()
         TokenManagerCache('', f"{release_id}.plist").del_storage_cache()
+        DownloadUrlCache('', f"{release_id}.plist").del_storage_cache()
 
     # 3.清理广告缓存
     invalid_ad_pic_cache(key, app_obj.short)
