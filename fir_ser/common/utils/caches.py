@@ -3,7 +3,7 @@
 # project: 4月
 # author: liuyu
 # date: 2020/4/7
-
+import datetime
 import logging
 import time
 
@@ -11,7 +11,7 @@ from django.core.cache import cache
 from django.db.models import F
 from django.utils import timezone
 
-from api.models import Apps, UserInfo, UserCertificationInfo, Order
+from api.models import Apps, UserInfo, UserCertificationInfo, Order, StorageExchange
 from api.utils.modelutils import get_app_d_count_by_app_id, get_app_domain_name, get_user_domain_name
 from common.base.baseutils import get_order_num
 from common.cache.invalid import invalid_app_cache, invalid_short_cache, invalid_app_download_times_cache, \
@@ -228,14 +228,11 @@ def get_user_cert_auth_status(user_id):
 
 
 def check_user_has_all_download_times(app_obj, user_obj):
-    if user_obj:
-        user_id = user_obj.pk
-        storage = user_obj.storage
-    else:
-        user_id = app_obj.user_id_id
-        storage = app_obj.user_id.storage
+    if not user_obj:
+        user_obj = app_obj.user_id
+    user_id = user_obj.pk
     auth_status = get_user_cert_auth_status(user_id)
-    d_count = get_app_d_count_by_app_id(app_obj.app_id, storage)
+    d_count = get_app_d_count_by_app_id(app_obj.app_id, user_obj)
     a = get_user_free_download_times(user_id, auth_status=auth_status)
     b = d_count
     c = check_user_can_download(user_id)
@@ -244,10 +241,10 @@ def check_user_has_all_download_times(app_obj, user_obj):
 
 
 def consume_user_download_times_by_app_obj(app_obj):
-    user_id = app_obj.user_id_id
-    auth_status = get_user_cert_auth_status(user_id)
-    amount = get_app_d_count_by_app_id(app_obj.app_id, False)
-    if consume_user_download_times(user_id, app_obj.app_id, int(amount * (Config.SIGN_EXTRA_MULTIPLE - 1)),
+    user_obj = app_obj.user_id
+    auth_status = get_user_cert_auth_status(user_obj.pk)
+    amount = get_app_d_count_by_app_id(app_obj.app_id, user_obj)
+    if consume_user_download_times(user_obj.pk, app_obj.app_id, int(amount * (Config.SIGN_EXTRA_MULTIPLE - 1)),
                                    auth_status):
         return False
     return True
@@ -398,3 +395,24 @@ def get_and_clean_udid_cache_queue(prefix_key):
             data = []
         cache_obj.del_storage_cache()
         return data
+
+
+def add_user_storage_exchange(user_obj, exchange_number, exchange_month, remote_addr):
+    with cache.lock("%s_%s" % ('user_storage_order_', user_obj.uid), timeout=10, blocking_timeout=6):
+        try:
+            download_times = exchange_number * exchange_month * Config.OSS_EXCHANGE_DOWNLOAD_TIMES
+            expires_time = datetime.datetime.now() + datetime.timedelta(days=30 * exchange_month)
+            description = f'扩容成功，消费下载点数{download_times} 兑换了 {exchange_number} GB存储空间'
+            obj = StorageExchange.objects.create(user_id=user_obj, download_times=download_times,
+                                                 storage_size=exchange_number * 1024 * 1024 * 1024,
+                                                 expires_time=expires_time, remote_addr=remote_addr,
+                                                 description=description)
+
+            if add_user_download_times(user_obj.pk, -download_times):
+                logger.info(f"{user_obj} 存储扩容成功  msg：{description}")
+                return True
+            else:
+                obj.delete()
+        except Exception as e:
+            logger.error(f"{user_obj} download_times less then 0. Exception:{e}")
+        return False

@@ -61,7 +61,7 @@ class OrderView(APIView):
                     logger.info(f"{request.user} 下单成功 {res.dict}")
                     return Response(res.dict)
 
-            price_obj = Price.objects.filter(name=price_id).first()
+            price_obj = Price.objects.filter(name=price_id, price_type=1).first()
             if price_obj:
                 try:
                     order_number = get_order_num()
@@ -154,7 +154,8 @@ class PriceView(APIView):
 
     def get(self, request):
         res = BaseResponse()
-        price_obj_lists = Price.objects.filter(is_enable=True).all().order_by("updated_time").order_by("price")
+        price_obj_lists = Price.objects.filter(is_enable=True, price_type=1).all().order_by("updated_time").order_by(
+            "price")
         res.data = PriceSerializer(price_obj_lists, many=True).data
         res.pay_choices = get_enable_pay_choices()
         return Response(res.dict)

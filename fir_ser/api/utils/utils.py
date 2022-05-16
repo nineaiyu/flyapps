@@ -198,7 +198,7 @@ def migrating_storage_data(user_obj, new_storage_obj, clean_old_data):
             # 消费下载次数
             cache_default_data['migrate_num'] += 1
             task_cache.set_storage_cache(cache_default_data)
-            amount = get_app_d_count_by_app_id(app_release_obj.app_id.app_id, False)
+            amount = get_app_d_count_by_app_id(app_release_obj.app_id.app_id, user_obj)
             consume_user_download_times(user_obj.pk, app_release_obj.app_id, amount, auth_status)
         task_cache.del_storage_cache()
         return True

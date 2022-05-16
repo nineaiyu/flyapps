@@ -40,7 +40,6 @@ class UserInfo(AbstractUser):
     memo = models.TextField('备注', blank=True, null=True, default=None, )
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name="注册时间")
     download_times = models.PositiveBigIntegerField(default=0, verbose_name="可用下载点次数,需要用户充值")
-    storage_capacity = models.BigIntegerField(default=0, verbose_name="存储容量，单位byte")
     all_download_times = models.BigIntegerField(default=0, verbose_name="总共下载次数")
     default_domain_name = models.ForeignKey(to="DomainCnameInfo", verbose_name="默认下载页域名", on_delete=models.CASCADE)
     history_release_limit = models.IntegerField(default=10, verbose_name="app 历史记录版本", blank=True, null=True)
@@ -318,6 +317,8 @@ class Price(models.Model):
     name = models.CharField(max_length=128, unique=True, verbose_name="下载包唯一名称")
     title = models.CharField(max_length=128, verbose_name="下载包名称")
     description = models.CharField(max_length=128, verbose_name="下载包描述")
+    price_type_choices = ((1, '下载次数'), (2, '存储容量'))
+    price_type = models.SmallIntegerField(choices=price_type_choices, default=1)
     price = models.BigIntegerField(null=False, verbose_name="下载包价格，单位分")
     package_size = models.BigIntegerField(null=False, verbose_name="下载包次数")
     download_count_gift = models.IntegerField(default=0, null=False, verbose_name="赠送下载次数")
@@ -330,12 +331,13 @@ class Price(models.Model):
         unique_together = ('price', 'package_size')
 
     def save(self, *args, **kwargs):
-        if Price.objects.filter(is_enable=True).count() > 3:  # 最多3个启用的价格表
+        if Price.objects.filter(is_enable=True, price_type=1).count() > 3:  # 最多3个启用的价格表
             raise
         super(Price, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "%s-%s-%s-%s" % (self.name, self.price, self.package_size, self.download_count_gift)
+        return "%s-%s-%s-%s-%s" % (
+            self.name, self.price, self.package_size, self.download_count_gift, self.get_price_type_display())
 
 
 class UserCertificationInfo(models.Model):
@@ -604,3 +606,20 @@ class StorageShareInfo(models.Model):
 
     def __str__(self):
         return f"{self.user_id}-{self.to_user_id}—{self.description}"
+
+
+class StorageExchange(models.Model):
+    user_id = models.ForeignKey(to=UserInfo, verbose_name="用户ID", on_delete=models.CASCADE)
+    download_times = models.BigIntegerField(verbose_name="消耗下载次数", default=0)
+    storage_size = models.BigIntegerField(verbose_name="兑换空间大小", default=0)
+    expires_time = models.DateTimeField(verbose_name="失效时间")
+    description = models.CharField(verbose_name="操作描述", max_length=128, default='', blank=True)
+    remote_addr = models.GenericIPAddressField(verbose_name="远程IP地址")
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name="添加时间")
+
+    class Meta:
+        verbose_name = '存储空间兑换信息'
+        verbose_name_plural = "存储空间兑换信息"
+
+    def __str__(self):
+        return f"{self.user_id}—{self.description}"

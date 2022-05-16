@@ -254,6 +254,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=128, unique=True, verbose_name='下载包唯一名称')),
                 ('title', models.CharField(max_length=128, verbose_name='下载包名称')),
                 ('description', models.CharField(max_length=128, verbose_name='下载包描述')),
+                ('price_type', models.SmallIntegerField(choices=[(1, '下载次数'), (2, '存储容量')], default=1)),
                 ('price', models.BigIntegerField(verbose_name='下载包价格，单位分')),
                 ('package_size', models.BigIntegerField(verbose_name='下载包次数')),
                 ('download_count_gift', models.IntegerField(default=0, verbose_name='赠送下载次数')),

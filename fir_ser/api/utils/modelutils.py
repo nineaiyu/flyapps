@@ -3,8 +3,7 @@
 # project: 4月 
 # author: NinEveN
 # date: 2021/4/16
-
-
+import datetime
 import logging
 import random
 from urllib.parse import urljoin
@@ -13,21 +12,24 @@ from django.db.models import Count
 from rest_framework.pagination import PageNumberPagination
 
 from api.models import AppReleaseInfo, UserDomainInfo, DomainCnameInfo, UserAdDisplayInfo, RemoteClientInfo, \
-    AppBundleIdBlackList, NotifyReceiver, WeChatInfo, AppDownloadToken, Apps, StorageShareInfo, UserInfo, AppStorage
+    AppBundleIdBlackList, NotifyReceiver, WeChatInfo, AppDownloadToken, Apps, StorageShareInfo, UserInfo, AppStorage, \
+    StorageExchange
 from common.base.baseutils import get_server_domain_from_request, get_user_default_domain_name, get_real_ip_address, \
     get_origin_domain_name
 from common.base.magic import MagicCacheData
-from common.core.sysconfig import Config
+from common.core.sysconfig import Config, UserConfig
 
 logger = logging.getLogger(__name__)
 
 
-def get_app_d_count_by_app_id(app_id, is_oss=False):
+def get_app_d_count_by_app_id(app_id, user_obj):
     d_count = 1
+    is_oss = user_obj.storage
     binary_size = AppReleaseInfo.objects.filter(is_master=True, app_id__app_id=app_id).values('binary_size').first()
     if binary_size and binary_size.get('binary_size', 0) > 0:
-        d_count += binary_size.get('binary_size') // 1024 // 1024 // 100
-    return d_count * (Config.APP_USE_BASE_DOWNLOAD_TIMES if not is_oss else Config.PRIVATE_OSS_DOWNLOAD_TIMES)
+        d_count += binary_size.get('binary_size') // Config.APP_FILE_CALCULATION_UNIT
+    return d_count * (UserConfig(user_obj).APP_USE_BASE_DOWNLOAD_TIMES if not is_oss else UserConfig(
+        user_obj).PRIVATE_OSS_DOWNLOAD_TIMES)
 
 
 def get_user_domain_name(obj, domain_type=1):
@@ -277,11 +279,18 @@ def get_user_storage_used(user_obj):
     return binary_size_sum
 
 
+def get_user_exchange_storage_capacity(user_obj):
+    obj = StorageExchange.objects.filter(user_id=user_obj, expires_time__gte=datetime.datetime.now()).order_by(
+        'storage_size').last()
+    if obj:
+        return obj.storage_size
+    return 0
+
+
 def get_user_storage_capacity(user_obj):
     storage_obj = user_obj.storage
     if not storage_obj:
-        user_storage_capacity = user_obj.storage_capacity
-        storage_capacity = user_storage_capacity if user_storage_capacity else Config.STORAGE_FREE_CAPACITY
+        storage_capacity = get_user_exchange_storage_capacity(user_obj) + Config.STORAGE_FREE_CAPACITY
     else:
         if storage_obj.user_id == user_obj:
             max_storage_capacity = storage_obj.max_storage_capacity

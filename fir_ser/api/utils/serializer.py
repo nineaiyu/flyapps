@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 
@@ -9,7 +10,7 @@ from api.utils.apputils import bytes2human
 from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_app_download_uri, get_user_storage_used
 from common.base.baseutils import get_choices_dict, WeixinLoginUid
 from common.cache.storage import AdPicShowCache
-from common.core.sysconfig import Config
+from common.core.sysconfig import Config, UserConfig
 from common.utils.caches import get_user_free_download_times, get_user_cert_auth_status
 from common.utils.storage import Storage
 from common.utils.token import make_token
@@ -61,9 +62,18 @@ def get_screenshots_from_self(self, obj, force_new=False):
 class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserInfo
-        fields = ["username", "uid", "mobile", "job", "email", "domain_name", "role", "first_name",
+        fields = ["username", "uid", "mobile", "job", "email", "domain_name", "role", "first_name", "times_info",
                   'head_img', 'storage_active', 'supersign_active', 'free_download_times', 'download_times',
-                  'certification', 'qrcode_domain_name', 'storage_used', 'storage_capacity', 'storage_used_capacity']
+                  'certification', 'qrcode_domain_name', 'storage_used', 'storage_used_capacity']
+
+    times_info = serializers.SerializerMethodField()
+
+    def get_times_info(self, obj):
+        return {
+            'every_size': UserConfig(obj).APP_FILE_CALCULATION_UNIT,
+            'private_times': UserConfig(obj).PRIVATE_OSS_DOWNLOAD_TIMES,
+            'base_times': UserConfig(obj).APP_USE_BASE_DOWNLOAD_TIMES,
+        }
 
     storage_used_capacity = serializers.SerializerMethodField()
 
@@ -436,7 +446,7 @@ class StorageSerializer(serializers.ModelSerializer):
 class PriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Price
-        exclude = ["id"]
+        exclude = ["id", "price_type", "is_enable"]
 
 
 class OrdersSerializer(serializers.ModelSerializer):
@@ -590,3 +600,14 @@ class StorageShareSerializer(serializers.ModelSerializer):
 
     def get_cancel(self, obj):
         return self.context.get('user_obj').pk == obj.user_id.pk
+
+
+class StorageExchangeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.StorageExchange
+        exclude = ["id", "remote_addr", "user_id"]
+
+    is_expired = serializers.SerializerMethodField()
+
+    def get_is_expired(self, obj):
+        return (obj.expires_time - datetime.datetime.now()).days

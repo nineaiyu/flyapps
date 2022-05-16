@@ -16,11 +16,6 @@ class Migration(migrations.Migration):
             name='max_storage_capacity',
             field=models.BigIntegerField(default=0, verbose_name='存储最大使用容量,单位btype'),
         ),
-        migrations.AddField(
-            model_name='userinfo',
-            name='storage_capacity',
-            field=models.BigIntegerField(default=0, verbose_name='存储容量，单位byte'),
-        ),
         migrations.AlterField(
             model_name='userinfo',
             name='download_times',
@@ -60,6 +55,24 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': '私有存储共享',
                 'verbose_name_plural': '私有存储共享',
+            },
+        ),
+        migrations.CreateModel(
+            name='StorageExchange',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('download_times', models.BigIntegerField(default=0, verbose_name='消耗下载次数')),
+                ('storage_size', models.BigIntegerField(default=0, verbose_name='兑换空间大小')),
+                ('expires_time', models.DateTimeField(verbose_name='失效时间')),
+                ('description', models.CharField(blank=True, default='', max_length=128, verbose_name='操作描述')),
+                ('remote_addr', models.GenericIPAddressField(verbose_name='远程IP地址')),
+                ('created_time', models.DateTimeField(auto_now_add=True, verbose_name='添加时间')),
+                ('user_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL,
+                                              verbose_name='用户ID')),
+            ],
+            options={
+                'verbose_name': '存储空间兑换信息',
+                'verbose_name_plural': '存储空间兑换信息',
             },
         ),
     ]

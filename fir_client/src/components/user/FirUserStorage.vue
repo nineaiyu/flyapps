@@ -191,6 +191,37 @@
         <el-button @click="shareVisible=false">取消</el-button>
       </el-form>
     </el-dialog>
+    <el-dialog :close-on-click-modal="false" :destroy-on-close="true" :visible.sync="exchangeVisible"
+               style="text-align:center" title="存储扩容" width="800px">
+      <el-tag style="margin-bottom: 20px" type="warning">请勿多次购买，多次购买，将按照最大的扩容容量进行计算</el-tag>
+      <el-form label-width="120px">
+        <el-form-item label="购买时间" style="width: 100%">
+          <el-radio-group v-model="exchange_prices_key" size="small">
+            <el-radio v-for="pay in exchange_prices.pay_times" :key="pay.name" :label="pay.name" border>
+              {{ pay.title }}
+            </el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="扩容存储大小" style="width: 100%;text-align: left">
+          <el-row :gutter="24">
+            <el-col :span="10">
+              <el-input-number v-model="exchange_number" :max="999999999" :min="10" :step="10">
+              </el-input-number>
+            </el-col>
+            <el-col :span="13">
+              <el-tag style="margin-left: 30px">扩容存储空间大小 {{ exchange_number }} GB</el-tag>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item label="所消耗下载次数" style="width: 100%;text-align: left">
+          <el-tag style="margin-left: 30px"> {{ exchangetimes }}</el-tag>
+        </el-form-item>
+
+        <el-button @click="sureExchangeFun(exchange_number,exchange_prices_key)">确定扩容</el-button>
+        <el-button @click="exchangeVisible=false">取消</el-button>
+      </el-form>
+    </el-dialog>
 
     <el-tabs v-model="activeName" tab-position="top" type="border-card" @tab-click="handleClick">
       <el-tab-pane label="存储选择" name="change">
@@ -218,7 +249,9 @@
                 trigger="hover">
               <div>
                 <el-link :underline="false">存储最大容量空间： {{ diskSize(storageinfo.max_storage_capacity) }}</el-link>
+                <br>
                 <el-link :underline="false">已经使用容量： {{ diskSize(storageinfo.used_number) }}</el-link>
+                <br>
                 <el-link :underline="false">当前可用容量：
                   {{ diskSize(storageinfo.max_storage_capacity - storageinfo.used_number) }}
                 </el-link>
@@ -265,6 +298,11 @@
 
           <el-form-item label="存储最大容量" label-width="110px" style="text-align: left">
             <el-tag>存储最大容量空间 {{ diskSize(storageinfo.max_storage_capacity) }}</el-tag>
+            <span v-if="percentage>=90 && use_storage_id===-1">
+              <el-tag style="margin: 0 10px" type="danger">容量即将不足，请立即扩容</el-tag> <el-button size="small"
+                                                                                            @click="exchangeFun">扩容</el-button>
+            </span>
+
           </el-form-item>
           <el-form-item label="已经使用容量" label-width="110px" style="text-align: left">
             <el-tag>存储已经使用容量空间 {{ diskSize(storageinfo.used_number) }}
@@ -663,6 +701,68 @@
 
         </el-table>
       </el-tab-pane>
+      <el-tab-pane label="默认存储扩容记录" name="exchange">
+        <div style="text-align: left;margin-bottom: 15px">
+          <el-tag>该记录为默认存储扩容记录，私有存储无需扩容</el-tag>
+        </div>
+        <el-table
+            v-loading="loading"
+            :data="storage_exchange_lists"
+            border
+            stripe
+            style="width: 100%">
+
+          <el-table-column
+              align="center"
+              label="兑换存储大小"
+              prop="storage_size"
+              width="140">
+            <template slot-scope="scope">
+              {{ diskSize(scope.row.storage_size) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="消耗下载次数"
+              prop="download_times"
+              width="140">
+            <template slot-scope="scope">
+              {{ parseInt(scope.row.download_times / 100) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="扩容日期"
+              prop="created_time">
+            <template slot-scope="scope">
+              {{ format_time(scope.row.created_time) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="失效日期"
+              prop="expires_time">
+            <template slot-scope="scope">
+              {{ format_time(scope.row.expires_time) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="状态"
+              prop="expires_time"
+              width="160">
+            <template slot-scope="scope">
+              <el-popover :content="expire_content(scope.row.is_expired)" placement="top-start" trigger="hover">
+                <div slot="reference">
+                  <el-tag v-if="scope.row.is_expired > 0">生效中</el-tag>
+                  <el-tag v-else type="warning">已失效</el-tag>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
+
+        </el-table>
+      </el-tab-pane>
       <el-tab-pane label="存储设置" name="setting" style="text-align: center">
         <div v-if="migrate_progress && migrate_progress.s_time" style="text-align: left">
           <el-card>
@@ -770,7 +870,7 @@
 </template>
 
 <script>
-import {cleanStorageData, configStorageData, getStorageinfo, shareStorageData} from "@/restful";
+import {cleanStorageData, configStorageData, exchangeStorageData, getStorageinfo, shareStorageData} from "@/restful";
 import {deepCopy, diskSize, getFormatDate, getUserInfoFun} from "@/utils";
 import {format_time} from "@/utils/base/utils";
 
@@ -790,9 +890,11 @@ export default {
       target_number: '',
       fstorage_lists: [],
       share_bill_lists: [],
+      storage_exchange_lists: [],
       Sdisabled: true,
       canshare: true,
       use_storage_id: 0,
+      exchange_number: 10,
       org_storage_id: 0,
       title: '',
       uidsearch: '',
@@ -801,6 +903,8 @@ export default {
       dialogstorageVisible: false,
       editstorageinfo: {},
       migrate_progress: {},
+      exchange_prices: {},
+      exchange_prices_key: "",
       selectlabel: "",
       storageinfo: {'used_number': 0, 'max_storage_capacity': 1},
       storage_list: [],
@@ -808,6 +912,7 @@ export default {
       disabled: true,
       isaddflag: false,
       shareVisible: false,
+      exchangeVisible: false,
       showshareSync: false,
       activeName: 'change',
       storage_info_lists: [],
@@ -819,8 +924,38 @@ export default {
     format_time,
     diskSize,
     getFormatDate,
-    cancelStorage() {
+    sureExchangeFun(exchange_number, exchange_prices_key) {
+      exchangeStorageData(res => {
+        if (res.code === 1000) {
+          this.$message.success("扩容成功")
+          this.exchangeVisible = false
 
+        } else {
+          this.$message.error("操作失败了，" + res.msg)
+        }
+      }, {"methods": 'POST', "data": {exchange_number, exchange_prices_key}})
+    },
+    exchangeFun() {
+      exchangeStorageData(res => {
+        if (res.code === 1000) {
+          this.exchangeVisible = true
+          this.exchange_prices = res.data
+          let pay_times = this.exchange_prices.pay_times
+          if (pay_times && pay_times.length > 0) {
+            this.exchange_prices_key = pay_times[0].name
+          }
+        } else {
+          this.$message.error("获取数据失败了，" + res.msg)
+        }
+      }, {"methods": 'PUT', "data": new Date()})
+    },
+    expire_content(is_expired) {
+      if (is_expired > 0) {
+        return `生效中，还有 ${is_expired} 天到期`
+      }
+      return `${-is_expired} 天前已失效`
+    },
+    cancelStorage() {
       this.$confirm("确定要解除迁移锁么，在未完成迁移状态下解除迁移锁之后，可能会导致数据异常?", '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -1241,7 +1376,9 @@ export default {
         }, {"methods": 'GET', "data": {'act': 'storage_type'}});
       } else if (tabname === "share") {
         data.operatestatus = this.operatestatus
+        this.loading = true
         shareStorageData(res => {
+          this.loading = false
           if (res.code === 1000) {
             this.share_bill_lists = res.data
             this.pagination.total = res.count
@@ -1260,13 +1397,25 @@ export default {
           }
         }, {"methods": 'GET', "data": data})
 
+      } else if (tabname === 'exchange') {
+        this.loading = true
+        exchangeStorageData(res => {
+          if (res.code === 1000) {
+            this.storage_exchange_lists = res.data
+            this.pagination.total = res.count
+          } else {
+            this.$message.error("获取数据失败了，" + res.msg)
+          }
+          this.loading = false
+        }, {"methods": 'GET', "data": data})
+
       }
     },
   }, mounted() {
     getUserInfoFun(this);
     if (this.$route.params.act) {
       let activeName = this.$route.params.act;
-      let activeName_list = ["change", "edit", "add", "share", "setting"];
+      let activeName_list = ["change", "edit", "add", "share", "exchange", "setting"];
       for (let index in activeName_list) {
         if (activeName_list[index] === activeName) {
           this.activeName = activeName;
@@ -1294,6 +1443,14 @@ export default {
         p = 100
       }
       return p
+    },
+    exchangetimes() {
+      let pay_key = this.exchange_prices_key
+      if (pay_key) {
+        let m = pay_key.split('_')[1]
+        return this.exchange_number * parseInt(m) * this.exchange_prices.storage_every_month_price / this.exchange_prices.download_times
+      }
+      return 0
     }
   }
 }

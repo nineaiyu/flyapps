@@ -445,8 +445,8 @@
               <div>
                 <el-tooltip placement="top">
                   <div slot="content">
-                    1.下载应用，每100M消耗一次下载次数<br>
-                    2.超级签下载，下载消耗次数翻倍<br>
+                    1.下载应用，每 {{ times_info.every_size|diskSize }} 消耗 {{ times_info.base_times / 100 }} 下载次数<br>
+                    2.私有存储模式下载应用，每 {{ times_info.every_size|diskSize }} 消耗 {{ times_info.private_times / 100 }} 下载次数<br>
                   </div>
                   <span class="name">购买次数</span>
                 </el-tooltip>
@@ -1167,6 +1167,10 @@ export default {
     getDelappTitle() {
       return `删除应用 ${this.delapp.name}`
     },
+    times_info() {
+      let times_info = this.$store.state.userinfo.times_info
+      return times_info ? times_info : {}
+    }
   },
   filters: {
     diskSize,

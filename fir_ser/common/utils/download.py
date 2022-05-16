@@ -71,7 +71,8 @@ def get_app_instance_by_cache(app_id, limit):
                                                                   'issupersign', 'user_id__storage',
                                                                   'user_id__certification__status').first()
         if app_obj_cache:
-            app_obj_cache['d_count'] = get_app_d_count_by_app_id(app_id, app_obj_cache.get('user_id__storage', False))
+            user_obj = UserInfo.objects.filter(pk=app_obj_cache.get('user_id')).first()
+            app_obj_cache['d_count'] = get_app_d_count_by_app_id(app_id, user_obj)
             app_instance_cache.set_storage_cache(app_obj_cache, limit)
     if not app_obj_cache:
         return False, '应用不存在'

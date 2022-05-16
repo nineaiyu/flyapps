@@ -414,6 +414,18 @@ export function configStorageData(callBack, params) {
     );
 }
 
+/**用户存储空间兑换操作 */
+export function exchangeStorageData(callBack, params) {
+    getData(
+        params.methods,
+        USERSEVER + '/storage/exchange',
+        params.data,
+        data => {
+            callBack(data);
+        }
+    );
+}
+
 /**用户个人信息 */
 export function userinfos(callBack, params) {
     getData(

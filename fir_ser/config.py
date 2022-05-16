@@ -392,7 +392,12 @@ bIX1aWjPxirQX9mzaL3oEQI=
 class DOWNLOADTIMESCONF(object):
     SIGN_EXTRA_MULTIPLE = 2  # 超级签名消耗额外倍数，超级签名需要占用的服务大量资源
 
+    # 具体计算方式查看该函数 get_app_d_count_by_app_id
     APP_USE_BASE_DOWNLOAD_TIMES = 100  # 单个应用下载消费点数
+    APP_FILE_CALCULATION_UNIT = 1024 * 1024 * 100  # 应用计算次数，表示应用大小计算点数
+
+    OSS_EXCHANGE_DOWNLOAD_TIMES = "{% widthratio 5 1 {{APP_USE_BASE_DOWNLOAD_TIMES}}  %}"  # 默认 1G 一个月 500下载点数
+
     PRIVATE_OSS_DOWNLOAD_TIMES = 4  # 私有存储单个应用下载消费点数
 
     USER_FREE_DOWNLOAD_TIMES = "{% widthratio 5 1 {{APP_USE_BASE_DOWNLOAD_TIMES}}  %}"  # 用户每日免费下载点数

@@ -3,7 +3,6 @@
 # project: 3月
 # author: liuyu
 # date: 2020/3/4
-
 import logging
 
 from django.db.models import Q
@@ -11,19 +10,19 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.base_views import app_delete
-from api.models import AppStorage, Apps, StorageShareInfo, UserInfo
+from api.models import AppStorage, Apps, StorageShareInfo, UserInfo, StorageExchange, Price
 from api.tasks import migrate_storage_job
 from api.utils.apputils import clean_history_apps
 from api.utils.modelutils import PageNumber, get_user_storage_capacity, get_user_storage_used
 from api.utils.response import BaseResponse
-from api.utils.serializer import StorageSerializer, StorageShareSerializer
+from api.utils.serializer import StorageSerializer, StorageShareSerializer, StorageExchangeSerializer, PriceSerializer
 from api.utils.utils import upload_oss_default_head_img
 from common.base.baseutils import get_choices_dict, get_choices_name_from_key, get_real_ip_address
 from common.cache.state import MigrateStorageState
 from common.cache.storage import TaskProgressCache
 from common.core.auth import ExpiringTokenAuthentication, StoragePermission
 from common.core.sysconfig import Config
-from common.utils.caches import del_cache_storage
+from common.utils.caches import del_cache_storage, add_user_storage_exchange
 
 logger = logging.getLogger(__name__)
 
@@ -93,10 +92,9 @@ class StorageView(APIView):
             return Response(res.dict)
         if pk:
             if pk == '-1':
-                storage_capacity = request.user.storage_capacity
                 default_storage = {
                     'id': -1,
-                    'max_storage_capacity': storage_capacity if storage_capacity != 0 else Config.STORAGE_FREE_CAPACITY,
+                    'max_storage_capacity': get_user_storage_capacity(request.user),
                     'used_number': get_user_storage_used(request.user)
                 }
                 res.data = [default_storage]
@@ -305,10 +303,10 @@ class ShareStorageView(APIView):
         except Exception as e:
             logger.error(f'status {status} check failed  Exception:{e}')
 
-        app_page_serializer = page_obj.paginate_queryset(queryset=share_list.order_by("-created_time"),
-                                                         request=request,
-                                                         view=self)
-        app_serializer = StorageShareSerializer(app_page_serializer, many=True, context={'user_obj': request.user})
+        page_serializer = page_obj.paginate_queryset(queryset=share_list.order_by("-created_time"),
+                                                     request=request,
+                                                     view=self)
+        app_serializer = StorageShareSerializer(page_serializer, many=True, context={'user_obj': request.user})
         res.data = app_serializer.data
         res.count = share_list.count()
         res.status_choices = get_choices_dict(StorageShareInfo.status_choices)
@@ -460,4 +458,50 @@ class StorageConfigView(APIView):
         migrate_obj = MigrateStorageState(request.user.uid)
         if migrate_obj.get_state() == request.data.get('storage_status'):
             migrate_obj.del_state()
+        return Response(res.dict)
+
+
+class StorageExchangeView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+    permission_classes = [StoragePermission, ]
+
+    def get(self, request):
+        res = BaseResponse()
+        storage_exchange_queryset = StorageExchange.objects.filter(user_id=request.user)
+        page_obj = PageNumber()
+        page_serializer = page_obj.paginate_queryset(queryset=storage_exchange_queryset.order_by("-created_time"),
+                                                     request=request,
+                                                     view=self)
+        app_serializer = StorageExchangeSerializer(page_serializer, many=True)
+        res.data = app_serializer.data
+        res.count = storage_exchange_queryset.count()
+        return Response(res.dict)
+
+    def post(self, request):
+        res = BaseResponse()
+        exchange_number = request.data.get('exchange_number')
+        exchange_prices_key = request.data.get('exchange_prices_key')
+        if exchange_number and exchange_prices_key:
+            price_obj = Price.objects.filter(is_enable=True, price_type=2, name=exchange_prices_key).first()
+            if price_obj:
+                exchange_month = price_obj.price
+                if not add_user_storage_exchange(request.user, exchange_number, exchange_month,
+                                                 get_real_ip_address(request)):
+                    res.code = 1002
+                    res.msg = '扩容失败，账号可用下载次数不足'
+            else:
+                res.code = 1001
+                res.msg = '价格异常'
+
+        return Response(res.dict)
+
+    def put(self, request):
+        res = BaseResponse()
+        price_obj_lists = Price.objects.filter(is_enable=True, price_type=2).all().order_by("updated_time").order_by(
+            "price")
+        res.data = {
+            'pay_times': PriceSerializer(price_obj_lists, many=True).data,
+            'storage_every_month_price': Config.OSS_EXCHANGE_DOWNLOAD_TIMES,
+            'download_times': Config.APP_USE_BASE_DOWNLOAD_TIMES,
+        }
         return Response(res.dict)

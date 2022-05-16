@@ -29,7 +29,7 @@ from api.views.notify import NotifyReceiverView, NotifyConfigView, NotifyInfoVie
 from api.views.order import PriceView, OrderView, PaySuccess, OrderSyncView
 from api.views.personalconfig import PersonalConfigView
 from api.views.report import ReportView
-from api.views.storage import StorageView, CleanStorageView, ShareStorageView, StorageConfigView
+from api.views.storage import StorageView, CleanStorageView, ShareStorageView, StorageConfigView, StorageExchangeView
 from api.views.thirdlogin import ValidWxChatToken, ThirdWxAccount
 from api.views.uploads import AppAnalyseView, UploadView
 
@@ -50,6 +50,7 @@ urlpatterns = [
     re_path("^storage/clean$", CleanStorageView.as_view()),
     re_path("^storage/share$", ShareStorageView.as_view()),
     re_path("^storage/config$", StorageConfigView.as_view()),
+    re_path("^storage/exchange$", StorageExchangeView.as_view()),
     re_path(r"^apps/(?P<app_id>\w+)", AppInfoView.as_view()),
     re_path(r"^download_password/(?P<app_id>\w+)", AppDownloadTokenView.as_view()),
     re_path(r"^appinfos/(?P<app_id>\w+)/(?P<act>\w+)", AppReleaseInfoView.as_view()),

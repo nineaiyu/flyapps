@@ -319,6 +319,14 @@ class UserDownloadTimesCache(ConfigCacheBase):
     def PRIVATE_OSS_DOWNLOAD_TIMES(self):
         return super().get_value('PRIVATE_OSS_DOWNLOAD_TIMES', DOWNLOADTIMESCONF.PRIVATE_OSS_DOWNLOAD_TIMES)
 
+    @property
+    def APP_FILE_CALCULATION_UNIT(self):
+        return super().get_value('APP_FILE_CALCULATION_UNIT', DOWNLOADTIMESCONF.APP_FILE_CALCULATION_UNIT)
+
+    @property
+    def OSS_EXCHANGE_DOWNLOAD_TIMES(self):
+        return super().get_value('OSS_EXCHANGE_DOWNLOAD_TIMES', DOWNLOADTIMESCONF.OSS_EXCHANGE_DOWNLOAD_TIMES)
+
 
 class OssStorageConfCache(ConfigCacheBase):
     def __init__(self, *args, **kwargs):
