@@ -24,8 +24,8 @@ class UserInfo(AbstractUser):
     uid = models.CharField(max_length=64, unique=True, db_index=True)  # user_id，唯一标识
     mobile = models.BigIntegerField(verbose_name="手机", db_index=True, help_text="用于手机验证码登录", null=True)
     is_active = models.BooleanField(default=True, verbose_name="账户状态，默认启用")
-    storage_active = models.BooleanField(default=False, verbose_name="配置存储，默认关闭")
-    supersign_active = models.BooleanField(default=True, verbose_name="配置超级签，默认关闭")
+    storage_active = models.BooleanField(default=True, verbose_name="配置存储，默认启用")
+    supersign_active = models.BooleanField(default=True, verbose_name="配置超级签，默认启用")
 
     job = models.TextField("职位", max_length=128, blank=True, null=True)
     company = models.CharField("公司", max_length=128, blank=True, null=True)
