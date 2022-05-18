@@ -70,12 +70,16 @@ class ConfigCacheBase(object):
                     logger.warning(f"db config - render failed {e}")
             except Exception as e:
                 logger.warning(f"db config - render failed {e}")
+        try:
+            value = json.loads(value)
+        except Exception as e:
+            logger.warning(f"db config - json loads failed {e}")
         if isinstance(value, str):
+            if value.isdigit():
+                return int(value)
             v_group = re.findall('"(.*?)"', value)
             if v_group and len(v_group) == 1 and v_group[0].isdigit():
                 return int(v_group[0])
-        if value.isdigit():
-            return int(value)
         return value
 
     def get_value_from_db(self, key):
@@ -102,10 +106,6 @@ class ConfigCacheBase(object):
             db_data['value'] = json.dumps(data)
             db_data['key'] = key
         db_data['value'] = self.get_render_value(db_data['value'])
-        try:
-            db_data['value'] = json.loads(db_data['value'])
-        except Exception as e:
-            logger.warning(f"db config - json loads failed {e}")
         cache.set_storage_cache(db_data, timeout=self.timeout)
         return db_data.get('value')
 
