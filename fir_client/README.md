@@ -39,5 +39,48 @@ yarn lint
 ```
 
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+## deploy nginx
+
+#### short deploy nginx
+```shell
+    location / {
+        try_files $uri $uri/  /short.html;
+    }
+```
+#### index.html
+```html
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="refresh" content="3;URL=https://flyapps.cn">
+    <title>FLY分发平台</title>
+    <style>
+        .container {
+            width: 60%;
+            margin: 10% auto 0;
+            background-color: #f0f0f0;
+            padding: 2% 5%;
+            border-radius: 10px
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+            ul li {
+                line-height: 2.3
+            }
+
+        a {
+            color: #20a53a
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>这是分发平台下载默认页，正在跳转 <a href="https://flyapps.cn">首页</a></h3>
+    </div>
+</body>
+</html>
+```

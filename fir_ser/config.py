@@ -41,7 +41,7 @@ class BASECONF(object):
     GEETEST_KEY = "6f4ab6185c230a4b1f8430f28ebe4804"
     GEETEST_CYCLE_TIME = 10
     GEETEST_BYPASS_STATUS_KEY = "gt_server_bypass_status"
-    GEETEST_BYPASS_URL = "http://bypass.geetest.com/v1/bypass_status.php"
+    GEETEST_BYPASS_URL = "https://bypass.geetest.com/v1/bypass_status.php"
 
     # 访问速率限制
     DEFAULT_THROTTLE_RATES = {

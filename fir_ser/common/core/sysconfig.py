@@ -63,9 +63,9 @@ class ConfigCacheBase(object):
                 except TemplateSyntaxError as e:
                     res_list = re.findall("Could not parse the remainder: '{{(.*?)}}'", str(e))
                     for res in res_list:
-                        r_value = get_render_context(f'{{{{{res}}}}}', context_dict)
-                        value = value.replace(f'{{{{{res}}}}}', r_value)
-                    value = get_render_context(value, context_dict)
+                        r_value = self.get_render_value(f'{{{{{res}}}}}')
+                        value = value.replace(f'{{{{{res}}}}}', f'{r_value}')
+                    value = self.get_render_value(value)
                 except Exception as e:
                     logger.warning(f"db config - render failed {e}")
             except Exception as e:
