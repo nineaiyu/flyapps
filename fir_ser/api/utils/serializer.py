@@ -454,6 +454,16 @@ class OrdersSerializer(serializers.ModelSerializer):
         model = models.Order
         exclude = ["id"]
 
+    actual_download_times = serializers.SerializerMethodField()
+
+    def get_actual_download_times(self, obj):
+        return obj.actual_download_times // Config.APP_USE_BASE_DOWNLOAD_TIMES
+
+    actual_download_gift_times = serializers.SerializerMethodField()
+
+    def get_actual_download_gift_times(self, obj):
+        return obj.actual_download_gift_times // Config.APP_USE_BASE_DOWNLOAD_TIMES
+
 
 class CertificationSerializer(serializers.ModelSerializer):
     class Meta:
