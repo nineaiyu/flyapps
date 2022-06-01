@@ -3,7 +3,7 @@
 # project: fir_ser
 # filename: notify
 # author: liuyu
-# data: 2022/3/25
+# date: 2022/3/25
 
 
 import logging

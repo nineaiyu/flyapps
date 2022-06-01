@@ -289,11 +289,12 @@ def update_order_info(user_id, out_trade_no, payment_number, payment_type, descr
                         if description:
                             default_description = description
                         order_obj.description = default_description % (
-                            download_times, user_obj.download_times + download_times)
+                            download_times // Config.APP_USE_BASE_DOWNLOAD_TIMES,
+                            (user_obj.download_times + download_times) // Config.APP_USE_BASE_DOWNLOAD_TIMES)
                         order_obj.save(
                             update_fields=["status", "payment_type", "payment_number", "pay_time",
                                            "description"])
-                        add_user_download_times(user_id, download_times * Config.APP_USE_BASE_DOWNLOAD_TIMES)
+                        add_user_download_times(user_id, download_times)
                         logger.info(f"{user_obj} 订单 {out_trade_no} msg：{order_obj.description}")
                         pay_success_notify(user_obj, order_obj)
                         return True

@@ -3,7 +3,7 @@
 # project: fir_ser
 # filename: getip
 # author: liuyu
-# data: 2022/3/28
+# date: 2022/3/28
 
 import logging
 

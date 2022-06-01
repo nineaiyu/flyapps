@@ -15,6 +15,7 @@ from admin.utils.utils import BaseModelSet, AppsPageNumber
 from api.models import UserInfo, Order
 from common.core.auth import AdminTokenAuthentication
 from common.core.response import ApiResponse
+from common.core.sysconfig import Config
 from common.utils.caches import update_order_info, admin_change_user_download_times
 
 logger = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ class OrderInfoView(BaseModelSet):
         obj = UserInfo.objects.filter(pk=pk).first()
         if obj:
             if amount > 0:
-                if admin_change_user_download_times(obj, amount):
+                if admin_change_user_download_times(obj, amount * Config.APP_USE_BASE_DOWNLOAD_TIMES):
                     return ApiResponse()
                 else:
                     return ApiResponse(code=1005, msg="订单创建失败")

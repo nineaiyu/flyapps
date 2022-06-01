@@ -3,7 +3,7 @@
 # project: fir_ser
 # filename: notify
 # author: liuyu
-# data: 2022/3/26
+# date: 2022/3/26
 import logging
 
 from api.utils.modelutils import get_notify_wx_queryset, get_wx_nickname

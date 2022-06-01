@@ -3,7 +3,7 @@
 # project: fir_ser
 # filename: constants
 # author: liuyu
-# data: 2022/4/5
+# date: 2022/4/5
 
 class DeviceStatus(object):
     """

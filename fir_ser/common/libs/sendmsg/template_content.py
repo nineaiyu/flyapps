@@ -3,7 +3,7 @@
 # project: fir_ser
 # filename: send_template_msg
 # author: liuyu
-# data: 2022/4/8
+# date: 2022/4/8
 
 from django.template import loader
 

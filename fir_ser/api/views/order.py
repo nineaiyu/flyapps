@@ -15,6 +15,7 @@ from api.utils.response import BaseResponse
 from api.utils.serializer import PriceSerializer, OrdersSerializer
 from common.base.baseutils import get_order_num, get_choices_dict
 from common.core.auth import ExpiringTokenAuthentication
+from common.core.sysconfig import Config
 from common.libs.pay.util import get_pay_obj_form_name, get_enable_pay_choices, get_payment_type
 from common.utils.caches import update_order_status
 from common.utils.pending import get_pending_result
@@ -69,10 +70,12 @@ class OrderView(APIView):
                     pay_obj = get_pay_obj_form_name(pay_id)
                     if pay_obj:
                         pay_url = pay_obj.get_pay_pc_url(order_number, int(actual_amount), {'user_id': request.user.id})
+                        actual_download_times = price_obj.package_size * Config.APP_USE_BASE_DOWNLOAD_TIMES
+                        actual_download_gift_times = price_obj.download_count_gift * Config.APP_USE_BASE_DOWNLOAD_TIMES
                         Order.objects.create(payment_type=get_payment_type(pay_obj.p_type), order_number=order_number,
                                              user_id=request.user, status=1, order_type=0, actual_amount=actual_amount,
-                                             actual_download_times=price_obj.package_size, payment_name=pay_obj.name,
-                                             actual_download_gift_times=price_obj.download_count_gift)
+                                             actual_download_times=actual_download_times, payment_name=pay_obj.name,
+                                             actual_download_gift_times=actual_download_gift_times)
                         res.data = pay_url
                         logger.info(f"{request.user} 下单成功 {res.dict}")
                         return Response(res.dict)
