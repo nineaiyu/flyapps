@@ -173,7 +173,14 @@ def magic_call_in_times(call_time=24 * 3600, call_limit=6, key=None):
 
 class MagicCacheData(object):
     @staticmethod
-    def make_cache(cache_time=60 * 10, key=None):
+    def make_cache(cache_time=60 * 10, invalid_time=0, key=None):
+        """
+        :param cache_time:  数据缓存的时候，单位秒
+        :param invalid_time: 数据缓存提前失效时间，单位秒。该cache有效时间为 cache_time-invalid_time
+        :param key: cache唯一标识，默认为所装饰函数名称
+        :return:
+        """
+
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -183,22 +190,23 @@ class MagicCacheData(object):
                 else:
                     cache_key = f'{cache_key}_{func.__name__}'
 
+                n_time = time.time()
                 res = cache.get(cache_key)
-                if res:
+                if res and n_time - res.get('c_time', n_time) < cache_time - invalid_time:
                     logger.info(f"exec {func} finished. cache_key:{cache_key}  cache data exist result:{res}")
-                    return res
+                    return res['data']
                 else:
-                    start_time = time.time()
                     try:
-                        res = func(*args, **kwargs)
+                        data = func(*args, **kwargs)
+                        res = {'c_time': n_time, 'data': data}
                         cache.set(cache_key, res, cache_time)
                         logger.info(
-                            f"exec {func} finished. time:{time.time() - start_time}  cache_key:{cache_key} result:{res}")
+                            f"exec {func} finished. time:{time.time() - n_time}  cache_key:{cache_key} result:{res}")
                     except Exception as e:
-                        logger.info(
-                            f"exec {func} failed. time:{time.time() - start_time}  cache_key:{cache_key} Exception:{e}")
+                        logger.error(
+                            f"exec {func} failed. time:{time.time() - n_time}  cache_key:{cache_key} Exception:{e}")
 
-                    return res
+                    return res['data']
 
             return wrapper
 

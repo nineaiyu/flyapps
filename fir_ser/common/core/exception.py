@@ -30,4 +30,9 @@ def common_exception_handler(exc, context):
     if not ret:  # drf内置处理不了，丢给django 的，我们自己来处理
         return ApiResponse(msg='error', result=str(exc), code=5000)
     else:
-        return ApiResponse(msg='error', status=ret.status_code, **ret.data, )
+        msg = ret.data.get('msg')
+        if not msg:
+            msg = 'error'
+        else:
+            del ret.data['msg']
+        return ApiResponse(msg=msg, status=ret.status_code, **ret.data)
