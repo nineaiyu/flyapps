@@ -239,8 +239,8 @@
                                                 <td align="left"
                                                     style="font-size:0px;padding:10px 25px;word-break:break-word;">
                                                     <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#525252;">
-                                                        订单信息：您充值了 {{ order_obj.actual_download_times }}
-                                                        下载次数，【赠送 {{ order_obj.actual_download_gift_times }}】
+                                                        订单信息：您充值了 {% widthratio order_obj.actual_download_times base_download_times 1 %}
+                                                        下载次数，【赠送 {% widthratio order_obj.actual_download_gift_times base_download_times 1 %}】
                                                     </div>
                                                 </td>
                                             </tr>

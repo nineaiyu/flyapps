@@ -210,14 +210,14 @@
                                                 <td align="left"
                                                     style="font-size:0px;padding:10px 25px;word-break:break-word;">
                                                     <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#525252;">
-                                                        您当前账户下载次数仅剩 {{ user_obj.download_times }}</div>
+                                                        您当前账户下载次数仅剩 {% widthratio user_obj.download_times base_download_times 1 %}</div>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td align="left"
                                                     style="font-size:0px;padding:10px 25px;word-break:break-word;">
                                                     <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#525252;">
-                                                        您当前账户下载次数不足，应用已经无法下载安装。为了避免业务使用，望您尽快充值
+                                                        您当前账户下载次数不足，应用已经无法下载安装。为了避免业务暂停使用，望您尽快充值
                                                     </div>
                                                 </td>
                                             </tr>

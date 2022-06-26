@@ -10,11 +10,12 @@ from django.template import loader
 from common.base.baseutils import get_format_time
 
 
-def get_pay_success_html_content(user_obj, order_obj):
+def get_pay_success_html_content(user_obj, order_obj, base_download_times=1):
     return loader.render_to_string('pay_success.html',
                                    {
                                        'username': user_obj.first_name,
                                        'order_obj': order_obj,
+                                       'base_download_times': base_download_times
                                    })
 
 
@@ -58,11 +59,12 @@ def get_check_developer_report_html_content(user_obj, developer_obj_list, develo
                                    })
 
 
-def get_user_download_times_over_limit_html_content(user_obj):
+def get_user_download_times_over_limit_html_content(user_obj, base_download_times=1):
     return loader.render_to_string('download_times_over_limit.html',
                                    {
                                        'username': user_obj.first_name,
                                        'user_obj': user_obj,
+                                       'base_download_times': base_download_times,
                                    })
 
 
@@ -83,11 +85,12 @@ def get_developer_cert_expired_html_content(user_obj, developer_obj_list):
                                    })
 
 
-def get_user_download_times_not_enough_html_content(user_obj):
+def get_user_download_times_not_enough_html_content(user_obj, base_download_times=1):
     return loader.render_to_string('download_times_not_enough.html',
                                    {
                                        'username': user_obj.first_name,
                                        'user_obj': user_obj,
+                                       'base_download_times': base_download_times,
                                    })
 
 

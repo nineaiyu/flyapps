@@ -24,17 +24,19 @@ logger = logging.getLogger(__name__)
 def download_times_over_limit(user_obj):
     """
     1, '下载次数不足'
-    :param msg:
     :param user_obj:
     :return:
     """
     message_type = 1
-    msg = f"您当前账户下载次数仅剩 {user_obj.download_times}，已超过您设置的阈值 {user_obj.notify_available_downloads}，为了避免业务使用，望您尽快充值!"
+    download_times = user_obj.download_times // Config.APP_USE_BASE_DOWNLOAD_TIMES
+    notify_available_downloads = user_obj.notify_available_downloads // Config.APP_USE_BASE_DOWNLOAD_TIMES
+    msg = f"您当前账户下载次数仅剩 {download_times}，已超过您设置的阈值 {notify_available_downloads}，为了避免业务使用，望您尽快充值!"
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
         res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).download_times_not_enough_msg(
-            user_obj.first_name, user_obj.download_times, msg)
+            user_obj.first_name, download_times, msg)
         logger.info(f'user_obj {user_obj} download times not enough result: {res}')
-    notify_by_email(user_obj, message_type, get_user_download_times_over_limit_html_content(user_obj))
+    notify_by_email(user_obj, message_type,
+                    get_user_download_times_over_limit_html_content(user_obj, Config.APP_USE_BASE_DOWNLOAD_TIMES))
 
 
 def apple_developer_devices_over_limit(user_obj, device_count):

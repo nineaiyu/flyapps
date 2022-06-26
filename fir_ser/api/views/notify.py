@@ -70,7 +70,7 @@ class NotifyConfigView(APIView):
                 notify_available_signs = threshold.get('notify_available_signs')
 
                 if notify_available_downloads is not None:
-                    request.user.notify_available_downloads = notify_available_downloads
+                    request.user.notify_available_downloads = notify_available_downloads * Config.APP_USE_BASE_DOWNLOAD_TIMES
                 if notify_available_signs is not None:
                     request.user.notify_available_signs = notify_available_signs
                 if notify_available_downloads is not None or notify_available_signs is not None:
@@ -78,8 +78,10 @@ class NotifyConfigView(APIView):
                     NotifyLoopCache(request.user.uid, 'download_times').del_storage_cache()
                     NotifyLoopCache(request.user.uid, 'sign_device_times').del_storage_cache()
 
-        res.data = UserInfo.objects.filter(pk=request.user.pk).values('notify_available_downloads',
-                                                                      'notify_available_signs').first()
+        data = UserInfo.objects.filter(pk=request.user.pk).values('notify_available_downloads',
+                                                                  'notify_available_signs').first()
+        data['notify_available_downloads'] = data['notify_available_downloads'] // Config.APP_USE_BASE_DOWNLOAD_TIMES
+        res.data = data
         return Response(res.dict)
 
     def put(self, request):

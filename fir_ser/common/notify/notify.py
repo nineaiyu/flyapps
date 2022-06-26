@@ -9,6 +9,7 @@ import logging
 from api.utils.modelutils import get_notify_wx_queryset, get_wx_nickname
 from common.base.baseutils import get_format_time
 from common.base.magic import magic_call_in_times
+from common.core.sysconfig import Config
 from common.libs.mp.wechat import WxTemplateMsg
 from common.libs.sendmsg.template_content import get_pay_success_html_content, get_sign_failed_html_content, \
     get_sign_unavailable_developer_html_content, get_sign_app_over_limit_html_content, \
@@ -26,10 +27,9 @@ def pay_success_notify(user_obj, order_obj):
     :return:
     """
     message_type = 4
-
-    title = f'{order_obj.actual_download_times} 下载次数'
+    title = f'{order_obj.actual_download_times // Config.APP_USE_BASE_DOWNLOAD_TIMES} 下载次数'
     if order_obj.actual_download_gift_times > 0:
-        title = f'{title} 【赠送 {order_obj.actual_download_gift_times}】'
+        title = f'{title} 【赠送 {order_obj.actual_download_gift_times // Config.APP_USE_BASE_DOWNLOAD_TIMES}】'
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
         res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).pay_success_msg(
             title,
@@ -38,8 +38,8 @@ def pay_success_notify(user_obj, order_obj):
             order_obj.pay_time.strftime("%Y/%m/%d %H:%M:%S"),
             order_obj.order_number, order_obj.description)
         logger.info(f'user_obj {user_obj} weixin notify pay success result: {res}')
-
-    notify_by_email(user_obj, message_type, get_pay_success_html_content(user_obj, order_obj))
+    notify_by_email(user_obj, message_type,
+                    get_pay_success_html_content(user_obj, order_obj, Config.APP_USE_BASE_DOWNLOAD_TIMES))
 
 
 @magic_call_in_times(key=lambda *x: x[0].uid)
@@ -138,6 +138,7 @@ def download_times_not_enough(user_obj, msg):
     message_type = 1
     for wx_user_obj in get_notify_wx_queryset(user_obj, message_type):
         res = WxTemplateMsg(wx_user_obj.openid, get_wx_nickname(wx_user_obj.openid)).download_times_not_enough_msg(
-            user_obj.first_name, user_obj.download_times, msg)
+            user_obj.first_name, user_obj.download_times // Config.APP_USE_BASE_DOWNLOAD_TIMES, msg)
         logger.info(f'user_obj {user_obj} download times not enough result: {res}')
-    notify_by_email(user_obj, message_type, get_user_download_times_not_enough_html_content(user_obj))
+    notify_by_email(user_obj, message_type,
+                    get_user_download_times_not_enough_html_content(user_obj, Config.APP_USE_BASE_DOWNLOAD_TIMES))
