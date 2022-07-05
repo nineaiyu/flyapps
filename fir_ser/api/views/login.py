@@ -395,7 +395,8 @@ class RegistView(APIView):
             response.msg = msg
             return Response(response.dict)
 
-        is_valid, target = is_valid_sender_code(act, receive.get("auth_token", None), receive.get("auth_key", None))
+        is_valid, target = is_valid_sender_code(act, receive.get("auth_token", None), receive.get("auth_key", None),
+                                                True)
         if is_valid and str(target) == str(username):
             if login_auth_failed("get", username):
                 password = receive.get("password")
@@ -409,9 +410,14 @@ class RegistView(APIView):
                         "default_domain_name": get_min_default_domain_cname_obj(True)
                     }
                     if is_valid_email(username):
-
+                        if UserInfo.objects.filter(email=username).count():
+                            response.msg = "注册异常"
+                            return Response(response.dict)
                         user_obj = UserInfo.objects.create_user(**new_data, email=username)
                     elif is_valid_phone(username):
+                        if UserInfo.objects.filter(mobile=username).count():
+                            response.msg = "注册异常"
+                            return Response(response.dict)
                         user_obj = UserInfo.objects.create_user(**new_data, mobile=username)
                     else:
                         user_obj = None
