@@ -318,11 +318,11 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'standard': {
-            'format': '[%(asctime)s][%(threadName)s:%(thread)d][task_id:%(name)s][%(filename)s:%(lineno)d]'
+            'format': '[%(asctime)s][%(threadName)s:%(thread)d][task_id:%(name)s][%(filename)s:%(funcName)s:%(lineno)d]'
                       '[%(levelname)s][%(message)s]'
         },
         'simple': {
-            'format': '[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d]%(message)s'
+            'format': '[%(levelname)s][%(asctime)s][%(filename)s:%(funcName)s:%(lineno)d]%(message)s'
         },
     },
     'filters': {
