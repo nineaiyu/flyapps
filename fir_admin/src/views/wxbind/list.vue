@@ -50,14 +50,14 @@
           {{ scope.row.openid }}
         </template>
       </el-table-column>
-      <el-table-column label="地址" min-width="200px" align="center">
+      <el-table-column label="允许扫码登录" min-width="100px" align="center">
         <template slot-scope="scope">
-          {{ scope.row.address }}
+          {{ scope.row.enable_login }}
         </template>
       </el-table-column>
-      <el-table-column label="性别" min-width="60px" align="center">
+      <el-table-column label="允许消息通知" min-width="100px" align="center">
         <template slot-scope="scope">
-          {{ scope.row |sexLableFilter }}
+          {{ scope.row.enable_notify }}
         </template>
       </el-table-column>
       <el-table-column class-name="status-col" label="订阅状态" width="95" align="center">
@@ -107,12 +107,6 @@ const wxbind_state_choices = [
   { id: true, name: '已订阅' }
 ]
 
-const wxbind_sex_choices = [
-  { id: 0, name: '未知' },
-  { id: 1, name: '男' },
-  { id: 2, name: '女' }
-]
-
 export default {
   name: 'WxBindInfo',
   components: { Pagination },
@@ -138,9 +132,6 @@ export default {
     },
     statusLableFilter(row) {
       return baseFilter(row.subscribe, wxbind_state_choices)
-    },
-    sexLableFilter(row) {
-      return baseFilter(row.sex, wxbind_sex_choices)
     },
     statusFilter(status) {
       const statusMap = {

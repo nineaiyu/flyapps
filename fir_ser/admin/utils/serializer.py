@@ -4,9 +4,11 @@ import os
 from rest_framework import serializers
 
 from api import models
+from api.models import Apps
 from api.utils.serializer import AppReleaseSerializer, UserInfoSerializer, AppsSerializer, StorageSerializer, \
-    ThirdWxSerializer, DomainNameSerializer, AppReportSerializer
+    ThirdWxSerializer, DomainNameSerializer, AppReportSerializer, OrdersSerializer
 from common.base.baseutils import get_choices_dict, get_choices_name_from_key
+from common.utils.caches import get_app_today_download_times
 from common.utils.storage import Storage
 
 logger = logging.getLogger(__name__)
@@ -92,6 +94,18 @@ class AdminUserInfoSerializer(UserInfoSerializer):
     def get_app_count(self, obj):
         return models.Apps.objects.filter(user_id=obj).count()
 
+    today_hits_count = serializers.SerializerMethodField()
+
+    def get_today_hits_count(self, obj):
+        android_app_ids = Apps.objects.filter(**{"user_id": obj, "type": 0}).values('app_id')
+        android_app_ids = [app_dict.get('app_id') for app_dict in android_app_ids]
+        ios_app_ids = Apps.objects.filter(**{"user_id": obj, "type": 1}).values('app_id')
+        ios_app_ids = [app_dict.get('app_id') for app_dict in ios_app_ids]
+        return {
+            "android_today_hits_count": get_app_today_download_times(android_app_ids),
+            "ios_today_hits_count": get_app_today_download_times(ios_app_ids)
+        }
+
     def update(self, instance, validated_data):
         return super(AdminUserInfoSerializer, self).update(instance, validated_data)
 
@@ -121,6 +135,11 @@ class AdminAppsSerializer(AppsSerializer):
 
     def get_release_count(self, obj):
         return models.AppReleaseInfo.objects.filter(app_id=obj).count()
+
+    today_hits_count = serializers.SerializerMethodField()
+
+    def get_today_hits_count(self, obj):
+        return get_app_today_download_times([obj.app_id])
 
     def update(self, instance, validated_data):
         return super(AdminAppsSerializer, self).update(instance, validated_data)
@@ -162,7 +181,7 @@ class AdminStorageSerializer(StorageSerializer):
     used_id = serializers.IntegerField(source="user_id.pk")
 
 
-class AdminOrdersSerializer(serializers.ModelSerializer):
+class AdminOrdersSerializer(OrdersSerializer):
     class Meta:
         model = models.Order
         fields = "__all__"

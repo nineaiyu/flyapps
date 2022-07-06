@@ -25,45 +25,54 @@
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item label="地址">
-            <el-row :gutter="12">
-              <el-col :span="16">
-                <el-input v-model="postForm.address" />
-              </el-col>
-            </el-row>
-          </el-form-item>
+
           <el-form-item label="创建时间" prop="timestamp">
             <el-row :gutter="20">
               <el-col :span="8">
-                <el-date-picker :value="postForm.created_time" type="datetime" disabled />
+                <el-date-picker :value="postForm.created_time" disabled type="datetime" />
               </el-col>
             </el-row>
           </el-form-item>
-
+          <el-form-item label="订阅时间" prop="timestamp">
+            <el-row :gutter="20">
+              <el-col :span="8">
+                <el-date-picker :value="postForm.subscribe_time*1000" disabled type="datetime" />
+              </el-col>
+            </el-row>
+          </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="用户头像" label-width="160px">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-image :src="postForm.head_img_url" :preview-src-list="[postForm.head_img_url]" fit="contain" style="width: 100px; height: 100px" />
+                <el-image
+                  :preview-src-list="[postForm.head_img_url]"
+                  :src="postForm.head_img_url"
+                  fit="contain"
+                  style="width: 100px; height: 100px"
+                />
               </el-col>
             </el-row>
           </el-form-item>
-
+          <el-form-item label="扫码登录" label-width="160px">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input v-model="postForm.enable_login" disabled />
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item label="消息通知" label-width="160px">
+            <el-row :gutter="12">
+              <el-col :span="16">
+                <el-input v-model="postForm.enable_notify" disabled />
+              </el-col>
+            </el-row>
+          </el-form-item>
           <el-form-item label="订阅状态" label-width="160px">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-select v-model="postForm.subscribe" class="filter-item">
+                <el-select v-model="postForm.subscribe" class="filter-item" disabled>
                   <el-option v-for="item in wxbind_state_choices" :key="item.id" :label="item.name" :value="item.id" />
-                </el-select>
-              </el-col>
-            </el-row>
-          </el-form-item>
-          <el-form-item label="性别" label-width="160px">
-            <el-row :gutter="12">
-              <el-col :span="16">
-                <el-select v-model="postForm.sex" class="filter-item">
-                  <el-option v-for="item in wxbind_sex_choices" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </el-col>
             </el-row>
@@ -84,15 +93,10 @@
 
 <script>
 import { getWxBindInfos, updateWxBindInfo } from '@/api/wxbind'
+
 const wxbind_state_choices = [
   { id: false, name: '未订阅' },
   { id: true, name: '已订阅' }
-]
-
-const wxbind_sex_choices = [
-  { id: 0, name: '未知' },
-  { id: 1, name: '男' },
-  { id: 2, name: '女' }
 ]
 
 const defaultForm = {
@@ -103,9 +107,10 @@ const defaultForm = {
   id: undefined,
   nickname: undefined,
   openid: undefined,
-  sex: undefined,
   subscribe: undefined,
-  subscribe_time: undefined
+  subscribe_time: undefined,
+  enable_login: undefined,
+  enable_notify: undefined
 }
 
 export default {
@@ -117,7 +122,6 @@ export default {
       loading: false,
       is_edit: false,
       wxbind_state_choices,
-      wxbind_sex_choices,
       id: ''
     }
   },

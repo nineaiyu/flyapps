@@ -60,6 +60,11 @@
           {{ scope.row.download_times }}
         </template>
       </el-table-column>
+      <el-table-column label="当天苹果|安卓下载次数" width="100" align="center">
+        <template slot-scope="scope">
+          {{ scope.row.today_hits_count.ios_today_hits_count }} | {{ scope.row.today_hits_count.android_today_hits_count }}
+        </template>
+      </el-table-column>
       <el-table-column label="应用数量" width="100" align="center">
         <template slot-scope="scope">
           <router-link :to="{name: 'app_info_list',params:{user_id:scope.row.id}}">

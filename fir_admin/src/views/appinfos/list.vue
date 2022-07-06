@@ -75,9 +75,14 @@
           {{ scope.row.short }}
         </template>
       </el-table-column>
-      <el-table-column label="下载次数" width="100" align="center">
+      <el-table-column label="下载次数" width="80" align="center">
         <template slot-scope="scope">
           {{ scope.row.count_hits }}
+        </template>
+      </el-table-column>
+      <el-table-column label="当天下载次数" width="80" align="center">
+        <template slot-scope="scope">
+          {{ scope.row.today_hits_count }}
         </template>
       </el-table-column>
       <el-table-column label="应用大小" width="80" align="center">
