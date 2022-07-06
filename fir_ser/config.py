@@ -269,7 +269,6 @@ class IPACONF(object):
         {'proxy': '121.89.194.26:17897', 'active': True},
         {'proxy': '39.103.139.122:17897', 'active': True},
         {'proxy': '8.142.99.245:17897', 'active': True},
-        {'proxy': '8.142.180.88:17897', 'active': True},
         {'proxy': '8.142.174.13:17897', 'active': True},
         {'proxy': '39.99.238.93:17897', 'active': True},
         {'proxy': '8.142.173.96:17897', 'active': True},

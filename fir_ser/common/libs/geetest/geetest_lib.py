@@ -1,17 +1,21 @@
 import hashlib
 import hmac
 import json
+import logging
 import random
 
 import requests
 
-from .geetest_lib_result import GeetestLibResult
+from common.libs.geetest.geetest_lib_result import GeetestLibResult
+from xsign.utils.iproxy import get_proxy_ip_from_cache
+
+logger = logging.getLogger(__name__)
 
 
 # sdk lib包，核心逻辑。
 class GeetestLib:
     IS_DEBUG = False  # 调试开关，是否输出调试日志
-    API_URL = "http://api.geetest.com"
+    API_URL = "https://api.geetest.com"
     REGISTER_URL = "/register.php"
     VALIDATE_URL = "/validate.php"
     JSON_FORMAT = "1"
@@ -28,8 +32,7 @@ class GeetestLib:
         self.libResult = GeetestLibResult()
 
     def gtlog(self, message):
-        if self.IS_DEBUG:
-            print("gtlog: " + message)
+        logger.debug(f"gtlog: {message}")
 
     # 验证初始化
     def register(self, digestmod, param_dict):
@@ -44,7 +47,8 @@ class GeetestLib:
         register_url = self.API_URL + self.REGISTER_URL
         self.gtlog("requestRegister(): 验证初始化, 向极验发送请求, url={0}, params={1}.".format(register_url, param_dict))
         try:
-            res = requests.get(register_url, params=param_dict, timeout=self.HTTP_TIMEOUT_DEFAULT)
+            res = requests.get(register_url, params=param_dict, timeout=self.HTTP_TIMEOUT_DEFAULT,
+                               proxies=get_proxy_ip_from_cache('geetes'))
             res_body = res.text if res.status_code == requests.codes.ok else ""
             self.gtlog("requestRegister(): 验证初始化, 与极验网络交互正常, 返回码={0}, 返回body={1}.".format(res.status_code, res_body))
             res_dict = json.loads(res_body)
@@ -122,7 +126,8 @@ class GeetestLib:
         validate_url = self.API_URL + self.VALIDATE_URL
         self.gtlog("requestValidate(): 二次验证 正常模式, 向极验发送请求, url={0}, params={1}.".format(validate_url, param_dict))
         try:
-            res = requests.post(validate_url, data=param_dict, timeout=self.HTTP_TIMEOUT_DEFAULT)
+            res = requests.post(validate_url, data=param_dict, timeout=self.HTTP_TIMEOUT_DEFAULT,
+                                proxies=get_proxy_ip_from_cache('geetes'))
             res_body = res.text if res.status_code == requests.codes.ok else ""
             self.gtlog(
                 "requestValidate(): 二次验证 正常模式, 与极验网络交互正常, 返回码={0}, 返回body={1}.".format(res.status_code, res_body))
