@@ -388,10 +388,10 @@ class StorageSerializer(serializers.ModelSerializer):
             raise ValidationError(f'endpoint [{endpoint}] not in {Config.STORAGE_ALLOW_ENDPOINT}')
         max_storage_capacity = attrs.get('storage_capacity', -1)
         if max_storage_capacity != -1:
-            attrs['max_storage_capacity'] = max_storage_capacity * 1024 * 1024
-        elif max_storage_capacity == 0:
-            attrs['max_storage_capacity'] = Config.STORAGE_OSS_CAPACITY
-        else:
+            if max_storage_capacity == 0:
+                attrs['max_storage_capacity'] = Config.STORAGE_OSS_CAPACITY
+            else:
+                attrs['max_storage_capacity'] = max_storage_capacity * 1024 * 1024
             del attrs['storage_capacity']
         return attrs
 
