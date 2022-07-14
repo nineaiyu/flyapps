@@ -324,7 +324,7 @@ export default {
   },
   methods: {
     format_copy_text(token) {
-      return this.currentapp.preview_url + "/" + this.currentapp.short + "?password=" + token
+      return this.currentapp.preview_url + "?password=" + token
     },
     copy_success() {
       this.$message.success('复制剪切板成功');

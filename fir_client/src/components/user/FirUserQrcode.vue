@@ -56,7 +56,7 @@
                       :logoSrc="appinfo.master_release.icon_url"
                       :margin="qrinfo.margin" :qid="appinfo.app_id"
                       :size="200"
-                      :text="short_url(appinfo)">
+                      :text="appinfo.preview_url">
               </vue-qr>
               <div style="margin: 5px 0 5px">
                 <i v-if="appinfo.type === 1" class=" type-icon iconfont icon-ios"/>
@@ -65,9 +65,9 @@
                 <span>{{ appinfo.name }}</span>
                 <div class="bottom clearfix">
                   <el-popover placement="top" trigger="hover">
-                       <span v-clipboard:copy="short_url(appinfo)"
+                       <span v-clipboard:copy="appinfo.preview_url"
                              v-clipboard:success="copy_success"
-                       >{{ short_url(appinfo) }}</span>
+                       >{{ appinfo.preview_url }}</span>
                     <div slot="reference" class="name-wrapper">
                       <el-button plain size="small" type="primary" @click="go_download(appinfo)">预览</el-button>
                       <el-button plain size="small" type="primary" @click="save_qr(appinfo)">保存本地</el-button>
@@ -213,14 +213,11 @@ export default {
       this.isIndeterminate = checkedCount > 0 && checkedCount < this.allQrcodeAppid.length;
     },
     go_download(appinfo) {
-      window.open(this.short_url(appinfo), '_blank', '');
+      window.open(appinfo.preview_url, '_blank', '');
     },
     qrback(dataUrl, id) {
       this.qrcode_img_info[id] = dataUrl;
       this.allQrcodeAppid.push(id);
-    },
-    short_url(appinfo) {
-      return appinfo.preview_url + '/' + appinfo.short;
     },
     save_qr(appinfo) {
       let dtype = "I";

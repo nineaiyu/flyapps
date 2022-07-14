@@ -319,3 +319,7 @@ def get_user_storage_obj(user_obj, default=False):
             auth = storage.get('auth', {})
             storage = AppStorage(user_id=user_obj, storage_type=storage_type, **auth)
             return storage
+
+
+def get_preview_short_config(user_obj, short):
+    return f"{'#/' if UserConfig(user_obj).PREVIEW_ROUTE_HASH else ''}{short}"

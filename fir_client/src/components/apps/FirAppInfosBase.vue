@@ -8,10 +8,10 @@
           </div>
           <div class="badges">
             <el-tooltip content="复制到剪切板" placement="top">
-                             <span v-clipboard:copy="short_full_url"
+                             <span v-clipboard:copy="appinfos.preview_url"
                                    v-clipboard:success="copy_success"
                                    class="bundleid short"
-                             >&nbsp;{{ short_full_url }}</span>
+                             >&nbsp;{{ appinfos.preview_url }}</span>
             </el-tooltip>
 
             <el-popover
@@ -23,7 +23,7 @@
                         :logoScale="qrinfo.logoScale"
                         :logoSrc="icon_url"
                         :margin="qrinfo.margin" :size="266"
-                        :text="short_url(appinfos)">
+                        :text="appinfos.preview_url">
                 </vue-qr>
                 <el-button size="small" type="primary" @click="save_qr()">保存本地</el-button>
               </div>
@@ -123,13 +123,12 @@ export default {
         margin: 20
       },
       icon_url: "",
-      appinfos: {status: 1},
+      appinfos: {status: 1, preview_url: ''},
       master_release: {},
       allapp: [],
       activity: {
         editing: false
       },
-      short_full_url: '',
     }
   },
   methods: {
@@ -149,9 +148,6 @@ export default {
       //合成函数，执行下载
       a.dispatchEvent(new MouseEvent('click'))
     },
-    short_url(appinfo) {
-      return appinfo.preview_url + '/' + appinfo.short;
-    },
     setfunactive(item, index) {
       for (let key in this.$refs) {
         if (key === "qr") continue;
@@ -168,7 +164,7 @@ export default {
       }
     },
     appDownload(appinfo) {
-      window.open(this.short_url(appinfo), '_blank', '');
+      window.open(appinfo.preview_url, '_blank', '');
     },
     defaulttimeline() {
       this.setfunactive('timeline', 5);
@@ -219,7 +215,6 @@ export default {
         this.master_release = data.data.master_release;
         this.appinfos["icon_url"] = this.master_release.icon_url;
         this.$store.dispatch('doucurrentapp', this.appinfos);
-        this.short_full_url = this.appinfos.preview_url + "/" + this.appinfos.short;
       } else if (data.code === 1003) {
         this.$router.push({name: 'FirApps'});
       } else {

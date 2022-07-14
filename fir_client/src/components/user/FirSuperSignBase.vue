@@ -1430,7 +1430,6 @@
         <el-date-picker
             v-model="timerangesearch"
             :picker-options="pickerOptions"
-            align="right"
             end-placeholder="结束日期"
             range-separator="至"
             start-placeholder="开始日期"

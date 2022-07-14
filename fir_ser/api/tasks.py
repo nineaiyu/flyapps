@@ -22,17 +22,18 @@ from xsign.utils.ctasks import auto_delete_ios_mobile_tmp_file
 logger = logging.getLogger(__name__)
 
 
+def clean_config_cache(key):
+    ConfigCacheBase().invalid_config_cache(key)
+    ConfigCacheBase(px='user').invalid_config_cache(key)
+
+
 @app.task
 def start_api_sever_do_clean():
     # 启动服务的时候，同时执行下面操作,主要是修改配置存储的时候，需要执行清理，否则会出问题，如果不修改，则无需执行
     logger.info("clean local storage cache")
     get_local_storage(clean_cache=True)
     check_bypass_status()
-    ConfigCacheBase().invalid_config_cache()
-
-
-def clean_config_cache(key):
-    return ConfigCacheBase().invalid_config_cache(key)
+    clean_config_cache('*')
 
 
 @app.task

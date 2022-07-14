@@ -13,12 +13,12 @@ from rest_framework.views import APIView
 
 from api.models import Apps, AppReleaseInfo
 from api.utils.modelutils import get_filename_form_file, check_app_domain_name_access, \
-    ad_random_weight, get_app_download_uri
+    ad_random_weight, get_app_download_uri, get_preview_short_config
 from api.utils.response import BaseResponse
 from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
 from api.utils.signalutils import run_get_xsign_binary_file
 from common.base.baseutils import get_origin_domain_name, format_get_uri, make_random_uuid, make_resigned
-from common.core.decorators import cache_response  # 本来使用的是 drf-extensions==0.7.0 但是还未支持该版本Django
+from common.core.decorators import cache_response
 from common.core.response import mobileprovision_file_response, file_response, ApiResponse
 from common.core.sysconfig import Config
 from common.core.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
@@ -124,7 +124,8 @@ class ShortDownloadView(APIView):
             res.code = 1000
             res.domain_name = domain_name
             res.redirect = True
-            res.data = format_get_uri(domain_name, short, {'release_id': release_id, 'udid': udid})
+            res.data = format_get_uri(domain_name, get_preview_short_config(user_obj, short),
+                                      {'release_id': release_id, 'udid': udid})
             return Response(res.dict)
         if udid:
             if not app_obj.issupersign:

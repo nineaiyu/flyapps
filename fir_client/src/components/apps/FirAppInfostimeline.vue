@@ -142,12 +142,7 @@ export default {
       );
     },
     previewRelease(app) {
-      let routeData = this.$router.resolve({
-        name: 'FirDownload',
-        params: {short: this.currentapp.short},
-        query: {release_id: app.release_id}
-      });
-      window.open(this.currentapp.preview_url + routeData.href, 'target', '');
+      window.open(this.currentapp.preview_url + '?release_id=' + app.release_id, '_blank', '');
     },
     getAppTimelineFun(act = '') {
       const loading = this.$loading({

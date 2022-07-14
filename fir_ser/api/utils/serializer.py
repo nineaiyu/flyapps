@@ -7,7 +7,8 @@ from rest_framework.exceptions import ValidationError
 
 from api import models
 from api.utils.apputils import bytes2human
-from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_app_download_uri, get_user_storage_used
+from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_app_download_uri, get_user_storage_used, \
+    get_preview_short_config
 from common.base.baseutils import get_choices_dict, WeixinLoginUid
 from common.cache.storage import AdPicShowCache
 from common.core.sysconfig import Config, UserConfig
@@ -153,19 +154,7 @@ class AppsSerializer(serializers.ModelSerializer):
     preview_url = serializers.SerializerMethodField()
 
     def get_preview_url(self, obj):
-        return get_app_download_uri(None, obj.user_id, obj)
-
-    # private_developer_number = serializers.IntegerField(default=0)
-    # count = serializers.IntegerField(default=0)
-    #
-    # def get_private_developer_number(self, obj):
-    #     return models.AppleDeveloperToAppUse.objects.filter(app_id=obj).count()
-    #
-    # private_developer_used_number = serializers.IntegerField(default=0)
-    #
-    # def get_private_developer_used_number(self, obj):
-    #     return models.DeveloperDevicesID.objects.filter(app_id=obj,
-    #                                                     developerid__appledevelopertoappuse__app_id=obj).distinct().count()
+        return f"{get_app_download_uri(None, obj.user_id, obj)}/{get_preview_short_config(obj.user_id, obj.short)}"
 
     domain_name = serializers.SerializerMethodField()
 

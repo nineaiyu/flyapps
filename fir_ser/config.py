@@ -468,6 +468,7 @@ class CONFIGDESCRIPTION(object):
 class USERPERSONALCONFIGKEY(object):
     DEVELOPER_STATUS_CONFIG = ['DEVELOPER_WAIT_ABNORMAL_STATE', 'DEVELOPER_WAIT_ABNORMAL_DEVICE',
                                'DEVELOPER_ABNORMAL_DEVICE_WRITE']
+    PREVIEW_ROUTE_HASH = False  # 预览路由模式是否是hash,  如果使用hash模式，url中就会存在“#“符号，这个符号后面的是路径。
 
 
 class OSSSTORAGECONF(object):

@@ -445,6 +445,10 @@ class UserPersonalConfKeyCache(ConfigCacheBase):
     def DEVELOPER_STATUS_CONFIG(self):
         return super().get_value('DEVELOPER_STATUS_CONFIG', USERPERSONALCONFIGKEY.DEVELOPER_STATUS_CONFIG)
 
+    @property
+    def PREVIEW_ROUTE_HASH(self):
+        return super().get_value('PREVIEW_ROUTE_HASH', USERPERSONALCONFIGKEY.PREVIEW_ROUTE_HASH)
+
 
 class ConfigDescriptionCache(ConfigCacheBase):
     def __init__(self, *args, **kwargs):
