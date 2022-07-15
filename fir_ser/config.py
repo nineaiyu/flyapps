@@ -14,6 +14,7 @@ class DOMAINCONF(object):
     API_DOMAIN = "https://app.hehelucky.cn"
     WEB_DOMAIN = "https://app.hehelucky.cn"
     MOBILEPROVISION = "https://static.flyapps.top/embedded2.mobileprovision"
+    DOWNLOAD_DEPLOYMENT_URL = "https://static.flyapps.top/download.v63.23.tar.gz"
 
 
 class BASECONF(object):
@@ -469,6 +470,8 @@ class USERPERSONALCONFIGKEY(object):
     DEVELOPER_STATUS_CONFIG = ['DEVELOPER_WAIT_ABNORMAL_STATE', 'DEVELOPER_WAIT_ABNORMAL_DEVICE',
                                'DEVELOPER_ABNORMAL_DEVICE_WRITE']
     PREVIEW_ROUTE_HASH = False  # 预览路由模式是否是hash,  如果使用hash模式，url中就会存在“#“符号，这个符号后面的是路径。
+
+    PREVIEW_ROUTE_HASH_DES = '【下载页路由hash模式】：使用hash模式，url中就会存在“#“符号，这个符号后面的是路径。非hash模式，需要nginx进行额外配置'
 
 
 class OSSSTORAGECONF(object):

@@ -11,6 +11,47 @@
                    :domain_state="true" :domain_type="current_domain_info.domain_type"
                    transitionName="bind-app-domain"/>
     </el-dialog>
+    <el-dialog
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        :visible.sync="configVisible"
+        center
+        title="下载页部署配置"
+        width="666px">
+
+
+      <el-card v-for="info in config_lists" :key="info.key" class="box-card" shadow="hover"
+               style="margin-bottom: 10px">
+        <div slot="header" class="clearfix">
+          <span><el-tag size="medium" type="info">配置KEY</el-tag> <el-tag size="medium">{{ info.key }}</el-tag></span>
+          <div style="float: right">
+            <el-switch
+                v-model="info.value"
+                active-color="#13ce66"
+                active-text="启用"
+                active-value="true"
+                inactive-color="#ff4949"
+                inactive-text="关闭"
+                inactive-value="false"
+                @change="changeConfig(info)">
+            </el-switch>
+          </div>
+        </div>
+        <el-tag size="medium" type="info">描述信息</el-tag>
+        {{ info.title }}
+        <div v-if="short_download_uri" style="margin-top: 20px">
+          <el-tag size="medium" type="success">下载页部署源码及操作文档</el-tag>&nbsp;&nbsp;&nbsp;&nbsp;
+          <el-link :href="short_download_uri" target="_blank">点击下载</el-link>
+        </div>
+      </el-card>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="updateConfig">恢复默认值</el-button>
+        <el-button @click="configVisible=false">取消</el-button>
+      </div>
+
+    </el-dialog>
+
     <div>
       <el-input
           v-model="search_key"
@@ -21,6 +62,11 @@
         搜索
       </el-button>
       <div style="float: right">
+        <el-tooltip content="下载页配置，可以定制部署私有下载页">
+          <el-button plain type="primary" @click="configFun">
+            下载页配置
+          </el-button>
+        </el-tooltip>
         <el-tooltip content="应用安装下载页，多个下载页域名可以避免域名被封导致其他应用也无法访问">
           <el-button plain type="primary" @click="$store.dispatch('dodomainaction', 1)">
             添加下载页域名
@@ -154,7 +200,7 @@
 
 <script>
 
-import {domaininfo} from "@/restful";
+import {domaininfo, personalConfigInfo} from "@/restful";
 import BindDomain from "@/components/base/BindDomain";
 import {format_choices, getUserInfoFun} from '@/utils'
 import {format_time} from "@/utils/base/utils";
@@ -172,9 +218,61 @@ export default {
       domain_type_choices: [],
       current_domain_info: {'domain_type': 1, 'app_id': null},
       loading: false,
+      configVisible: false,
+      config_lists: [],
+      short_download_uri: ''
     }
   },
   methods: {
+    configFun() {
+      personalConfigInfo(data => {
+        if (data.code === 1000) {
+          if (data.data.length === 1) {
+            this.short_download_uri = data.data[0].value
+          }
+        } else {
+          this.$message.error("获取数据失败了 " + data.msg)
+        }
+      }, {
+        methods: 'GET'
+      }, 'short_download_uri')
+
+
+      personalConfigInfo(data => {
+        if (data.code === 1000) {
+          this.config_lists = data.data
+          this.configVisible = true
+        } else {
+          this.$message.error("获取数据失败了 " + data.msg)
+        }
+      }, {
+        methods: 'GET'
+      }, 'preview_route')
+    },
+    changeConfig(info) {
+      personalConfigInfo(data => {
+        if (data.code === 1000) {
+          this.$message.success("操作成功")
+          this.configFun()
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, {
+        methods: 'PUT', data: {config_key: info.key, config_value: info.value}
+      }, 'preview_route')
+    },
+    updateConfig() {
+      personalConfigInfo(data => {
+        if (data.code === 1000) {
+          this.$message.success("操作成功")
+          this.configFun()
+        } else {
+          this.$message.error("操作失败了 " + data.msg)
+        }
+      }, {
+        methods: 'DELETE'
+      }, 'preview_route')
+    },
     saveWeight(domain_info) {
       domaininfo(data => {
         if (data.code === 1000) {

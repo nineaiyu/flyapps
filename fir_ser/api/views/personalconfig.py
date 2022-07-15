@@ -15,8 +15,22 @@ from api.utils.response import BaseResponse
 from api.utils.serializer import PersonalConfigSerializer
 from common.core.auth import ExpiringTokenAuthentication, SuperSignPermission
 from common.core.sysconfig import UserConfig, Config
+from common.utils.caches import del_cache_storage
 
 logger = logging.getLogger(__name__)
+
+
+def get_personal_config(request):
+    config_type = request.query_params.get("config_type", None)
+    if config_type == 'super_sign':
+        personal_config = Config.DEVELOPER_STATUS_CONFIG
+    elif config_type == 'preview_route':
+        personal_config = ['PREVIEW_ROUTE_HASH']
+    elif config_type == 'short_download_uri':
+        personal_config = ['DOWNLOAD_DEPLOYMENT_URL']
+    else:
+        personal_config = []
+    return personal_config
 
 
 class PersonalConfigView(APIView):
@@ -27,11 +41,11 @@ class PersonalConfigView(APIView):
         res = BaseResponse()
 
         config_key = request.query_params.get("config_key", None)
-        developer_personal_config = Config.DEVELOPER_STATUS_CONFIG
+        personal_config = get_personal_config(request)
         personal_config_queryset = UserPersonalConfig.objects.filter(user_id=request.user,
-                                                                     key__in=developer_personal_config)
-        if personal_config_queryset.count() != len(developer_personal_config):
-            for key in developer_personal_config:
+                                                                     key__in=personal_config)
+        if personal_config_queryset.count() != len(personal_config):
+            for key in personal_config:
                 UserConfig(request.user).set_default_value(key)
         if config_key:
             personal_config_queryset = personal_config_queryset.filter(key=config_key)
@@ -46,15 +60,17 @@ class PersonalConfigView(APIView):
         res = BaseResponse()
         config_key = request.data.get("config_key", None)
         config_value = request.data.get("config_value", None)
-        if config_key is not None and config_value is not None and config_key in Config.DEVELOPER_STATUS_CONFIG:
+        if config_key is not None and config_value is not None and config_key in get_personal_config(request):
             UserPersonalConfig.objects.filter(user_id=request.user, key=config_key).update(value=config_value)
             UserConfig(request.user).invalid_config_cache(config_key)
         return Response(res.dict)
 
     def delete(self, request):
         res = BaseResponse()
-        developer_personal_config = Config.DEVELOPER_STATUS_CONFIG
-        for key in developer_personal_config:
+        for key in get_personal_config(request):
             UserConfig(request.user).del_value(key)
             Config.invalid_config_cache(f'{key}_DES')
+            if key == 'preview_route':
+                # 清理缓存
+                del_cache_storage(request.user)
         return Response(res.dict)

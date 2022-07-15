@@ -692,10 +692,10 @@ export function notifyConfigInfo(callBack, params) {
 }
 
 /**消息配置 */
-export function personalConfigInfo(callBack, params) {
+export function personalConfigInfo(callBack, params, super_sign) {
     getData(
         params.methods,
-        USERSEVER + '/personal/config',
+        USERSEVER + '/personal/config?config_type=' + super_sign,
         params.data,
         data => {
             callBack(data);

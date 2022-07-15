@@ -157,6 +157,10 @@ class DomainConfCache(ConfigCacheBase):
     def WEB_DOMAIN(self):
         return self.get_value('WEB_DOMAIN', DOMAINCONF.WEB_DOMAIN)
 
+    @property
+    def DOWNLOAD_DEPLOYMENT_URL(self):
+        return self.get_value('DOWNLOAD_DEPLOYMENT_URL', DOMAINCONF.DOWNLOAD_DEPLOYMENT_URL)
+
 
 class BaseConfCache(ConfigCacheBase):
     def __init__(self, *args, **kwargs):
@@ -448,6 +452,10 @@ class UserPersonalConfKeyCache(ConfigCacheBase):
     @property
     def PREVIEW_ROUTE_HASH(self):
         return super().get_value('PREVIEW_ROUTE_HASH', USERPERSONALCONFIGKEY.PREVIEW_ROUTE_HASH)
+
+    @property
+    def PREVIEW_ROUTE_HASH_DES(self):
+        return super().get_value('PREVIEW_ROUTE_HASH_DES', USERPERSONALCONFIGKEY.PREVIEW_ROUTE_HASH_DES)
 
 
 class ConfigDescriptionCache(ConfigCacheBase):

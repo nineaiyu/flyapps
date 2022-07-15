@@ -222,7 +222,7 @@
                 <el-row :gutter="20" style="margin-top: 10px;">
                   <el-col :span="18">
                     <el-input v-model="short">
-                      <template slot="prepend">{{ analyseappinfo.short_domain_name }}/</template>
+                      <template slot="prepend">{{ analyseappinfo.short_domain_name }}</template>
                     </el-input>
                   </el-col>
                 </el-row>

@@ -109,12 +109,26 @@
             prop="token"
         >
           <template slot-scope="scope">
-            <el-tooltip content="点击复制">
-              <el-link v-clipboard:copy="format_copy_text(scope.row.token)" v-clipboard:success="copy_success"
-                       :underline="false">
-                {{ scope.row.token }}
-              </el-link>
-            </el-tooltip>
+
+            <el-popover
+                placement="top-start"
+                trigger="hover"
+                width="200">
+              <p>
+                <el-tag v-clipboard:copy="scope.row.token" v-clipboard:success="copy_success" type="success">
+                  <el-link :underline="false">点击复制授权码</el-link>
+                </el-tag>
+              </p>
+
+              <p>
+                <el-tag v-clipboard:copy="format_copy_text(scope.row.token)" v-clipboard:success="copy_success">
+                  <el-link :underline="false">点击复制授权码下载链接</el-link>
+                </el-tag>
+              </p>
+
+              <el-link slot="reference" :underline="false">{{ scope.row.token }}</el-link>
+            </el-popover>
+
           </template>
         </el-table-column>
 

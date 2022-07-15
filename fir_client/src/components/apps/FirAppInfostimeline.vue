@@ -4,7 +4,7 @@
                       :color="app.master_color"
                       :timestamp="app.created_time|formatdatatimeline"
                       placement="top">
-      <el-card>
+      <el-card :body-style="{border: app.is_master ? '#2abb9d 1px solid' : ''}">
         <div class="directive-view-release">
 
           <i v-if="! app.is_master" class="el-icon-cloudy"/>
@@ -80,7 +80,7 @@
 
             <el-button v-if="!currentapp.issupersign" class="tooltip-top" @click="previewRelease(app)"><i
                 class="el-icon-view"/> <span
-                class="ng-binding">预览</span>
+                class="ng-binding">预览该版本</span>
             </el-button>
 
             <el-button v-if="! app.is_master" class="tooltip-top" @click="make_master_release(app)">

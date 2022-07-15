@@ -1962,7 +1962,7 @@ export default {
         }
       }, {
         methods: 'PUT', data: {config_key: info.key, config_value: info.value}
-      })
+      }, 'super_sign')
     },
     updateSignConfig() {
       personalConfigInfo(data => {
@@ -1974,7 +1974,7 @@ export default {
         }
       }, {
         methods: 'DELETE'
-      })
+      }, 'super_sign')
     },
     signConfigFun() {
       personalConfigInfo(data => {
@@ -1986,7 +1986,7 @@ export default {
         }
       }, {
         methods: 'GET'
-      })
+      }, 'super_sign')
     },
     saveblackdevice() {
       blackDeviceUtil(data => {
