@@ -19,7 +19,7 @@ from Crypto.Cipher import AES
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils import timezone
-from dns.resolver import Resolver
+from dns import resolver, rdatatype
 
 from fir_ser.settings import SUPER_SIGN_ROOT
 
@@ -218,20 +218,22 @@ def format_storage_selection(storage_info_list, storage_choice_list):
     return storage_choice_list
 
 
-def get_cname_from_domain(domain, resolve_cname):
+def get_cname_from_domain(domain, resolve_cname, rd_type=rdatatype.CNAME):
     dns_list = [
         ["119.29.29.29", "114.114.114.114"],
         ["223.5.5.5", "223.6.6.6"],
         ["8.8.8.8", "8.8.4.4"],
     ]
-    dns_resolver = Resolver()
+    dns_resolver = resolver.Resolver()
     domain = domain.lower().strip()
     count = 3
     while count:
         try:
             dns_resolver.nameservers = dns_list[len(dns_list) - count]
-            if dns_resolver.resolve(domain, 'CNAME')[0].to_text() == resolve_cname:
-                return True
+            for ans in dns_resolver.resolve(domain, rd_type):
+                logger.info(f"dns {dns_resolver.nameservers} resolve {domain} answer: {ans.to_text()}")
+                if ans.to_text().strip("'").strip('"') == resolve_cname.strip("'").strip('"'):
+                    return True
         except Exception as e:
             logger.error(f"dns {dns_resolver.nameservers} resolve {domain} failed Exception:{e}")
         count -= 1
@@ -373,3 +375,13 @@ def make_resigned(bin_url, img_url, bundle_id, app_version, name):
     logger.info(
         f"make_resigned bin_url {bin_url} ,img_url {img_url}, bundle_id {bundle_id}, app_version {app_version}, name {name}")
     return ios_plist_tem
+
+
+def format_cname_host(c_name: str):
+    cname_list = c_name.split('.')
+    cname_len = len(cname_list)
+    if cname_len == 2:
+        return ''
+    elif cname_len > 2:
+        return '.'.join(cname_list[0:-2])
+    return ''

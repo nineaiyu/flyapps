@@ -90,14 +90,15 @@ def get_app_download_uri(request, user_obj, app_obj=None, preview=True):
     return get_server_domain_from_request(request, server_domain)
 
 
-def get_min_default_domain_cname_obj(is_system=True):
+def get_min_default_domain_cname_obj(is_system=True, user_ipk=0):
     if is_system:
         c_n = 'userinfo'
     else:
         c_n = 'userdomaininfo'
-    domain_queryset = DomainCnameInfo.objects.annotate(Count(c_n)).filter(is_enable=True, is_system=is_system)
+    domain_queryset = DomainCnameInfo.objects.annotate(Count(c_n)).filter(is_enable=True, is_system=is_system,
+                                                                          user_ipk=user_ipk)
     if not domain_queryset:
-        return DomainCnameInfo.objects.filter(is_enable=True, is_system=True).first()
+        return DomainCnameInfo.objects.filter(is_enable=True, is_system=True, user_ipk=user_ipk).first()
     return min(domain_queryset, key=lambda x: getattr(x, f'{c_n}__count'))
 
 

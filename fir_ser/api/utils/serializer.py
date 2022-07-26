@@ -508,6 +508,17 @@ class DomainNameSerializer(serializers.ModelSerializer):
             return app_info
         return {}
 
+    is_private = serializers.SerializerMethodField()
+
+    def get_is_private(self, obj):
+        return bool(obj.cname_id.user_ipk)
+
+
+class DomainCnameInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.DomainCnameInfo
+        exclude = ["id", "user_ipk", "is_https", "is_system"]
+
 
 class UserAdInfoSerializer(serializers.ModelSerializer):
     class Meta:

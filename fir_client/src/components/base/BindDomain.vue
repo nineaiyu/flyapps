@@ -21,6 +21,7 @@
             </div>
             请联系域名管理员，前往 <strong>{{ domain_name }}</strong> 域名 DNS 管理后台添加如下 CNAME 记录。
             <el-table
+                v-loading="is_loading"
                 :data="domain_tData"
                 border
                 stripe
@@ -51,6 +52,11 @@
                   prop="dns"
                   width="300">
                 <template slot-scope="scope">
+
+                  <el-tooltip content="该记录值为私有下载服务器">
+                    <el-tag v-if="scope.row.is_private" style="margin-right: 5px" type="small">Private</el-tag>
+                  </el-tooltip>
+
                   <el-tooltip content="点击复制到剪贴板">
                     <el-link v-if="scope.row.dns" v-clipboard:copy="scope.row.dns"
                              v-clipboard:success="copy_success"
@@ -80,7 +86,7 @@
                 <el-col :span="6">
                   <el-button plain size="small" style="margin-top: 8px" type="danger"
                              @click="remove_domain">
-                    解除绑定
+                    解除绑定并删除记录
                   </el-button>
                 </el-col>
               </el-row>
@@ -98,13 +104,14 @@
                 <el-col :span="6">
                   <el-button plain size="small" style="margin-top: 8px" type="danger"
                              @click="remove_domain">
-                    解除绑定
+                    解除绑定并删除记录
                   </el-button>
                 </el-col>
               </el-row>
 
             </div>
             <el-table
+                v-loading="is_loading"
                 :data="domain_tData"
                 border
                 stripe
@@ -126,10 +133,23 @@
                   label="记录值"
                   prop="dns"
                   width="300">
+                <template slot-scope="scope">
+
+                  <el-tooltip content="该记录值为私有下载服务器">
+                    <el-tag v-if="scope.row.is_private" style="margin-right: 5px" type="small">Private</el-tag>
+                  </el-tooltip>
+
+                  <el-tooltip content="点击复制到剪贴板">
+                    <el-link v-if="scope.row.dns" v-clipboard:copy="scope.row.dns"
+                             v-clipboard:success="copy_success"
+                             :underline="false">{{ scope.row.dns }}
+                    </el-link>
+                  </el-tooltip>
+                </template>
               </el-table-column>
             </el-table>
             <div v-if="!bind_status" style="text-align: center;margin: 30px 0">
-              <el-button plain type="success" @click="check_cname">已经修改配置，再次检查绑定</el-button>
+              <el-button :disabled="is_loading" plain type="success" @click="check_cname">已经修改配置，再次检查绑定</el-button>
             </div>
           </div>
 
@@ -139,8 +159,8 @@
         <el-button :disabled="bind_status|| active===1 "
                    @click="last">上一步
         </el-button>
-        <el-button v-if="force_bind" @click="next(1)">强制绑定</el-button>
-        <el-button v-else @click="next(0)">下一步</el-button>
+        <el-button v-if="force_bind" :disabled="is_loading" @click="next(1)">强制绑定</el-button>
+        <el-button v-else :disabled="is_loading" @click="next(0)">下一步</el-button>
 
       </div>
 
@@ -173,17 +193,18 @@ export default {
     c_domain_name: {
       type: String,
       default: ''
-    },
+    }
   },
   data() {
     return {
       active: 1,
       bind_status: false,
       bind_domain_sure: true,
-      domain_tData: [{'type': 'CNAME', 'host': 'xxx', 'dns': 'demo.xxx.cn'}],
+      domain_tData: [{'type': 'CNAME', 'host': 'xxx', 'dns': 'demo.xxx.cn', 'is_private': false}],
       domain_name: '',
       force_bind: false,
       b_t_msg: '您的账户',
+      is_loading: false
     }
   },
   mounted() {
@@ -203,10 +224,13 @@ export default {
       this.$message.success('复制剪切板成功');
     },
     check_cname() {
+      this.is_loading = true
       domainFun(data => {
+        this.is_loading = false
         if (data.code === 1000) {
           if (this.active++ > 2) this.active = 3;
           this.bind_status = true;
+          this.$message.success("绑定成功")
           if (!this.app_id) {
             if (this.domain_type === 1) {
               this.$store.dispatch("dodomainshow", false);
@@ -258,7 +282,7 @@ export default {
               this.domain_name = data.data.domain_name;
             }
             if (data.data.domain_record) {
-              this.format_domain_tData(data.data.domain_record);
+              this.format_domain_tData(data.data);
               if (this.active++ > 2) this.active = 3;
             }
             if (data.data.is_enable) {
@@ -281,14 +305,15 @@ export default {
         domain_name_list.splice(domain_name_list.length - 2, 2);
         this.domain_tData[0].host = domain_name_list.join(".")
       }
-      this.domain_tData[0].dns = cname_domain;
+      this.domain_tData[0].dns = cname_domain.domain_record;
+      this.domain_tData[0].is_private = cname_domain.is_private;
     },
     next(force_bind) {
       if (this.active === 1) {
         domainFun(data => {
           if (data.code === 1000) {
-            if (data.data && data.data.cname_domain) {
-              this.format_domain_tData(data.data.cname_domain);
+            if (data.data && data.data.domain_record) {
+              this.format_domain_tData(data.data);
               if (this.active++ > 2) this.active = 3;
             }
           } else {

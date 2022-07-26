@@ -4,7 +4,7 @@
       <el-input v-model="listQuery.bundle_id" placeholder="Bundle_Id" style="width: 250px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.name" placeholder="应用名称" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.short" placeholder="短连接" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-<!--      <el-input v-model="listQuery.domain_name" placeholder="应用专属访问域名" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />-->
+      <!--      <el-input v-model="listQuery.domain_name" placeholder="应用专属访问域名" style="width: 200px;" class="filter-item" clearable @keyup.enter.native="handleFilter" />-->
       <el-select v-if="type_choices" v-model="listQuery.type" placeholder="应用类型" clearable class="filter-item" style="width: 120px" @change="handleFilter">
         <el-option v-for="item in type_choices" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
@@ -221,7 +221,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.listLoading = true
-        deleteApp(app_id).then(response => {
+        deleteApp(app_id).then(() => {
           this.$message.success('删除成功')
           this.fetchData()
           this.listLoading = false

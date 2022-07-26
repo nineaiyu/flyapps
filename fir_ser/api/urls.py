@@ -17,7 +17,7 @@ from django.urls import re_path
 
 from api.views.advert import UserAdInfoView
 from api.views.apps import AppsView, AppInfoView, AppReleaseInfoView, AppsQrcodeShowView, AppDownloadTokenView
-from api.views.domain import DomainCnameView, DomainInfoView
+from api.views.domain import DomainCnameView, DomainInfoView, DomainCnameInfoView
 from api.views.download import ShortDownloadView, InstallView, DownloadView
 from api.views.getip import GetRemoteIp
 from api.views.login import LoginView, UserInfoView, RegistView, AuthorizationView, ChangeAuthorizationView, \
@@ -73,6 +73,7 @@ urlpatterns = [
     re_path(r"^pay_success/(?P<name>\w+)$", PaySuccess.as_view()),
     re_path("^cname_domain$", DomainCnameView.as_view()),
     re_path("^domain_info$", DomainInfoView.as_view()),
+    re_path("^cname_info$", DomainCnameInfoView.as_view()),
     re_path("^mp.weixin$", ValidWxChatToken.as_view()),
     re_path("^mp.applet$", WeChatAppletView.as_view()),
     re_path("^mp.web.login$", WeChatWebLoginView.as_view(), name="mp.web.login"),

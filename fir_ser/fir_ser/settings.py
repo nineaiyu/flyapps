@@ -290,6 +290,7 @@ CACHE_KEY_TEMPLATE = {
 
 DATA_DOWNLOAD_KEY = "d_token"
 FILE_UPLOAD_TMP_KEY = ".tmp"
+DOMAIN_CNAME_KEY = "_fly_dnsauth"
 
 SYNC_CACHE_TO_DATABASE = {
     'download_times': 10,  # 下载次数同步时间

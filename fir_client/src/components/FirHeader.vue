@@ -51,6 +51,7 @@
               <el-dropdown-item command="userinfo">个人资料</el-dropdown-item>
               <el-dropdown-item command="apitoken">API token</el-dropdown-item>
               <el-dropdown-item command="setdomian">设置域名</el-dropdown-item>
+              <el-dropdown-item command="download">下载配置</el-dropdown-item>
               <el-dropdown-item command="setnotify">消息中心</el-dropdown-item>
               <el-dropdown-item v-if="$store.state.userinfo.role>1" command="setadvert">宣传广告
               </el-dropdown-item>
@@ -135,6 +136,8 @@ export default {
 
       } else if (command === 'setdomian') {
         this.$router.push({"name": 'FirUserDomain'})
+      } else if (command === 'download') {
+        this.$router.push({"name": 'FirUserDownload'})
       } else if (command === 'setadvert') {
         this.$router.push({"name": 'FirUserAdvert'})
       } else if (command === 'myorder') {

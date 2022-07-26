@@ -605,6 +605,17 @@ export function domainFun(callBack, params) {
     );
 }
 
+/**用户添加下载页服务器*/
+export function dCnameInfoFun(callBack, params) {
+    getData(
+        params.methods,
+        USERSEVER + '/cname_info',
+        params.data,
+        data => {
+            callBack(data);
+        }
+    );
+}
 
 /**微信用户绑定 */
 export function wxutils(callBack, params) {

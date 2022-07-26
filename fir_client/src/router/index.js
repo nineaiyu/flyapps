@@ -168,6 +168,11 @@ const router = new VueRouter({
                     name: 'FirUserDomain',
                     meta: {label: '绑定域名详情'},
                     component: () => import("@/components/user/FirUserDomain"),
+                }, {
+                    path: 'download',
+                    name: 'FirUserDownload',
+                    meta: {label: '下载页设置'},
+                    component: () => import("@/components/user/FirUserDownload"),
                 },
                 {
                     path: 'advert',

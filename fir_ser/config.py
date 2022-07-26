@@ -14,7 +14,10 @@ class DOMAINCONF(object):
     API_DOMAIN = "https://app.hehelucky.cn"
     WEB_DOMAIN = "https://app.hehelucky.cn"
     MOBILEPROVISION = "https://static.flyapps.top/embedded2.mobileprovision"
-    DOWNLOAD_DEPLOYMENT_URL = "https://static.flyapps.top/download.v63.23.tar.gz"
+    DOWNLOAD_DEPLOYMENT_HASH_URL = "https://static.flyapps.top/download.v63.23.tar.gz"
+    DOWNLOAD_DEPLOYMENT_HISTORY_URL = "https://static.flyapps.top/download.v63.23.tar.gz"
+    DOWNLOAD_DEPLOYMENT_HASH_URL_DES = "hash模式"
+    DOWNLOAD_DEPLOYMENT_HISTORY_URL_DES = "history模式"
 
 
 class BASECONF(object):
@@ -471,8 +474,10 @@ class USERPERSONALCONFIGKEY(object):
                                'DEVELOPER_ABNORMAL_DEVICE_WRITE']
     PREVIEW_ROUTE_HASH = False  # 预览路由模式是否是hash,  如果使用hash模式，url中就会存在“#“符号，这个符号后面的是路径。
 
-    PREVIEW_ROUTE_HASH_DES = '【下载页路由hash模式】：使用hash模式，url中就会存在“#“符号，这个符号后面的是路径。非hash模式，需要nginx进行额外配置'
+    PREVIEW_ROUTE_HASH_DES = '【下载页路由hash模式】：使用hash模式，url中就会存在“#“符号，这个符号后面的是路径。非hash模式(history模式)，需要nginx进行额外配置'
 
+    PRIVATE_DOWNLOAD_PAGE = False  # 私有下载页配置，默认false
+    PRIVATE_DOWNLOAD_PAGE_DES = '【私有下载页模式】：默认是关闭状态，若开启，则需要先添加下载域名服务器'
 
 class OSSSTORAGECONF(object):
     STORAGE_FREE_CAPACITY = 2048 * 1024 * 1024  # 单位byte 2G

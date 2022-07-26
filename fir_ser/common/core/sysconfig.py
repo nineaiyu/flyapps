@@ -158,8 +158,20 @@ class DomainConfCache(ConfigCacheBase):
         return self.get_value('WEB_DOMAIN', DOMAINCONF.WEB_DOMAIN)
 
     @property
-    def DOWNLOAD_DEPLOYMENT_URL(self):
-        return self.get_value('DOWNLOAD_DEPLOYMENT_URL', DOMAINCONF.DOWNLOAD_DEPLOYMENT_URL)
+    def DOWNLOAD_DEPLOYMENT_HASH_URL(self):
+        return self.get_value('DOWNLOAD_DEPLOYMENT_HASH_URL', DOMAINCONF.DOWNLOAD_DEPLOYMENT_HASH_URL)
+
+    @property
+    def DOWNLOAD_DEPLOYMENT_HISTORY_URL(self):
+        return self.get_value('DOWNLOAD_DEPLOYMENT_HISTORY_URL', DOMAINCONF.DOWNLOAD_DEPLOYMENT_HISTORY_URL)
+
+    @property
+    def DOWNLOAD_DEPLOYMENT_HASH_URL_DES(self):
+        return self.get_value('DOWNLOAD_DEPLOYMENT_HASH_URL_DES', DOMAINCONF.DOWNLOAD_DEPLOYMENT_HASH_URL_DES)
+
+    @property
+    def DOWNLOAD_DEPLOYMENT_HISTORY_URL_DES(self):
+        return self.get_value('DOWNLOAD_DEPLOYMENT_HISTORY_URL_DES', DOMAINCONF.DOWNLOAD_DEPLOYMENT_HISTORY_URL_DES)
 
 
 class BaseConfCache(ConfigCacheBase):
@@ -456,6 +468,14 @@ class UserPersonalConfKeyCache(ConfigCacheBase):
     @property
     def PREVIEW_ROUTE_HASH_DES(self):
         return super().get_value('PREVIEW_ROUTE_HASH_DES', USERPERSONALCONFIGKEY.PREVIEW_ROUTE_HASH_DES)
+
+    @property
+    def PRIVATE_DOWNLOAD_PAGE(self):
+        return super().get_value('PRIVATE_DOWNLOAD_PAGE', USERPERSONALCONFIGKEY.PRIVATE_DOWNLOAD_PAGE)
+
+    @property
+    def PRIVATE_DOWNLOAD_PAGE_DES(self):
+        return super().get_value('PRIVATE_DOWNLOAD_PAGE_DES', USERPERSONALCONFIGKEY.PRIVATE_DOWNLOAD_PAGE_DES)
 
 
 class ConfigDescriptionCache(ConfigCacheBase):

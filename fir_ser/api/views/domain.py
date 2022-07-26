@@ -5,16 +5,20 @@
 # date: 2021/3/29
 import logging
 
+from dns import rdatatype
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import UserDomainInfo, Apps
+from api.models import UserDomainInfo, Apps, DomainCnameInfo
 from api.utils.modelutils import get_user_domain_name, get_min_default_domain_cname_obj, PageNumber
 from api.utils.response import BaseResponse
-from api.utils.serializer import DomainNameSerializer
-from common.base.baseutils import is_valid_domain, get_cname_from_domain, get_choices_dict
+from api.utils.serializer import DomainNameSerializer, DomainCnameInfoSerializer
+from common.base.baseutils import is_valid_domain, get_cname_from_domain, get_choices_dict, make_app_uuid, \
+    format_cname_host
 from common.core.auth import ExpiringTokenAuthentication
-from common.utils.caches import del_cache_response_by_short, reset_app_wx_easy_type
+from common.core.sysconfig import UserConfig
+from common.utils.caches import del_cache_response_by_short, reset_app_wx_easy_type, reset_short_response_cache
+from fir_ser.settings import DOMAIN_CNAME_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +58,16 @@ def remove_domain_wx_easy(app_obj, user_obj):
 
 
 def add_new_domain_info(res, request, domain_name, domain_type):
-    min_domain_cname_info_obj = get_min_default_domain_cname_obj(False)
+    user_ipk = 0
+    if UserConfig(request.user).PRIVATE_DOWNLOAD_PAGE:
+        user_ipk = request.user.pk
+
+    min_domain_cname_info_obj = get_min_default_domain_cname_obj(False, user_ipk)
     if min_domain_cname_info_obj:
-        res.data = {'cname_domain': min_domain_cname_info_obj.domain_record}
+        res.data = {
+            'domain_record': min_domain_cname_info_obj.domain_record,
+            'is_private': bool(min_domain_cname_info_obj.user_ipk)
+        }
         data_dict = {
             'user_id': request.user,
             'cname_id': min_domain_cname_info_obj,
@@ -78,7 +89,7 @@ class DomainCnameView(APIView):
 
     def get(self, request):
         res = BaseResponse()
-        res.data = {'domain_name': '', 'domain_record': '', 'is_enable': False}
+        res.data = {'domain_name': '', 'domain_record': '', 'is_enable': False, 'is_private': False}
         user_domain_obj = UserDomainInfo.objects.filter(**get_domain_filter(request)).last()
         domain_type = request.query_params.get("domain_type", -1)
 
@@ -91,6 +102,7 @@ class DomainCnameView(APIView):
             res.data['is_enable'] = user_domain_obj.is_enable
             if user_domain_obj.cname_id:
                 res.data['domain_record'] = user_domain_obj.cname_id.domain_record
+                res.data['is_private'] = bool(user_domain_obj.cname_id.user_ipk)
         return Response(res.dict)
 
     def post(self, request):
@@ -126,7 +138,10 @@ class DomainCnameView(APIView):
                     kwargs['domain_name'] = domain_name
                     user_domain_obj = UserDomainInfo.objects.filter(**kwargs).first()
                     if user_domain_obj:
-                        res.data = {'cname_domain': user_domain_obj.cname_id.domain_record}
+                        res.data = {
+                            'domain_record': user_domain_obj.cname_id.domain_record,
+                            'is_private': bool(user_domain_obj.cname_id.user_ipk)
+                        }
                     else:
                         kwargs.pop('domain_name')
                         UserDomainInfo.objects.filter(**kwargs, is_enable=False).delete()
@@ -136,7 +151,10 @@ class DomainCnameView(APIView):
                 kwargs['domain_name'] = domain_name
                 user_domain_obj = UserDomainInfo.objects.filter(**kwargs).first()
                 if user_domain_obj:
-                    res.data = {'cname_domain': user_domain_obj.cname_id.domain_record}
+                    res.data = {
+                        'domain_record': user_domain_obj.cname_id.domain_record,
+                        'is_private': bool(user_domain_obj.cname_id.user_ipk)
+                    }
                 else:
                     add_new_domain_info(res, request, domain_name, domain_type)
         else:
@@ -234,13 +252,97 @@ class DomainInfoView(APIView):
         res = BaseResponse()
         domain_name = request.data.get('domain_name', '')
         weight = request.data.get('weight', 10)
+        is_https = request.data.get('is_https', 10)
         domain_type = request.data.get('domain_type', None)
         if domain_type is not None and weight and domain_name:
             domain_name_obj = UserDomainInfo.objects.filter(user_id=request.user, domain_name=domain_name,
                                                             domain_type=domain_type).all()
             if domain_name_obj and len(domain_name_obj) == 1:
-                domain_name_obj.update(weight=weight)
+                domain_name_obj.update(weight=weight, is_https=is_https)
+                reset_short_response_cache(request.user, None)
         else:
             res.code = 1002
             res.msg = '参数有误'
+        return Response(res.dict)
+
+
+class DomainCnameInfoView(APIView):
+    authentication_classes = [ExpiringTokenAuthentication, ]
+
+    def get(self, request):
+        res = BaseResponse()
+        search_key = request.query_params.get("search_key", None)
+        obj_lists = DomainCnameInfo.objects.filter(user_ipk=request.user.pk)
+        if search_key:
+            obj_lists = obj_lists.filter(domain_record=search_key)
+
+        page_obj = PageNumber()
+        domain_info_serializer = page_obj.paginate_queryset(
+            queryset=obj_lists.order_by("-created_time"), request=request, view=self)
+        domain_info = DomainCnameInfoSerializer(domain_info_serializer, many=True, )
+        res.data = domain_info.data
+        res.count = obj_lists.count()
+
+        return Response(res.dict)
+
+    def put(self, request):
+        res = BaseResponse()
+        domain_record = request.data.get('domain_record')
+        act = request.data.get('act')
+        if domain_record and act:
+            c_obj = DomainCnameInfo.objects.filter(user_ipk=request.user.pk, domain_record=domain_record).first()
+            if not c_obj:
+                res.code = 1003
+                res.msg = '参数有误'
+                return Response(res.dict)
+            if act == 'check':
+                resolve_cname = f"{request.user.uid}{make_app_uuid(request.user, domain_record)}"
+                auth_domain_record = f'{DOMAIN_CNAME_KEY}.{domain_record}'
+                if get_cname_from_domain(auth_domain_record, resolve_cname, rd_type=rdatatype.TXT):
+                    c_obj.is_enable = True
+                    c_obj.save(update_fields=['is_enable'])
+                    return Response(res.dict)
+                else:
+                    res.code = 1004
+                    res.msg = 'TXT解析错误，请检查或者稍后再试'
+        else:
+            res.code = 1002
+            res.msg = '参数有误'
+        return Response(res.dict)
+
+    def post(self, request):
+        res = BaseResponse()
+        domain_info = request.data
+        domain_record = domain_info.get('domain_record')
+        ip_address = domain_info.get('ip_address')
+        description = domain_info.get('description')
+        if domain_record and ip_address:
+            c_obj = DomainCnameInfo.objects.filter(user_ipk=request.user.pk, domain_record=domain_record)
+            if not c_obj:
+                DomainCnameInfo.objects.create(user_ipk=request.user.pk, domain_record=domain_record,
+                                               ip_address=ip_address, description=description)
+
+            res.data = {
+                'a_type': 'DNS',
+                'r_type': 'TXT',
+                'host_r': f'{DOMAIN_CNAME_KEY}.{format_cname_host(domain_record)}',
+                'cname_r': f"{request.user.uid}{make_app_uuid(request.user, domain_record)}",
+                'domain_record': domain_record
+            }
+        else:
+            res.code = 1001
+            res.msg = "参数有误"
+        return Response(res.dict)
+
+    def delete(self, request):
+        res = BaseResponse()
+        domain_record = request.query_params.get('domain_record')
+        if domain_record:
+            c_query_set = DomainCnameInfo.objects.filter(user_ipk=request.user.pk, domain_record=domain_record)
+            if UserDomainInfo.objects.filter(user_id=request.user, cname_id=c_query_set.first(),
+                                             is_enable=True).count():
+                reset_short_response_cache(request.user, None)
+            c_query_set.delete()
+            if DomainCnameInfo.objects.filter(user_ipk=request.user.pk, is_enable=True).count() == 0:
+                UserConfig(request.user).del_value('PRIVATE_DOWNLOAD_PAGE')
         return Response(res.dict)

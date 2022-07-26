@@ -63,7 +63,7 @@ class UserInfo(AbstractUser):
             self.api_token = self.uid + generate_alphanumeric_token_of_length(64)
         if not self.default_domain_name_id:
             default_domain_obj = min(
-                DomainCnameInfo.objects.annotate(Count('userinfo')).filter(is_enable=True, is_system=True),
+                DomainCnameInfo.objects.annotate(Count('userinfo')).filter(is_enable=True, is_system=True, user_ipk=0),
                 key=lambda x: x.userinfo__count)
             if default_domain_obj:
                 self.default_domain_name_id = default_domain_obj.pk
@@ -378,9 +378,10 @@ class CertificationInfo(models.Model):
 
 
 class DomainCnameInfo(models.Model):
-    domain_record = models.CharField(max_length=128, unique=True, verbose_name="记录值")
+    user_ipk = models.IntegerField(verbose_name="用户ipk", default=0)
+    domain_record = models.CharField(max_length=128, verbose_name="记录值")
     ip_address = models.CharField(max_length=128, verbose_name="域名解析地址", null=False)
-    is_enable = models.BooleanField(default=True, verbose_name="是否启用该解析")
+    is_enable = models.BooleanField(default=False, verbose_name="是否启用该解析")
     is_system = models.BooleanField(default=False, verbose_name="是否是系统自带解析")
     is_https = models.BooleanField(default=False, verbose_name="是否支持HTTPS")
     description = models.TextField(verbose_name='备注', blank=True, null=True, default='')
@@ -389,9 +390,10 @@ class DomainCnameInfo(models.Model):
     class Meta:
         verbose_name = '系统分发域名配置'
         verbose_name_plural = "系统分发域名配置"
+        unique_together = (('user_ipk', 'domain_record'),)
 
     def save(self, *args, **kwargs):
-        if not self.domain_record or (self.domain_record and len(self.domain_record) < 26):  # 最多3个启用的价格表
+        if self.user_ipk == 0 and (not self.domain_record or (self.domain_record and len(self.domain_record) < 26)):
             self.domain_record = '%s.%s' % (generate_numeric_token_of_length(24, 'abcdef'), self.domain_record)
         super(DomainCnameInfo, self).save(*args, **kwargs)
 

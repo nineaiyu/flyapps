@@ -10,7 +10,7 @@ import logging
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import UserPersonalConfig
+from api.models import UserPersonalConfig, DomainCnameInfo
 from api.utils.response import BaseResponse
 from api.utils.serializer import PersonalConfigSerializer
 from common.core.auth import ExpiringTokenAuthentication, SuperSignPermission
@@ -25,12 +25,19 @@ def get_personal_config(request):
     if config_type == 'super_sign':
         personal_config = Config.DEVELOPER_STATUS_CONFIG
     elif config_type == 'preview_route':
-        personal_config = ['PREVIEW_ROUTE_HASH']
+        personal_config = ['PRIVATE_DOWNLOAD_PAGE', 'PREVIEW_ROUTE_HASH']
     elif config_type == 'short_download_uri':
-        personal_config = ['DOWNLOAD_DEPLOYMENT_URL']
+        personal_config = ['DOWNLOAD_DEPLOYMENT_HISTORY_URL', 'DOWNLOAD_DEPLOYMENT_HASH_URL']
     else:
         personal_config = []
     return personal_config
+
+
+def check_config_auth(request, config_key, config_value):
+    if config_key == 'PRIVATE_DOWNLOAD_PAGE':
+        if not DomainCnameInfo.objects.filter(user_ipk=request.user.pk, is_enable=True).count():
+            return False
+    return True
 
 
 class PersonalConfigView(APIView):
@@ -60,9 +67,11 @@ class PersonalConfigView(APIView):
         res = BaseResponse()
         config_key = request.data.get("config_key", None)
         config_value = request.data.get("config_value", None)
+
         if config_key is not None and config_value is not None and config_key in get_personal_config(request):
-            UserPersonalConfig.objects.filter(user_id=request.user, key=config_key).update(value=config_value)
-            UserConfig(request.user).invalid_config_cache(config_key)
+            if check_config_auth(request, config_key, config_value):
+                UserPersonalConfig.objects.filter(user_id=request.user, key=config_key).update(value=config_value)
+                UserConfig(request.user).invalid_config_cache(config_key)
         return Response(res.dict)
 
     def delete(self, request):
