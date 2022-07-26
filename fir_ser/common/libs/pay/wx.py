@@ -24,7 +24,7 @@ class Weixinpay(object):
     def __get_wx_pay(self):
         return WeChatPay(wechatpay_type=WeChatPayType.NATIVE,
                          mchid=self.wx_config.get('MCH_ID'),
-                         parivate_key=self.wx_config.get('APP_PRIVATE_KEY'),
+                         private_key=self.wx_config.get('APP_PRIVATE_KEY'),
                          cert_serial_no=self.wx_config.get('SERIAL_NO'),
                          appid=self.wx_config.get('APP_ID'),
                          notify_url=f"{self.wx_config.get('APP_NOTIFY_URL')}/{self.name}",

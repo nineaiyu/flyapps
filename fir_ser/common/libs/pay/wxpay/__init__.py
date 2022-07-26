@@ -8,7 +8,7 @@ class WeChatPay(object):
     def __init__(self,
                  wechatpay_type,
                  mchid,
-                 parivate_key,
+                 private_key,
                  cert_serial_no,
                  appid,
                  apiv3_key,
@@ -16,7 +16,7 @@ class WeChatPay(object):
         """
         :param wechatpay_type: 微信支付类型，示例值：WeChatPayType.MINIPROG
         :param mchid: 直连商户号，示例值：'1230000109'
-        :param parivate_key: 商户证书私钥，示例值：'MIIEvwIBADANBgkqhkiG9w0BAQE...'
+        :param private_key: 商户证书私钥，示例值：'MIIEvwIBADANBgkqhkiG9w0BAQE...'
         :param cert_serial_no: 商户证书序列号，示例值：'444F4864EA9B34415...'
         :param appid: 应用ID，示例值：'wxd678efh567hg6787'
         :param apiv3_key: 商户APIv3密钥，示例值：'a12d3924fd499edac8a5efc...'
@@ -28,7 +28,7 @@ class WeChatPay(object):
         self._notify_url = notify_url
         self._core = Core(mchid=self._mchid,
                           cert_serial_no=cert_serial_no,
-                          private_key=parivate_key,
+                          private_key=private_key,
                           apiv3_key=apiv3_key)
 
     def pay(self,

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# wechatpay v3 python sdk(https://github.com/minibear2021/wechatpayv3)
 import json
 import time
 import uuid
@@ -175,8 +176,7 @@ class Core():
         headers = {}
         headers.update({'Content-Type': 'application/json'})
         headers.update({'Accept': 'application/json'})
-        headers.update(
-            {'User-Agent': 'wechatpay v3 python sdk(https://github.com/minibear2021/wechatpayv3)'})
+        headers.update({'User-Agent': 'flyapps python sdk'})
         authorization = build_authorization(
             path,
             'GET' if method == RequestType.GET else 'POST',
