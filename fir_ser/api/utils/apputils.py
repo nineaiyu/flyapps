@@ -117,13 +117,13 @@ def save_app_infos(app_tmp_filename, app_file_name, user_obj, app_info, bundle_i
             app_obj.issupersign = issupersign
             # appmobj.wxeasytype = False if user_obj.domain_name or appmobj.domain_name else True
             app_obj.bundle_id = bundle_id
-            app_obj.save(update_fields=["short", "name", "bundle_id", "issupersign"])
+            app_obj.save(update_fields=["short", "name", "bundle_id", "issupersign", "updated_time"])
         except Exception as e:
             logger.error(f"save app info failed,app_obj:{app_obj}  Exception:{e}")
             app_obj.bundle_id = bundle_id
             app_obj.issupersign = issupersign
             app_obj.name = app_info["labelname"]
-            app_obj.save(update_fields=["name", "bundle_id", "issupersign"])
+            app_obj.save(update_fields=["name", "bundle_id", "issupersign", "updated_time"])
         del_cache_response_by_short(app_obj.app_id)
         MagicCacheData.invalid_cache(app_obj.app_id)
     AppReleaseInfo.objects.filter(app_id=app_obj).update(is_master=False)
