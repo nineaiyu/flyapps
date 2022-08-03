@@ -101,11 +101,24 @@ const dev_base_env = {
 };
 let base_evn = dev_base_env;
 
+const footer_info = {
+    copyright: 'Copyright © 2022-2099 isummer 版权所有.',
+    ipcBeiAn: {
+        url: 'https://beian.miit.gov.cn',
+        text: '京ICP备681262896号',
+    },
+    gongAnBeiAn: {
+        url: 'https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=681262896',
+        text: '京公网安备681262896号',
+    },
+}
+
 if (IS_PROD) {
     base_evn = pro_base_env
 } else {
     base_evn = dev_base_env
 }
+base_evn.footer_info = footer_info
 
 function get_public_path(pages) {
     if (!IS_PROD) {
@@ -141,7 +154,12 @@ module.exports = {
         config
             .plugin('define')
             .tap(args => {
-                args[0]['process.env']['base_env'] = JSON.stringify({baseUrl: base_evn.baseUrl,baseShortUrl:base_evn.baseShortUrl,version:base_evn.version});
+                args[0]['process.env']['base_env'] = JSON.stringify({
+                    baseUrl: base_evn.baseUrl,
+                    baseShortUrl: base_evn.baseShortUrl,
+                    version: base_evn.version,
+                    footer: base_evn.footer_info
+                });
                 return args
             });
 

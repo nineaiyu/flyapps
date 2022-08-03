@@ -28,22 +28,12 @@
 </template>
 
 <script>
-
+const footer = process.env.base_env.footer
 export default {
   name: "FirFooter",
   data() {
     return {
-      footer: {
-        copyright: 'Copyright © 2020-2099 isummer 版权所有.',
-        ipcBeiAn: {
-          url: 'https://beian.miit.gov.cn',
-          text: '京ICP备681262896号',
-        },
-        gongAnBeiAn: {
-          url: 'https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=681262896',
-          text: '京公网安备681262896号',
-        },
-      }
+      footer
     }
   }
 }
