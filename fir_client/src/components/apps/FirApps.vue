@@ -491,7 +491,10 @@
 
           <div class=" app-animator">
             <div class="card app card-ios">
-              <i class="down-icon el-icon-cloudy"> {{ r.count_hits }}</i>
+              <el-tooltip>
+                <div slot="content">总下载次数：{{ r.count_hits }}<br/>当天下载次数：{{ r.today_hits_count }}</div>
+                <i class="down-icon el-icon-cloudy"> {{ r.count_hits }} &nbsp;|&nbsp; {{ r.today_hits_count }}</i>
+              </el-tooltip>
               <i v-if="r.type === 1" class="type-icon iconfont icon-ios"/>
               <i v-if="r.type === 0" class="type-icon iconfont icon-android2"/>
 

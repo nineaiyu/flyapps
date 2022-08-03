@@ -136,11 +136,6 @@ class AdminAppsSerializer(AppsSerializer):
     def get_release_count(self, obj):
         return models.AppReleaseInfo.objects.filter(app_id=obj).count()
 
-    today_hits_count = serializers.SerializerMethodField()
-
-    def get_today_hits_count(self, obj):
-        return get_app_today_download_times([obj.app_id])
-
     def update(self, instance, validated_data):
         return super(AdminAppsSerializer, self).update(instance, validated_data)
 

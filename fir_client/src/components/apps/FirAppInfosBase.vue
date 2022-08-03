@@ -13,28 +13,32 @@
                                    class="bundleid short"
                              >&nbsp;{{ appinfos.preview_url }}</span>
             </el-tooltip>
+            <el-tooltip content="点击查看下载码">
 
-            <el-popover
-                placement="right"
-                width="288">
-              <div style="text-align: center; margin: 0">
-                <vue-qr ref="qr"
-                        :correctLevel="qrinfo.correctLevel" :logoCornerRadius="qrinfo.logoCornerRadius"
-                        :logoScale="qrinfo.logoScale"
-                        :logoSrc="icon_url"
-                        :margin="qrinfo.margin" :size="266"
-                        :text="appinfos.preview_url">
-                </vue-qr>
-                <el-button size="small" type="primary" @click="save_qr()">保存本地</el-button>
-              </div>
-
-              <span slot="reference" class="short ng-scope">下载码</span>
-            </el-popover>
+              <el-popover
+                  placement="right"
+                  width="288">
+                <div style="text-align: center; margin: 0">
+                  <vue-qr ref="qr"
+                          :correctLevel="qrinfo.correctLevel" :logoCornerRadius="qrinfo.logoCornerRadius"
+                          :logoScale="qrinfo.logoScale"
+                          :logoSrc="icon_url"
+                          :margin="qrinfo.margin" :size="266"
+                          :text="appinfos.preview_url">
+                  </vue-qr>
+                  <el-button size="small" type="primary" @click="save_qr()">保存本地</el-button>
+                </div>
+                <span slot="reference" class="short ng-scope">下载码</span>
+              </el-popover>
+            </el-tooltip>
 
 
             <span>{{ master_release.release_type |getapptype }}</span>
-            <el-tooltip content="下载量" placement="top">
-              <span><i class="el-icon-cloudy"/><b class="short">{{ appinfos.count_hits }}</b></span>
+            <el-tooltip placement="top">
+              <div slot="content">总下载次数：{{ appinfos.count_hits }}<br/>当天下载次数：{{ appinfos.today_hits_count }}</div>
+              <span><i class="el-icon-cloudy"/><b class="short">{{
+                  appinfos.count_hits
+                }}  &nbsp;|&nbsp; {{ appinfos.today_hits_count }} </b></span>
             </el-tooltip>
             <span class="bundleid ng-binding">BundleID<b class="ng-binding">
                           <el-tooltip content="复制到剪切板" placement="top">

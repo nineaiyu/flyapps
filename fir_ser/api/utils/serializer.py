@@ -12,7 +12,7 @@ from api.utils.modelutils import get_user_domain_name, get_app_domain_name, get_
 from common.base.baseutils import get_choices_dict, WeixinLoginUid
 from common.cache.storage import AdPicShowCache
 from common.core.sysconfig import Config, UserConfig
-from common.utils.caches import get_user_free_download_times, get_user_cert_auth_status
+from common.utils.caches import get_user_free_download_times, get_user_cert_auth_status, get_app_today_download_times
 from common.utils.storage import Storage
 from common.utils.token import make_token
 
@@ -216,12 +216,16 @@ class AppsSerializer(serializers.ModelSerializer):
         else:
             return {}
 
+    today_hits_count = serializers.SerializerMethodField()
+
+    def get_today_hits_count(self, obj):
+        return get_app_today_download_times([obj.app_id])
 
 class AppsListSerializer(AppsSerializer):
     class Meta:
         model = models.Apps
         fields = ["app_id", "bundle_id", "issupersign", "name", "preview_url", "short", "type", "master_release",
-                  "has_combo", "count_hits"]
+                  "has_combo", "count_hits", "today_hits_count"]
 
     def get_master_release(self, obj):
         master_release_obj = get_app_master_obj_from_context(self, obj)
