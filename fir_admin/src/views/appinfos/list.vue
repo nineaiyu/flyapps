@@ -212,7 +212,7 @@ export default {
   },
   methods: {
     go_download_url(app_info) {
-      window.open(app_info.preview_url + '/' + app_info.short, '_blank', '')
+      window.open(app_info.preview_url, '_blank', '')
     },
     deleteApp(app_id) {
       this.$confirm('此操作将永久删除该应用, 是否继续?', '提示', {
