@@ -87,7 +87,7 @@ class THIRDLOGINCONF(object):
             'token': 'f0ae76c1559cacf72a99db6a41b879b8',
             'encoding_aes_key': '7b9U60tCXk3f4yOFideTN5ithh4Y8X3Xl9pRovp83gG',
         },
-        'active': False
+        'active': True
     }
     wx_applet = {
         'auth': {
@@ -268,40 +268,12 @@ class SENDERCONF(object):
 
 class IPACONF(object):
     APPLE_DEVELOPER_API_PROXY_LIST = [
-        {'proxy': '39.101.198.124:17897', 'active': True},
-        {'proxy': '8.142.38.157:17897', 'active': True},
-        {'proxy': '121.89.194.26:17897', 'active': True},
-        {'proxy': '39.103.139.122:17897', 'active': True},
-        {'proxy': '8.142.99.245:17897', 'active': True},
-        {'proxy': '8.142.174.13:17897', 'active': True},
-        {'proxy': '39.99.238.93:17897', 'active': True},
-        {'proxy': '8.142.173.96:17897', 'active': True},
-        {'proxy': '8.142.163.150:17897', 'active': True},
-        {'proxy': '39.99.148.6:17897', 'active': True},
-        {'proxy': '8.142.177.18:17897', 'active': True},
-        {'proxy': '39.99.238.109:17897', 'active': True},
-        {'proxy': '8.142.137.58:17897', 'active': True},
-        {'proxy': '8.142.70.111:17897', 'active': True},
-        {'proxy': '39.99.250.139:17897', 'active': True},
-        {'proxy': '39.98.108.35:17897', 'active': True},
-        {'proxy': '8.142.86.125:17897', 'active': True},
-        {'proxy': '39.103.134.67:17897', 'active': True},
-        {'proxy': '121.89.213.83:17897', 'active': True},
-        {'proxy': '39.103.157.148:17897', 'active': True},
-        {'proxy': '121.89.211.11:17897', 'active': True},
-        {'proxy': '39.101.134.27:17897', 'active': True},
-        {'proxy': '39.103.129.39:17897', 'active': True},
-        {'proxy': '39.103.170.156:17897', 'active': True},
-        {'proxy': '8.142.169.88:17897', 'active': True},
-        {'proxy': '39.103.231.80:17897', 'active': True},
-        {'proxy': '8.142.43.168:17897', 'active': True},
-        {'proxy': '8.142.120.245:17897', 'active': True},
-        {'proxy': '8.142.120.174:17897', 'active': True},
+        # {'proxy': '39.26.108.94:7897', 'active': True},
     ]
     APPLE_DEVELOPER_API_PROXY = {
         # 代理的作用，主要是为了加快苹果api的访问，在国内会出现卡死，访问超时等问题，怀疑是被苹果服务器拦截了
-        # 'http': '47.243.172.202:17897',
-        # 'https': '47.243.172.202:17897'
+        # 'http': '47.243.172.202:7897',
+        # 'https': '47.243.172.202:7897'
     }
     APPLE_DEVELOPER_API_TIMEOUT = 2 * 60  # 访问苹果api超时时间，默认3分钟
     MOBILE_CONFIG_SIGN_SSL = {

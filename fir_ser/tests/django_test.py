@@ -58,9 +58,14 @@ django.setup()
 #
 # a = WeChatInfo.objects.filter(openid='11').values('nickname')
 # print(a)
-from xsign.utils.ctasks import auto_check_ios_developer_active
-
-auto_check_ios_developer_active()
+#
+from api.models import *
+app_obj = Apps.objects.first()
+print(app_obj.updated_time)
+app_obj.description='111'
+app_obj.save(update_fields=["description","updated_time"])
+app_obj = Apps.objects.first()
+print(app_obj.updated_time)
 # from common.notify.wx import check_apple_developer_devices
 #
 # user_obj = UserInfo.objects.filter(uid='47ed855a8e6411ec83f100163e1bfc45').first()
