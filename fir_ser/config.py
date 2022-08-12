@@ -11,9 +11,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class DOMAINCONF(object):
-    API_DOMAIN = "https://app.hehelucky.cn"
-    WEB_DOMAIN = "https://app.hehelucky.cn"
-    MOBILEPROVISION = "https://static.flyapps.top/embedded2.mobileprovision"
+    API_DOMAIN = "https://app.hehelucky.cn"  # 用与开启本地存储，上传应用配置
+    WEB_DOMAIN = "https://app.hehelucky.cn"  # 用于超级签跳转配置，该域名一般为前端页面域名
+    MOBILEPROVISION = "https://static.hehejoy.cn/embedded3.mobileprovision"  # 用于苹果包企业签信任企业跳转
+
     DOWNLOAD_DEPLOYMENT_HASH_URL = "https://static.flyapps.top/download.v63.23.tar.gz"
     DOWNLOAD_DEPLOYMENT_HISTORY_URL = "https://static.flyapps.top/download.v63.23.tar.gz"
     DOWNLOAD_DEPLOYMENT_HASH_URL_DES = "hash模式"
@@ -40,14 +41,14 @@ class BASECONF(object):
     CELERY_FLOWER_PORT = 5566
     CELERY_FLOWER_HOST = '127.0.0.1'
 
-    # geetest 配置信息
-    GEETEST_ID = "d3f3cf73200a70bd3a0c32ea22e5003a"
-    GEETEST_KEY = "6f4ab6185c230a4b1f8430f28ebe4804"
+    # geetest 配置信息, 该配置信息一般用于登录，注册，修改信息的滑动验证
+    GEETEST_ID = "修改为你自己的信息"
+    GEETEST_KEY = "修改为你自己的信息"
     GEETEST_CYCLE_TIME = 10
     GEETEST_BYPASS_STATUS_KEY = "gt_server_bypass_status"
     GEETEST_BYPASS_URL = "https://bypass.geetest.com/v1/bypass_status.php"
 
-    # 访问速率限制
+    # 访问速率限制，可根据实际情况修改
     DEFAULT_THROTTLE_RATES = {
         'ShortAccessUser1': '180/m',
         'ShortAccessUser2': '2000/h',
@@ -64,7 +65,10 @@ class BASECONF(object):
 
 
 class DBCONF(object):
-    host = '127.0.0.1'
+    """
+    mysql数据库信息
+    """
+    host = 'mysql'  # 可以通过主机名进行通信，如果是本地部署，可填写 127.0.0.1
     port = '3306'
     password = 'KGzKjZpWBp4R4RSa'
     user = 'flyuser'
@@ -72,7 +76,10 @@ class DBCONF(object):
 
 
 class CACHECONF(object):
-    host = '127.0.0.1'
+    """
+    redis 缓存配置
+    """
+    host = 'redis'   # 可以通过主机名进行通信，如果是本地部署，可填写 127.0.0.1
     port = '6379'
     password = ''
 
@@ -82,19 +89,19 @@ class THIRDLOGINCONF(object):
     wx_official = {
         'name': 'wx_official',
         'auth': {
-            'app_id': '1wx390e5985fd3699e6',
-            'app_secret': '5b1796722172a902d019f43e4a2fb678',
-            'token': 'f0ae76c1559cacf72a99db6a41b879b8',
-            'encoding_aes_key': '7b9U60tCXk3f4yOFideTN5ithh4Y8X3Xl9pRovp83gG',
+            'app_id': '修改为你自己的信息',
+            'app_secret': '修改为你自己的信息',
+            'token': '修改为你自己的信息',
+            'encoding_aes_key': '修改为你自己的信息',
         },
-        'active': True
+        'active': False
     }
     wx_applet = {
         'auth': {
-            'app_id': 'wxb65d1894331e9ff3',
-            'app_secret': 'e05b319562b3b123ffef1d9ce64dd665',
+            'app_id': '修改为你自己的信息',
+            'app_secret': '修改为你自己的信息',
         },
-        'active': True
+        'active': False
     }
 
 
@@ -103,9 +110,9 @@ class AUTHCONF(object):
     REGISTER = {
         "enable": True,
         "captcha": False,  # 是否开启注册字母验证码
-        "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
+        "geetest": False,  # 是否开启geetest验证，如要开启请先配置geetest
         "register_type": {
-            'sms': True,  # 短信注册
+            'sms': False,  # 短信注册
             'email': True,  # 邮件注册
             'code': False,  # 邀请码注册,邀请码必填写，需要和短信，邮件一起使用
         }
@@ -114,18 +121,18 @@ class AUTHCONF(object):
     CHANGER = {
         "enable": True,
         "captcha": False,  # 是否开启注册字母验证码
-        "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
+        "geetest": False,  # 是否开启geetest验证，如要开启请先配置geetest
         "change_type": {
-            'sms': True,  # 短信注册
+            'sms': False,  # 短信注册
             'email': True,  # 邮件注册
             'code': False,  # 邀请码注册,邀请码必填写，需要和短信，邮件一起使用
         }
     }
     LOGIN = {
         "captcha": False,  # 是否开启登录字母验证码
-        "geetest": True,  # 是否开启geetest验证
+        "geetest": False,  # 是否开启geetest验证
         "login_type": {
-            'sms': True,  # 短信登录
+            'sms': False,  # 短信登录
             'email': True,  # 邮件登录
             'up': False,  # 密码登录
             'third': {
@@ -136,7 +143,7 @@ class AUTHCONF(object):
     REPORT = {
         "enable": True,
         "captcha": False,  # 是否开启注册字母验证码
-        "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
+        "geetest": False,  # 是否开启geetest验证，如要开启请先配置geetest
         "report_type": {
             'sms': False,  # 短信举报
             'email': True,  # 邮件举报
@@ -145,7 +152,7 @@ class AUTHCONF(object):
     NOTIFY = {
         "enable": True,
         "captcha": False,  # 是否开启注册字母验证码
-        "geetest": True,  # 是否开启geetest验证，如要开启请先配置geetest
+        "geetest": False,  # 是否开启geetest验证，如要开启请先配置geetest
         "notify_type": {
             'sms': False,  # 短信通知
             'email': True,  # 邮件通知
@@ -173,13 +180,13 @@ class STORAGEKEYCONF(object):
             'name': 'aliyun',
             'type': 2,
             'auth': {
-                'access_key': 'LTAI4FkbTR',
-                'secret_key': '2iLIxy9',
-                'bucket_name': 'fge',
-                'sts_role_arn': 'ap-sage',
+                'access_key': '修改为你自己的信息',
+                'secret_key': '修改为你自己的信息',
+                'bucket_name': '修改为你自己的信息',
+                'sts_role_arn': '修改为你自己的信息',
                 'endpoint': 'oss-cn-beijing-internal.aliyuncs.com',  # 服务器和oss在同一个地区，填写内网的endpoint
                 'is_https': True,
-                'domain_name': 'aoud.xin',
+                'domain_name': '修改为你自己的信息',
                 'download_auth_type': 1,  # 1:oss 2:cdn
                 'cnd_auth_key': '',  # 当cdn为阿里云并且 download_auth_type=2 的时候 生效,需要 开启阿里云OSS私有Bucket回源
             },
@@ -189,11 +196,11 @@ class STORAGEKEYCONF(object):
             'name': 'qiniuyun',
             'type': 1,
             'auth': {
-                'access_key': 'mT4fiJ',
-                'secret_key': '0G9fXfhYLynv',
-                'bucket_name': 'fge',
+                'access_key': '修改为你自己的信息',
+                'secret_key': '修改为你自己的信息',
+                'bucket_name': '修改为你自己的信息',
                 'is_https': False,
-                'domain_name': 'foud.xin'
+                'domain_name': '修改为你自己的信息'
             },
             'active': False
         }
@@ -214,9 +221,9 @@ class SENDERCONF(object):
                 'email_port': 465,
                 'use_tls': False,
                 'use_ssl': True,
-                'username': 'flyapps@126.com',
-                'password': 'GGHFEUMZBRZIFZGQ',
-                'form': 'fly分发平台 <flyapps@126.com>',
+                'username': '修改为你自己的信息',
+                'password': '修改为你自己的信息',
+                'form': 'fly分发平台 <修改为你自己的信息>',
                 'subject': '%(code)s验证',
                 'template_code': {
                     'login': 'common.libs.sendmsg.template_content.get_userinfo_login_code_html_content',
@@ -232,27 +239,27 @@ class SENDERCONF(object):
             'name': 'aliyun',
             'type': 1,
             'auth': {
-                'access_key': 'LTAI5tJH2EnjVzJGMmNCYo9U',
-                'secret_key': 'd0LETks5oxkdfbkLGtFihklWGbokab',
+                'access_key': '修改为你自己的信息',
+                'secret_key': '修改为你自己的信息',
                 'region_id': 'cn-hangzhou',
-                'sing_name': '东城飞阳',
+                'sing_name': '修改为你自己的信息',
                 'template_code': {
-                    'login': 'SMS_216700569',
-                    'change': 'SMS_216700566',
-                    'register': 'SMS_216700567',
-                    'password': 'SMS_222341718',
-                    'common': 'SMS_227259072'
+                    'login': '修改为你自己的信息',
+                    'change': '修改为你自己的信息',
+                    'register': '修改为你自己的信息',
+                    'password': '修改为你自己的信息',
+                    'common': '修改为你自己的信息'
                 }
             },
-            'active': True
+            'active': False
         },
         {
             'name': 'jiguang',
             'type': 2,
             'auth': {
-                'app_key': '93e1a9f71db4f044de4db34a',
-                'master_secret': '5f996ee39c7eb52906510cc2',
-                'sign_id': '18138',
+                'app_key': '修改为你自己的信息',
+                'master_secret': '修改为你自己的信息',
+                'sign_id': '修改为你自己的信息',
                 'template_code': {
                     'login': '1',
                     'change': '1',
@@ -305,14 +312,14 @@ class PAYCONF(object):
         {
             'NAME': 'alipay',
             'TYPE': 'ALI',
-            'ENABLED': True,
+            'ENABLED': False,
             'AUTH': {
-                'APP_ID': "2021002138691845",
+                'APP_ID': "修改为你自己的信息",
                 'APP_PRIVATE_KEY': '''-----BEGIN RSA PRIVATE KEY-----
-MIIEowIBAAKCAQEAhqf2mwftoxZDNpl4eWsQ6mEfXgMlNPr6jv72ecA4hbKWqChXQmGS1T+0VsRTSoOXRDlu1MMqkTGISzHvmGb7Gmw+Myfs/ojoonD9r8fODvIo1MHolFBhr3GNQu7tqBlVJ76QgiYft+c4kkqCguuyCrd3Te6C5zCIuh6O98r4D3A3LFcm6OdScWGcfEbR+FUv+jSi2oezHeSpkhhpHGBLSsI0L9JOdHetdUE/TwN8V1HABdpnPXtp9SIu6ioIrrligX1ZRlwht2YUt0BPqPp/ApLdRIsqlhD4/ejmtMlaRqqiN6PulEThBew/qaLVSXIr2HCSXtwbki3pFMFOcsjF2wIDAQABAoIBADp4sQL83FnXDvSki8XdkgjUh7RhFUT+PtLdL9YKfADCXd1DNzDiAcqL0RlkQu62WXcMoW3OGavWoGJWmr3I6fy9R/0atzSH6syu19n+nyGqUcShNwdAKErwufB4o8Y8yddqToHVYCyRQOV1aVrEUhmJNUsn6LvPPW/kWRyMjE7XQDFHpL5/Ly7pXe+f9Btm37ZuePTPsm65P88C3GznjZxXhY1LBWFKLPG1470xdReduyeJFZS/TmK0nUxLwkACm9Gfvp7S2KJ3okUXohsGBAgJ68B9YeGiuIJiZhH2DZ1pm3/R9bSpOX3H+6vjaCsacXT5w7LZB+O0Vkthcm9vqeECgYEAvozFkIkFXXCEmCr3QVCJs4Fc6onbXEJU45xxubPhkA1wwwPrSqdubo4RHvNIus45Fn4mLzuQsaPRyJJZajvaKWC00GxhChMYj+nWgkAmABPKGwkMxzjC7wvEJkGyt87fHpK1XMFWQgfJ42VwUtmyemCMuh+A2SOekIJay93xTtkCgYEAtOhmQ4pu2cyqTzT+SD7p/VnS4sNqqM4I8NSvTuLkEo2IHnUj7YG6XoPZjn35dBvYUWWN2dwgfHXGEEzCOIwfy8GPA4eoKCDNEkMvoBVLdrEzMqg5QwG5GsIGvOuFnAzAw+D5YwEym/qmC2oBbat5jsAGT2rMmU5MnaS8a7lvcdMCgYEAiusQQb5TZfrZACMa3cg8i9y9A9R7UzicsM/mbW+B+8aAtfxOdr+4F+uE+d594IrmPcq8ReUUKR34nFRt0bBO7amuSOEqofCoEIt3MsBXs+i5iJpBcaClJSeb2hQ9mhm8uopUpInjPAJ3okva5twFbYikMDE1e5inSk1uqoBlI4kCgYB4rzDJjeg1U9upy2h3OcFPSkTtEgBtbEV6o+fvcF1GIzTTXMIDB7AUrVDNRizL0GeWpXDkDX1+ifL/nLVUk+YCP7XwXOdJHdiwfjGfUZVuMPg+qwrIMLYTq6xjC5uuZrOR+NtluL7SX3u10ZnyV5pYKLIM+OpUu29RGzy3gJVgEQKBgCC9vXS7P9RHTAxYEG4WOzv0tjFUtPOsaHenvNbc7nVe2Kkre0/TO+EtnuhINmJp2y5UEve6cLK2sPnbT8raarjPuomDfN0hwEx3jZd+rPdB/tdRH0LMLBu28TlzHllJYjbINn+NXc0adbqeuA4ziXTZow5yX5J+i9dy55A1bvie
+修改为你自己的信息
 -----END RSA PRIVATE KEY-----''',
                 'ALI_PUBLIC_KEY': '''-----BEGIN CERTIFICATE-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkru1ulQV1v4q+q38nyzgkdd3evf7C1/Ipu6K+ZFb5FiuxJ7mildkBSuKz/8+TRd+tjgk2lfc2ehK5pja3cxDO/nb25sBoWiU09rtxgXLehLsgRRhatbICrlOnYxg5aiB5odAp3NMRqore4lnVYwfIyL9M49I0G/NbQzYjUQvAQJsnHwc6a6Kuqi1CwR1WXI0sDF9w7KXC4vRFFIUTwI4bVq4HQWI7NhbgEajHM/j6D6Bh/OMcTYnJJzCja0WmZRe5flfCsELlPESOCWUMbYoaNfBzpNvvyOpmRgs9jgy2WY9SeaB9hxwkpr8tOd2Sc7j3221JKCyDaFAX+4zPy7/fQIDAQAB
+修改为你自己的信息
 -----END CERTIFICATE-----''',
                 'APP_NOTIFY_URL': '{{APP_NOTIFY_URL}}',  # 支付支付回调URL
                 'RETURN_URL': '{{PAY_SUCCESS_URL}}',  # 支付前端页面回调URL
@@ -322,40 +329,15 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkru1ulQV1v4q+q38nyzgkdd3evf7C1/Ipu6K
         {
             'TYPE': 'WX',
             'NAME': 'wxpay',
-            'ENABLED': True,
+            'ENABLED': False,
             'AUTH': {
-                'APP_ID': "wx390e5985fd3699e6",
-                'MCH_ID': "1608486112",
-                'SERIAL_NO': "27DADA4D2921CDD66B8B20A68276F09B90754922",
+                'APP_ID': "修改为你自己的信息",
+                'MCH_ID': "修改为你自己的信息",
+                'SERIAL_NO': "修改为你自己的信息",
                 'APP_PRIVATE_KEY': '''-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDbXhNoHljrkS8T
-jXg3+tTkaoOol8FDt0jSGckhzX46gkS16CWYwTthBKurfFtynsJe4uDOphS1ge/r
-QEU3+rWNxqa8o6gHSpp2UTYAz/1oYOlXuSa4NA1uD47lmVZJzad2ybWDSsoeRjFj
-c+X6F0ZiE3FmdN1iHz8NmbP99foih4smv15X+wX5DrsuLuPVHNB4D0fqvY7P5PO3
-wUQXWQNezCYzpPoXX2H/UkyFEFZhWk6/9z3aAkYmqfd6IWPHewOqnVoQRKmo5bXb
-yWbB+QIl/HcSfNtq869s5lLGR2Rl2UX8IFXCcXnRPhSAVIeWfXN26Pc9dz9N4VTU
-yiZ8Y6AHAgMBAAECggEABdS0U1orJufPBogGIAbMzd1+7mZKPtCKYPtKe1mI92kr
-BmLLTQol1+hV39MIYz2RERCaxSNo/YIcrHYi4OALH1+eYvk+qCL1hBuYgeEFbVbW
-HPzQ6KiJitljBPtUbdXHk8K8zmaYhMF84pXcEQ+5UTYPF5gXoloORQBG5oM5SN2g
-2GTgYw1cpDzzRRwnmpvYd1ZydYNj8m6k7I2L1pwzRS/6/whz1sScpfh+91w1IVM0
-WT+pPSdiVtQ7ktmvcTrWj7eNIbcsptZ1QgSV3UHkU0xzLG9N1TqJdHOquunXRS7V
-iw/4NgXveXSTSQrmmZVS+Kdyc+z1iDqwOXmE7hjioQKBgQD7js+40NCAPLYXEfer
-UFvZ6kem9mJIzAUdeTdK4BjYJrcU+UsXRmcWJIPI9HWSr31f/fSfu2SKyBa6+dFF
-SeNHuHPPqQAXrsNuhFG1wcKoNybk7KrsQlXheK7br42565Tegz3UXOKMrnPPlukH
-ZZdlYmwBFjEJvIr9jxJvJoW6qQKBgQDfPb697vR8ruLaecPmsq920iC3AQRanYFK
-dW6U98JkCN9A/LXA1jGyDTEhtlja+5Ylp0M1EnlcZ079Jnvek5haSNnD0xb1nMy8
-P/o0/eWWArTgfjfiJeq1tSdrinGhNz0+Vty74wnbS+5P18H23I5jBlGX5hyNkU4L
-axUfJM9jLwKBgCo/1xVkRNB04eRICT/FlFeqKHSbRvCRC37iv+2ca6/J+M/V+s2i
-7mdipJuYqzKCtNztayt0rrM8Xczzbjlj6n8+NH05FiHkIUCriomrTEUyVh72vNJH
-ZeMjgMK23mfOcEda5YSIQSh9mEfSQbsTTfUiLZ+VGZFYEEP7xo3Se31ZAoGBAJas
-LPYytq8EtrYwowktJwJydoQt2otybRYdRmKjCn/MASrypZWeu/Hpt3SCh1xdnAyT
-5OeILYMxcv2noMksIxMkwl3KNl/V0dVo9O4ZQ4DJGN3AMuWfI9g6iX2q9mCSUPKn
-W9owNbHegN1AyXhdinjJhf6Y4EKohN1uC9Z2WMcfAoGAW90Z2LkqG2fen+R62syP
-aaInnu9bitb9rVENCNGXQHdWmIYBMM5zrg8nX8xNJ+yeGQhgxE+YeSq4FOpe0JkA
-daWIhg++OHN2MBRutj7oL/AFAxyu467YA5+itEJLHNATbOr/s13S66nePNXox/hr
-bIX1aWjPxirQX9mzaL3oEQI=
+修改为你自己的信息
 -----END PRIVATE KEY-----''',
-                'API_V3_KEY': '60DbP621a9C3162dDd4AB9c2O15a005L',
+                'API_V3_KEY': '修改为你自己的信息',
                 'APP_NOTIFY_URL': '{{APP_NOTIFY_URL}}',  # 支付支付回调URL
                 'RETURN_URL': '{{PAY_SUCCESS_URL}}',  # 支付前端页面回调URL
                 'SUBJECT': '向 FLY分发平台 充值',
