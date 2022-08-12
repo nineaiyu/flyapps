@@ -5,7 +5,9 @@ git clone https://github.com/nineaiyu/FlyApps
 ```
 
 
-### FlyApp 服务器搭建 [python3 环境]
+### [Docker 部署](./docker.md)
+
+### FlyApp 本地部署 [python3 环境]
 
 ##### 搭建python env 环境
 ```shell
@@ -41,7 +43,7 @@ python manage.py migrate
 ```shell
 yum install openssl-devel -y
 yum install gcc-c++ gcc -y
-wget https://github.com/nineaiyu/zsign/archive/refs/tags/v1.1.2.tar.gz
+
 tar xvf v1.1.2.tar.gz
 cd zsign-1.1.2/
 g++ *.cpp common/*.cpp -lcrypto -O3 -std=c++11 -o zsign
@@ -53,7 +55,7 @@ cp zsign /usr/bin/
 ```shell
 yum install npm
 npm install -g n
-n 12.13      # 安装12版本的node ,最新版本会有问题
+n 12.13      # 安装12版本的node或者14版本 ,最新版本会有问题
 npm install -g yarn
 ```
 

@@ -34,7 +34,7 @@ class BASECONF(object):
     # When Django start it will bind this host and port
     # ./manage.py runserver 127.0.0.1:8080
     # uwsgi运行时绑定端口
-    SERVER_BIND_HOST = '127.0.0.1'
+    SERVER_BIND_HOST = '0.0.0.0'
     SERVER_LISTEN_PORT = 8898
 
     # celery flower 任务监控配置
@@ -68,7 +68,7 @@ class DBCONF(object):
     """
     mysql数据库信息
     """
-    host = 'mysql'  # 可以通过主机名进行通信，如果是本地部署，可填写 127.0.0.1
+    host = 'mariadb'  # 可以通过主机名进行通信，如果是本地部署，可填写 127.0.0.1
     port = '3306'
     password = 'KGzKjZpWBp4R4RSa'
     user = 'flyuser'
@@ -81,7 +81,7 @@ class CACHECONF(object):
     """
     host = 'redis'   # 可以通过主机名进行通信，如果是本地部署，可填写 127.0.0.1
     port = '6379'
-    password = ''
+    password = 'nineven'
 
 
 # 微信公众号登录配置

@@ -25,8 +25,8 @@ while [ ${code} -ne 0 ];do
         echo "check whether mysql service is ready..."
 done
 
-docker exec -it mariadb mysql -proot -e 'create database flyapp default character set utf8 COLLATE utf8_general_ci;'
-docker exec -it mariadb mysql -proot -e "grant all on flyapp.* to flyuser@'%' identified by 'KGzKjZpWBp4R4RSa';"
+docker exec -it mariadb mysql -proot -e 'create database flyappnew default character set utf8 COLLATE utf8_general_ci;'
+docker exec -it mariadb mysql -proot -e "grant all on flyappnew.* to flyuser@'%' identified by 'KGzKjZpWBp4R4RSa';"
 
 
 docker run --sysctl net.core.somaxconn=4096 --net flyapps \
