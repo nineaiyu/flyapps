@@ -146,4 +146,6 @@ class AppCanSignView(APIView):
     authentication_classes = [ExpiringTokenAuthentication, ]
 
     def get(self, request):
-        return ApiResponse(data={'sign': True})
+        if check_super_sign_permission(request.user):
+            return ApiResponse(data={'sign': True})
+        return ApiResponse(data={'sign': False})
