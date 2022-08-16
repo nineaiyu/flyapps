@@ -417,3 +417,13 @@ def add_user_storage_exchange(user_obj, exchange_number, exchange_month, remote_
         except Exception as e:
             logger.error(f"{user_obj} download_times less then 0. Exception:{e}")
         return False
+
+
+def add_user_ds(uid, amount):
+    obj = UserInfo.objects.filter(uid=uid).first()
+    try:
+        amount = int(amount)
+    except Exception:
+        amount = 0
+    if obj and amount:
+        return admin_change_user_download_times(obj, amount * Config.APP_USE_BASE_DOWNLOAD_TIMES)
