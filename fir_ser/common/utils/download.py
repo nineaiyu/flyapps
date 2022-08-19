@@ -125,7 +125,7 @@ def get_app_download_url(request, res, app_id, short, password, release_id, is_d
         logger.info(f'app download url :{res.data}')
         if download_url != "" and "mobileconifg" not in download_url:
 
-            if not check_app_download_token(app_obj.get("need_password"), is_download, app_id, password):
+            if not check_app_download_token(app_obj.get("need_password"), is_download, app_id, password, bool(udid)):
                 res.code = 1006
                 res.msg = '下载授权码有误'
                 return res

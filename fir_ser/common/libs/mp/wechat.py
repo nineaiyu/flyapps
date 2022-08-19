@@ -73,11 +73,6 @@ def create_menu(menu_json=None):
                         "key": "flyapps"
                     },
                     {
-                        "type": "view",
-                        "name": "留言反馈",
-                        "url": "https://flyapps.cn/gbook/"
-                    },
-                    {
                         "type": "click",
                         "name": "查询当前绑定",
                         "key": "query_bind"

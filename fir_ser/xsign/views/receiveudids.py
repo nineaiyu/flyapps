@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 
 from api.models import Apps, AppDownloadToken
 from api.utils.modelutils import get_redirect_server_domain, add_remote_info_from_request, \
-    get_app_download_uri
+    get_app_download_uri, get_preview_short_config
 from api.utils.response import BaseResponse
 from common.base.baseutils import get_real_ip_address, make_random_uuid, get_server_domain_from_request, AesBaseCrypt
 from common.cache.storage import TaskStateCache
@@ -56,12 +56,16 @@ class IosUDIDView(APIView):
         stream_f = str(request.body)
         format_udid_info = udid_bytes_to_dict(stream_f)
         logger.info(f"short {short} receive new udid {format_udid_info}")
+        org_short = short
+        short = get_preview_short_config(None, short)
         server_domain = get_redirect_server_domain(request)
         try:
             app_obj = Apps.objects.filter(short=short, app_id=app_id).first()
             if app_obj:
+                user_obj = app_obj.user_id
+                short = get_preview_short_config(user_obj, short)
                 if p_token and verify_token(p_token, app_obj.app_id, True):
-                    server_domain = get_app_download_uri(request, app_obj.user_id, app_obj, preview=False)
+                    server_domain = get_app_download_uri(request, user_obj, app_obj, preview=False)
                     if app_obj.issupersign and app_obj.user_id.supersign_active:
                         res = check_app_permission(app_obj, BaseResponse())
                         if res.code != 1000:
@@ -76,7 +80,7 @@ class IosUDIDView(APIView):
                             # return Response('ok')
                             data = {
                                 'format_udid_info': format_udid_info,
-                                'short': short,
+                                'short': org_short,
                                 'app_id': app_id,
                                 'client_ip': client_ip,
                                 'r_token': make_token(app_obj.app_id, time_limit=60, key='receive_udid', force_new=True)

@@ -323,4 +323,7 @@ def get_user_storage_obj(user_obj, default=False):
 
 
 def get_preview_short_config(user_obj, short):
-    return f"{'#/' if UserConfig(user_obj).PREVIEW_ROUTE_HASH else ''}{short}"
+    if user_obj:
+        return f"{'#/' if UserConfig(user_obj).PREVIEW_ROUTE_HASH else ''}{short}"
+    else:
+        return f"{'#/' if Config.PREVIEW_ROUTE_HASH else ''}{short}"
