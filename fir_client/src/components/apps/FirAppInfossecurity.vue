@@ -1,5 +1,6 @@
 <template>
   <div style="margin-top: 20px;width: 66%;margin-left: 8%">
+
     <el-dialog
         :close-on-click-modal="false"
         :close-on-press-escape="false"
@@ -23,6 +24,25 @@
           center
           title="下载授权码生成"
           width="500px">
+
+        <el-dialog
+            :visible.sync="addUdidVisible"
+            append-to-body
+            center
+            title="添加设备udid授权"
+            width="500px">
+          <el-tag style="margin: 10px 0">可以输入多个udid,以空格或者回车分割</el-tag>
+          <el-input
+              v-model="makeTokenInfo.udids"
+              :rows="17"
+              placeholder="可以输入多个udid,以空格或者回车分割"
+              type="textarea">
+          </el-input>
+          <span slot="footer">
+            <el-button @click="addUdidVisible=false,makeTokenInfo.udids=''">取消</el-button>
+            <el-button @click="addUididFunc">确定</el-button>
+        </span>
+        </el-dialog>
 
         <el-form ref="form" :model="makeTokenInfo" label-width="110px">
           <el-form-item label="指定授权码" style="width: 400px">
@@ -62,6 +82,12 @@
               </el-switch>
             </el-tooltip>
             <el-tag style="margin-left: 5px">绑定设备之后，二次自动进行设备授权下载应用</el-tag>
+          </el-form-item>
+          <el-form-item v-if="currentapp.type===1 && currentapp.issupersign && makeTokenInfo.bind_status===true"
+                        label="添加授权设备">
+            <el-button size="mini" @click="addudid">
+              添加
+            </el-button>
           </el-form-item>
         </el-form>
         <span slot="footer">
@@ -154,7 +180,7 @@
             align="center"
             label="最大可用次数"
             prop="max_limit_count"
-            width="130">
+            width="110">
           <template slot-scope="scope">
             <span v-if="scope.row.max_limit_count === 0">不限次数</span>
             <span v-else>{{ scope.row.max_limit_count }}</span>
@@ -175,16 +201,24 @@
               align="center"
               label="设备ID"
               prop="bind_udid">
+            <template slot-scope="scope">
+              <el-tooltip content="点击复制到剪贴板">
+                <el-link v-clipboard:copy="scope.row.bind_udid"
+                         v-clipboard:success="copy_success"
+                         :underline="false">{{ scope.row.bind_udid }}
+                </el-link>
+              </el-tooltip>
+            </template>
           </el-table-column>
         </div>
         <el-table-column
             align="center"
             fixed="right"
             label="操作"
-            width="120">
+            width="90">
           <template slot-scope="scope">
             <div>
-              <el-tooltip content="重置使用次数" placement="top">
+              <el-tooltip :content="get_reset_title()" placement="top">
                 <el-button
                     size="mini"
                     @click="resetDownloadUsed(scope.row)">重置
@@ -327,16 +361,42 @@ export default {
       app_download_token_list: [],
       loading: false,
       makeTokenVisible: false,
+      addUdidVisible: false,
       tokendisable: false,
       pagination: {"currentPage": 1, "total": 0, "pagesize": 10},
       dpwdsearch: '',
       dpwdtitle: '输入下载授权码',
-      makeTokenInfo: {token: '', token_length: 6, token_number: 20, token_max_used_number: 0, bind_status: false},
-      multipleSelection: []
-
+      makeTokenInfo: {
+        token: '',
+        token_length: 6,
+        token_number: 20,
+        token_max_used_number: 0,
+        bind_status: false,
+        udids: ''
+      },
+      multipleSelection: [],
     }
   },
   methods: {
+    addUididFunc() {
+      let udids = this.makeTokenInfo.udids
+      if (udids && udids.length > 10) {
+        this.makeDownloadToken()
+      } else {
+        this.$message.error('设备udid不存在，请检查')
+      }
+    },
+    get_reset_title() {
+      let title = '重置使用次数'
+      if (this.currentapp.type === 1 && this.currentapp.issupersign) {
+        title = '重置使用次数和授权设备ID'
+      }
+      return title
+    },
+    addudid() {
+      this.makeTokenInfo.udids = ''
+      this.addUdidVisible = true
+    },
     format_copy_text(token) {
       return this.currentapp.preview_url + "?password=" + token
     },
@@ -369,8 +429,16 @@ export default {
       this.multipleSelection = val;
     },
     cancelDownloadToken() {
-      this.makeTokenInfo = {token: '', token_length: 6, token_number: 20, token_max_used_number: 0, bind_status: false}
+      this.makeTokenInfo = {
+        token: '',
+        token_length: 6,
+        token_number: 20,
+        token_max_used_number: 0,
+        bind_status: false,
+        udids: ''
+      }
       this.makeTokenVisible = false
+      this.addUdidVisible = false
     },
     resetDownloadUsed(info) {
       appDownloadToken(data => {

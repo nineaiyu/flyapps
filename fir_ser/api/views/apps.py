@@ -387,11 +387,18 @@ class AppDownloadTokenView(APIView):
         token_number = data.get('token_number')
         bind_status = data.get('bind_status')
         token_max_used_number = data.get('token_max_used_number')
+        udid_list_str = data.get('udids')
+        udid_list = []
 
         if not isinstance(bind_status, bool):
             bind_status = False
         if bind_status:
             token_max_used_number = 1
+            if udid_list_str and len(udid_list_str) > 10:
+                udid_list = udid_list_str.replace('  ', ' ').replace('\n', ' ').replace(',', ' ').replace('\r\n',
+                                                                                                          ' ').split()
+                udid_list = list(filter(lambda x: len(x) > 10, udid_list))
+                token = ''
 
         app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
         if token and isinstance(token, str) and len(token) >= 4:
@@ -408,6 +415,9 @@ class AppDownloadTokenView(APIView):
             else:
                 token_number = 20
 
+            if udid_list:
+                token_number = len(udid_list)
+
             download_token_queryset = AppDownloadToken.objects.filter(app_id=app_obj).annotate(
                 token_len=Length('token')).filter(token_len=token_length).values('token').all()
             exist_token = [d_token['token'] for d_token in download_token_queryset]
@@ -415,9 +425,19 @@ class AppDownloadTokenView(APIView):
                                                         token_number=token_number + download_token_queryset.count(),
                                                         exist_token=copy.deepcopy(exist_token))
             bulk_list = []
+            d_index = 0
             for d_token in list(set(make_token_list) - set(exist_token))[:token_number]:
-                bulk_list.append(AppDownloadToken(token=d_token, max_limit_count=token_max_used_number, app_id=app_obj,
-                                                  bind_status=bind_status))
+                n_data = {
+                    'token': d_token,
+                    'max_limit_count': token_max_used_number,
+                    'app_id': app_obj,
+                    'bind_status': bind_status,
+                }
+                if udid_list:
+                    n_data['bind_udid'] = udid_list[d_index]
+                    n_data['used_count'] = 1
+                    d_index += 1
+                bulk_list.append(AppDownloadToken(**n_data))
             AppDownloadToken.objects.bulk_create(bulk_list)
 
         return Response(res.dict)
