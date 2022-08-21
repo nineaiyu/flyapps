@@ -125,7 +125,7 @@
 </template>
 
 <script>
-import {loginFun, set_auth_token, wxLoginFun} from "@/restful";
+import {loginFun, wxLoginFun} from "@/restful";
 import {geetest} from "@/utils";
 import {checkEmail, checkphone, getRandomStr} from "@/utils/base/utils";
 
@@ -177,7 +177,6 @@ export default {
       this.$cookies.set("username", data.userinfo.username, 3600 * 24 * 30);
       this.$cookies.set("first_name", data.userinfo.first_name, 3600 * 24 * 30);
       this.$store.dispatch("doUserinfo", data.userinfo);
-      set_auth_token();
       this.$router.push({name: 'FirApps'})
     },
     loop_get_wx_info(wx_login_ticket, c_count = 1, unique_key = getRandomStr()) {

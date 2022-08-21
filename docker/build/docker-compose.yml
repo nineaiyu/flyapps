@@ -1,0 +1,67 @@
+version: '3.2'
+
+services:
+  buildflyapps:
+    image: 'flyapps'
+    build:
+      context: ../../fir_ser
+      dockerfile: Dockerfile
+    command:
+        - echo
+        - success
+
+  buildclient:
+    container_name: buildclient
+    image: 'node:14.17.3'
+    working_dir: /fir_client
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ../../fir_client:/fir_client
+      - ../../data/web/:/web
+    command:
+        - bash
+        - -c
+        - yarn config set registry https://registry.npm.taobao.org && yarn install && yarn build index && yarn build short && ([ ! -e /web/fir_client ] && \cp -a dist_index /web/fir_client || \cp -a dist_index/* /web/fir_client/) && ([ ! -e /web/fir_client/short ] && \cp -a dist_short /web/fir_client/short || \cp -a dist_short/* /web/fir_client/short/)  && echo build success
+
+  buildindex:
+    container_name: buildindex
+    image: 'node:14.17.3'
+    working_dir: /fir_client
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ../../fir_client:/fir_client
+      - ../../data/web/:/web
+    command:
+        - bash
+        - -c
+        - yarn config set registry https://registry.npm.taobao.org && yarn install && yarn build index && ([ ! -e /web/fir_client ] && \cp -a dist_index /web/fir_client || \cp -a dist_index/* /web/fir_client/) && echo build success
+
+
+
+  buildshort:
+    container_name: buildshort
+    image: 'node:14.17.3'
+    working_dir: /fir_client
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ../../fir_client:/fir_client
+      - ../../data/web/:/web
+    command:
+        - sh
+        - -c
+        - yarn config set registry https://registry.npm.taobao.org && yarn install && yarn build short && ([ ! -e /web/fir_short ] && \cp -a dist_short /web/fir_short || \cp -a dist_short/* /web/fir_short/) && echo build success
+
+
+  buildadmin:
+    container_name: buildadmin
+    image: 'node:14.17.3'
+    working_dir: /fir_admin
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ../../fir_admin:/fir_admin
+      - ../../data/web/:/web
+    command:
+        - sh
+        - -c
+        - yarn config set registry https://registry.npm.taobao.org && yarn install && yarn build:prod && ([ ! -e /web/fir_admin ] && \cp -a dist /web/fir_admin || \cp -a dist/* /web/fir_admin/) && echo build success
+

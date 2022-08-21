@@ -4,8 +4,8 @@ import router from "@/router";
 import {geetestbase} from "@/utils/base/utils";
 
 const Base64 = require('js-base64').Base64;
-Axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
-Axios.defaults.withCredentials = true;
+// Axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+// Axios.defaults.withCredentials = true;
 // Axios.defaults.httpsAgent = new https.Agent({
 //     keepAlive: true
 // });
@@ -19,8 +19,14 @@ export function requestAbort() {
 console.log("flyapps js version:" + process.env.base_env.version);
 
 const DOMAIN = process.env.base_env.baseUrl;
-const APIPATH = '/api/v1/fir/server';
-let USERSEVER = DOMAIN + APIPATH;
+const USERSEVER = 'api/v1/fir/server';
+
+// create an axios instance
+const service = Axios.create({
+    baseURL: DOMAIN, // url = base url + request url
+    withCredentials: true, // send cookies when cross-domain requests
+    timeout: 120000 // request timeout
+})
 
 export function convertRes2Blob(response) {
     // 提取文件名
@@ -53,31 +59,25 @@ export function convertRes2Blob(response) {
     }
 }
 
-export function set_auth_token() {
-    Axios.interceptors.request.use(function (config) {
-        // 在发送请求之前做些什么
-
-        if (VueCookies.get('token')) {
-            // Axios.defaults.headers.common['Authorization'] = localStorage.getItem('access_token');
-            // console.log(config.headers);
-            if (VueCookies.get('auth_token')) {
-                config.headers.Authorization = VueCookies.get('auth_token')
-            } else {
-                let token = VueCookies.get('token');
-                let username = VueCookies.get('username');
-                VueCookies.set("auth_token", Base64.encode(token + ':' + username), 3600 * 24 * 30);
-            }
+service.interceptors.request.use(config => {
+    if (VueCookies.get('token')) {
+        // Axios.defaults.headers.common['Authorization'] = localStorage.getItem('access_token');
+        // console.log(config.headers);
+        if (!VueCookies.get('auth_token')) {
+            let token = VueCookies.get('token');
+            let username = VueCookies.get('username');
+            VueCookies.set("auth_token", Base64.encode(token + ':' + username), 3600 * 24 * 30);
         }
-        // 更改加载的样式
+        config.headers.Authorization = VueCookies.get('auth_token')
+    }
+    return config;
+}, function (error) {
+    // 对请求错误做些什么
+    // eslint-disable-next-line no-console
+    console.log(error)
+    return Promise.reject(error);
+});
 
-        return config;
-    }, function (error) {
-        // 对请求错误做些什么
-        return Promise.reject(error);
-    });
-}
-
-set_auth_token();
 
 function ErrorMsg(error, callBack) {
     if (error && error.response) {
@@ -141,7 +141,7 @@ function responseMiddleware(data, callBack) {
 function getData(methods, url, params = {}, callBack) {
 
     if (methods === "DELETE") {
-        Axios
+        service
             .delete(url, {params: params, signal: controller.signal})
             .then(function (response) {
                 responseMiddleware(response.data, callBack);
@@ -151,7 +151,7 @@ function getData(methods, url, params = {}, callBack) {
             });
 
     } else if (methods === "PUT") {
-        Axios
+        service
             .put(url, params, {signal: controller.signal})
             .then(function (response) {
                 responseMiddleware(response.data, callBack);
@@ -161,7 +161,7 @@ function getData(methods, url, params = {}, callBack) {
             });
 
     } else if (methods === 'POST') {
-        Axios
+        service
             .post(url, params, {signal: controller.signal})
             .then(function (response) {
                 responseMiddleware(response.data, callBack);
@@ -170,7 +170,7 @@ function getData(methods, url, params = {}, callBack) {
                 ErrorMsg(error, callBack);
             });
     } else if (methods === 'FILE') {
-        Axios
+        service
             .get(url, {params: params, responseType: 'blob', signal: controller.signal})
             .then(function (response) {
                 convertRes2Blob(response)
@@ -179,7 +179,7 @@ function getData(methods, url, params = {}, callBack) {
                 ErrorMsg(error, callBack);
             });
     } else {
-        Axios
+        service
             .get(url, {params: params, signal: controller.signal})
             .then(function (response) {
                 responseMiddleware(response.data, callBack);
@@ -447,10 +447,10 @@ export function getapppicurl(app_id) {
 }
 
 export function getuploadurl(domain_name = null) {
-    if (domain_name) {
-        return domain_name + APIPATH + '/upload'
+    if (domain_name && !domain_name.match('http[s?]:///$')) {
+        return domain_name + '/' +USERSEVER + '/upload'
     } else {
-        return USERSEVER + '/upload';
+        return DOMAIN + USERSEVER + '/upload';
     }
 }
 
@@ -722,7 +722,7 @@ export function geetest(self, uid, params, callback) {
 
 /** 超级签名************************************************相关api */
 
-let SIGNSEVER = DOMAIN + '/api/v1/fir/xsign';
+let SIGNSEVER = '/api/v1/fir/xsign';
 
 /** 超级签名--检测该账户是否可开启超级签名 */
 export function checkCanSign(callBack, params) {

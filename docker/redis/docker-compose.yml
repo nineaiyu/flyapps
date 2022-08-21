@@ -1,0 +1,25 @@
+version: '3.2'
+
+
+networks:
+    flyapps:
+        external: true
+        name: flyapps
+
+services:
+  redis:
+    image: 'bitnami/redis:6.2.7'
+    container_name: redis
+    restart: always
+    volumes:
+         - ../init/timezone:/etc/timezone:ro
+         - /etc/localtime:/etc/localtime:ro
+         - ../../data/redis:/bitnami/redis/data
+    environment:
+      #- REDIS_REPLICATION_MODE=master
+      #- ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_PASSWORD=nineven
+    networks:
+      - flyapps
+    #ports:
+    #  - 6379:6379

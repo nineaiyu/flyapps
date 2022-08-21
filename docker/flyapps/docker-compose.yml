@@ -1,0 +1,45 @@
+version: '3'
+
+networks:
+    flyapps:
+        external: true
+        name: flyapps
+
+services:
+  flyapps:
+    container_name: flyapps
+    restart: always
+    image: 'flyapps'
+    working_dir: /data/fir_ser
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ../../fir_ser:/data/fir_ser
+      - ../../data/flyapps/files:/data/fir_ser/files
+      - ../../data/logs/flyapps/:/data/fir_ser/logs
+      - ../../data/flyapps/supersign/:/data/fir_ser/supersign
+    networks:
+         flyapps:
+           ipv4_address: 172.31.31.100
+    external_links:
+        - mariadb:mariadb 
+        - redis:redis
+    sysctls:
+        - net.core.somaxconn=4096
+  nginx:
+    container_name: nginx
+    restart: always
+    image: 'nginx:1.21.3'
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ../../data/web:/data
+      - ../../nginx.conf.d:/etc/nginx/conf.d
+    networks:
+         flyapps:
+           ipv4_address: 172.31.31.200
+    ports:
+        - 80:80
+        - 443:443
+    external_links:
+        - flyapps:flyapps
+    depends_on:
+        - flyapps

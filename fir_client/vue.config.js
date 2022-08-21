@@ -28,6 +28,7 @@ const compress = new CompressionWebpackPlugin(
 );
 
 const index = {
+    outputDir:'dist_index',
     // page 的入口
     entry: 'src/main.js',
     // 模板来源
@@ -43,6 +44,7 @@ const index = {
 };
 // eslint-disable-next-line no-unused-vars
 const mshort = {
+    outputDir:'dist_mshort',
     // page 的入口
     entry: 'src/main.short.js',
     // 模板来源
@@ -57,6 +59,7 @@ const mshort = {
     chunks: ['chunk-vendors', 'chunk-common', 'mshort', 'chunk-elementUI', 'runtime']
 };
 const short = {
+    outputDir:'dist_short',
     // page 的入口
     entry: 'src/short.js',
     // 模板来源
@@ -71,32 +74,36 @@ const short = {
     chunks: ['chunk-vendors', 'chunk-common', 'short', 'chunk-commons', 'runtime']
 };
 let pages = {index, short, mshort};
-const page = argv[3];
-if (page) {
-    for (const key of Object.keys(pages)) {
-        if (key === page) {
-            const tmp = pages[key];
-            pages = {};
-            pages[key] = tmp;
-        }
+let outputDir = 'dist'
+let page = argv[3];
+if (!page) {
+    page = 'index'
+}
+
+for (const key of Object.keys(pages)) {
+    if (key === page) {
+        const tmp = pages[key];
+        pages = {};
+        pages[key] = tmp;
+        outputDir = tmp.outputDir
     }
 }
 
 const version='2.3.8';
 
 const pro_base_env = {
-    baseUrl: 'https://flyapps.cn',
-    index_static: 'https://static.flyapps.cn/index/',
-    baseShortUrl: 'https://flyapps.top',
-    short_static: 'https://static.flyapps.top/short/',
+    baseUrl: '/',       //该选项可以填写web-api的域名，类似 https://api.xxx.com/
+    index_static: '/',  //若配置cdn等加速，可以填写cdn加速域名
+    baseShortUrl: '/',  //该选项可以填写short-api的域名,也可以和web-api域名一样，类似 https://api.xxx.com/
+    short_static: '/short/',  //若配置cdn等加速，可以填写cdn加速域名
     version: version,
 };
 
 const dev_base_env = {
-    baseUrl: 'https://app.hehelucky.cn',
-    baseShortUrl: 'https://app.hehelucky.cn',
-    short_static: '/',
+    baseUrl: 'https://app.hehelucky.cn/',
     index_static: '/',
+    baseShortUrl: 'https://app.hehelucky.cn/',
+    short_static: 'https://app.hehelucky.cn/short/',
     version: version,
 };
 let base_evn = dev_base_env;
@@ -131,9 +138,9 @@ function get_public_path(pages) {
 }
 
 let publicPath = get_public_path(pages);
-
 module.exports = {
     pages: pages,
+    outputDir: outputDir,
     productionSourceMap: false, //去除生产环境的productionSourceMap
     assetsDir: "static", //静态文件存储位置
     lintOnSave: true,
@@ -248,7 +255,11 @@ module.exports = {
                         priority: 23, // the weight needs to be larger than libs and app or it will be packaged into libs or app
                         test: /[\\/]node_modules[\\/]_?ali-oss(.*)/ // in order to adapt to cnpm
                     },
-
+                    appinfo: {
+                        name: 'appinfo', // split elementUI into a single package
+                        priority: 23, // the weight needs to be larger than libs and app or it will be packaged into libs or app
+                        test: /[\\/]node_modules[\\/]_?app-info-parser(.*)/ // in order to adapt to cnpm
+                    },
                     qrcodejs2: {
                         name: 'qrcodejs2', // split elementUI into a single package
                         priority: 23, // the weight needs to be larger than libs and app or it will be packaged into libs or app
@@ -261,7 +272,7 @@ module.exports = {
                     },
                     common: {
                         name: 'chunk-commons',
-                        test: resolve(resolve('src/components')), // can customize your rules
+                        test: resolve('src/components'), // can customize your rules
                         minChunks: 3, //  minimum common number
                         priority: 5,
                         reuseExistingChunk: true

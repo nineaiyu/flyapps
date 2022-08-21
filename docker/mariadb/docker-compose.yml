@@ -1,0 +1,43 @@
+version: '3.2'
+
+ 
+
+networks:
+    flyapps:
+        external: true
+        name: flyapps
+
+services:
+
+  mariadb:
+    image: bitnami/mariadb:10.7.3
+    container_name: mariadb 
+    restart: always
+    environment:
+            - MARIADB_ROOT_PASSWORD=rootIPD.xx2.19
+            - MARIADB_DATABASE=flyappnew
+            - MARIADB_USER=flyuser
+            - MARIADB_PASSWORD=KGzKjZpWBp4R4RSa
+              #- ALLOW_EMPTY_PASSWORD=yes
+            - MARIADB_ENABLE_SLOW_QUERY=1
+            - MARIADB_LONG_QUERY_TIME=3
+            - MARIADB_SKIP_TEST_DB=yes
+            - MARIADB_EXTRA_FLAGS=--max-connect-errors=3000 --max_connections=30000
+    ports:
+      - 3306:3306
+    networks:
+         flyapps:
+           ipv4_address: 172.31.31.90
+    volumes:
+       - ../init/timezone:/etc/timezone:ro
+       - /etc/localtime:/etc/localtime:ro
+       - ../../data/mariadb:/bitnami/mariadb/data
+       - ../../data/logs/mariadb:/data/logs/mariadb
+       - ./server.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
+
+#  adminer:
+#    image: adminer
+#    ports:
+#      - 8080:8080
+#    networks:
+#         - fungame

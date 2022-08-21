@@ -28,8 +28,7 @@ class BASECONF(object):
 
     SECRET_KEY = 'j!g@^bc(z(a3*i&kp$_@bgb)bug&^#3=amch!3lz&1x&s6ss6t'
 
-    ALLOWED_HOSTS = ['127.0.0.1', 'synchrotron', '172.16.133.34', 'ali.cdn.flyapp.dvcloud.xin',
-                     'api.src.flyapp.dvcloud.xin', 'app.hehelucky.cn']
+    ALLOWED_HOSTS = ['*']
 
     # When Django start it will bind this host and port
     # ./manage.py runserver 127.0.0.1:8080
@@ -72,7 +71,7 @@ class DBCONF(object):
     port = '3306'
     password = 'KGzKjZpWBp4R4RSa'
     user = 'flyuser'
-    name = 'flyappnew'
+    name = 'flyapps'
 
 
 class CACHECONF(object):

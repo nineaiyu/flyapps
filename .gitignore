@@ -12,3 +12,5 @@ fir_client/src/assets/down_right.png
 mailhtml/build/
 mailhtml/node_modules/
 mailhtml/.idea/
+fir_client/dist_index/
+fir_client/dist_short/

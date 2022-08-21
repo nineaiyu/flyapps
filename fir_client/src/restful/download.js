@@ -1,11 +1,17 @@
 import Axios from 'axios'
 import {geetestbase} from "@/utils/base/utils";
 
-Axios.defaults.withCredentials = true;
-
 const DOMAIN = process.env.base_env.baseShortUrl;
-const APIPATH = '/api/v1/fir/server';
-let USERSEVER = DOMAIN + APIPATH;
+
+const USERSEVER = 'api/v1/fir/server';
+
+// create an axios instance
+const service = Axios.create({
+    baseURL: DOMAIN, // url = base url + request url
+    withCredentials: true, // send cookies when cross-domain requests
+    timeout: 120000 // request timeout
+})
+
 
 function ErrorMsg(error, callBack) {
     if (error && error.response) {
@@ -42,7 +48,7 @@ function responseMiddleware(data, callBack) {
 function getData(methods = 'GET', url, params = {}, callBack) {
 
     if (methods === "PUT") {
-        Axios
+        service
             .put(url, params)
             .then(function (response) {
                 responseMiddleware(response.data, callBack);
@@ -51,7 +57,7 @@ function getData(methods = 'GET', url, params = {}, callBack) {
                 ErrorMsg(error, callBack);
             });
     } else if (methods === 'POST') {
-        Axios
+        service
             .post(url, params)
             .then(function (response) {
                 responseMiddleware(response.data, callBack);
@@ -60,7 +66,7 @@ function getData(methods = 'GET', url, params = {}, callBack) {
                 ErrorMsg(error, callBack);
             });
     } else
-        Axios
+        service
             .get(url, {params: params})
             .then(function (response) {
                 responseMiddleware(response.data, callBack);

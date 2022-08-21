@@ -30,6 +30,40 @@
 - 需要阿里云OSS存储和阿里云CDN,并且OSS存储和阿里云服务器部署同一个地区
 - 可以申请一个极验进行滑动验证，或者开启验证码验证
 - 阿里云备案域名：api和前端可以使用一个域名，下载页单独域名
+
+#### 部署必备资料
+- 域名证书
+  - web域名和证书
+  - api域名和证书
+  - 下载页域名（可配置证书）
+  - 存储域名和证书
+    - 本地存储，则该域名和证书可以和api域名证书一致
+    - 阿里云oss存储
+      - 开启cdn，需要新域名和证书
+      - 不开启，无需域名和证书
+- Centos8Stream 服务器
+
+#### 修改配置文件
+##### fir_ser配置文件 config.py
+```python
+class DOMAINCONF(object):
+    API_DOMAIN = "https://app.hehelucky.cn"  # 用与开启本地存储，上传应用配置
+    WEB_DOMAIN = "https://app.hehelucky.cn"  # 用于超级签跳转配置，该域名一般为前端页面域名
+    MOBILEPROVISION = "https://static.hehejoy.cn/embedded3.mobileprovision"  # 用于苹果包企业签信任企业跳转
+
+```
+
+##### fir_client配置文件 vue.confjg.js
+```javascript
+const pro_base_env = {
+    baseUrl: '/',       //该选项可以填写web-api的域名，类似 https://api.xxx.com/
+    index_static: '/',  //若配置cdn等加速，可以填写cdn加速域名
+    baseShortUrl: '/',  //该选项可以填写short-api的域名,也可以和web-api域名一样，类似 https://api.xxx.com/
+    short_static: '/short/',  //若配置cdn等加速，可以填写cdn加速域名
+    version: version,
+};
+```
+
 ##### 从git上面下载源码
 ```shell
 cd /data/

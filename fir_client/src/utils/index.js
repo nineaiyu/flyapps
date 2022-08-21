@@ -242,7 +242,7 @@ export function uploadlocalstorage(file, certinfo, app, successcallback, process
 
 }
 
-export function removeAaary(_arr, _obj) {
+export function removeArray(_arr, _obj) {
     let length = _arr.length;
     for (let i = 0; i < length; i++) {
         if (_arr[i] == _obj) {

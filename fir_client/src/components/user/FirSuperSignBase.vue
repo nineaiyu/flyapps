@@ -1808,7 +1808,7 @@ import {
   personalConfigInfo,
   signoperatemessage
 } from "@/restful";
-import {format_choices, getUserInfoFun, removeAaary} from "@/utils";
+import {format_choices, getUserInfoFun, removeArray} from "@/utils";
 import AppleDeveloperBindApp from "@/components/base/AppleDeveloperBindApp";
 import {format_time} from "@/utils/base/utils";
 
@@ -2730,7 +2730,7 @@ export default {
             this.pagination.total = data.count;
           } else if (action === "DELETE") {
             if (scope) {
-              this.app_udid_lists = removeAaary(this.app_udid_lists, scope.row)
+              this.app_udid_lists = removeArray(this.app_udid_lists, scope.row)
             }
           } else if (action === 'POST') {
             this.$message.success("操作成功");
