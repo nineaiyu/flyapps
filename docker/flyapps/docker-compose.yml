@@ -17,6 +17,7 @@ services:
       - ../../data/flyapps/files:/data/fir_ser/files
       - ../../data/logs/flyapps/:/data/fir_ser/logs
       - ../../data/flyapps/supersign/:/data/fir_ser/supersign
+      - ../../nginx.conf.d:/data/cert
     networks:
          flyapps:
            ipv4_address: 172.31.31.100

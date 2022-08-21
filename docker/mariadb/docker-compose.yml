@@ -15,7 +15,7 @@ services:
     restart: always
     environment:
             - MARIADB_ROOT_PASSWORD=rootIPD.xx2.19
-            - MARIADB_DATABASE=flyappnew
+            - MARIADB_DATABASE=flyapps
             - MARIADB_USER=flyuser
             - MARIADB_PASSWORD=KGzKjZpWBp4R4RSa
               #- ALLOW_EMPTY_PASSWORD=yes
