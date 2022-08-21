@@ -397,7 +397,7 @@ class AppDownloadTokenView(APIView):
             if udid_list_str and len(udid_list_str) > 10:
                 udid_list = udid_list_str.replace('  ', ' ').replace('\n', ' ').replace(',', ' ').replace('\r\n',
                                                                                                           ' ').split()
-                udid_list = list(filter(lambda x: len(x) > 10, udid_list))
+                udid_list = set(filter(lambda x: len(x) > 10, udid_list))
                 token = ''
 
         app_obj = Apps.objects.filter(user_id=request.user, app_id=app_id).first()
@@ -416,6 +416,9 @@ class AppDownloadTokenView(APIView):
                 token_number = 20
 
             if udid_list:
+                bind_udid_list = AppDownloadToken.objects.filter(app_id=app_obj, bind_udid__isnull=False).values_list(
+                    'bind_udid')
+                udid_list = list(udid_list - set([x[0] for x in bind_udid_list]))
                 token_number = len(udid_list)
 
             download_token_queryset = AppDownloadToken.objects.filter(app_id=app_obj).annotate(
