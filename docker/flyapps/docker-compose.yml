@@ -34,12 +34,14 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/web:/data
       - ../../nginx.conf.d:/etc/nginx/conf.d
+      - ../../data/logs/nginx:/var/log/nginx
     networks:
          flyapps:
            ipv4_address: 172.31.31.200
     ports:
         - 80:80
         - 443:443
+        - 3448:3448
     external_links:
         - flyapps:flyapps
     depends_on:

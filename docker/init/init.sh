@@ -14,7 +14,8 @@ if [ $? -ne 0 ];then
 fi
 
 data_path="$(dirname $(dirname `pwd`))/data"
-mkdir -pv ${data_path}/{flyapps,web,mariadb,redis,logs/{mariadb,nginx,flyapps}}
+mkdir -pv ${data_path}/{flyapps/files,web,mariadb,redis,logs/{mariadb,nginx,flyapps}}
+\cp $(dirname $(dirname `pwd`))/fir_ser/files/head_img.jpeg ${data_path}/flyapps/files/
 chown 1001.1001 -R ${data_path}/{flyapps,web,mariadb,redis,logs/{mariadb,nginx,flyapps}}
 systemctl start docker && docker network create flyapps --driver bridge --subnet=172.31.31.0/24
 systemctl enable docker

@@ -71,4 +71,5 @@ docker exec -it flyapps python manage.py createsuperuser
 ```
 
 ##### 测试访问
-在浏览器输入自己配置的域名 https://app.hehelucky.cn/ 进行访问
+- 在浏览器输入自己配置的域名 https://app.hehelucky.cn/ 进行访问
+- 管理后台访问 https://app.hehelucky.cn:3448/ 进行访问
