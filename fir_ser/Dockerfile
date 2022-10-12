@@ -1,33 +1,24 @@
 FROM python:3.9.14-slim
 
 # Fixes some weird terminal issues such as broken clear / CTRL+L
-ARG PIP_MIRROR=https://mirrors.aliyun.com/pypi/simple
+ARG PIP_MIRROR=https://mirrors.163.com/pypi/simple
 
-RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list \
-    && sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list \
-    && apt update 
+RUN sed -i 's/deb.debian.org/mirrors.163.com/g' /etc/apt/sources.list \
+    && sed -i 's/security.debian.org/mirrors.163.com/g' /etc/apt/sources.list \
+    && apt update  \
+    && apt-get install g++ wget -y \
+    && apt-get install libssl-dev openssl libmariadb-dev  -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install g++ wget -y
-RUN apt-get install libssl-dev openssl libmariadb-dev  -y
-RUN rm -rf /var/lib/apt/lists/* 
-
-
-
-#COPY fir_client/dist /data/flyapps/fir_client
 
 #RUN cd /opt/ && wget https://github.com/nineaiyu/zsign/archive/refs/tags/v1.1.2.tar.gz
-COPY zsign-1.1.2.tar.gz /opt/zsign-1.1.2.tar.gz
-RUN cd /opt/ && tar xvf zsign-1.1.2.tar.gz && cd zsign-1.1.2/ && g++ *.cpp common/*.cpp -lcrypto -O3 -std=c++11 -o zsign && cp zsign /usr/bin/
+ADD zsign-1.1.2.tar.gz /opt/
+RUN cd /opt/zsign-1.1.2/ && g++ *.cpp common/*.cpp -lcrypto -O3 -std=c++11 -o zsign && cp zsign /usr/bin/ && rm -rf /opt/zsign-1.1.2/
 # install pip
 COPY requirements.txt /opt/requirements.txt
 RUN cd /opt/ && pip install -U setuptools pip -i ${PIP_MIRROR} --ignore-installed && pip install --no-cache-dir -r requirements.txt -i ${PIP_MIRROR}  && pip install --no-cache-dir uwsgi -i ${PIP_MIRROR} 
 
-
-#COPY Docker/flyapps.conf  /etc/supervisor/conf.d/flyapps.conf
-#COPY Docker/uwsgi.conf /data/flyapps/fir_ser/uwsgi.conf
-#COPY Docker/flyapps-vhost.conf  /etc/nginx/conf.d/flyapps-vhost.conf
-#COPY Docker/app.hehelucky.cn.pem /data/flyapps/app.hehelucky.cn.pem
-#COPY Docker/app.hehelucky.cn.key /data/flyapps/app.hehelucky.cn.key
 
 WORKDIR /data/fir_ser/
 RUN addgroup --system --gid 101 nginx \

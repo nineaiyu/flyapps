@@ -195,9 +195,6 @@ STATIC_URL = '/statics/'
 # python manage.py collectstatic 收集到的静态文件
 STATIC_ROOT = os.path.join(BASE_DIR, "api-static")
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "statics")
-]
 
 # Media配置
 MEDIA_URL = "files/"
