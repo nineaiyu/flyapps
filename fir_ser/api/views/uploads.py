@@ -15,6 +15,7 @@ from api.utils.apputils import get_random_short, save_app_infos
 from api.utils.modelutils import get_app_download_uri, check_bundle_id_legal, get_user_storage_used, \
     get_user_storage_capacity
 from api.utils.response import BaseResponse
+from api.utils.serializer import AppsSerializer
 from api.utils.signalutils import run_signal_resign_utils
 from common.base.baseutils import make_app_uuid, make_from_user_uuid
 from common.cache.state import MigrateStorageState
@@ -170,9 +171,11 @@ class AppAnalyseView(APIView):
                 storage.rename_file(app_tmp_filename, app_new_filename)
                 storage.rename_file(png_tmp_filename, png_new_filename)
 
-                app_obj = Apps.objects.filter(bundle_id=data.get("bundleid"), user_id=request.user, type=1).first()
-                if app_obj:
+                app_obj = Apps.objects.filter(bundle_id=data.get("bundleid"), user_id=request.user).first()
+                if app_obj and app_obj.type == 1:
                     run_signal_resign_utils(app_obj)
+                app_serializer = AppsSerializer(app_obj, context={"storage": Storage(request.user)})
+                res.data = app_serializer.data
             else:
                 storage.delete_file(app_tmp_filename)
                 storage.delete_file(png_tmp_filename)

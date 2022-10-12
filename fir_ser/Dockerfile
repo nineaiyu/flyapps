@@ -22,7 +22,6 @@ RUN cd /opt/ && tar xvf zsign-1.1.2.tar.gz && cd zsign-1.1.2/ && g++ *.cpp commo
 COPY requirements.txt /opt/requirements.txt
 RUN cd /opt/ && pip install -U setuptools pip -i ${PIP_MIRROR} --ignore-installed && pip install --no-cache-dir -r requirements.txt -i ${PIP_MIRROR}  && pip install --no-cache-dir uwsgi -i ${PIP_MIRROR} 
 
-RUN rm -rf /var/cache/yum/
 
 #COPY Docker/flyapps.conf  /etc/supervisor/conf.d/flyapps.conf
 #COPY Docker/uwsgi.conf /data/flyapps/fir_ser/uwsgi.conf

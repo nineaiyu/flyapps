@@ -112,7 +112,8 @@ class FLYCliSer(object):
         req = requests.put(url, json=data, headers=self._header)
         if req.status_code == 200:
             if req.json()['code'] == 1000:
-                print("应用 %s  %s 上传更新成功" % (data.get('appname'), data.get('bundleid')))
+                print("应用 %s  %s 上传更新成功，下载连接 %s" % (
+                    data.get('appname'), data.get('bundleid'), req.json()['data'].get('preview_url')))
                 return
         raise AssertionError(req.text)
 

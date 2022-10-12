@@ -1,0 +1,14 @@
+FROM python:3.6.14-slim
+
+ARG PIP_MIRROR=https://mirrors.aliyun.com/pypi/simple
+
+RUN pip install --upgrade pip --no-cache-dir -i ${PIP_MIRROR} && \
+        pip install setuptools-rust oss2 requests-toolbelt androguard requests --no-cache-dir -i ${PIP_MIRROR} && \
+        rm -rf ~/.cache/*
+
+WORKDIR /opt/
+
+COPY cli.py /opt/cli.py
+
+CMD ["python", "cli.py"]
+

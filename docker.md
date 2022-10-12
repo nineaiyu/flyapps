@@ -46,6 +46,12 @@ const pro_base_env = {
 cd /data/FlyApps/docker/scripts
 sh build.sh
 ```
+##### 构建flyapps-cli
+```shell
+cd /data/FlyApps/fir_ser
+docker build -t flyapps-cli -f Dockerfile.cli .
+```
+
 ##### 构建镜像的同时，下载依赖镜像
 ```shell
 docker pull 'bitnami/mariadb:10.7.3'
