@@ -1,4 +1,4 @@
-FROM python:3.6.14-slim
+FROM python:3.9.14-slim
 
 ARG PIP_MIRROR=https://mirrors.aliyun.com/pypi/simple
 

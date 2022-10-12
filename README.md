@@ -10,7 +10,7 @@
     - API域名证书
     - 存储域名证书（使用阿里云oss存储）
     - 前端web域名证书（可选）
-- Centos7 服务器
+- Centos8Stream 服务器
     - 如果使用oss存储，则带宽为1M,若使用本地存储，则带宽越大越好
     - 如果使用超级签，最低配置为2cpu 4G内存，若干不使用签名，则1cpu2G就行
 - 阿里云短信或极光短信服务【可选一个，主要用与注册，重置密码】
@@ -77,9 +77,9 @@ git clone https://github.com/nineaiyu/FlyApps
 
 ##### 搭建python env 环境
 ```shell
-yum install python36 python36-devel  redis mariadb-server  mariadb-devel -y
-python3 -m venv py3
-source py3/bin/activate
+yum install python39 python39-devel  redis mariadb-server  mariadb-devel -y
+python3.9 -m venv py39
+source py39/bin/activate
 ```
 
 ###### 安装pip包
