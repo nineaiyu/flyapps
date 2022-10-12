@@ -360,6 +360,7 @@ if __name__ == '__main__':
         Example: \r\n
         """
     )
+    parser.add_argument('-host', '--host', nargs="?", const=True, type=str, help="服务器地址")
     parser.add_argument('-s', '--short', nargs="?", const=True, type=str, help="短连接")
     parser.add_argument('-cl', '--change_log', nargs="?", const=True, type=str, help="更新日志")
     parser.add_argument('-n', '--name', nargs="?", const=True, type=str, help="名称")
@@ -369,6 +370,8 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--filepath', nargs="+", type=str, help="filepath")
     parser.add_argument('-d', '--dir_path', nargs="+", type=str, help="dir_path")
     args = parser.parse_args()
+    if not args.host:
+        args.host = domain
     if args.token and args.write_token_info:
         write_token(args.token)
     if args.install_depends:
@@ -380,7 +383,7 @@ if __name__ == '__main__':
             if token: token = token.replace('\r', '').replace('\n', '')
         if not token:
             raise Exception('token not exist')
-        fly_obj = FLYCliSer(domain, token)
+        fly_obj = FLYCliSer(args.host, token)
         file_path_list = []
         if args.filepath is not None and len(args.filepath) > 0:
             for args_filepath in args.filepath:
