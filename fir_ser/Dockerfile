@@ -36,5 +36,6 @@ RUN addgroup --system --gid 101 nginx \
 #EXPOSE 443
 #ENTRYPOINT ["./entrypoint.sh"]
 #ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf", "-n"]
-CMD ["python", "manage.py", "start", "all","-u","nginx","-usm","1"]
+#CMD ["python", "manage.py", "start", "all","-u","nginx","-usm","1"]
+ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
 
