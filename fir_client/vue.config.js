@@ -87,10 +87,8 @@ for (const key of Object.keys(pages)) {
         outputDir = tmp.outputDir
     }
 }
-
-const version='2.3.8';
+const version = '2.3.8';
 const github = 'https://github.com/nineaiyu/FlyApps';
-
 const pro_base_env = {
     baseUrl: '/',       //该选项可以填写web-api的域名，类似 https://api.xxx.com/
     index_static: '/',  //若配置cdn等加速，可以填写cdn加速域名
