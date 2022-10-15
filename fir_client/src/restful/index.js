@@ -16,7 +16,7 @@ export function requestAbort() {
 }
 
 // eslint-disable-next-line no-console
-console.log("flyapps js version:" + process.env.base_env.version);
+console.log("js build version:" + process.env.base_env.version);
 
 const DOMAIN = process.env.base_env.baseUrl;
 const USERSEVER = 'api/v1/fir/server';

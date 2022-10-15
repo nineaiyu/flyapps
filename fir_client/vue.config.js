@@ -1,14 +1,13 @@
 const IS_PROD = ['production', 'prod'].includes(process.env.NODE_ENV);
 const path = require('path');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const dateFormat = require("./src/utils/format.js");
+const CompressionWebpackPlugin = require('compression-webpack-plugin');
+const argv = process.argv;
 
 function resolve(dir) {
     return path.join(__dirname, dir);
 }
-
-const argv = process.argv;
-
-const CompressionWebpackPlugin = require('compression-webpack-plugin');
 
 const compress = new CompressionWebpackPlugin(
     {
@@ -19,7 +18,7 @@ const compress = new CompressionWebpackPlugin(
         threshold: 10240,
         test: new RegExp(
             '\\.(' +
-            ['js','css'].join('|') +
+            ['js', 'css'].join('|') +
             ')$'
         ),
         minRatio: 0.8,
@@ -28,7 +27,7 @@ const compress = new CompressionWebpackPlugin(
 );
 
 const index = {
-    outputDir:'dist_index',
+    outputDir: 'dist_index',
     // page 的入口
     entry: 'src/main.js',
     // 模板来源
@@ -40,11 +39,11 @@ const index = {
     title: 'Fly分发平台',
     // 在这个页面中包含的块，默认情况下会包含
     // 提取出来的通用 chunk 和 vendor chunk。
-    chunks: ['chunk-vendors', 'chunk-common', 'index', 'elementui','runtime', 'alioss', 'qiniujs', 'qrcodejs2']
+    chunks: ['chunk-vendors', 'chunk-common', 'index', 'elementui', 'runtime', 'alioss', 'qiniujs', 'qrcodejs2']
 };
 // eslint-disable-next-line no-unused-vars
 const mshort = {
-    outputDir:'dist_mshort',
+    outputDir: 'dist_mshort',
     // page 的入口
     entry: 'src/main.short.js',
     // 模板来源
@@ -59,7 +58,7 @@ const mshort = {
     chunks: ['chunk-vendors', 'chunk-common', 'mshort', 'chunk-elementUI', 'runtime']
 };
 const short = {
-    outputDir:'dist_short',
+    outputDir: 'dist_short',
     // page 的入口
     entry: 'src/short.js',
     // 模板来源
@@ -90,6 +89,7 @@ for (const key of Object.keys(pages)) {
 }
 
 const version='2.3.8';
+const github = 'https://github.com/nineaiyu/FlyApps';
 
 const pro_base_env = {
     baseUrl: '/',       //该选项可以填写web-api的域名，类似 https://api.xxx.com/
@@ -164,8 +164,9 @@ module.exports = {
                 args[0]['process.env']['base_env'] = JSON.stringify({
                     baseUrl: base_evn.baseUrl,
                     baseShortUrl: base_evn.baseShortUrl,
-                    version: base_evn.version,
-                    footer: base_evn.footer_info
+                    version: dateFormat("yyyyMMdd.hhmmss") + '.' + base_evn.version,
+                    footer: base_evn.footer_info,
+                    github
                 });
                 return args
             });

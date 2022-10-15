@@ -16,11 +16,11 @@
       <div class="item"><p style="margin-bottom: 16px">应用举报</p>
       </div>
       <div>
-        <el-link :underline="false" href="https://github.com/nineaiyu/FlyApps"><p><b>FlyApps</b></p></el-link>
+        <el-link :href="github" :underline="false"><p><b>FlyApps</b></p></el-link>
       </div>
       <el-divider/>
       <el-tooltip content="拿出手机扫一扫" style="margin-top: 33px">
-        <el-image :lazy="true" :src="require('@/assets/github.png')" alt="https://github.com/nineaiyu/FlyApps"
+        <el-image :alt="github" :lazy="true" :src="require('@/assets/github.png')"
                   style="width: 160px">
         </el-image>
       </el-tooltip>
@@ -34,7 +34,8 @@ export default {
   name: "FirContact",
   data() {
     return {
-      bg_img: require("@/assets/imgs/banner_1.jpg")
+      bg_img: require("@/assets/imgs/banner_1.jpg"),
+      github: process.env.base_env.github
     }
   },
 }

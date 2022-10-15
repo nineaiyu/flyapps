@@ -4,7 +4,8 @@ import {geetestbase} from "@/utils/base/utils";
 const DOMAIN = process.env.base_env.baseShortUrl;
 
 const USERSEVER = 'api/v1/fir/server';
-
+// eslint-disable-next-line no-console
+console.log("js build version:" + process.env.base_env.version);
 // create an axios instance
 const service = Axios.create({
     baseURL: DOMAIN, // url = base url + request url
