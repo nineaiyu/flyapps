@@ -6,8 +6,8 @@
         <p style="color:#b2b2b2">Company News</p>
       </div>
       <div class="nav text-center">
-        <a class="active" href="#">公司新闻</a>
-        <a href="#">行业动态</a>
+        <a class="active" href="#">开发历程</a>
+        <a href="#">发展足迹</a>
       </div>
       <ul class="news-container">
         <li v-for="(item,index) in newsList" :key="index">
@@ -40,6 +40,18 @@ export default {
       show: false,
       newsList: [
         {
+          id: '008',
+          title: 'ios16系统',
+          introduce: '超级签名字支持ios16系统签名，只需要手机开启调试模式，即可安装打开',
+          date: '09-22',
+          year: '2022'
+        }, {
+          id: '007',
+          title: '私有下载页部署',
+          introduce: '支持私有下载页部署，方便快捷，稳定访问',
+          date: '05-18',
+          year: '2022'
+        }, {
           id: '001',
           title: '现有版本',
           introduce: '经过好长时间的编写，平台已经支持超级签名，权限管理，自定义域名，自定义存储',

@@ -273,6 +273,10 @@ class AuthConfCache(ConfigCacheBase):
     def REPORT(self):
         return super().get_value('REPORT', AUTHCONF.REPORT)
 
+    @property
+    def INVITECODE(self):
+        return super().get_value('INVITECODE', AUTHCONF.INVITECODE)
+
 
 class GeeTestConfCache(ConfigCacheBase):
     def __init__(self, *args, **kwargs):

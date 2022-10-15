@@ -41,13 +41,13 @@ export function geetestbase(func, self, uid, params, callback, errback, readybac
                 challenge: data.challenge,
                 new_captcha: data.new_captcha, // 用于宕机时表示是新验证码的宕机
                 offline: !data.success, // 表示用户后台检测极验服务器是否宕机，一般不需要关注
-                product: "float", // 产品形式，包括：float，popup
+                product: "bind", // 产品形式，包括：float，popup
                 width: "100%"
             }, (captchaObj) => {
                 self.$refs.captcha.innerHTML = '';
-                captchaObj.appendTo("#captcha");
+                // captchaObj.appendTo("#captcha");
                 captchaObj.onReady(() => {
-                    readyback()
+                    readyback(captchaObj)
                 }).onSuccess(() => {
                     params.geetest = captchaObj.getValidate();
                     callback(params);

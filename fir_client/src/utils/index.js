@@ -356,8 +356,8 @@ export function geetest(self, uid, params, callback, http_func = loginFun) {
             message: res.msg,
             type: 'error'
         });
-        // eslint-disable-next-line no-unused-vars
-    }, _ => {
+    }, captchaObj => {
+        captchaObj.verify()
         loading.close()
     })
 }

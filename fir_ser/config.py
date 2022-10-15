@@ -105,6 +105,8 @@ class THIRDLOGINCONF(object):
 
 
 class AUTHCONF(object):
+    # 邀请码
+    INVITECODE = ['yugechaoshen666']
     # 注册方式，如果启用sms或者email 需要配置 THIRD_PART_CONFIG_KEY_INFO.sender 信息
     REGISTER = {
         "enable": True,

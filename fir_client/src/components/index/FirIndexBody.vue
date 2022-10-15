@@ -114,12 +114,12 @@ export default {
         {
           logo: require("@/assets/imgs/qq.png"),
           title: "核心优势3",
-          content: "<p>利用QQ微信等提供在线解答</p>帮助用户快速准确解决问题和故障"
+          content: "<p>QQ微信等提供在线解答</p>帮助用户快速准确解决问题"
         },
         {
           logo: require("@/assets/imgs/skill.png"),
           title: "核心优势4",
-          content: "<p>由技术支持工程师，负责问题解答</p>需求受理及故障受理"
+          content: "<p>自定义配置，容器化部署</p>升级维护超级便捷"
         }
       ]
     }

@@ -21,10 +21,10 @@
                 <el-link @click="$router.push({name:'FirApps'})">登录</el-link>
               </el-col>
               <el-col :span="8">
-                <el-link @click="$router.push({name:'FirRegist'})">注册</el-link>
+                <el-link @click="$router.push({name:'FirContact'})">联系我们</el-link>
               </el-col>
               <el-col :span="8">
-                <el-link @click="$router.push({name:'FirContact'})">联系我们</el-link>
+                <el-link @click="github">Github</el-link>
               </el-col>
             </el-row>
           </el-col>
@@ -64,6 +64,10 @@ export default {
         'line-height': '45px',
         background: '#e7eaf1'
       },
+    }
+  }, methods: {
+    github() {
+      window.open('https://github.com/nineaiyu/FlyApps', '_blank', '');
     }
   }
 }

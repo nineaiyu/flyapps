@@ -15,9 +15,13 @@
       <el-divider direction="vertical"/>
       <div class="item"><p style="margin-bottom: 16px">应用举报</p>
       </div>
-      <p><b>flyapps@126.com</b></p>
-      <el-tooltip content="拿出手机扫描添加微信" style="margin-top: 33px">
-        <el-image :lazy="true" :src="require('@/assets/wxchat.jpg')" alt="扫描添加微信" style="width: 160px">
+      <div>
+        <el-link :underline="false" href="https://github.com/nineaiyu/FlyApps"><p><b>FlyApps</b></p></el-link>
+      </div>
+      <el-divider/>
+      <el-tooltip content="拿出手机扫一扫" style="margin-top: 33px">
+        <el-image :lazy="true" :src="require('@/assets/github.png')" alt="https://github.com/nineaiyu/FlyApps"
+                  style="width: 160px">
         </el-image>
       </el-tooltip>
 
@@ -44,7 +48,7 @@ export default {
 
 .content {
   width: 942px;
-  margin: 80px auto 160px;
+  margin: 10px auto 160px;
   text-align: center;
 }
 

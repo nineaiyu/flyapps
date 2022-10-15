@@ -576,9 +576,7 @@ class AuthorizationView(APIView):
         ext = request.data.get("ext", None)
         register_type = get_register_type()
         if ext and register_type.get('code', None) and ext.get('icode', None):
-            if ext.get('icode') == '689888666':
-                pass
-            else:
+            if ext.get('icode') not in Config.INVITECODE:
                 res.code = 1008
                 res.msg = "邀请码已失效"
                 return Response(res.dict)
