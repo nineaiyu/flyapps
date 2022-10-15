@@ -12,7 +12,7 @@ service="${2-all}"
 
 trap cleanup EXIT
 
-rm -f logs/tmp/*.pid
+rm -f tmp/*.pid
 
 if [[ "$action" == "bash" || "$action" == "sh" ]];then
     bash
