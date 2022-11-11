@@ -112,9 +112,11 @@ class FLYCliSer(object):
         req = requests.put(url, json=data, headers=self._header)
         if req.status_code == 200:
             if req.json()['code'] == 1000:
-                print("应用 %s  %s 上传更新成功，下载连接 %s" % (
-                    data.get('appname'), data.get('bundleid'), req.json()['data'].get('preview_url')))
-                return
+                master_download_url = req.json().get('data', {}).get('preview_url')
+                print("应用 %s  %s 上传更新成功" % (data.get('appname'), data.get('bundleid')))
+                print("当前应用下载连接：", master_download_url)
+                print("当前版本下载连接：", master_download_url + '?release_id=' + data.get('upload_key').split('.')[0])
+                return master_download_url
         raise AssertionError(req.text)
 
     def upload_local_storage(self, upload_key, upload_token, app_id, file_path):
@@ -201,7 +203,7 @@ class FLYCliSer(object):
             "udid": appinfo.get('udid', []),
             "type": appinfo['type'],
         }
-        self.analyse({**app_data, **upcretsdata})
+        return self.analyse({**app_data, **upcretsdata})
 
 
 class AppInfo(object):

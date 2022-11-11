@@ -166,15 +166,11 @@ class AppsSerializer(serializers.ModelSerializer):
     def get_sign_type_choice(self, obj):
         return get_choices_dict(obj.supersign_type_choices)
 
-    # supersign_used_number = serializers.IntegerField(default=0)
-    #
-    # def get_supersign_used_number(self, obj):
-    #     return models.APPSuperSignUsedInfo.objects.filter(app_id=obj).all().count()
-    #
-    # developer_used_count = serializers.IntegerField(default=0)
-    #
-    # def get_developer_used_count(self, obj):
-    #     return models.DeveloperAppID.objects.filter(app_id=obj).all().count()
+    count = serializers.IntegerField(default=0)
+    developer_used_count = serializers.IntegerField(default=0)
+    private_developer_number = serializers.IntegerField(default=0)
+    private_developer_used_number = serializers.IntegerField(default=0)
+    supersign_used_number = serializers.IntegerField(default=0)
 
     screenshots = serializers.SerializerMethodField()
 
