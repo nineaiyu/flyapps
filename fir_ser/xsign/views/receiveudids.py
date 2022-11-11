@@ -64,8 +64,8 @@ class IosUDIDView(APIView):
             if app_obj:
                 user_obj = app_obj.user_id
                 short = get_preview_short_config(user_obj, short)
+                server_domain = get_app_download_uri(request, user_obj, app_obj, preview=False)
                 if p_token and verify_token(p_token, app_obj.app_id, True):
-                    server_domain = get_app_download_uri(request, user_obj, app_obj, preview=False)
                     if app_obj.issupersign and app_obj.user_id.supersign_active:
                         res = check_app_permission(app_obj, BaseResponse())
                         if res.code != 1000:

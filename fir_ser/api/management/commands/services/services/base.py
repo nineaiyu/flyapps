@@ -20,6 +20,15 @@ def get_user_id(uid):
             ...
 
 
+def chown_dir_file(directory, u_gid, recursive=False):
+    if recursive:
+        for (dir_path, dir_names, filenames) in os.walk(directory):
+            for filename in filenames + dir_names:
+                os.chown(uid=u_gid, gid=u_gid, path=os.path.join(dir_path, filename))
+    else:
+        os.chown(uid=u_gid, gid=u_gid, path=directory)
+
+
 class BaseService(object):
 
     def __init__(self, **kwargs):
@@ -144,12 +153,10 @@ class BaseService(object):
         if u_gid is None:
             u_gid = os.getuid()
         if u_gid is not None:
-            for (dir_path, dir_names, filenames) in os.walk(LOG_DIR):
-                for filename in filenames + dir_names:
-                    os.chown(uid=u_gid, gid=u_gid, path=os.path.join(dir_path, filename))
+            chown_dir_file(LOG_DIR, u_gid, recursive=True)
             if self.name == 'uwsgi':
                 for dirs in ['files', 'supersign']:
-                    os.chown(uid=u_gid, gid=u_gid, path=os.path.join(BASE_DIR, dirs))
+                    chown_dir_file(os.path.join(BASE_DIR, dirs), u_gid, recursive=True)
         else:
             logging.error(f'uid: {self.uid} gid:{self.gid} is not exists')
 

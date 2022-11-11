@@ -41,7 +41,7 @@ def get_domain_filter(request):
 def auto_clean_download_cache(user_obj, user_domain_obj, app_obj, delete=False):
     if user_domain_obj:
         base_domain_queryset = UserDomainInfo.objects.filter(user_id=user_obj, is_enable=True).all()
-        if user_domain_obj.domain_type in [0, 1]:
+        if user_domain_obj.domain_type in [0, 1, 2]:
             if delete:
                 user_domain_obj.delete()
             if base_domain_queryset.filter(domain_type__in=[0, 1]).count() == 0:

@@ -5,7 +5,7 @@ FROM python:3.9.14-slim
 RUN sed -i 's/deb.debian.org/mirrors.163.com/g' /etc/apt/sources.list \
     && sed -i 's/security.debian.org/mirrors.163.com/g' /etc/apt/sources.list \
     && apt update  \
-    && apt-get install g++ wget -y \
+    && apt-get install g++ wget zip unzip -y \
     && apt-get install libssl-dev openssl libmariadb-dev  -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
