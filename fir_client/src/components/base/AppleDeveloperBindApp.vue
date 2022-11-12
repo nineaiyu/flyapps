@@ -3,8 +3,8 @@
     <div>
       <div style="text-align: center">
         <el-transfer
+            id="transfer"
             v-model="choices_data"
-            v-loading="loadings"
             :button-texts="['', '']"
             :data="app_developer_lists"
             :format="{
@@ -93,6 +93,7 @@
 <script>
 import {developerBindAppFun} from "@/restful";
 import {sort_compare} from "@/utils";
+import {Loading} from "element-ui";
 
 export default {
   name: 'AppleDeveloperBindApp',
@@ -120,8 +121,7 @@ export default {
       s_props: {},
       s_titles: [],
       app_private_used_number: 100,
-      loadings: false,
-      app_limit_number: 0
+      app_limit_number: 0,
     };
   },
   mounted() {
@@ -147,14 +147,12 @@ export default {
     },
     handleChange(value, direction, movedKeys) {
       if (this.issuer_id && direction === 'right') {
-        // if(value.length > this.app_limit_number){
-        //   this.$message.warning('超出开发者可签名应用数量限制,最大可分配'+this.app_limit_number+'个应用')
-        for (let i = 0; i < movedKeys.length; i++) {
-          let app_info = this.get_choice_data_from_key([movedKeys[i]])[0][0]
-          if (!(app_info && app_info.app_used_number > 0)) {
-            this.choices_data.splice(this.choices_data.indexOf(movedKeys[i]), 1)
-          }
-        }
+        //  不清楚当时为啥这样写，但是目前当 应用没有进行任何签名的时候，无法选中当前应用
+        // for (let i = 0; i < movedKeys.length; i++) {
+        //   let app_info = this.get_choice_data_from_key([movedKeys[i]])[0][0]
+        //   if (!(app_info && app_info.app_used_number > 0)) {
+        //     this.choices_data.splice(this.choices_data.indexOf(movedKeys[i]), 1)
+        //   }
         // }
       }
       if (this.app_id && direction === 'right') {
@@ -221,7 +219,7 @@ export default {
       })
     },
     getBindInfo(params) {
-      this.loadings = true
+      let loadingInstance = Loading.service({target: '#transfer'})
       if (this.issuer_id) {
         params.issuer_id = this.issuer_id
       }
@@ -250,7 +248,9 @@ export default {
         } else {
           this.$message.error("数据获取失败" + data.msg)
         }
-        this.loadings = false
+        this.$nextTick(() => { // 以服务的方式调用的 Loading 需要异步关闭
+          loadingInstance.close()
+        });
       }, {methods: 'GET', data: params})
     },
     format_data(data) {
