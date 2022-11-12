@@ -4,6 +4,7 @@ from django.db.models import Sum
 from rest_framework import serializers
 
 from common.base.baseutils import AppleDeveloperUid, get_choices_dict
+from common.constants import DeviceClass
 from common.core.sysconfig import Config
 from xsign import models
 from xsign.utils.modelutils import get_developer_udided, get_use_number
@@ -18,6 +19,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
         exclude = ["id", "user_id", "p8key"]
 
     developer_used_number = serializers.SerializerMethodField()
+    developer_other_device_used_number = serializers.SerializerMethodField()
     developer_used_other_number = serializers.SerializerMethodField()
     use_number = serializers.SerializerMethodField()
     app_used_count = serializers.SerializerMethodField()
@@ -46,7 +48,10 @@ class DeveloperSerializer(serializers.ModelSerializer):
         return 0
 
     def get_developer_used_number(self, obj):
-        return models.UDIDsyncDeveloper.objects.filter(developerid=obj).count()
+        return models.UDIDsyncDeveloper.objects.filter(developerid=obj, device_class=DeviceClass.IPHONE).count()
+
+    def get_developer_other_device_used_number(self, obj):
+        return models.UDIDsyncDeveloper.objects.filter(developerid=obj).exclude(device_class=DeviceClass.IPHONE).count()
 
     def get_developer_used_other_number(self, obj):
         return get_developer_udided(obj)[0]

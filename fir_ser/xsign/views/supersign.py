@@ -507,6 +507,7 @@ class DeveloperDeviceView(APIView):
         udid = request.query_params.get("udid", None)
         issuer_id = request.query_params.get("issuer_id", None)
         device_status = request.query_params.get("devicestatus", None)
+        device_class = request.query_params.get("deviceclass", None)
         super_sign_used_objs = UDIDsyncDeveloper.objects.filter(developerid__user_id=request.user, )
         if device_status:
             try:
@@ -515,6 +516,14 @@ class DeveloperDeviceView(APIView):
                     super_sign_used_objs = super_sign_used_objs.filter(status__in=device_status)
             except Exception as e:
                 logger.warning(f'device status json load failed. Exception:{e} .{device_status}')
+        if device_class:
+            try:
+                device_class = json.loads(device_class)
+                if device_class is not None and isinstance(device_class, list) and device_class:
+                    super_sign_used_objs = super_sign_used_objs.filter(device_class__in=device_class)
+            except Exception as e:
+                logger.warning(f'device_class json load failed. Exception:{e} .{device_class}')
+
         if issuer_id:
             super_sign_used_objs = super_sign_used_objs.filter(developerid__issuer_id=issuer_id)
         if udid:
@@ -526,6 +535,7 @@ class DeveloperDeviceView(APIView):
         app_serializer = DeveloperDeviceSerializer(app_page_serializer, many=True)
         res.data = app_serializer.data
         res.status_choices = get_choices_dict(UDIDsyncDeveloper.status_choices)
+        res.device_class_choices = get_choices_dict(UDIDsyncDeveloper.device_class_choices)
 
         res.count = super_sign_used_objs.count()
         return Response(res.dict)

@@ -43,3 +43,15 @@ class SignStatus(object):
     APP_REGISTRATION_COMPLETE = 2
     PROFILE_DOWNLOAD_COMPLETE = 3
     SIGNATURE_PACKAGE_COMPLETE = 4
+
+
+class DeviceClass(object):
+    """
+        苹果设备类型分为6类，每类都有100设备数
+    """
+    APPLE_WATCH = 'APPLE_WATCH'
+    IPAD = 'IPAD'
+    IPHONE = 'IPHONE'
+    IPOD = 'IPOD'
+    APPLE_TV = 'APPLE_TV'
+    MAC = 'MAC'

@@ -11,7 +11,7 @@ from django.db.models import Count, Sum, Q
 
 from api.models import AppReleaseInfo, UserInfo
 from common.base.baseutils import is_valid_phone
-from common.constants import SignStatus, AppleDeveloperStatus
+from common.constants import SignStatus, AppleDeveloperStatus, DeviceClass
 from common.core.sysconfig import Config, UserConfig
 from xsign.models import APPSuperSignUsedInfo, UDIDsyncDeveloper, AppUDID, APPToDeveloper, AppIOSDeveloperInfo, \
     IosDeveloperPublicPoolBill, IosDeveloperBill, DeveloperDevicesID, AppleDeveloperToAppUse, DeveloperAppID, \
@@ -106,7 +106,8 @@ def update_or_create_developer_udid_info(device_obj, developer_obj):
         "product": device_obj.name,
         "udid": device_obj.udid,
         "version": device_obj.model,
-        "status": device_obj.status
+        "status": device_obj.status,
+        "device_class": device_obj.deviceClass
     }
     return UDIDsyncDeveloper.objects.update_or_create(developerid=developer_obj, udid=device_obj.udid, defaults=device)
 
@@ -117,7 +118,7 @@ def check_uid_has_relevant(user_uid, to_user_uid):
 
 
 def usable_number(developer_obj):
-    d_count = UDIDsyncDeveloper.objects.filter(developerid=developer_obj).count()
+    d_count = UDIDsyncDeveloper.objects.filter(developerid=developer_obj, device_class=DeviceClass.IPHONE).count()
     u_count = developer_obj.usable_number
     return d_count if d_count > u_count else u_count
 
@@ -131,13 +132,16 @@ def get_developer_devices(developer_obj_lists, user_obj):
     result_info = []
     for dev_obj in developer_obj_lists:
         other_used, flyapp_used, _ = get_developer_udided(dev_obj)
+        device_class_count = UDIDsyncDeveloper.objects.filter(developerid=dev_obj).exclude(
+            device_class=DeviceClass.IPHONE).count()
         result_info.append({
             'other_used': other_used,
             'flyapp_used': flyapp_used,
             'usable_number': usable_number(dev_obj),
             'use_number': get_use_number(dev_obj),
             'status': dev_obj.status,
-            'abnormal_register': dev_obj.abnormal_register
+            'abnormal_register': dev_obj.abnormal_register,
+            'device_class_count': device_class_count
         })
 
     use_num = {
@@ -150,7 +154,8 @@ def get_developer_devices(developer_obj_lists, user_obj):
         "may_sign_number": 0,  # 可以被用来签名数
         "can_other_used": 0,  # 开发者已经使用，但是平台未使用设备数【状态为1】
         "used_number": 0,  # 可用的设备数【状态为1】
-        "max_total": 100 * len(result_info)
+        "max_total": 100 * len(result_info),
+        "device_class_count": 0  # 除了IPHONE其他设备状态
     }
 
     developer_status = Config.DEVELOPER_SIGN_STATUS
@@ -169,7 +174,7 @@ def get_developer_devices(developer_obj_lists, user_obj):
             use_num['can_other_used'] += info['other_used']
             use_num['used_number'] += info['use_number']
         use_num['may_sign_number'] += (info['usable_number'] - info['flyapp_used'] - info['other_used'])
-
+        use_num['device_class_count'] += info['device_class_count']
     return use_num
 
 

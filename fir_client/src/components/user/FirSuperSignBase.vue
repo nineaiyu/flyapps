@@ -521,9 +521,10 @@
                 {{ developer_used_info.may_sign_number - developer_used_info.can_sign_number }}
               </el-link>
               <el-link :underline="false">当前可签名设备数： {{ developer_used_info.can_sign_number }}</el-link>
+              <el-link :underline="false">当前非苹果手机设备数： {{ developer_used_info.device_class_count }}</el-link>
             </div>
             <el-link slot="reference" :underline="false">
-              还剩：{{ developer_used_info.can_sign_number }} 可用
+              还剩：{{ developer_used_info.can_sign_number + developer_used_info.device_class_count }} 可用
             </el-link>
           </el-popover>
           <el-progress
@@ -589,7 +590,10 @@
                            :underline="false">开发者账户ID: {{ scope.row.issuer_id }}
                   </el-link>
                 </el-tooltip>
-                <p>开发者账户已使用设备数: {{ scope.row.developer_used_number }}</p>
+                <p>开发者账户已使用苹果手机设备数: {{ scope.row.developer_used_number }}</p>
+                <p>开发者账户已使用非苹果手机设备数: {{ scope.row.developer_other_device_used_number }}
+                  <el-tag size="mini" type="warning">可忽略该设备数</el-tag>
+                </p>
                 <p>开发者账户可用设备数: {{ 100 - scope.row.developer_used_number }}</p>
                 <p>由于您设置可用设备数: {{ scope.row.usable_number }} ,所以现在可用设备数: {{
                     scope.row.usable_number - scope.row.developer_used_number > 0
@@ -873,16 +877,21 @@
             v-model="udidsearch"
             clearable
             placeholder="输入UDID"
-            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
+            style="width: 30%;margin-right: 5px;margin-bottom: 10px"/>
         <el-input
             v-model="appidseach"
             clearable
             placeholder="输入开发者用户ID"
-            style="width: 30%;margin-right: 30px;margin-bottom: 10px"/>
-        <el-select v-if="status_choices" v-model="devicestatus" clearable multiple
+            style="width: 30%;margin-right: 5px;margin-bottom: 10px"/>
+        <el-select v-model="devicestatus" clearable multiple
                    placeholder="设备状态"
-                   style="width: 120px;margin-right: 30px" @change="handleCurrentChange(1)">
+                   style="width: 110px;margin-right: 5px" @change="handleCurrentChange(1)">
           <el-option v-for="item in device_status_choices" :key="item.id" :label="item.name" :value="item.id"/>
+        </el-select>
+        <el-select v-model="deviceclass" clearable multiple
+                   placeholder="设备类型"
+                   style="width: 110px;margin-right: 5px" @change="handleCurrentChange(1)">
+          <el-option v-for="item in device_class_choices" :key="item.id" :label="item.name" :value="item.id"/>
         </el-select>
         <el-button icon="el-icon-search" type="primary" @click="handleCurrentChange(1)">
           搜索
@@ -936,7 +945,7 @@
               align="center"
               label="设备版本"
               prop="version"
-              width="200">
+              width="180">
           </el-table-column>
           <el-table-column
               align="center"
@@ -957,6 +966,12 @@
                 <el-tag type="danger">{{ scope.row.device_status }}</el-tag>
               </el-tooltip>
             </template>
+          </el-table-column>
+          <el-table-column
+              align="center"
+              label="设备类型"
+              prop="device_class"
+              width="80">
           </el-table-column>
           <el-table-column
               :formatter="deviceformatter"
@@ -1843,6 +1858,7 @@ export default {
       Bundleidsearch: "",
       appidseach: "",
       devicestatus: "",
+      deviceclass: "",
       operatestatus: "",
       operate_status_choices: [],
       uidsearch: "",
@@ -1928,6 +1944,7 @@ export default {
       appletoapp_title: '',
       status_choices: [],
       device_status_choices: [],
+      device_class_choices: [],
       read_only_mode: 'off',
       developer_status_choice: [],
       multipleSelection: [],
@@ -2353,6 +2370,7 @@ export default {
           "issuer_id": this.appidseach,
           "act": "syncalldevice",
           "devicestatus": this.devicestatus,
+          "deviceclass": this.deviceclass,
           "udidsearch": this.udidsearch
         }
       });
@@ -2524,6 +2542,7 @@ export default {
         this.iosdevicerankFun({"methods": "GET", "data": data})
       } else if (tabname === "iosudevices") {
         data.devicestatus = JSON.stringify(this.devicestatus);
+        data.deviceclass = JSON.stringify(this.deviceclass);
         this.iosudevicesFun("GET", data)
       } else if (tabname === 'operatemsg') {
         data.operate_status = this.operatestatus;
@@ -2795,6 +2814,7 @@ export default {
             this.developer_udevices_lists = data.data;
             this.pagination.total = data.count;
             this.device_status_choices = data.status_choices;
+            this.device_class_choices = data.device_class_choices;
           } else {
             this.refreshactiveFun()
           }

@@ -2,7 +2,7 @@ from django.db import models
 
 from api.models import Apps, UserInfo
 from common.base.daobase import AESCharField
-from common.constants import DeviceStatus, AppleDeveloperStatus, SignStatus
+from common.constants import DeviceStatus, AppleDeveloperStatus, SignStatus, DeviceClass
 
 
 class AppIOSDeveloperInfo(models.Model):
@@ -74,6 +74,12 @@ class UDIDsyncDeveloper(models.Model):
     status_choices = ((DeviceStatus.DISABLED, '禁用'), (DeviceStatus.ENABLED, '启用'),
                       (DeviceStatus.PROCESSING, '处理中'), (DeviceStatus.INELIGIBLE, '不合格'))
     status = models.CharField(choices=status_choices, verbose_name="设备状态", default=DeviceStatus.DISABLED, max_length=16)
+
+    device_class_choices = ((DeviceClass.APPLE_WATCH, 'APPLE_WATCH'), (DeviceClass.IPAD, 'IPAD'),
+                            (DeviceClass.IPHONE, 'IPHONE'), (DeviceClass.IPOD, 'IPOD'),
+                            (DeviceClass.APPLE_TV, 'APPLE_TV'), (DeviceClass.MAC, 'MAC'))
+    device_class = models.CharField(choices=device_class_choices, verbose_name="设备类型", default=DeviceClass.IPHONE,
+                                    max_length=16)
 
     class Meta:
         verbose_name = 'iOS开发平台同步设备信息'
