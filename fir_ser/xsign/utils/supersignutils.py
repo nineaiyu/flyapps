@@ -626,9 +626,11 @@ class IosUtils(object):
                         sign_status=SignStatus.SIGNATURE_PACKAGE_COMPLETE)
                     base_app_udid = AppUDID.objects.filter(app_id=app_obj, udid__developerid_id=developer_obj_id)
                     if base_app_udid.filter(sign_status__lt=SignStatus.SIGNATURE_PACKAGE_COMPLETE).count():
-                        c_time = base_app_udid.order_by('-created_time').first()
-                        u_time = base_app_udid.order_by('-updated_time').first()
-                        if u_time.updated_time > c_time.created_time:
+                        c_time = base_app_udid.filter(sign_status__lt=SignStatus.SIGNATURE_PACKAGE_COMPLETE).order_by(
+                            '-created_time').first()
+                        u_time = base_app_udid.filter(sign_status=SignStatus.SIGNATURE_PACKAGE_COMPLETE).order_by(
+                            '-updated_time').first()
+                        if c_time and u_time and u_time.updated_time > c_time.created_time:
                             base_app_udid.update(sign_status=SignStatus.SIGNATURE_PACKAGE_COMPLETE)
 
             del_cache_response_by_short(app_obj.app_id)

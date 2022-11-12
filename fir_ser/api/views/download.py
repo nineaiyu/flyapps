@@ -18,7 +18,8 @@ from api.utils.response import BaseResponse
 from api.utils.serializer import AppsShortSerializer, AppAdInfoSerializer
 from api.utils.signalutils import run_get_xsign_binary_file
 from common.base.baseutils import get_origin_domain_name, format_get_uri, make_random_uuid, make_resigned
-from common.core.decorators import cache_response
+from common.base.magic import cache_response
+from common.cache.storage import AppDownloadShortShowCache
 from common.core.response import mobileprovision_file_response, file_response, ApiResponse
 from common.core.sysconfig import Config
 from common.core.throttle import VisitShortThrottle, InstallShortThrottle, InstallThrottle1, InstallThrottle2
@@ -97,7 +98,7 @@ class ShortDownloadView(APIView):
     根据下载短链接，获取应用信息
     '''
 
-    @cache_response(timeout=600 - 60, cache="default", key_func='calculate_cache_key', cache_errors=False)
+    @cache_response(timeout=600 - 60, key_func='calculate_cache_key', callback_func='set_short_show_cache')
     def get(self, request, short):
         res = BaseResponse()
         release_id = request.query_params.get("release_id", None)
@@ -144,6 +145,19 @@ class ShortDownloadView(APIView):
             if ad_obj:
                 res.ad = AppAdInfoSerializer(ad_obj, context={"key": "ShortDownloadView", "short": short}).data
         return Response(res.dict)
+
+    def set_short_show_cache(self, view_instance, view_method,
+                             request, args, kwargs, cache_key):
+        short = kwargs.get("short", '')
+        short_show_cache = AppDownloadShortShowCache("ShortDownloadView".lower(), short)
+        key_list = short_show_cache.get_storage_cache()
+
+        if key_list and isinstance(key_list, list):
+            key_list.append(cache_key)
+            key_list = list(set(key_list))
+        else:
+            key_list = [cache_key]
+        short_show_cache.set_storage_cache(key_list, 600)
 
     # key的设置
     def calculate_cache_key(self, view_instance, view_method,

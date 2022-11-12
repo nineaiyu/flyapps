@@ -259,7 +259,7 @@ def check_app_access_token(app_id, access_token, only_check, udid):
         return AppDownloadToken.objects.filter(app_id__app_id=app_id, bind_udid=udid).count()
 
 
-@MagicCacheData.make_cache(60 * 60 * 24, key=lambda x: x.app_id)
+@MagicCacheData.make_cache(timeout=60 * 60 * 24, key_func=lambda x: x.app_id)
 def get_app_storage_used(app_obj):
     binary_size_sum = 0
     for release_obj in AppReleaseInfo.objects.filter(app_id=app_obj).all():

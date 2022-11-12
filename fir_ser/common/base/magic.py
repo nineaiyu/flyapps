@@ -6,10 +6,11 @@
 import datetime
 import logging
 import time
-from functools import wraps
+from functools import wraps, WRAPPER_ASSIGNMENTS
 from importlib import import_module
 
 from django.core.cache import cache
+from django.http import HttpResponse
 
 logger = logging.getLogger(__name__)
 
@@ -173,38 +174,51 @@ def magic_call_in_times(call_time=24 * 3600, call_limit=6, key=None):
 
 class MagicCacheData(object):
     @staticmethod
-    def make_cache(cache_time=60 * 10, invalid_time=0, key=None):
+    def make_cache(timeout=60 * 10, invalid_time=0, key_func=None, timeout_func=None):
         """
-        :param cache_time:  数据缓存的时候，单位秒
+        :param timeout_func:
+        :param timeout:  数据缓存的时候，单位秒
         :param invalid_time: 数据缓存提前失效时间，单位秒。该cache有效时间为 cache_time-invalid_time
-        :param key: cache唯一标识，默认为所装饰函数名称
+        :param key_func: cache唯一标识，默认为所装饰函数名称
         :return:
         """
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cache_key = f'magic_cache_data'
-                if key:
-                    cache_key = f'{cache_key}_{key(*args, **kwargs)}'
-                else:
-                    cache_key = f'{cache_key}_{func.__name__}'
+                cache_key = f'magic_cache_data_{func.__name__}'
+                if key_func:
+                    cache_key = f'{cache_key}_{key_func(*args, **kwargs)}'
+
+                cache_time = timeout
+                if timeout_func:
+                    cache_time = timeout_func(*args, **kwargs)
 
                 n_time = time.time()
                 res = cache.get(cache_key)
+                if res:
+                    while res.get('status') != 'ok':
+                        time.sleep(0.5)
+                        logger.warning(
+                            f'exec {func} wait. data status is not ok. cache_time:{cache_time} cache_key:{cache_key}  cache data exist result:{res}')
+                        res = cache.get(cache_key)
+
                 if res and n_time - res.get('c_time', n_time) < cache_time - invalid_time:
-                    logger.info(f"exec {func} finished. cache_key:{cache_key}  cache data exist result:{res}")
+                    logger.info(
+                        f"exec {func} finished. cache_time:{cache_time} cache_key:{cache_key} cache data exist result:{res}")
                     return res['data']
                 else:
+                    res = {'c_time': n_time, 'data': '', 'status': 'ready'}
+                    cache.set(cache_key, res, cache_time)
                     try:
-                        data = func(*args, **kwargs)
-                        res = {'c_time': n_time, 'data': data}
+                        res['data'] = func(*args, **kwargs)
+                        res['status'] = 'ok'
                         cache.set(cache_key, res, cache_time)
                         logger.info(
-                            f"exec {func} finished. time:{time.time() - n_time}  cache_key:{cache_key} result:{res}")
+                            f"exec {func} finished. time:{time.time() - n_time} cache_time:{cache_time} cache_key:{cache_key} result:{res}")
                     except Exception as e:
                         logger.error(
-                            f"exec {func} failed. time:{time.time() - n_time}  cache_key:{cache_key} Exception:{e}")
+                            f"exec {func} failed. time:{time.time() - n_time}  cache_time:{cache_time} cache_key:{cache_key} Exception:{e}")
 
                     return res['data']
 
@@ -217,3 +231,141 @@ class MagicCacheData(object):
         cache_key = f'magic_cache_data_{key}'
         res = cache.delete(cache_key)
         logger.warning(f"invalid_cache cache_key:{cache_key} result:{res}")
+
+
+class MagicCacheResponse(object):
+    def __init__(self, timeout=60 * 10, invalid_time=0, key_func=None, callback_func=None):
+        self.timeout = timeout
+        self.key_func = key_func
+        self.invalid_time = invalid_time
+        self.callback_func = callback_func
+
+    @staticmethod
+    def invalid_cache(key):
+        cache_key = f'magic_cache_response_{key}'
+        res = cache.delete(cache_key)
+        logger.warning(f"invalid_response_cache cache_key:{cache_key} result:{res}")
+
+    def __call__(self, func):
+        this = self
+
+        @wraps(func, assigned=WRAPPER_ASSIGNMENTS)
+        def inner(self, request, *args, **kwargs):
+            return this.process_cache_response(
+                view_instance=self,
+                view_method=func,
+                request=request,
+                args=args,
+                kwargs=kwargs,
+            )
+
+        return inner
+
+    def process_cache_response(self,
+                               view_instance,
+                               view_method,
+                               request,
+                               args,
+                               kwargs):
+        func_key = self.calculate_key(
+            view_instance=view_instance,
+            view_method=view_method,
+            request=request,
+            args=args,
+            kwargs=kwargs
+        )
+        func_name = f'{view_instance.__class__.__name__}_{view_method.__name__}'
+        cache_key = f'magic_cache_response_{func_name}'
+        if func_key:
+            cache_key = f'{cache_key}_{func_key}'
+
+        timeout = self.calculate_timeout(view_instance=view_instance)
+        n_time = time.time()
+        res = cache.get(cache_key)
+        if res and n_time - res.get('c_time', n_time) < timeout - self.invalid_time:
+            logger.info(f"exec {func_name} finished. cache_key:{cache_key}  cache data exist result:{res}")
+            content, status, headers = res['data']
+            response = HttpResponse(content=content, status=status)
+            for k, v in headers.values():
+                response[k] = v
+        else:
+            response = view_method(view_instance, request, *args, **kwargs)
+            response = view_instance.finalize_response(request, response, *args, **kwargs)
+            response.render()
+
+            if not response.status_code >= 400:
+                # django 3.0 has not .items() method, django 3.2 has not ._headers
+                if hasattr(response, '_headers'):
+                    headers = response._headers.copy()
+                else:
+                    headers = {k: (k, v) for k, v in response.items()}
+                data = (
+                    response.rendered_content,
+                    response.status_code,
+                    headers
+                )
+                res = {'c_time': n_time, 'data': data}
+                cache.set(cache_key, res, timeout)
+
+                self.callback_check(view_instance=view_instance,
+                                    view_method=view_method,
+                                    request=request,
+                                    args=args,
+                                    kwargs=kwargs,
+                                    cache_key=cache_key)
+
+                logger.info(
+                    f"exec {func_name} finished. time:{time.time() - n_time}  cache_key:{cache_key} result:{res}")
+
+        if not hasattr(response, '_closable_objects'):
+            response._closable_objects = []
+
+        return response
+
+    def calculate_key(self,
+                      view_instance,
+                      view_method,
+                      request,
+                      args,
+                      kwargs):
+        if isinstance(self.key_func, str):
+            key_func = getattr(view_instance, self.key_func)
+        else:
+            key_func = self.key_func
+        if key_func:
+            return key_func(
+                view_instance=view_instance,
+                view_method=view_method,
+                request=request,
+                args=args,
+                kwargs=kwargs,
+            )
+
+    def calculate_timeout(self, view_instance, **_):
+        if isinstance(self.timeout, str):
+            self.timeout = getattr(view_instance, self.timeout)
+        return self.timeout
+
+    def callback_check(self,
+                       view_instance,
+                       view_method,
+                       request,
+                       args,
+                       kwargs,
+                       cache_key):
+        if isinstance(self.callback_func, str):
+            callback_func = getattr(view_instance, self.callback_func)
+        else:
+            callback_func = self.callback_func
+        if callback_func:
+            return callback_func(
+                view_instance=view_instance,
+                view_method=view_method,
+                request=request,
+                args=args,
+                kwargs=kwargs,
+                cache_key=cache_key
+            )
+
+
+cache_response = MagicCacheResponse
