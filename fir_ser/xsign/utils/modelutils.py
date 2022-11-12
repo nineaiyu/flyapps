@@ -70,9 +70,9 @@ def check_super_sign_permission(user_obj):
     return True
 
 
-def check_ipa_is_latest_sign(app_obj, developer_obj=None):
-    if AppUDID.objects.filter(app_id=app_obj, udid__developerid=developer_obj,
-                              sign_status__lt=SignStatus.SIGNATURE_PACKAGE_COMPLETE).first():
+def check_ipa_is_latest_sign(app_obj, developer_obj=None, app_udid_obj=None):
+    if not app_udid_obj and AppUDID.objects.filter(app_id=app_obj, udid__developerid=developer_obj,
+                                                   sign_status__lt=SignStatus.SIGNATURE_PACKAGE_COMPLETE).first():
         return
     release_obj = AppReleaseInfo.objects.filter(app_id=app_obj, is_master=True).first()
     all_app_to_dev = APPToDeveloper.objects.filter(app_id=app_obj)

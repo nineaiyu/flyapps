@@ -472,7 +472,7 @@ def check_sign_is_exists(user_obj, app_obj, udid, developer_obj, sign=True):
     app_udid_obj = AppUDID.objects.filter(app_id=app_obj, udid__udid=udid, udid__developerid=developer_obj).first()
     if app_udid_obj and app_udid_obj.sign_status >= SignStatus.PROFILE_DOWNLOAD_COMPLETE:
         if app_udid_obj.sign_status == SignStatus.SIGNATURE_PACKAGE_COMPLETE:
-            if check_ipa_is_latest_sign(app_obj, developer_obj):
+            if check_ipa_is_latest_sign(app_obj, developer_obj, app_udid_obj):
                 d_result['msg'] = f'udid {udid} exists app_id {app_obj}'
                 logger.warning(d_result)
                 return True, d_result
@@ -624,6 +624,13 @@ class IosUtils(object):
                                            udid=udid_obj,
                                            sign_status=SignStatus.PROFILE_DOWNLOAD_COMPLETE).update(
                         sign_status=SignStatus.SIGNATURE_PACKAGE_COMPLETE)
+                    base_app_udid = AppUDID.objects.filter(app_id=app_obj, udid__developerid_id=developer_obj_id)
+                    if base_app_udid.filter(sign_status__lt=SignStatus.SIGNATURE_PACKAGE_COMPLETE).count():
+                        c_time = base_app_udid.order_by('-created_time').first()
+                        u_time = base_app_udid.order_by('-updated_time').first()
+                        if u_time.updated_time > c_time.created_time:
+                            base_app_udid.update(sign_status=SignStatus.SIGNATURE_PACKAGE_COMPLETE)
+
             del_cache_response_by_short(app_obj.app_id)
             MagicCacheData.invalid_cache(app_obj.app_id)
             return True
