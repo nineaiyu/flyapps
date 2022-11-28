@@ -273,7 +273,8 @@ def get_new_developer_by_app_obj(app_obj, obj_base_filter, apple_to_app=False):
     developer_obj_lists = developer_obj_lists.all().distinct().order_by("created_time")
     for developer_obj in developer_obj_lists:
         # 通过开发者数限制进行过滤
-        if get_developer_udided(developer_obj)[2] < developer_obj.usable_number:
+        i_use_num = UDIDsyncDeveloper.objects.filter(developerid=developer_obj, device_class=DeviceClass.IPHONE).count()
+        if i_use_num < developer_obj.usable_number:
             if apple_to_app:
                 apple_to_app_obj = AppleDeveloperToAppUse.objects.filter(app_id=app_obj,
                                                                          developerid=developer_obj).first()
