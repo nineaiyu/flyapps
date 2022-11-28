@@ -25,7 +25,7 @@ from common.base.baseutils import file_format_path, delete_app_profile_file, get
 from common.base.magic import run_function_by_locker, call_function_try_attempts, magic_wrapper, MagicCacheData
 from common.cache.state import CleanErrorBundleIdSignDataState
 from common.cache.storage import RedisCacheBase
-from common.constants import DeviceStatus, AppleDeveloperStatus, SignStatus
+from common.constants import DeviceStatus, AppleDeveloperStatus, SignStatus, DeviceClass
 from common.core.sysconfig import Config, UserConfig
 from common.notify.notify import sign_failed_notify, sign_unavailable_developer_notify, sign_app_over_limit_notify
 from common.utils.caches import del_cache_response_by_short, send_msg_over_limit, check_app_permission, \
@@ -279,7 +279,8 @@ def get_new_developer_by_app_obj(app_obj, obj_base_filter, apple_to_app=False):
                                                                          developerid=developer_obj).first()
                 if apple_to_app_obj:
                     # 通过配置的专属分配数量进行过滤
-                    app_used_number = DeveloperDevicesID.objects.filter(developerid=developer_obj)
+                    app_used_number = DeveloperDevicesID.objects.filter(developerid=developer_obj,
+                                                                        udid__device_class=DeviceClass.IPHONE)
                     if app_used_number.filter(app_id=app_obj).distinct().count() < apple_to_app_obj.usable_number:
                         can_used_developer_pk_list.append(developer_obj.pk)
             else:
