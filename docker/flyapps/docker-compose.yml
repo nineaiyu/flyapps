@@ -9,7 +9,7 @@ services:
   flyapps:
     container_name: flyapps
     restart: always
-    image: 'flyapps'
+    image: 'nineven/flyapps'
     working_dir: /data/fir_ser
     volumes:
       - /etc/localtime:/etc/localtime:ro

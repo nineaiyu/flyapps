@@ -2,9 +2,9 @@ FROM python:3.9.14-slim
 
 # Fixes some weird terminal issues such as broken clear / CTRL+L
 
-RUN sed -i 's/deb.debian.org/mirrors.163.com/g' /etc/apt/sources.list \
-    && sed -i 's/security.debian.org/mirrors.163.com/g' /etc/apt/sources.list \
-    && apt update  \
+#RUN sed -i 's/deb.debian.org/mirrors.163.com/g' /etc/apt/sources.list \
+#    && sed -i 's/security.debian.org/mirrors.163.com/g' /etc/apt/sources.list \
+RUN apt update  \
     && apt-get install g++ wget zip unzip -y \
     && apt-get install libssl-dev openssl libmariadb-dev  -y \
     && apt-get clean \
