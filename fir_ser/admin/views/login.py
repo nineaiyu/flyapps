@@ -9,6 +9,7 @@ import logging
 from django.contrib import auth
 from rest_framework.views import APIView
 
+from api.models import UserInfo
 from api.utils.auth.util import AuthInfo
 from api.utils.serializer import UserInfoSerializer
 from api.utils.utils import set_user_token
@@ -81,3 +82,16 @@ class LoginUserView(APIView):
     def get(self, request):
         serializer = UserInfoSerializer(request.user, )
         return ApiResponse(data=serializer.data)
+
+    def post(self, request):
+        data = request.data
+        user_id = data.get('user_id')
+        password = data.get('password')
+        if user_id and password and len(password) >= 6:
+            user_obj = UserInfo.objects.filter(pk=user_id).first()
+            if user_obj:
+                user_obj.set_password(password)
+                user_obj.save(update_fields=['password'])
+            serializer = UserInfoSerializer(user_obj, )
+            return ApiResponse(data=serializer.data)
+        return ApiResponse(code=1001, msg='重置密码失败，用户不存在')

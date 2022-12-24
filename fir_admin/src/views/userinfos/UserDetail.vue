@@ -6,21 +6,21 @@
           <el-form-item label="UID">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input :value="postForm.uid" disabled />
+                <el-input :value="postForm.uid" disabled/>
               </el-col>
             </el-row>
           </el-form-item>
           <el-form-item label="账号" prop="username">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.username" />
+                <el-input v-model="postForm.username"/>
               </el-col>
             </el-row>
           </el-form-item>
           <el-form-item label="昵称">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.first_name" />
+                <el-input v-model="postForm.first_name"/>
               </el-col>
             </el-row>
           </el-form-item>
@@ -28,7 +28,9 @@
             <el-row :gutter="12">
               <el-col :span="16">
                 <el-select v-model="postForm.gender" class="filter-item" placeholder="Please select">
-                  <el-option v-for="item in postForm.gender_choices" :key="item.id" :label="item.name" :value="item.id" />
+                  <el-option v-for="item in postForm.gender_choices" :key="item.id" :label="item.name"
+                             :value="item.id"
+                  />
                 </el-select>
               </el-col>
             </el-row>
@@ -37,7 +39,7 @@
             <el-row :gutter="12">
               <el-col :span="16">
                 <el-select v-model="postForm.role" class="filter-item" placeholder="Please select">
-                  <el-option v-for="item in postForm.role_choices" :key="item.id" :label="item.name" :value="item.id" />
+                  <el-option v-for="item in postForm.role_choices" :key="item.id" :label="item.name" :value="item.id"/>
                 </el-select>
               </el-col>
             </el-row>
@@ -46,7 +48,7 @@
           <el-form-item label="邮箱" prop="email">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.email" />
+                <el-input v-model="postForm.email"/>
               </el-col>
             </el-row>
           </el-form-item>
@@ -54,35 +56,37 @@
           <el-form-item label="手机" prop="mobile">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.mobile" />
+                <el-input v-model="postForm.mobile"/>
               </el-col>
             </el-row>
           </el-form-item>
           <el-form-item label="Q Q" prop="number">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.qq" />
+                <el-input v-model="postForm.qq"/>
               </el-col>
             </el-row>
           </el-form-item>
           <el-form-item label="职位">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.job" />
+                <el-input v-model="postForm.job"/>
               </el-col>
             </el-row>
           </el-form-item>
           <el-form-item label="公司">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.company" />
+                <el-input v-model="postForm.company"/>
               </el-col>
             </el-row>
           </el-form-item>
           <el-form-item label="备注">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-input v-model="postForm.memo" :autosize="{ minRows: 4, maxRows: 6}" type="textarea" placeholder="Please input" />
+                <el-input v-model="postForm.memo" :autosize="{ minRows: 4, maxRows: 6}" type="textarea"
+                          placeholder="Please input"
+                />
               </el-col>
             </el-row>
           </el-form-item>
@@ -91,7 +95,9 @@
           <el-form-item label="用户头像">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-image :src="postForm.head_img" :preview-src-list="[postForm.head_img]" fit="contain" style="width: 100px; height: 100px" />
+                <el-image :src="postForm.head_img" :preview-src-list="[postForm.head_img]" fit="contain"
+                          style="width: 100px; height: 100px"
+                />
               </el-col>
             </el-row>
           </el-form-item>
@@ -177,10 +183,16 @@
           <el-form-item label="实名认证">
             <el-row :gutter="12">
               <el-col :span="16">
-                <el-select v-model="postForm.certification" class="filter-item" placeholder="Please select" :disabled="postForm.certification === -1">
-                  <el-option v-for="item in postForm.certification_status_choices" :key="item.id" :label="item.name" :value="item.id" />
+                <el-select v-model="postForm.certification" class="filter-item" placeholder="Please select"
+                           :disabled="postForm.certification === -1"
+                >
+                  <el-option v-for="item in postForm.certification_status_choices" :key="item.id" :label="item.name"
+                             :value="item.id"
+                  />
                 </el-select>
-                <router-link v-if="postForm.certification_id" :to="{name: 'user_authentication_info_edit',params:{id:postForm.certification_id.id}}">
+                <router-link v-if="postForm.certification_id"
+                             :to="{name: 'user_authentication_info_edit',params:{id:postForm.certification_id.id}}"
+                >
                   <el-button type="primary">
                     审核认证信息
                   </el-button>
@@ -203,7 +215,7 @@
           <el-form-item label="下载次数" prop="download_times">
             <el-row :gutter="12">
               <el-col :span="8">
-                <el-input :value="postForm.download_times" disabled />
+                <el-input :value="postForm.download_times" disabled/>
               </el-col>
               <el-col :span="8">
                 <router-link v-if="postForm.id" :to="{name: 'order_info_list',params:{user_id:postForm.id}}">
@@ -215,14 +227,14 @@
           <el-form-item label="注册时间" prop="timestamp">
             <el-row :gutter="20">
               <el-col :span="8">
-                <el-date-picker :value="postForm.date_joined" type="datetime" disabled />
+                <el-date-picker :value="postForm.date_joined" type="datetime" disabled/>
               </el-col>
             </el-row>
           </el-form-item>
           <el-form-item label="应用版本历史记录">
             <el-row :gutter="20">
               <el-col :span="8">
-                <el-input v-model="postForm.history_release_limit" />
+                <el-input v-model="postForm.history_release_limit"/>
               </el-col>
             </el-row>
           </el-form-item>
@@ -233,6 +245,9 @@
     <el-col :span="9" style="float: right">
       <el-col :span="8">
         <el-button @click="add_amount_download_times(postForm.id)">下载次数充值</el-button>
+      </el-col>
+      <el-col :span="8">
+        <el-button @click="reset_password(postForm.id)">重置密码</el-button>
       </el-col>
       <el-button v-if="!is_edit" type="primary" @click="is_edit=true">修改</el-button>
       <div v-else>
@@ -245,7 +260,7 @@
 
 <script>
 import { validURL } from '@/utils/validate'
-import { getUserInfos, updateUserInfo } from '@/api/user'
+import { getUserInfos, resetPassword, updateUserInfo } from '@/api/user'
 import { createOrderInfo } from '@/api/order'
 import { changeStorageInfo, getStorageList } from '@/api/storage'
 
@@ -277,7 +292,7 @@ const defaultForm = {
 
 export default {
   name: 'UserDetail',
-  components: { }, filters: {
+  components: {}, filters: {
     userStatusFilter(status) {
       const statusMap = {
         true: '激活，允许登录',
@@ -341,8 +356,7 @@ export default {
       storage_selection: []
     }
   },
-  computed: {
-  },
+  computed: {},
   created() {
     if (this.isEdit) {
       const id = this.$route.params && this.$route.params.id
@@ -369,9 +383,33 @@ export default {
           message: '取消充值'
         })
       })
+    }, reset_password(user_id) {
+      this.$prompt('请输入新密码，密码至少6位', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }).then(({ value }) => {
+        resetPassword({ user_id: user_id, password: value }).then(res => {
+          if (res.code === 1000) {
+            this.$message.success('密码重置成功')
+            this.fetchData(user_id)
+          } else {
+            this.$message.error(res.msg)
+          }
+        })
+      }).catch((e) => {
+        console.log(e)
+        this.$message({
+          type: 'info',
+          message: '取消充值'
+        })
+      })
     },
     changeStorageData(force) {
-      changeStorageInfo({ id: this.postForm.id, use_storage_id: this.postForm.storage, force: force }).then(response => {
+      changeStorageInfo({
+        id: this.postForm.id,
+        use_storage_id: this.postForm.storage,
+        force: force
+      }).then(response => {
         this.$message.success('存储数据迁移并设置刷新成功')
       }).catch(err => {
         console.log(err)

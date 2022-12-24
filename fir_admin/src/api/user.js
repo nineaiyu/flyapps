@@ -53,3 +53,11 @@ export function updateCertificationInfo(data) {
     data
   })
 }
+
+export function resetPassword(data) {
+  return request({
+    url: '/user/info',
+    method: 'post',
+    data
+  })
+}

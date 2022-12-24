@@ -290,7 +290,7 @@ export default {
           });
           return
         }
-        if (password.length > 6) {
+        if (password.length >= 6) {
           let params = {
             "username": email,
             "password": password,
