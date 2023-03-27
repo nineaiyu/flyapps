@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+#
+
+
+docker pull 'bitnami/mariadb:10.7.3'
+docker pull 'bitnami/redis:6.2.7'
+docker pull 'nginx:1.21.3'
+docker pull 'nineven/flyapps:latest'
+docker pull 'node:14.17.3'

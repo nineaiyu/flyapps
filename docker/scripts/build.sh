@@ -3,4 +3,4 @@
 #
 
 cd ../build/
-docker-compose up buildclient buildadmin
+docker compose up buildclient buildadmin
