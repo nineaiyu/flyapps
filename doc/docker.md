@@ -9,6 +9,7 @@
 ### 开始部署
 ##### 1.从git上面下载源码
 ```
+mkdir /data/
 cd /data/
 dnf install git -y
 git clone https://github.com/nineaiyu/flyapps

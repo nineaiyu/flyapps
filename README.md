@@ -45,9 +45,11 @@
 
 ## 部署方式
 
-### 1.[Docker 部署](./doc/docker.md) 【推荐】
+### 1.[Docker 部署](./doc/docker.md) 【推荐, 内存比本地部署高一些】
 
 ### 2.[本地部署](./doc/local.md)
+
+### 3.[宝塔面板部署](./doc/btlocal.md)
 
 ### 功能预览
 ![img_1.png](./doc/images/img_1.png)

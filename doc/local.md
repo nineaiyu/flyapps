@@ -6,10 +6,27 @@
 数据路径| ```/data```
 
 
+### 数据库环境依赖
+##### 安装mariadb数据库并启动数据库 [如果存在mysql数据库服务则忽略该操作]
+```shell
+dnf install mariadb-devel mariadb-server -y
+systemctl restart mariadb
+systemctl enable mariadb
+```
+##### 安装redis数据库 [如果存在redis数据库服务则忽略该操作]
+```shell
+dnf install redis -y
+systemctl restart redis
+systemctl enable redis
+```
+
+### 开始部署源码
+
 ##### 从git上面下载源码
 ```shell
+mkdir /data/
 cd /data/
-dnf install git gcc zip unzip -y
+dnf install git gcc zip unzip mariadb-devel -y
 git clone https://github.com/nineaiyu/flyapps
 ```
 
@@ -18,24 +35,20 @@ git clone https://github.com/nineaiyu/flyapps
 
 ##### 搭建python env 环境
 ```shell
-dnf install python39 python39-devel  redis mariadb-server  mariadb-devel -y
+dnf install python39 python39-devel -y
 python3.9 -m venv py39
-source py39/bin/activate
 ```
 
 ###### 安装pip包
 ```shell
 cd /data/flyapps/fir_ser/
+source /data/py39/bin/activate
 pip install -U setuptools pip -i https://pypi.tuna.tsinghua.edu.cn/simple/
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple/
 ```
 
 #### 配置数据库
-##### 启动mariadb数据库
-```shell
-systemctl restart mariadb
-systemctl enable mariadb
-```
+
 ##### 创建mysql数据库
 ```shell
 mysql
@@ -44,12 +57,13 @@ mysql
 ```mariadb
 create database flyapps default character set utf8 COLLATE utf8_general_ci;
 grant all on flyapps.* to flyuser@'127.0.0.1' identified by 'KGzKjZpWBp4R4RSa';
+quit;
 ```
-##### 启动redis数据库
+
+##### 增加redis密码并重启redis数据库
 ```shell
 echo 'requirepass nineven' >> /etc/redis.conf  # 配置授权密码
 systemctl restart redis
-systemctl enable redis
 ```
 
 ### flyapps  zsign ipa重签名工具安装
@@ -62,6 +76,12 @@ cd zsign-1.1.2/
 g++ *.cpp common/*.cpp -lcrypto -O3 -std=c++11 -o /usr/bin/zsign
 ```
 
+##### 添加redis和mariadb uwsgi本地解析
+```shell
+echo '127.0.0.1 mariadb redis flyapps' >> /etc/hosts
+```
+
+### 配置文件操作
 
 ####  配置api服务需要修改api和web域名，如果有需求，还可以配置 短信，邮箱，geetest，存储等信息
 ##### fir_ser配置文件 ```fir_ser/config.py```
@@ -91,15 +111,15 @@ n 12.13      # 安装12版本的node或者14版本 ,最新版本会有问题
 npm install -g yarn
 ```
 
-
-
+###### 修改前端web编译信息【可选】
+```shell
+vim  /data/flyapps/fir_client/vue.config.js  #根据需求修改相关信息,并保存退出
+# pro_base_env 正式环境信息
+# dev_base_env 开发环境信息
+```
 ###### 编译web端和下载页
 ```shell
 cd /data/flyapps/fir_client/
-vim  vue.config.js  #修改api接口地址
-# pro_base_env 正式环境信息
-# dev_base_env 开发环境信息
-
 yarn install
 yarn build index  # 前端打包,输出目录 dist_index
 yarn build short  # 下载页打包，输出目录 dist_short
@@ -137,23 +157,23 @@ systemctl restart nginx
 systemctl enable nginx
 ```
 
-##### 添加redis和mariadb uwsgi本地解析
-```shell
-echo '127.0.0.1 mariadb redis flyapps' >> /etc/hosts
-```
-
 ###### 迁移数据库
 ```shell
+source /data/py39/bin/activate
 cd /data/flyapps/fir_ser/
 python manage.py makemigrations
 python manage.py migrate
 ```
 
-#### 启动api服务
+#### 配置内核参数【仅执行一次】
 ```shell
 echo 'net.core.somaxconn=1024' >> /etc/sysctl.conf
 sysctl -p
+```
+#### 启动api服务
+```shell
 cd /data/flyapps/fir_ser/
+source /data/py39/bin/activate
 python manage.py start all -u nginx -usm 1 -d
 ```
 
