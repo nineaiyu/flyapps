@@ -695,16 +695,16 @@ export default {
             if (this.currentappinfo.type === 1) {
               if (this.currentappinfo.issupersign) {
                 if (this.$route.query.udid && this.udid === this.$route.query.udid) {
-                  if (this.agent !== '') {
+                  // if (this.agent !== '') {
                     let download_url = res.data.download_url;
                     this.downloadurl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(download_url);
                     // eslint-disable-next-line no-unused-vars
                     this.timer = setTimeout(data => {
                       this.gomobile = false;
                     }, 5000);
-                  }
+                  // }
                 } else {
-                  if (this.agent !== '') {
+                  // if (this.agent !== '') {
                     this.downloadurl = res.data.download_url;
                     let pwd = ''
                     if (res.data.password && res.data.password.length > 4) {
@@ -719,7 +719,7 @@ export default {
                     }
 
                     return;
-                  }
+                  // }
                 }
               } else {
                 let download_url = res.data.download_url;
@@ -733,9 +733,9 @@ export default {
                 }
               }
             } else {
-              if (this.agent !== '') {
+              // if (this.agent !== '') {
                 this.downloadurl = res.data.download_url;
-              }
+              // }
             }
             window.location.href = this.downloadurl;
           } else if (res.code === 1009) {
@@ -925,9 +925,9 @@ export default {
           if (this.mcurrentappinfo.release_type === 2 && !this.currentappinfo.issupersign) {
             this.signhelplist = this.inhousehelplist;
           }
-          if (this.agent !== '') {
+          // if (this.agent !== '') {
             this.check_msg();
-          }
+          // }
         } else if (data.code === 1002) {
           window.location.href = location.href.replace(location.search, '');
         } else if (data.code === 302 && data.data) {
@@ -972,11 +972,11 @@ export default {
           this.agent = 'wxapple';
           //微信
         } else {
-          if (browser.versions.macos) {
-            this.agent = '';
-          } else {
+          // if (browser.versions.macos) {
+          //   this.agent = '';
+          // } else {
             this.agent = 'apple';
-          }
+          // }
         }
 
       }
@@ -1587,7 +1587,7 @@ button:focus {
 
 .section {
   position: relative;
-  z-index: 2;
+  z-index: -2;
   padding: 50px 0;
   border-top: 1px solid #dae2e3
 }
