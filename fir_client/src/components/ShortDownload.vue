@@ -844,10 +844,10 @@ export default {
             }
           }
 
-          // if (this.agent !== '') {
+          if (this.agent !== '') {
             this.miscomboappinfo = {};
             this.iscomboappinfo = {};
-          // }
+          }
           if (this.currentappinfo.wxeasytype) {
             if (this.agent !== 'wxandroid' && this.agent !== 'wxapple') {
               document.title = this.currentappinfo.name + '下载';
