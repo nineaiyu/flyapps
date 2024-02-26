@@ -134,8 +134,7 @@
                   </p>
                 </div>
 
-                <div v-if="agent !==''" id="actions" class="actions"
-                     style="margin-top: 10%;margin-bottom: 20%">
+                <div id="actions" class="actions" style="margin-top: 10%;margin-bottom: 20%">
                   <button v-if="wrong" type="button">{{ msg }}</button>
 
                   <el-button v-else-if="agent === 'wxandroid' || agent === 'wxapple'" round
@@ -1742,58 +1741,8 @@ button:focus {
   background: 0
 }
 
-@media only screen and (min-device-width: 320px) and (max-device-width: 480px) and (-webkit-min-device-pixel-ratio: 2) {
-  #actions {
-    display: block
-  }
-}
-
-@media only screen and (min-device-width: 320px) and (max-device-width: 568px) and (-webkit-min-device-pixel-ratio: 2) {
-  #actions {
-    display: block
-  }
-}
-
-@media only screen and (min-device-width: 375px) and (max-device-width: 667px) and (-webkit-min-device-pixel-ratio: 2) {
-  #actions {
-    display: block
-  }
-}
-
-@media only screen and (min-device-width: 414px) and (max-device-width: 736px) and (-webkit-min-device-pixel-ratio: 3) {
-  #actions {
-    display: block
-  }
-}
-
-@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 1) {
-  #actions {
-    display: block
-  }
-}
-
-@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) {
-  #actions {
-    display: block
-  }
-}
-
-@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: landscape) {
-  #actions {
-    display: block
-  }
-}
-
-@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: portrait) {
-  #actions {
-    display: block
-  }
-}
-
-@media only screen and (min-device-width: 1024px) and (max-device-width: 1366px) and (orientation: landscape) {
-  #actions {
-    display: block
-  }
+#actions {
+  display: block
 }
 
 #actions.type-android {
