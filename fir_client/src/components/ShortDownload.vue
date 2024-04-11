@@ -595,7 +595,7 @@ export default {
           }, 1000);
         }
       } else {
-        if (this.$route.query.udid && this.$route.query.task_token) {
+        if ((this.$route.query.udid && this.$route.query.task_token) || this.$route.query?.download==='auto') {
           this.download()
         }
       }
@@ -742,11 +742,12 @@ export default {
       }
     },
     qrcode() {
-      this.make_qr(document.getElementById("qrcode"), 100)
-      // eslint-disable-next-line no-unused-vars
-      setTimeout(_ => {
+      setTimeout(() => {
+        this.make_qr(document.getElementById("qrcode"), 100)
+      }, 500);
+      setTimeout(() => {
         this.make_qr(document.getElementById("qrcode1"), 266)
-      }, 1000);
+      }, 500);
     },
     getDownloadTokenFun() {
       let params = {
