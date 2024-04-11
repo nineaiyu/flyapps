@@ -815,10 +815,12 @@ export default {
                 href = href + '?password=' + this.$route.query.password
               }
             }
-            if (href.indexOf('?') !== -1) {
-              href = href + '&download=' + this.$route.query.download
-            }else {
-              href = href + '?download=' + this.$route.query.download
+            if (this.$route.query.download) {
+              if (href.indexOf('?') !== -1) {
+                href = href + '&download=' + this.$route.query.download
+              } else {
+                href = href + '?download=' + this.$route.query.download
+              }
             }
             window.location.href = href;
             return
