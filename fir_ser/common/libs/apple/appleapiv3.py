@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 # https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api
-#  https://appstoreconnect.apple.com/access/api 去申请秘钥
+#  https://appstoreconnect.apple.com/access/integrations/api 去申请秘钥
 #
 
 # proxies = settings.APPLE_DEVELOPER_API_PROXY if settings.APPLE_DEVELOPER_API_PROXY else {}
@@ -94,7 +94,7 @@ class DevicesAPI(object):
 
         """
         params = {
-            "fields[devices]": "addedDate, deviceClass, model, name, platform, status, udid",
+            "fields[devices]": "addedDate,deviceClass,model,name,platform,status,udid",
             "filter[platform]": "IOS",
             "limit": 200
         }
@@ -152,7 +152,7 @@ class DevicesAPI(object):
         """
         base_url = f'{self.devices_url}/{device_id}'
         params = {
-            "fields[devices]": "addedDate, deviceClass, model, name, platform, status, udid",
+            "fields[devices]": "addedDate,deviceClass,model,name,platform,status,udid",
         }
         return request_format_log(self,
                                   requests.get(base_url, params=params, headers=self.headers, proxies=self.proxies,
@@ -251,7 +251,7 @@ class BundleIDsAPI(object):
             403 ErrorResponse Forbidden Request not authorized. Content-Type: application/json
         """
         params = {
-            "fields[bundleIds]": "identifier, name, platform, profiles, seedId",
+            "fields[bundleIds]": "identifier,name,platform,profiles,seedId",
             # "filter[platform]": "IOS",
             "limit": 200
         }
@@ -504,8 +504,7 @@ class CertificatesAPI(object):
             403 ErrorResponse Forbidden Request not authorized. Content-Type: application/json
         """
         params = {
-            "fields[certificates]": "certificateContent, certificateType, csrContent, displayName, expirationDate, "
-                                    "name, platform, serialNumber",
+            "fields[certificates]": "certificateContent,certificateType,displayName,expirationDate,name,platform,serialNumber",
         }
         if query_parameters:
             for k, v in query_parameters.items():
@@ -664,8 +663,7 @@ class Profiles(namedtuple("Profiles",
 
 
 class Certificates(namedtuple("Certificates",
-                              ["id", "serialNumber", "certificateContent", "displayName", "name", "csrContent",
-                               "platform",
+                              ["id", "serialNumber", "certificateContent", "displayName", "name", "platform",
                                "expirationDate",
                                "certificateType"]), ):
     @classmethod
