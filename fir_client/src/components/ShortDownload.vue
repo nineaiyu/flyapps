@@ -252,11 +252,11 @@
           <div class="release-info">
             <div v-if="mcurrentappinfo.changelog" class="info">
               <h3>更新日志</h3>
-              {{ mcurrentappinfo.changelog }}
+              <div v-html="mcurrentappinfo.changelog"></div>
             </div>
             <div v-if="currentappinfo.description" class="info">
               <h3>应用描述</h3>
-              {{ currentappinfo.description }}
+              <div v-html="currentappinfo.description"></div>
             </div>
           </div>
 
@@ -928,7 +928,8 @@ export default {
             iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者QQHD浏览器
             iPad: u.indexOf('iPad') > -1, //是否iPad
             webApp: u.indexOf('Safari') === -1, //是否web应该程序，没有头部与底部
-            macos: u.indexOf('Mac OS') > -1 && u.indexOf('Macintosh') > -1
+            macos: u.indexOf('Mac OS') > -1 && u.indexOf('Macintosh') > -1,
+            harmony: u.indexOf('Harmony') > -1 // 检测鸿蒙系统
           };
         }(),
         language: (navigator.browserLanguage || navigator.language).toLowerCase()
@@ -947,7 +948,7 @@ export default {
         }
 
       }
-      if (browser.versions.android) {//安卓
+        if (browser.versions.android||browser.versions.harmony) {//安卓
         if (ua.match(/micromessenger/i) && ua.match(/micromessenger/i)[0] === "micromessenger") {
           // alert('安卓微信');
           this.agent = 'wxandroid';
