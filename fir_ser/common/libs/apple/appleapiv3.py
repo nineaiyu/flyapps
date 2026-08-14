@@ -21,8 +21,10 @@ from xsign.utils.iproxy import get_proxy_ip_from_cache
 logger = logging.getLogger(__name__)
 
 
-# https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api
+# https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api
 #  https://appstoreconnect.apple.com/access/integrations/api 去申请秘钥
+# 接口规范参考 Apple 官方 OpenAPI 定义(4.4.1):
+#  https://developer.apple.com/sample-code/app-store-connect/app-store-connect-openapi-specification.zip
 #
 
 # proxies = settings.APPLE_DEVELOPER_API_PROXY if settings.APPLE_DEVELOPER_API_PROXY else {}
@@ -80,6 +82,8 @@ def get_capability(s_type):
 
 class DevicesAPI(object):
     # https://developer.apple.com/documentation/appstoreconnectapi/devices
+    # platform 取值(BundleIdPlatform): IOS, MAC_OS, UNIVERSAL
+    # deviceClass 最新枚举: APPLE_VISION_PRO, APPLE_WATCH, IPAD, IPHONE, IPOD, APPLE_TV, MAC
     def __init__(self, base_uri, jwt_headers):
         self.headers = jwt_headers
         self.devices_url = f'{base_uri}/devices'
@@ -115,6 +119,10 @@ class DevicesAPI(object):
     def list_device_by_device_id(self, device_id):
         return self.list_devices({"filter[id]": device_id})
 
+    def list_devices_by_udid(self, udid):
+        # 使用服务端 filter[udid] 过滤, 避免拉取全部设备
+        return self.list_devices({"filter[udid]": udid})
+
     def register_device(self, device_name, device_udid, platform="IOS"):
         """
         :param device_name:
@@ -133,7 +141,7 @@ class DevicesAPI(object):
                 'attributes': {
                     'name': device_name,
                     'udid': device_udid,
-                    'platform': platform  # IOS or MAC_OS
+                    'platform': platform  # IOS, MAC_OS 或 UNIVERSAL
                 }
             }
         }
@@ -193,7 +201,8 @@ class DevicesAPI(object):
 
 
 class BundleIDsAPI(object):
-    # https://developer.apple.com/documentation/appstoreconnectapi/bundle_ids
+    # https://developer.apple.com/documentation/appstoreconnectapi/bundle-ids
+    # platform 取值(BundleIdPlatform): IOS, MAC_OS, UNIVERSAL
     def __init__(self, base_uri, jwt_headers):
         self.headers = jwt_headers
         self.bundle_ids_url = f'{base_uri}/bundleIds'
@@ -251,7 +260,7 @@ class BundleIDsAPI(object):
             403 ErrorResponse Forbidden Request not authorized. Content-Type: application/json
         """
         params = {
-            "fields[bundleIds]": "identifier,name,platform,profiles,seedId",
+            "fields[bundleIds]": "identifier,name,platform,seedId",
             # "filter[platform]": "IOS",
             "limit": 200
         }
@@ -294,9 +303,68 @@ class BundleIDsAPI(object):
                                   requests.patch(base_url, json=json, headers=self.headers, proxies=self.proxies,
                                                  timeout=self.timeout))
 
+    def read_bundle_id_information(self, bundle_id):
+        """
+        GET /v1/bundleIds/{id}
+        :param bundle_id:
+        :return:
+            200 BundleIdResponse OK Content-Type: application/json
+            400 ErrorResponse Bad Request An error occurred with your request. Content-Type: application/json
+            403 ErrorResponse Forbidden Request not authorized. Content-Type: application/json
+            404 ErrorResponse Not Found Resource not found. Content-Type: application/json
+        """
+        base_url = f'{self.bundle_ids_url}/{bundle_id}'
+        params = {
+            "fields[bundleIds]": "identifier,name,platform,seedId",
+        }
+        return request_format_log(self,
+                                  requests.get(base_url, params=params, headers=self.headers, proxies=self.proxies,
+                                               timeout=self.timeout))
+
+    def list_bundle_id_capabilities(self, bundle_id):
+        """
+        GET /v1/bundleIds/{id}/bundleIdCapabilities 查询 bundle id 已开通的能力
+        :param bundle_id:
+        :return:
+            200 BundleIdCapabilitiesResponse OK Content-Type: application/json
+            400 ErrorResponse Bad Request An error occurred with your request. Content-Type: application/json
+            403 ErrorResponse Forbidden Request not authorized. Content-Type: application/json
+            404 ErrorResponse Not Found Resource not found. Content-Type: application/json
+        """
+        base_url = f'{self.bundle_ids_url}/{bundle_id}/bundleIdCapabilities'
+        return request_format_log(self,
+                                  requests.get(base_url, headers=self.headers, proxies=self.proxies,
+                                               timeout=self.timeout))
+
+    def list_bundle_id_profiles(self, bundle_id, query_parameters=None):
+        """
+        GET /v1/bundleIds/{id}/profiles 查询 bundle id 关联的描述文件
+        :param bundle_id:
+        :param query_parameters:
+        :return:
+            200 ProfilesWithoutIncludesResponse OK Content-Type: application/json
+            400 ErrorResponse Bad Request An error occurred with your request. Content-Type: application/json
+            403 ErrorResponse Forbidden Request not authorized. Content-Type: application/json
+            404 ErrorResponse Not Found Resource not found. Content-Type: application/json
+        """
+        base_url = f'{self.bundle_ids_url}/{bundle_id}/profiles'
+        params = {"limit": 200}
+        if query_parameters:
+            for k, v in query_parameters.items():
+                params[k] = v
+        return request_format_log(self,
+                                  requests.get(base_url, params=params, headers=self.headers, proxies=self.proxies,
+                                               timeout=self.timeout))
+
 
 class BundleIDsCapabilityAPI(object):
-    # https://developer.apple.com/documentation/appstoreconnectapi/bundle_id_capabilities
+    # https://developer.apple.com/documentation/appstoreconnectapi/bundle-id-capabilities
+    # capabilityType 最新枚举:
+    #   ICLOUD, IN_APP_PURCHASE, GAME_CENTER, PUSH_NOTIFICATIONS, WALLET, INTER_APP_AUDIO, MAPS,
+    #   ASSOCIATED_DOMAINS, PERSONAL_VPN, APP_GROUPS, HEALTHKIT, HOMEKIT, WIRELESS_ACCESSORY_CONFIGURATION,
+    #   APPLE_PAY, DATA_PROTECTION, SIRIKIT, NETWORK_EXTENSIONS, MULTIPATH, HOT_SPOT, NFC_TAG_READING,
+    #   CLASSKIT, AUTOFILL_CREDENTIAL_PROVIDER, ACCESS_WIFI_INFORMATION, NETWORK_CUSTOM_PROTOCOL,
+    #   COREMEDIA_HLS_LOW_LATENCY, SYSTEM_EXTENSION_INSTALL, USER_MANAGEMENT, APPLE_ID_AUTH
     def __init__(self, base_uri, jwt_headers):
         self.headers = jwt_headers
         self.bundle_ids_capability_url = f'{base_uri}/bundleIdCapabilities'
@@ -350,9 +418,43 @@ class BundleIDsCapabilityAPI(object):
                                                 proxies=self.proxies,
                                                 timeout=self.timeout))
 
+    def modify_capability(self, capability_id, capability_type, settings=None):
+        """
+        PATCH /v1/bundleIdCapabilities/{id} 更新已开通能力的配置
+        :param capability_id: 能力资源 id, 格式为 {bundle_id}_{capability_type}
+        :param capability_type:
+        :param settings:
+        :return:
+            200 BundleIdCapabilityResponse OK Content-Type: application/json
+            400 ErrorResponse Bad Request An error occurred with your request. Content-Type: application/json
+            403 ErrorResponse Forbidden Request not authorized. Content-Type: application/json
+            404 ErrorResponse Not Found Resource not found. Content-Type: application/json
+            409 ErrorResponse Conflict The provided resource data is not valid. Content-Type: application/json
+        """
+        if settings is None:
+            settings = []
+        base_url = f'{self.bundle_ids_capability_url}/{capability_id}'
+        json = {
+            'data': {
+                'type': 'bundleIdCapabilities',
+                'id': capability_id,
+                'attributes': {
+                    'capabilityType': capability_type,
+                    'settings': settings
+                }
+            }
+        }
+        return request_format_log(self,
+                                  requests.patch(base_url, json=json, headers=self.headers, proxies=self.proxies,
+                                                 timeout=self.timeout))
+
 
 class ProfilesAPI(object):
     # https://developer.apple.com/documentation/appstoreconnectapi/profiles
+    # profileType 最新枚举: IOS_APP_DEVELOPMENT, IOS_APP_STORE, IOS_APP_ADHOC, IOS_APP_INHOUSE,
+    #   MAC_APP_DEVELOPMENT, MAC_APP_STORE, MAC_APP_DIRECT, TVOS_APP_DEVELOPMENT, TVOS_APP_STORE,
+    #   TVOS_APP_ADHOC, TVOS_APP_INHOUSE, MAC_CATALYST_APP_DEVELOPMENT, MAC_CATALYST_APP_STORE,
+    #   MAC_CATALYST_APP_DIRECT
     def __init__(self, base_uri, jwt_headers):
         self.headers = jwt_headers
         self.profiles_url = f'{base_uri}/profiles'
@@ -378,10 +480,6 @@ class ProfilesAPI(object):
                 'attributes': {
                     'name': profile_name,
                     'profileType': profile_type,
-                    # Possible values: IOS_APP_DEVELOPMENT, IOS_APP_STORE, IOS_APP_ADHOC, IOS_APP_INHOUSE,
-                    # MAC_APP_DEVELOPMENT, MAC_APP_STORE, MAC_APP_DIRECT, TVOS_APP_DEVELOPMENT, TVOS_APP_STORE,
-                    # TVOS_APP_ADHOC, TVOS_APP_INHOUSE, MAC_CATALYST_APP_DEVELOPMENT, MAC_CATALYST_APP_STORE,
-                    # MAC_CATALYST_APP_DIRECT
                 },
                 'relationships': {
                     'bundleId': {
@@ -439,6 +537,7 @@ class ProfilesAPI(object):
 
         """
         params = {
+            "fields[profiles]": "createdDate,expirationDate,name,platform,profileContent,profileState,profileType,uuid",
             "limit": 200
         }
         if query_parameters:
@@ -455,9 +554,32 @@ class ProfilesAPI(object):
     def list_profile_by_profile_name(self, profile_name):
         return self.list_profiles({"filter[name]": profile_name, "include": ""})
 
+    def read_profile_information(self, profile_id):
+        """
+        GET /v1/profiles/{id}
+        :param profile_id:
+        :return:
+            200 ProfileResponse OK Content-Type: application/json
+            400 ErrorResponse Bad Request An error occurred with your request. Content-Type: application/json
+            403 ErrorResponse Forbidden Request not authorized. Content-Type: application/json
+            404 ErrorResponse Not Found Resource not found. Content-Type: application/json
+        """
+        base_url = f'{self.profiles_url}/{profile_id}'
+        params = {
+            "fields[profiles]": "createdDate,expirationDate,name,platform,profileContent,profileState,profileType,uuid",
+        }
+        return request_format_log(self,
+                                  requests.get(base_url, params=params, headers=self.headers, proxies=self.proxies,
+                                               timeout=self.timeout))
+
 
 class CertificatesAPI(object):
     # https://developer.apple.com/documentation/appstoreconnectapi/certificates
+    # certificateType 最新枚举:
+    #   APPLE_PAY, APPLE_PAY_MERCHANT_IDENTITY, APPLE_PAY_PSP_IDENTITY, APPLE_PAY_RSA, DEVELOPER_ID_KEXT,
+    #   DEVELOPER_ID_KEXT_G2, DEVELOPER_ID_APPLICATION, DEVELOPER_ID_APPLICATION_G2, DEVELOPMENT,
+    #   DISTRIBUTION, IDENTITY_ACCESS, IOS_DEVELOPMENT, IOS_DISTRIBUTION, MAC_APP_DISTRIBUTION,
+    #   MAC_INSTALLER_DISTRIBUTION, MAC_APP_DEVELOPMENT, PASS_TYPE_ID, PASS_TYPE_ID_WITH_NFC
     def __init__(self, base_uri, jwt_headers):
         self.headers = jwt_headers
         self.certificates_url = f'{base_uri}/certificates'
@@ -504,7 +626,7 @@ class CertificatesAPI(object):
             403 ErrorResponse Forbidden Request not authorized. Content-Type: application/json
         """
         params = {
-            "fields[certificates]": "certificateContent,certificateType,displayName,expirationDate,name,platform,serialNumber",
+            "fields[certificates]": "activated,certificateContent,certificateType,displayName,expirationDate,name,platform,serialNumber",
         }
         if query_parameters:
             for k, v in query_parameters.items():
@@ -516,6 +638,32 @@ class CertificatesAPI(object):
 
     def list_certificate_by_certificate_id(self, certificate_id):
         return self.list_certificate({"filter[id]": certificate_id, })
+
+    def modify_certificate_activated(self, certificate_id, activated=True):
+        """
+        PATCH /v1/certificates/{id} 更新证书激活状态(新增接口)
+        :param certificate_id:
+        :param activated:
+        :return:
+            200 CertificateResponse OK Content-Type: application/json
+            400 ErrorResponse Bad Request An error occurred with your request. Content-Type: application/json
+            403 ErrorResponse Forbidden Request not authorized. Content-Type: application/json
+            404 ErrorResponse Not Found Resource not found. Content-Type: application/json
+            409 ErrorResponse Conflict The provided resource data is not valid. Content-Type: application/json
+        """
+        base_url = f'{self.certificates_url}/{certificate_id}'
+        json = {
+            'data': {
+                'type': 'certificates',
+                'id': certificate_id,
+                'attributes': {
+                    'activated': activated
+                }
+            }
+        }
+        return request_format_log(self,
+                                  requests.patch(base_url, json=json, headers=self.headers, proxies=self.proxies,
+                                                 timeout=self.timeout))
 
     def revoke_certificate(self, certificate_id):
         """
@@ -535,6 +683,16 @@ class CertificatesAPI(object):
 
 
 class BaseInfoObj(object):
+    @staticmethod
+    def from_json_attributes(cls, json_obj):
+        # 只保留 namedtuple 已定义的字段, 苹果接口新增的 attributes 字段(如 csrContent)不会导致构造失败
+        new_dict = {'id': json_obj.get('id', '')}
+        attributes = json_obj.get("attributes", {})
+        for k in cls._fields:
+            if k in attributes:
+                new_dict[k] = attributes[k]
+        return cls(**new_dict)
+
     @staticmethod
     def filter(obj_lists, query_parameters=None):
         if not isinstance(obj_lists, list):
@@ -598,11 +756,7 @@ class Devices(namedtuple("Devices", ["id", "addedDate", "name", "deviceClass", "
 
     @classmethod
     def from_json(cls, json):
-        new_dict = {'id': json.get('id', '')}
-        attributes = json.get("attributes", {})
-        for k, v in attributes.items():
-            new_dict[k] = v
-        return cls(**new_dict)
+        return BaseInfoObj.from_json_attributes(cls, json)
 
     def copy_and_replace(self, **kwargs):
         return self._replace(**kwargs)
@@ -618,11 +772,7 @@ class BundleIds(namedtuple("BundleIds", ["id", "name", "identifier", "platform",
 
     @classmethod
     def from_json(cls, json):
-        new_dict = {'id': json.get('id', '')}
-        attributes = json.get("attributes", {})
-        for k, v in attributes.items():
-            new_dict[k] = v
-        return cls(**new_dict)
+        return BaseInfoObj.from_json_attributes(cls, json)
 
     def copy_and_replace(self, **kwargs):
         return self._replace(**kwargs)
@@ -641,11 +791,7 @@ class Profiles(namedtuple("Profiles",
 
     @classmethod
     def from_json(cls, json):
-        new_dict = {'id': json.get('id', '')}
-        attributes = json.get("attributes", {})
-        for k, v in attributes.items():
-            new_dict[k] = v
-        return cls(**new_dict)
+        return BaseInfoObj.from_json_attributes(cls, json)
 
     def copy_and_replace(self, **kwargs):
         return self._replace(**kwargs)
@@ -665,7 +811,7 @@ class Profiles(namedtuple("Profiles",
 class Certificates(namedtuple("Certificates",
                               ["id", "serialNumber", "certificateContent", "displayName", "name", "platform",
                                "expirationDate",
-                               "certificateType"]), ):
+                               "certificateType", "activated"], defaults=(None,)), ):
     @classmethod
     def from_json_list(cls, json_list):
         new_cls_list = []
@@ -675,11 +821,7 @@ class Certificates(namedtuple("Certificates",
 
     @classmethod
     def from_json(cls, json):
-        new_dict = {'id': json.get('id', '')}
-        attributes = json.get("attributes", {})
-        for k, v in attributes.items():
-            new_dict[k] = v
-        return cls(**new_dict)
+        return BaseInfoObj.from_json_attributes(cls, json)
 
     def copy_and_replace(self, **kwargs):
         return self._replace(**kwargs)
@@ -803,28 +945,52 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         }
         self.headers = headers
 
-    def __base_format(self, s_type, req, success_code):
+    def __make_objs(self, s_type, data, raw_text=''):
+        if isinstance(data, dict):
+            data = [data]
+        obj = None
+        if s_type == 'devices':
+            obj = Devices.from_json_list(data)
+        elif s_type == 'bundleIds':
+            obj = BundleIds.from_json_list(data)
+        elif s_type == 'profiles':
+            obj = Profiles.from_json_list(data)
+        elif s_type == 'certificates':
+            obj = Certificates.from_json_list(data)
+        if obj is None:
+            raise Exception(f'None object: {raw_text}')
+        if len(obj) == 1:
+            return obj[0]
+        return obj
+
+    def __get_paged_data(self, req):
+        """
+        跟随响应中的 links.next 分页链接, 累积返回全部 data
+        https://developer.apple.com/documentation/appstoreconnectapi/large-data-sets
+        """
+        req_data = req.json()
+        data_list = req_data.get('data') or []
+        next_url = req_data.get('links', {}).get('next')
+        while next_url:
+            next_req = request_format_log(self,
+                                          requests.get(next_url, headers=self.headers, proxies=self.proxies,
+                                                       timeout=self.timeout))
+            if next_req.status_code != 200:
+                raise Exception(f'paging error: {next_req.text}')
+            next_data = next_req.json()
+            data_list.extend(next_data.get('data') or [])
+            next_url = next_data.get('links', {}).get('next')
+        return data_list
+
+    def __base_format(self, s_type, req, success_code, paging=False):
         # self.__set_rate_limit_info(req.headers)
         if req.status_code == success_code:
+            if paging:
+                return self.__make_objs(s_type, self.__get_paged_data(req))
             req_data = req.json()
             data = req_data.get('data')
             if isinstance(data, list) or isinstance(data, dict):
-                obj = None
-                if isinstance(data, dict):
-                    data = [data]
-                if s_type == 'devices':
-                    obj = Devices.from_json_list(data)
-                elif s_type == 'bundleIds':
-                    obj = BundleIds.from_json_list(data)
-                elif s_type == 'profiles':
-                    obj = Profiles.from_json_list(data)
-                elif s_type == 'certificates':
-                    obj = Certificates.from_json_list(data)
-                if len(obj) == 1:
-                    return obj[0]
-                if obj is None:
-                    raise Exception(f'None object: {req.text}')
-                return obj
+                return self.__make_objs(s_type, data, req.text)
             else:
                 # self.__init_jwt_headers()
                 raise Exception(f'error instance: {req.text}')
@@ -838,39 +1004,39 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         else:
             raise Exception('unknown error: %s  code:%s' % (req.text, req.status_code))
 
-    def __device_store(self, req, success_code=200):
-        return self.__base_format('devices', req, success_code)
+    def __device_store(self, req, success_code=200, paging=False):
+        return self.__base_format('devices', req, success_code, paging)
 
-    def __profile_store(self, req, success_code=200):
-        return self.__base_format('profiles', req, success_code)
+    def __profile_store(self, req, success_code=200, paging=False):
+        return self.__base_format('profiles', req, success_code, paging)
 
-    def __certificates_store(self, req, success_code=200):
-        return self.__base_format('certificates', req, success_code)
+    def __certificates_store(self, req, success_code=200, paging=False):
+        return self.__base_format('certificates', req, success_code, paging)
 
-    def __bundle_ids_store(self, req, success_code=200):
-        return self.__base_format('bundleIds', req, success_code)
+    def __bundle_ids_store(self, req, success_code=200, paging=False):
+        return self.__base_format('bundleIds', req, success_code, paging)
 
     @call_function_try_attempts()
     def get_all_devices(self):
         req = self.list_devices()
-        return self.__device_store(req)
+        return self.__device_store(req, paging=True)
 
     def list_enabled_devices(self):
         req = super().list_enabled_devices()
-        return self.__device_store(req)
+        return self.__device_store(req, paging=True)
 
     def get_all_bundle_ids(self):
         req = self.list_bundle_ids()
-        return self.__bundle_ids_store(req)
+        return self.__bundle_ids_store(req, paging=True)
 
     def get_all_profiles(self):
         req = self.list_profiles()
-        return self.__profile_store(req)
+        return self.__profile_store(req, paging=True)
 
     @call_function_try_attempts(try_attempts=2)
     def get_all_certificates(self, query_parameters=None):
         req = self.list_certificate(query_parameters)
-        return self.__certificates_store(req)
+        return self.__certificates_store(req, paging=True)
 
     @call_function_try_attempts()
     def get_certificate_by_cid(self, certificate_id):
@@ -878,7 +1044,11 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
         return self.__certificates_store(req)
 
     def list_device_by_udid(self, udid):
-        device_obj_list = BaseInfoObj.filter(self.get_all_devices(), {"udid": udid})
+        # 使用服务端 filter[udid] 过滤, 避免拉取全部设备
+        req = super().list_devices_by_udid(udid)
+        device_obj_list = self.__device_store(req)
+        if isinstance(device_obj_list, Devices):
+            device_obj_list = [device_obj_list]
         if not device_obj_list:
             raise Exception('Device obj is None')
         if len(device_obj_list) != 1 and len(set([device_obj.udid for device_obj in device_obj_list])) != 1:
@@ -887,7 +1057,10 @@ class AppStoreConnectApi(DevicesAPI, BundleIDsAPI, BundleIDsCapabilityAPI, Profi
 
     @call_function_try_attempts()
     def register_device(self, device_name, device_udid, platform="IOS"):
-        device_obj_list = BaseInfoObj.filter(self.get_all_devices(), {"udid": device_udid})
+        req = super().list_devices_by_udid(device_udid)
+        device_obj_list = self.__device_store(req)
+        if isinstance(device_obj_list, Devices):
+            device_obj_list = [device_obj_list]
         # 发现同一个开发者账户里面有两个一样的udid，奇了怪
         if device_obj_list and (
                 len(device_obj_list) == 1 or len(set([device_obj.udid for device_obj in device_obj_list])) == 1):
