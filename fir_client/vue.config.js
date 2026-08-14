@@ -4,6 +4,7 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const dateFormat = require("./src/utils/format.js");
 const CompressionWebpackPlugin = require('compression-webpack-plugin');
 const argv = process.argv;
+const page_arg = process.env.npm_config_page || argv[3];
 
 function resolve(dir) {
     return path.join(__dirname, dir);
@@ -74,7 +75,7 @@ const short = {
 };
 let pages = {index, short, mshort};
 let outputDir = 'dist'
-let page = argv[3];
+let page = page_arg;
 if (!page) {
     page = 'index'
 }

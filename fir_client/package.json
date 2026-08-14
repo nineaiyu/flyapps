@@ -2,10 +2,17 @@
   "name": "fir_client",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=14"
+  },
+  "resolutions": {
+    "@achrinza/node-ipc": "9.2.9",
+    "@types/minimatch": "5.1.2"
+  },
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "analyz": "vue-cli-service serve analyz",
+    "serve": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service serve",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build",
+    "analyz": "NODE_OPTIONS=--openssl-legacy-provider npm_config_page=analyz vue-cli-service serve",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {

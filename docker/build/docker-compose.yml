@@ -12,7 +12,7 @@ services:
 
   buildclient:
     container_name: buildclient
-    image: 'node:14.17.3'
+    image: 'node:18.20.8'
     working_dir: /fir_client
     volumes:
       - /etc/localtime:/etc/localtime:ro
@@ -25,7 +25,7 @@ services:
 
   buildindex:
     container_name: buildindex
-    image: 'node:14.17.3'
+    image: 'node:18.20.8'
     working_dir: /fir_client
     volumes:
       - /etc/localtime:/etc/localtime:ro
@@ -40,7 +40,7 @@ services:
 
   buildshort:
     container_name: buildshort
-    image: 'node:14.17.3'
+    image: 'node:18.20.8'
     working_dir: /fir_client
     volumes:
       - /etc/localtime:/etc/localtime:ro
@@ -54,7 +54,7 @@ services:
 
   buildadmin:
     container_name: buildadmin
-    image: 'node:14.17.3'
+    image: 'node:18.20.8'
     working_dir: /fir_admin
     volumes:
       - /etc/localtime:/etc/localtime:ro
