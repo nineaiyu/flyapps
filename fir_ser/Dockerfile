@@ -6,14 +6,14 @@ FROM python:3.9.14-slim
 #    && sed -i 's/security.debian.org/mirrors.163.com/g' /etc/apt/sources.list \
 RUN apt update  \
     && apt-get install g++ wget zip unzip -y \
-    && apt-get install libssl-dev openssl libmariadb-dev  -y \
+    && apt-get install libssl-dev pkg-config openssl libmariadb-dev  -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 
 #RUN cd /opt/ && wget https://github.com/nineaiyu/zsign/archive/refs/tags/v1.1.2.tar.gz
 ADD zsign-1.1.2.tar.gz /opt/
-RUN cd /opt/zsign-1.1.2/ && g++ *.cpp common/*.cpp -lcrypto -O3 -std=c++11 -o zsign && cp zsign /usr/bin/ && rm -rf /opt/zsign-1.1.2/
+RUN cd /opt/zsign-1.1.2/build/linux && make clean && make && cp zsign /usr/bin/ && rm -rf /opt/zsign-1.1.2/
 # install pip
 COPY requirements.txt /opt/requirements.txt
 RUN cd /opt/ && pip install -U setuptools pip --ignore-installed && pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir uwsgi
