@@ -1,4 +1,4 @@
-FROM python:3.9.14-slim
+FROM registry.cn-beijing.aliyuncs.com/nineaiyu/python:3.12.7-slim
 
 # Fixes some weird terminal issues such as broken clear / CTRL+L
 
