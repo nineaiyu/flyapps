@@ -12,8 +12,10 @@ import signal
 import time
 from subprocess import Popen, PIPE
 
-from OpenSSL.crypto import (load_pkcs12, dump_certificate_request, dump_privatekey, PKey, TYPE_RSA, X509Req,
-                            dump_certificate, load_privatekey, load_certificate, PKCS12, FILETYPE_PEM, FILETYPE_ASN1)
+from OpenSSL.crypto import (dump_certificate_request, dump_privatekey, PKey, TYPE_RSA, X509Req, X509,
+                            dump_certificate, load_privatekey, load_certificate, FILETYPE_PEM, FILETYPE_ASN1)
+from cryptography.hazmat.primitives.serialization import (pkcs12 as crypto_pkcs12, BestAvailableEncryption,
+                                                          NoEncryption)
 
 from common.base.baseutils import get_format_time, format_apple_date, make_app_uuid
 from common.cache.state import CleanErrorBundleIdSignDataState
@@ -129,15 +131,18 @@ class ResignApp(object):
         try:
             certificate = load_certificate(FILETYPE_PEM, open(self.app_dev_pem, 'rb').read())
             private_key = load_privatekey(FILETYPE_PEM, open(self.my_local_key, 'rb').read())
-            p12 = PKCS12()
-            p12.set_certificate(certificate)
-            p12.set_privatekey(private_key)
+            # pyOpenSSL 24 移除了 PKCS12 类, 改用 cryptography 序列化
+            encrypt_alg = BestAvailableEncryption(
+                password.encode('utf-8') if isinstance(password, str) else password) if password else NoEncryption()
+            p12_data = crypto_pkcs12.serialize_key_and_certificates(
+                name=None, key=private_key.to_cryptography(), cert=certificate.to_cryptography(),
+                cas=None, encryption_algorithm=encrypt_alg)
             with open(self.app_dev_p12, 'wb+') as f:
-                f.write(p12.export(password))
+                f.write(p12_data)
             if password:
                 with open(self.app_dev_p12 + '.pwd', 'w') as f:
                     f.write(password)
-            return True, p12.get_friendlyname()
+            return True, None
         except Exception as e:
             result["err_info"] = e
             return False, result
@@ -168,13 +173,19 @@ class ResignApp(object):
             else:
                 result["err_info"] = '证书内容有误，请检查'
                 return False, result
-            p12 = load_pkcs12(open(self.app_dev_p12 + '.bak', 'rb').read(), password)
-            cert = p12.get_certificate()
+            # pyOpenSSL 24 移除了 load_pkcs12, 改用 cryptography 解析
+            crypto_key, crypto_cert, _ = crypto_pkcs12.load_key_and_certificates(
+                open(self.app_dev_p12 + '.bak', 'rb').read(),
+                password.encode('utf-8') if isinstance(password, str) else password)
+            if not crypto_cert:
+                result["err_info"] = 'p12文件中未找到证书，请检查'
+                return False, result
+            cert = X509.from_cryptography(crypto_cert)
             if cert.has_expired():
                 result["err_info"] = '证书已经过期'
                 return False, result
             with open(self.my_local_key + '.bak', 'wb+') as f:
-                f.write(dump_privatekey(FILETYPE_PEM, p12.get_privatekey()))
+                f.write(dump_privatekey(FILETYPE_PEM, PKey.from_cryptography_key(crypto_key)))
             with open(self.app_dev_pem + '.bak', 'wb+') as f:
                 f.write(dump_certificate(FILETYPE_PEM, cert))
             return True, cert.get_version()
@@ -183,7 +194,7 @@ class ResignApp(object):
                 if os.path.exists(file + '.bak'):
                     os.remove(file + '.bak')
             result["err_info"] = str(e)
-            if 'mac verify failure' in str(e):
+            if 'mac verify failure' in str(e) or 'Invalid password' in str(e):
                 result["err_info"] = 'p12 导入密码错误，请检查'
             return False, result
 
@@ -406,7 +417,8 @@ class AppDeveloperApiV2(object):
         result = {}
         try:
             cer = load_certificate(FILETYPE_PEM, open(app_dev_pem, 'rb').read())
-            not_after = datetime.datetime.strptime(cer.get_notAfter().decode('utf-8'), "%Y%m%d%H%M%SZ")
+            # pyOpenSSL 24 移除了 get_notAfter(), 改用 not_valid_after_utc
+            not_after = cer.not_valid_after_utc
             apple_obj = AppStoreConnectApi(self.issuer_id, self.private_key_id, self.p8key)
             certificates = apple_obj.get_all_certificates({'filter[certificateType]': 'IOS_DISTRIBUTION'})
             status, result = self.__result_format(certificates, Certificates)

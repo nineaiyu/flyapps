@@ -14,6 +14,7 @@ from urllib.parse import quote_plus
 from urllib.request import urlopen
 
 import OpenSSL
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from Crypto.Hash import SHA, SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
@@ -692,9 +693,9 @@ class DCAliPay(BaseAliPay):
         cert = OpenSSL.crypto.load_certificate(
             OpenSSL.crypto.FILETYPE_PEM, self._alipay_public_key_cert_string
         )
-        return OpenSSL.crypto.dump_publickey(
-            OpenSSL.crypto.FILETYPE_PEM, cert.get_pubkey()
-        ).decode("utf-8")
+        # pyOpenSSL 24 移除了 dump_publickey, 改用 cryptography 导出 PEM 公钥
+        public_key = cert.to_cryptography().public_key()
+        return public_key.public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo).decode("utf-8")
 
     @staticmethod
     def get_cert_sn(cert):

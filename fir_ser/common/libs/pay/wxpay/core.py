@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.serialization import (load_pem_private_key,
-                                                          load_pem_public_key)
+                                                          load_pem_public_key, Encoding, PublicFormat)
 
 
 def build_authorization(path,
@@ -99,8 +99,9 @@ def certificate_serial_number(certificate):
 
 def dump_public_key(certificate):
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, format_certificate(certificate))
-    public_key = crypto.dump_publickey(crypto.FILETYPE_PEM, cert.get_pubkey()).decode("utf-8")
-    return public_key
+    # pyOpenSSL 24 移除了 dump_publickey, 改用 cryptography 导出 PEM 公钥
+    public_key = cert.to_cryptography().public_key()
+    return public_key.public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo).decode("utf-8")
 
 
 class RequestType(Enum):

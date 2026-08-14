@@ -1,22 +1,28 @@
 FROM registry.cn-beijing.aliyuncs.com/nineaiyu/python:3.12.7-slim
 
+
+# add pip cn mirrors
+ARG PIP_MIRROR=https://pypi.tuna.tsinghua.edu.cn/simple
+ARG APT_MIRROR=http://mirrors.tuna.tsinghua.edu.cn
+
 # Fixes some weird terminal issues such as broken clear / CTRL+L
 
 #RUN sed -i 's/deb.debian.org/mirrors.163.com/g' /etc/apt/sources.list \
 #    && sed -i 's/security.debian.org/mirrors.163.com/g' /etc/apt/sources.list \
-RUN apt update  \
+RUN sed -i "s@http://.*.debian.org@${APT_MIRROR}@g" /etc/apt/sources.list.d/debian.sources \
+    && apt update  \
     && apt-get install g++ wget zip unzip -y \
-    && apt-get install libssl-dev pkg-config openssl libmariadb-dev  -y \
+    && apt-get install make libssl-dev pkg-config openssl libmariadb-dev  -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 
 #RUN cd /opt/ && wget https://github.com/nineaiyu/zsign/archive/refs/tags/v1.1.2.tar.gz
 ADD zsign-1.1.2.tar.gz /opt/
-RUN cd /opt/zsign-1.1.2/build/linux && make clean && make && cp zsign /usr/bin/ && rm -rf /opt/zsign-1.1.2/
+RUN cd /opt/zsign-1.1.2/build/linux && make clean && make && cp ../../bin/zsign /usr/bin/ && rm -rf /opt/zsign-1.1.2/
 # install pip
 COPY requirements.txt /opt/requirements.txt
-RUN cd /opt/ && pip install -U setuptools pip --ignore-installed && pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir uwsgi
+RUN cd /opt/ && pip install -U setuptools pip --ignore-installed -i ${PIP_MIRROR} && pip install --no-cache-dir -r requirements.txt -i ${PIP_MIRROR}
 
 
 WORKDIR /data/fir_ser/

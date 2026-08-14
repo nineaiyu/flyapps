@@ -181,7 +181,7 @@ TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
-USE_L10N = True
+# USE_L10N 在 Django 4.0+ 已弃用(默认开启), 5.0 移除, 故删除
 
 USE_TZ = False
 
