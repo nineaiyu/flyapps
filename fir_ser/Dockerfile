@@ -22,7 +22,7 @@ ADD zsign-1.1.2.tar.gz /opt/
 RUN cd /opt/zsign-1.1.2/build/linux && make clean && make && cp ../../bin/zsign /usr/bin/ && rm -rf /opt/zsign-1.1.2/
 # install pip
 COPY requirements.txt /opt/requirements.txt
-RUN cd /opt/ && pip install -U setuptools pip --ignore-installed -i ${PIP_MIRROR} && pip install --no-cache-dir -r requirements.txt -i ${PIP_MIRROR}
+RUN cd /opt/ && pip install -U setuptools pip --ignore-installed -i ${PIP_MIRROR} && pip install --no-cache-dir -r requirements.txt -i ${PIP_MIRROR} && && pip install --no-cache-dir uwsgi -i ${PIP_MIRROR} 
 
 
 WORKDIR /data/fir_ser/

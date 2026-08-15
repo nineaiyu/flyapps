@@ -21,6 +21,5 @@ python-daemon==2.3.2
 psutil==6.1.1
 flower==2.0.1
 django-proxy==1.2.1
-uWSGI==2.0.29
 django-cors-headers==4.3.1
 django-filter==23.5
