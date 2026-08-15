@@ -14,3 +14,5 @@ mailhtml/node_modules/
 mailhtml/.idea/
 fir_client/dist_index/
 fir_client/dist_short/
+fir_ser/logs
+.idea

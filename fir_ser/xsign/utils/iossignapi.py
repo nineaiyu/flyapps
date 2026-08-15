@@ -112,10 +112,11 @@ class ResignApp(object):
                 if len(cert_list) > 1:
                     cas.extend([x509.load_pem_x509_certificate(x.encode('utf-8')) for x in cert_list[1:]])
                 key = serialization.load_pem_private_key(ssl_key_data, None)
+                # cryptography 43.0+ signer 为 4 元组 (证书, 私钥, 摘要算法, RSA填充模式), 非 RSA-PSS 填 None
                 result['data'] = pkcs7.PKCS7SignatureBuilder(
                     data=sign_data.encode('utf-8'),
                     signers=[
-                        (cert, key, hashes.SHA512()),
+                        (cert, key, hashes.SHA512(), None),
                     ],
                     additional_certs=cas,
                 ).sign(
