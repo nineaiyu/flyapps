@@ -1,3 +1,4 @@
+import ast
 import datetime
 import logging
 import os
@@ -17,6 +18,26 @@ from common.utils.storage import Storage
 from common.utils.token import make_token
 
 logger = logging.getLogger(__name__)
+
+
+def get_udid_list_from_storage(udid_str):
+    """
+    安全解析数据库中存储的 udid 字段。
+    历史数据为 list 字面量(也可能来自客户端 JSON)，使用 ast.literal_eval 替代 eval，
+    避免 eval 执行任意代码(安全修复: eval(user-controlled udid) => RCE)。
+    """
+    udid_lists = []
+    if not udid_str:
+        return udid_lists
+    try:
+        udid_data = ast.literal_eval(udid_str)
+    except (ValueError, SyntaxError, MemoryError, RecursionError):
+        return udid_lists
+    if isinstance(udid_data, str):
+        udid_data = [udid_data]
+    if isinstance(udid_data, (list, tuple, set)):
+        udid_lists = [{'udid': udid} for udid in udid_data]
+    return udid_lists
 
 
 def get_download_url_from_context(self, obj, key, url, force_new=False):
@@ -199,14 +220,7 @@ class AppsSerializer(serializers.ModelSerializer):
 
             download_token = make_token(master_release_obj.release_id, 600, key=key)
             datainfo["download_token"] = download_token
-            udid_lists = []
-            try:
-                udid_data = eval(master_release_obj.udid)
-                for udid in udid_data:
-                    udid_lists.append({'udid': udid})
-            except Exception as e:
-                pass
-            datainfo["udid"] = udid_lists
+            datainfo["udid"] = get_udid_list_from_storage(master_release_obj.udid)
 
             return datainfo
         else:
@@ -339,14 +353,7 @@ class AppReleaseSerializer(serializers.ModelSerializer):
     udid = serializers.SerializerMethodField()
 
     def get_udid(self, obj):
-        udid_lists = []
-        try:
-            udid_data = eval(obj.udid)
-            for udid in udid_data:
-                udid_lists.append({'udid': udid})
-        except Exception as e:
-            pass
-        return udid_lists
+        return get_udid_list_from_storage(obj.udid)
 
     def get_binary_size(self, obj):
         return bytes2human(obj.binary_size)

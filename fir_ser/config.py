@@ -24,7 +24,9 @@ class DOMAINCONF(object):
 class BASECONF(object):
     VERSION = '1.3.1'
 
-    DEBUG = True
+    # 生产环境必须为 False：DEBUG=True 会在报错页泄露 SECRET_KEY 等配置，
+    # 且会导致 Flower 监控代理(admin/views/celery_flower.py)关闭认证，被公网直接访问
+    DEBUG = False
 
     SECRET_KEY = 'j!g@^bc(z(a3*i&kp$_@bgb)bug&^#3=amch!3lz&1x&s6ss6t'
 
