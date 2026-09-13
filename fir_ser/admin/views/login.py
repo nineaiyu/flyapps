@@ -13,7 +13,7 @@ from api.models import UserInfo
 from api.utils.auth.util import AuthInfo
 from api.utils.serializer import UserInfoSerializer
 from api.utils.utils import set_user_token
-from common.core.auth import ExpiringTokenAuthentication
+from common.core.auth import AdminTokenAuthentication
 from common.core.response import ApiResponse
 from common.core.sysconfig import Config
 from common.core.throttle import VisitRegister1Throttle, VisitRegister2Throttle
@@ -39,7 +39,7 @@ class LoginView(APIView):
             if login_auth_failed("get", username):
                 password = receive.get("password")
                 user = auth.authenticate(username=username, password=password)
-                logger.info(f"username:{username}  password:{password}")
+                logger.info(f"username:{username} login attempt")
                 if user:
                     if user.is_active:
                         if user.role == 3:
@@ -77,7 +77,8 @@ class LoginView(APIView):
 
 class LoginUserView(APIView):
     throttle_classes = [VisitRegister1Throttle, VisitRegister2Throttle]
-    authentication_classes = [ExpiringTokenAuthentication, ]
+    # 安全修复: 仅管理员可重置用户密码, 否则任意登录用户可改任意账号(含管理员)密码完成接管
+    authentication_classes = [AdminTokenAuthentication, ]
 
     def get(self, request):
         serializer = UserInfoSerializer(request.user, )

@@ -32,7 +32,7 @@ def reset_user_pwd(user, sure_password, old_password=''):
     if user is not None:
         user.set_password(sure_password)
     user.save(update_fields=["password"])
-    logger.info(f"user:{user} change password success,old {old_password} new {sure_password}")
+    logger.info(f"user:{user} change password success")
     clean_user_token_and_cache(user)
 
 
@@ -311,7 +311,7 @@ class LoginView(APIView):
 
             password = receive.get("password")
             user = get_authenticate(username, password, login_type, get_login_type())
-            logger.info(f"username:{username}  password:{password}")
+            logger.info(f"username:{username} login attempt")
             if user:
                 if user.is_active:
                     login_auth_failed("del", username)
@@ -492,7 +492,7 @@ class UserInfoView(APIView):
                 user.set_password(sure_password)
                 user.save(update_fields=['password'])
                 res.msg = "密码修改成功"
-                logger.info(f"user:{request.user} change password success,old {old_password} new {sure_password}")
+                logger.info(f"user:{request.user} change password success")
 
                 auth_token = request.auth
                 clean_user_token_and_cache(user, [auth_token])
